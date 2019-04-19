@@ -80,6 +80,12 @@ For example, to run the test program above with SMT debug information, use
 java -DdebugSmt -jar formulog.jar greeting.flg
 ```
 
+### Disclaimer
+
+We have not yet focused on the performance or scalability of the FormuLog
+runtime. We hope to improve it soon (most likely by integrating the language
+features of FormuLog into an existing Datalog implementation). Stay tuned!
+
 ## Writing FormuLog programs
 
 See the wiki on the GitHub repo for FormuLog documentation. 
