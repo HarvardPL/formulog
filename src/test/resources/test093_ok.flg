@@ -1,2 +1,11 @@
+output ok1.
+ok1 :- true.
+
+output ok2.
+ok2 :- !false.
+
+output ok3.
+ok3 :- X = true, X.
+
 output ok.
-ok :- (if true then true else false) && true.
+ok :- ok1, ok2, ok3.

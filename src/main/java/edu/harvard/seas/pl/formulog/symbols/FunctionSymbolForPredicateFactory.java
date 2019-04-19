@@ -33,7 +33,7 @@ public class FunctionSymbolForPredicateFactory {
 	}
 
 	public FunctionSymbolForPredicate create(Symbol predSym) {
-		if (!predSym.getSymbolType().isRelationType()) {
+		if (!predSym.getSymbolType().isRelationSym()) {
 			throw new IllegalArgumentException("Expected a predicate symbol, but received non-predicate symbol " + predSym);
 		}
 		FunctionSymbolForPredicate sym = new FunctionSymbolForPredicate(predSym);

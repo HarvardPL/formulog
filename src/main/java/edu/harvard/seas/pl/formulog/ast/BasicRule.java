@@ -26,8 +26,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
-import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
-import edu.harvard.seas.pl.formulog.symbols.BuiltInPredicateSymbol;
 
 public class BasicRule implements Rule {
 
@@ -54,9 +52,7 @@ public class BasicRule implements Rule {
 	}
 
 	public static BasicRule get(Atom head) {
-		Term trueTerm = Constructors.makeZeroAry(BuiltInConstructorSymbol.TRUE);
-		Atom trueEqTrue = Atoms.getPositive(BuiltInPredicateSymbol.UNIFY, new Term[] { trueTerm, trueTerm });
-		return get(head, Collections.singletonList(trueEqTrue));
+		return get(head, Collections.singletonList(Atoms.trueAtom));
 	}
 
 	@Override

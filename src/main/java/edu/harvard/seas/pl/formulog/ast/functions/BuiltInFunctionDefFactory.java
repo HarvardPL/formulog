@@ -1524,8 +1524,8 @@ public final class BuiltInFunctionDefFactory {
 		return Constructors.make(BuiltInConstructorSymbol.SOME, Terms.singletonArray(arg));
 	}
 
-	private static final Constructor trueBool = Constructors.makeZeroAry(BuiltInConstructorSymbol.TRUE);
-	private static final Constructor falseBool = Constructors.makeZeroAry(BuiltInConstructorSymbol.FALSE);
+	private static final Constructor trueBool = Constructors.makeTrue();
+	private static final Constructor falseBool = Constructors.makeFalse();
 
 	private static boolean boolTermToBool(Constructor b) {
 		if (b.equals(trueBool)) {

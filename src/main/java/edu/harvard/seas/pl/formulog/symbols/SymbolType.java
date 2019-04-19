@@ -54,7 +54,7 @@ public enum SymbolType {
 	
 	;
 	
-	public boolean isRelationType() {
+	public boolean isRelationSym() {
 		switch (this) {
 		case EDB_REL:
 		case IDB_REL:

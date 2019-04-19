@@ -352,11 +352,10 @@ public class EvaluationTest {
 		test("test092_ok.flg");
 	}
 
-	// XXX We currently don't support this (ifs used as terms).
-	// @Test
-	// public void test093() {
-	// test("test093_ok.flg");
-	// }
+	@Test
+	public void test093() {
+		test("test093_ok.flg");
+	}
 
 	@Test
 	public void test094() {

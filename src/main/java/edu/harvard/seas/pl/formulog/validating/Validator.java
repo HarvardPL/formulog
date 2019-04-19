@@ -33,35 +33,34 @@ import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.TimeUnit;
 
 import edu.harvard.seas.pl.formulog.ast.Atoms;
+import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
+import edu.harvard.seas.pl.formulog.ast.Atoms.UnifyAtom;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
+import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
-import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
-import edu.harvard.seas.pl.formulog.ast.Atoms.UnifyAtom;
-import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitorExn;
+import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
-import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.Expr;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.ExprVisitorExn;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.TermExpr;
+import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.smt.Z3ThreadFactory;
-import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInPredicateSymbol;
+import edu.harvard.seas.pl.formulog.symbols.FunctionSymbolForPredicateFactory.FunctionSymbolForPredicate;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
-import edu.harvard.seas.pl.formulog.symbols.FunctionSymbolForPredicateFactory.FunctionSymbolForPredicate;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.unification.Unification;
 import edu.harvard.seas.pl.formulog.util.UnionFind;
@@ -297,8 +296,7 @@ public class Validator {
 			}
 		}
 		if (newBody.isEmpty()) {
-			Term tru = Constructors.makeZeroAry(BuiltInConstructorSymbol.TRUE);
-			newBody.add(makeUnifier(tru, tru, false));
+			newBody.add(Atoms.trueAtom);
 		}
 		return BasicRule.get(Util.iterableToList(r.getHead()), newBody);
 	}

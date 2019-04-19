@@ -367,8 +367,7 @@ public class Parser {
 			}
 			if (newBody.isEmpty()) {
 				// Add a vacuous body.
-				Term tt = Constructors.makeZeroAry(BuiltInConstructorSymbol.TRUE);
-				newBody.add(Atoms.getPositive(BuiltInPredicateSymbol.UNIFY, new Term[] { tt, tt }));
+				newBody.add(Atoms.trueAtom);
 			}
 			return BasicRule.get(newHead, newBody);
 		}
@@ -529,7 +528,7 @@ public class Parser {
 
 			private Term makeFunctor(Symbol sym, Term[] args) {
 				SymbolType st = sym.getSymbolType();
-				if (st.isRelationType()) {
+				if (st.isRelationSym()) {
 					Symbol newSym = symbolManager.createFunctionSymbolForPredicate(sym);
 					if (!functionDefManager.hasDefinition(newSym)) {
 						functionDefManager.register(new DummyFunctionDef(newSym));
@@ -898,9 +897,9 @@ public class Parser {
 						public Term evaluate(Term[] args, Substitution substitution) throws EvaluationException {
 							Constructor c = (Constructor) args[0].applySubstitution(substitution);
 							if (c.getSymbol().equals(ctor)) {
-								return Constructors.makeZeroAry(BuiltInConstructorSymbol.FALSE);
+								return Constructors.makeFalse();
 							}
-							return Constructors.makeZeroAry(BuiltInConstructorSymbol.TRUE);
+							return Constructors.makeTrue();
 						}
 
 					});
@@ -924,14 +923,19 @@ public class Parser {
 				if (sym == null) {
 					throw new RuntimeException("Unrecognized symbol: " + ctx.ID().getText());
 				}
-				if (sym.getSymbolType().isFunctionSymbol()) {
+				SymbolType symType = sym.getSymbolType();
+				if (symType.isFunctionSymbol()) {
 					Term f = functionCallFactory.make(sym, args);
-					Term tt = Constructors.makeZeroAry(BuiltInConstructorSymbol.TRUE);
-					return Atoms.get(BuiltInPredicateSymbol.UNIFY, new Term[] { f, tt }, negated);
-				} else if (!sym.getSymbolType().isRelationType()) {
-					throw new RuntimeException("Non-relation symbol used in an atom: " + sym);
+					return Atoms.liftTerm(f, negated);
 				}
-				return Atoms.get(sym, args, negated);
+				if (symType.isConstructorSymbol()) {
+					Term c = Constructors.make(sym, args);
+					return Atoms.liftTerm(c, negated);
+				}
+				if (symType.isRelationSym()) {
+					return Atoms.get(sym, args, negated);
+				}
+				throw new AssertionError("impossible");
 			}
 
 			@Override
@@ -1006,11 +1010,9 @@ public class Parser {
 				Expr guard = ctx.guard.accept(this);
 				Expr thenExpr = ctx.thenExpr.accept(this);
 				Expr elseExpr = ctx.elseExpr.accept(this);
-				Term trueTerm = Constructors.make(BuiltInConstructorSymbol.TRUE, Terms.emptyArray());
-				Term falseTerm = Constructors.make(BuiltInConstructorSymbol.FALSE, Terms.emptyArray());
 				List<MatchClause> branches = new ArrayList<>();
-				branches.add(CustomFunctionDef.getMatchClause(trueTerm, thenExpr));
-				branches.add(CustomFunctionDef.getMatchClause(falseTerm, elseExpr));
+				branches.add(CustomFunctionDef.getMatchClause(Constructors.makeTrue(), thenExpr));
+				branches.add(CustomFunctionDef.getMatchClause(Constructors.makeFalse(), elseExpr));
 				return CustomFunctionDef.getMatchExpr(guard, branches);
 			}
 

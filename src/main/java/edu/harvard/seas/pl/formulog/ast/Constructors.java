@@ -81,6 +81,14 @@ public final class Constructors {
 	public static Constructor makeZeroAry(Symbol sym) {
 		return make(sym, Terms.emptyArray());
 	}
+	
+	public static Constructor makeTrue() {
+		return makeZeroAry(BuiltInConstructorSymbol.TRUE);
+	}
+	
+	public static Constructor makeFalse() {
+		return makeZeroAry(BuiltInConstructorSymbol.FALSE);
+	}
 
 	private static Constructor lookupOrCreateBuiltInConstructor(BuiltInConstructorSymbol sym, Term[] args) {
 		Function<String, Constructor> makeSolverOp = op -> memo.lookupOrCreate(sym, args,

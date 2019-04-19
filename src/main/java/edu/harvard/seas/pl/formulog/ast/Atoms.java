@@ -74,7 +74,7 @@ public final class Atoms {
 
 	@SuppressWarnings("unchecked")
 	public static Atom get(Symbol sym, Term[] args, boolean neg) {
-		if (!sym.getSymbolType().isRelationType()) {
+		if (!sym.getSymbolType().isRelationSym()) {
 			throw new IllegalArgumentException("Non-relation symbol: " + sym);
 		}
 		if (sym.getArity() != args.length) {
@@ -249,5 +249,12 @@ public final class Atoms {
 	public static Atom normalize(Atom a) throws EvaluationException {
 		return normalize(a, EmptySubstitution.INSTANCE);
 	}
+	
+	public static Atom liftTerm(Term t, boolean negated) {
+		Term tru = Constructors.makeTrue();
+		return Atoms.get(BuiltInPredicateSymbol.UNIFY, new Term[] { t, tru }, negated);
+	}
+	
+	public static final Atom trueAtom = liftTerm(Constructors.makeTrue(), false);
 	
 }

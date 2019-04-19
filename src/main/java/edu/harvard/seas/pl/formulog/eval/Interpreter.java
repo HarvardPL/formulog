@@ -29,41 +29,40 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import edu.harvard.seas.pl.formulog.ast.Atoms;
-import edu.harvard.seas.pl.formulog.ast.BasicRule;
-import edu.harvard.seas.pl.formulog.ast.Constructor;
-import edu.harvard.seas.pl.formulog.ast.Constructors;
-import edu.harvard.seas.pl.formulog.ast.Primitive;
-import edu.harvard.seas.pl.formulog.ast.Rule;
-import edu.harvard.seas.pl.formulog.ast.Term;
-import edu.harvard.seas.pl.formulog.ast.Terms;
-import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
 import edu.harvard.seas.pl.formulog.ast.Atoms.AtomVisitorExn;
 import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
 import edu.harvard.seas.pl.formulog.ast.Atoms.UnifyAtom;
+import edu.harvard.seas.pl.formulog.ast.BasicRule;
+import edu.harvard.seas.pl.formulog.ast.Constructor;
+import edu.harvard.seas.pl.formulog.ast.Constructors;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
+import edu.harvard.seas.pl.formulog.ast.Primitive;
+import edu.harvard.seas.pl.formulog.ast.Rule;
+import edu.harvard.seas.pl.formulog.ast.Term;
+import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
+import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
-import edu.harvard.seas.pl.formulog.ast.functions.DummyFunctionDef;
-import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.Expr;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.TermExpr;
+import edu.harvard.seas.pl.formulog.ast.functions.DummyFunctionDef;
+import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDB;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDB.IndexedFactDBBuilder;
 import edu.harvard.seas.pl.formulog.smt.Z3ThreadFactory;
-import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.FunctionSymbolForPredicateFactory.FunctionSymbolForPredicate;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolType;
-import edu.harvard.seas.pl.formulog.symbols.FunctionSymbolForPredicateFactory.FunctionSymbolForPredicate;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.unification.Unification;
 import edu.harvard.seas.pl.formulog.util.CountingFJP;
-import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.util.CountingFJP.AbstractFJPTask;
+import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.ValidProgram;
 
 public class Interpreter {
@@ -251,8 +250,8 @@ public class Interpreter {
 								assert def.getDef() == null;
 								NormalAtom a = (NormalAtom) Atoms.getPositive(predSym, function.getArgs());
 								final int idx = dbb.addIndex(a, Terms.varSet(function));
-								Term trueBool = Constructors.makeZeroAry(BuiltInConstructorSymbol.TRUE);
-								Term falseBool = Constructors.makeZeroAry(BuiltInConstructorSymbol.FALSE);
+								Term trueBool = Constructors.makeTrue();
+								Term falseBool = Constructors.makeFalse();
 								def.setDef(new FunctionDef() {
 
 									@Override
