@@ -33,8 +33,8 @@ You can also set the following system properties (using the `-D` flag, as in
 * `debugSmt` - print debugging information related to SMT calls
 * `debugMst` - print debugging information related to the magic set
   transformation
-* `softExceptions` - ignore exceptions during evaluation (i.e., treat them as a
-  unification failure, and not as something that should stop evaluation)
+* `softExceptions` - ignore exceptions during evaluation (i.e., treat them as
+  unification failures, and not as something that should stop evaluation)
 
 For example, to run the test program above with SMT debug information, use
 
