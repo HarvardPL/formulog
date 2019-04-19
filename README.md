@@ -18,8 +18,8 @@ Dependencies:
 * Z3 (in particular, you need to have the `z3` binary on your path)
 
 To build an executable JAR, run the command `mvn package` from the project
-directory. This will create an executable JAR called
-`formulog-0.0.1-SNAPSHOT-jar-with-dependencies.jar` in the `target/`
+directory. This will create an executable JAR with a name like 
+`formulog-X.Y.Z-SNAPSHOT-jar-with-dependencies.jar` in the `target/`
 directory.
 
 ## Running FormuLog
@@ -60,6 +60,8 @@ greeting("Hello, Bob").
 greeting("Hello, World").
 ```
 
+### Options
+
 Use the option `-v` for verbose mode and `-j N` to run the evaluator with a
 thread pool of size `N` (defaults to 1).
 
@@ -75,7 +77,7 @@ You can also set the following system properties (using the `-D` flag, as in
 For example, to run the test program above with SMT debug information, use
 
 ```
-java -jar -DdebugSmt formulog.jar greeting.flg
+java -DdebugSmt -jar formulog.jar greeting.flg
 ```
 
 ## Writing FormuLog programs
