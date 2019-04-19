@@ -1,0 +1,5 @@
+output ok.
+ok :-
+	F = `forall #x[bool] . #x[bool] #= #y[bool]`,
+	G = substitute(#y[bool], `#x[bool]`, F),
+	!is_sat(G).

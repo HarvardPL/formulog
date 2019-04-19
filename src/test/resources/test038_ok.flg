@@ -1,0 +1,21 @@
+output ok.
+
+ok :-
+
+	is_sat(`0 #= bv_to_bv_unsigned[32](0L)`),
+	is_sat(`0 #= fp_to_bv[32](0F)`),
+	is_sat(`0 #= fp_to_bv[32](0D)`),
+
+	is_sat(`0L #= bv_to_bv_unsigned[64](0)`),
+	is_sat(`0L #= fp_to_bv[64](0F)`),
+	is_sat(`0L #= fp_to_bv[64](0D)`),
+
+	is_sat(`0F #= bv_to_fp[32](0)`),
+	is_sat(`0F #= bv_to_fp[32](0L)`),
+	is_sat(`0F #= fp_to_fp[32](0D)`),
+	
+	is_sat(`0D #= bv_to_fp[64](0)`),
+	is_sat(`0D #= bv_to_fp[64](0L)`),
+	is_sat(`0D #= fp_to_fp[64](0F)`),
+	
+	true = true.

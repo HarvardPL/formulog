@@ -1,0 +1,11 @@
+input foo(i32).
+
+fun incr(X: i32) : i32 = X + 1.
+fun zero : i32 = 0.
+
+foo(incr(41)).
+foo(zero).
+foo(-12 - 30).
+
+output ok.
+ok :- foo(42), foo(0), foo(-42).

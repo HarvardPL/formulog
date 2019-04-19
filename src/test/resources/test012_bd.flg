@@ -1,0 +1,5 @@
+input str(string).
+input num(i32).
+output foo(i32, string).
+
+foo(X, Y) :- str(X), str(Y).

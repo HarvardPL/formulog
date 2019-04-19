@@ -1,0 +1,4 @@
+fun f(Xs:'a list) : 'a list = Xs.
+
+fun g(Xs:string list, Ys:i32 list) : (string list * i32 list) =
+  (f(Xs), f(Ys)).

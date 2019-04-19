@@ -1,0 +1,6 @@
+type foo =
+  | bar
+  | baz1(i32)
+  | baz2(string)
+  | baz3(i32)
+  | baz4(string).

@@ -1,0 +1,56 @@
+output ok1.
+ok1 :-
+ 	X = #x[bv[32]],
+  Y = #y[bv[32]],
+ 	Z = #z[bv[32]],
+  E1 = `42 #= bv_add(X, Y)`,
+  E2 = `42 #= bv_add(Z, Y)`,
+ 	substitute(X, `Z`, E1) = E2. 
+ 	
+output ok2.
+ok2 :-
+ 	X = "x",
+  Y = "y",
+ 	Z = "z",
+  E1 = `42 #= bv_add(#{X}[bv[32]], #{Y}[bv[32]])`,
+  E2 = `42 #= bv_add(#{Z}[bv[32]], #{Y}[bv[32]])`,
+ 	substitute(#{X}[bv[32]], `#{Z}[bv[32]]`, E1) = E2.
+
+output ok3.
+ok3 :-
+  X = #x[bv[32]],
+  Y = #y[bv[32]],
+  E =
+    `#let X = Y in
+     #let X = 42 in
+     bv_add(X, X) #= 84`,
+  is_valid(E).
+
+output ok4.
+ok4 :-
+  X = #x[bv[32]],
+  E =
+    `#let X = 42 in
+     bv_add(X, X) #= 84`,
+  is_valid(substitute(X, `0`, E)).
+
+(* Make sure that we are avoiding variable capture correctly. *)
+output ok5.
+ok5 :-
+  X = #x[bv[32]],
+  Y = #y[bv[32]],
+  E =
+    `#let X = 0 in
+     bv_add(Y, Y) #= 42`,
+  is_sat(substitute(Y, `X`, E)).
+
+(* Make sure that substitute is deterministic. *)
+output ok6.
+ok6 :-
+  X = #x[bv[32]],
+  Y = #y[bv[32]],
+  E = `#let X = 42 in bv_add(X, Y)`,
+  substitute(Y, `21`, E) = substitute(Y, `21`, E).
+ 	
+output ok.
+ok :- ok1, ok2, ok3, ok4, ok5, ok6.

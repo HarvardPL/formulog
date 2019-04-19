@@ -1,0 +1,3 @@
+input foo(bv[32] smt).
+
+foo(`42L`).

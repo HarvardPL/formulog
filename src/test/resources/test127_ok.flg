@@ -1,0 +1,9 @@
+uninterpreted fun foo1(bool) : bool smt.
+uninterpreted fun foo2(bool) : bool smt.
+
+output ok.
+ok :-
+  X = #x[bool],
+  Y = #y[bool],
+  Axiom = `forall X, Y : foo1(X), foo2(Y). (foo1(X) #= X) \/ (foo2(Y) #= Y)`,
+  is_valid(`(Axiom /\ foo1(X) /\ foo2(X)) ==> X`).

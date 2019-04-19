@@ -1,0 +1,5 @@
+output ok.
+ok :-
+  some(M) = get_model(`is_nil(#x[bool list]) /\ is_nil(#y[i32 list])`, none),
+  query_model(#x[bool list], M) = some([]),
+  query_model(#y[i32 list], M) = some([]).

@@ -1,0 +1,18 @@
+output something_true.
+output something_false.
+output ok.
+
+something_true :-
+	X = #x[fp[32]],
+	Y = `fp_const[32](42F)`,
+	F = `X #= Y`,
+	is_sat(F),
+	is_sat(`~F`).
+	
+something_false :-
+	X = #{"x"}[fp[32]],
+	Y = `fp_const[32](42F)`,
+	F = `X #= Y`,
+	is_sat(`F /\ ~F`).
+
+ok :- something_true, !something_false.

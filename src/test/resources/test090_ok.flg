@@ -1,0 +1,27 @@
+type foo = a | b | c.
+
+output common(foo, i32).
+common(a, 0).
+common(b, 1).
+common(c, 2).
+
+output special(foo, i32).
+special(a, 5).
+
+output op(foo, i32).
+op(X, Res) :-
+  X not a, 
+  common(X, Res).
+op(a, Res) :-
+  special(a, Res).
+
+output ok.
+ok :- 
+  op(a, 5), !op(a, 0),
+  !(a not a), b not a, c not a,
+  a not b, !(b not b), c not b,
+  a not c, b not c, !(c not c),
+  true not false, !(false not false),
+  !(true not true), true not false.
+
+:- ok.

@@ -1,0 +1,20 @@
+output ok.
+
+ok :-
+
+	is_sat(`#if true then true else false`),
+	!is_sat(`#if true then false else true`),
+
+	is_sat(`(#if true then 1 else 0) #= 1`),
+	!is_sat(`(#if false then 1 else 0) #= 1`),
+
+	is_sat(`(#if true then 1L else 0L) #= 1L`),
+	!is_sat(`(#if false then 1L else 0L) #= 1L`),
+
+	is_sat(`(#if true then 1F else 0F) #= 1F`),
+	!is_sat(`(#if false then 1F else 0F) #= 1F`),
+
+	is_sat(`(#if true then 1D else 0D) #= 1D`),
+	!is_sat(`(#if false then 1D else 0D) #= 1D`),
+
+  true = true.

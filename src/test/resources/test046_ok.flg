@@ -1,0 +1,11 @@
+input foo(i32, bool).
+input bar(i32).
+output ok.
+
+foo(42, true).
+foo(0, false).
+bar(42).
+
+ok :-
+	foo(42, bar(42)),
+	foo(0, bar(0)).

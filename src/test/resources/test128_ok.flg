@@ -1,0 +1,14 @@
+output ok.
+ok :-
+	X = #x[bool],
+	Y = #y[bool],
+	is_free(X, `X /\ Y`),
+	is_free(Y, `X /\ Y`),
+	!is_free(Y, `X`),
+	is_free(X, `#let Y = X in Y`),
+	!is_free(Y, `#let Y = X in Y`),
+	is_free(X, `#let X = X in X`),
+	is_free(X, `forall Y. X`),
+	!is_free(X, `forall X. X`),
+	!is_free(X, `forall X, Y. X /\ Y`),
+	is_free(Y, `forall X, X. X /\ Y`).

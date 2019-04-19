@@ -1,0 +1,4 @@
+type foo = | a. 
+
+output ok.
+ok :- !a not a. 

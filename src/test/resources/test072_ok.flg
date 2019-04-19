@@ -1,0 +1,8 @@
+output ok.
+ok :-
+	X = #x[i32 list],
+	Y = `X #= [1, 2, 3]`,
+	is_sat(Y),
+	Z = `X #= []`,
+	is_sat(Z),
+	!is_sat(`Y /\ Z`).

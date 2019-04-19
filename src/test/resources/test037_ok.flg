@@ -1,0 +1,16 @@
+output something_true.
+output something_false1.
+output something_false2.
+output ok.
+
+something_true :-
+	fp32_nan = fp32_nan,
+	fp64_nan = fp64_nan.
+	
+something_false1 :-
+	fp32_eq(fp32_nan, fp32_nan) = true.
+	
+something_false2 :-
+	fp64_eq(fp64_nan, fp64_nan) = true.
+
+ok :- something_true, !something_false1, !something_false2.

@@ -1,0 +1,8 @@
+input foo(i32).
+output ok.
+
+foo(42).
+
+fun bar(X:i32) : bool = foo(X).
+
+ok :- bar(42) = true, bar(0) = false.

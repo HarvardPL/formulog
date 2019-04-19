@@ -1,0 +1,8 @@
+output ok.
+
+ok :-
+  X = #x[bool],
+  is_sat(`#let X = true in X`),
+  !is_sat(`#let X = false in X`),
+  is_sat(`#let X = false in #let X = true in X`),
+  !is_sat(`#let X = true in #let X = false in X`).

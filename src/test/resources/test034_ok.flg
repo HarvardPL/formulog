@@ -1,0 +1,17 @@
+output something_true.
+output something_false.
+output ok.
+
+something_true :-
+	X = #x[fp[64]],
+	Y = `fp_big_const[64](42D)`,
+	is_sat(`X #= Y`),
+	is_sat(`~(X #= Y)`).
+	
+something_false :-
+	X = #{"x"}[fp[64]],
+	Y = `fp_big_const[64](42D)`,
+	F = `X #= Y`,
+	is_sat(`F /\ ~F`).
+
+ok :- something_true, !something_false.

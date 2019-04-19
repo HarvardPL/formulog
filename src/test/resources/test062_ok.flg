@@ -1,0 +1,9 @@
+input bar(i32).
+bar(2).
+
+output foo(i32, i32, i32).
+foo(1, 2, 1 + 2).
+foo(X, Y, X + Y) :- bar(X), bar(Y).
+
+output ok.
+ok :- foo(1,2,3), foo(2,2,4).

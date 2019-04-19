@@ -1,0 +1,5 @@
+output foo(i32).
+
+fun bar(X:i32) : i32 = if foo(X) then -X else X.
+
+foo(X) :- bar(42) = X.

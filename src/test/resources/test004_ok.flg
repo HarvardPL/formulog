@@ -1,0 +1,16 @@
+type i32_alias = i32.
+type i32x2 = (i32 * i32).
+type i32x3 = (i32 * i32 * i32).
+type i32x4 = (i32 * i32 * i32 * i32).
+type i32_alias_pair = (i32_alias * i32_alias).
+
+type i32_list = i32_list_nil | i32_list_cons(i32, i32_list).
+
+type 'a my_list =
+  | my_nil
+  | my_cons('a, 'a my_list).
+
+type string_alias = string.
+type i32_list_2 = i32 my_list.
+type ('k, 'v) assoc_list = ('k * 'v) my_list.
+type 'a alias = 'a.

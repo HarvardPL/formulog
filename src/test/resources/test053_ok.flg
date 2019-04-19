@@ -1,0 +1,5 @@
+input foo(bv[32] smt).
+
+foo(`42`).
+foo(`bv_add(42, 77)`).
+foo(`bv_to_bv_unsigned[32](128L)`).

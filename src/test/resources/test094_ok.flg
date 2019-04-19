@@ -1,0 +1,2 @@
+output ok.
+ok :- !is_sat(`forall #x[bool] . #x[bool] #= #y[bool]`).

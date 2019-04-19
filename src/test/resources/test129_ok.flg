@@ -1,0 +1,6 @@
+output ok.
+ok :-
+  X = #x[bool],
+  Y = #y[bool],
+  is_sat_opt(`X #= Y`, some(10)) = some(true),
+  is_valid_opt(`X #= Y`, some(10)) = some(false).

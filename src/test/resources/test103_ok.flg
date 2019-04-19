@@ -1,0 +1,17 @@
+output ok1.
+ok1 :-
+  some(M) = get_model(`fp_is_nan(#x[fp32])`, none),
+  query_model(#x[fp32], M) = some(fp32_nan).
+  
+output ok2.
+ok2 :-
+  some(M) = get_model(`#x[fp32] #= fp32_pos_infinity`, none),
+  query_model(#x[fp32], M) = some(fp32_pos_infinity).
+  
+output ok3.
+ok3 :-
+  some(M) = get_model(`#x[fp32] #= fp32_neg_infinity`, none),
+  query_model(#x[fp32], M) = some(fp32_neg_infinity).
+  
+output ok.
+ok :- ok1, ok2, ok3.

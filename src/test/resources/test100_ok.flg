@@ -1,0 +1,5 @@
+output ok.
+ok :-
+  some(M) = get_model(`(#x[i32] #= 42) /\ (#y[i32] #= bv_neg(#x[i32]))`, none),
+  query_model(#x[i32], M) = some(42),
+  query_model(#y[i32], M) = some(-42).

@@ -1,0 +1,38 @@
+input p0.
+type 'a alias = 'a.
+type i32_alias = i32 alias.
+type string_alias = string alias.
+input p_i32(i32_alias).
+input p_i32_2x(i32_alias, i32_alias).
+input p_string(string_alias).
+input p_string_2x(string_alias, string_alias).
+
+p0.
+
+p_i32(0).
+p_i32(-42).
+p_i32(42).
+
+p_i32_2x(0, 0).
+p_i32_2x(0, -42).
+p_i32_2x(0, 42).
+p_i32_2x(-42, 0).
+p_i32_2x(-42, -42).
+p_i32_2x(-42, 42).
+p_i32_2x(42, 0).
+p_i32_2x(42, -42).
+p_i32_2x(42, 42).
+
+p_string("").
+p_string("hello").
+p_string("goodbye").
+
+p_string_2x("", "").
+p_string_2x("", "hello").
+p_string_2x("", "goodbye").
+p_string_2x("hello", "").
+p_string_2x("hello", "hello").
+p_string_2x("hello", "goodbye").
+p_string_2x("goodbye", "").
+p_string_2x("goodbye", "hello").
+p_string_2x("goodbye", "goodbye").

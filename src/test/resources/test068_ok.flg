@@ -1,0 +1,12 @@
+type foo =
+  | foo1
+  | foo2.
+
+output ok.
+ok :-
+	X = #x[foo],
+	Y = `X #= foo1`,
+	is_sat(Y),
+	Z = `X #= foo2`,
+	is_sat(Z),
+	!is_sat(`Y /\ Z`).

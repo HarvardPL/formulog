@@ -1,0 +1,2 @@
+output ok.
+ok :- !is_sat(`exists #x[bool] . ~(#x[bool] #= #x[bool])`).

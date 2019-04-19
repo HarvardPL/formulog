@@ -1,0 +1,9 @@
+type ('a, 'b) union =
+  | inj_l('a)
+  | inj_r('b).
+input q((i32, string) union).
+output p(i32).
+output r(string).
+
+p(X) :- q(inj_l(X)).
+r(X) :- q(inj_r(X)).

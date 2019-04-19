@@ -1,0 +1,12 @@
+input foo(fp32).
+input bar(fp64).
+
+foo(42.0f).
+foo(-42.42F).
+foo(-.42F).
+foo(-42F).
+
+bar(42.0d).
+bar(-42.42D).
+bar(-.42D).
+bar(-42D).

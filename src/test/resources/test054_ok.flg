@@ -1,0 +1,1 @@
+uninterpreted fun foo(bv[32] smt, fp[32] smt) : bool smt.

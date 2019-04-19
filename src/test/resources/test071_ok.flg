@@ -1,0 +1,12 @@
+type 'a my_list =
+	| my_nil
+	| my_cons('a, 'a my_list).
+
+output ok.
+ok :-
+	X = #x[i32 my_list],
+	Y = `X #= my_cons(42, my_nil)`,
+	is_sat(Y),
+	Z = `X #= my_nil`,
+	is_sat(Z),
+	!is_sat(`Y /\ Z`).

@@ -1,0 +1,46 @@
+type node = i32.
+input edge(node, node).
+input vertex(node).
+output notWellFormed.
+output reach(node, node).
+output inCycle(node).
+output notInCycle(node).
+output hasOtherNeighbor(node).
+output ok.
+
+notWellFormed :- edge(X, _), !vertex(X).
+notWellFormed :- edge(_, X), !vertex(X).
+
+reach(X, Y) :- edge(X, Y).
+reach(X, Y) :- edge(X, Z), reach(Z, Y).
+
+inCycle(X) :- reach(X, Y), X = Y.
+
+notInCycle(X) :- vertex(X), !inCycle(X).
+
+hasOtherNeighbor(X) :- edge(X, Y), X != Y.
+
+vertex(0).
+vertex(1).
+vertex(2).
+vertex(3).
+vertex(4).
+edge(0, 1).
+edge(1, 2).
+edge(2, 3).
+edge(3, 4).
+edge(4, 4).
+
+ok :- 
+	vertex(0), vertex(1), vertex(2), vertex(3), vertex(4),
+	edge(0, 1), edge(1, 2), edge(2, 3), edge(3, 4), edge(4, 4),
+	!notWellFormed, 
+	reach(0, 1), reach(0, 2), reach(0, 3), reach(0, 4),
+	reach(1, 2), reach(1, 3), reach(1, 4),
+	reach(2, 3), reach(2, 4), reach(3, 4),
+	reach(4, 4),
+	inCycle(4),
+	notInCycle(0), notInCycle(1), notInCycle(2), notInCycle(3),
+	hasOtherNeighbor(0), hasOtherNeighbor(1),
+	hasOtherNeighbor(2), hasOtherNeighbor(3),
+	!hasOtherNeighbor(4).

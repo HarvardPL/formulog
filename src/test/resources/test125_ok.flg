@@ -1,0 +1,5 @@
+output ok.
+ok :-
+  I = #x[int],
+  F = `int_add(I, int_big_const(0L)) #= int_mul(I, int_const(1))`,
+  is_valid(F).

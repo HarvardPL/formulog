@@ -1,0 +1,8 @@
+type foo =
+  | foo1
+  | foo2.
+
+output ok.
+ok :-
+	X = `#x[foo] #= foo2`,
+	is_sat(X).

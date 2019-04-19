@@ -1,0 +1,18 @@
+type prim =
+  | prim_byte(bv[32] smt)
+  | prim_short(bv[32] smt).
+
+type java_prim_type =
+  | java_prim_type_int.
+	
+fun handle_concrete_conversion(V:prim, Type:java_prim_type) : prim =
+  match Type with
+  | java_prim_type_int =>
+    let Vv = 
+      match V with
+      | prim_byte(X) => `42`
+      | prim_byte(X)
+      | prim_short(X) => X
+      end in
+    prim_short(Vv)
+  end.	

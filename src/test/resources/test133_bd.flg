@@ -1,0 +1,4 @@
+input formula(bool smt).
+
+output not_ok.
+not_ok :- formula(X), X = `Y /\ Z`. 

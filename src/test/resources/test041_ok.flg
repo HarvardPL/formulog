@@ -1,0 +1,13 @@
+(* test how fp conversion works. *)
+
+output ok.
+
+ok :-
+	
+	is_valid(`fp_is_nan(fp_to_fp[32](fp64_nan))`),
+	is_valid(`fp32_pos_infinity #= fp_to_fp[32](fp64_pos_infinity)`),
+	is_valid(`fp32_neg_infinity #= fp_to_fp[32](fp64_neg_infinity)`),
+	
+	is_valid(`fp_is_nan(fp_to_fp[64](fp32_nan))`),
+	is_valid(`fp64_pos_infinity #= fp_to_fp[64](fp32_pos_infinity)`),
+	is_valid(`fp64_neg_infinity #= fp_to_fp[64](fp32_neg_infinity)`).

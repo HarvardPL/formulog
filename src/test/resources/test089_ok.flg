@@ -1,0 +1,34 @@
+output ok1.
+ok1 :-
+  X = #{1}[bool],
+  Y = #{"2"}[bool],
+  X != Y,
+  is_sat(`X #= Y`),
+  !is_valid(`X #= Y`).
+
+output ok2.
+ok2 :-
+  X = #{1}[bool],
+  Y = #y[bool],
+  X != Y,
+  is_sat(`X #= Y`),
+  !is_valid(`X #= Y`).
+
+output ok3.
+ok3 :-
+  is_sat(`#{1}[bool] #= #{"2"}[bool]`),
+  !is_valid(`#{1}[bool] #= #{"2"}[bool]`).
+
+output ok4.
+ok4 :-
+  X = #{1}[bool],
+  Y = #{1}[bool],
+  X = Y,
+  is_valid(`X #= Y`).
+
+output ok5.
+ok5 :-
+  is_valid(`#{1}[bool] #= #{1}[bool]`).
+
+output ok.
+ok :- ok1, ok2, ok3, ok4, ok5.

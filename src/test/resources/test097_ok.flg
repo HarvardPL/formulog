@@ -1,0 +1,5 @@
+output ok.
+ok :-
+	F = `exists #x[bool] . ~(#x[bool] #= #y[bool])`,
+	G = substitute(#y[bool], `#x[bool]`, F),
+	is_valid(G).

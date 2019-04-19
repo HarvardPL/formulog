@@ -1,0 +1,10 @@
+output ok.
+
+ok :-
+	is_sat(`42 #= 42`),
+	X = `42`,
+	Y = X,
+	is_sat(`X #= Y`),
+	Z = `43`,
+	!is_sat(`Y #= Z`),
+	is_sat(`~(Y #= Z)`).

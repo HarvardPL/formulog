@@ -1,0 +1,11 @@
+fun f(X:i32) : i32 = X.
+fun g(X:'a) : 'a = X.
+fun h(X:string) : i32 = 42.
+fun h_inv(X:i32) : string = "hello".
+
+input q(i32).
+output p(i32).
+
+p(Y) :- Y = f(X), q(X).
+p(Y) :- Y = g(X), q(X).
+p(Y) :- Y = f(h(g(h_inv(X)))), q(X).

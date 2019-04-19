@@ -1,0 +1,13 @@
+fun make_eq(X : 'a list smt, Y : 'a) : bool smt = `cons_1(cons_2(X)) #= Y`.
+
+output ok.
+ok :-
+  X1 = #x[i32],
+  L1 = `[1, X1, 2]`,
+  X2 = #x[string],
+  L2 = `["foo", X2, "baz"]`,
+  E = make_eq(L1, 42),
+  F = make_eq(L2, "bar"),
+  is_sat(E),
+  is_sat(F),
+  is_sat(`E /\ F`).

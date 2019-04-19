@@ -1,0 +1,9 @@
+uninterpreted sort typ.
+
+uninterpreted fun subtyp(typ, typ) : bool smt.
+
+output ok.
+ok :-
+	X = #x[typ],
+	Refl = `forall X. subtyp(X, X)`,
+	is_valid(`Refl ==> subtyp(X, X)`).

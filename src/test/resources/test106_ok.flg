@@ -1,0 +1,6 @@
+fun msg : string = "Hello, \"world\"!\nGoodbye!".
+
+output ok.
+ok :-
+  some(M) = get_model(`#x[string] #= ,msg`, none),
+  query_model(#x[string], M) = some(msg).

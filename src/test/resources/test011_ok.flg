@@ -1,0 +1,11 @@
+type ('a, 'b) pair = ('a * 'b).
+input p_i32_string((i32, string) pair).
+type i32_pair = (i32, i32) pair. 
+input pair_of_i32_pair((i32_pair, i32_pair) pair).
+
+p_i32_string((0, "")).
+p_i32_string((42, "hello")).
+p_i32_string((-42, "goodbye")).
+
+pair_of_i32_pair(((0, 0), (-42, 42))).
+pair_of_i32_pair(((-42, 0), (0, 42))).

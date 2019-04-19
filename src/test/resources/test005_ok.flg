@@ -1,0 +1,17 @@
+type 'a my_list =
+  | my_nil
+  | my_cons('a, 'a my_list).
+
+type ('k, 'v) assoc_list = ('k * 'v) my_list.
+type 'a my_option =
+  | my_none
+  | my_some('a).
+
+fun lookup(Key:'k, Map:('k, 'v) assoc_list) : 'v my_option =
+	match Map with
+	| my_nil => my_none
+	(* this doesn't actually do what you think, since key is rebound in the
+	   pattern *)
+	| my_cons((Key, Val), _) => my_some(Val)
+	| my_cons(_, Rest) => lookup(Key, Rest)
+	end.

@@ -1,0 +1,7 @@
+type foo = foo1 | foo2(foo, foo).
+
+output ok.
+ok :-
+  A = #a[(foo, foo) array],
+  X = #x[foo],
+  is_valid(`array_select(array_store(A, X, X), X) #= X`).

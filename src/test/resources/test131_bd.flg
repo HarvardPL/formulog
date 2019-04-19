@@ -1,0 +1,4 @@
+output not_ok.
+not_ok :-
+  X = get_model(`true`, none),
+  _ = `X #= X`.

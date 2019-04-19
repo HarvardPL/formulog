@@ -1,0 +1,6 @@
+output ok.
+ok :-
+  A = #a[bool],
+  B = #b[bool],
+  is_valid(`A /\ B ==> A \/ B`),
+  !is_valid(`A \/ B ==> A /\ B`).

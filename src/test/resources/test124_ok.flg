@@ -1,0 +1,6 @@
+output ok.
+ok :-
+  A = #a[(i32, i32) array],
+  X = #x[i32],
+  Y = #y[i32],
+  is_valid(`~(X #= Y) ==> array_select(array_store(array_store(A, X, 42), Y, 21), X) #= 42`).

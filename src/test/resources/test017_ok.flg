@@ -1,0 +1,16 @@
+type nat =
+  | o
+  | s(nat).
+
+fun lookup(Idx:nat, List:'a list) : 'a option =
+  match (Idx, List) with
+  | (_, []) => none
+  | (o, X :: _) => some(X)
+  | (s(Idx), _ :: List) => lookup(Idx, List)
+  end.
+
+fun loop : 'a = loop.
+type false_term = .
+fun false_exists : false_term = loop.
+
+fun id(X:'a) : 'a = X.

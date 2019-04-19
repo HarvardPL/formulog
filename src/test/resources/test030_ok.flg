@@ -1,0 +1,24 @@
+output something_true.
+output something_false1.
+output something_false2.
+output ok.
+
+something_true :-
+	X = #{"x"}[bv[64]],
+	Y = `bv_big_const[64](42L)`,
+	F = `X #= Y`,
+	is_sat(F),
+	is_sat(`~F`).
+
+something_false1 :-
+	X = #x[bv[64]],
+	Y = `bv_big_const[64](42L)`,
+	F = `X #= Y`,
+	is_sat(`F /\ ~F`).
+
+something_false2 :-
+	X = #{"x"}[bv[64]],
+	Y = #x[bv[64]],
+  is_sat(`~(X #= Y)`).
+
+ok :- something_true, !something_false1, !something_false2.

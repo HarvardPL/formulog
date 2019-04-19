@@ -1,0 +1,18 @@
+input foo(fp32).
+
+foo(0F).
+foo(-1F).
+
+output add(fp32, fp32, fp32).
+
+add(X, Y, Z) :-
+	foo(X),
+	foo(Y),
+	Z = fp32_add(X, Y).
+
+output ok.
+ok :-
+	add(0F, 0F, 0F),
+	add(0F, -1F, -1F),
+	add(-1F, 0F, -1F),
+	add(-1F, -1F, -2F).

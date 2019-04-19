@@ -1,0 +1,16 @@
+input foo(i32, i32).
+output ok.
+
+foo(42, 13).
+foo(17, 42).
+
+ok :-
+	foo(X, Y) = false,
+	foo(X, Z) = true,
+	foo(Y, X) = true,
+	foo(Y, Z) = false,
+	foo(Z, X) = false,
+	foo(Z, Y) = false,
+	X = 42,
+	Y = 17,
+	Z = 13.

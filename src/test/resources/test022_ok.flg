@@ -1,0 +1,33 @@
+output base_ok.
+output neg_ok.
+output and_ok.
+output or_ok.
+output ok.
+
+base_ok :-
+	is_sat(`true`),
+	!is_sat(`false`).
+	
+neg_ok :-
+	!is_sat(`~true`),
+	is_sat(`~false`),
+	is_sat(`~~true`),
+	!is_sat(`~~false`).
+
+and_ok :-
+	is_sat(`true /\ true`),
+	!is_sat(`true /\ false`),
+	!is_sat(`false /\ true`),
+	!is_sat(`false /\ false`).
+	
+or_ok :-
+	is_sat(`true \/ true`),
+	is_sat(`true \/ false`),
+	is_sat(`false \/ true`),
+	!is_sat(`false \/ false`).
+	
+ok :-
+	base_ok,
+	neg_ok,
+	and_ok,
+	or_ok.

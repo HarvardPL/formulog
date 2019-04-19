@@ -1,0 +1,18 @@
+type ('a, 'b) union =
+  | inj_l('a)
+  | inj_r('b).
+type color = (i32, (i32*i32*i32)) union.
+type id = (string, i32) union.
+
+fun str2i32(S:string) : i32 = 42.
+
+input colors(color).
+input ids(id).
+
+output gray(i32, i32).
+output rgb(i32, i32, i32, i32).
+
+gray(Id, Color) :- ids(inj_r(Id)), colors(inj_l(Color)).
+gray(Id, Color) :- ids(inj_l(Id_str)), colors(inj_l(Color)), Id = str2i32(Id_str).
+rgb(Id, R, G, B) :- ids(inj_r(Id)), colors(inj_r((R, G, B))).
+rgb(Id, R, G, B) :- ids(inj_l(Id_str)), colors(inj_r((R, G, B))), Id = str2i32(Id_str).

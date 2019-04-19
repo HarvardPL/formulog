@@ -1,0 +1,2 @@
+output ok.
+ok :- (if true then true else false) && true.

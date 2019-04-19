@@ -1,0 +1,5 @@
+output ok.
+ok :-
+  some(M) = get_model(`(#x[fp64] #= 42D) /\ (#y[fp64] #= fp_neg(#x[fp64]))`, none),
+  query_model(#x[fp64], M) = some(42D),
+  query_model(#y[fp64], M) = some(-42D).

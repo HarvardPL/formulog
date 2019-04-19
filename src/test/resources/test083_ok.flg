@@ -1,0 +1,8 @@
+output ok.
+ok :-
+  X = #x[i32 list],
+  E = `is_nil(X)`,
+  F = `is_cons(X)`,
+  is_sat(E),
+  is_sat(F),
+  !is_sat(`E /\ F`).

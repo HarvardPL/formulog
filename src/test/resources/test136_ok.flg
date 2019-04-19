@@ -1,0 +1,9 @@
+uninterpreted sort ('a, 'b) typ.
+
+uninterpreted fun subtyp((bool, i32) typ, (bool, i32) typ) : bool smt.
+
+output ok.
+ok :-
+	X = #x[(bool, i32) typ],
+	Refl = `forall X. subtyp(X, X)`,
+	is_valid(`Refl ==> subtyp(X, X)`).

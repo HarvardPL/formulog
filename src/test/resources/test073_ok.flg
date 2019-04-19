@@ -1,0 +1,8 @@
+output ok.
+ok :-
+	X = #x[i32 option],
+	Y = `X #= some(42)`,
+	is_sat(Y),
+	Z = `X #= none`,
+	is_sat(Z),
+	!is_sat(`Y /\ Z`).

@@ -1,0 +1,8 @@
+type 'a my_list =
+	| my_nil
+	| my_cons('a, 'a my_list).
+
+output ok.
+ok :-
+	X = #x[i32 my_list],
+	is_sat(`X #= my_nil`).

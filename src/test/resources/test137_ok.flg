@@ -1,0 +1,11 @@
+uninterpreted sort ('a, 'b) typ.
+
+uninterpreted fun subtyp((bool, i32) typ, (bool, i32) typ) : bool smt.
+
+output ok.
+ok :-
+	X = #x[(bool, i32) typ],
+	Y = #y[bool],
+	some(M) = get_model(`subtyp(X, X) /\ Y`, none),
+	query_model(X, M) = none,
+	query_model(Y, M) = some(true).

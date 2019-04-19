@@ -1,0 +1,15 @@
+output ok.
+
+ok :-
+
+  X = #x[fp[32]],
+	!is_sat(`fp_lt(fp32_pos_infinity, X)`),
+	!is_sat(`fp_gt(fp32_neg_infinity, X)`),
+	!is_sat(`fp_eq(fp32_nan, fp32_nan)`),
+	is_valid(`fp_is_nan(fp32_nan)`),
+	
+  Y = #x[fp[64]],
+	!is_sat(`fp_lt(fp64_pos_infinity, Y)`),
+	!is_sat(`fp_gt(fp64_neg_infinity, Y)`),
+	!is_sat(`fp_eq(fp64_nan, fp64_nan)`),
+	is_valid(`fp_is_nan(fp64_nan)`).

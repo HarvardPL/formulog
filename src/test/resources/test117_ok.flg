@@ -1,0 +1,3 @@
+output ok.
+ok :-
+	is_sat(`exists #x[bv[32]], #y[bv[16]] . bv_to_bv_signed[16](#x[bv[32]]) #= #y[bv[16]]`).

@@ -1,0 +1,8 @@
+output ok.
+ok :-
+  X = #x[i32],
+  Eq1 = `X #= 42`,
+  Eq2 = `X #= 99`,
+  is_sat(Eq1),
+  is_sat(Eq2),
+  !is_sat(`Eq1 /\ Eq2`).

@@ -1,0 +1,5 @@
+output ok.
+ok :-
+  some(M) = get_model(`(#x[bv[16]] #= bv_const[16](-1)) /\ (#y[i32] #= bv_to_bv_signed[32](#x[bv[16]]))`, none),
+  query_model(#x[bv[16]], M) = none,
+  query_model(#y[bv[32]], M) = some(-1).

@@ -1,0 +1,18 @@
+input foo(fp64).
+
+foo(0D).
+foo(-1D).
+
+output add(fp64, fp64, fp64).
+
+add(X, Y, Z) :-
+	foo(X),
+	foo(Y),
+	Z = fp64_add(X, Y).
+
+output ok.
+ok :-
+	add(0D, 0D, 0D),
+	add(0D, -1D, -1D),
+	add(-1D, 0D, -1D),
+	add(-1D, -1D, -2D).

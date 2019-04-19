@@ -1,0 +1,14 @@
+output ok.
+output something_true.
+output something_false.
+
+uninterpreted fun foo(bv[32] smt) : bool smt.
+
+fun exp1 : bool smt = `foo(42) #= true`.
+fun exp2 : bool smt = `foo(42) #= false`.
+
+something_true :- is_sat(exp1), is_sat(exp2).
+
+something_false :- is_sat(`,exp1 /\ ,exp2`).
+
+ok :- something_true, !something_false.

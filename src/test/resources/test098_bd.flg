@@ -1,0 +1,3 @@
+output foo(i32).
+
+:- foo("hello").

@@ -1,0 +1,3 @@
+output not_ok.
+not_ok :-
+  _ = `,get_model(`true`, none) #= ,get_model(`true`, none)`.

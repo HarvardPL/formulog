@@ -1,0 +1,7 @@
+output ok.
+ok :- 
+  none = get_model(`#x[bool] /\ ~#x[bool]`, none),
+  some(M) = get_model(`#x[bool] /\ ~#y[bool]`, none),
+  query_model(#x[bool], M) = some(true),
+  query_model(#y[bool], M) = some(false),
+  query_model(#z[bool], M) = none.

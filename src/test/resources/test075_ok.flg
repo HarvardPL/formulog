@@ -1,0 +1,6 @@
+type 'a foo =
+  | foo1(i32)
+  | foo2('a)
+and ('a, 'b) bar =
+  | bar1('a)
+  | bar2('b). 

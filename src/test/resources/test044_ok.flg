@@ -1,0 +1,16 @@
+input foo(i32, i32).
+output ok.
+
+fun bar(X:i32) : bool = foo(X, 13).
+
+fun baz(X:i32) : bool = foo(17, X).
+
+foo(42, 13).
+foo(17, 42).
+
+ok :-
+	bar(42) = true,
+	bar(0) = false,
+	baz(42) = true,
+	baz(0) = false.
+		

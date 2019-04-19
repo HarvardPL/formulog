@@ -1,0 +1,7 @@
+type 'a foo =
+  | foo1(('a, 'a) bar)
+  | foo2('a foo)
+and ('a, 'b) bar =
+  | bar1('a foo)
+  | bar2('b foo)
+  | bar3(('a foo, 'b foo) bar). 

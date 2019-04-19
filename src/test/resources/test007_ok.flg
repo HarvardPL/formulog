@@ -1,0 +1,4 @@
+input p(string).
+
+p("hello").
+p("").

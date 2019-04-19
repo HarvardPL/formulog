@@ -1,0 +1,4 @@
+input p.
+output fail(i32).
+
+fail(X) :- p.

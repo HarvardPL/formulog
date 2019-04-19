@@ -1,0 +1,6 @@
+input foo(i64).
+
+foo(42l).
+foo(42L).
+foo(-42l).
+foo(-42L).

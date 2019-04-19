@@ -1,0 +1,10 @@
+input foo(fp32).
+input bar(fp64).
+
+foo(fp32_nan).
+foo(fp32_neg_infinity).
+foo(fp32_pos_infinity).
+
+bar(fp64_nan).
+bar(fp64_neg_infinity).
+bar(fp64_pos_infinity).

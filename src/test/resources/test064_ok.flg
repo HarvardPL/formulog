@@ -1,0 +1,7 @@
+type foo =
+  | foo1
+  | foo2.
+
+output ok.
+ok :-
+  _ = `foo1 #= foo2`.
