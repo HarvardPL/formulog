@@ -313,9 +313,9 @@ public enum BuiltInConstructorSymbol implements Symbol {
 		case STR_CONCAT:
 			return makeType(string, string, smt(string));
 		case STR_CONTAINS:
-			return makeType(string, string, smt(string));
+			return makeType(string, string, smt(bool));
 		case STR_INDEXOF:
-			return makeType(string, string, int_, smt(string));
+			return makeType(string, string, int_, smt(int_));
 		case STR_LEN:
 			return makeType(string, smt(int_));
 		case STR_PREFIXOF:
