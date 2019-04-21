@@ -28,6 +28,7 @@ import java.io.PrintWriter;
 import java.util.Map;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinWorkerThread;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
@@ -40,6 +41,7 @@ import edu.harvard.seas.pl.formulog.util.Pair;
 public class Z3Thread extends ForkJoinWorkerThread {
 
 	private final boolean debug = System.getProperty("debugSmt") != null;
+	private final AtomicInteger cnt = new AtomicInteger();
 	private final SymbolManager symbolManager;
 
 	private Process z3;
@@ -64,7 +66,7 @@ public class Z3Thread extends ForkJoinWorkerThread {
 		z3.destroy();
 	}
 
-	private SmtLibShim makeAssertion(SmtLibTerm formula) {
+	private SmtLibShim makeAssertion(SmtLibTerm formula, Integer id) {
 		BufferedReader reader = new BufferedReader(new InputStreamReader(z3.getInputStream()));
 		PrintWriter writer;
 		if (debug) {
@@ -73,7 +75,10 @@ public class Z3Thread extends ForkJoinWorkerThread {
 			SmtLibShim shim = new SmtLibShim(reader, writer, symbolManager);
 			shim.reset();
 			shim.makeAssertion(formula);
-			System.err.println(baos.toString());
+			String msg = "\nBEGIN Z3 JOB #" + id + ":\n";
+			msg += baos.toString();
+			msg += "\nEND Z3 JOB #" + id;
+			System.err.println(msg);
 		}
 		writer = new PrintWriter(z3.getOutputStream());
 		SmtLibShim shim = new SmtLibShim(reader, writer, symbolManager);
@@ -85,10 +90,14 @@ public class Z3Thread extends ForkJoinWorkerThread {
 	public Pair<Status, Map<SolverVariable, Term>> check(SmtLibTerm t, Integer timeout)
 			throws EvaluationException {
 		t = (new SmtLibSimplifier()).simplify(t);
-		SmtLibShim shim = makeAssertion(t);
+		Integer id = null;
+		if (debug) {
+			id = cnt.getAndIncrement();
+		}
+		SmtLibShim shim = makeAssertion(t, id);
 		Status status = shim.checkSat(timeout);
 		if (debug) {
-			System.err.println("Z3 returned " + status);
+			System.err.println("\nRES Z3 JOB #" + id + ": " + status);
 		}
 		Map<SolverVariable, Term> m = null;
 		if (status.equals(Status.SATISFIABLE)) {

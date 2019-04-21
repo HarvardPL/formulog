@@ -84,6 +84,7 @@ public final class Main {
 		if (cl.hasOption("v")) {
 			System.setProperty("debugMst", "true");
 			System.setProperty("debugSmt", "true");
+			System.setProperty("factTrace", "true");
 		}
 		return cl;
 	}

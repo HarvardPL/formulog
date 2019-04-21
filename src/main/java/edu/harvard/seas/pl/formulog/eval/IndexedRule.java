@@ -25,15 +25,14 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
 
 import edu.harvard.seas.pl.formulog.ast.Atoms;
-import edu.harvard.seas.pl.formulog.ast.Rule;
-import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
 import edu.harvard.seas.pl.formulog.ast.Atoms.AtomVisitor;
 import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
 import edu.harvard.seas.pl.formulog.ast.Atoms.UnifyAtom;
+import edu.harvard.seas.pl.formulog.ast.Rule;
+import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDB.IndexedFactDBBuilder;
 import edu.harvard.seas.pl.formulog.util.Util;
 
@@ -108,17 +107,24 @@ public class IndexedRule implements Rule {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		Consumer<List<Atom>> f = l -> {
-			for (Iterator<Atom> it = l.iterator(); it.hasNext();) {
-				sb.append(it.next());
-				if (it.hasNext()) {
-					sb.append(", ");
-				}
+		for (Iterator<Atom> it = head.iterator(); it.hasNext();) {
+			sb.append(it.next());
+			if (it.hasNext()) {
+				sb.append(",\n");
 			}
-		};
-		f.accept(head);
-		sb.append(" :- ");
-		f.accept(body);
+		}
+		sb.append(" :-");
+		if (body.size() == 1) {
+			sb.append(" ");
+		} else {
+			sb.append("\n\t");
+		}
+		for (Iterator<Atom> it = body.iterator(); it.hasNext();) {
+			sb.append(it.next());
+			if (it.hasNext()) {
+				sb.append(",\n\t");
+			}
+		}
 		sb.append(".");
 		return sb.toString();
 	}

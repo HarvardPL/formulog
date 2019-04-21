@@ -294,7 +294,7 @@ public final class Constructors {
 
 		@Override
 		public String toString() {
-			return "(let " + args[0] + " = " + args[1] + " in " + args[2] + ")";
+			return "(#let " + args[0] + " = " + args[1] + " in " + args[2] + ")";
 		}
 		
 		@Override
@@ -938,7 +938,7 @@ public final class Constructors {
 
 		@Override
 		public String toString() {
-			return "(if " + args[0] + " then " + args[1] + " else " + args[2] + ")";
+			return "(#if " + args[0] + " then " + args[1] + " else " + args[2] + ")";
 		}
 
 	}

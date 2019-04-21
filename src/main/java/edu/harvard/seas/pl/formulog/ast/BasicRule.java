@@ -105,7 +105,7 @@ public class BasicRule implements Rule {
 				sb.append(",\n");
 			}
 		}
-		sb.append(":-");
+		sb.append(" :-");
 		if (body.size() == 1) {
 			sb.append(" ");
 		} else {

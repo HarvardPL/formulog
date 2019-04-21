@@ -68,6 +68,7 @@ import edu.harvard.seas.pl.formulog.validating.ValidProgram;
 public class Interpreter {
 
 	private static final boolean softExceptions = System.getProperty("softExceptions") != null;
+	private static final boolean factTrace = System.getProperty("factTrace") != null;
 
 	private final ValidProgram prog;
 	private IndexedFactDB res;
@@ -456,11 +457,19 @@ public class Interpreter {
 				}
 			}
 
-			private void reportFacts(Substitution s) throws EvaluationException {
+			private void reportFacts(RuleSubstitution s) throws EvaluationException {
 				for (Atom a : rule.getHead()) {
 					Atom fact = Atoms.normalize(Atoms.applySubstitution(a, s));
 					boolean isNew = db.add((NormalAtom) fact);
 					if (isNew) {
+						if (factTrace) {
+							String msg = "\nBEGIN NEW FACT\nFact:\n";
+							msg += fact;
+							msg += "\n\nDerived using this rule:\n" + rule;
+							msg += "\n\nUnder this substitution:\n" + s.toSimpleString();
+							msg += "\nEND NEW FACT";
+							System.err.println(msg);
+						}
 						for (IndexedRule r : lookupRulesInCurStratum(fact.getSymbol())) {
 							exec.recursivelyAddTask(new WorkItem(fact, r, getSubstitution(r)));
 						}

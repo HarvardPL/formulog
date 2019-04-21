@@ -39,7 +39,7 @@ public class RuleSubstitution implements Substitution {
 	private final Map<Var, Term> map = new HashMap<>();
 	private final Collection<Var>[] varsPerIdx;
 	private int curIdx;
-	
+
 	@SuppressWarnings("unchecked")
 	public RuleSubstitution(Rule r) {
 		varsPerIdx = new Collection[r.getBodySize()];
@@ -57,7 +57,7 @@ public class RuleSubstitution implements Substitution {
 	private RuleSubstitution(Collection<Var>[] varsPerIdx) {
 		this.varsPerIdx = varsPerIdx;
 	}
-	
+
 	@Override
 	public void put(Var v, Term t) {
 		Term t2 = map.put(v, t);
@@ -80,11 +80,11 @@ public class RuleSubstitution implements Substitution {
 	public Iterable<Var> iterateKeys() {
 		return map.keySet();
 	}
-	
+
 	public RuleSubstitution fresh() {
 		return new RuleSubstitution(varsPerIdx);
 	}
-	
+
 	public void setToBefore(int atomIdx) {
 		while (curIdx >= atomIdx) {
 			for (Var v : varsPerIdx[curIdx]) {
@@ -94,21 +94,33 @@ public class RuleSubstitution implements Substitution {
 		}
 		curIdx = atomIdx;
 	}
-	
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("[ ");
+		sb.append("[\n");
 		for (int i = 0; i < varsPerIdx.length; ++i) {
 			if (i == curIdx) {
 				sb.append("*");
 			}
-			sb.append(i + " ");
+			sb.append("\t<" + i + ">\n");
 			for (Var v : varsPerIdx[i]) {
-				sb.append(v + "->" + map.get(v) + " ");
+				sb.append("\t" + v + "->" + map.get(v) + "\n");
 			}
 		}
-		sb.append(" ]");
+		sb.append("]");
+		return sb.toString();
+	}
+
+	public String toSimpleString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("[\n");
+		for (int i = 0; i < varsPerIdx.length; ++i) {
+			for (Var v : varsPerIdx[i]) {
+				sb.append("\t" + v + "->" + map.get(v) + "\n");
+			}
+		}
+		sb.append("]");
 		return sb.toString();
 	}
 

@@ -71,6 +71,7 @@ You can also set the following system properties (using the `-D` flag, as in
 * `debugSmt` - print debugging information related to SMT calls
 * `debugMst` - print debugging information related to the magic set
   transformation
+* `factTrace` - print new facts as they are derived
 * `softExceptions` - ignore exceptions during evaluation (i.e., treat them as
   unification failures, and not as something that should stop evaluation)
 
