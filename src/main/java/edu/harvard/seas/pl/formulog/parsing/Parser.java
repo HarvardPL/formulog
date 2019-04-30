@@ -338,7 +338,8 @@ public class Parser {
 					SymbolType.SOLVER_UNINTERPRETED_FUNCTION, new FunctorType(typeArgs, type));
 			if (!(type instanceof AlgebraicDataType)
 					|| !((AlgebraicDataType) type).getSymbol().equals(BuiltInTypeSymbol.SMT_TYPE)) {
-				throw new RuntimeException("Uninterpreted function must have an expr type: " + csym);
+				throw new RuntimeException("Uninterpreted function must have an "
+						+ BuiltInTypeSymbol.SMT_TYPE.toString() + " type: " + csym);
 			}
 			if (!Types.getTypeVars(typeArgs).isEmpty() || !Types.getTypeVars(type).isEmpty()) {
 				throw new RuntimeException("Unbound type variable in definition of " + csym);
