@@ -311,7 +311,7 @@ public enum BuiltInConstructorSymbol implements Symbol {
 		case ARRAY_DEFAULT:
 			return makeType(array(a, b), smt(b));
 		case ARRAY_CONST:
-			return makeType(b, array(a, b));
+			return makeType(b, smt(array(a, b)));
 		case STR_AT:
 			return makeType(string, int_, smt(string));
 		case STR_CONCAT:
