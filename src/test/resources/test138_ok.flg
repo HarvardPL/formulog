@@ -1,0 +1,7 @@
+fun a : ('a, i32) array smt = `array_const(0)`.
+
+output ok.
+ok :-
+  X = #x[string],
+  Y = #y[bool],
+  is_valid(`array_select(,a, X) #= 0 /\ array_select(,a, Y) #= 0`).

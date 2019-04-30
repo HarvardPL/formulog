@@ -668,8 +668,7 @@ public class SmtLibShim {
 	}
 
 	private static boolean needsTypeAnnotation(Symbol constructorSymbol, List<Type> argTypes, Type retType) {
-		return !constructorSymbol.getSymbolType().isSolverConstructorSymbol()
-				&& !Types.getTypeVars(argTypes).containsAll(Types.getTypeVars(retType));
+		return !Types.getTypeVars(argTypes).containsAll(Types.getTypeVars(retType));
 	}
 
 }

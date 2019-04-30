@@ -141,6 +141,8 @@ public enum BuiltInConstructorSymbol implements Symbol {
 	
 	ARRAY_DEFAULT("array_default", 1, SOLVER_EXPR),
 	
+	ARRAY_CONST("array_const", 1, SOLVER_EXPR),
+	
 	// Strings
 	
 	STR_CONCAT("str_concat", 2, SOLVER_EXPR),
@@ -308,6 +310,8 @@ public enum BuiltInConstructorSymbol implements Symbol {
 			return makeType(array(a, b), a, b, smt(array(a, b)));
 		case ARRAY_DEFAULT:
 			return makeType(array(a, b), smt(b));
+		case ARRAY_CONST:
+			return makeType(b, array(a, b));
 		case STR_AT:
 			return makeType(string, int_, smt(string));
 		case STR_CONCAT:

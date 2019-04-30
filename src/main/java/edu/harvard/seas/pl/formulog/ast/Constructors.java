@@ -187,6 +187,8 @@ public final class Constructors {
 			return makeSolverOp.apply("store");
 		case ARRAY_DEFAULT:
 			return makeSolverOp.apply("default");
+		case ARRAY_CONST:
+			return makeSolverOp.apply("const");
 		case INT_ABS:
 			return makeSolverOp.apply("abs");
 		case INT_ADD:
@@ -879,18 +881,7 @@ public final class Constructors {
 
 		@Override
 		public void toSmtLib(SmtLibShim shim) {
-			if (sym.getArity() == 0) {
-				shim.print(op);
-				return;
-			}
-			shim.print("(");
-			shim.print(op);
-			for (int i = 0; i < args.length; ++i) {
-				SmtLibTerm t = (SmtLibTerm) args[i];
-				shim.print(" ");
-				t.toSmtLib(shim);
-			}
-			shim.print(")");
+			Constructors.toSmtLib(this, op, shim);
 		}
 
 		private String getSyntax() {
@@ -943,7 +934,7 @@ public final class Constructors {
 
 	}
 
-	private static void toSmtLib(Constructor c, SmtLibShim shim) {
+	private static void toSmtLib(Constructor c, String repr, SmtLibShim shim) {
 		Symbol sym = c.getSymbol();
 		if (sym.getArity() > 0) {
 			shim.print("(");
@@ -951,12 +942,12 @@ public final class Constructors {
 		String typeAnnotation = shim.getTypeAnnotation(c);
 		if (typeAnnotation != null) {
 			shim.print("(as ");
-			shim.print(sym);
+			shim.print(repr);
 			shim.print(" ");
 			shim.print(typeAnnotation);
 			shim.print(")");
 		} else {
-			shim.print(sym);
+			shim.print(repr);
 		}
 		for (Term t : c.getArgs()) {
 			SmtLibTerm tt = (SmtLibTerm) t;
@@ -966,6 +957,10 @@ public final class Constructors {
 		if (sym.getArity() > 0) {
 			shim.print(")");
 		}
+	}
+	
+	private static void toSmtLib(Constructor c, SmtLibShim shim) {
+		toSmtLib(c, c.getSymbol().toString(), shim);
 	}
 
 }
