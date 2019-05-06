@@ -121,8 +121,7 @@ public final class Types {
 
 		@Override
 		public Type applySubst(Map<TypeVar, Type> subst) {
-			Type t = subst.get(this);
-			return t == null ? this : t;
+			return TypeChecker.lookupType(this, subst);
 		}
 
 		public static TypeVar fresh() {

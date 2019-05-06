@@ -26,7 +26,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.OpaqueType;
@@ -139,7 +138,7 @@ public class FunctorType implements Type {
 
 	@Override
 	public Type applySubst(Map<TypeVar, Type> subst) {
-		List<Type> newArgTypes = argTypes.stream().map(t -> t.applySubst(subst)).collect(Collectors.toList());
+		List<Type> newArgTypes = Util.map(argTypes, t -> t.applySubst(subst));
 		Type newRetType = retType.applySubst(subst);
 		return new FunctorType(newArgTypes, newRetType);
 	}

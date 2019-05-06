@@ -492,17 +492,10 @@ public class TypeChecker {
 			}
 			return true;
 		}
-
+		
 		private boolean handleVars(Type type1, Type type2) {
 			if (type1.isVar() && type2.isVar()) {
-				TypeVar v1 = (TypeVar) type1;
-				TypeVar v2 = (TypeVar) type2;
-				// Avoid cycles in the typeVars map
-				if (v1.compareTo(v2) > 0) {
-					typeVars.put(v1, v2);
-				} else if (v1.compareTo(v2) < 0) {
-					typeVars.put(v2, v1);
-				}
+				addBinding((TypeVar) type1, type2, typeVars);
 				return true;
 			}
 
@@ -566,6 +559,21 @@ public class TypeChecker {
 			return TypeChecker.lookupType(t, typeVars);
 		}
 
+	}
+
+	// XXX This and lookupType should be factored into a class for type substitutions.
+	public static void addBinding(TypeVar x, Type t, Map<TypeVar, Type> subst) {
+		if (t instanceof TypeVar) {
+			// Avoid cycles in map
+			TypeVar y = (TypeVar) t;
+			if (x.compareTo(y) > 0) {
+				subst.put(x, y);
+			} else if (x.compareTo(y) < 0) {
+				subst.put(y, x);
+			}
+		} else {
+			subst.put(x, t);
+		}
 	}
 
 	public static Type lookupType(Type t, Map<TypeVar, Type> subst) {

@@ -136,7 +136,7 @@ public class TypeAlias {
 		}
 		Map<TypeVar, Type> subst = new HashMap<>();
 		for (int i = 0; i < params.size(); ++i) {
-			subst.put(params.get(i), paramTypes.get(i));
+			TypeChecker.addBinding(params.get(i), paramTypes.get(i), subst);
 		}
 		return type.applySubst(subst);
 	}

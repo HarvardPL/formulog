@@ -546,5 +546,10 @@ public class EvaluationTest {
 	public void test138() {
 		test("test138_ok.flg");
 	}
+	
+	@Test
+	public void test139() {
+		test("test139_ok.flg");
+	}
 
 }

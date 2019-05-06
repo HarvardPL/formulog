@@ -1,0 +1,6 @@
+uninterpreted sort sv_map.
+
+uninterpreted fun f((string, i32 option) array) : bool smt.
+
+output ok.
+ok :- is_sat(`f(array_const(none))`).
