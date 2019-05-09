@@ -114,7 +114,7 @@ public final class Main {
 			} catch (InvalidProgramException e) {
 				handleException("Error while rewriting the program!", e);
 			}
-			if (cl.hasOption("v")) {
+			if (System.getProperty("debugMst") != null) {
 				System.out.println("\n*** New rules ***");
 				List<String> rules = new ArrayList<>();
 				for (Symbol sym : prog.getRuleSymbols()) {
@@ -146,7 +146,7 @@ public final class Main {
 		}
 		System.out.println("Results:");
 		IndexedFactDB db = interp.getResult();
-		if (q == null || cl.hasOption("v")) {
+		if (q == null || System.getProperty("debugSmt") != null) {
 			System.out.println("\n*** All generated facts ***");
 			for (Symbol sym : db.getSymbols()) {
 				printSortedFacts(db.query(sym));
