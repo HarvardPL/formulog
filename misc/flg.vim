@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language: FormuLog
 " Maintainer: Aaron Bembenek
-" Latest Revision: 18 April 2019
+" Latest Revision: 9 May 2019
 
 if exists("b:current_syntax")
     finish
