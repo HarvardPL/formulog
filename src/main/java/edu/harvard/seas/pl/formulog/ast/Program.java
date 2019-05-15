@@ -42,5 +42,7 @@ public interface Program {
 	Set<Rule> getRules(Symbol sym);
 	
 	SymbolManager getSymbolManager();
+	
+	Set<Annotation> getAnnotations(Symbol sym);
 
 }

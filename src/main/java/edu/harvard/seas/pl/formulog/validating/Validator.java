@@ -32,6 +32,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.TimeUnit;
 
+import edu.harvard.seas.pl.formulog.ast.Annotation;
 import edu.harvard.seas.pl.formulog.ast.Atoms;
 import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
 import edu.harvard.seas.pl.formulog.ast.Atoms.UnifyAtom;
@@ -632,6 +633,11 @@ public class Validator {
 		@Override
 		public SymbolManager getSymbolManager() {
 			return prog.getSymbolManager();
+		}
+
+		@Override
+		public Set<Annotation> getAnnotations(Symbol sym) {
+			return prog.getAnnotations(sym);
 		}
 
 	}

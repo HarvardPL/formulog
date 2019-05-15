@@ -16,7 +16,7 @@ metadata
 	(
 		'and' funDefLHS EQ expr
 	)* '.' # funDecl
-	| relType =
+	| annotation* relType =
 	(
 		INPUT
 		| OUTPUT
@@ -105,6 +105,11 @@ typeDefRHS
 	)*
 	| // can be empty
 
+;
+
+annotation
+:
+	'@' ID
 ;
 
 // Program logic ///////////////////////////////////////////////////////////////

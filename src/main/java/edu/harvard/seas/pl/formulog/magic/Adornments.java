@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import edu.harvard.seas.pl.formulog.ast.Annotation;
 import edu.harvard.seas.pl.formulog.ast.Atoms;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Program;
@@ -45,22 +46,37 @@ public final class Adornments {
 		throw new AssertionError();
 	}
 
-	public static Atom adorn(Atom a, Set<Var> boundVars) {
+	public static Atom adorn(Atom a, Set<Var> boundVars, Program prog, boolean topDownIsDefault) {
+		Symbol origSym = a.getSymbol();
+		boolean defaultAdornment = topDownIsDefault || prog.getAnnotations(origSym).contains(Annotation.TOPDOWN);
+		if (prog.getAnnotations(origSym).contains(Annotation.BOTTOMUP)) {
+			if (!topDownIsDefault) {
+				return a;
+			} else {
+				defaultAdornment = false;
+			}
+		}
 		Term[] args = a.getArgs();
 		boolean[] adornment = new boolean[args.length];
 		for (int k = 0; k < args.length; k++) {
-			adornment[k] = boundVars.containsAll(Terms.varSet(args[k]));
+			adornment[k] = defaultAdornment && boundVars.containsAll(Terms.varSet(args[k]));
 		}
-		AdornedSymbol sym = new AdornedSymbol(a.getSymbol(), adornment);
+		AdornedSymbol sym = new AdornedSymbol(origSym, adornment);
 		return Atoms.get(sym, args, a.isNegated());
 	}
 
-	public static Rule adornRule(Atom head, List<Atom> body, Program prog) throws InvalidProgramException {
+	public static Rule adornRule(Atom head, List<Atom> body, Program prog, boolean topDownIsDefault)
+			throws InvalidProgramException {
 		Symbol sym = head.getSymbol();
-		if (!(sym instanceof AdornedSymbol)) {
-			throw new IllegalArgumentException("Head must be adorned");
+		boolean[] headAdornment;
+		if (sym instanceof AdornedSymbol) {
+			headAdornment = ((AdornedSymbol) head.getSymbol()).getAdornment();
+		} else {
+			headAdornment = new boolean[sym.getArity()];
+			for (int i = 0; i < headAdornment.length; ++i) {
+				headAdornment[i] = false;
+			}
 		}
-		boolean[] headAdornment = ((AdornedSymbol) head.getSymbol()).getAdornment();
 		body = new ArrayList<>(body);
 		Set<Var> boundVars = new HashSet<>();
 		Term[] headArgs = head.getArgs();
@@ -76,7 +92,7 @@ public final class Adornments {
 				if (Unification.canBindVars(a, boundVars)) {
 					Collections.swap(body, i, j);
 					if (a.getSymbol().getSymbolType().isIDBSymbol()) {
-						body.set(i, adorn((NormalAtom) a, boundVars));
+						body.set(i, adorn((NormalAtom) a, boundVars, prog, topDownIsDefault));
 					}
 					boundVars.addAll(Atoms.varSet(a));
 					ok = true;

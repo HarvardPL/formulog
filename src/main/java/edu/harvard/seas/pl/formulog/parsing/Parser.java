@@ -22,6 +22,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
+import edu.harvard.seas.pl.formulog.ast.Annotation;
 import edu.harvard.seas.pl.formulog.ast.Atoms;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
@@ -53,6 +54,7 @@ import edu.harvard.seas.pl.formulog.parsing.generated.DatalogBaseVisitor;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogLexer;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogVisitor;
+import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.AnnotationContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.AtomListContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.BinopFormulaContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.BinopTermContext;
@@ -231,6 +233,7 @@ public class Parser {
 		private final Map<Symbol, Set<Rule>> rules = new HashMap<>();
 		private final FunctionDefManager functionDefManager = new FunctionDefManager();
 		private final FunctionCallFactory functionCallFactory = new FunctionCallFactory(functionDefManager);
+		private final Map<Symbol, Set<Annotation>> annotations = new HashMap<>();
 		private Atom query;
 
 		@Override
@@ -267,7 +270,31 @@ public class Parser {
 				throw new RuntimeException("Cannot use type variables in the signature of a relation: " + name);
 			}
 			SymbolType symType = ctx.relType.getType() == DatalogLexer.OUTPUT ? SymbolType.IDB_REL : SymbolType.EDB_REL;
-			symbolManager.createSymbol(name, types.size(), symType, new FunctorType(types, BuiltInTypes.bool));
+			Symbol sym = symbolManager.createSymbol(name, types.size(), symType,
+					new FunctorType(types, BuiltInTypes.bool));
+			Set<Annotation> aset = new HashSet<>();
+			for (AnnotationContext actx : ctx.annotation()) {
+				switch (actx.getText()) {
+				case "@bottomup":
+					if (!sym.getSymbolType().isIDBSymbol()) {
+						throw new RuntimeException("Annotation @bottomup not relevant for non-IDB predicate " + sym);
+					}
+					aset.add(Annotation.BOTTOMUP);
+					break;
+				case "@topdown":
+					if (!sym.getSymbolType().isIDBSymbol()) {
+						throw new RuntimeException("Annotation @bottomup not relevant for non-IDB predicate " + sym);
+					}
+					aset.add(Annotation.TOPDOWN);
+					break;
+				default:
+					throw new RuntimeException("Unrecognized annotation for predicate " + sym + ": " + actx.getText());
+				}
+			}
+			if (aset.contains(Annotation.BOTTOMUP) && aset.contains(Annotation.TOPDOWN)) {
+				throw new RuntimeException("Cannot annotate predicate " + sym + " as being both topdown and bottomup");
+			}
+			annotations.put(sym, aset);
 		}
 
 		@Override
@@ -1062,6 +1089,12 @@ public class Parser {
 				@Override
 				public SymbolManager getSymbolManager() {
 					return symbolManager;
+				}
+
+				@Override
+				public Set<Annotation> getAnnotations(Symbol sym) {
+					assert sym.getSymbolType().isRelationSym();
+					return annotations.get(sym);
 				}
 
 			};

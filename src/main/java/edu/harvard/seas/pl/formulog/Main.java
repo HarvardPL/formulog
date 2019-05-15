@@ -64,7 +64,7 @@ public final class Main {
 		formatter.printHelp("formulog.jar input-file.flg", opts);
 		System.exit(1);
 	}
-	
+
 	private static CommandLine parseArgs(String[] args) {
 		Options opts = new Options();
 		opts.addOption("j", true, "Number of threads to use (defaults to 1).");
@@ -107,28 +107,32 @@ public final class Main {
 		} catch (TypeException e) {
 			handleException("Error while typechecking the program!", e);
 		}
-		if (q != null) {
-			System.out.println("Rewriting for query " + q + "...");
-			try {
+		try {
+			if (q != null) {
+				System.out.println("Rewriting for query " + q + "...");
 				prog = (new MagicTransformer(prog, q)).transform();
-			} catch (InvalidProgramException e) {
-				handleException("Error while rewriting the program!", e);
+			} else {
+				System.out.println("Rewriting top-down relations...");
+				prog = MagicTransformer.rewriteTopDownRules(prog);
 			}
-			if (System.getProperty("debugMst") != null) {
-				System.out.println("\n*** New rules ***");
-				List<String> rules = new ArrayList<>();
-				for (Symbol sym : prog.getRuleSymbols()) {
-					for (Rule r : prog.getRules(sym)) {
-						rules.add(r.toString());
-					}
-				}
-				Collections.sort(rules);
-				for (String r : rules) {
-					System.out.println(r);
-				}
-				System.out.println();
-			}
+		} catch (InvalidProgramException e) {
+			handleException("Error while rewriting the program!", e);
 		}
+		if (System.getProperty("debugMst") != null) {
+			System.err.println("\n*** New rules ***");
+			List<String> rules = new ArrayList<>();
+			for (Symbol sym : prog.getRuleSymbols()) {
+				for (Rule r : prog.getRules(sym)) {
+					rules.add(r.toString());
+				}
+			}
+			Collections.sort(rules);
+			for (String r : rules) {
+				System.err.println(r);
+			}
+			System.err.println();
+		}
+
 		System.out.println("Validating...");
 		ValidProgram vprog = null;
 		try {
@@ -146,25 +150,25 @@ public final class Main {
 		}
 		System.out.println("Results:");
 		IndexedFactDB db = interp.getResult();
-		if (q == null || System.getProperty("debugSmt") != null) {
-			System.out.println("\n*** All generated facts ***");
+		if (q == null || System.getProperty("debugMst") != null) {
+			System.err.println("\n*** All generated facts ***");
 			for (Symbol sym : db.getSymbols()) {
-				printSortedFacts(db.query(sym));
+				printSortedFacts(db.query(sym), System.err);
 			}
 		}
 		if (q != null) {
 			System.out.println("\n*** Query results ***");
-			printSortedFacts(db.query(q.getSymbol()));
+			printSortedFacts(db.query(q.getSymbol()), System.out);
 		}
 	}
 
-	private static void printSortedFacts(Iterable<NormalAtom> facts) {
+	private static void printSortedFacts(Iterable<NormalAtom> facts, PrintStream out) {
 		Util.iterableToList(facts).stream().map(a -> {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			PrintStream ps = new PrintStream(baos);
 			ps.print(a);
 			return baos.toString();
-		}).sorted().forEach(s -> System.out.println(s));
+		}).sorted().forEach(s -> out.println(s));
 	}
 
 	private static void handleException(String msg, Exception e) {

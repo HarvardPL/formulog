@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.harvard.seas.pl.formulog.ast.Annotation;
 import edu.harvard.seas.pl.formulog.ast.Atoms;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
@@ -121,6 +122,11 @@ public class TypeChecker {
 			@Override
 			public SymbolManager getSymbolManager() {
 				return prog.getSymbolManager();
+			}
+
+			@Override
+			public Set<Annotation> getAnnotations(Symbol sym) {
+				return prog.getAnnotations(sym);
 			}
 
 		};
