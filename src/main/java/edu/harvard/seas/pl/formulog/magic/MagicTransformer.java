@@ -301,7 +301,7 @@ public class MagicTransformer {
 							.collect(Collectors.toSet());
 					supVars.addAll(nextLiveVars);
 					Atom supAtom = createSupAtom(supVars, number, supCount);
-					magicRules.add(BasicRule.get(supAtom, l));
+					magicRules.add(makeRule(supAtom, l));
 					magicRules.add(BasicRule.get(createInputAtom(a), Collections.singletonList(supAtom)));
 					l = new ArrayList<>();
 					l.add(supAtom);
@@ -318,8 +318,16 @@ public class MagicTransformer {
 				}
 				i++;
 			}
-			magicRules.add(BasicRule.get(head, l));
+			magicRules.add(makeRule(head, l));
 			return magicRules;
+		}
+
+		private static BasicRule makeRule(Atom head, List<Atom> body) {
+			if (body.isEmpty()) {
+				return BasicRule.get(head);
+			} else {
+				return BasicRule.get(head, body);
+			}
 		}
 
 		private List<Set<Var>> liveVarsByAtom(Rule r) {
