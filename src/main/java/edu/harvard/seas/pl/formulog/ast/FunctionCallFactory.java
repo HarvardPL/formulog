@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitorExn;
@@ -22,6 +23,9 @@ public final class FunctionCallFactory {
 
 	private final FunctionDefManager defManager;
 	private final Memoizer<FunctionCall> memo = new Memoizer<>();
+	
+	private static final AtomicInteger cnt = new AtomicInteger();
+	private static final boolean debug = System.getProperty("callTrace") != null;
 
 	private final Map<Symbol, Map<List<Term>, Term>> callMemo = new ConcurrentHashMap<>();
 
@@ -76,6 +80,15 @@ public final class FunctionCallFactory {
 
 		// FIXME This way of implementing memoization seems expensive
 		public Term evaluate(Term[] args, Substitution s) throws EvaluationException {
+			Integer id = null;
+			if (debug) {
+				id = cnt.getAndIncrement();
+				String msg = "BEGIN CALL #" + id + "\n";
+				msg += "Function: " + sym + "\n";
+				msg += "Arguments: " + Arrays.toString(args) + "\n";
+				msg += "***\n";
+				System.err.println(msg);
+			}
 			FunctionDef def = defManager.lookup(getSymbol());
 			assert def != null;
 			Term[] newArgs = new Term[args.length];
@@ -91,6 +104,14 @@ public final class FunctionCallFactory {
 				if (other != null) {
 					r = other;
 				}
+			}
+			if (debug) {
+				String msg = "END CALL #" + id + "\n";
+				msg += "Function: " + sym + "\n";
+				msg += "Arguments: " + Arrays.toString(args) + "\n";
+				msg += "Result: " + r + "\n";
+				msg += "***\n";
+				System.err.println(msg);
 			}
 			return r;
 		}

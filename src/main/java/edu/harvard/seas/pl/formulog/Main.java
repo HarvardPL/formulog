@@ -34,19 +34,21 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 
-import edu.harvard.seas.pl.formulog.ast.Program;
-import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
 import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
+import edu.harvard.seas.pl.formulog.ast.Program;
+import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDB;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.eval.Interpreter;
-import edu.harvard.seas.pl.formulog.magic.MagicTransformer;
+import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
 import edu.harvard.seas.pl.formulog.parsing.ParseException;
 import edu.harvard.seas.pl.formulog.parsing.Parser;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
 import edu.harvard.seas.pl.formulog.types.TypeException;
+import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
+import edu.harvard.seas.pl.formulog.unification.Unification;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
@@ -85,6 +87,7 @@ public final class Main {
 			System.setProperty("debugMst", "true");
 			System.setProperty("debugSmt", "true");
 			System.setProperty("factTrace", "true");
+			System.setProperty("callTrace", "true");
 		}
 		return cl;
 	}
@@ -108,12 +111,15 @@ public final class Main {
 			handleException("Error while typechecking the program!", e);
 		}
 		try {
+			MagicSetTransformer mst = new MagicSetTransformer(prog);
 			if (q != null) {
 				System.out.println("Rewriting for query " + q + "...");
-				prog = (new MagicTransformer(prog, q)).transform();
+				p = mst.transform(q, false);
+				prog = p.fst();
+				q = p.snd();
 			} else {
 				System.out.println("Rewriting top-down relations...");
-				prog = MagicTransformer.rewriteTopDownRules(prog);
+				prog = mst.transform(false);
 			}
 		} catch (InvalidProgramException e) {
 			handleException("Error while rewriting the program!", e);
@@ -158,7 +164,17 @@ public final class Main {
 		}
 		if (q != null) {
 			System.out.println("\n*** Query results ***");
-			printSortedFacts(db.query(q.getSymbol()), System.out);
+			List<NormalAtom> facts = new ArrayList<>();
+			try {
+				for (Atom fact : db.query(q.getSymbol())) {
+					if (Unification.unify(q, fact, new SimpleSubstitution())) {
+						facts.add((NormalAtom) fact);
+					}
+				}
+			} catch (EvaluationException e) {
+				throw new AssertionError("impossible");
+			}
+			printSortedFacts(facts, System.out);
 		}
 	}
 

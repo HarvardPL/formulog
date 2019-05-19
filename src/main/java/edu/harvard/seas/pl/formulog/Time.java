@@ -34,7 +34,7 @@ import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
 import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDB;
 import edu.harvard.seas.pl.formulog.eval.Interpreter;
-import edu.harvard.seas.pl.formulog.magic.MagicTransformer;
+import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
 import edu.harvard.seas.pl.formulog.parsing.Parser;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
@@ -69,7 +69,8 @@ public class Time {
 		Atom q = p.snd();
 		prog = (new TypeChecker(prog, q)).typeCheck();
 		if (q != null) {
-			prog = (new MagicTransformer(prog, q)).transform();
+			p = (new MagicSetTransformer(prog)).transform(q, false);
+			prog = p.fst();
 		}
 		ValidProgram vprog = (new Validator(prog)).validate();
 		Interpreter interp = new Interpreter(vprog);

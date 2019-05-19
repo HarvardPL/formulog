@@ -50,32 +50,56 @@ import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Unification;
 import edu.harvard.seas.pl.formulog.util.DedupWorkList;
+import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 import edu.harvard.seas.pl.formulog.validating.Stratifier;
 
-public class MagicTransformer {
+public class MagicSetTransformer {
 
 	private final Program origProg;
-	private Atom query;
-	private final Atom adornedQuery;
-	private Program newProg;
+	private boolean topDownIsDefault;
+
 	private static final boolean debug = System.getProperty("debugMst") != null;
 
-	public MagicTransformer(Program prog, Atom query) throws InvalidProgramException {
+	public MagicSetTransformer(Program prog) {
+		this.origProg = prog;
+	}
+
+	public synchronized Pair<Program, Atom> transform(Atom query, boolean useDemandTransformation)
+			throws InvalidProgramException {
+		topDownIsDefault = true;
 		if (query.isNegated()) {
 			throw new InvalidProgramException("Query cannot be negated");
 		}
 		Symbol qsym = query.getSymbol();
 		if (qsym.getSymbolType().equals(SymbolType.SPECIAL_REL)) {
-			throw new InvalidProgramException("Cannot query2 built-in predicate: " + query.getSymbol());
+			throw new InvalidProgramException("Cannot query built-in predicate: " + query.getSymbol());
 		}
-		this.origProg = prog;
-		this.query = query;
-		this.adornedQuery = Adornments.adorn(query, Collections.emptySet(), origProg, true);
+		query = normalizeQuery(query);
+		Program newProg;
+		if (query.getSymbol().getSymbolType().isEDBSymbol()) {
+			newProg = makeEdbProgram(query);
+		} else {
+			Atom adornedQuery = Adornments.adorn(query, Collections.emptySet(), origProg, topDownIsDefault);
+			Set<Rule> adRules = adorn(Collections.singleton(adornedQuery.getSymbol()));
+			Set<Rule> magicRules = makeMagicRules(adRules);
+			magicRules.add(makeSeedRule(adornedQuery));
+			ProgramImpl magicProg = new ProgramImpl(magicRules, origProg);
+			if (!isStratified(magicProg)) {
+				magicProg = stratify(magicProg, adRules);
+			}
+			newProg = magicProg;
+			if (useDemandTransformation) {
+				throw new UnsupportedOperationException("TODO");
+			} else {
+				query = adornedQuery;
+			}
+		}
+		return new Pair<>(newProg, query);
 	}
 
-	public void normalizeQuery() throws InvalidProgramException {
+	public Atom normalizeQuery(final Atom query) throws InvalidProgramException {
 		ForkJoinPool fjp = new ForkJoinPool(1, new Z3ThreadFactory(origProg.getSymbolManager()), null, true);
 		@SuppressWarnings("serial")
 		Atom query2 = fjp.invoke(new RecursiveTask<Atom>() {
@@ -103,39 +127,14 @@ public class MagicTransformer {
 		if (query2 == null) {
 			throw new InvalidProgramException("Query contained function call that could not be normalized: " + query);
 		}
-		query = query2;
+		return query;
 	}
 
-	public synchronized Program transform() throws InvalidProgramException {
-		if (newProg == null) {
-			normalizeQuery();
-			if (query.getSymbol().getSymbolType().isEDBSymbol()) {
-				newProg = makeEdbProgram();
-			} else {
-				Rewriter rewriter = new Rewriter(origProg, true);
-				Set<Rule> adRules = rewriter.adorn(Collections.singleton(adornedQuery.getSymbol()));
-				Set<Rule> magicRules = rewriter.makeMagicRules(adRules);
-				magicRules.add(makeSeedRule());
-				ProgramImpl magicProg = new ProgramImpl(magicRules, origProg);
-				if (!isStratified(magicProg)) {
-					magicProg = stratify(magicProg, adRules);
-				}
-				magicProg.addRule(makeQueryRule());
-				newProg = magicProg;
-			}
-		}
-		return newProg;
-	}
-
-	private Rule makeSeedRule() {
+	private Rule makeSeedRule(Atom adornedQuery) {
 		return BasicRule.get(createInputAtom(adornedQuery));
 	}
 
-	private Rule makeQueryRule() {
-		return BasicRule.get(query, Collections.singletonList(adornedQuery));
-	}
-
-	private Program makeEdbProgram() {
+	private Program makeEdbProgram(Atom query) {
 		Symbol querySym = query.getSymbol();
 		Set<Atom> facts = new HashSet<>();
 		for (Atom fact : origProg.getFacts(querySym)) {
@@ -195,153 +194,136 @@ public class MagicTransformer {
 		};
 	}
 
-	public static Program rewriteTopDownRules(Program prog) throws InvalidProgramException {
+	public synchronized Program transform(boolean useDemandTransformation) throws InvalidProgramException {
+		topDownIsDefault = false;
 		Set<Symbol> bottomUpSymbols = new HashSet<>();
-		for (Symbol sym : prog.getRuleSymbols()) {
-			if (!prog.getAnnotations(sym).contains(Annotation.TOPDOWN)) {
+		for (Symbol sym : origProg.getRuleSymbols()) {
+			if (!origProg.getAnnotations(sym).contains(Annotation.TOPDOWN)) {
 				bottomUpSymbols.add(sym);
 			}
 		}
-		Rewriter rewriter = new Rewriter(prog, false);
-		Set<Rule> adRules = rewriter.adorn(bottomUpSymbols);
-		Set<Rule> magicRules = rewriter.makeMagicRules(adRules);
-		ProgramImpl magicProg = new ProgramImpl(magicRules, prog);
+		Set<Rule> adRules = adorn(bottomUpSymbols);
+		Set<Rule> magicRules = makeMagicRules(adRules);
+		ProgramImpl magicProg = new ProgramImpl(magicRules, origProg);
+		if (!isStratified(magicProg)) {
+			magicProg = stratify(magicProg, adRules);
+		}
+		if (useDemandTransformation) {
+			throw new UnsupportedOperationException("TODO");
+		}
 		return magicProg;
 	}
 
-	private static class Rewriter {
-
-		private final Program origProg;
-		private final boolean topDownIsDefault;
-
-		public Rewriter(Program origProg, boolean topDownIsDefault) {
-			this.origProg = origProg;
-			this.topDownIsDefault = topDownIsDefault;
+	private Set<Rule> adorn(Set<Symbol> seeds) throws InvalidProgramException {
+		Set<Rule> adRules = new HashSet<>();
+		DedupWorkList<Symbol> worklist = new DedupWorkList<>();
+		for (Symbol seed : seeds) {
+			worklist.push(seed);
 		}
-
-		private Set<Rule> adorn(Set<Symbol> seeds) throws InvalidProgramException {
-			Set<Rule> adRules = new HashSet<>();
-			DedupWorkList<Symbol> worklist = new DedupWorkList<>();
-			for (Symbol seed : seeds) {
-				worklist.push(seed);
+		while (!worklist.isEmpty()) {
+			Symbol adSym = worklist.pop();
+			Symbol origSym = adSym;
+			if (adSym instanceof AdornedSymbol) {
+				origSym = ((AdornedSymbol) adSym).getSymbol();
 			}
-			// worklist.push(adornedQuery.getSymbol());
-			while (!worklist.isEmpty()) {
-				Symbol adSym = worklist.pop();
-				Symbol origSym = adSym;
-				if (adSym instanceof AdornedSymbol) {
-					origSym = ((AdornedSymbol) adSym).getSymbol();
-				}
-				for (Rule r : origProg.getRules(origSym)) {
-					for (Atom head : r.getHead()) {
-						if (head.getSymbol().equals(origSym)) {
-							Atom adHead = Atoms.get(adSym, head.getArgs(), head.isNegated());
-							Rule adRule = Adornments.adornRule(adHead, Util.iterableToList(r.getBody()), origProg,
-									topDownIsDefault);
-							for (Atom a : adRule.getBody()) {
-								Symbol sym = a.getSymbol();
-								if (sym.getSymbolType().isIDBSymbol()) {
-									worklist.push(sym);
-								}
+			for (Rule r : origProg.getRules(origSym)) {
+				for (Atom head : r.getHead()) {
+					if (head.getSymbol().equals(origSym)) {
+						Atom adHead = Atoms.get(adSym, head.getArgs(), head.isNegated());
+						Rule adRule = Adornments.adornRule(adHead, Util.iterableToList(r.getBody()), origProg,
+								topDownIsDefault);
+						for (Atom a : adRule.getBody()) {
+							Symbol sym = a.getSymbol();
+							if (sym.getSymbolType().isIDBSymbol()) {
+								worklist.push(sym);
 							}
-							if (debug) {
-								System.err.println(adRule);
-							}
-							adRules.add(adRule);
 						}
+						if (debug) {
+							System.err.println(adRule);
+						}
+						adRules.add(adRule);
 					}
 				}
 			}
-			return adRules;
 		}
+		return adRules;
+	}
 
-		private Set<Rule> makeMagicRules(Set<Rule> adornedRules) {
-			Set<Rule> magicRules = new HashSet<>();
-			int ruleNum = 0;
-			for (Rule adornedRule : adornedRules) {
-				magicRules.addAll(makeMagicRules(adornedRule, ruleNum));
-				ruleNum++;
-			}
-			// magicRules.add(makeSeedRule());
-			return magicRules;
+	private Set<Rule> makeMagicRules(Set<Rule> adornedRules) {
+		Set<Rule> magicRules = new HashSet<>();
+		int ruleNum = 0;
+		for (Rule adornedRule : adornedRules) {
+			magicRules.addAll(makeMagicRules(adornedRule, ruleNum));
+			ruleNum++;
 		}
+		return magicRules;
+	}
 
-		private boolean exploreTopDown(Symbol sym) {
-			if (sym instanceof AdornedSymbol) {
-				sym = ((AdornedSymbol) sym).getSymbol();
-			}
-			if (!sym.getSymbolType().isIDBSymbol()) {
-				return false;
-			}
-			Set<Annotation> annos = origProg.getAnnotations(sym);
-			return annos.contains(Annotation.TOPDOWN) || (topDownIsDefault && !annos.contains(Annotation.BOTTOMUP));
+	private boolean exploreTopDown(Symbol sym) {
+		if (sym instanceof AdornedSymbol) {
+			sym = ((AdornedSymbol) sym).getSymbol();
 		}
-
-		private Set<Rule> makeMagicRules(Rule r, int number) {
-			int supCount = 0;
-			Set<Rule> magicRules = new HashSet<>();
-			List<Set<Var>> liveVarsByAtom = liveVarsByAtom(r);
-			List<Atom> l = new ArrayList<>();
-			assert r.getHeadSize() == 1;
-			Atom head = r.getHead(0);
-			Set<Var> curLiveVars = new HashSet<>();
-			if (exploreTopDown(head.getSymbol())) {
-				Atom inputAtom = createInputAtom(head);
-				l.add(inputAtom);
-				curLiveVars.addAll(Atoms.varSet(inputAtom));
-			}
-			int i = 0;
-			for (Atom a : r.getBody()) {
-				Set<Var> futureLiveVars = liveVarsByAtom.get(i);
-				Set<Var> nextLiveVars = curLiveVars.stream().filter(futureLiveVars::contains)
-						.collect(Collectors.toSet());
-				Symbol sym = a.getSymbol();
-				if (exploreTopDown(sym)) {
-					Set<Var> supVars = Atoms.varSet(a).stream().filter(curLiveVars::contains)
-							.collect(Collectors.toSet());
-					supVars.addAll(nextLiveVars);
-					Atom supAtom = createSupAtom(supVars, number, supCount);
-					magicRules.add(makeRule(supAtom, l));
-					magicRules.add(BasicRule.get(createInputAtom(a), Collections.singletonList(supAtom)));
-					l = new ArrayList<>();
-					l.add(supAtom);
-					l.add(a);
-					supCount++;
-				} else {
-					l.add(a);
-				}
-				curLiveVars = nextLiveVars;
-				for (Var v : Atoms.varSet(a)) {
-					if (futureLiveVars.contains(v)) {
-						curLiveVars.add(v);
-					}
-				}
-				i++;
-			}
-			magicRules.add(makeRule(head, l));
-			return magicRules;
+		if (!sym.getSymbolType().isIDBSymbol()) {
+			return false;
 		}
+		Set<Annotation> annos = origProg.getAnnotations(sym);
+		return annos.contains(Annotation.TOPDOWN) || (topDownIsDefault && !annos.contains(Annotation.BOTTOMUP));
+	}
 
-		private static BasicRule makeRule(Atom head, List<Atom> body) {
-			if (body.isEmpty()) {
-				return BasicRule.get(head);
+	private Set<Rule> makeMagicRules(Rule r, int number) {
+		int supCount = 0;
+		Set<Rule> magicRules = new HashSet<>();
+		List<Set<Var>> liveVarsByAtom = liveVarsByAtom(r);
+		List<Atom> l = new ArrayList<>();
+		assert r.getHeadSize() == 1;
+		Atom head = r.getHead(0);
+		Set<Var> curLiveVars = new HashSet<>();
+		if (exploreTopDown(head.getSymbol())) {
+			Atom inputAtom = createInputAtom(head);
+			l.add(inputAtom);
+			curLiveVars.addAll(Atoms.varSet(inputAtom));
+		}
+		int i = 0;
+		for (Atom a : r.getBody()) {
+			Set<Var> futureLiveVars = liveVarsByAtom.get(i);
+			Set<Var> nextLiveVars = curLiveVars.stream().filter(futureLiveVars::contains).collect(Collectors.toSet());
+			Symbol sym = a.getSymbol();
+			if (exploreTopDown(sym)) {
+				Set<Var> supVars = Atoms.varSet(a).stream().filter(curLiveVars::contains).collect(Collectors.toSet());
+				supVars.addAll(nextLiveVars);
+				Atom supAtom = createSupAtom(supVars, number, supCount);
+				magicRules.add(BasicRule.get(supAtom, l));
+				magicRules.add(BasicRule.get(createInputAtom(a), Collections.singletonList(supAtom)));
+				l = new ArrayList<>();
+				l.add(supAtom);
+				l.add(a);
+				supCount++;
 			} else {
-				return BasicRule.get(head, body);
+				l.add(a);
 			}
+			curLiveVars = nextLiveVars;
+			for (Var v : Atoms.varSet(a)) {
+				if (futureLiveVars.contains(v)) {
+					curLiveVars.add(v);
+				}
+			}
+			i++;
 		}
+		magicRules.add(BasicRule.get(head, l));
+		return magicRules;
+	}
 
-		private List<Set<Var>> liveVarsByAtom(Rule r) {
-			List<Set<Var>> liveVars = new ArrayList<>();
-			assert r.getHeadSize() == 1;
-			Set<Var> acc = Atoms.varSet(r.getHead(0));
+	private List<Set<Var>> liveVarsByAtom(Rule r) {
+		List<Set<Var>> liveVars = new ArrayList<>();
+		assert r.getHeadSize() == 1;
+		Set<Var> acc = Atoms.varSet(r.getHead(0));
+		liveVars.add(acc);
+		for (int i = r.getBodySize() - 1; i > 0; i--) {
+			acc.addAll(Atoms.varSet(r.getBody(i)));
 			liveVars.add(acc);
-			for (int i = r.getBodySize() - 1; i > 0; i--) {
-				acc.addAll(Atoms.varSet(r.getBody(i)));
-				liveVars.add(acc);
-			}
-			Collections.reverse(liveVars);
-			return liveVars;
 		}
+		Collections.reverse(liveVars);
+		return liveVars;
 	}
 
 	private static Atom createSupAtom(Set<Var> curLiveVars, int ruleNum, int supCount) {
@@ -645,12 +627,6 @@ public class MagicTransformer {
 		public Set<Rule> getRules(Symbol sym) {
 			assert sym.getSymbolType().isIDBSymbol();
 			return Util.lookupOrCreate(rules, sym, () -> Collections.emptySet());
-		}
-
-		public void addRule(Rule r) {
-			for (Atom head : r.getHead()) {
-				Util.lookupOrCreate(rules, head.getSymbol(), () -> new HashSet<>()).add(r);
-			}
 		}
 
 		@Override

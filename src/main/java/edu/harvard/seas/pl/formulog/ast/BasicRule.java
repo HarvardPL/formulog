@@ -48,6 +48,9 @@ public class BasicRule implements Rule {
 	}
 
 	public static BasicRule get(Atom head, List<Atom> body) {
+		if (body.isEmpty()) {
+			return get(head);
+		}
 		return get(Collections.singletonList(head), body);
 	}
 
