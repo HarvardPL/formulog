@@ -85,16 +85,16 @@ public class MagicSetTransformer {
 			Set<Rule> adRules = adorn(Collections.singleton(adornedQuery.getSymbol()));
 			Set<Rule> magicRules = makeMagicRules(adRules);
 			magicRules.add(makeSeedRule(adornedQuery));
-			ProgramImpl magicProg = new ProgramImpl(magicRules, origProg);
+			Program magicProg = new ProgramImpl(magicRules, origProg, false);
 			if (!isStratified(magicProg)) {
 				magicProg = stratify(magicProg, adRules);
 			}
-			newProg = magicProg;
 			if (useDemandTransformation) {
-				throw new UnsupportedOperationException("TODO");
+				magicProg = stripAdornments(magicProg);
 			} else {
 				query = adornedQuery;
 			}
+			newProg = magicProg;
 		}
 		return new Pair<>(newProg, query);
 	}
@@ -204,14 +204,44 @@ public class MagicSetTransformer {
 		}
 		Set<Rule> adRules = adorn(bottomUpSymbols);
 		Set<Rule> magicRules = makeMagicRules(adRules);
-		ProgramImpl magicProg = new ProgramImpl(magicRules, origProg);
+		Program magicProg = new ProgramImpl(magicRules, origProg, true);
 		if (!isStratified(magicProg)) {
 			magicProg = stratify(magicProg, adRules);
 		}
 		if (useDemandTransformation) {
-			throw new UnsupportedOperationException("TODO");
+			magicProg = stripAdornments(magicProg);
 		}
 		return magicProg;
+	}
+
+	private static Program stripAdornments(Program prog) {
+		Set<Rule> rules = new HashSet<>();
+		for (Symbol sym : prog.getRuleSymbols()) {
+			for (Rule r : prog.getRules(sym)) {
+				List<Atom> newHead = new ArrayList<>();
+				for (Atom atom : r.getHead()) {
+					newHead.add(stripAdornment(atom));
+				}
+				List<Atom> newBody = new ArrayList<>();
+				for (Atom atom : r.getBody()) {
+					newBody.add(stripAdornment(atom));
+				}
+				rules.add(BasicRule.get(newHead, newBody));
+			}
+		}
+		return new ProgramImpl(rules, prog, true);
+	}
+
+	private static Atom stripAdornment(Atom atom) {
+		Symbol sym = atom.getSymbol();
+		if (sym instanceof PositiveSymbol) {
+			sym = ((PositiveSymbol) sym).getUnderlyingSymbol();
+			assert sym instanceof AdornedSymbol;
+			sym = new PositiveSymbol(((AdornedSymbol) sym).getSymbol());
+		} else if (sym instanceof AdornedSymbol) {
+			sym = ((AdornedSymbol) sym).getSymbol();
+		}
+		return Atoms.get(sym, atom.getArgs(), atom.isNegated());
 	}
 
 	private Set<Rule> adorn(Set<Symbol> seeds) throws InvalidProgramException {
@@ -501,7 +531,7 @@ public class MagicSetTransformer {
 			}
 		}
 		newRules.addAll(adjustAdornedRules(adornedRules));
-		return new ProgramImpl(newRules, origProg);
+		return new ProgramImpl(newRules, origProg, true);
 	}
 
 	private List<Atom> makePositive(Iterable<Atom> atoms) {
@@ -509,11 +539,10 @@ public class MagicSetTransformer {
 		for (Atom a : atoms) {
 			Symbol sym = a.getSymbol();
 			if (sym instanceof AdornedSymbol) {
-				AdornedSymbol adSym = (AdornedSymbol) sym;
 				if (a.isNegated()) {
 					continue;
 				}
-				a = Atoms.getPositive(new PositiveSymbol(adSym), a.getArgs());
+				a = Atoms.getPositive(new PositiveSymbol(sym), a.getArgs());
 			}
 			l.add(a);
 		}
@@ -524,8 +553,12 @@ public class MagicSetTransformer {
 
 		private final Symbol underlyingSymbol;
 
-		public PositiveSymbol(AdornedSymbol underlyingSymbol) {
+		public PositiveSymbol(Symbol underlyingSymbol) {
 			this.underlyingSymbol = underlyingSymbol;
+		}
+
+		public Symbol getUnderlyingSymbol() {
+			return underlyingSymbol;
 		}
 
 		@Override
@@ -579,22 +612,26 @@ public class MagicSetTransformer {
 
 		private final Map<Symbol, Set<Rule>> rules = new HashMap<>();
 		private final Map<Symbol, Set<Atom>> facts = new HashMap<>();
+		private final boolean keepAllFacts;
 
 		public final Program origProg;
 
-		public ProgramImpl(Set<Rule> rs, Program origProg) {
+		public ProgramImpl(Set<Rule> rs, Program origProg, boolean keepAllFacts) {
 			for (Rule r : rs) {
 				for (Atom head : r.getHead()) {
 					Util.lookupOrCreate(rules, head.getSymbol(), () -> new HashSet<>()).add(r);
 				}
-				for (Atom a : r.getBody()) {
-					Symbol sym = a.getSymbol();
-					if (sym.getSymbolType().isEDBSymbol()) {
-						facts.putIfAbsent(sym, origProg.getFacts(sym));
+				if (!keepAllFacts) {
+					for (Atom a : r.getBody()) {
+						Symbol sym = a.getSymbol();
+						if (sym.getSymbolType().isEDBSymbol()) {
+							facts.putIfAbsent(sym, origProg.getFacts(sym));
+						}
 					}
 				}
 			}
 			this.origProg = origProg;
+			this.keepAllFacts = keepAllFacts;
 		}
 
 		@Override
@@ -604,6 +641,9 @@ public class MagicSetTransformer {
 
 		@Override
 		public Set<Symbol> getFactSymbols() {
+			if (keepAllFacts) {
+				return origProg.getFactSymbols();
+			}
 			return Collections.unmodifiableSet(facts.keySet());
 		}
 
@@ -620,6 +660,9 @@ public class MagicSetTransformer {
 		@Override
 		public Set<Atom> getFacts(Symbol sym) {
 			assert sym.getSymbolType().isEDBSymbol();
+			if (keepAllFacts) {
+				return origProg.getFacts(sym);
+			}
 			return Util.lookupOrCreate(facts, sym, () -> Collections.emptySet());
 		}
 

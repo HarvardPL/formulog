@@ -114,12 +114,12 @@ public final class Main {
 			MagicSetTransformer mst = new MagicSetTransformer(prog);
 			if (q != null) {
 				System.out.println("Rewriting for query " + q + "...");
-				p = mst.transform(q, false);
+				p = mst.transform(q, true);
 				prog = p.fst();
 				q = p.snd();
 			} else {
 				System.out.println("Rewriting top-down relations...");
-				prog = mst.transform(false);
+				prog = mst.transform(true);
 			}
 		} catch (InvalidProgramException e) {
 			handleException("Error while rewriting the program!", e);

@@ -69,7 +69,7 @@ public class Time {
 		Atom q = p.snd();
 		prog = (new TypeChecker(prog, q)).typeCheck();
 		if (q != null) {
-			p = (new MagicSetTransformer(prog)).transform(q, false);
+			p = (new MagicSetTransformer(prog)).transform(q, true);
 			prog = p.fst();
 		}
 		ValidProgram vprog = (new Validator(prog)).validate();
