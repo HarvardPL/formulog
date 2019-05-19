@@ -512,10 +512,14 @@ public class MagicSetTransformer {
 		for (Rule r : adRules) {
 			assert r.getHeadSize() == 1;
 			Atom head = r.getHead(0);
-			List<Atom> body = new ArrayList<>();
-			body.add(createInputAtom(head));
-			r.getBody().forEach(body::add);
-			newRules.add(BasicRule.get(head, body));
+			if (exploreTopDown(head.getSymbol())) {
+				List<Atom> body = new ArrayList<>();
+				body.add(createInputAtom(head));
+				r.getBody().forEach(body::add);
+				newRules.add(BasicRule.get(head, body));
+			} else {
+				newRules.add(r);
+			}
 		}
 		return newRules;
 	}
