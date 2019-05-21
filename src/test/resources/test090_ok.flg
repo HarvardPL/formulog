@@ -23,5 +23,3 @@ ok :-
   a not c, b not c, !(c not c),
   true not false, !(false not false),
   !(true not true), true not false.
-
-:- ok.

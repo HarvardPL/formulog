@@ -1,0 +1,28 @@
+input a(i32).
+input d(i32).
+
+@bottomup
+output b(i32).
+
+@bottomup
+output c(i32, i32).
+
+@bottomup
+output p(i32).
+
+@bottomup
+output q(i32).
+
+a(0). a(1). a(2).
+d(0). d(2). d(4).
+
+p(X) :- a(X).
+
+b(X) :- d(X).
+
+c(X, Y) :- b(X), p(X), b(Y).
+
+q(X) :- c(X, X).
+
+output ok.
+ok :- q(2).

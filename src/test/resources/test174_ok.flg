@@ -1,0 +1,36 @@
+input d(i32, i32).
+input e(i32, i32).
+input f(i32, i32).
+
+@bottomup
+output a(i32, i32).
+@topdown
+output b(i32).
+
+e(1, 2).
+d(1, 2). d(3, 4). d(4, 5). d(5, 3).
+f(2, 1).
+
+(* Modified this slightly from example by Meskes and Noack [1993] *)
+b(X) :- e(Z, X), f(X, Z).
+a(X, Y) :- d(X, Y), !b(Y).
+a(X, Y) :- a(X, Z), d(Z, Y), !b(Y).
+
+input three(i32).
+three(3).
+input four(i32).
+four(4).
+input five(i32).
+five(5).
+
+output ok1.
+ok1 :- a(3, X), three(X).
+
+output ok2.
+ok2 :- a(3, X), four(X).
+
+output ok3.
+ok3 :- a(3, X), five(X).
+
+output ok.
+ok :- ok1, ok2, ok3.

@@ -50,6 +50,7 @@ public class EvaluationTest {
 			}
 			Pair<Program, Atom> p = (new Parser()).parse(new InputStreamReader(is));
 			Program prog = p.fst();
+			assert p.snd() == null;
 			prog = (new TypeChecker(prog, p.snd())).typeCheck();
 			ValidProgram vprog = (new Validator(prog)).validate();
 			Interpreter interp = new Interpreter(vprog);

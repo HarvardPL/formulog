@@ -236,8 +236,10 @@ public class MagicSetTransformer {
 		Symbol sym = atom.getSymbol();
 		if (sym instanceof PositiveSymbol) {
 			sym = ((PositiveSymbol) sym).getUnderlyingSymbol();
-			assert sym instanceof AdornedSymbol;
-			sym = new PositiveSymbol(((AdornedSymbol) sym).getSymbol());
+			if (sym instanceof AdornedSymbol) {
+				sym = ((AdornedSymbol) sym).getSymbol();
+			}
+			sym = new PositiveSymbol(sym);
 		} else if (sym instanceof AdornedSymbol) {
 			sym = ((AdornedSymbol) sym).getSymbol();
 		}
@@ -542,7 +544,7 @@ public class MagicSetTransformer {
 		List<Atom> l = new ArrayList<>();
 		for (Atom a : atoms) {
 			Symbol sym = a.getSymbol();
-			if (sym instanceof AdornedSymbol) {
+			if (sym.getSymbolType().isIDBSymbol() && !(sym instanceof InputSymbol || sym instanceof SupSymbol)) {
 				if (a.isNegated()) {
 					continue;
 				}
