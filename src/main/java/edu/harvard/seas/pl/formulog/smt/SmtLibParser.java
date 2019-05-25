@@ -25,8 +25,10 @@ import java.io.Reader;
 import java.io.StreamTokenizer;
 import java.io.StringReader;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.Constructors;
 import edu.harvard.seas.pl.formulog.ast.FP32;
@@ -72,7 +74,7 @@ public class SmtLibParser {
 		t.consume(")");
 		return m;
 	}
-	
+
 	private void consumeComment(Tokenizer t) throws IOException, SmtLibParseException {
 		t.consume(";;");
 		t.ignoreWhitespace(false);
@@ -81,7 +83,7 @@ public class SmtLibParser {
 		}
 		t.ignoreWhitespace(true);
 	}
-	
+
 	private void parseFunctionDef(Map<SolverVariable, Term> m, Tokenizer t) throws IOException, SmtLibParseException {
 		t.consume("(");
 		if (t.peek().equals("forall") || t.peek().equals("declare")) {
@@ -124,18 +126,26 @@ public class SmtLibParser {
 		return (AlgebraicDataType) symType.getTypeArgs().get(0);
 	}
 
-	private boolean shouldRecord(AlgebraicDataType type) {
-		boolean ok = shouldRecord1(type);
+	private boolean shouldRecord(AlgebraicDataType type) throws SmtLibParseException {
+		Set<Symbol> seen = new HashSet<>();
+		boolean ok = shouldRecord1(type, seen);
 		for (Type arg : type.getTypeArgs()) {
 			if (arg instanceof AlgebraicDataType) {
-				ok &= shouldRecord1((AlgebraicDataType) arg);
+				ok &= shouldRecord1((AlgebraicDataType) arg, seen);
 			}
 		}
 		return ok;
 	}
 
-	private boolean shouldRecord1(AlgebraicDataType type) {
+	private static void die(String msg) throws SmtLibParseException {
+		throw new SmtLibParseException("INTERNAL ERROR: " + msg);
+	}
+
+	private boolean shouldRecord1(AlgebraicDataType type, Set<Symbol> seen) throws SmtLibParseException {
 		Symbol sym = type.getSymbol();
+		if (!seen.add(sym)) {
+			return true;
+		}
 		if (sym instanceof IndexedSymbol) {
 			switch ((IndexedSymbol) sym) {
 			case BV: {
@@ -151,7 +161,7 @@ public class SmtLibParser {
 				return (e == 8 && s == 24) || (e == 11 && s == 53);
 			}
 			default:
-				throw new AssertionError("impossible");
+				die("unexpected indexed symbol: " + sym);
 			}
 		}
 		if (sym instanceof BuiltInTypeSymbol) {
@@ -162,17 +172,33 @@ public class SmtLibParser {
 			case OPTION_TYPE:
 			case STRING_TYPE:
 				return true;
+			case ARRAY_TYPE:
+			case INT_TYPE:
+				return false;
 			case SMT_TYPE:
 			case MODEL_TYPE:
 			case SYM_TYPE:
 			default:
-				throw new AssertionError("impossible");
+				die("unexpected built-in symbol: " + sym);
 			}
 		}
-		return !sym.getSymbolType().equals(SymbolType.SOLVER_UNINTERPRETED_SORT);
+		if (sym.getSymbolType().equals(SymbolType.SOLVER_UNINTERPRETED_SORT)) {
+			return false;
+		}
+		boolean ok = true;
+		if (type.hasConstructors()) {
+			for (ConstructorScheme cs : type.getConstructors()) {
+				for (Type ty : cs.getTypeArgs()) {
+					if (ty instanceof AlgebraicDataType) {
+						ok &= shouldRecord1((AlgebraicDataType) ty, seen);
+					}
+				}
+			}
+		}
+		return ok;
 	}
 
-	private TermType getTermType(AlgebraicDataType type) {
+	private TermType getTermType(AlgebraicDataType type) throws SmtLibParseException {
 		Symbol sym = type.getSymbol();
 		if (sym instanceof IndexedSymbol) {
 			switch ((IndexedSymbol) sym) {
@@ -184,7 +210,7 @@ public class SmtLibParser {
 				} else if (w == 64) {
 					return TermType.BV64;
 				}
-				throw new AssertionError("impossible");
+				die("unexpected BV width " + w);
 			}
 			case FP: {
 				TypeIndex idx1 = (TypeIndex) type.getTypeArgs().get(0);
@@ -196,10 +222,10 @@ public class SmtLibParser {
 				} else if (e == 11 && s == 53) {
 					return TermType.FP64;
 				}
-				throw new AssertionError("impossible");
+				die("unexpected FP dimensions " + e + "/" + s);
 			}
 			default:
-				throw new AssertionError("impossible");
+				die("unexpected indexed symbol: " + sym);
 			}
 		}
 		if (sym instanceof BuiltInTypeSymbol) {
@@ -211,11 +237,8 @@ public class SmtLibParser {
 				return TermType.ADT;
 			case STRING_TYPE:
 				return TermType.STRING;
-			case SMT_TYPE:
-			case MODEL_TYPE:
-			case SYM_TYPE:
 			default:
-				throw new AssertionError("impossible");
+				die("unexpected built-in symbol: " + sym);
 			}
 		}
 		return TermType.ADT;
@@ -346,7 +369,8 @@ public class SmtLibParser {
 		case STRING:
 			return parseString(t);
 		}
-		throw new AssertionError("impossible");
+		die("unexpected term type: " + getTermType(type));
+		return null;
 	}
 
 	// FIXME This is pretty rudimentary and doesn't capture a lot of cases (for
@@ -467,7 +491,7 @@ public class SmtLibParser {
 				// This should only happen in the mode when whitespace is significant.
 				return "\n";
 			case StreamTokenizer.TT_NUMBER:
-				throw new AssertionError("Nothing should be tokenized as a number.");
+				die("nothing should be tokenized as a number.");
 			case StreamTokenizer.TT_WORD:
 				return t.sval;
 			default:

@@ -194,6 +194,10 @@ public final class Types {
 			}
 		}
 
+		public boolean hasConstructors() {
+			return memo.containsKey(sym);
+		}
+		
 		public Set<ConstructorScheme> getConstructors() {
 			Set<ConstructorScheme> s = constructors.get();
 			if (s == null) {
