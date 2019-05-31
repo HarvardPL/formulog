@@ -49,17 +49,16 @@ import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitorExn;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
-import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.Expr;
-import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.ExprVisitorExn;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.MatchExpr;
-import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.TermExpr;
+import edu.harvard.seas.pl.formulog.ast.functions.Expr;
+import edu.harvard.seas.pl.formulog.ast.functions.Exprs.ExprVisitor;
+import edu.harvard.seas.pl.formulog.ast.functions.Exprs.ExprVisitorExn;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.smt.Z3ThreadFactory;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInPredicateSymbol;
-import edu.harvard.seas.pl.formulog.symbols.FunctionSymbolForPredicateFactory.FunctionSymbolForPredicate;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
@@ -104,7 +103,7 @@ public class Validator {
 
 		});
 		if (fact2 == null) {
-			throw new InvalidProgramException("Fact contains a function call that cannot be normalized: " + fact);
+			throw new InvalidProgramException("Fact contains an expression that cannot be normalized: " + fact);
 		}
 		return fact2;
 	}
@@ -164,7 +163,7 @@ public class Validator {
 		}
 		return BasicRule.get(newHead, newBody);
 	}
-	
+
 	private static Atom simplifyAtom(Atom a) {
 		Term[] args = a.getArgs();
 		Term[] newArgs = new Term[args.length];
@@ -173,8 +172,8 @@ public class Validator {
 		}
 		return Atoms.get(a.getSymbol(), newArgs, a.isNegated());
 	}
-	
-	private static TermVisitor<Void, Term> termSimplifier = new TermVisitor<Void, Term>() {
+
+	private static final TermVisitor<Void, Term> termSimplifier = new TermVisitor<Void, Term>() {
 
 		@Override
 		public Term visit(Var t, Void in) {
@@ -197,19 +196,40 @@ public class Validator {
 		}
 
 		@Override
+		public Term visit(Expr expr, Void in) {
+			return expr.visit(exprSimplifier, in);
+		}
+
+	};
+
+	private static final ExprVisitor<Void, Term> exprSimplifier = new ExprVisitor<Void, Term>() {
+
+		@Override
+		public Term visit(MatchExpr matchExpr, Void in) {
+			Term matchee = matchExpr.getMatchee().visit(termSimplifier, in);
+			List<MatchClause> clauses = new ArrayList<>();
+			for (MatchClause cl : matchExpr.getClauses()) {
+				Term lhs = cl.getLHS().visit(termSimplifier, in);
+				Term rhs = cl.getRHS().visit(termSimplifier, in);
+				clauses.add(CustomFunctionDef.getMatchClause(lhs, rhs));
+			}
+			return CustomFunctionDef.getMatchExpr(matchee, clauses);
+		}
+
+		@Override
 		public Term visit(FunctionCall f, Void in) {
 			Symbol sym = f.getSymbol();
 			if (sym.equals(BuiltInFunctionSymbol.ENTER_FORMULA) || sym.equals(BuiltInFunctionSymbol.EXIT_FORMULA)) {
-				return f.getArgs()[0].visit(this, in);
+				return f.getArgs()[0].visit(termSimplifier, in);
 			}
 			Term[] args = f.getArgs();
 			Term[] newArgs = new Term[args.length];
 			for (int i = 0; i < args.length; ++i) {
-				newArgs[i] = args[i].visit(this, in);
+				newArgs[i] = args[i].visit(termSimplifier, in);
 			}
 			return f.copyWithNewArgs(newArgs);
 		}
-		
+
 	};
 
 	private static TermVisitor<List<Atom>, Term> funcRemover = new TermVisitor<List<Atom>, Term>() {
@@ -235,20 +255,24 @@ public class Validator {
 		}
 
 		@Override
-		public Term visit(FunctionCall f, List<Atom> in) {
-			Term[] args = f.getArgs();
-			Term[] newArgs = new Term[args.length];
-			for (int i = 0; i < args.length; ++i) {
-				newArgs[i] = args[i].visit(this, in);
-			}
+		public Term visit(Expr expr, List<Atom> in) {
+			// Term[] args = f.getArgs();
+			// Term[] newArgs = new Term[args.length];
+			// for (int i = 0; i < args.length; ++i) {
+			// newArgs[i] = args[i].visit(this, in);
+			// }
+			// Var x = Var.getFresh();
+			// Atom eq = makeUnifier(x, f.copyWithNewArgs(newArgs), false);
+			// in.add(eq);
+			// XXX This doesn't totally flatten expressions like before, but I'm not sure
+			// why we'd have to.
 			Var x = Var.getFresh();
-			Atom eq = makeUnifier(x, f.copyWithNewArgs(newArgs), false);
+			Atom eq = makeUnifier(x, expr, false);
 			in.add(eq);
 			return x;
 		}
 
 	};
-
 
 	private static UnifyAtom makeUnifier(Term t1, Term t2, boolean neg) {
 		return (UnifyAtom) Atoms.get(BuiltInPredicateSymbol.UNIFY, new Term[] { t1, t2 }, neg);
@@ -423,7 +447,7 @@ public class Validator {
 	private void validateBody(Iterable<Atom> body, Set<Var> unboundVars) throws InvalidProgramException {
 		for (Atom a : body) {
 			unboundVars.addAll(Atoms.varSet(a));
-			validateFunctionCalls(a);
+			validateTerms(a.getArgs());
 		}
 		Set<Var> boundVars = new HashSet<>();
 		boolean changed;
@@ -448,47 +472,68 @@ public class Validator {
 		}
 	}
 
-	private void validateFunctionCalls(Atom a) throws InvalidProgramException {
-		for (Term t : a.getArgs()) {
-			validateFunctionCalls(t);
+	private static final TermVisitorExn<Void, Void, InvalidProgramException> termValidator = new TermVisitorExn<Void, Void, InvalidProgramException>() {
+
+		@Override
+		public Void visit(Var x, Void in) throws InvalidProgramException {
+			return null;
 		}
+
+		@Override
+		public Void visit(Constructor c, Void in) throws InvalidProgramException {
+			for (Term arg : c.getArgs()) {
+				arg.visit(this, in);
+			}
+			return null;
+		}
+
+		@Override
+		public Void visit(Primitive<?> p, Void in) throws InvalidProgramException {
+			return null;
+		}
+
+		@Override
+		public Void visit(Expr e, Void in) throws InvalidProgramException {
+			e.visit(exprValidator, in);
+			return null;
+		}
+
+	};
+
+	private static final ExprVisitorExn<Void, Void, InvalidProgramException> exprValidator = new ExprVisitorExn<Void, Void, InvalidProgramException>() {
+
+		@Override
+		public Void visit(MatchExpr matchExpr, Void in) throws InvalidProgramException {
+			validateTerm(matchExpr.getMatchee());
+			for (MatchClause cl : matchExpr.getClauses()) {
+				Term lhs = cl.getLHS();
+				validateTerm(lhs);
+				if (lhs.containsFunctionCall()) {
+					throw new InvalidProgramException("Cannot have a match pattern with a reducible term: " + lhs);
+				}
+				validateTerm(cl.getRHS());
+			}
+			return null;
+		}
+
+		@Override
+		public Void visit(FunctionCall funcCall, Void in) throws InvalidProgramException {
+			for (Term arg : funcCall.getArgs()) {
+				arg.visit(termValidator, in);
+			}
+			return null;
+		}
+
+	};
+
+	private static void validateTerm(Term term) throws InvalidProgramException {
+		term.visit(termValidator, null);
 	}
 
-	private void validateFunctionCalls(Term t) throws InvalidProgramException {
-		t.visit(new TermVisitorExn<Void, Void, InvalidProgramException>() {
-
-			@Override
-			public Void visit(Var t, Void in) throws InvalidProgramException {
-				return null;
-			}
-
-			@Override
-			public Void visit(Constructor t, Void in) throws InvalidProgramException {
-				for (Term tt : t.getArgs()) {
-					tt.visit(this, in);
-				}
-				return null;
-			}
-
-			@Override
-			public Void visit(Primitive<?> prim, Void in) throws InvalidProgramException {
-				return null;
-			}
-
-			@Override
-			public Void visit(FunctionCall function, Void in) throws InvalidProgramException {
-				if (!prog.getFunctionSymbols().contains(function.getSymbol())
-						&& !(function.getSymbol() instanceof FunctionSymbolForPredicate)) {
-					throw new InvalidProgramException(
-							"Call to declared but undefined function: " + function.getSymbol());
-				}
-				for (Term tt : function.getArgs()) {
-					tt.visit(this, in);
-				}
-				return null;
-			}
-
-		}, null);
+	private static void validateTerms(Term[] terms) throws InvalidProgramException {
+		for (Term t : terms) {
+			validateTerm(t);
+		}
 	}
 
 	private void validateFunctionDefs() throws InvalidProgramException {
@@ -517,45 +562,20 @@ public class Validator {
 		return vars;
 	}
 
-	private void validateFunctionBody(Expr body, Set<Var> boundVars) throws InvalidProgramException {
-		body.visit(new ExprVisitorExn<Set<Var>, Void, InvalidProgramException>() {
-
-			@Override
-			public Void visit(TermExpr termExpr, Set<Var> in) throws InvalidProgramException {
-				Term t = termExpr.getTerm();
-				validateFunctionCalls(t);
-				Set<Var> vars = Terms.varSet(t);
-				vars.removeAll(in);
-				if (!vars.isEmpty()) {
-					StringBuilder sb = new StringBuilder();
-					for (Iterator<Var> it = vars.iterator(); it.hasNext();) {
-						sb.append("\"" + it.next() + "\"");
-						if (it.hasNext()) {
-							sb.append(", ");
-						}
-					}
-					throw new InvalidProgramException("Unbound variables: " + sb.toString());
+	private void validateFunctionBody(Term body, Set<Var> boundVars) throws InvalidProgramException {
+		validateTerm(body);
+		Set<Var> freeVars = Terms.varSet(body);
+		freeVars.removeAll(boundVars);
+		if (!freeVars.isEmpty()) {
+			StringBuilder sb = new StringBuilder();
+			for (Iterator<Var> it = freeVars.iterator(); it.hasNext();) {
+				sb.append("\"" + it.next() + "\"");
+				if (it.hasNext()) {
+					sb.append(", ");
 				}
-				return null;
 			}
-
-			@Override
-			public Void visit(MatchExpr matchExpr, Set<Var> in) throws InvalidProgramException {
-				matchExpr.getExpr().visit(this, in);
-				for (MatchClause m : matchExpr.getClauses()) {
-					Term lhs = m.getLHS();
-					if (lhs.containsFunctionCall()) {
-						throw new InvalidProgramException(
-								"Cannot have a match pattern with a term with a function invocation: " + lhs);
-					}
-					Set<Var> newBoundVars = new HashSet<>(in);
-					newBoundVars.addAll(Terms.varSet(lhs));
-					m.getRHS().visit(this, newBoundVars);
-				}
-				return null;
-			}
-
-		}, boundVars);
+			throw new InvalidProgramException("Unbound variables: " + sb.toString());
+		}
 	}
 
 	private class ValidProgramImpl implements ValidProgram {

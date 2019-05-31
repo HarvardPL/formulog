@@ -44,10 +44,10 @@ import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
-import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.MatchExpr;
-import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.TermExpr;
+import edu.harvard.seas.pl.formulog.ast.functions.Expr;
+import edu.harvard.seas.pl.formulog.ast.functions.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbolForPredicateFactory.FunctionSymbolForPredicate;
 
@@ -146,23 +146,44 @@ public class Stratifier {
 				}
 
 				@Override
-				public Void visit(FunctionCall function, Void in) {
-					processFunctionSymbol(function.getSymbol());
-					for (Term arg : function.getArgs()) {
-						arg.visit(this, null);
-					}
+				public Void visit(Expr expr, Void in) {
+					processExpr(expr);
 					return null;
 				}
 
 			}, null);
 		}
+		
+		private void processExpr(Expr expr) {
+			expr.visit(new ExprVisitor<Void, Void>() {
+
+				@Override
+				public Void visit(MatchExpr matchExpr, Void in) {
+					processTerm(matchExpr.getMatchee());
+					for (MatchClause cl : matchExpr.getClauses()) {
+						processTerm(cl.getLHS());
+						processTerm(cl.getRHS());
+					}
+					return null;
+				}
+
+				@Override
+				public Void visit(FunctionCall funcCall, Void in) {
+					processFunctionSymbol(funcCall.getSymbol());
+					for (Term arg : funcCall.getArgs()) {
+						processTerm(arg);
+					}
+					return null;
+				}
+				
+			}, null);
+		}
 
 		private void processFunctionSymbol(Symbol s) {
 			assert prog.getFunctionSymbols().contains(s);
-			if (visitedFunctions.contains(s)) {
+			if (!visitedFunctions.add(s)) {
 				return;
 			}
-			visitedFunctions.add(s);
 			if (s instanceof FunctionSymbolForPredicate) {
 				addNegative(((FunctionSymbolForPredicate) s).getPredicateSymbol());
 				return;
@@ -170,25 +191,7 @@ public class Stratifier {
 			FunctionDef def1 = prog.getDef(s);
 			if (def1 instanceof CustomFunctionDef) {
 				CustomFunctionDef def = (CustomFunctionDef) def1;
-				def.getBody().visit(new ExprVisitor<Void, Void>() {
-
-					@Override
-					public Void visit(TermExpr termExpr, Void in) {
-						processTerm(termExpr.getTerm());
-						return null;
-					}
-
-					@Override
-					public Void visit(MatchExpr matchExpr, Void in) {
-						matchExpr.getExpr().visit(this, null);
-						for (MatchClause cl : matchExpr.getClauses()) {
-							processTerm(cl.getLHS());
-							cl.getRHS().visit(this, null);
-						}
-						return null;
-					}
-
-				}, null);
+				processTerm(def.getBody());
 			}
 		}
 

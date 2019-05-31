@@ -44,12 +44,11 @@ import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
-import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.Expr;
-import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.MatchExpr;
-import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.TermExpr;
 import edu.harvard.seas.pl.formulog.ast.functions.DummyFunctionDef;
+import edu.harvard.seas.pl.formulog.ast.functions.Expr;
+import edu.harvard.seas.pl.formulog.ast.functions.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDB;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDB.IndexedFactDBBuilder;
@@ -198,49 +197,19 @@ public class Interpreter {
 				e.visit(new ExprVisitor<Void, Void>() {
 
 					@Override
-					public Void visit(TermExpr termExpr, Void in) {
-						preprocessTerm(termExpr.getTerm());
-						return null;
-					}
-
-					@Override
 					public Void visit(MatchExpr matchExpr, Void in) {
-						matchExpr.getExpr().visit(this, null);
+						preprocessTerm(matchExpr.getMatchee());
 						for (MatchClause cl : matchExpr.getClauses()) {
 							preprocessTerm(cl.getLHS());
-							cl.getRHS().visit(this, null);
+							preprocessTerm(cl.getRHS());
 						}
 						return null;
 					}
-
-				}, null);
-			}
-
-			private void preprocessTerm(Term t) {
-				t.visit(new TermVisitor<Void, Void>() {
-
-					@Override
-					public Void visit(Var t, Void in) {
-						return null;
-					}
-
-					@Override
-					public Void visit(Constructor t, Void in) {
-						for (Term arg : t.getArgs()) {
-							arg.visit(this, null);
-						}
-						return null;
-					}
-
-					@Override
-					public Void visit(Primitive<?> prim, Void in) {
-						return null;
-					}
-
+					
 					@Override
 					public Void visit(FunctionCall function, Void in) {
 						for (Term arg : function.getArgs()) {
-							arg.visit(this, null);
+							preprocessTerm(arg);
 						}
 						Symbol funcSym = function.getSymbol();
 						if (!visitedFunctions.contains(funcSym)) {
@@ -279,11 +248,41 @@ public class Interpreter {
 								});
 							} else if (prog.getDef(funcSym) instanceof CustomFunctionDef) {
 								CustomFunctionDef def = (CustomFunctionDef) prog.getDef(funcSym);
-								preprocessExpr(def.getBody());
+								preprocessTerm(def.getBody());
 							}
 						}
 						return null;
 					}
+				}, null);
+			}
+
+			private void preprocessTerm(Term t) {
+				t.visit(new TermVisitor<Void, Void>() {
+
+					@Override
+					public Void visit(Var t, Void in) {
+						return null;
+					}
+
+					@Override
+					public Void visit(Constructor t, Void in) {
+						for (Term arg : t.getArgs()) {
+							arg.visit(this, null);
+						}
+						return null;
+					}
+
+					@Override
+					public Void visit(Primitive<?> prim, Void in) {
+						return null;
+					}
+
+					@Override
+					public Void visit(Expr expr, Void in) {
+						preprocessExpr(expr);
+						return null;
+					}
+					
 				}, null);
 			}
 		}

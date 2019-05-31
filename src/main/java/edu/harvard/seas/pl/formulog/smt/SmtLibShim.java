@@ -45,14 +45,14 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.traverse.TopologicalOrderIterator;
 
 import edu.harvard.seas.pl.formulog.ast.Constructor;
+import edu.harvard.seas.pl.formulog.ast.Constructors.SolverUninterpretedFunction;
+import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
-import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.ast.Constructors.SolverUninterpretedFunction;
-import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
-import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
+import edu.harvard.seas.pl.formulog.ast.Var;
+import edu.harvard.seas.pl.formulog.ast.functions.Expr;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.smt.SmtLibParser.SmtLibParseException;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;
@@ -65,12 +65,12 @@ import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
 import edu.harvard.seas.pl.formulog.types.Types;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
+import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType.ConstructorScheme;
 import edu.harvard.seas.pl.formulog.types.Types.OpaqueType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
 import edu.harvard.seas.pl.formulog.types.Types.TypeVar;
 import edu.harvard.seas.pl.formulog.types.Types.TypeVisitor;
-import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType.ConstructorScheme;
 import edu.harvard.seas.pl.formulog.util.DedupWorkList;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
@@ -244,7 +244,7 @@ public class SmtLibShim {
 			}
 
 			@Override
-			public Void visit(FunctionCall f, Void in) {
+			public Void visit(Expr expr, Void in) {
 				throw new AssertionError("impossible");
 			}
 
@@ -440,7 +440,7 @@ public class SmtLibShim {
 				}
 
 				@Override
-				public Void visit(FunctionCall f, Void in) {
+				public Void visit(Expr expr, Void in) {
 					throw new AssertionError("impossible");
 				}
 
@@ -599,7 +599,7 @@ public class SmtLibShim {
 				}
 
 				@Override
-				public Type visit(FunctionCall f, Void in) {
+				public Type visit(Expr expr, Void in) {
 					throw new AssertionError("impossible");
 				}
 

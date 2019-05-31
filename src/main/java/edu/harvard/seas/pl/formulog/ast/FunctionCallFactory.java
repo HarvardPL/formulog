@@ -6,8 +6,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
-import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitorExn;
+import edu.harvard.seas.pl.formulog.ast.functions.Expr;
+import edu.harvard.seas.pl.formulog.ast.functions.Exprs.ExprVisitor;
+import edu.harvard.seas.pl.formulog.ast.functions.Exprs.ExprVisitorExn;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDefManager;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
@@ -16,8 +17,8 @@ import edu.harvard.seas.pl.formulog.symbols.SymbolType;
 import edu.harvard.seas.pl.formulog.unification.EmptySubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.FunctorUtil;
-import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.util.FunctorUtil.Memoizer;
+import edu.harvard.seas.pl.formulog.util.Util;
 
 public final class FunctionCallFactory {
 
@@ -41,7 +42,7 @@ public final class FunctionCallFactory {
 		return memo.lookupOrCreate(sym, args, () -> new FunctionCall(sym, args));
 	}
 
-	public class FunctionCall implements Functor {
+	public class FunctionCall implements Functor, Expr {
 
 		private final Symbol sym;
 		private final Term[] args;
@@ -117,16 +118,6 @@ public final class FunctionCallFactory {
 		}
 
 		@Override
-		public <I, O> O visit(TermVisitor<I, O> v, I in) {
-			return v.visit(this, in);
-		}
-
-		@Override
-		public <I, O, E extends Throwable> O visit(TermVisitorExn<I, O, E> v, I in) throws E {
-			return v.visit(this, in);
-		}
-
-		@Override
 		public FunctionCall copyWithNewArgs(Term[] newArgs) {
 			return make(sym, newArgs);
 		}
@@ -162,6 +153,16 @@ public final class FunctionCallFactory {
 		public Term normalize(Substitution s) throws EvaluationException {
 			Term[] newArgs = Terms.mapExn(args, t -> t.normalize(s));
 			return evaluate(newArgs, s);
+		}
+
+		@Override
+		public <I, O> O visit(ExprVisitor<I, O> visitor, I in) {
+			return visitor.visit(this, in);
+		}
+
+		@Override
+		public <I, O, E extends Throwable> O visit(ExprVisitorExn<I, O, E> visitor, I in) throws E {
+			return visitor.visit(this, in);
 		}
 
 	}

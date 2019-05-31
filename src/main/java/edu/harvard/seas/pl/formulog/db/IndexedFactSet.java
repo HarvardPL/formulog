@@ -30,15 +30,15 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import edu.harvard.seas.pl.formulog.ast.Atoms;
+import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
+import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
-import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
-import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
-import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
+import edu.harvard.seas.pl.formulog.ast.Var;
+import edu.harvard.seas.pl.formulog.ast.functions.Expr;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
@@ -104,9 +104,9 @@ public class IndexedFactSet {
 		}
 		IndexEntry e = idxs[idx];
 		Var v = e.getV();
-		FunctionCall f = e.getF();
-		if (s.containsKey(v) || f != null) {
-			Term t = (f == null) ? s.get(v) : f.evaluate(s);
+		Expr expr = e.getE();
+		if (s.containsKey(v) || expr != null) {
+			Term t = (expr == null) ? s.get(v) : expr.normalize(s);
 			m = (Map<Object, Object>) m.get(t);
 			query(m, s, idx + 1, acc);
 		} else {
@@ -158,10 +158,10 @@ public class IndexedFactSet {
 				}
 
 				@Override
-				public Term visit(FunctionCall function, Void in) {
+				public Term visit(Expr expr, Void in) {
 					Var v = Var.getFresh();
-					idxs.add(new IndexEntry(v, function));
-					for (Var vv : Terms.varSet(function)) {
+					idxs.add(new IndexEntry(v, expr));
+					for (Var vv : Terms.varSet(expr)) {
 						if (!boundVars.contains(vv)) {
 							idxs.add(new IndexEntry(vv, null));
 						}
@@ -182,8 +182,8 @@ public class IndexedFactSet {
 		while (!idxSet.isEmpty()) {
 			for (IndexEntry e : new HashSet<>(idxSet)) {
 				Var v = e.getV();
-				FunctionCall f = e.getF();
-				if (f == null || boundVar.containsAll(Terms.varSet(f))) {
+				Expr expr = e.getE();
+				if (expr == null || boundVar.containsAll(Terms.varSet(expr))) {
 					boundVar.add(v);
 					idxs.add(e);
 				}
@@ -204,26 +204,26 @@ public class IndexedFactSet {
 	private static class IndexEntry {
 
 		private final Var v;
-		private final FunctionCall f;
+		private final Expr expr;
 
-		public IndexEntry(Var v, FunctionCall f) {
+		public IndexEntry(Var v, Expr expr) {
 			this.v = v;
-			this.f = f;
+			this.expr = expr;
 		}
 
 		public Var getV() {
 			return v;
 		}
 
-		public FunctionCall getF() {
-			return f;
+		public Expr getE() {
+			return expr;
 		}
 
 		@Override
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + ((f == null) ? 0 : f.hashCode());
+			result = prime * result + ((expr == null) ? 0 : expr.hashCode());
 			result = prime * result + ((v == null) ? 0 : v.hashCode());
 			return result;
 		}
@@ -237,10 +237,10 @@ public class IndexedFactSet {
 			if (getClass() != obj.getClass())
 				return false;
 			IndexEntry other = (IndexEntry) obj;
-			if (f == null) {
-				if (other.f != null)
+			if (expr == null) {
+				if (other.expr != null)
 					return false;
-			} else if (!f.equals(other.f))
+			} else if (!expr.equals(other.expr))
 				return false;
 			if (v == null) {
 				if (other.v != null)
@@ -253,8 +253,8 @@ public class IndexedFactSet {
 		@Override
 		public String toString() {
 			String s = "IndexEntry(" + v;
-			if (f != null) {
-				s += ", " + f.getSymbol();
+			if (expr != null) {
+				s += ", <expr>";
 			}
 			return s + ")";
 		}

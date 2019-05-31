@@ -25,6 +25,10 @@ import java.util.Set;
 import java.util.function.Function;
 
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
+import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.MatchClause;
+import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.MatchExpr;
+import edu.harvard.seas.pl.formulog.ast.functions.Expr;
+import edu.harvard.seas.pl.formulog.ast.functions.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.ExceptionalFunction;
 
@@ -60,37 +64,62 @@ public final class Terms {
 		return ys;
 	}
 
+	private static final ExprVisitor<Set<Var>, Void> exprVarExtractor = new ExprVisitor<Set<Var>, Void>() {
+
+		@Override
+		public Void visit(MatchExpr matchExpr, Set<Var> in) {
+			for (MatchClause cl : matchExpr.getClauses()) {
+				Set<Var> patternVars = varSet(cl.getLHS());
+				Set<Var> rhsVars = varSet(cl.getRHS());
+				rhsVars.removeAll(patternVars);
+				in.addAll(rhsVars);
+			}
+			return null;
+		}
+
+		@Override
+		public Void visit(FunctionCall funcCall, Set<Var> in) {
+			for (Term arg : funcCall.getArgs()) {
+				arg.visit(termVarExtractor, in);
+			}
+			return null;
+		}
+		
+	};
+	
+	private static final TermVisitor<Set<Var>, Void> termVarExtractor = new TermVisitor<Set<Var>, Void>() {
+
+		@Override
+		public Void visit(Var t, Set<Var> in) {
+			in.add(t);
+			return null;
+		}
+
+		@Override
+		public Void visit(Constructor c, Set<Var> in) {
+			for (Term arg : c.getArgs()) {
+				arg.visit(this, in);
+			}
+			return null;
+		}
+
+		@Override
+		public Void visit(Primitive<?> p, Set<Var> in) {
+			return null;
+		}
+
+		@Override
+		public Void visit(Expr e, Set<Var> in) {
+			e.visit(exprVarExtractor, in);
+			return null;
+		}
+		
+	};
+	
 	public static Set<Var> varSet(Term t) {
-		return t.visit(new TermVisitor<Set<Var>, Set<Var>>() {
-
-			@Override
-			public Set<Var> visit(Var t, Set<Var> in) {
-				in.add(t);
-				return in;
-			}
-
-			@Override
-			public Set<Var> visit(Constructor t, Set<Var> in) {
-				for (Term tt : t.getArgs()) {
-					tt.visit(this, in);
-				}
-				return in;
-			}
-
-			@Override
-			public Set<Var> visit(Primitive<?> prim, Set<Var> in) {
-				return in;
-			}
-
-			@Override
-			public Set<Var> visit(FunctionCall t, Set<Var> in) {
-				for (Term tt : t.getArgs()) {
-					tt.visit(this, in);
-				}
-				return in;
-			}
-
-		}, new HashSet<>());
+		Set<Var> vars = new HashSet<>();
+		t.visit(termVarExtractor, vars);
+		return vars;
 	}
 
 	public static boolean isGround(Term t, Set<Var> boundVars) {
@@ -120,8 +149,8 @@ public final class Terms {
 			}
 
 			@Override
-			public Void visit(FunctionCall function, Void in) {
-				vars.addAll(Terms.varSet(function));
+			public Void visit(Expr expr, Void in) {
+				vars.addAll(Terms.varSet(expr));
 				return null;
 			}
 			
@@ -153,7 +182,7 @@ public final class Terms {
 			}
 
 			@Override
-			public Void visit(FunctionCall function, Void in) {
+			public Void visit(Expr expr, Void in) {
 				return null;
 			}
 			
@@ -169,7 +198,7 @@ public final class Terms {
 
 		O visit(Primitive<?> p, I in);
 
-		O visit(FunctionCall f, I in);
+		O visit(Expr e, I in);
 
 	}
 
@@ -181,7 +210,7 @@ public final class Terms {
 
 		O visit(Primitive<?> p, I in) throws E;
 
-		O visit(FunctionCall f, I in) throws E;
+		O visit(Expr e, I in) throws E;
 
 	}
 

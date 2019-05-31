@@ -1,54 +1,23 @@
 package edu.harvard.seas.pl.formulog.unification;
 
-/*-
- * #%L
- * FormuLog
- * %%
- * Copyright (C) 2018 - 2019 President and Fellows of Harvard College
- * %%
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * #L%
- */
-
-import java.util.ArrayDeque;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
-import java.util.stream.Collectors;
-
-import org.jgrapht.Graph;
-import org.jgrapht.graph.DefaultDirectedGraph;
-import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.SimpleGraph;
 
 import edu.harvard.seas.pl.formulog.ast.Atoms;
-import edu.harvard.seas.pl.formulog.ast.Constructor;
-import edu.harvard.seas.pl.formulog.ast.Primitive;
-import edu.harvard.seas.pl.formulog.ast.Term;
-import edu.harvard.seas.pl.formulog.ast.Terms;
-import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
 import edu.harvard.seas.pl.formulog.ast.Atoms.AtomVisitorExn;
 import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
 import edu.harvard.seas.pl.formulog.ast.Atoms.UnifyAtom;
+import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
+import edu.harvard.seas.pl.formulog.ast.Primitive;
+import edu.harvard.seas.pl.formulog.ast.Term;
+import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
-import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitorExn;
+import edu.harvard.seas.pl.formulog.ast.Var;
+import edu.harvard.seas.pl.formulog.ast.functions.Expr;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
-import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 
 public final class Unification {
@@ -182,7 +151,7 @@ public final class Unification {
 			}
 
 			@Override
-			public Void visit(FunctionCall function, Term in) {
+			public Void visit(Expr expr, Term in) {
 				return null;
 			}
 
@@ -246,355 +215,355 @@ public final class Unification {
 	 * This is a more sophisticated unification method than unify2 (i.e., it can
 	 * unify terms that unify2 cannot), but it is too slow...
 	 */
-	@SuppressWarnings("unused")
-	private static boolean unify1(Term t1, Term t2, Substitution s) throws EvaluationException {
-		// Handle some simple cases.
-		if (t1 instanceof Var && !s.containsKey((Var) t1)) {
-			t2 = t2.reduce(s);
-			s.put((Var) t1, t2.applySubstitution(s));
-			return true;
-		}
-		if (t2 instanceof Var && !s.containsKey((Var) t2)) {
-			t1 = t1.reduce(s);
-			s.put((Var) t2, t1.applySubstitution(s));
-			return true;
-		}
-
-		return (new Unifier(t1, t2, s)).unify();
-	}
-
-	private static class Unifier {
-
-		private final Term t1;
-		private final Term t2;
-		private final Substitution s;
-		private final Graph<Node, DefaultEdge> ugraph = new DefaultDirectedGraph<>(DefaultEdge.class);
-		// Invariant: a term is in dgraph iff it is not ground.
-		private final Graph<Node, DefaultEdge> dgraph = new SimpleGraph<>(DefaultEdge.class);
-		private final Map<Term, Node> memo = new HashMap<>();
-		private final Set<Node> ground = new HashSet<>();
-
-		public Unifier(Term t1, Term t2, Substitution s) {
-			this.t1 = t1;
-			this.t2 = t2;
-			this.s = s;
-		}
-
-		/*
-		 * Unification routines
-		 */
-
-		public boolean unify() throws EvaluationException {
-			if (!processPair(t1, t2)) {
-				return false;
-			}
-			Set<Node> lastFrontier = new HashSet<>(ground);
-			while (!lastFrontier.isEmpty()) {
-				Set<Node> frontier = new HashSet<>();
-				for (Node g : lastFrontier) {
-					assert !dgraph.containsVertex(g);
-					// ugraph might not contain vertex if it is coalesced in a previous iteration.
-					if (ugraph.containsVertex(g)) {
-						for (Node n : ugraphNeighbors(g)) {
-							if (!tryToCoalesce(g, n, frontier)) {
-								return false;
-							}
-						}
-						if (ugraph.degreeOf(g) == 0) {
-							ugraph.removeVertex(g);
-						}
-					}
-				}
-
-				Queue<Node> q = new ArrayDeque<>(frontier);
-				while (!q.isEmpty()) {
-					Node n = q.remove();
-					Term t = n.getTerm();
-					if (t instanceof FunctionCall) {
-						FunctionCall f = (FunctionCall) t;
-						Term r = f.evaluate(s);
-						n.setTerm(r);
-					}
-
-					if (dgraph.containsVertex(n)) {
-						for (Node dst : dgraphNeighbors(n)) {
-							if (dgraph.inDegreeOf(dst) == 1 && !frontier.contains(dst)) {
-								frontier.add(dst);
-								q.add(dst);
-								dst.setTerm(dst.getTerm().applySubstitution(s));
-							}
-						}
-						dgraph.removeVertex(n);
-					}
-				}
-
-				ground.addAll(frontier);
-				lastFrontier = frontier;
-			}
-
-			assert ugraph.vertexSet().isEmpty();
-			assert dgraph.vertexSet().isEmpty();
-			return true;
-		}
-
-		private boolean tryToCoalesce(Node src, Node dst, Set<Node> frontier) {
-			Term dstT = dst.getTerm();
-			if (dstT instanceof Var) {
-				assert !s.containsKey((Var) dstT);
-				s.put((Var) dstT, src.getTerm());
-				coalesce(src, dst, frontier);
-				return true;
-			} else {
-				if (dstT instanceof FunctionCall) {
-					assert !ground.contains(dst);
-					return true;
-				}
-				if (unifyGroundTermWithOther(src.getTerm(), dst.getTerm(), frontier)) {
-					coalesce(src, dst, frontier);
-					return true;
-				} else {
-					return false;
-				}
-			}
-		}
-
-		private void coalesce(Node eater, Node eaten, Set<Node> frontier) {
-			ugraphRemoveEdge(eater, eaten);
-			if (ugraph.degreeOf(eaten) > 0) {
-				frontier.add(eater);
-			}
-			for (Node dst : ugraphNeighbors(eaten)) {
-				addEdge(eater, dst, ugraph);
-			}
-			ugraph.removeVertex(eaten);
-			frontier.add(eaten);
-			assert eater.getTerm().isGround();
-			eaten.setTerm(eater.getTerm());
-		}
-
-		private boolean unifyGroundTermWithOther(Term grndT, Term other, Set<Node> frontier) {
-			assert grndT.isGround();
-			assert grndT instanceof Constructor || grndT instanceof Primitive;
-			return other.visit(new TermVisitor<Term, Boolean>() {
-
-				@Override
-				public Boolean visit(Var t, Term in) {
-					if (s.containsKey(t)) {
-						if (!s.get(t).equals(in)) {
-							return false;
-						}
-						assert getNode(t).getTerm().equals(in);
-					} else {
-						s.put(t, in);
-						getNode(t).setTerm(in);
-					}
-					frontier.add(getNode(t));
-					return true;
-				}
-
-				@Override
-				public Boolean visit(Constructor t, Term in) {
-					if (!(in instanceof Constructor)) {
-						return false;
-					}
-					Constructor cin = (Constructor) in;
-					if (!cin.getSymbol().equals(t.getSymbol())) {
-						return false;
-					}
-					Term[] inargs = cin.getArgs();
-					Term[] targs = t.getArgs();
-					boolean ok = true;
-					for (int i = 0; i < targs.length; ++i) {
-						ok &= targs[i].visit(this, inargs[i]);
-					}
-					return ok;
-				}
-
-				@Override
-				public Boolean visit(Primitive<?> prim, Term in) {
-					return in.equals(prim);
-				}
-
-				@Override
-				public Boolean visit(FunctionCall function, Term in) {
-					throw new AssertionError();
-				}
-
-			}, grndT);
-		}
-
-		/*
-		 * Graph setup
-		 */
-
-		private boolean processPair(Term t1, Term t2) throws EvaluationException {
-			t1 = lookup(t1);
-			t2 = lookup(t2);
-			if (t1 instanceof Constructor && t2 instanceof Constructor) {
-				Constructor c1 = (Constructor) t1;
-				Constructor c2 = (Constructor) t2;
-				if (!c1.getSymbol().equals(c2.getSymbol())) {
-					return false;
-				}
-				Term[] args1 = c1.getArgs();
-				Term[] args2 = c2.getArgs();
-				boolean ok = true;
-				for (int i = 0; i < args1.length; ++i) {
-					ok &= processPair(args1[i], args2[i]);
-				}
-				return ok;
-			} else if (t1 instanceof Primitive && t2 instanceof Primitive) {
-				return t1.equals(t2);
-			} else {
-				Node node1 = flatten(t1);
-				Node node2 = flatten(t2);
-				addEdge(node1, node2, ugraph);
-				return true;
-			}
-		}
-
-		private Node flatten(Term t) throws EvaluationException {
-			t = lookup(t);
-			Node tnode = getNode(t);
-			t.visit(new TermVisitorExn<Void, Void, EvaluationException>() {
-
-				@Override
-				public Void visit(Var t, Void in) {
-					return null;
-				}
-
-				@Override
-				public Void visit(Constructor t, Void in) throws EvaluationException {
-					int arity = t.getSymbol().getArity();
-					if (arity == 0) {
-						ground.add(tnode);
-					} else {
-						dgraph.addVertex(tnode);
-						Term[] vars = new Var[arity];
-						Term[] args = t.getArgs();
-						for (int i = 0; i < arity; ++i) {
-							Node vnode = flattenHelper(args[i]);
-							vars[i] = vnode.getTerm();
-							addEdge(vnode, tnode, dgraph);
-						}
-						t = t.copyWithNewArgs(vars);
-						tnode.setTerm(t);
-					}
-					return null;
-				}
-
-				@Override
-				public Void visit(Primitive<?> prim, Void in) {
-					ground.add(tnode);
-					return null;
-				}
-
-				@Override
-				public Void visit(FunctionCall function, Void in) throws EvaluationException {
-					int arity = function.getSymbol().getArity();
-					// Corner case: zero-ary functions, which can be evaluated right away
-					if (arity == 0) {
-						Term tt = function.evaluate(EmptySubstitution.INSTANCE);
-						tnode.setTerm(tt);
-						// Every term returned by a function call must be ground
-						ground.add(tnode);
-					} else {
-						dgraph.addVertex(tnode);
-						Term[] vars = new Var[arity];
-						Term[] args = function.getArgs();
-						for (int i = 0; i < arity; ++i) {
-							Node vnode = flattenHelper(args[i]);
-							vars[i] = vnode.getTerm();
-							addEdge(vnode, tnode, dgraph);
-						}
-						tnode.setTerm(function.copyWithNewArgs(vars));
-					}
-					return null;
-				}
-
-			}, null);
-			return tnode;
-		}
-
-		private Node flattenHelper(Term t) throws EvaluationException {
-			t = lookup(t);
-			if (t instanceof Var) {
-				return getNode(t);
-			}
-			Var v = Var.getFresh();
-			Node vnode = getNode(v);
-			Node tnode = flatten(t);
-			addEdge(vnode, tnode, ugraph);
-			return vnode;
-		}
-
-		/*
-		 * Helpers
-		 */
-
-		private Iterable<Node> ugraphNeighbors(Node src) {
-			Set<Node> neighbors = new HashSet<>();
-			for (DefaultEdge e : ugraph.edgesOf(src)) {
-				Node dst = ugraph.getEdgeTarget(e);
-				if (dst == src) {
-					dst = ugraph.getEdgeSource(e);
-				}
-				neighbors.add(dst);
-			}
-			return neighbors;
-		}
-
-		private void ugraphRemoveEdge(Node src, Node dst) {
-			ugraph.removeAllEdges(src, dst);
-			ugraph.removeAllEdges(dst, src);
-		}
-
-		private Iterable<Node> dgraphNeighbors(Node src) {
-			return dgraph.outgoingEdgesOf(src).stream().map(e -> dgraph.getEdgeTarget(e)).collect(Collectors.toSet());
-		}
-
-		private void addEdge(Node v1, Node v2, Graph<Node, ?> graph) {
-			graph.addVertex(v1);
-			graph.addVertex(v2);
-			if (!v1.equals(v2) && !graph.containsEdge(v1, v2)) {
-				graph.addEdge(v1, v2);
-			}
-		}
-
-		private Node getNode(Term t) {
-			return Util.lookupOrCreate(memo, t, () -> new Node(t));
-		}
-
-		private Term lookup(Term t) {
-			if (t instanceof Var && s.containsKey((Var) t)) {
-				t = s.get((Var) t);
-			}
-			return t;
-		}
-
-	}
-
-	private static class Node {
-
-		private Term t;
-
-		public Node(Term t) {
-			this.t = t;
-		}
-
-		public Term getTerm() {
-			return t;
-		}
-
-		public void setTerm(Term t) {
-			this.t = t;
-		}
-
-		@Override
-		public String toString() {
-			return t.toString();
-		}
-
-	}
+//	@SuppressWarnings("unused")
+//	private static boolean unify1(Term t1, Term t2, Substitution s) throws EvaluationException {
+//		// Handle some simple cases.
+//		if (t1 instanceof Var && !s.containsKey((Var) t1)) {
+//			t2 = t2.reduce(s);
+//			s.put((Var) t1, t2.applySubstitution(s));
+//			return true;
+//		}
+//		if (t2 instanceof Var && !s.containsKey((Var) t2)) {
+//			t1 = t1.reduce(s);
+//			s.put((Var) t2, t1.applySubstitution(s));
+//			return true;
+//		}
+//
+//		return (new Unifier(t1, t2, s)).unify();
+//	}
+//
+//	private static class Unifier {
+//
+//		private final Term t1;
+//		private final Term t2;
+//		private final Substitution s;
+//		private final Graph<Node, DefaultEdge> ugraph = new DefaultDirectedGraph<>(DefaultEdge.class);
+//		// Invariant: a term is in dgraph iff it is not ground.
+//		private final Graph<Node, DefaultEdge> dgraph = new SimpleGraph<>(DefaultEdge.class);
+//		private final Map<Term, Node> memo = new HashMap<>();
+//		private final Set<Node> ground = new HashSet<>();
+//
+//		public Unifier(Term t1, Term t2, Substitution s) {
+//			this.t1 = t1;
+//			this.t2 = t2;
+//			this.s = s;
+//		}
+//
+//		/*
+//		 * Unification routines
+//		 */
+//
+//		public boolean unify() throws EvaluationException {
+//			if (!processPair(t1, t2)) {
+//				return false;
+//			}
+//			Set<Node> lastFrontier = new HashSet<>(ground);
+//			while (!lastFrontier.isEmpty()) {
+//				Set<Node> frontier = new HashSet<>();
+//				for (Node g : lastFrontier) {
+//					assert !dgraph.containsVertex(g);
+//					// ugraph might not contain vertex if it is coalesced in a previous iteration.
+//					if (ugraph.containsVertex(g)) {
+//						for (Node n : ugraphNeighbors(g)) {
+//							if (!tryToCoalesce(g, n, frontier)) {
+//								return false;
+//							}
+//						}
+//						if (ugraph.degreeOf(g) == 0) {
+//							ugraph.removeVertex(g);
+//						}
+//					}
+//				}
+//
+//				Queue<Node> q = new ArrayDeque<>(frontier);
+//				while (!q.isEmpty()) {
+//					Node n = q.remove();
+//					Term t = n.getTerm();
+//					if (t instanceof FunctionCall) {
+//						FunctionCall f = (FunctionCall) t;
+//						Term r = f.evaluate(s);
+//						n.setTerm(r);
+//					}
+//
+//					if (dgraph.containsVertex(n)) {
+//						for (Node dst : dgraphNeighbors(n)) {
+//							if (dgraph.inDegreeOf(dst) == 1 && !frontier.contains(dst)) {
+//								frontier.add(dst);
+//								q.add(dst);
+//								dst.setTerm(dst.getTerm().applySubstitution(s));
+//							}
+//						}
+//						dgraph.removeVertex(n);
+//					}
+//				}
+//
+//				ground.addAll(frontier);
+//				lastFrontier = frontier;
+//			}
+//
+//			assert ugraph.vertexSet().isEmpty();
+//			assert dgraph.vertexSet().isEmpty();
+//			return true;
+//		}
+//
+//		private boolean tryToCoalesce(Node src, Node dst, Set<Node> frontier) {
+//			Term dstT = dst.getTerm();
+//			if (dstT instanceof Var) {
+//				assert !s.containsKey((Var) dstT);
+//				s.put((Var) dstT, src.getTerm());
+//				coalesce(src, dst, frontier);
+//				return true;
+//			} else {
+//				if (dstT instanceof FunctionCall) {
+//					assert !ground.contains(dst);
+//					return true;
+//				}
+//				if (unifyGroundTermWithOther(src.getTerm(), dst.getTerm(), frontier)) {
+//					coalesce(src, dst, frontier);
+//					return true;
+//				} else {
+//					return false;
+//				}
+//			}
+//		}
+//
+//		private void coalesce(Node eater, Node eaten, Set<Node> frontier) {
+//			ugraphRemoveEdge(eater, eaten);
+//			if (ugraph.degreeOf(eaten) > 0) {
+//				frontier.add(eater);
+//			}
+//			for (Node dst : ugraphNeighbors(eaten)) {
+//				addEdge(eater, dst, ugraph);
+//			}
+//			ugraph.removeVertex(eaten);
+//			frontier.add(eaten);
+//			assert eater.getTerm().isGround();
+//			eaten.setTerm(eater.getTerm());
+//		}
+//
+//		private boolean unifyGroundTermWithOther(Term grndT, Term other, Set<Node> frontier) {
+//			assert grndT.isGround();
+//			assert grndT instanceof Constructor || grndT instanceof Primitive;
+//			return other.visit(new TermVisitor<Term, Boolean>() {
+//
+//				@Override
+//				public Boolean visit(Var t, Term in) {
+//					if (s.containsKey(t)) {
+//						if (!s.get(t).equals(in)) {
+//							return false;
+//						}
+//						assert getNode(t).getTerm().equals(in);
+//					} else {
+//						s.put(t, in);
+//						getNode(t).setTerm(in);
+//					}
+//					frontier.add(getNode(t));
+//					return true;
+//				}
+//
+//				@Override
+//				public Boolean visit(Constructor t, Term in) {
+//					if (!(in instanceof Constructor)) {
+//						return false;
+//					}
+//					Constructor cin = (Constructor) in;
+//					if (!cin.getSymbol().equals(t.getSymbol())) {
+//						return false;
+//					}
+//					Term[] inargs = cin.getArgs();
+//					Term[] targs = t.getArgs();
+//					boolean ok = true;
+//					for (int i = 0; i < targs.length; ++i) {
+//						ok &= targs[i].visit(this, inargs[i]);
+//					}
+//					return ok;
+//				}
+//
+//				@Override
+//				public Boolean visit(Primitive<?> prim, Term in) {
+//					return in.equals(prim);
+//				}
+//
+//				@Override
+//				public Boolean visit(Expr expr, Term in) {
+//					throw new AssertionError();
+//				}
+//
+//			}, grndT);
+//		}
+//
+//		/*
+//		 * Graph setup
+//		 */
+//
+//		private boolean processPair(Term t1, Term t2) throws EvaluationException {
+//			t1 = lookup(t1);
+//			t2 = lookup(t2);
+//			if (t1 instanceof Constructor && t2 instanceof Constructor) {
+//				Constructor c1 = (Constructor) t1;
+//				Constructor c2 = (Constructor) t2;
+//				if (!c1.getSymbol().equals(c2.getSymbol())) {
+//					return false;
+//				}
+//				Term[] args1 = c1.getArgs();
+//				Term[] args2 = c2.getArgs();
+//				boolean ok = true;
+//				for (int i = 0; i < args1.length; ++i) {
+//					ok &= processPair(args1[i], args2[i]);
+//				}
+//				return ok;
+//			} else if (t1 instanceof Primitive && t2 instanceof Primitive) {
+//				return t1.equals(t2);
+//			} else {
+//				Node node1 = flatten(t1);
+//				Node node2 = flatten(t2);
+//				addEdge(node1, node2, ugraph);
+//				return true;
+//			}
+//		}
+//
+//		private Node flatten(Term t) throws EvaluationException {
+//			t = lookup(t);
+//			Node tnode = getNode(t);
+//			t.visit(new TermVisitorExn<Void, Void, EvaluationException>() {
+//
+//				@Override
+//				public Void visit(Var t, Void in) {
+//					return null;
+//				}
+//
+//				@Override
+//				public Void visit(Constructor t, Void in) throws EvaluationException {
+//					int arity = t.getSymbol().getArity();
+//					if (arity == 0) {
+//						ground.add(tnode);
+//					} else {
+//						dgraph.addVertex(tnode);
+//						Term[] vars = new Var[arity];
+//						Term[] args = t.getArgs();
+//						for (int i = 0; i < arity; ++i) {
+//							Node vnode = flattenHelper(args[i]);
+//							vars[i] = vnode.getTerm();
+//							addEdge(vnode, tnode, dgraph);
+//						}
+//						t = t.copyWithNewArgs(vars);
+//						tnode.setTerm(t);
+//					}
+//					return null;
+//				}
+//
+//				@Override
+//				public Void visit(Primitive<?> prim, Void in) {
+//					ground.add(tnode);
+//					return null;
+//				}
+//
+//				@Override
+//				public Void visit(FunctionCall function, Void in) throws EvaluationException {
+//					int arity = function.getSymbol().getArity();
+//					// Corner case: zero-ary functions, which can be evaluated right away
+//					if (arity == 0) {
+//						Term tt = function.evaluate(EmptySubstitution.INSTANCE);
+//						tnode.setTerm(tt);
+//						// Every term returned by a function call must be ground
+//						ground.add(tnode);
+//					} else {
+//						dgraph.addVertex(tnode);
+//						Term[] vars = new Var[arity];
+//						Term[] args = function.getArgs();
+//						for (int i = 0; i < arity; ++i) {
+//							Node vnode = flattenHelper(args[i]);
+//							vars[i] = vnode.getTerm();
+//							addEdge(vnode, tnode, dgraph);
+//						}
+//						tnode.setTerm(function.copyWithNewArgs(vars));
+//					}
+//					return null;
+//				}
+//
+//			}, null);
+//			return tnode;
+//		}
+//
+//		private Node flattenHelper(Term t) throws EvaluationException {
+//			t = lookup(t);
+//			if (t instanceof Var) {
+//				return getNode(t);
+//			}
+//			Var v = Var.getFresh();
+//			Node vnode = getNode(v);
+//			Node tnode = flatten(t);
+//			addEdge(vnode, tnode, ugraph);
+//			return vnode;
+//		}
+//
+//		/*
+//		 * Helpers
+//		 */
+//
+//		private Iterable<Node> ugraphNeighbors(Node src) {
+//			Set<Node> neighbors = new HashSet<>();
+//			for (DefaultEdge e : ugraph.edgesOf(src)) {
+//				Node dst = ugraph.getEdgeTarget(e);
+//				if (dst == src) {
+//					dst = ugraph.getEdgeSource(e);
+//				}
+//				neighbors.add(dst);
+//			}
+//			return neighbors;
+//		}
+//
+//		private void ugraphRemoveEdge(Node src, Node dst) {
+//			ugraph.removeAllEdges(src, dst);
+//			ugraph.removeAllEdges(dst, src);
+//		}
+//
+//		private Iterable<Node> dgraphNeighbors(Node src) {
+//			return dgraph.outgoingEdgesOf(src).stream().map(e -> dgraph.getEdgeTarget(e)).collect(Collectors.toSet());
+//		}
+//
+//		private void addEdge(Node v1, Node v2, Graph<Node, ?> graph) {
+//			graph.addVertex(v1);
+//			graph.addVertex(v2);
+//			if (!v1.equals(v2) && !graph.containsEdge(v1, v2)) {
+//				graph.addEdge(v1, v2);
+//			}
+//		}
+//
+//		private Node getNode(Term t) {
+//			return Util.lookupOrCreate(memo, t, () -> new Node(t));
+//		}
+//
+//		private Term lookup(Term t) {
+//			if (t instanceof Var && s.containsKey((Var) t)) {
+//				t = s.get((Var) t);
+//			}
+//			return t;
+//		}
+//
+//	}
+//
+//	private static class Node {
+//
+//		private Term t;
+//
+//		public Node(Term t) {
+//			this.t = t;
+//		}
+//
+//		public Term getTerm() {
+//			return t;
+//		}
+//
+//		public void setTerm(Term t) {
+//			this.t = t;
+//		}
+//
+//		@Override
+//		public String toString() {
+//			return t.toString();
+//		}
+//
+//	}
 
 }

@@ -22,12 +22,10 @@ package edu.harvard.seas.pl.formulog.ast.functions;
 
 import java.util.List;
 
-import edu.harvard.seas.pl.formulog.ast.Constructor;
-import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
-import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitorExn;
+import edu.harvard.seas.pl.formulog.ast.functions.Exprs.ExprVisitor;
+import edu.harvard.seas.pl.formulog.ast.functions.Exprs.ExprVisitorExn;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
@@ -38,9 +36,9 @@ public class CustomFunctionDef implements FunctionDef {
 
 	private final Symbol sym;
 	private final Var[] params;
-	private volatile Expr body;
+	private volatile Term body;
 
-	private CustomFunctionDef(Symbol sym, Var[] params, Expr body) {
+	private CustomFunctionDef(Symbol sym, Var[] params, Term body) {
 		this.sym = sym;
 		this.params = params;
 		this.body = body;
@@ -50,7 +48,7 @@ public class CustomFunctionDef implements FunctionDef {
 		return params;
 	}
 
-	public Expr getBody() {
+	public Term getBody() {
 		return body;
 	}
 
@@ -71,7 +69,7 @@ public class CustomFunctionDef implements FunctionDef {
 			s.put(params[i], args[i].applySubstitution(substitution));
 		}
 		try {
-			return body.evaluate(s);
+			return body.normalize(s);
 		} catch (EvaluationException e) {
 			throw new EvaluationException("Error evaluating function " + sym + ": " + e.getMessage());
 		}
@@ -81,107 +79,26 @@ public class CustomFunctionDef implements FunctionDef {
 		return new CustomFunctionDef(sym, params, body);
 	}
 
-	public static MatchExpr getMatchExpr(Expr expr, List<MatchClause> match) {
-		return new MatchExpr(expr, match);
+	public static MatchExpr getMatchExpr(Term matchee, List<MatchClause> match) {
+		return new MatchExpr(matchee, match);
 	}
 
-	public static MatchClause getMatchClause(Term lhs, Expr rhs) {
+	public static MatchClause getMatchClause(Term lhs, Term rhs) {
 		return new MatchClause(lhs, rhs);
-	}
-
-	public static TermExpr liftTerm(Term t) {
-		return new TermExpr(t);
-	}
-
-	public static interface Expr {
-
-		<I, O> O visit(ExprVisitor<I, O> visitor, I in);
-
-		<I, O, E extends Throwable> O visit(ExprVisitorExn<I, O, E> visitor, I in) throws E;
-
-		Term evaluate(Substitution s) throws EvaluationException;
-
-	}
-
-	public static class TermExpr implements Expr {
-
-		private final Term t;
-
-		private TermExpr(Term t) {
-			this.t = t;
-		}
-
-		public Term getTerm() {
-			return t;
-		}
-
-		@Override
-		public <I, O, E extends Throwable> O visit(ExprVisitorExn<I, O, E> visitor, I in) throws E {
-			return visitor.visit(this, in);
-		}
-
-		@Override
-		public Term evaluate(Substitution s) throws EvaluationException {
-			return t.visit(new TermVisitorExn<Void, Term, EvaluationException>() {
-
-				@Override
-				public Term visit(Var t, Void in) {
-					assert s.containsKey(t);
-					return s.get(t);
-				}
-
-				@Override
-				public Term visit(Constructor t, Void in) throws EvaluationException {
-					Term[] args = t.getArgs();
-					Term[] newArgs = new Term[args.length];
-					for (int i = 0; i < args.length; ++i) {
-						newArgs[i] = args[i].visit(this, in);
-					}
-					return t.copyWithNewArgs(newArgs);
-				}
-
-				@Override
-				public Term visit(Primitive<?> prim, Void in) {
-					return prim;
-				}
-
-				@Override
-				public Term visit(FunctionCall t, Void in) throws EvaluationException {
-					Term[] args = t.getArgs();
-					Term[] newArgs = new Term[args.length];
-					for (int i = 0; i < args.length; ++i) {
-						newArgs[i] = args[i].visit(this, in);
-					}
-					return t.evaluate(newArgs);
-				}
-
-			}, null);
-		}
-
-		@Override
-		public <I, O> O visit(ExprVisitor<I, O> visitor, I in) {
-			return visitor.visit(this, in);
-		}
-		
-		@Override
-		public String toString() {
-			return t.toString();
-		}
-
 	}
 
 	public static class MatchExpr implements Expr {
 
-		private final Expr expr;
+		private final Term matchee;
 		private final List<MatchClause> match;
 
-		private MatchExpr(Expr expr, List<MatchClause> match) {
-			this.expr = expr;
+		private MatchExpr(Term matchee, List<MatchClause> match) {
+			this.matchee = matchee;
 			this.match = match;
 		}
 
-		public Expr getExpr() {
-			return expr;
+		public Term getMatchee() {
+			return matchee;
 		}
 
 		public List<MatchClause> getClauses() {
@@ -194,13 +111,13 @@ public class CustomFunctionDef implements FunctionDef {
 		}
 
 		@Override
-		public Term evaluate(Substitution s) throws EvaluationException {
-			Term e = expr.evaluate(s);
+		public Term normalize(Substitution s) throws EvaluationException {
+			Term e = matchee.normalize(s);
 			for (MatchClause m : match) {
 				// TODO We need to create a new substitution here because we don't want our
 				// previous bindings to be used in the match (since the variables in the pattern
 				// shadow the previous bindings). For efficiency sake, we might want to just
-				// rewrite rules so that there is not variable shadowing.
+				// rewrite patterns so that there is not variable shadowing.
 				Substitution s2 = new SimpleSubstitution();
 				if (Unification.unify(e, m.getLHS(), s2)) {
 					for (Var v : s.iterateKeys()) {
@@ -208,7 +125,7 @@ public class CustomFunctionDef implements FunctionDef {
 							s2.put(v, s.get(v));
 						}
 					}
-					return m.getRHS().evaluate(s2);
+					return m.getRHS().normalize(s2);
 				}
 			}
 			throw new EvaluationException("No matching pattern in function for " + e + " under substitution " + s);
@@ -224,9 +141,9 @@ public class CustomFunctionDef implements FunctionDef {
 	public static class MatchClause {
 
 		private final Term lhs;
-		private final Expr rhs;
+		private final Term rhs;
 
-		private MatchClause(Term lhs, Expr rhs) {
+		private MatchClause(Term lhs, Term rhs) {
 			this.lhs = lhs;
 			this.rhs = rhs;
 		}
@@ -235,25 +152,9 @@ public class CustomFunctionDef implements FunctionDef {
 			return lhs;
 		}
 
-		public Expr getRHS() {
+		public Term getRHS() {
 			return rhs;
 		}
-
-	}
-
-	public static interface ExprVisitor<I, O> {
-
-		O visit(TermExpr termExpr, I in);
-
-		O visit(MatchExpr matchExpr, I in);
-
-	}
-
-	public static interface ExprVisitorExn<I, O, E extends Throwable> {
-
-		O visit(TermExpr termExpr, I in) throws E;
-
-		O visit(MatchExpr matchExpr, I in) throws E;
 
 	}
 

@@ -8,14 +8,14 @@ import org.pcollections.HashTreePMap;
 import org.pcollections.PMap;
 
 import edu.harvard.seas.pl.formulog.ast.Constructor;
+import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
-import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
-import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
+import edu.harvard.seas.pl.formulog.ast.Var;
+import edu.harvard.seas.pl.formulog.ast.functions.Expr;
 
 public class SmtLibSimplifier {
 
@@ -51,7 +51,7 @@ public class SmtLibSimplifier {
 			}
 
 			@Override
-			public SmtLibTerm visit(FunctionCall f, Void in) {
+			public SmtLibTerm visit(Expr expr, Void in) {
 				throw new AssertionError("impossible");
 			}
 

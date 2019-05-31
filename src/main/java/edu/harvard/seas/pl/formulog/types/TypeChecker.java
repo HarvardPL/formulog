@@ -51,11 +51,11 @@ import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
-import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.Expr;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.TermExpr;
+import edu.harvard.seas.pl.formulog.ast.functions.Expr;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
@@ -315,7 +315,7 @@ public class TypeChecker {
 				@Override
 				public Void visit(MatchExpr matchExpr, Void in) {
 					TypeVar guardType = TypeVar.fresh();
-					Expr guard = matchExpr.getExpr();
+					Expr guard = matchExpr.getE();
 					// We do not need to make a copy of varTypes here. We might worry that a
 					// variable is bound in the guard expression and then that binding leaks into
 					// this scope. However, variables are only bound in match patterns, and a fresh
