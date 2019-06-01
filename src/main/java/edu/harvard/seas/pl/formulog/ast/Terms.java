@@ -24,11 +24,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 
+import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
-import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.MatchClause;
-import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.MatchExpr;
-import edu.harvard.seas.pl.formulog.ast.functions.Expr;
-import edu.harvard.seas.pl.formulog.ast.functions.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.ExceptionalFunction;
 

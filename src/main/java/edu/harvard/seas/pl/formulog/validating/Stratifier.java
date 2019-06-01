@@ -34,20 +34,20 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.traverse.TopologicalOrderIterator;
 
 import edu.harvard.seas.pl.formulog.ast.Constructor;
+import edu.harvard.seas.pl.formulog.ast.Expr;
+import edu.harvard.seas.pl.formulog.ast.MatchClause;
+import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
+import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
-import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.MatchClause;
-import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.MatchExpr;
-import edu.harvard.seas.pl.formulog.ast.functions.Expr;
-import edu.harvard.seas.pl.formulog.ast.functions.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbolForPredicateFactory.FunctionSymbolForPredicate;
 

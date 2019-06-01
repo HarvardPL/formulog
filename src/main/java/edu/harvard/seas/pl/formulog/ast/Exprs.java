@@ -20,27 +20,28 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
+import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 
-public interface Rule {
+public final class Exprs {
 
-	/*
-	 * TODO Instead of returning the whole list, should probably just provide
-	 * methods to index into head/body and get size of each.
-	 * 
-	 * Could maybe provide all of head/body as Iterable.
-	 */
+	private Exprs() {
+		throw new AssertionError("impossible");
+	}
 
-	public Iterable<Atom> getHead();
+	public static interface ExprVisitor<I, O> {
 
-	public Iterable<Atom> getBody();
+		O visit(MatchExpr matchExpr, I in);
+		
+		O visit(FunctionCall funcCall, I in);
+
+	}
+
+	public static interface ExprVisitorExn<I, O, E extends Throwable> {
+
+		O visit(MatchExpr matchExpr, I in) throws E;
+		
+		O visit(FunctionCall funcCall, I in) throws E;
+
+	}
 	
-	public int getHeadSize();
-	
-	public int getBodySize();
-	
-	public Atom getHead(int idx);
-	
-	public Atom getBody(int idx);
-
 }

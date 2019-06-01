@@ -45,6 +45,7 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.traverse.TopologicalOrderIterator;
 
 import edu.harvard.seas.pl.formulog.ast.Constructor;
+import edu.harvard.seas.pl.formulog.ast.Expr;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverUninterpretedFunction;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
@@ -52,7 +53,6 @@ import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.ast.functions.Expr;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.smt.SmtLibParser.SmtLibParseException;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;

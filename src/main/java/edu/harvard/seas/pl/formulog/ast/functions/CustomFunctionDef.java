@@ -1,7 +1,5 @@
 package edu.harvard.seas.pl.formulog.ast.functions;
 
-import java.util.ArrayList;
-
 /*-
  * #%L
  * FormuLog
@@ -22,19 +20,13 @@ import java.util.ArrayList;
  * #L%
  */
 
-import java.util.List;
-import java.util.Set;
-
+import edu.harvard.seas.pl.formulog.ast.Expr;
 import edu.harvard.seas.pl.formulog.ast.Term;
-import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.ast.functions.Exprs.ExprVisitor;
-import edu.harvard.seas.pl.formulog.ast.functions.Exprs.ExprVisitorExn;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
-import edu.harvard.seas.pl.formulog.unification.Unification;
 
 public class CustomFunctionDef implements FunctionDef {
 
@@ -81,118 +73,6 @@ public class CustomFunctionDef implements FunctionDef {
 
 	public static CustomFunctionDef get(Symbol sym, Var[] params, Term body) {
 		return new CustomFunctionDef(sym, params, body);
-	}
-
-	public static MatchExpr getMatchExpr(Term matchee, List<MatchClause> match) {
-		return new MatchExpr(matchee, match);
-	}
-
-	public static MatchClause getMatchClause(Term lhs, Term rhs) {
-		return new MatchClause(lhs, rhs);
-	}
-
-	public static class MatchExpr implements Expr {
-
-		private final Term matchee;
-		private final List<MatchClause> match;
-
-		public static MatchExpr make(Term matchee, List<MatchClause> match) {
-			return new MatchExpr(matchee, match);
-		}
-		
-		private MatchExpr(Term matchee, List<MatchClause> match) {
-			this.matchee = matchee;
-			this.match = match;
-		}
-
-		public Term getMatchee() {
-			return matchee;
-		}
-
-		public List<MatchClause> getClauses() {
-			return match;
-		}
-
-		@Override
-		public <I, O, E extends Throwable> O visit(ExprVisitorExn<I, O, E> visitor, I in) throws E {
-			return visitor.visit(this, in);
-		}
-
-		@Override
-		public Term normalize(Substitution s) throws EvaluationException {
-			Term e = matchee.normalize(s);
-			for (MatchClause m : match) {
-				// TODO We need to create a new substitution here because we don't want our
-				// previous bindings to be used in the match (since the variables in the pattern
-				// shadow the previous bindings). For efficiency sake, we might want to just
-				// rewrite patterns so that there is not variable shadowing.
-				Substitution s2 = new SimpleSubstitution();
-				if (Unification.unify(e, m.getLhs(), s2)) {
-					for (Var v : s.iterateKeys()) {
-						if (!s2.containsKey(v)) {
-							s2.put(v, s.get(v));
-						}
-					}
-					return m.getRhs().normalize(s2);
-				}
-			}
-			throw new EvaluationException("No matching pattern in function for " + e + " under substitution " + s);
-		}
-
-		@Override
-		public <I, O> O visit(ExprVisitor<I, O> visitor, I in) {
-			return visitor.visit(this, in);
-		}
-
-		@Override
-		public Term applySubstitution(Substitution s) {
-			Term newMatchee = matchee.applySubstitution(s);
-			List<MatchClause> clauses = new ArrayList<>();
-			for (MatchClause cl : match) {
-				Substitution newS = new SimpleSubstitution();
-				Term pat = cl.getLhs();
-				Set<Var> patVars = Terms.varSet(pat);
-				for (Var x : s.iterateKeys()) {
-					if (!patVars.contains(x)) {
-						newS.put(x, s.get(x));
-					}
-				}
-				Term newRhs = cl.getRhs().applySubstitution(newS);
-				clauses.add(getMatchClause(pat, newRhs));
-			}
-			return make(newMatchee, clauses);
-		}
-		
-		@Override
-		public String toString() {
-			String s = "match " + matchee.toString() + " with";
-			for (MatchClause cl : match) {
-				s += "\n\t| " + cl.getLhs() + " => " + cl.getRhs();
-			}
-			s += "\nend";
-			return s;
-		}
-
-	}
-
-	public static class MatchClause {
-
-		private final Term lhs;
-		private final Term rhs;
-
-		private MatchClause(Term lhs, Term rhs) {
-			this.lhs = lhs;
-			this.rhs = rhs;
-		}
-
-		public Term getLhs() {
-			return lhs;
-		}
-
-		public Term getRhs() {
-			return rhs;
-		}
-
 	}
 
 }

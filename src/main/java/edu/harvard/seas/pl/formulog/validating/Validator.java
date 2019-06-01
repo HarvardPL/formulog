@@ -36,9 +36,14 @@ import edu.harvard.seas.pl.formulog.ast.Annotation;
 import edu.harvard.seas.pl.formulog.ast.Atoms;
 import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
 import edu.harvard.seas.pl.formulog.ast.Atoms.UnifyAtom;
+import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
+import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitorExn;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
+import edu.harvard.seas.pl.formulog.ast.Expr;
+import edu.harvard.seas.pl.formulog.ast.MatchClause;
+import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
@@ -49,11 +54,6 @@ import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitorExn;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
-import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.MatchClause;
-import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.MatchExpr;
-import edu.harvard.seas.pl.formulog.ast.functions.Expr;
-import edu.harvard.seas.pl.formulog.ast.functions.Exprs.ExprVisitor;
-import edu.harvard.seas.pl.formulog.ast.functions.Exprs.ExprVisitorExn;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.smt.Z3ThreadFactory;
@@ -211,9 +211,9 @@ public class Validator {
 			for (MatchClause cl : matchExpr.getClauses()) {
 				Term lhs = cl.getLhs().visit(termSimplifier, in);
 				Term rhs = cl.getRhs().visit(termSimplifier, in);
-				clauses.add(CustomFunctionDef.getMatchClause(lhs, rhs));
+				clauses.add(MatchClause.make(lhs, rhs));
 			}
-			return CustomFunctionDef.getMatchExpr(matchee, clauses);
+			return MatchExpr.make(matchee, clauses);
 		}
 
 		@Override

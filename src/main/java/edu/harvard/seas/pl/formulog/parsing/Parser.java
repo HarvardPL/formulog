@@ -1,5 +1,25 @@
 package edu.harvard.seas.pl.formulog.parsing;
 
+/*-
+ * #%L
+ * FormuLog
+ * %%
+ * Copyright (C) 2018 - 2019 President and Fellows of Harvard College
+ * %%
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * #L%
+ */
+
 import static edu.harvard.seas.pl.formulog.util.Util.map;
 
 import java.io.IOException;
@@ -28,11 +48,14 @@ import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
+import edu.harvard.seas.pl.formulog.ast.Expr;
 import edu.harvard.seas.pl.formulog.ast.FP32;
 import edu.harvard.seas.pl.formulog.ast.FP64;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory;
 import edu.harvard.seas.pl.formulog.ast.I32;
 import edu.harvard.seas.pl.formulog.ast.I64;
+import edu.harvard.seas.pl.formulog.ast.MatchClause;
+import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Rule;
@@ -42,9 +65,7 @@ import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
-import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.functions.DummyFunctionDef;
-import edu.harvard.seas.pl.formulog.ast.functions.Expr;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDefManager;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
@@ -943,10 +964,10 @@ public class Parser {
 					Term rhs = extract(mcc.rhs);
 					for (TermContext pc : mcc.patterns().term()) {
 						Term pattern = extract(pc);
-						matches.add(CustomFunctionDef.getMatchClause(pattern, rhs));
+						matches.add(MatchClause.make(pattern, rhs));
 					}
 				}
-				return CustomFunctionDef.getMatchExpr(guard, matches);
+				return MatchExpr.make(guard, matches);
 			}
 
 			@Override
@@ -960,8 +981,8 @@ public class Parser {
 				}
 				Term assign = ctx.assign.accept(this);
 				Term body = ctx.body.accept(this);
-				MatchClause m = CustomFunctionDef.getMatchClause(t, body);
-				return CustomFunctionDef.getMatchExpr(assign, Collections.singletonList(m));
+				MatchClause m = MatchClause.make(t, body);
+				return MatchExpr.make(assign, Collections.singletonList(m));
 			}
 
 			@Override
@@ -970,9 +991,9 @@ public class Parser {
 				Term thenExpr = ctx.thenExpr.accept(this);
 				Term elseExpr = ctx.elseExpr.accept(this);
 				List<MatchClause> branches = new ArrayList<>();
-				branches.add(CustomFunctionDef.getMatchClause(Constructors.makeTrue(), thenExpr));
-				branches.add(CustomFunctionDef.getMatchClause(Constructors.makeFalse(), elseExpr));
-				return CustomFunctionDef.getMatchExpr(guard, branches);
+				branches.add(MatchClause.make(Constructors.makeTrue(), thenExpr));
+				branches.add(MatchClause.make(Constructors.makeFalse(), elseExpr));
+				return MatchExpr.make(guard, branches);
 			}
 
 		};
