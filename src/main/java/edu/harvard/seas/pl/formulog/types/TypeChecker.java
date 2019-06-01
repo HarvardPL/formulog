@@ -51,11 +51,10 @@ import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
-import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.MatchExpr;
-import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.TermExpr;
 import edu.harvard.seas.pl.formulog.ast.functions.Expr;
+import edu.harvard.seas.pl.formulog.ast.functions.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
@@ -300,39 +299,40 @@ public class TypeChecker {
 			for (int i = 0; i < params.length; ++i) {
 				varTypes.put(params[i], argTypes.get(i));
 			}
-			genConstraints(def.getBody(), r, varTypes);
+			genConstraints(def.getBody(), r, varTypes, false);
 		}
 
-		private void genConstraints(Expr e, Type exprType, Map<Var, Type> varTypes) {
+		private void genConstraintsForExpr(Expr e, Type exprType, Map<Var, Type> varTypes, boolean allowSubtype) {
 			e.visit(new ExprVisitor<Void, Void>() {
 
 				@Override
-				public Void visit(TermExpr termExpr, Void in) {
-					genConstraints(termExpr.getTerm(), exprType, varTypes, false);
-					return null;
-				}
-
-				@Override
 				public Void visit(MatchExpr matchExpr, Void in) {
+					assert !allowSubtype;
 					TypeVar guardType = TypeVar.fresh();
-					Expr guard = matchExpr.getE();
+					Term guard = matchExpr.getMatchee();
 					// We do not need to make a copy of varTypes here. We might worry that a
 					// variable is bound in the guard expression and then that binding leaks into
 					// this scope. However, variables are only bound in match patterns, and a fresh
 					// var map is created for each match pattern.
-					genConstraints(guard, guardType, varTypes);
+					genConstraints(guard, guardType, varTypes, allowSubtype);
 					for (MatchClause cl : matchExpr.getClauses()) {
 						// Use a fresh var map when type checking a pattern (because of variable
 						// shadowing).
 						Map<Var, Type> newVarTypes = new HashMap<>();
-						genConstraints(cl.getLHS(), guardType, newVarTypes, false);
+						genConstraints(cl.getLHS(), guardType, newVarTypes, allowSubtype);
 						// However, still need to propagate any variables that are not re-bound in
 						// pattern.
 						for (Map.Entry<Var, Type> e : varTypes.entrySet()) {
 							newVarTypes.putIfAbsent(e.getKey(), e.getValue());
 						}
-						genConstraints(cl.getRHS(), exprType, newVarTypes);
+						genConstraints(cl.getRHS(), exprType, newVarTypes, allowSubtype);
 					}
+					return null;
+				}
+
+				@Override
+				public Void visit(FunctionCall funcCall, Void in) {
+					genConstraintsForFunctionCall(funcCall, exprType, varTypes, allowSubtype);
 					return null;
 				}
 
@@ -370,8 +370,8 @@ public class TypeChecker {
 				}
 
 				@Override
-				public Void visit(FunctionCall function, Void in) {
-					genConstraintsForFunctionCall(function, ttype, subst, allowSubtype);
+				public Void visit(Expr expr, Void in) {
+					genConstraintsForExpr(expr, ttype, subst, allowSubtype);
 					return null;
 				}
 

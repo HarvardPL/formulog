@@ -75,7 +75,7 @@ public class CustomFunctionDef implements FunctionDef {
 		}
 	}
 
-	public static CustomFunctionDef get(Symbol sym, Var[] params, Expr body) {
+	public static CustomFunctionDef get(Symbol sym, Var[] params, Term body) {
 		return new CustomFunctionDef(sym, params, body);
 	}
 

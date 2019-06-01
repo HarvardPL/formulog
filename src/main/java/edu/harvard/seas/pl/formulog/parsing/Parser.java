@@ -24,6 +24,7 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
 import edu.harvard.seas.pl.formulog.ast.Annotation;
 import edu.harvard.seas.pl.formulog.ast.Atoms;
+import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
@@ -38,22 +39,19 @@ import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.StringTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
-import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
-import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
+import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
+import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.functions.DummyFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.Expr;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDefManager;
-import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef.MatchClause;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogBaseListener;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogBaseVisitor;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogLexer;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogVisitor;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.AnnotationContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.AtomListContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.BinopFormulaContext;
@@ -110,6 +108,7 @@ import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.UninterpSort
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.UnopTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.UnquoteTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.VarTermContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.DatalogVisitor;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInPredicateSymbol;
@@ -124,12 +123,12 @@ import edu.harvard.seas.pl.formulog.types.TypeAlias;
 import edu.harvard.seas.pl.formulog.types.TypeManager;
 import edu.harvard.seas.pl.formulog.types.Types;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
+import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType.ConstructorScheme;
 import edu.harvard.seas.pl.formulog.types.Types.OpaqueType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
 import edu.harvard.seas.pl.formulog.types.Types.TypeVar;
 import edu.harvard.seas.pl.formulog.types.Types.TypeVisitor;
-import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType.ConstructorScheme;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
@@ -239,11 +238,11 @@ public class Parser {
 		@Override
 		public void enterFunDecl(FunDeclContext ctx) {
 			List<Pair<Symbol, List<Var>>> ps = map(ctx.funDefLHS(), this::parseFunDefLHS);
-			Iterator<Expr> bodies = map(ctx.expr(), e -> e.accept(exprExtractor)).iterator();
+			Iterator<Term> bodies = map(ctx.expr(), e -> e.accept(exprExtractor)).iterator();
 			for (Pair<Symbol, List<Var>> p : ps) {
 				Symbol sym = p.fst();
 				List<Var> args = p.snd();
-				Expr body = bodies.next();
+				Term body = bodies.next();
 				functionDefManager.register(CustomFunctionDef.get(sym, args.toArray(new Var[0]), body));
 			}
 		}
@@ -427,9 +426,9 @@ public class Parser {
 					}
 
 					@Override
-					public Term visit(FunctionCall function, Void in) {
+					public Term visit(Expr expr, Void in) {
 						Var x = Var.getFresh();
-						acc.add(Atoms.getPositive(BuiltInPredicateSymbol.UNIFY, new Term[] { x, function }));
+						acc.add(Atoms.getPositive(BuiltInPredicateSymbol.UNIFY, new Term[] { x, expr }));
 						return x;
 					}
 
@@ -997,19 +996,19 @@ public class Parser {
 
 		};
 
-		private final DatalogVisitor<Expr> exprExtractor = new DatalogBaseVisitor<Expr>() {
+		private final DatalogVisitor<Term> exprExtractor = new DatalogBaseVisitor<Term>() {
 
 			@Override
-			public Expr visitTermExpr(TermExprContext ctx) {
-				return CustomFunctionDef.liftTerm(extract(ctx.term()));
+			public Term visitTermExpr(TermExprContext ctx) {
+				return extract(ctx.term());
 			}
 
 			@Override
-			public Expr visitMatchExpr(MatchExprContext ctx) {
-				Expr guard = ctx.expr().accept(this);
+			public Term visitMatchExpr(MatchExprContext ctx) {
+				Term guard = ctx.expr().accept(this);
 				List<MatchClause> matches = new ArrayList<>();
 				for (MatchClauseContext mcc : ctx.matchClause()) {
-					Expr rhs = mcc.expr().accept(this);
+					Term rhs = mcc.expr().accept(this);
 					for (TermContext pc : mcc.term()) {
 						Term pattern = extract(pc);
 						matches.add(CustomFunctionDef.getMatchClause(pattern, rhs));
@@ -1019,7 +1018,7 @@ public class Parser {
 			}
 
 			@Override
-			public Expr visitLetExpr(LetExprContext ctx) {
+			public Term visitLetExpr(LetExprContext ctx) {
 				List<Term> ts = map(ctx.term(), StmtProcessor.this::extract);
 				Term t;
 				if (ts.size() > 1) {
@@ -1027,17 +1026,17 @@ public class Parser {
 				} else {
 					t = ts.get(0);
 				}
-				Expr assign = ctx.assign.accept(this);
-				Expr body = ctx.body.accept(this);
+				Term assign = ctx.assign.accept(this);
+				Term body = ctx.body.accept(this);
 				MatchClause m = CustomFunctionDef.getMatchClause(t, body);
 				return CustomFunctionDef.getMatchExpr(assign, Collections.singletonList(m));
 			}
 
 			@Override
-			public Expr visitIfExpr(IfExprContext ctx) {
-				Expr guard = ctx.guard.accept(this);
-				Expr thenExpr = ctx.thenExpr.accept(this);
-				Expr elseExpr = ctx.elseExpr.accept(this);
+			public Term visitIfExpr(IfExprContext ctx) {
+				Term guard = ctx.guard.accept(this);
+				Term thenExpr = ctx.thenExpr.accept(this);
+				Term elseExpr = ctx.elseExpr.accept(this);
 				List<MatchClause> branches = new ArrayList<>();
 				branches.add(CustomFunctionDef.getMatchClause(Constructors.makeTrue(), thenExpr));
 				branches.add(CustomFunctionDef.getMatchClause(Constructors.makeFalse(), elseExpr));
