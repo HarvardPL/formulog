@@ -200,8 +200,8 @@ public class Interpreter {
 					public Void visit(MatchExpr matchExpr, Void in) {
 						preprocessTerm(matchExpr.getMatchee());
 						for (MatchClause cl : matchExpr.getClauses()) {
-							preprocessTerm(cl.getLHS());
-							preprocessTerm(cl.getRHS());
+							preprocessTerm(cl.getLhs());
+							preprocessTerm(cl.getRhs());
 						}
 						return null;
 					}

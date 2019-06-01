@@ -22,6 +22,7 @@ package edu.harvard.seas.pl.formulog.util;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class UnionFind<T> {
 
@@ -49,6 +50,10 @@ public class UnionFind<T> {
 			t = m.get(prev);
 		}
 		return t;
+	}
+	
+	public Set<T> members() {
+		return m.keySet();
 	}
 	
 }

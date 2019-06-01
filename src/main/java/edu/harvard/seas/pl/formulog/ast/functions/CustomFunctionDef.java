@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.ast.functions;
 
+import java.util.ArrayList;
+
 /*-
  * #%L
  * FormuLog
@@ -21,8 +23,10 @@ package edu.harvard.seas.pl.formulog.ast.functions;
  */
 
 import java.util.List;
+import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.Term;
+import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.functions.Exprs.ExprVisitorExn;
@@ -92,6 +96,10 @@ public class CustomFunctionDef implements FunctionDef {
 		private final Term matchee;
 		private final List<MatchClause> match;
 
+		public static MatchExpr make(Term matchee, List<MatchClause> match) {
+			return new MatchExpr(matchee, match);
+		}
+		
 		private MatchExpr(Term matchee, List<MatchClause> match) {
 			this.matchee = matchee;
 			this.match = match;
@@ -119,13 +127,13 @@ public class CustomFunctionDef implements FunctionDef {
 				// shadow the previous bindings). For efficiency sake, we might want to just
 				// rewrite patterns so that there is not variable shadowing.
 				Substitution s2 = new SimpleSubstitution();
-				if (Unification.unify(e, m.getLHS(), s2)) {
+				if (Unification.unify(e, m.getLhs(), s2)) {
 					for (Var v : s.iterateKeys()) {
 						if (!s2.containsKey(v)) {
 							s2.put(v, s.get(v));
 						}
 					}
-					return m.getRHS().normalize(s2);
+					return m.getRhs().normalize(s2);
 				}
 			}
 			throw new EvaluationException("No matching pattern in function for " + e + " under substitution " + s);
@@ -134,6 +142,35 @@ public class CustomFunctionDef implements FunctionDef {
 		@Override
 		public <I, O> O visit(ExprVisitor<I, O> visitor, I in) {
 			return visitor.visit(this, in);
+		}
+
+		@Override
+		public Term applySubstitution(Substitution s) {
+			Term newMatchee = matchee.applySubstitution(s);
+			List<MatchClause> clauses = new ArrayList<>();
+			for (MatchClause cl : match) {
+				Substitution newS = new SimpleSubstitution();
+				Term pat = cl.getLhs();
+				Set<Var> patVars = Terms.varSet(pat);
+				for (Var x : s.iterateKeys()) {
+					if (!patVars.contains(x)) {
+						newS.put(x, s.get(x));
+					}
+				}
+				Term newRhs = cl.getRhs().applySubstitution(newS);
+				clauses.add(getMatchClause(pat, newRhs));
+			}
+			return make(newMatchee, clauses);
+		}
+		
+		@Override
+		public String toString() {
+			String s = "match " + matchee.toString() + " with";
+			for (MatchClause cl : match) {
+				s += "\n\t| " + cl.getLhs() + " => " + cl.getRhs();
+			}
+			s += "\nend";
+			return s;
 		}
 
 	}
@@ -148,11 +185,11 @@ public class CustomFunctionDef implements FunctionDef {
 			this.rhs = rhs;
 		}
 
-		public Term getLHS() {
+		public Term getLhs() {
 			return lhs;
 		}
 
-		public Term getRHS() {
+		public Term getRhs() {
 			return rhs;
 		}
 

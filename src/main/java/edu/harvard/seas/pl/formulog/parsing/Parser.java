@@ -951,7 +951,7 @@ public class Parser {
 
 			@Override
 			public Term visitLetExpr(LetExprContext ctx) {
-				List<Term> ts = map(ctx.term(), StmtProcessor.this::extract);
+				List<Term> ts = map(ctx.letBind().term(), StmtProcessor.this::extract);
 				Term t;
 				if (ts.size() > 1) {
 					t = Constructors.make(symbolManager.lookupTupleSymbol(ts.size()), ts.toArray(Terms.emptyArray()));

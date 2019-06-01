@@ -1,0 +1,13 @@
+input foo(bool).
+foo(true).
+
+output ok.
+ok :-
+  if T then T else F,
+  let X = true in X && T,
+  match T with | true => T | false => F end,
+  foo(if T then T else F),
+  foo(let X = true in X && T),
+  foo(match T with | true => T | false => F end),
+  F = false,
+  T = true.

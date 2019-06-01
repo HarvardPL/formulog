@@ -209,8 +209,8 @@ public class Validator {
 			Term matchee = matchExpr.getMatchee().visit(termSimplifier, in);
 			List<MatchClause> clauses = new ArrayList<>();
 			for (MatchClause cl : matchExpr.getClauses()) {
-				Term lhs = cl.getLHS().visit(termSimplifier, in);
-				Term rhs = cl.getRHS().visit(termSimplifier, in);
+				Term lhs = cl.getLhs().visit(termSimplifier, in);
+				Term rhs = cl.getRhs().visit(termSimplifier, in);
 				clauses.add(CustomFunctionDef.getMatchClause(lhs, rhs));
 			}
 			return CustomFunctionDef.getMatchExpr(matchee, clauses);
@@ -409,7 +409,13 @@ public class Validator {
 
 			@Override
 			public Iterable<Var> iterateKeys() {
-				throw new AssertionError("impossible");
+				List<Var> vars = new ArrayList<>();
+				for (Term t : uf.members()) {
+					if (t instanceof Var) {
+						vars.add((Var) t);
+					}
+				}
+				return vars;
 			}
 
 		};
@@ -506,12 +512,12 @@ public class Validator {
 		public Void visit(MatchExpr matchExpr, Void in) throws InvalidProgramException {
 			validateTerm(matchExpr.getMatchee());
 			for (MatchClause cl : matchExpr.getClauses()) {
-				Term lhs = cl.getLHS();
+				Term lhs = cl.getLhs();
 				validateTerm(lhs);
 				if (lhs.containsFunctionCall()) {
 					throw new InvalidProgramException("Cannot have a match pattern with a reducible term: " + lhs);
 				}
-				validateTerm(cl.getRHS());
+				validateTerm(cl.getRhs());
 			}
 			return null;
 		}

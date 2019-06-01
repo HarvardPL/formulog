@@ -31,11 +31,6 @@ public interface Expr extends Term {
 	}
 	
 	@Override
-	default Term applySubstitution(Substitution s) {
-		throw new UnsupportedOperationException("Shouldn't apply substitution to unnormalized term");
-	}
-	
-	@Override
 	default Term reduce(Substitution s) throws EvaluationException {
 		return normalize(s);
 	}

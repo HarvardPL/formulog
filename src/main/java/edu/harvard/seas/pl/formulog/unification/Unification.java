@@ -9,7 +9,6 @@ import edu.harvard.seas.pl.formulog.ast.Atoms.AtomVisitorExn;
 import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
 import edu.harvard.seas.pl.formulog.ast.Atoms.UnifyAtom;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
-import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
@@ -179,19 +178,17 @@ public final class Unification {
 			return true;
 		}
 
-		if (t1 instanceof FunctionCall) {
+		if (t1 instanceof Expr) {
 			t1 = t1.normalize(s);
 		}
-		if (t2 instanceof FunctionCall) {
+		if (t2 instanceof Expr) {
 			t2 = t2.normalize(s);
 		}
 
 		if (t1 instanceof Primitive) {
 			return t1.equals(t2);
 		}
-		if (t2 instanceof Primitive) {
-			return false;
-		}
+		assert !(t2 instanceof Primitive);
 
 		Constructor c1 = (Constructor) t1;
 		Constructor c2 = (Constructor) t2;

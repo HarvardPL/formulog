@@ -253,27 +253,37 @@ term
 	(
 		FORALL
 		| EXISTS
-	) variables = nonEmptyTermList (':' pattern = nonEmptyTermList)? '.' boundTerm = term # quantifiedFormula
+	) variables = nonEmptyTermList
+	(
+		':' pattern = nonEmptyTermList
+	)? '.' boundTerm = term # quantifiedFormula
 	| '#if' term 'then' term 'else' term # iteTerm
 	| term ISNOT ID # outermostCtor
-	|	'match' term 'with' '|'? matchClause
+	| 'match' term 'with' '|'? matchClause
 	(
 		'|' matchClause
 	)* 'end' # matchExpr
-	| 'let'
+	| 'let' lhs = letBind '=' assign = term 'in' body = term # letExpr
+	| 'if' guard = term 'then' thenExpr = term 'else' elseExpr = term # ifExpr
+;
+
+letBind
+:
 	(
 		term
 		| '(' term ',' term
 		(
 			',' term
 		)* ')'
-	) '=' assign = term 'in' body = term # letExpr
-	| 'if' guard = term 'then' thenExpr = term 'else' elseExpr = term # ifExpr
+	)
 ;
 
 nonEmptyTermList
 :
-	term (',' term)*
+	term
+	(
+		',' term
+	)*
 ;
 
 list
@@ -295,7 +305,6 @@ tuple
 	)* ')'
 ;
 
-
 matchClause
 :
 	pats = patterns '=>' rhs = term
@@ -303,7 +312,10 @@ matchClause
 
 patterns
 :
-	term ('|' term)*
+	term
+	(
+		'|' term
+	)*
 ;
 
 // Tokens //////////////////////////////////////////////////////////////////////

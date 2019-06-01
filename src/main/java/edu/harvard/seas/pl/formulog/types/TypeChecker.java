@@ -319,13 +319,13 @@ public class TypeChecker {
 						// Use a fresh var map when type checking a pattern (because of variable
 						// shadowing).
 						Map<Var, Type> newVarTypes = new HashMap<>();
-						genConstraints(cl.getLHS(), guardType, newVarTypes, allowSubtype);
+						genConstraints(cl.getLhs(), guardType, newVarTypes, allowSubtype);
 						// However, still need to propagate any variables that are not re-bound in
 						// pattern.
 						for (Map.Entry<Var, Type> e : varTypes.entrySet()) {
 							newVarTypes.putIfAbsent(e.getKey(), e.getValue());
 						}
-						genConstraints(cl.getRHS(), exprType, newVarTypes, allowSubtype);
+						genConstraints(cl.getRhs(), exprType, newVarTypes, allowSubtype);
 					}
 					return null;
 				}

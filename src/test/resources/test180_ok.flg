@@ -1,0 +1,11 @@
+input foo(bool).
+foo(true).
+
+output ok.
+ok :-
+  if true then true else false,
+  let X = true in X && X,
+  match true with | true => true | false => false end,
+  foo(if true then true else false),
+  foo(let X = true in X && X),
+  foo(match true with | true => true | false => false end).

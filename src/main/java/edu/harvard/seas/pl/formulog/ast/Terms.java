@@ -69,8 +69,8 @@ public final class Terms {
 		@Override
 		public Void visit(MatchExpr matchExpr, Set<Var> in) {
 			for (MatchClause cl : matchExpr.getClauses()) {
-				Set<Var> patternVars = varSet(cl.getLHS());
-				Set<Var> rhsVars = varSet(cl.getRHS());
+				Set<Var> patternVars = varSet(cl.getLhs());
+				Set<Var> rhsVars = varSet(cl.getRhs());
 				rhsVars.removeAll(patternVars);
 				in.addAll(rhsVars);
 			}

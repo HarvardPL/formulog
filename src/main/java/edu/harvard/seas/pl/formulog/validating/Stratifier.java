@@ -161,8 +161,8 @@ public class Stratifier {
 				public Void visit(MatchExpr matchExpr, Void in) {
 					processTerm(matchExpr.getMatchee());
 					for (MatchClause cl : matchExpr.getClauses()) {
-						processTerm(cl.getLHS());
-						processTerm(cl.getRHS());
+						processTerm(cl.getLhs());
+						processTerm(cl.getRhs());
 					}
 					return null;
 				}
