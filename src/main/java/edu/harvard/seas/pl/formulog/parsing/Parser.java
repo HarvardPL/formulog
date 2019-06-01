@@ -92,7 +92,6 @@ import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.SpecialFPTer
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.StringTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.TermAtomContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.TermContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.TermExprContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.TermSymFormulaContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.TupleTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.TupleTypeContext;
@@ -238,7 +237,7 @@ public class Parser {
 		@Override
 		public void enterFunDecl(FunDeclContext ctx) {
 			List<Pair<Symbol, List<Var>>> ps = map(ctx.funDefLHS(), this::parseFunDefLHS);
-			Iterator<Term> bodies = map(ctx.expr(), e -> e.accept(exprExtractor)).iterator();
+			Iterator<Term> bodies = map(ctx.term(), e -> e.accept(termExtractor)).iterator();
 			for (Pair<Symbol, List<Var>> p : ps) {
 				Symbol sym = p.fst();
 				List<Var> args = p.snd();
@@ -935,6 +934,46 @@ public class Parser {
 				Term arg = extract(ctx.term());
 				return functionCallFactory.make(isNotFun, Terms.singletonArray(arg));
 			}
+			
+			@Override
+			public Term visitMatchExpr(MatchExprContext ctx) {
+				Term guard = ctx.term().accept(this);
+				List<MatchClause> matches = new ArrayList<>();
+				for (MatchClauseContext mcc : ctx.matchClause()) {
+					Term rhs = extract(mcc.rhs);
+					for (TermContext pc : mcc.patterns().term()) {
+						Term pattern = extract(pc);
+						matches.add(CustomFunctionDef.getMatchClause(pattern, rhs));
+					}
+				}
+				return CustomFunctionDef.getMatchExpr(guard, matches);
+			}
+
+			@Override
+			public Term visitLetExpr(LetExprContext ctx) {
+				List<Term> ts = map(ctx.term(), StmtProcessor.this::extract);
+				Term t;
+				if (ts.size() > 1) {
+					t = Constructors.make(symbolManager.lookupTupleSymbol(ts.size()), ts.toArray(Terms.emptyArray()));
+				} else {
+					t = ts.get(0);
+				}
+				Term assign = ctx.assign.accept(this);
+				Term body = ctx.body.accept(this);
+				MatchClause m = CustomFunctionDef.getMatchClause(t, body);
+				return CustomFunctionDef.getMatchExpr(assign, Collections.singletonList(m));
+			}
+
+			@Override
+			public Term visitIfExpr(IfExprContext ctx) {
+				Term guard = ctx.guard.accept(this);
+				Term thenExpr = ctx.thenExpr.accept(this);
+				Term elseExpr = ctx.elseExpr.accept(this);
+				List<MatchClause> branches = new ArrayList<>();
+				branches.add(CustomFunctionDef.getMatchClause(Constructors.makeTrue(), thenExpr));
+				branches.add(CustomFunctionDef.getMatchClause(Constructors.makeFalse(), elseExpr));
+				return CustomFunctionDef.getMatchExpr(guard, branches);
+			}
 
 		};
 
@@ -992,55 +1031,6 @@ public class Parser {
 				Term arg = extract(ctx.term());
 				return Atoms.getPositive(BuiltInPredicateSymbol.UNIFY,
 						new Term[] { arg, Constructors.makeZeroAry(BuiltInConstructorSymbol.TRUE) });
-			}
-
-		};
-
-		private final DatalogVisitor<Term> exprExtractor = new DatalogBaseVisitor<Term>() {
-
-			@Override
-			public Term visitTermExpr(TermExprContext ctx) {
-				return extract(ctx.term());
-			}
-
-			@Override
-			public Term visitMatchExpr(MatchExprContext ctx) {
-				Term guard = ctx.expr().accept(this);
-				List<MatchClause> matches = new ArrayList<>();
-				for (MatchClauseContext mcc : ctx.matchClause()) {
-					Term rhs = mcc.expr().accept(this);
-					for (TermContext pc : mcc.term()) {
-						Term pattern = extract(pc);
-						matches.add(CustomFunctionDef.getMatchClause(pattern, rhs));
-					}
-				}
-				return CustomFunctionDef.getMatchExpr(guard, matches);
-			}
-
-			@Override
-			public Term visitLetExpr(LetExprContext ctx) {
-				List<Term> ts = map(ctx.term(), StmtProcessor.this::extract);
-				Term t;
-				if (ts.size() > 1) {
-					t = Constructors.make(symbolManager.lookupTupleSymbol(ts.size()), ts.toArray(Terms.emptyArray()));
-				} else {
-					t = ts.get(0);
-				}
-				Term assign = ctx.assign.accept(this);
-				Term body = ctx.body.accept(this);
-				MatchClause m = CustomFunctionDef.getMatchClause(t, body);
-				return CustomFunctionDef.getMatchExpr(assign, Collections.singletonList(m));
-			}
-
-			@Override
-			public Term visitIfExpr(IfExprContext ctx) {
-				Term guard = ctx.guard.accept(this);
-				Term thenExpr = ctx.thenExpr.accept(this);
-				Term elseExpr = ctx.elseExpr.accept(this);
-				List<MatchClause> branches = new ArrayList<>();
-				branches.add(CustomFunctionDef.getMatchClause(Constructors.makeTrue(), thenExpr));
-				branches.add(CustomFunctionDef.getMatchClause(Constructors.makeFalse(), elseExpr));
-				return CustomFunctionDef.getMatchExpr(guard, branches);
 			}
 
 		};

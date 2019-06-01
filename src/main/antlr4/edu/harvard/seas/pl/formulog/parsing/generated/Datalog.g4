@@ -12,9 +12,9 @@ prog
 
 metadata
 :
-	'fun' funDefLHS EQ expr
+	'fun' funDefLHS EQ term
 	(
-		'and' funDefLHS EQ expr
+		'and' funDefLHS EQ term
 	)* '.' # funDecl
 	| annotation* relType =
 	(
@@ -256,6 +256,19 @@ term
 	) variables = nonEmptyTermList (':' pattern = nonEmptyTermList)? '.' boundTerm = term # quantifiedFormula
 	| '#if' term 'then' term 'else' term # iteTerm
 	| term ISNOT ID # outermostCtor
+	|	'match' term 'with' '|'? matchClause
+	(
+		'|' matchClause
+	)* 'end' # matchExpr
+	| 'let'
+	(
+		term
+		| '(' term ',' term
+		(
+			',' term
+		)* ')'
+	) '=' assign = term 'in' body = term # letExpr
+	| 'if' guard = term 'then' thenExpr = term 'else' elseExpr = term # ifExpr
 ;
 
 nonEmptyTermList
@@ -282,30 +295,15 @@ tuple
 	)* ')'
 ;
 
-expr
-:
-	'match' expr 'with' '|'? matchClause
-	(
-		'|' matchClause
-	)* 'end' # matchExpr
-	| 'let'
-	(
-		term
-		| '(' term ',' term
-		(
-			',' term
-		)* ')'
-	) '=' assign = expr 'in' body = expr # letExpr
-	| 'if' guard = expr 'then' thenExpr = expr 'else' elseExpr = expr # ifExpr
-	| term # termExpr
-;
 
 matchClause
 :
-	term
-	(
-		'|' term
-	)* '=>' expr
+	pats = patterns '=>' rhs = term
+;
+
+patterns
+:
+	term ('|' term)*
 ;
 
 // Tokens //////////////////////////////////////////////////////////////////////
