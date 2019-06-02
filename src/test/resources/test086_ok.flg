@@ -1,4 +1,4 @@
-fun make_eq(X : 'a list smt, Y : 'a) : bool smt = `cons_1(cons_2(X)) #= Y`.
+fun make_eq(X : 'a list smt, Y : 'a) : bool smt = `#cons_1(#cons_2(X)) #= Y`.
 
 output ok.
 ok :-

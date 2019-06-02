@@ -5,8 +5,8 @@ type 'a my_list =
 output ok.
 ok :-
   X = #x[i32 my_list],
-  E = `is_my_nil(X)`,
-  F = `is_my_cons(X)`,
+  E = `#is_my_nil(X)`,
+  F = `#is_my_cons(X)`,
   is_sat(E),
   is_sat(F),
   !is_sat(`E /\ F`).

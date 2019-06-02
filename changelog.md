@@ -13,6 +13,8 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Increased the amount of information printed with the `debugMst` option.
 - Allow ML-style expressions to occur as logic programming terms.
+- Prefix names of automatically-generated ADT testers and getters with `#`
+- Removed syntax highlighting for solver variables
 
 ### Fixed
 - Fixed bug with applying type substitutions that contain mappings to (possibly

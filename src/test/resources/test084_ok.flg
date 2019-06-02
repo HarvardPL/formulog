@@ -5,8 +5,8 @@ type 'a my_option =
 output ok.
 ok :-
   X = #x[i32 my_option],
-  E = `my_some_1(X) #= 0`,
-  F = `my_some_1(X) #= 42`,
+  E = `#my_some_1(X) #= 0`,
+  F = `#my_some_1(X) #= 42`,
   is_sat(E),
   is_sat(F),
   !is_sat(`E /\ F`).

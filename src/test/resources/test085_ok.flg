@@ -1,8 +1,8 @@
 output ok.
 ok :-
   X = #x[i32 option],
-  E = `some_1(X) #= 0`,
-  F = `some_1(X) #= 42`,
+  E = `#some_1(X) #= 0`,
+  F = `#some_1(X) #= 42`,
   is_sat(E),
   is_sat(F),
   !is_sat(`E /\ F`).

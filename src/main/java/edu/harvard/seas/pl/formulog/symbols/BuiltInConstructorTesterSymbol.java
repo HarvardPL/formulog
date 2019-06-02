@@ -36,19 +36,19 @@ import edu.harvard.seas.pl.formulog.types.Types.Type;
 
 public enum BuiltInConstructorTesterSymbol implements Symbol {
 
-	IS_CMP_LT("is_cmp_lt", cmp, smt(bool)),
+	IS_CMP_LT("#is_cmp_lt", cmp, smt(bool)),
 	
-	IS_CMP_EQ("is_cmp_eq", cmp, smt(bool)),
+	IS_CMP_EQ("#is_cmp_eq", cmp, smt(bool)),
 	
-	IS_CMP_GT("is_cmp_gt", cmp, smt(bool)),
+	IS_CMP_GT("#is_cmp_gt", cmp, smt(bool)),
 	
-	IS_NIL("is_nil", list(a), smt(bool)),
+	IS_NIL("#is_nil", list(a), smt(bool)),
 	
-	IS_CONS("is_cons", list(a), smt(bool)),
+	IS_CONS("#is_cons", list(a), smt(bool)),
 	
-	IS_NONE("is_none", option(a), smt(bool)),
+	IS_NONE("#is_none", option(a), smt(bool)),
 	
-	IS_SOME("is_some", option(a), smt(bool)),
+	IS_SOME("#is_some", option(a), smt(bool)),
 	
 	;
 

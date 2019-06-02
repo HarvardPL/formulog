@@ -358,12 +358,12 @@ public class Parser {
 				if (!typeVars.containsAll(Types.getTypeVars(typeArgs))) {
 					throw new RuntimeException("Unbound type variable in definition of " + csym);
 				}
-				symbolManager.createSymbol("is_" + csym.toString(), 1, SymbolType.SOLVER_CONSTRUCTOR_TESTER,
+				symbolManager.createSymbol("#is_" + csym.toString(), 1, SymbolType.SOLVER_CONSTRUCTOR_TESTER,
 						new FunctorType(type, BuiltInTypes.bool));
 				List<Symbol> getterSyms = new ArrayList<>();
 				for (int i = 0; i < csym.getArity(); ++i) {
 					Type t = new FunctorType(type, typeArgs.get(i));
-					String name = csym.toString() + "_" + (i + 1);
+					String name = "#" + csym.toString() + "_" + (i + 1);
 					getterSyms.add(symbolManager.createSymbol(name, 1, SymbolType.SOLVER_CONSTRUCTOR_GETTER, t));
 				}
 				constructors.add(new ConstructorScheme(csym, typeArgs, getterSyms));
@@ -403,7 +403,7 @@ public class Parser {
 				throw new RuntimeException("Unbound type variable in definition of " + sym);
 			}
 			FunctorType ctype = new FunctorType(entryTypes, type);
-			Symbol csym = symbolManager.createSymbol("%" + sym, entryTypes.size(), SymbolType.VANILLA_CONSTRUCTOR,
+			Symbol csym = symbolManager.createSymbol("rec%" + sym, entryTypes.size(), SymbolType.VANILLA_CONSTRUCTOR,
 					ctype);
 			ConstructorScheme ctor = new ConstructorScheme(csym, entryTypes, getterSyms);
 			AlgebraicDataType.setConstructors(sym, typeVars, Collections.singleton(ctor));
@@ -585,7 +585,7 @@ public class Parser {
 			@Override
 			public Term visitIndexedFunctor(IndexedFunctorContext ctx) {
 				Term[] args = termContextsToTerms(ctx.termArgs().term());
-				String name = ctx.ID().getText();
+				String name = ctx.id.getText();
 				List<Integer> indices = getIndices(ctx.index());
 				Pair<Symbol, List<Integer>> p = symbolManager.lookupIndexedSymbol(name, indices);
 				Symbol sym = p.fst();
@@ -916,7 +916,7 @@ public class Parser {
 			@Override
 			public Term visitConstSymFormula(ConstSymFormulaContext ctx) {
 				Type type = ctx.type().accept(typeExtractor);
-				Term id = StringTerm.make(ctx.id.getText());
+				Term id = StringTerm.make(ctx.id.getText().substring(1));
 				return extractSolverSymbol(id, type);
 			}
 

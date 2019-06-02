@@ -34,11 +34,11 @@ import edu.harvard.seas.pl.formulog.types.Types.Type;
 
 public enum BuiltInConstructorGetterSymbol implements Symbol {
 
-	CONS_1("cons_1", list(a), smt(a)),
+	CONS_1("#cons_1", list(a), smt(a)),
 	
-	CONS_2("cons_2", list(a), smt(list(a))),
+	CONS_2("#cons_2", list(a), smt(list(a))),
 	
-	SOME_1("some_1", option(a), smt(a))
+	SOME_1("#some_1", option(a), smt(a))
 	
 	;
 

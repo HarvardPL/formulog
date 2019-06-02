@@ -179,7 +179,7 @@ predicate
 
 functor
 :
-	ID index termArgs # indexedFunctor
+	id = (ID | XID) index termArgs # indexedFunctor
 ;
 
 termArgs
@@ -255,11 +255,7 @@ term
 	) # specialFPTerm
 	| '`' term '`' # formulaTerm
 	| ',' term # unquoteTerm
-	| '#' id =
-	(
-		ID
-		| VAR
-	) '[' type ']' # constSymFormula
+	| id = (XID | XVAR) '[' type ']' # constSymFormula
 	| '#' '{' term '}' '[' type ']' # termSymFormula
 	| NOT term # notFormula
 	| < assoc = left > term op = FORMULA_EQ term # binopFormula
@@ -412,6 +408,11 @@ FP64_NEG_INFINITY
 TYPEVAR
 :
 	'\'' ID
+;
+
+XVAR
+:
+	'#' VAR
 ;
 
 VAR
@@ -596,6 +597,11 @@ COMMENT
 		COMMENT
 		| .
 	)*? '*)' -> skip
+;
+
+XID
+:
+	'#'	 ID
 ;
 
 ID

@@ -70,6 +70,7 @@ public final class Constructors {
 		case TUPLE:
 			return memo.lookupOrCreate(sym, args, () -> new Tuple(sym, args));
 		case SOLVER_CONSTRUCTOR_GETTER:
+			return memo.lookupOrCreate(sym, args, () -> makeConstructorGetter(sym, args));
 		case INDEX_CONSTRUCTOR:
 		case VANILLA_CONSTRUCTOR:
 			return memo.lookupOrCreate(sym, args, () -> new VanillaConstructor(sym, args));
@@ -841,8 +842,24 @@ public final class Constructors {
 	}
 
 	private static Constructor makeConstructorTester(Symbol sym, Term[] args) {
-		assert sym.toString().matches("is_.*");
-		String s = "|is-" + sym.toString().substring(3) + "|";
+		assert sym.toString().matches("#is_.*");
+		String s = "|is-" + sym.toString().substring(4) + "|";
+		return new AbstractConstructor(sym, args) {
+
+			@Override
+			public void toSmtLib(SmtLibShim shim) {
+				shim.print("(");
+				shim.print(s);
+				shim.print(" ");
+				((SmtLibTerm) args[0]).toSmtLib(shim);
+				shim.print(")");
+			}
+
+		};
+	}
+	
+	private static Constructor makeConstructorGetter(Symbol sym, Term[] args) {
+		String s = "|" + sym.toString() + "|";
 		return new AbstractConstructor(sym, args) {
 
 			@Override
