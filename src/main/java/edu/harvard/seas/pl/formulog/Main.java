@@ -156,14 +156,21 @@ public final class Main {
 		}
 		System.out.println("Results:");
 		IndexedFactDB db = interp.getResult();
-		if (q == null || System.getProperty("debugMst") != null) {
-			System.err.println("\n*** All generated facts ***");
+		boolean debugMst = System.getProperty("debugMst") != null;
+		if (q == null || debugMst) {
+			PrintStream out = System.out;
+			if (debugMst) {
+				out = System.err;
+				out.println("\n*** All generated facts ***");
+			}
 			for (Symbol sym : db.getSymbols()) {
-				printSortedFacts(db.query(sym), System.err);
+				printSortedFacts(db.query(sym), out);
 			}
 		}
 		if (q != null) {
-			System.out.println("\n*** Query results ***");
+			if (debugMst) {
+				System.err.println("\n*** Query results ***");
+			}
 			List<NormalAtom> facts = new ArrayList<>();
 			try {
 				for (Atom fact : db.query(q.getSymbol())) {

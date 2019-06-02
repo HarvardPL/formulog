@@ -1,0 +1,11 @@
+type 'a linked_list = {
+  val : 'a ;
+  next : 'a linked_list option ;
+}.
+
+output ok.
+ok :-
+	X = { val = 42 ; next = none ; },
+	Y = { val = "hello" ; next = some(X) ; },
+	some(Z) = next(Y),
+	42 = val(Z).

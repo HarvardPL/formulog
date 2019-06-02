@@ -66,7 +66,7 @@ public final class Types {
 		O visit(AlgebraicDataType algebraicType, I in);
 
 		O visit(OpaqueType opaqueType, I in);
-		
+
 		O visit(TypeIndex typeIndex, I in);
 
 	}
@@ -197,7 +197,7 @@ public final class Types {
 		public boolean hasConstructors() {
 			return memo.containsKey(sym);
 		}
-		
+
 		public Set<ConstructorScheme> getConstructors() {
 			Set<ConstructorScheme> s = constructors.get();
 			if (s == null) {
@@ -208,7 +208,12 @@ public final class Types {
 				List<TypeVar> params = p.fst();
 				Map<TypeVar, Type> subst = new HashMap<>();
 				for (int i = 0; i < params.size(); ++i) {
-					subst.put(params.get(i), typeArgs.get(i));
+					TypeVar x = params.get(i);
+					Type t = typeArgs.get(i);
+					// XXX This is to avoid cycles in subst, but is obviously fragile
+					if (!x.equals(t)) {
+						subst.put(x, t);
+					}
 				}
 				s = new HashSet<>();
 				for (ConstructorScheme c : p.snd()) {
@@ -326,7 +331,7 @@ public final class Types {
 			public List<Type> getTypeArgs() {
 				return typeArgs;
 			}
-			
+
 			public List<Symbol> getGetterSymbols() {
 				return getterSyms;
 			}
@@ -409,19 +414,19 @@ public final class Types {
 		}
 
 	}
-	
+
 	public static class TypeIndex implements Type {
 
 		private final int index;
-	
+
 		public TypeIndex(int index) {
 			this.index = index;
 		}
-		
+
 		public static TypeIndex make(int index) {
 			return new TypeIndex(index);
 		}
-		
+
 		@Override
 		public <I, O> O visit(TypeVisitor<I, O> visitor, I in) {
 			return visitor.visit(this, in);
@@ -458,7 +463,7 @@ public final class Types {
 				return false;
 			return true;
 		}
-		
+
 		@Override
 		public String toString() {
 			return "[" + index + "]";
@@ -467,7 +472,7 @@ public final class Types {
 		public int getIndex() {
 			return index;
 		}
-		
+
 	}
 
 	// Helpers /////////////////////////////////////////////////////////////////

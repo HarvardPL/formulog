@@ -111,6 +111,8 @@ import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.QuantifiedFo
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.QueryStmtContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.RecordDefContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.RecordEntryContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.RecordEntryDefContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.RecordTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.RelDeclContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.SpecialFPTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.StringTermContext;
@@ -256,6 +258,7 @@ public class Parser {
 		private final FunctionDefManager functionDefManager = new FunctionDefManager();
 		private final FunctionCallFactory functionCallFactory = new FunctionCallFactory(functionDefManager);
 		private final Map<Symbol, Set<Annotation>> annotations = new HashMap<>();
+		private final Map<Symbol, Pair<AlgebraicDataType, Integer>> recordLabels = new HashMap<>();
 		private Atom query;
 
 		@Override
@@ -375,7 +378,7 @@ public class Parser {
 			List<Type> entryTypes = new ArrayList<>();
 			List<Symbol> getterSyms = new ArrayList<>();
 			int i = 0;
-			for (RecordEntryContext entry : ctx.recordEntry()) {
+			for (RecordEntryDefContext entry : ctx.recordEntryDef()) {
 				Type entryType = entry.type().accept(typeExtractor);
 				entryTypes.add(entryType);
 				Type labelType = new FunctorType(type, entryType);
@@ -390,12 +393,14 @@ public class Parser {
 
 					@Override
 					public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-						return args[j].applySubstitution(subst);
+						Constructor ctor = (Constructor) args[0];
+						return ctor.getArgs()[j].applySubstitution(subst);
 					}
 
 				});
 				Symbol getter = symbolManager.createSymbol("#" + label, 1, SymbolType.SOLVER_CONSTRUCTOR_GETTER, labelType);
 				getterSyms.add(getter);
+				recordLabels.put(label, new Pair<>(type, i));
 				i++;
 			}
 			Symbol sym = type.getSymbol();
@@ -711,6 +716,34 @@ public class Parser {
 					return FP64.make(Double.POSITIVE_INFINITY);
 				}
 				throw new AssertionError();
+			}
+			
+			@Override
+			public Term visitRecordTerm(RecordTermContext ctx) {
+				AlgebraicDataType type = null;
+				Map<Integer, Term> argMap = new HashMap<>();
+				for (RecordEntryContext entry : ctx.recordEntries().recordEntry()) {
+					Symbol label = symbolManager.lookupSymbol(entry.ID().getText());
+					Pair<AlgebraicDataType, Integer> p = recordLabels.get(label);
+					if (p == null) {
+						throw new RuntimeException(label + " is not a record label");
+					}
+					AlgebraicDataType type2 = p.fst();
+					if (type == null) {
+						type = type2;
+					} else if (!type.equals(type2)) {
+						throw new RuntimeException("Cannot use label " + label + " in a record of type " + type);
+					}
+					if (argMap.putIfAbsent(p.snd(), extract(entry.term())) != null) {
+						throw new RuntimeException("Cannot use the same label " + label + " multiple times when creating a record");
+					}
+				}
+				Symbol csym = type.getConstructors().iterator().next().getSymbol();
+				Term[] args = new Term[csym.getArity()];
+				for (int i = 0; i < args.length; i++) {
+					args[i] = argMap.get(i);
+				}
+				return Constructors.make(csym, args);
 			}
 
 			@Override
@@ -1056,9 +1089,6 @@ public class Parser {
 			private Atom extractAtom(PredicateContext ctx, boolean negated) {
 				Term[] args = termContextsToTerms(ctx.termArgs().term());
 				Symbol sym = symbolManager.lookupSymbol(ctx.ID().getText());
-				if (sym == null) {
-					throw new RuntimeException("Unrecognized symbol: " + ctx.ID().getText());
-				}
 				SymbolType symType = sym.getSymbolType();
 				if (symType.isFunctionSymbol()) {
 					Term f = functionCallFactory.make(sym, args);

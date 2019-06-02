@@ -115,13 +115,13 @@ adtDef
 
 recordDef
 :
-	'{' recordEntry
+	'{' recordEntryDef
 	(
-		';' recordEntry
+		';' recordEntryDef
 	)* ';'? '}'
 ;
 
-recordEntry
+recordEntryDef
 :
 	ID ':' type
 ;
@@ -253,6 +253,7 @@ term
 		| FP64_POS_INFINITY
 		| FP64_NEG_INFINITY
 	) # specialFPTerm
+	| '{' recordEntries '}' #recordTerm
 	| '`' term '`' # formulaTerm
 	| ',' term # unquoteTerm
 	| id = (XID | XVAR) '[' type ']' # constSymFormula
@@ -280,6 +281,16 @@ term
 	)* 'end' # matchExpr
 	| 'let' lhs = letBind '=' assign = term 'in' body = term # letExpr
 	| 'if' guard = term 'then' thenExpr = term 'else' elseExpr = term # ifExpr
+;
+
+recordEntries
+:
+	recordEntry (';' recordEntry)* ';'?
+;
+
+recordEntry
+:
+	ID '=' term
 ;
 
 letBind

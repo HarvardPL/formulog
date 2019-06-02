@@ -174,5 +174,10 @@ public class TypeCheckingTest {
 	public void test132() {
 		test("test132_bd.flg");
 	}
+	
+	@Test
+	public void test185() {
+		test("test185_bd.flg");
+	}
 
 }

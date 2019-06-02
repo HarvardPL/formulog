@@ -562,5 +562,20 @@ public class EvaluationTest {
 	public void test181() {
 		test("test181_ok.flg");
 	}
+	
+	@Test
+	public void test182() {
+		test("test182_ok.flg");
+	}
+	
+	@Test
+	public void test183() {
+		test("test183_ok.flg");
+	}
+	
+	@Test
+	public void test184() {
+		test("test184_ok.flg");
+	}
 
 }
