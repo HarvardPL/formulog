@@ -113,6 +113,7 @@ import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.RecordDefCon
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.RecordEntryContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.RecordEntryDefContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.RecordTermContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.RecordUpdateTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.RelDeclContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.SpecialFPTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.StringTermContext;
@@ -259,6 +260,7 @@ public class Parser {
 		private final FunctionCallFactory functionCallFactory = new FunctionCallFactory(functionDefManager);
 		private final Map<Symbol, Set<Annotation>> annotations = new HashMap<>();
 		private final Map<Symbol, Pair<AlgebraicDataType, Integer>> recordLabels = new HashMap<>();
+		private final Map<Symbol, Symbol[]> constructorLabels = new HashMap<>();
 		private Atom query;
 
 		@Override
@@ -377,12 +379,14 @@ public class Parser {
 		private void handleRecordDef(RecordDefContext ctx, AlgebraicDataType type, List<TypeVar> typeVars) {
 			List<Type> entryTypes = new ArrayList<>();
 			List<Symbol> getterSyms = new ArrayList<>();
+			List<Symbol> labels = new ArrayList<>();
 			int i = 0;
 			for (RecordEntryDefContext entry : ctx.recordEntryDef()) {
 				Type entryType = entry.type().accept(typeExtractor);
 				entryTypes.add(entryType);
 				Type labelType = new FunctorType(type, entryType);
 				Symbol label = symbolManager.createSymbol(entry.ID().getText(), 1, SymbolType.FUNCTION, labelType);
+				labels.add(label);
 				final int j = i;
 				functionDefManager.register(new FunctionDef() {
 
@@ -412,6 +416,7 @@ public class Parser {
 					ctype);
 			ConstructorScheme ctor = new ConstructorScheme(csym, entryTypes, getterSyms);
 			AlgebraicDataType.setConstructors(sym, typeVars, Collections.singleton(ctor));
+			constructorLabels.put(csym, labels.toArray(new Symbol[0]));
 		}
 
 		private Pair<Symbol, List<TypeVar>> parseTypeDefLHS(TypeDefLHSContext ctx, SymbolType symType) {
@@ -720,9 +725,42 @@ public class Parser {
 			
 			@Override
 			public Term visitRecordTerm(RecordTermContext ctx) {
+				Pair<Symbol, Map<Integer, Term>> p = handleRecordEntries(ctx.recordEntries().recordEntry());
+				Symbol csym = p.fst();
+				Map<Integer, Term> argMap = p.snd();
+				Term[] args = new Term[csym.getArity()];
+				if (args.length != argMap.keySet().size()) {
+					throw new RuntimeException("Missing label(s) when creating record of type " + csym);
+				}
+				for (int i = 0; i < args.length; i++) {
+					args[i] = argMap.get(i);
+				}
+				return Constructors.make(csym, args);
+			}
+			
+			@Override
+			public Term visitRecordUpdateTerm(RecordUpdateTermContext ctx) {
+				Pair<Symbol, Map<Integer, Term>> p = handleRecordEntries(ctx.recordEntries().recordEntry());
+				Symbol csym = p.fst();
+				Map<Integer, Term> argMap = p.snd();
+				Term[] args = new Term[csym.getArity()];
+				Symbol[] labels = constructorLabels.get(csym);
+				Term orig = extract(ctx.term());
+				for (int i = 0; i < args.length; ++i) {
+					Term t = argMap.get(i);
+					if (t == null) {
+						Symbol label = labels[i];
+						t = functionCallFactory.make(label, Terms.singletonArray(orig));
+					}	
+					args[i] = t;
+				}
+				return Constructors.make(csym, args);
+			}
+			
+			private Pair<Symbol, Map<Integer, Term>> handleRecordEntries(List<RecordEntryContext> entries) {
 				AlgebraicDataType type = null;
 				Map<Integer, Term> argMap = new HashMap<>();
-				for (RecordEntryContext entry : ctx.recordEntries().recordEntry()) {
+				for (RecordEntryContext entry : entries) {
 					Symbol label = symbolManager.lookupSymbol(entry.ID().getText());
 					Pair<AlgebraicDataType, Integer> p = recordLabels.get(label);
 					if (p == null) {
@@ -739,11 +777,7 @@ public class Parser {
 					}
 				}
 				Symbol csym = type.getConstructors().iterator().next().getSymbol();
-				Term[] args = new Term[csym.getArity()];
-				for (int i = 0; i < args.length; i++) {
-					args[i] = argMap.get(i);
-				}
-				return Constructors.make(csym, args);
+				return new Pair<>(csym, argMap);
 			}
 
 			@Override

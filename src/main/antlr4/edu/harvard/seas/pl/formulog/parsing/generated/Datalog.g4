@@ -254,6 +254,7 @@ term
 		| FP64_NEG_INFINITY
 	) # specialFPTerm
 	| '{' recordEntries '}' #recordTerm
+	| '{' term 'with' recordEntries '}' #recordUpdateTerm
 	| '`' term '`' # formulaTerm
 	| ',' term # unquoteTerm
 	| id = (XID | XVAR) '[' type ']' # constSymFormula
