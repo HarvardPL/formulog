@@ -99,12 +99,31 @@ typeDefLHS
 
 typeDefRHS
 :
+	adtDef
+	| recordDef
+;
+
+adtDef
+:
 	'|'? constructorType
 	(
 		'|' constructorType
 	)*
 	| // can be empty
 
+;
+
+recordDef
+:
+	'{' recordEntry
+	(
+		';' recordEntry
+	)* ';'? '}'
+;
+
+recordEntry
+:
+	ID ':' type
 ;
 
 annotation

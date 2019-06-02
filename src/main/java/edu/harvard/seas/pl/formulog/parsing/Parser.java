@@ -73,6 +73,7 @@ import edu.harvard.seas.pl.formulog.parsing.generated.DatalogBaseListener;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogBaseVisitor;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogLexer;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser;
+import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.AdtDefContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.AnnotationContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.AtomListContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.BinopFormulaContext;
@@ -108,6 +109,8 @@ import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.ParensTermCo
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.PredicateContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.QuantifiedFormulaContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.QueryStmtContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.RecordDefContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.RecordEntryContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.RelDeclContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.SpecialFPTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.StringTermContext;
@@ -338,26 +341,72 @@ public class Parser {
 				List<TypeVar> typeVars = p.snd();
 				AlgebraicDataType type = AlgebraicDataType.make(sym, new ArrayList<>(typeVars));
 				TypeDefRHSContext rhs = it.next();
-				Set<ConstructorScheme> constructors = new HashSet<>();
-				for (ConstructorTypeContext ctc : rhs.constructorType()) {
-					List<Type> typeArgs = map(ctc.typeList().type(), t -> t.accept(typeExtractor));
-					Symbol csym = symbolManager.createSymbol(ctc.ID().getText(), typeArgs.size(),
-							SymbolType.VANILLA_CONSTRUCTOR, new FunctorType(typeArgs, type));
-					if (!typeVars.containsAll(Types.getTypeVars(typeArgs))) {
-						throw new RuntimeException("Unbound type variable in definition of " + csym);
-					}
-					symbolManager.createSymbol("is_" + csym.toString(), 1, SymbolType.SOLVER_CONSTRUCTOR_TESTER,
-							new FunctorType(type, BuiltInTypes.bool));
-					List<Symbol> getterSyms = new ArrayList<>();
-					for (int i = 0; i < csym.getArity(); ++i) {
-						Type t = new FunctorType(type, typeArgs.get(i));
-						String name = csym.toString() + "_" + (i + 1);
-						getterSyms.add(symbolManager.createSymbol(name, 1, SymbolType.SOLVER_CONSTRUCTOR_GETTER, t));
-					}
-					constructors.add(new ConstructorScheme(csym, typeArgs, getterSyms));
+				if (rhs.adtDef() != null) {
+					handleAdtDef(rhs.adtDef(), type, typeVars);
+				} else {
+					handleRecordDef(rhs.recordDef(), type, typeVars);
 				}
-				AlgebraicDataType.setConstructors(type.getSymbol(), typeVars, constructors);
 			}
+		}
+
+		private void handleAdtDef(AdtDefContext ctx, AlgebraicDataType type, List<TypeVar> typeVars) {
+			Set<ConstructorScheme> constructors = new HashSet<>();
+			for (ConstructorTypeContext ctc : ctx.constructorType()) {
+				List<Type> typeArgs = map(ctc.typeList().type(), t -> t.accept(typeExtractor));
+				Symbol csym = symbolManager.createSymbol(ctc.ID().getText(), typeArgs.size(),
+						SymbolType.VANILLA_CONSTRUCTOR, new FunctorType(typeArgs, type));
+				if (!typeVars.containsAll(Types.getTypeVars(typeArgs))) {
+					throw new RuntimeException("Unbound type variable in definition of " + csym);
+				}
+				symbolManager.createSymbol("is_" + csym.toString(), 1, SymbolType.SOLVER_CONSTRUCTOR_TESTER,
+						new FunctorType(type, BuiltInTypes.bool));
+				List<Symbol> getterSyms = new ArrayList<>();
+				for (int i = 0; i < csym.getArity(); ++i) {
+					Type t = new FunctorType(type, typeArgs.get(i));
+					String name = csym.toString() + "_" + (i + 1);
+					getterSyms.add(symbolManager.createSymbol(name, 1, SymbolType.SOLVER_CONSTRUCTOR_GETTER, t));
+				}
+				constructors.add(new ConstructorScheme(csym, typeArgs, getterSyms));
+			}
+			AlgebraicDataType.setConstructors(type.getSymbol(), typeVars, constructors);
+		}
+
+		private void handleRecordDef(RecordDefContext ctx, AlgebraicDataType type, List<TypeVar> typeVars) {
+			List<Type> entryTypes = new ArrayList<>();
+			List<Symbol> getterSyms = new ArrayList<>();
+			int i = 0;
+			for (RecordEntryContext entry : ctx.recordEntry()) {
+				Type entryType = entry.type().accept(typeExtractor);
+				entryTypes.add(entryType);
+				Type labelType = new FunctorType(type, entryType);
+				Symbol label = symbolManager.createSymbol(entry.ID().getText(), 1, SymbolType.FUNCTION, labelType);
+				final int j = i;
+				functionDefManager.register(new FunctionDef() {
+
+					@Override
+					public Symbol getSymbol() {
+						return label;
+					}
+
+					@Override
+					public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
+						return args[j].applySubstitution(subst);
+					}
+
+				});
+				Symbol getter = symbolManager.createSymbol("#" + label, 1, SymbolType.SOLVER_CONSTRUCTOR_GETTER, labelType);
+				getterSyms.add(getter);
+				i++;
+			}
+			Symbol sym = type.getSymbol();
+			if (!typeVars.containsAll(Types.getTypeVars(entryTypes))) {
+				throw new RuntimeException("Unbound type variable in definition of " + sym);
+			}
+			FunctorType ctype = new FunctorType(entryTypes, type);
+			Symbol csym = symbolManager.createSymbol("%" + sym, entryTypes.size(), SymbolType.VANILLA_CONSTRUCTOR,
+					ctype);
+			ConstructorScheme ctor = new ConstructorScheme(csym, entryTypes, getterSyms);
+			AlgebraicDataType.setConstructors(sym, typeVars, Collections.singleton(ctor));
 		}
 
 		private Pair<Symbol, List<TypeVar>> parseTypeDefLHS(TypeDefLHSContext ctx, SymbolType symType) {
@@ -955,7 +1004,7 @@ public class Parser {
 				Term arg = extract(ctx.term());
 				return functionCallFactory.make(isNotFun, Terms.singletonArray(arg));
 			}
-			
+
 			@Override
 			public Term visitMatchExpr(MatchExprContext ctx) {
 				Term guard = ctx.term().accept(this);
