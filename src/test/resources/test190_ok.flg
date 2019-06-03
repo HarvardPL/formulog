@@ -1,0 +1,12 @@
+type point2d = {
+  x : i32;
+  y : i32;
+}.
+
+output ok.
+ok :-
+  P = #p[point2d],
+  E = `#x(P) #= #y(P) /\ #x(P) #= 0`,
+  some(M) = get_model(E, none),
+  some(P2) = query_model(P, M),
+  y(P2) = 0.

@@ -412,7 +412,7 @@ public class Parser {
 				throw new RuntimeException("Unbound type variable in definition of " + sym);
 			}
 			FunctorType ctype = new FunctorType(entryTypes, type);
-			Symbol csym = symbolManager.createSymbol("rec%" + sym, entryTypes.size(), SymbolType.VANILLA_CONSTRUCTOR,
+			Symbol csym = symbolManager.createSymbol("_rec_" + sym, entryTypes.size(), SymbolType.VANILLA_CONSTRUCTOR,
 					ctype);
 			ConstructorScheme ctor = new ConstructorScheme(csym, entryTypes, getterSyms);
 			AlgebraicDataType.setConstructors(sym, typeVars, Collections.singleton(ctor));
