@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Demand transformation simplification for magic set rewriting (following Tekle
   and Liu [2010]).
 - Support for record types. 
+- Support external input facts via annotation `@external`.
 
 ### Changed
 - Increased the amount of information printed with the `debugMst` option.
