@@ -24,6 +24,10 @@ import static edu.harvard.seas.pl.formulog.util.Util.map;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.io.StringReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -35,6 +39,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -180,11 +185,15 @@ public class Parser {
 	}
 
 	public Pair<Program, Atom> parse(Reader r) throws ParseException {
+		return parse(r, Paths.get(""));
+	}
+	
+	public Pair<Program, Atom> parse(Reader r, Path inputDir) throws ParseException {
 		try {
 			DatalogParser parser = getParser(r);
 			ParseTree tree = parser.prog();
 			ParseTreeWalker walker = new ParseTreeWalker();
-			StmtProcessor stmtProcessor = new StmtProcessor();
+			StmtProcessor stmtProcessor = new StmtProcessor(inputDir);
 			walker.walk(stmtProcessor, tree);
 			return new Pair<>(stmtProcessor.getProgram(), stmtProcessor.getQuery());
 		} catch (Exception e) {
@@ -261,7 +270,13 @@ public class Parser {
 		private final Map<Symbol, Set<Annotation>> annotations = new HashMap<>();
 		private final Map<Symbol, Pair<AlgebraicDataType, Integer>> recordLabels = new HashMap<>();
 		private final Map<Symbol, Symbol[]> constructorLabels = new HashMap<>();
+		private final Set<Symbol> externalEdbs = new HashSet<>();
+		private final Path inputDir;
 		private Atom query;
+		
+		public StmtProcessor(Path inputDir) {
+			this.inputDir = inputDir;
+		}
 
 		@Override
 		public void enterFunDecl(FunDeclContext ctx) {
@@ -313,6 +328,12 @@ public class Parser {
 						throw new RuntimeException("Annotation @bottomup not relevant for non-IDB predicate " + sym);
 					}
 					aset.add(Annotation.TOPDOWN);
+					break;
+				case "@external":
+					if (!sym.getSymbolType().isEDBSymbol()) {
+						throw new RuntimeException("Annotation @external cannot be used for non-EDB predicate " + sym);
+					}
+					externalEdbs.add(sym);
 					break;
 				default:
 					throw new RuntimeException("Unrecognized annotation for predicate " + sym + ": " + actx.getText());
@@ -402,7 +423,8 @@ public class Parser {
 					}
 
 				});
-				Symbol getter = symbolManager.createSymbol("#" + label, 1, SymbolType.SOLVER_CONSTRUCTOR_GETTER, labelType);
+				Symbol getter = symbolManager.createSymbol("#" + label, 1, SymbolType.SOLVER_CONSTRUCTOR_GETTER,
+						labelType);
 				getterSyms.add(getter);
 				recordLabels.put(label, new Pair<>(type, i));
 				i++;
@@ -722,7 +744,7 @@ public class Parser {
 				}
 				throw new AssertionError();
 			}
-			
+
 			@Override
 			public Term visitRecordTerm(RecordTermContext ctx) {
 				Pair<Symbol, Map<Integer, Term>> p = handleRecordEntries(ctx.recordEntries().recordEntry());
@@ -737,7 +759,7 @@ public class Parser {
 				}
 				return Constructors.make(csym, args);
 			}
-			
+
 			@Override
 			public Term visitRecordUpdateTerm(RecordUpdateTermContext ctx) {
 				Pair<Symbol, Map<Integer, Term>> p = handleRecordEntries(ctx.recordEntries().recordEntry());
@@ -751,12 +773,12 @@ public class Parser {
 					if (t == null) {
 						Symbol label = labels[i];
 						t = functionCallFactory.make(label, Terms.singletonArray(orig));
-					}	
+					}
 					args[i] = t;
 				}
 				return Constructors.make(csym, args);
 			}
-			
+
 			private Pair<Symbol, Map<Integer, Term>> handleRecordEntries(List<RecordEntryContext> entries) {
 				AlgebraicDataType type = null;
 				Map<Integer, Term> argMap = new HashMap<>();
@@ -773,7 +795,8 @@ public class Parser {
 						throw new RuntimeException("Cannot use label " + label + " in a record of type " + type);
 					}
 					if (argMap.putIfAbsent(p.snd(), extract(entry.term())) != null) {
-						throw new RuntimeException("Cannot use the same label " + label + " multiple times when creating a record");
+						throw new RuntimeException(
+								"Cannot use the same label " + label + " multiple times when creating a record");
 					}
 				}
 				Symbol csym = type.getConstructors().iterator().next().getSymbol();
@@ -1173,7 +1196,35 @@ public class Parser {
 			return query;
 		}
 
-		public Program getProgram() {
+		private void readEdbFromFile(Symbol sym) throws ParseException {
+			Set<Atom> facts = Util.lookupOrCreate(initialFacts, sym, () -> new HashSet<>());
+			Path path = inputDir.resolve(sym.toString() + ".csv");
+			try {
+				Stream<String> lines;
+				lines = Files.lines(path);
+				for (Iterator<String> it = lines.iterator(); it.hasNext();) {
+					readLineFromCsv(sym, new StringReader(it.next()), facts);
+				}
+				lines.close();
+			} catch (Exception e) {
+				throw new ParseException("Exception when extracting facts from " + path + ":\n" + e);
+			}
+		}
+
+		private void readLineFromCsv(Symbol sym, Reader r, Set<Atom> facts) throws ParseException {
+			DatalogParser parser = getParser(r);
+			Term[] args = new Term[sym.getArity()];
+			for (int i = 0; i < args.length; i++) {
+				args[i] = extract(parser.term());
+			}
+			Atom fact = Atoms.getPositive(sym, args);
+			facts.add(fact);
+		}
+
+		public Program getProgram() throws ParseException {
+			for (Symbol sym : externalEdbs) {
+				readEdbFromFile(sym);
+			}
 			return new Program() {
 
 				@Override

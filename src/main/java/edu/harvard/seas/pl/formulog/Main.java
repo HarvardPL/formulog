@@ -24,6 +24,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.PrintStream;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -71,6 +72,7 @@ public final class Main {
 		Options opts = new Options();
 		opts.addOption("j", true, "Number of threads to use (defaults to 1).");
 		opts.addOption("v", "verbose", false, "Print a lot of stuff.");
+		opts.addOption("I", true, "Directory for (tab and/or space-delimited) CSVs with input facts.");
 		CommandLineParser clp = new DefaultParser();
 		CommandLine cl = null;
 		try {
@@ -97,7 +99,11 @@ public final class Main {
 		System.out.println("Parsing program...");
 		Pair<Program, Atom> p = null;
 		try {
-			p = (new Parser()).parse(new FileReader(args[0]));
+			String inputDir = "";
+			if (cl.hasOption("I")) {
+				inputDir = cl.getOptionValue("I");
+			}
+			p = (new Parser()).parse(new FileReader(args[0]), Paths.get(inputDir));
 		} catch (ParseException e) {
 			handleException("Error while parsing!", e);
 		}

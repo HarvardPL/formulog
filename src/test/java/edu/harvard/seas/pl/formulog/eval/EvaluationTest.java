@@ -25,13 +25,14 @@ import static org.junit.Assert.fail;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URL;
+import java.nio.file.Paths;
 
 import org.junit.Test;
 
-import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
+import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDB;
-import edu.harvard.seas.pl.formulog.eval.Interpreter;
 import edu.harvard.seas.pl.formulog.parsing.Parser;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
@@ -41,14 +42,15 @@ import edu.harvard.seas.pl.formulog.validating.Validator;
 
 public class EvaluationTest {
 
-	void test(String file) {
+	void test(String file, String inputDir) {
 		boolean isBad = file.matches("test\\d\\d\\d_bd.flg");
 		try {
 			InputStream is = getClass().getClassLoader().getResourceAsStream(file);
 			if (is == null) {
 				throw new FileNotFoundException(file + " not found");
 			}
-			Pair<Program, Atom> p = (new Parser()).parse(new InputStreamReader(is));
+			URL dir = getClass().getClassLoader().getResource(inputDir);
+			Pair<Program, Atom> p = (new Parser()).parse(new InputStreamReader(is), Paths.get(dir.toURI()));
 			Program prog = p.fst();
 			assert p.snd() == null;
 			prog = (new TypeChecker(prog, p.snd())).typeCheck();
@@ -71,6 +73,10 @@ public class EvaluationTest {
 		} catch (Exception e) {
 			fail("Unexpected exception: " + e);
 		}
+	}
+
+	void test(String file) {
+		test(file, "");
 	}
 
 	@Test
@@ -542,60 +548,65 @@ public class EvaluationTest {
 	public void test137() {
 		test("test137_ok.flg");
 	}
-	
+
 	@Test
 	public void test138() {
 		test("test138_ok.flg");
 	}
-	
+
 	@Test
 	public void test139() {
 		test("test139_ok.flg");
 	}
-	
+
 	@Test
 	public void test180() {
 		test("test180_ok.flg");
 	}
-	
+
 	@Test
 	public void test181() {
 		test("test181_ok.flg");
 	}
-	
+
 	@Test
 	public void test182() {
 		test("test182_ok.flg");
 	}
-	
+
 	@Test
 	public void test183() {
 		test("test183_ok.flg");
 	}
-	
+
 	@Test
 	public void test184() {
 		test("test184_ok.flg");
 	}
-	
+
 	@Test
 	public void test186() {
 		test("test186_ok.flg");
 	}
-	
+
 	@Test
 	public void test187() {
 		test("test187_ok.flg");
 	}
-	
+
 	@Test
 	public void test189() {
 		test("test189_ok.flg");
 	}
-	
+
 	@Test
 	public void test190() {
 		test("test190_ok.flg");
+	}
+
+	@Test
+	public void test191() {
+		test("test191_ok.flg", "test191_input");
 	}
 
 }

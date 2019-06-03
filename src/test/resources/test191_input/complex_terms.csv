@@ -1,0 +1,2 @@
+my_cons("jimmy", my_nil)	my_cons("hendrix", my_nil)
+my_cons("giuseppe", my_nil)	my_cons("garibaldi", my_nil)
