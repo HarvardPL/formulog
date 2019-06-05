@@ -15,19 +15,19 @@ metadata
 	'fun' funDefLHS EQ term
 	(
 		'and' funDefLHS EQ term
-	)* '.' # funDecl
+	)* '.'? # funDecl
 	| annotation* relType =
 	(
 		INPUT
 		| OUTPUT
-	) ID typeList '.' # relDecl
-	| 'type' typeDefLHS EQ type '.' # typeAlias
+	) ID typeList '.'? # relDecl
+	| 'type' typeDefLHS EQ type '.'? # typeAlias
 	| 'type' typeDefLHS EQ typeDefRHS
 	(
 		'and' typeDefLHS EQ typeDefRHS
-	)* '.' # typeDecl
-	| 'uninterpreted' 'fun' constructorType ':' type '.' # uninterpFunDecl
-	| 'uninterpreted' 'sort' typeDefLHS '.' # uninterpSortDecl
+	)* '.'? # typeDecl
+	| 'uninterpreted' 'fun' constructorType ':' type '.'? # uninterpFunDecl
+	| 'uninterpreted' 'sort' typeDefLHS '.'? # uninterpSortDecl
 ;
 
 funDefLHS

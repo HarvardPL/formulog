@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Allow ML-style expressions to occur as logic programming terms.
 - Prefix names of automatically-generated ADT testers and getters with `#`.
 - Removed syntax highlighting for solver variables.
+- Don't require periods after declarations and function definitions.
 
 ### Fixed
 - Fixed bug with applying type substitutions that contain mappings to (possibly
