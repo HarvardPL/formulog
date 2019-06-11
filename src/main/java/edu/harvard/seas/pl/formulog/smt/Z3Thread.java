@@ -30,9 +30,9 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
-import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.smt.SmtLibShim.Status;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
@@ -75,7 +75,7 @@ public class Z3Thread extends ForkJoinWorkerThread {
 			SmtLibShim shim = new SmtLibShim(reader, writer, symbolManager);
 			shim.reset();
 			shim.makeAssertion(formula);
-			String msg = "\nBEGIN Z3 JOB #" + id + ":\n";
+			String msg = "\nBEGIN Z3 JOB #" + id + " (THREAD " + Thread.currentThread().getName() + "):\n";
 			msg += baos.toString();
 			msg += "\nEND Z3 JOB #" + id;
 			System.err.println(msg);
@@ -87,8 +87,7 @@ public class Z3Thread extends ForkJoinWorkerThread {
 		return shim;
 	}
 
-	public Pair<Status, Map<SolverVariable, Term>> check(SmtLibTerm t, Integer timeout)
-			throws EvaluationException {
+	public Pair<Status, Map<SolverVariable, Term>> check(SmtLibTerm t, Integer timeout) throws EvaluationException {
 		t = (new SmtLibSimplifier()).simplify(t);
 		Integer id = null;
 		if (debug) {

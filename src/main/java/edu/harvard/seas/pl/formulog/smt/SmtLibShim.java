@@ -117,8 +117,8 @@ public class SmtLibShim {
 		out.flush();
 	}
 
-	public Status checkSat(Integer timeout) throws EvaluationException {
-		if (timeout != null && timeout >= 0) {
+	public Status checkSat(int timeout) throws EvaluationException {
+		if (timeout >= 0) {
 			println("(set-option :timeout " + timeout + ")");
 
 		}

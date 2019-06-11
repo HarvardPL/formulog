@@ -41,7 +41,7 @@ public class CountingFJP<T> {
 				System.err.println(e);
 			}
 			
-		}, true);
+		}, false);
 	}
 
 	public void externallyAddTask(AbstractFJPTask<T> w) {

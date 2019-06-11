@@ -3,7 +3,10 @@ package edu.harvard.seas.pl.formulog.ast.functions;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /*-
  * #%L
@@ -29,6 +32,7 @@ import org.pcollections.HashTreePMap;
 
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
+import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.FP32;
 import edu.harvard.seas.pl.formulog.ast.FP64;
 import edu.harvard.seas.pl.formulog.ast.I32;
@@ -38,15 +42,15 @@ import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.StringTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
-import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.smt.Z3Thread;
 import edu.harvard.seas.pl.formulog.smt.SmtLibShim.Status;
+import edu.harvard.seas.pl.formulog.smt.Z3Thread;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.Pair;
+import edu.harvard.seas.pl.formulog.util.Util;
 
 // TODO Break this up into different classes; pass them into BuiltInFunctionSymbol
 public final class BuiltInFunctionDefFactory {
@@ -1317,9 +1321,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 	}
-	
+
 	private enum IsFree implements FunctionDef {
-		
+
 		INSTANCE;
 
 		@Override
@@ -1337,33 +1341,44 @@ public final class BuiltInFunctionDefFactory {
 				return falseBool;
 			}
 		}
-		
+
 	}
 
-	private static final Map<Term, Optional<Model>> smtMemo = new ConcurrentHashMap<>();
+	private static final Map<Term, Map<Integer, Future<Optional<Model>>>> smtMemo = new ConcurrentHashMap<>();
 
-	private static Optional<Model> querySmt(SmtLibTerm formula, Integer timeout) throws EvaluationException {
-		Optional<Model> m = smtMemo.get(formula);
+	private static Optional<Model> querySmt(SmtLibTerm formula, int timeout) throws EvaluationException {
+		Map<Integer, Future<Optional<Model>>> byTimeout = Util.lookupOrCreate(smtMemo, formula,
+				() -> new ConcurrentHashMap<>());
+		Future<Optional<Model>> m = byTimeout.get(timeout);
 		if (m == null) {
-			Z3Thread z3 = (Z3Thread) Thread.currentThread();
-			Pair<Status, Map<SolverVariable, Term>> p = z3.check(formula, timeout);
-			switch (p.fst()) {
-			case SATISFIABLE:
-				m = Optional.of(Model.make(p.snd()));
-				break;
-			case UNKNOWN:
-				return null;
-			case UNSATISFIABLE:
-				m = Optional.empty();
-				break;
-			}
-			Optional<Model> m2 = smtMemo.putIfAbsent(formula, m);
+			CompletableFuture<Optional<Model>> future = new CompletableFuture<>();
+			m = future;
+			Future<Optional<Model>> m2 = byTimeout.putIfAbsent(timeout, m);
 			if (m2 != null) {
 				m = m2;
+			} else {
+				Z3Thread z3 = (Z3Thread) Thread.currentThread();
+				Pair<Status, Map<SolverVariable, Term>> p = z3.check(formula, timeout);
+				switch (p.fst()) {
+				case SATISFIABLE:
+					future.complete(Optional.of(Model.make(p.snd())));
+					break;
+				case UNKNOWN:
+					future.complete(null);
+					break;
+				case UNSATISFIABLE:
+					future.complete(Optional.empty());
+					break;
+				default:
+					throw new AssertionError("impossible");
+				}
 			}
 		}
-		return m;
-
+		try {
+			return m.get();
+		} catch (InterruptedException | ExecutionException e) {
+			throw new EvaluationException(e);
+		}
 	}
 
 	private enum IsSat implements FunctionDef {
@@ -1378,7 +1393,7 @@ public final class BuiltInFunctionDefFactory {
 		@Override
 		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
 			SmtLibTerm formula = (SmtLibTerm) args[0].applySubstitution(subst);
-			Optional<Model> m = querySmt(formula, null);
+			Optional<Model> m = querySmt(formula, -1);
 			if (m == null) {
 				throw new EvaluationException("Z3 returned \"unknown\"");
 			}
@@ -1417,7 +1432,7 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 	}
-	
+
 	private enum IsValidOpt implements FunctionDef {
 
 		INSTANCE;
@@ -1459,7 +1474,7 @@ public final class BuiltInFunctionDefFactory {
 		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
 			SmtLibTerm formula = (SmtLibTerm) args[0].applySubstitution(subst);
 			formula = Constructors.make(BuiltInConstructorSymbol.FORMULA_NOT, args);
-			Optional<Model> m = querySmt(formula, null);
+			Optional<Model> m = querySmt(formula, -1);
 			if (m == null) {
 				throw new EvaluationException("Z3 returned \"unknown\"");
 			}
@@ -1472,11 +1487,11 @@ public final class BuiltInFunctionDefFactory {
 
 	}
 
-	private static Integer extractOptionalTimeout(Constructor opt) {
+	private static int extractOptionalTimeout(Constructor opt) {
 		if (opt.getSymbol().equals(BuiltInConstructorSymbol.SOME)) {
 			return ((I32) opt.getArgs()[0]).getVal();
 		}
-		return null;
+		return -1;
 	}
 
 	private enum GetModel implements FunctionDef {

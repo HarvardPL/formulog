@@ -18,6 +18,8 @@ All notable changes to this project will be documented in this file.
 - Prefix names of automatically-generated ADT testers and getters with `#`.
 - Removed syntax highlighting for solver variables.
 - Don't require periods after declarations and function definitions.
+- Print thread name during SMT debugging.
+- Make sure that the same SMT call is never made twice (with the same timeout).
 
 ### Fixed
 - Fixed bug with applying type substitutions that contain mappings to (possibly
