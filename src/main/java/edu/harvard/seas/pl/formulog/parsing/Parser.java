@@ -265,7 +265,7 @@ public class Parser {
 
 		private final Map<Symbol, Set<Atom>> initialFacts = new HashMap<>();
 		private final Map<Symbol, Set<Rule>> rules = new HashMap<>();
-		private final FunctionDefManager functionDefManager = new FunctionDefManager();
+		private final FunctionDefManager functionDefManager = new FunctionDefManager(symbolManager);
 		private final FunctionCallFactory functionCallFactory = new FunctionCallFactory(functionDefManager);
 		private final Map<Symbol, Set<Annotation>> annotations = new HashMap<>();
 		private final Map<Symbol, Pair<AlgebraicDataType, Integer>> recordLabels = new HashMap<>();

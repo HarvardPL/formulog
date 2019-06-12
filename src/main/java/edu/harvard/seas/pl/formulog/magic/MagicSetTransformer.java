@@ -27,9 +27,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.RecursiveTask;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import edu.harvard.seas.pl.formulog.ast.Annotation;
@@ -42,7 +39,6 @@ import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.smt.Z3ThreadFactory;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.SymbolType;
@@ -100,34 +96,12 @@ public class MagicSetTransformer {
 	}
 
 	public Atom normalizeQuery(final Atom query) throws InvalidProgramException {
-		ForkJoinPool fjp = new ForkJoinPool(1, new Z3ThreadFactory(origProg.getSymbolManager()), null, true);
-		@SuppressWarnings("serial")
-		Atom query2 = fjp.invoke(new RecursiveTask<Atom>() {
-
-			@Override
-			protected Atom compute() {
-				try {
-					return Atoms.normalize(query);
-				} catch (EvaluationException e) {
-					return null;
-				}
-			}
-
-		});
-		fjp.shutdown();
-		while (true) {
-			try {
-				if (fjp.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS)) {
-					break;
-				}
-			} catch (InterruptedException e) {
-				// loop
-			}
+		try {
+			return Atoms.normalize(query);
+		} catch (EvaluationException e) {
+			throw new InvalidProgramException(
+					"Query contained function call that could not be normalized: " + query + "\n" + e);
 		}
-		if (query2 == null) {
-			throw new InvalidProgramException("Query contained function call that could not be normalized: " + query);
-		}
-		return query;
 	}
 
 	private Rule makeSeedRule(Atom adornedQuery) {

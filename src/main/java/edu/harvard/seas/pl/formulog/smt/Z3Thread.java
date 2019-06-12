@@ -20,89 +20,32 @@ package edu.harvard.seas.pl.formulog.smt;
  * #L%
  */
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.util.Map;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinWorkerThread;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
-import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
-import edu.harvard.seas.pl.formulog.ast.Term;
-import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.smt.SmtLibShim.Status;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
-import edu.harvard.seas.pl.formulog.util.Pair;
 
 public class Z3Thread extends ForkJoinWorkerThread {
 
-	private final boolean debug = System.getProperty("debugSmt") != null;
-	private final AtomicInteger cnt = new AtomicInteger();
-	private final SymbolManager symbolManager;
-
-	private Process z3;
+	private final Z3Process z3;
 
 	protected Z3Thread(ForkJoinPool pool, SymbolManager symbolManager) {
 		super(pool);
-		this.symbolManager = symbolManager;
+		z3 = new Z3Process(symbolManager);
 	}
 
 	@Override
-	protected synchronized void onStart() {
-		try {
-			z3 = Runtime.getRuntime().exec("z3 -in -smt2");
-		} catch (IOException e) {
-			e.printStackTrace();
-			throw new AssertionError();
-		}
+	protected void onStart() {
+		z3.start();
 	}
 
 	@Override
-	protected synchronized void onTermination(Throwable exception) {
+	protected void onTermination(Throwable exception) {
 		z3.destroy();
 	}
 
-	private SmtLibShim makeAssertion(SmtLibTerm formula, Integer id) {
-		BufferedReader reader = new BufferedReader(new InputStreamReader(z3.getInputStream()));
-		PrintWriter writer;
-		if (debug) {
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			writer = new PrintWriter(baos);
-			SmtLibShim shim = new SmtLibShim(reader, writer, symbolManager);
-			shim.reset();
-			shim.makeAssertion(formula);
-			String msg = "\nBEGIN Z3 JOB #" + id + " (THREAD " + Thread.currentThread().getName() + "):\n";
-			msg += baos.toString();
-			msg += "\nEND Z3 JOB #" + id;
-			System.err.println(msg);
-		}
-		writer = new PrintWriter(z3.getOutputStream());
-		SmtLibShim shim = new SmtLibShim(reader, writer, symbolManager);
-		shim.reset();
-		shim.makeAssertion(formula);
-		return shim;
-	}
-
-	public Pair<Status, Map<SolverVariable, Term>> check(SmtLibTerm t, Integer timeout) throws EvaluationException {
-		t = (new SmtLibSimplifier()).simplify(t);
-		Integer id = null;
-		if (debug) {
-			id = cnt.getAndIncrement();
-		}
-		SmtLibShim shim = makeAssertion(t, id);
-		Status status = shim.checkSat(timeout);
-		if (debug) {
-			System.err.println("\nRES Z3 JOB #" + id + ": " + status);
-		}
-		Map<SolverVariable, Term> m = null;
-		if (status.equals(Status.SATISFIABLE)) {
-			m = shim.getModel();
-		}
-		return new Pair<>(status, m);
+	public Z3Process getZ3Process() {
+		return z3;
 	}
 
 }

@@ -27,16 +27,19 @@ import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
+import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 
 public class FunctionDefManager {
 
-	public FunctionDefManager() {
+	private final Map<Symbol, FunctionDef> memo = new HashMap<>();
+	private final BuiltInFunctionDefFactory builtIns;
+	
+	public FunctionDefManager(SymbolManager symbolManager) {
+		builtIns = new BuiltInFunctionDefFactory(symbolManager);
 		for (BuiltInFunctionSymbol sym : BuiltInFunctionSymbol.values()) {
-			memo.put(sym, BuiltInFunctionDefFactory.get(sym));
+			memo.put(sym, builtIns.get(sym));
 		}
 	}
-
-	private final Map<Symbol, FunctionDef> memo = new HashMap<>();
 
 	public void register(FunctionDef def) {
 		if (memo.put(def.getSymbol(), def) != null) {

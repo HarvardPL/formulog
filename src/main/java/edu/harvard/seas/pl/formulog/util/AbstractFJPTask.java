@@ -20,22 +20,23 @@ package edu.harvard.seas.pl.formulog.util;
  * #L%
  */
 
-public interface CountingFJP<T> {
+import java.util.concurrent.RecursiveAction;
 
-	void externallyAddTask(AbstractFJPTask<T> w);
+@SuppressWarnings("serial")
+public abstract class AbstractFJPTask<T> extends RecursiveAction {
 
-	void recursivelyAddTask(AbstractFJPTask<T> w);
-	
-	void reportTaskCompletion();
+	private final CountingFJP<T> exec;
 
-	void blockUntilFinished();
+	protected AbstractFJPTask(CountingFJP<T> exec) {
+		this.exec = exec;
+	}
 
-	void shutdown();
-	
-	void fail(T cause);
-	
-	boolean hasFailed();
-	
-	T getFailureCause();
-	
+	@Override
+	protected void compute() {
+		doTask();
+		exec.reportTaskCompletion();
+	}
+
+	public abstract void doTask();
+
 }

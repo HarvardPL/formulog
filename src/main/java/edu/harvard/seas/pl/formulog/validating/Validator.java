@@ -28,23 +28,20 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.RecursiveTask;
-import java.util.concurrent.TimeUnit;
 
 import edu.harvard.seas.pl.formulog.ast.Annotation;
 import edu.harvard.seas.pl.formulog.ast.Atoms;
 import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
 import edu.harvard.seas.pl.formulog.ast.Atoms.UnifyAtom;
-import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
-import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitorExn;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
 import edu.harvard.seas.pl.formulog.ast.Expr;
+import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
+import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitorExn;
+import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
-import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Rule;
@@ -56,7 +53,6 @@ import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.smt.Z3ThreadFactory;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInPredicateSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
@@ -88,28 +84,16 @@ public class Validator {
 		return vprog;
 	}
 
-	private Atom normalizeFact(Atom fact, ForkJoinPool exec) throws InvalidProgramException {
-		@SuppressWarnings("serial")
-		Atom fact2 = exec.invoke(new RecursiveTask<Atom>() {
-
-			@Override
-			protected Atom compute() {
-				try {
-					return Atoms.normalize(fact);
-				} catch (EvaluationException e) {
-					return null;
-				}
-			}
-
-		});
-		if (fact2 == null) {
-			throw new InvalidProgramException("Fact contains an expression that cannot be normalized: " + fact);
+	private Atom normalizeFact(Atom fact) throws InvalidProgramException {
+		try {
+			return Atoms.normalize(fact);
+		} catch (EvaluationException e) {
+			throw new InvalidProgramException(
+					"Fact contains an expression that cannot be normalized: " + fact + "\n" + e);
 		}
-		return fact2;
 	}
 
 	private void validateFacts() throws InvalidProgramException {
-		ForkJoinPool fjp = new ForkJoinPool(1, new Z3ThreadFactory(prog.getSymbolManager()), null, true);
 		for (Symbol sym : prog.getFactSymbols()) {
 			Set<Atom> s = new HashSet<>();
 			for (Atom fact : prog.getFacts(sym)) {
@@ -119,19 +103,9 @@ public class Validator {
 				if (!Atoms.varSet(fact).isEmpty()) {
 					throw new InvalidProgramException("Every fact must be ground: " + fact);
 				}
-				s.add(normalizeFact(fact, fjp));
+				s.add(normalizeFact(fact));
 			}
 			facts.put(sym, s);
-		}
-		fjp.shutdown();
-		while (true) {
-			try {
-				if (fjp.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS)) {
-					break;
-				}
-			} catch (InterruptedException e) {
-				// continue;
-			}
 		}
 	}
 

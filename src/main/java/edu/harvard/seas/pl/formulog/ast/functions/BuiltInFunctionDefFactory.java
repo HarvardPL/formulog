@@ -44,10 +44,12 @@ import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.smt.SmtLibShim.Status;
+import edu.harvard.seas.pl.formulog.smt.Z3Process;
 import edu.harvard.seas.pl.formulog.smt.Z3Thread;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
+import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
@@ -55,11 +57,14 @@ import edu.harvard.seas.pl.formulog.util.Util;
 // TODO Break this up into different classes; pass them into BuiltInFunctionSymbol
 public final class BuiltInFunctionDefFactory {
 
-	public BuiltInFunctionDefFactory() {
-		throw new AssertionError();
+	private final Z3Process z3;
+	
+	public BuiltInFunctionDefFactory(SymbolManager symbolManager) {
+		z3 = new Z3Process(symbolManager);
+		z3.start();
 	}
 
-	public static FunctionDef get(BuiltInFunctionSymbol sym) {
+	public FunctionDef get(BuiltInFunctionSymbol sym) {
 		switch (sym) {
 		case I32_ADD:
 			return I32Add.INSTANCE;
@@ -178,15 +183,15 @@ public final class BuiltInFunctionDefFactory {
 		case STRCAT:
 			return Strcat.INSTANCE;
 		case IS_SAT:
-			return IsSat.INSTANCE;
+			return isSat;
 		case IS_SAT_OPT:
-			return IsSatOpt.INSTANCE;
+			return isSatOpt;
 		case IS_VALID_OPT:
-			return IsValidOpt.INSTANCE;
+			return isValidOpt;
 		case IS_VALID:
-			return IsValid.INSTANCE;
+			return isValid;
 		case GET_MODEL:
-			return GetModel.INSTANCE;
+			return getModel;
 		case QUERY_MODEL:
 			return QueryModel.INSTANCE;
 		// case PATH_INTERPOLANT:
@@ -1344,9 +1349,9 @@ public final class BuiltInFunctionDefFactory {
 
 	}
 
-	private static final Map<Term, Map<Integer, Future<Optional<Model>>>> smtMemo = new ConcurrentHashMap<>();
+	private final Map<Term, Map<Integer, Future<Optional<Model>>>> smtMemo = new ConcurrentHashMap<>();
 
-	private static Optional<Model> querySmt(SmtLibTerm formula, int timeout) throws EvaluationException {
+	private Optional<Model> querySmt(SmtLibTerm formula, int timeout) throws EvaluationException {
 		Map<Integer, Future<Optional<Model>>> byTimeout = Util.lookupOrCreate(smtMemo, formula,
 				() -> new ConcurrentHashMap<>());
 		Future<Optional<Model>> m = byTimeout.get(timeout);
@@ -1357,8 +1362,12 @@ public final class BuiltInFunctionDefFactory {
 			if (m2 != null) {
 				m = m2;
 			} else {
-				Z3Thread z3 = (Z3Thread) Thread.currentThread();
-				Pair<Status, Map<SolverVariable, Term>> p = z3.check(formula, timeout);
+				Thread thread = Thread.currentThread();
+				Z3Process localZ3 = z3;
+				if (thread instanceof Z3Thread) {
+					localZ3 = ((Z3Thread) thread).getZ3Process();
+				} 
+				Pair<Status, Map<SolverVariable, Term>> p = localZ3.check(formula, timeout);
 				switch (p.fst()) {
 				case SATISFIABLE:
 					future.complete(Optional.of(Model.make(p.snd())));
@@ -1381,9 +1390,7 @@ public final class BuiltInFunctionDefFactory {
 		}
 	}
 
-	private enum IsSat implements FunctionDef {
-
-		INSTANCE;
+	private final FunctionDef isSat = new FunctionDef() {
 
 		@Override
 		public Symbol getSymbol() {
@@ -1404,11 +1411,9 @@ public final class BuiltInFunctionDefFactory {
 			}
 		}
 
-	}
+	};
 
-	private enum IsSatOpt implements FunctionDef {
-
-		INSTANCE;
+	private final FunctionDef isSatOpt = new FunctionDef() {
 
 		@Override
 		public Symbol getSymbol() {
@@ -1431,11 +1436,9 @@ public final class BuiltInFunctionDefFactory {
 			}
 		}
 
-	}
+	};
 
-	private enum IsValidOpt implements FunctionDef {
-
-		INSTANCE;
+	private final FunctionDef isValidOpt = new FunctionDef() {
 
 		@Override
 		public Symbol getSymbol() {
@@ -1459,11 +1462,9 @@ public final class BuiltInFunctionDefFactory {
 			}
 		}
 
-	}
+	};
 
-	private enum IsValid implements FunctionDef {
-
-		INSTANCE;
+	private final FunctionDef isValid = new FunctionDef() {
 
 		@Override
 		public Symbol getSymbol() {
@@ -1485,7 +1486,7 @@ public final class BuiltInFunctionDefFactory {
 			}
 		}
 
-	}
+	};
 
 	private static int extractOptionalTimeout(Constructor opt) {
 		if (opt.getSymbol().equals(BuiltInConstructorSymbol.SOME)) {
@@ -1494,9 +1495,7 @@ public final class BuiltInFunctionDefFactory {
 		return -1;
 	}
 
-	private enum GetModel implements FunctionDef {
-
-		INSTANCE;
+	private final FunctionDef getModel = new FunctionDef() {
 
 		@Override
 		public Symbol getSymbol() {
@@ -1512,7 +1511,7 @@ public final class BuiltInFunctionDefFactory {
 			return m == null || !m.isPresent() ? none : some(m.get());
 		}
 
-	}
+	};
 
 	private enum QueryModel implements FunctionDef {
 

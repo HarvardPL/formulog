@@ -59,8 +59,10 @@ import edu.harvard.seas.pl.formulog.symbols.SymbolType;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.unification.Unification;
+import edu.harvard.seas.pl.formulog.util.AbstractFJPTask;
 import edu.harvard.seas.pl.formulog.util.CountingFJP;
-import edu.harvard.seas.pl.formulog.util.CountingFJP.AbstractFJPTask;
+import edu.harvard.seas.pl.formulog.util.CountingFJPImpl;
+import edu.harvard.seas.pl.formulog.util.MockCountingFJP;
 import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.ValidProgram;
 
@@ -68,6 +70,7 @@ public class Interpreter {
 
 	private static final boolean softExceptions = System.getProperty("softExceptions") != null;
 	private static final boolean factTrace = System.getProperty("factTrace") != null;
+	private static final boolean sequential = System.getProperty("sequential") != null;
 
 	private final ValidProgram prog;
 	private IndexedFactDB res;
@@ -107,7 +110,11 @@ public class Interpreter {
 		private final IndexedFactDB db;
 
 		public Eval(int nthreads) {
-			exec = new CountingFJP<>(nthreads, new Z3ThreadFactory(prog.getSymbolManager()));
+			if (sequential) {
+				exec = new MockCountingFJP<>();
+			} else {
+				exec = new CountingFJPImpl<>(nthreads, new Z3ThreadFactory(prog.getSymbolManager()));
+			}
 			db = preprocessRules();
 			processInitFacts();
 		}
@@ -205,7 +212,7 @@ public class Interpreter {
 						}
 						return null;
 					}
-					
+
 					@Override
 					public Void visit(FunctionCall function, Void in) {
 						for (Term arg : function.getArgs()) {
@@ -282,7 +289,7 @@ public class Interpreter {
 						preprocessExpr(expr);
 						return null;
 					}
-					
+
 				}, null);
 			}
 		}

@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.util;
+package edu.harvard.seas.pl.formulog.symbols;
 
 /*-
  * #%L
@@ -20,22 +20,15 @@ package edu.harvard.seas.pl.formulog.util;
  * #L%
  */
 
-public interface CountingFJP<T> {
+public final class Namespaces {
 
-	void externallyAddTask(AbstractFJPTask<T> w);
-
-	void recursivelyAddTask(AbstractFJPTask<T> w);
+	private Namespaces() {
+		throw new AssertionError("impossible");
+	}
 	
-	void reportTaskCompletion();
-
-	void blockUntilFinished();
-
-	void shutdown();
+	public static final String std = "std";
+	public static final String magic = "magic";
 	
-	void fail(T cause);
-	
-	boolean hasFailed();
-	
-	T getFailureCause();
+	public static final String separator = ".";
 	
 }
