@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
   and Liu [2010]).
 - Support for record types. 
 - Support external input facts via annotation `@external`.
+- Support sequential runtime (for debugging) via `sequential` system property.
 
 ### Changed
 - Increased the amount of information printed with the `debugMst` option.
