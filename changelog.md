@@ -27,6 +27,7 @@ All notable changes to this project will be documented in this file.
   nested) type variables.
 - Updated name of formula type in Vim syntax file.
 - Fixed a couple bugs in SMT-LIB parser.
+- Fixed bug with missing case in unification algorithm.
 
 ## [0.1.0] - 2019-04-21
 ### Added

@@ -609,4 +609,9 @@ public class EvaluationTest {
 		test("test191_ok.flg", "test191_input");
 	}
 
+	@Test
+	public void test192() {
+		test("test192_ok.flg");
+	}
+
 }

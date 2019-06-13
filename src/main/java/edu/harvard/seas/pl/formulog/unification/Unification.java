@@ -187,7 +187,7 @@ public final class Unification {
 	public static boolean unify2(Term t1, Term t2, Substitution s) throws EvaluationException {
 		t1 = Terms.lookup(t1, s);
 		t2 = Terms.lookup(t2, s);
-
+		
 		if (t1 instanceof Var) {
 			assert !(t2 instanceof Var);
 			s.put((Var) t1, t2.normalize(s));
@@ -207,8 +207,12 @@ public final class Unification {
 
 		if (t1 instanceof Primitive) {
 			return t1.equals(t2);
+		} else if (t2 instanceof Primitive) {
+			// At first glance, this case looks like it should never happen,
+			// since it is not well-typed. However, it can occur when comparing
+			// the "names" of solver variables.
+			return false;
 		}
-		assert !(t2 instanceof Primitive);
 
 		Constructor c1 = (Constructor) t1;
 		Constructor c2 = (Constructor) t2;
