@@ -123,21 +123,21 @@ public final class FunctionCallFactory {
 			// FIXME This way of implementing memoization seems expensive
 			Integer id = null;
 			Long start = null;
+			Term[] newArgs = new Term[args.length];
+			for (int i = 0; i < args.length; ++i) {
+				newArgs[i] = args[i].normalize(s);
+			}
 			if (debug) {
 				id = cnt.getAndIncrement();
 				start = System.currentTimeMillis();
 				String msg = "BEGIN CALL #" + id + "\n";
 				msg += "Function: " + sym + "\n";
-				msg += "Arguments: " + Arrays.toString(args) + "\n";
+				msg += "Arguments: " + Arrays.toString(newArgs) + "\n";
 				msg += "***\n";
 				System.err.println(msg);
 			}
 			FunctionDef def = defManager.lookup(getSymbol());
 			assert def != null;
-			Term[] newArgs = new Term[args.length];
-			for (int i = 0; i < args.length; ++i) {
-				newArgs[i] = args[i].normalize(s);
-			}
 			Map<List<Term>, Term> m = Util.lookupOrCreate(callMemo, sym, () -> new ConcurrentHashMap<>());
 			List<Term> key = Arrays.asList(newArgs);
 			Term r = m.get(key);
@@ -152,7 +152,7 @@ public final class FunctionCallFactory {
 				long end = System.currentTimeMillis();
 				String msg = "END CALL #" + id + "\n";
 				msg += "Function: " + sym + "\n";
-				msg += "Arguments: " + Arrays.toString(args) + "\n";
+				msg += "Arguments: " + Arrays.toString(newArgs) + "\n";
 				msg += "Result: " + r + "\n";
 				msg += "Time: " + (end - start) / 1000.0 + " (s)\n";
 				msg += "***\n";

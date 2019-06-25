@@ -247,6 +247,10 @@ public final class Unification {
 		while (!ts1.isEmpty()) {
 			t1 = ts1.removeLast().applySubstitution(s);
 			t2 = ts2.removeLast().applySubstitution(s);
+			
+			if (t1.equals(t2)) {
+				continue;
+			}
 
 			if (t1 instanceof Var) {
 				s.put((Var) t1, t2.normalize(s));

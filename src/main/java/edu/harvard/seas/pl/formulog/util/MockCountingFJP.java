@@ -1,5 +1,8 @@
 package edu.harvard.seas.pl.formulog.util;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
+
 /*-
  * #%L
  * FormuLog
@@ -24,19 +27,24 @@ public class MockCountingFJP<T> implements CountingFJP<T> {
 
 	private volatile T failureCause;
 	private volatile boolean shutdown;
+	
+	private final Deque<AbstractFJPTask<T>> workItems = new ArrayDeque<>();
 
 	public synchronized void externallyAddTask(AbstractFJPTask<T> w) {
 		assert !shutdown;
-		w.compute();
+		workItems.addLast(w);
 	}
 
 	public synchronized void recursivelyAddTask(AbstractFJPTask<T> w) {
 		assert !shutdown;
-		w.compute();
+		workItems.addLast(w);
 	}
 
 	public synchronized final void blockUntilFinished() {
-		
+		while (!workItems.isEmpty()) {
+			AbstractFJPTask<T> task = workItems.removeLast();
+			task.compute();
+		}
 	}
 
 	public synchronized final void shutdown() {
