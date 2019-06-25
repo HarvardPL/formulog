@@ -85,6 +85,7 @@ public class Var implements Term {
 
 	@Override
 	public Term normalize(Substitution s) throws EvaluationException {
+		assert s.containsKey(this);
 		return s.get(this);
 	}
 	

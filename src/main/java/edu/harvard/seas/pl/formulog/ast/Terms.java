@@ -26,7 +26,6 @@ import java.util.function.Function;
 
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
-import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.ExceptionalFunction;
 
 public final class Terms {
@@ -209,16 +208,6 @@ public final class Terms {
 
 		O visit(Expr e, I in) throws E;
 
-	}
-
-	public static Term lookup(Term t, Substitution subst) {
-		if (t instanceof Var) {
-			Var v = (Var) t;
-			if (subst.containsKey(v)) {
-				return subst.get(v);
-			}
-		}
-		return t;
 	}
 
 }
