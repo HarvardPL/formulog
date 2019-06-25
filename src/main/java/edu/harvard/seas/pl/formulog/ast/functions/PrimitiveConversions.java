@@ -25,11 +25,9 @@ import edu.harvard.seas.pl.formulog.ast.FP64;
 import edu.harvard.seas.pl.formulog.ast.I32;
 import edu.harvard.seas.pl.formulog.ast.I64;
 import edu.harvard.seas.pl.formulog.ast.Term;
-import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
-import edu.harvard.seas.pl.formulog.unification.Substitution;
 
 public final class PrimitiveConversions {
 	
@@ -45,8 +43,8 @@ public final class PrimitiveConversions {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I32 x = (I32) Terms.lookup(args[0], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I32 x = (I32) args[0];
 			return I64.make(x.getVal());
 		}
 		
@@ -60,8 +58,8 @@ public final class PrimitiveConversions {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I32 x = (I32) Terms.lookup(args[0], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I32 x = (I32) args[0];
 			return FP32.make(x.getVal());
 		}
 		
@@ -75,8 +73,8 @@ public final class PrimitiveConversions {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I32 x = (I32) Terms.lookup(args[0], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I32 x = (I32) args[0];
 			return FP64.make(x.getVal());
 		}
 		
@@ -90,8 +88,8 @@ public final class PrimitiveConversions {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I64 x = (I64) Terms.lookup(args[0], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I64 x = (I64) args[0];
 			return I32.make(x.getVal().intValue());
 		}
 		
@@ -105,8 +103,8 @@ public final class PrimitiveConversions {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I64 x = (I64) Terms.lookup(args[0], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I64 x = (I64) args[0];
 			return FP32.make(x.getVal());
 		}
 		
@@ -120,8 +118,8 @@ public final class PrimitiveConversions {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I64 x = (I64) Terms.lookup(args[0], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I64 x = (I64) args[0];
 			return FP64.make(x.getVal());
 		}
 		
@@ -135,8 +133,8 @@ public final class PrimitiveConversions {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			FP32 x = (FP32) Terms.lookup(args[0], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			FP32 x = (FP32) args[0];
 			return I32.make(x.getVal().intValue());
 		}
 		
@@ -150,8 +148,8 @@ public final class PrimitiveConversions {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			FP32 x = (FP32) Terms.lookup(args[0], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			FP32 x = (FP32) args[0];
 			return I64.make(x.getVal().longValue());
 		}
 		
@@ -165,8 +163,8 @@ public final class PrimitiveConversions {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			FP32 x = (FP32) Terms.lookup(args[0], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			FP32 x = (FP32) args[0];
 			return FP64.make(x.getVal());
 		}
 		
@@ -180,8 +178,8 @@ public final class PrimitiveConversions {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			FP64 x = (FP64) Terms.lookup(args[0], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			FP64 x = (FP64) args[0];
 			return I32.make(x.getVal().intValue());
 		}
 		
@@ -195,8 +193,8 @@ public final class PrimitiveConversions {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			FP64 x = (FP64) Terms.lookup(args[0], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			FP64 x = (FP64) args[0];
 			return I64.make(x.getVal().longValue());
 		}
 		
@@ -210,8 +208,8 @@ public final class PrimitiveConversions {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			FP64 x = (FP64) Terms.lookup(args[0], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			FP64 x = (FP64) args[0];
 			return FP32.make(x.getVal().floatValue());
 		}
 		

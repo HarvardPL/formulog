@@ -50,7 +50,6 @@ import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
-import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
 
@@ -243,9 +242,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I32 arg1 = (I32) Terms.lookup(args[0], subst);
-			I32 arg2 = (I32) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I32 arg1 = (I32) args[0];
+			I32 arg2 = (I32) args[1];
 			return I32.make(arg1.getVal() + arg2.getVal());
 		}
 
@@ -261,9 +260,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I32 arg1 = (I32) Terms.lookup(args[0], subst);
-			I32 arg2 = (I32) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I32 arg1 = (I32) args[0];
+			I32 arg2 = (I32) args[1];
 			return I32.make(arg1.getVal() - arg2.getVal());
 		}
 
@@ -279,9 +278,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I32 arg1 = (I32) Terms.lookup(args[0], subst);
-			I32 arg2 = (I32) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I32 arg1 = (I32) args[0];
+			I32 arg2 = (I32) args[1];
 			return I32.make(arg1.getVal() * arg2.getVal());
 		}
 
@@ -297,9 +296,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I32 arg1 = (I32) Terms.lookup(args[0], subst);
-			I32 arg2 = (I32) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I32 arg1 = (I32) args[0];
+			I32 arg2 = (I32) args[1];
 			if (arg2.getVal() == 0) {
 				throw new EvaluationException("Division by zero");
 			}
@@ -318,9 +317,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I32 arg1 = (I32) Terms.lookup(args[0], subst);
-			I32 arg2 = (I32) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I32 arg1 = (I32) args[0];
+			I32 arg2 = (I32) args[1];
 			if (arg2.getVal() == 0) {
 				throw new EvaluationException("Remainder by zero");
 			}
@@ -339,9 +338,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I32 arg1 = (I32) Terms.lookup(args[0], subst);
-			I32 arg2 = (I32) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I32 arg1 = (I32) args[0];
+			I32 arg2 = (I32) args[1];
 			return boolToBoolTerm(arg1.getVal() > arg2.getVal());
 		}
 
@@ -357,9 +356,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I32 arg1 = (I32) Terms.lookup(args[0], subst);
-			I32 arg2 = (I32) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I32 arg1 = (I32) args[0];
+			I32 arg2 = (I32) args[1];
 			return boolToBoolTerm(arg1.getVal() >= arg2.getVal());
 		}
 
@@ -375,9 +374,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I32 arg1 = (I32) Terms.lookup(args[0], subst);
-			I32 arg2 = (I32) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I32 arg1 = (I32) args[0];
+			I32 arg2 = (I32) args[1];
 			return boolToBoolTerm(arg1.getVal() < arg2.getVal());
 		}
 
@@ -393,9 +392,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I32 arg1 = (I32) Terms.lookup(args[0], subst);
-			I32 arg2 = (I32) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I32 arg1 = (I32) args[0];
+			I32 arg2 = (I32) args[1];
 			return boolToBoolTerm(arg1.getVal() <= arg2.getVal());
 		}
 
@@ -411,9 +410,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I32 arg1 = (I32) Terms.lookup(args[0], subst);
-			I32 arg2 = (I32) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I32 arg1 = (I32) args[0];
+			I32 arg2 = (I32) args[1];
 			return I32.make(arg1.getVal() & arg2.getVal());
 		}
 
@@ -429,9 +428,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I32 arg1 = (I32) Terms.lookup(args[0], subst);
-			I32 arg2 = (I32) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I32 arg1 = (I32) args[0];
+			I32 arg2 = (I32) args[1];
 			return I32.make(arg1.getVal() | arg2.getVal());
 		}
 
@@ -447,9 +446,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I32 arg1 = (I32) Terms.lookup(args[0], subst);
-			I32 arg2 = (I32) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I32 arg1 = (I32) args[0];
+			I32 arg2 = (I32) args[1];
 			return I32.make(arg1.getVal() ^ arg2.getVal());
 		}
 
@@ -465,8 +464,8 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I32 arg1 = (I32) Terms.lookup(args[0], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I32 arg1 = (I32) args[0];
 			return I32.make(-arg1.getVal());
 		}
 
@@ -482,9 +481,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I64 arg1 = (I64) Terms.lookup(args[0], subst);
-			I64 arg2 = (I64) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I64 arg1 = (I64) args[0];
+			I64 arg2 = (I64) args[1];
 			return I64.make(arg1.getVal() + arg2.getVal());
 		}
 
@@ -500,9 +499,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I64 arg1 = (I64) Terms.lookup(args[0], subst);
-			I64 arg2 = (I64) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I64 arg1 = (I64) args[0];
+			I64 arg2 = (I64) args[1];
 			return I64.make(arg1.getVal() - arg2.getVal());
 		}
 
@@ -518,9 +517,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I64 arg1 = (I64) Terms.lookup(args[0], subst);
-			I64 arg2 = (I64) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I64 arg1 = (I64) args[0];
+			I64 arg2 = (I64) args[1];
 			return I64.make(arg1.getVal() * arg2.getVal());
 		}
 
@@ -536,9 +535,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I64 arg1 = (I64) Terms.lookup(args[0], subst);
-			I64 arg2 = (I64) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I64 arg1 = (I64) args[0];
+			I64 arg2 = (I64) args[1];
 			if (arg2.getVal() == 0) {
 				throw new EvaluationException("Division by zero");
 			}
@@ -557,9 +556,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I64 arg1 = (I64) Terms.lookup(args[0], subst);
-			I64 arg2 = (I64) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I64 arg1 = (I64) args[0];
+			I64 arg2 = (I64) args[1];
 			if (arg2.getVal() == 0) {
 				throw new EvaluationException("Remainder by zero");
 			}
@@ -578,9 +577,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I64 arg1 = (I64) Terms.lookup(args[0], subst);
-			I64 arg2 = (I64) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I64 arg1 = (I64) args[0];
+			I64 arg2 = (I64) args[1];
 			return boolToBoolTerm(arg1.getVal() > arg2.getVal());
 		}
 
@@ -596,9 +595,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I64 arg1 = (I64) Terms.lookup(args[0], subst);
-			I64 arg2 = (I64) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I64 arg1 = (I64) args[0];
+			I64 arg2 = (I64) args[1];
 			return boolToBoolTerm(arg1.getVal() >= arg2.getVal());
 		}
 
@@ -614,9 +613,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I64 arg1 = (I64) Terms.lookup(args[0], subst);
-			I64 arg2 = (I64) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I64 arg1 = (I64) args[0];
+			I64 arg2 = (I64) args[1];
 			return boolToBoolTerm(arg1.getVal() < arg2.getVal());
 		}
 
@@ -632,9 +631,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I64 arg1 = (I64) Terms.lookup(args[0], subst);
-			I64 arg2 = (I64) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I64 arg1 = (I64) args[0];
+			I64 arg2 = (I64) args[1];
 			return boolToBoolTerm(arg1.getVal() <= arg2.getVal());
 		}
 
@@ -650,9 +649,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I64 arg1 = (I64) Terms.lookup(args[0], subst);
-			I64 arg2 = (I64) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I64 arg1 = (I64) args[0];
+			I64 arg2 = (I64) args[1];
 			return I64.make(arg1.getVal() & arg2.getVal());
 		}
 
@@ -668,9 +667,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I64 arg1 = (I64) Terms.lookup(args[0], subst);
-			I64 arg2 = (I64) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I64 arg1 = (I64) args[0];
+			I64 arg2 = (I64) args[1];
 			return I64.make(arg1.getVal() | arg2.getVal());
 		}
 
@@ -686,9 +685,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I64 arg1 = (I64) Terms.lookup(args[0], subst);
-			I64 arg2 = (I64) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I64 arg1 = (I64) args[0];
+			I64 arg2 = (I64) args[1];
 			return I64.make(arg1.getVal() ^ arg2.getVal());
 		}
 
@@ -704,8 +703,8 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I64 arg1 = (I64) Terms.lookup(args[0], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I64 arg1 = (I64) args[0];
 			return I64.make(-arg1.getVal());
 		}
 
@@ -721,9 +720,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			FP32 arg1 = (FP32) Terms.lookup(args[0], subst);
-			FP32 arg2 = (FP32) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			FP32 arg1 = (FP32) args[0];
+			FP32 arg2 = (FP32) args[1];
 			return FP32.make(arg1.getVal() + arg2.getVal());
 		}
 
@@ -739,9 +738,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			FP32 arg1 = (FP32) Terms.lookup(args[0], subst);
-			FP32 arg2 = (FP32) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			FP32 arg1 = (FP32) args[0];
+			FP32 arg2 = (FP32) args[1];
 			return FP32.make(arg1.getVal() - arg2.getVal());
 		}
 
@@ -757,9 +756,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			FP32 arg1 = (FP32) Terms.lookup(args[0], subst);
-			FP32 arg2 = (FP32) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			FP32 arg1 = (FP32) args[0];
+			FP32 arg2 = (FP32) args[1];
 			return FP32.make(arg1.getVal() * arg2.getVal());
 		}
 
@@ -775,9 +774,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			FP32 arg1 = (FP32) Terms.lookup(args[0], subst);
-			FP32 arg2 = (FP32) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			FP32 arg1 = (FP32) args[0];
+			FP32 arg2 = (FP32) args[1];
 			if (arg2.getVal() == 0) {
 				throw new EvaluationException("Division by zero");
 			}
@@ -796,9 +795,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			FP32 arg1 = (FP32) Terms.lookup(args[0], subst);
-			FP32 arg2 = (FP32) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			FP32 arg1 = (FP32) args[0];
+			FP32 arg2 = (FP32) args[1];
 			if (arg2.getVal() == 0) {
 				throw new EvaluationException("Remainder by zero");
 			}
@@ -817,9 +816,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			FP32 arg1 = (FP32) Terms.lookup(args[0], subst);
-			FP32 arg2 = (FP32) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			FP32 arg1 = (FP32) args[0];
+			FP32 arg2 = (FP32) args[1];
 			return boolToBoolTerm(arg1.getVal() > arg2.getVal());
 		}
 
@@ -835,9 +834,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			FP32 arg1 = (FP32) Terms.lookup(args[0], subst);
-			FP32 arg2 = (FP32) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			FP32 arg1 = (FP32) args[0];
+			FP32 arg2 = (FP32) args[1];
 			return boolToBoolTerm(arg1.getVal() >= arg2.getVal());
 		}
 
@@ -853,9 +852,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			FP32 arg1 = (FP32) Terms.lookup(args[0], subst);
-			FP32 arg2 = (FP32) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			FP32 arg1 = (FP32) args[0];
+			FP32 arg2 = (FP32) args[1];
 			return boolToBoolTerm(arg1.getVal() < arg2.getVal());
 		}
 
@@ -871,9 +870,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			FP32 arg1 = (FP32) Terms.lookup(args[0], subst);
-			FP32 arg2 = (FP32) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			FP32 arg1 = (FP32) args[0];
+			FP32 arg2 = (FP32) args[1];
 			return boolToBoolTerm(arg1.getVal() <= arg2.getVal());
 		}
 
@@ -889,9 +888,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			FP32 arg1 = (FP32) Terms.lookup(args[0], subst);
-			FP32 arg2 = (FP32) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			FP32 arg1 = (FP32) args[0];
+			FP32 arg2 = (FP32) args[1];
 			return boolToBoolTerm(arg1.getVal().floatValue() == arg2.getVal().floatValue());
 		}
 
@@ -907,8 +906,8 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			FP32 arg1 = (FP32) Terms.lookup(args[0], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			FP32 arg1 = (FP32) args[0];
 			return FP32.make(-arg1.getVal());
 		}
 
@@ -924,9 +923,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			FP64 arg1 = (FP64) Terms.lookup(args[0], subst);
-			FP64 arg2 = (FP64) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			FP64 arg1 = (FP64) args[0];
+			FP64 arg2 = (FP64) args[1];
 			return FP64.make(arg1.getVal() + arg2.getVal());
 		}
 
@@ -942,9 +941,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			FP64 arg1 = (FP64) Terms.lookup(args[0], subst);
-			FP64 arg2 = (FP64) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			FP64 arg1 = (FP64) args[0];
+			FP64 arg2 = (FP64) args[1];
 			return FP64.make(arg1.getVal() - arg2.getVal());
 		}
 
@@ -960,9 +959,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			FP64 arg1 = (FP64) Terms.lookup(args[0], subst);
-			FP64 arg2 = (FP64) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			FP64 arg1 = (FP64) args[0];
+			FP64 arg2 = (FP64) args[1];
 			return FP64.make(arg1.getVal() * arg2.getVal());
 		}
 
@@ -978,9 +977,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			FP64 arg1 = (FP64) Terms.lookup(args[0], subst);
-			FP64 arg2 = (FP64) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			FP64 arg1 = (FP64) args[0];
+			FP64 arg2 = (FP64) args[1];
 			if (arg2.getVal() == 0) {
 				throw new EvaluationException("Division by zero");
 			}
@@ -999,9 +998,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			FP64 arg1 = (FP64) Terms.lookup(args[0], subst);
-			FP64 arg2 = (FP64) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			FP64 arg1 = (FP64) args[0];
+			FP64 arg2 = (FP64) args[1];
 			if (arg2.getVal() == 0) {
 				throw new EvaluationException("Remainder by zero");
 			}
@@ -1020,9 +1019,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			FP64 arg1 = (FP64) Terms.lookup(args[0], subst);
-			FP64 arg2 = (FP64) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			FP64 arg1 = (FP64) args[0];
+			FP64 arg2 = (FP64) args[1];
 			return boolToBoolTerm(arg1.getVal() > arg2.getVal());
 		}
 
@@ -1038,9 +1037,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			FP64 arg1 = (FP64) Terms.lookup(args[0], subst);
-			FP64 arg2 = (FP64) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			FP64 arg1 = (FP64) args[0];
+			FP64 arg2 = (FP64) args[1];
 			return boolToBoolTerm(arg1.getVal() >= arg2.getVal());
 		}
 
@@ -1056,9 +1055,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			FP64 arg1 = (FP64) Terms.lookup(args[0], subst);
-			FP64 arg2 = (FP64) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			FP64 arg1 = (FP64) args[0];
+			FP64 arg2 = (FP64) args[1];
 			return boolToBoolTerm(arg1.getVal() < arg2.getVal());
 		}
 
@@ -1074,9 +1073,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			FP64 arg1 = (FP64) Terms.lookup(args[0], subst);
-			FP64 arg2 = (FP64) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			FP64 arg1 = (FP64) args[0];
+			FP64 arg2 = (FP64) args[1];
 			return boolToBoolTerm(arg1.getVal() <= arg2.getVal());
 		}
 
@@ -1092,9 +1091,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			FP64 arg1 = (FP64) Terms.lookup(args[0], subst);
-			FP64 arg2 = (FP64) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			FP64 arg1 = (FP64) args[0];
+			FP64 arg2 = (FP64) args[1];
 			return boolToBoolTerm(arg1.getVal().doubleValue() == arg2.getVal().doubleValue());
 		}
 
@@ -1110,8 +1109,8 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			FP64 arg1 = (FP64) Terms.lookup(args[0], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			FP64 arg1 = (FP64) args[0];
 			return FP64.make(-arg1.getVal());
 		}
 
@@ -1127,9 +1126,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			Term arg1 = args[0].applySubstitution(subst);
-			Term arg2 = args[1].applySubstitution(subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			Term arg1 = args[0];
+			Term arg2 = args[1];
 			return boolToBoolTerm(arg1.equals(arg2));
 		}
 
@@ -1145,9 +1144,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			Term arg1 = args[0].applySubstitution(subst);
-			Term arg2 = args[1].applySubstitution(subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			Term arg1 = args[0];
+			Term arg2 = args[1];
 			return boolToBoolTerm(!arg1.equals(arg2));
 		}
 
@@ -1163,9 +1162,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			Constructor arg1 = (Constructor) args[0].applySubstitution(subst);
-			Constructor arg2 = (Constructor) args[1].applySubstitution(subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			Constructor arg1 = (Constructor) args[0];
+			Constructor arg2 = (Constructor) args[1];
 			return boolToBoolTerm(boolTermToBool(arg1) && boolTermToBool(arg2));
 		}
 
@@ -1181,9 +1180,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			Constructor arg1 = (Constructor) args[0].applySubstitution(subst);
-			Constructor arg2 = (Constructor) args[1].applySubstitution(subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			Constructor arg1 = (Constructor) args[0];
+			Constructor arg2 = (Constructor) args[1];
 			return boolToBoolTerm(boolTermToBool(arg1) || boolTermToBool(arg2));
 		}
 
@@ -1199,8 +1198,8 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			Constructor t = (Constructor) Terms.lookup(args[0], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			Constructor t = (Constructor) args[0];
 			return boolToBoolTerm(!boolTermToBool(t));
 		}
 	}
@@ -1215,12 +1214,12 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			Constructor t = (Constructor) Terms.lookup(args[0], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			Constructor t = (Constructor) args[0];
 			if (boolTermToBool(t)) {
-				return Terms.lookup(args[1], subst);
+				return args[1];
 			} else {
-				return Terms.lookup(args[2], subst);
+				return args[2];
 			}
 		}
 	}
@@ -1235,8 +1234,8 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			I32 x = (I32) Terms.lookup(args[0], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I32 x = (I32) args[0];
 			return StringTerm.make(Integer.toString(x.getVal()));
 		}
 
@@ -1252,9 +1251,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			String s1 = ((StringTerm) Terms.lookup(args[0], subst)).getVal();
-			String s2 = ((StringTerm) Terms.lookup(args[1], subst)).getVal();
+		public Term evaluate(Term[] args) throws EvaluationException {
+			String s1 = ((StringTerm) args[0]).getVal();
+			String s2 = ((StringTerm) args[1]).getVal();
 			int cmp = s1.compareTo(s2);
 			if (cmp < 0) {
 				return Constructors.makeZeroAry(BuiltInConstructorSymbol.CMP_LT);
@@ -1276,9 +1275,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			int x = ((I32) Terms.lookup(args[0], subst)).getVal();
-			int y = ((I32) Terms.lookup(args[1], subst)).getVal();
+		public Term evaluate(Term[] args) throws EvaluationException {
+			int x = ((I32) args[0]).getVal();
+			int y = ((I32) args[1]).getVal();
 			int cmp = Integer.compare(x, y);
 			if (cmp < 0) {
 				return Constructors.makeZeroAry(BuiltInConstructorSymbol.CMP_LT);
@@ -1300,9 +1299,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			String s1 = ((StringTerm) Terms.lookup(args[0], subst)).getVal();
-			String s2 = ((StringTerm) Terms.lookup(args[1], subst)).getVal();
+		public Term evaluate(Term[] args) throws EvaluationException {
+			String s1 = ((StringTerm) args[0]).getVal();
+			String s2 = ((StringTerm) args[1]).getVal();
 			return StringTerm.make(s1 + s2);
 		}
 
@@ -1318,10 +1317,10 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			SolverVariable x = (SolverVariable) Terms.lookup(args[0], subst);
-			SmtLibTerm y = (SmtLibTerm) Terms.lookup(args[1], subst);
-			SmtLibTerm t = (SmtLibTerm) Terms.lookup(args[2], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			SolverVariable x = (SolverVariable) args[0];
+			SmtLibTerm y = (SmtLibTerm) args[1];
+			SmtLibTerm t = (SmtLibTerm) args[2];
 			return t.substSolverTerms(HashTreePMap.singleton(x, y));
 		}
 
@@ -1337,9 +1336,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			Set<SolverVariable> vars = ((SmtLibTerm) Terms.lookup(args[1], subst)).freeVars();
-			SolverVariable x = (SolverVariable) Terms.lookup(args[0], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			Set<SolverVariable> vars = ((SmtLibTerm) args[1]).freeVars();
+			SolverVariable x = (SolverVariable) args[0];
 			if (vars.contains(x)) {
 				return trueBool;
 			} else {
@@ -1398,8 +1397,8 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			SmtLibTerm formula = (SmtLibTerm) args[0].applySubstitution(subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			SmtLibTerm formula = (SmtLibTerm) args[0];
 			Optional<Model> m = querySmt(formula, -1);
 			if (m == null) {
 				throw new EvaluationException("Z3 returned \"unknown\"");
@@ -1421,9 +1420,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			SmtLibTerm formula = (SmtLibTerm) args[0].applySubstitution(subst);
-			Constructor timeoutOpt = (Constructor) args[1].applySubstitution(subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			SmtLibTerm formula = (SmtLibTerm) args[0];
+			Constructor timeoutOpt = (Constructor) args[1];
 			Integer timeout = extractOptionalTimeout(timeoutOpt);
 			Optional<Model> m = querySmt(formula, timeout);
 			if (m == null) {
@@ -1446,10 +1445,10 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			SmtLibTerm formula = (SmtLibTerm) args[0].applySubstitution(subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			SmtLibTerm formula = (SmtLibTerm) args[0];
 			formula = Constructors.make(BuiltInConstructorSymbol.FORMULA_NOT, Terms.singletonArray(formula));
-			Constructor timeoutOpt = (Constructor) args[1].applySubstitution(subst);
+			Constructor timeoutOpt = (Constructor) args[1];
 			Integer timeout = extractOptionalTimeout(timeoutOpt);
 			Optional<Model> m = querySmt(formula, timeout);
 			if (m == null) {
@@ -1472,8 +1471,8 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			SmtLibTerm formula = (SmtLibTerm) args[0].applySubstitution(subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			SmtLibTerm formula = (SmtLibTerm) args[0];
 			formula = Constructors.make(BuiltInConstructorSymbol.FORMULA_NOT, args);
 			Optional<Model> m = querySmt(formula, -1);
 			if (m == null) {
@@ -1503,9 +1502,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			SmtLibTerm formula = (SmtLibTerm) args[0].applySubstitution(subst);
-			Constructor timeoutOpt = (Constructor) args[1].applySubstitution(subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			SmtLibTerm formula = (SmtLibTerm) args[0];
+			Constructor timeoutOpt = (Constructor) args[1];
 			Integer timeout = extractOptionalTimeout(timeoutOpt);
 			Optional<Model> m = querySmt(formula, timeout);
 			return m == null || !m.isPresent() ? none : some(m.get());
@@ -1523,9 +1522,9 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			SolverVariable x = (SolverVariable) Terms.lookup(args[0], subst);
-			Model m = (Model) Terms.lookup(args[1], subst);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			SolverVariable x = (SolverVariable) args[0];
+			Model m = (Model) args[1];
 			Term t = m.getVal().get(x);
 			return t == null ? none : some(t);
 		}
@@ -1574,8 +1573,8 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution substitution) throws EvaluationException {
-			return args[0].applySubstitution(substitution);
+		public Term evaluate(Term[] args) throws EvaluationException {
+			return args[0];
 		}
 
 	}
@@ -1590,8 +1589,8 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
-			System.out.println(Terms.lookup(args[0], subst));
+		public Term evaluate(Term[] args) throws EvaluationException {
+			System.out.println(args[0]);
 			return trueBool;
 		}
 
@@ -1607,12 +1606,12 @@ public final class BuiltInFunctionDefFactory {
 	// }
 	//
 	// @Override
-	// public Term evaluate(Term[] args, Substitution subst) throws
+	// public Term evaluate(Term[] args) throws
 	// EvaluationException {
 	// throw new AssertionError();
 	//// ConstraintSolver solver = new ConstraintSolver();
 	//// Term[] res =
-	// solver.getPathInterpolants(listTermToArray(args[0].applySubstitution(subst)));
+	// solver.getPathInterpolants(listTermToArray(args[0]));
 	//// if (res == null) {
 	//// return Constructor.getZeroAry(BuiltInConstructorSymbol.NONE);
 	//// }

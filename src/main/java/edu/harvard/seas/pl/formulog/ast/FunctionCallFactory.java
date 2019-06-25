@@ -33,7 +33,6 @@ import edu.harvard.seas.pl.formulog.ast.functions.FunctionDefManager;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolType;
-import edu.harvard.seas.pl.formulog.unification.EmptySubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.FunctorUtil;
 import edu.harvard.seas.pl.formulog.util.FunctorUtil.Memoizer;
@@ -43,7 +42,7 @@ public final class FunctionCallFactory {
 
 	private final FunctionDefManager defManager;
 	private final Memoizer<FunctionCall> memo = new Memoizer<>();
-	
+
 	private static final AtomicInteger cnt = new AtomicInteger();
 	private static final boolean debug = System.getProperty("callTrace") != null;
 
@@ -90,16 +89,38 @@ public final class FunctionCallFactory {
 			return args;
 		}
 
-		public Term evaluate(Substitution s) throws EvaluationException {
-			return evaluate(args, s);
+		@Override
+		public FunctionCall copyWithNewArgs(Term[] newArgs) {
+			return make(sym, newArgs);
 		}
 
-		public Term evaluate(Term[] args) throws EvaluationException {
-			return evaluate(args, EmptySubstitution.INSTANCE);
+		@Override
+		public boolean containsFunctionCall() {
+			return true;
 		}
 
-		// FIXME This way of implementing memoization seems expensive
-		public Term evaluate(Term[] args, Substitution s) throws EvaluationException {
+		@Override
+		public Term applySubstitution(Substitution s) {
+			if (isGround) {
+				return this;
+			}
+			Term[] newArgs = Terms.map(args, t -> t.applySubstitution(s));
+			return make(sym, newArgs);
+		}
+
+		@Override
+		public boolean isGround() {
+			return isGround;
+		}
+
+		@Override
+		public String toString() {
+			return FunctorUtil.toString(sym, args);
+		}
+
+		@Override
+		public Term normalize(Substitution s) throws EvaluationException {
+			// FIXME This way of implementing memoization seems expensive
 			Integer id = null;
 			Long start = null;
 			if (debug) {
@@ -138,41 +159,6 @@ public final class FunctionCallFactory {
 				System.err.println(msg);
 			}
 			return r;
-		}
-
-		@Override
-		public FunctionCall copyWithNewArgs(Term[] newArgs) {
-			return make(sym, newArgs);
-		}
-
-		@Override
-		public boolean containsFunctionCall() {
-			return true;
-		}
-
-		@Override
-		public Term applySubstitution(Substitution s) {
-			if (isGround) {
-				return this;
-			}
-			Term[] newArgs = Terms.map(args, t -> t.applySubstitution(s));
-			return make(sym, newArgs);
-		}
-
-		@Override
-		public boolean isGround() {
-			return isGround;
-		}
-
-		@Override
-		public String toString() {
-			return FunctorUtil.toString(sym, args);
-		}
-
-		@Override
-		public Term normalize(Substitution s) throws EvaluationException {
-			Term[] newArgs = Terms.mapExn(args, t -> t.normalize(s));
-			return evaluate(newArgs, s);
 		}
 
 		@Override

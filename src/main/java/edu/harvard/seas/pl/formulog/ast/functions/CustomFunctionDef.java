@@ -58,11 +58,11 @@ public class CustomFunctionDef implements FunctionDef {
 	}
 
 	@Override
-	public Term evaluate(Term[] args, Substitution substitution) throws EvaluationException {
+	public Term evaluate(Term[] args) throws EvaluationException {
 		Substitution s = new SimpleSubstitution();
 		assert params.length == args.length;
 		for (int i = 0; i < params.length; ++i) {
-			s.put(params[i], args[i].applySubstitution(substitution));
+			s.put(params[i], args[i]);
 		}
 		try {
 			return body.normalize(s);

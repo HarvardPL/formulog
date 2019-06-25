@@ -23,7 +23,6 @@ package edu.harvard.seas.pl.formulog.ast.functions;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
-import edu.harvard.seas.pl.formulog.unification.Substitution;
 
 public class DummyFunctionDef implements FunctionDef {
 
@@ -40,11 +39,11 @@ public class DummyFunctionDef implements FunctionDef {
 	}
 
 	@Override
-	public Term evaluate(Term[] args, Substitution substitution) throws EvaluationException {
+	public Term evaluate(Term[] args) throws EvaluationException {
 		if (def == null) {
 			throw new EvaluationException();
 		}
-		return def.evaluate(args, substitution);
+		return def.evaluate(args);
 	}
 	
 	public void setDef(FunctionDef def) {

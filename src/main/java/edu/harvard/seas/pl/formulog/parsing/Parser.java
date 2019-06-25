@@ -160,7 +160,6 @@ import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
 import edu.harvard.seas.pl.formulog.types.Types.TypeVar;
 import edu.harvard.seas.pl.formulog.types.Types.TypeVisitor;
-import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
 
@@ -417,9 +416,9 @@ public class Parser {
 					}
 
 					@Override
-					public Term evaluate(Term[] args, Substitution subst) throws EvaluationException {
+					public Term evaluate(Term[] args) throws EvaluationException {
 						Constructor ctor = (Constructor) args[0];
-						return ctor.getArgs()[j].applySubstitution(subst);
+						return ctor.getArgs()[j];
 					}
 
 				});
@@ -1080,8 +1079,8 @@ public class Parser {
 						}
 
 						@Override
-						public Term evaluate(Term[] args, Substitution substitution) throws EvaluationException {
-							Constructor c = (Constructor) args[0].applySubstitution(substitution);
+						public Term evaluate(Term[] args) throws EvaluationException {
+							Constructor c = (Constructor) args[0];
 							if (c.getSymbol().equals(ctor)) {
 								return Constructors.makeFalse();
 							}

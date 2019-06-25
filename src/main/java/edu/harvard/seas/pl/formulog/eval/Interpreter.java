@@ -237,12 +237,8 @@ public class Interpreter {
 									}
 
 									@Override
-									public Term evaluate(Term[] args, Substitution substitution)
-											throws EvaluationException {
+									public Term evaluate(Term[] args) throws EvaluationException {
 										Substitution s = new SimpleSubstitution();
-										for (Var v : substitution.iterateKeys()) {
-											s.put(v, substitution.get(v));
-										}
 										Unification.unify(a, Atoms.getPositive(predSym, args), s);
 										Iterable<NormalAtom> facts = db.query(idx, s);
 										if (facts.iterator().hasNext()) {
