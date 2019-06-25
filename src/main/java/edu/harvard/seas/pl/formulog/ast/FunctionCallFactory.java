@@ -101,8 +101,10 @@ public final class FunctionCallFactory {
 		// FIXME This way of implementing memoization seems expensive
 		public Term evaluate(Term[] args, Substitution s) throws EvaluationException {
 			Integer id = null;
+			Long start = null;
 			if (debug) {
 				id = cnt.getAndIncrement();
+				start = System.currentTimeMillis();
 				String msg = "BEGIN CALL #" + id + "\n";
 				msg += "Function: " + sym + "\n";
 				msg += "Arguments: " + Arrays.toString(args) + "\n";
@@ -113,7 +115,7 @@ public final class FunctionCallFactory {
 			assert def != null;
 			Term[] newArgs = new Term[args.length];
 			for (int i = 0; i < args.length; ++i) {
-				newArgs[i] = args[i].applySubstitution(s).reduce(s);
+				newArgs[i] = args[i].normalize(s);
 			}
 			Map<List<Term>, Term> m = Util.lookupOrCreate(callMemo, sym, () -> new ConcurrentHashMap<>());
 			List<Term> key = Arrays.asList(newArgs);
@@ -126,10 +128,12 @@ public final class FunctionCallFactory {
 				}
 			}
 			if (debug) {
+				long end = System.currentTimeMillis();
 				String msg = "END CALL #" + id + "\n";
 				msg += "Function: " + sym + "\n";
 				msg += "Arguments: " + Arrays.toString(args) + "\n";
 				msg += "Result: " + r + "\n";
+				msg += "Time: " + (end - start) / 1000.0 + " (s)\n";
 				msg += "***\n";
 				System.err.println(msg);
 			}
@@ -148,14 +152,11 @@ public final class FunctionCallFactory {
 
 		@Override
 		public Term applySubstitution(Substitution s) {
+			if (isGround) {
+				return this;
+			}
 			Term[] newArgs = Terms.map(args, t -> t.applySubstitution(s));
 			return make(sym, newArgs);
-		}
-
-		@Override
-		public Term reduce(Substitution s) throws EvaluationException {
-			Term[] newArgs = Terms.mapExn(args, t -> t.reduce(s));
-			return evaluate(newArgs, s);
 		}
 
 		@Override

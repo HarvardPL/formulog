@@ -241,7 +241,7 @@ public final class Atoms {
 		Term[] args = a.getArgs();
 		Term[] newArgs = new Term[args.length];
 		for (int i = 0; i < args.length; ++i) {
-			newArgs[i] = args[i].reduce(EmptySubstitution.INSTANCE);
+			newArgs[i] = args[i].normalize(s);
 		}
 		return Atoms.get(a.getSymbol(), newArgs, a.isNegated());
 	}

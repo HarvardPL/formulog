@@ -84,11 +84,6 @@ public class Var implements Term {
 	}
 
 	@Override
-	public Term reduce(Substitution s) {
-		return this;
-	}
-
-	@Override
 	public Term normalize(Substitution s) throws EvaluationException {
 		return s.get(this);
 	}

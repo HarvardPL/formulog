@@ -50,11 +50,6 @@ public interface Primitive<T> extends Term {
 	}
 	
 	@Override
-	public default Term reduce(Substitution s) {
-		return this;
-	}
-	
-	@Override
 	public default Term normalize(Substitution s) {
 		return this;
 	}

@@ -51,23 +51,87 @@ public final class FunctorUtil {
 		return sb.toString();
 	}
 
+//	public static class Memoizer<F extends Functor> {
+//
+//		private final Map<Object, Object> memo = new ConcurrentHashMap<>();
+//
+//		@SuppressWarnings("unchecked")
+//		public F lookupOrCreate(Symbol sym, Term[] args, Supplier<F> constructor) {
+//			if (sym.getArity() != args.length) {
+//				throw new IllegalArgumentException("Symbol " + sym + " has arity " + sym.getArity() + " but args "
+//						+ Arrays.toString(args) + " have length " + args.length);
+//			}
+//			Map<Object, Object> m = memo;
+//			Object k = sym;
+//			for (int i = 0; i < args.length; ++i) {
+//				m = (Map<Object, Object>) Util.lookupOrCreate(m, k, () -> new ConcurrentHashMap<>());
+//				k = args[i];
+//			}
+//			return (F) Util.lookupOrCreate(m, k, () -> constructor.get());
+//		}
+//
+//	}
+	
 	public static class Memoizer<F extends Functor> {
+	
+		private final Map<Key, F> memo = new ConcurrentHashMap<>();
 
-		private final Map<Object, Object> memo = new ConcurrentHashMap<>();
-
-		@SuppressWarnings("unchecked")
 		public F lookupOrCreate(Symbol sym, Term[] args, Supplier<F> constructor) {
-			if (sym.getArity() != args.length) {
-				throw new IllegalArgumentException("Symbol " + sym + " has arity " + sym.getArity() + " but args "
-						+ Arrays.toString(args) + " have length " + args.length);
+			Key key = new Key(sym, args);
+			F f = memo.get(key);
+			if (f == null) {
+				f = constructor.get();
+				F f2 = memo.putIfAbsent(key, f);
+				if (f2 != null) {
+					f = f2;
+				}
 			}
-			Map<Object, Object> m = memo;
-			Object k = sym;
-			for (int i = 0; i < args.length; ++i) {
-				m = (Map<Object, Object>) Util.lookupOrCreate(m, k, () -> new ConcurrentHashMap<>());
-				k = args[i];
+			return f;
+		}
+		
+		private static class Key {
+			
+			private final Symbol sym;
+			private final Term[] args;
+			private final int hashCode;
+			
+			public Key(Symbol sym, Term[] args) {
+				this.sym = sym;
+				this.args = args;
+				final int prime = 31;
+				int result = 1;
+				result = prime * result + Arrays.hashCode(args);
+				result = prime * result + ((sym == null) ? 0 : sym.hashCode());
+				hashCode = result;
 			}
-			return (F) Util.lookupOrCreate(m, k, () -> constructor.get());
+
+			@Override
+			public int hashCode() {
+				return hashCode;
+			}
+
+			@Override
+			public boolean equals(Object obj) {
+				if (this == obj)
+					return true;
+				if (obj == null)
+					return false;
+				if (getClass() != obj.getClass())
+					return false;
+				Key other = (Key) obj;
+				if (hashCode != other.hashCode) {
+					return false;
+				}
+				if (sym == null) {
+					if (other.sym != null)
+						return false;
+				} else if (!sym.equals(other.sym))
+					return false;
+				if (!Arrays.equals(args, other.args))
+					return false;
+				return true;
+			}
+			
 		}
 
 	}

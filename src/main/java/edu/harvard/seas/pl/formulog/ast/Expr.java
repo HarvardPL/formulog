@@ -24,8 +24,6 @@ import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitorExn;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitorExn;
-import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.unification.Substitution;
 
 public interface Expr extends Term {
 
@@ -46,11 +44,6 @@ public interface Expr extends Term {
 	@Override
 	default boolean containsFunctionCall() {
 		return true;
-	}
-	
-	@Override
-	default Term reduce(Substitution s) throws EvaluationException {
-		return normalize(s);
 	}
 	
 	@Override

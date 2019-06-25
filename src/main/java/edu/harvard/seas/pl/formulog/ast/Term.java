@@ -37,8 +37,6 @@ public interface Term {
 
 	Term applySubstitution(Substitution s);
 	
-	Term reduce(Substitution s) throws EvaluationException;
-	
 	Term normalize(Substitution s) throws EvaluationException;
 	
 }

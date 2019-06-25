@@ -104,9 +104,9 @@ public class Z3Process {
 	}
 
 	public Pair<Status, Map<SolverVariable, Term>> check(SmtLibTerm t, Integer timeout) throws EvaluationException {
-		t = (new SmtLibSimplifier()).simplify(t);
 		Integer id = null;
 		if (debug) {
+			t = (new SmtLibSimplifier()).simplify(t);
 			id = cnt.getAndIncrement();
 		}
 		SmtLibShim shim = makeAssertion(t, id);
