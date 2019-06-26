@@ -76,6 +76,8 @@ You can also set the following system properties (using the `-D` flag, as in
 * `factTrace` - print new facts as they are derived
 * `softExceptions` - ignore exceptions during evaluation (i.e., treat them as
   unification failures, and not as something that should stop evaluation)
+* `sequential` - run interpreter without a thread pool (helpful for debugging
+  runtime)
 
 For example, to run the test program above with SMT debug information, use
 
