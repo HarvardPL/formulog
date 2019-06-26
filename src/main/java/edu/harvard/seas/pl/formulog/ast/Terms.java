@@ -35,15 +35,15 @@ public final class Terms {
 	}
 
 	private static final Term[] EMPTY_TERMS_ARR = new Term[0];
-	
+
 	public static Term[] emptyArray() {
 		return EMPTY_TERMS_ARR;
 	}
-	
+
 	public static Term[] singletonArray(Term t) {
 		return new Term[] { t };
 	}
-	
+
 	public static Term[] map(Term[] ts, Function<Term, Term> f) {
 		Term[] ys = new Term[ts.length];
 		for (int i = 0; i < ts.length; ++i) {
@@ -51,7 +51,7 @@ public final class Terms {
 		}
 		return ys;
 	}
-	
+
 	public static <E extends Exception> Term[] mapExn(Term[] ts, ExceptionalFunction<Term, Term, E> f) throws E {
 		Term[] ys = new Term[ts.length];
 		for (int i = 0; i < ts.length; ++i) {
@@ -64,6 +64,7 @@ public final class Terms {
 
 		@Override
 		public Void visit(MatchExpr matchExpr, Set<Var> in) {
+			varSetOfTerm(matchExpr.getMatchee(), in);
 			for (MatchClause cl : matchExpr.getClauses()) {
 				Set<Var> patternVars = varSet(cl.getLhs());
 				Set<Var> rhsVars = varSet(cl.getRhs());
@@ -76,13 +77,13 @@ public final class Terms {
 		@Override
 		public Void visit(FunctionCall funcCall, Set<Var> in) {
 			for (Term arg : funcCall.getArgs()) {
-				arg.visit(termVarExtractor, in);
+				varSetOfTerm(arg, in);
 			}
 			return null;
 		}
-		
+
 	};
-	
+
 	private static final TermVisitor<Set<Var>, Void> termVarExtractor = new TermVisitor<Set<Var>, Void>() {
 
 		@Override
@@ -94,7 +95,7 @@ public final class Terms {
 		@Override
 		public Void visit(Constructor c, Set<Var> in) {
 			for (Term arg : c.getArgs()) {
-				arg.visit(this, in);
+				varSetOfTerm(arg, in);
 			}
 			return null;
 		}
@@ -106,22 +107,34 @@ public final class Terms {
 
 		@Override
 		public Void visit(Expr e, Set<Var> in) {
-			e.visit(exprVarExtractor, in);
+			varSetOfExpr(e, in);
 			return null;
 		}
-		
+
 	};
-	
+
+	private static void varSetOfExpr(Expr e, Set<Var> vars) {
+		if (!e.isGround()) {
+			e.visit(exprVarExtractor, vars);
+		}
+	}
+
+	private static void varSetOfTerm(Term t, Set<Var> vars) {
+		if (!t.isGround()) {
+			t.visit(termVarExtractor, vars);
+		}
+	}
+
 	public static Set<Var> varSet(Term t) {
 		Set<Var> vars = new HashSet<>();
-		t.visit(termVarExtractor, vars);
+		varSetOfTerm(t, vars);
 		return vars;
 	}
 
 	public static boolean isGround(Term t, Set<Var> boundVars) {
 		return boundVars.containsAll(varSet(t));
 	}
-	
+
 	public static Set<Var> getNonBindingVarInstances(Term t) {
 		Set<Var> vars = new HashSet<>();
 		t.visit(new TermVisitor<Void, Void>() {
@@ -149,11 +162,11 @@ public final class Terms {
 				vars.addAll(Terms.varSet(expr));
 				return null;
 			}
-			
+
 		}, null);
 		return vars;
 	}
-	
+
 	public static Set<Var> getBindingVarInstances(Term t) {
 		Set<Var> vars = new HashSet<>();
 		t.visit(new TermVisitor<Void, Void>() {
@@ -181,7 +194,7 @@ public final class Terms {
 			public Void visit(Expr expr, Void in) {
 				return null;
 			}
-			
+
 		}, null);
 		return vars;
 	}

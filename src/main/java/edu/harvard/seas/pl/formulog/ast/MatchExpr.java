@@ -35,14 +35,27 @@ public class MatchExpr implements Expr {
 
 	private final Term matchee;
 	private final List<MatchClause> match;
+	private final boolean isGround;
 
 	public static MatchExpr make(Term matchee, List<MatchClause> match) {
 		return new MatchExpr(matchee, match);
 	}
-	
+
 	MatchExpr(Term matchee, List<MatchClause> match) {
 		this.matchee = matchee;
 		this.match = match;
+		boolean isGround = matchee.isGround();
+		if (isGround) {
+			for (MatchClause cl : match) {
+				Set<Var> vars = Terms.varSet(cl.getRhs());
+				Set<Var> patVars = Terms.varSet(cl.getLhs());
+				if (!patVars.containsAll(vars)) {
+					isGround = false;
+					break;
+				}
+			}
+		}
+		this.isGround = isGround;
 	}
 
 	public Term getMatchee() {
@@ -102,7 +115,7 @@ public class MatchExpr implements Expr {
 		}
 		return make(newMatchee, clauses);
 	}
-	
+
 	@Override
 	public String toString() {
 		String s = "match " + matchee.toString() + " with";
@@ -142,6 +155,11 @@ public class MatchExpr implements Expr {
 		} else if (!matchee.equals(other.matchee))
 			return false;
 		return true;
+	}
+
+	@Override
+	public boolean isGround() {
+		return isGround;
 	}
 
 }

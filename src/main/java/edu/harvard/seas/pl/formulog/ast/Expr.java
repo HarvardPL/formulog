@@ -45,10 +45,5 @@ public interface Expr extends Term {
 	default boolean containsFunctionCall() {
 		return true;
 	}
-	
-	@Override
-	default boolean isGround() {
-		return Terms.varSet(this).isEmpty();
-	}
 
 }

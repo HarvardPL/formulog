@@ -51,32 +51,38 @@ public final class FunctorUtil {
 		return sb.toString();
 	}
 
-//	public static class Memoizer<F extends Functor> {
-//
-//		private final Map<Object, Object> memo = new ConcurrentHashMap<>();
-//
-//		@SuppressWarnings("unchecked")
-//		public F lookupOrCreate(Symbol sym, Term[] args, Supplier<F> constructor) {
-//			if (sym.getArity() != args.length) {
-//				throw new IllegalArgumentException("Symbol " + sym + " has arity " + sym.getArity() + " but args "
-//						+ Arrays.toString(args) + " have length " + args.length);
-//			}
-//			Map<Object, Object> m = memo;
-//			Object k = sym;
-//			for (int i = 0; i < args.length; ++i) {
-//				m = (Map<Object, Object>) Util.lookupOrCreate(m, k, () -> new ConcurrentHashMap<>());
-//				k = args[i];
-//			}
-//			return (F) Util.lookupOrCreate(m, k, () -> constructor.get());
-//		}
-//
-//	}
-	
+	// public static class Memoizer<F extends Functor> {
+	//
+	// private final Map<Object, Object> memo = new ConcurrentHashMap<>();
+	//
+	// @SuppressWarnings("unchecked")
+	// public F lookupOrCreate(Symbol sym, Term[] args, Supplier<F> constructor) {
+	// if (sym.getArity() != args.length) {
+	// throw new IllegalArgumentException("Symbol " + sym + " has arity " +
+	// sym.getArity() + " but args "
+	// + Arrays.toString(args) + " have length " + args.length);
+	// }
+	// Map<Object, Object> m = memo;
+	// Object k = sym;
+	// for (int i = 0; i < args.length; ++i) {
+	// m = (Map<Object, Object>) Util.lookupOrCreate(m, k, () -> new
+	// ConcurrentHashMap<>());
+	// k = args[i];
+	// }
+	// return (F) Util.lookupOrCreate(m, k, () -> constructor.get());
+	// }
+	//
+	// }
+
 	public static class Memoizer<F extends Functor> {
-	
+
 		private final Map<Key, F> memo = new ConcurrentHashMap<>();
 
 		public F lookupOrCreate(Symbol sym, Term[] args, Supplier<F> constructor) {
+			if (sym.getArity() != args.length) {
+				throw new IllegalArgumentException("Symbol " + sym + " has arity " + sym.getArity() + " but args "
+						+ Arrays.toString(args) + " have arity " + args.length);
+			}
 			Key key = new Key(sym, args);
 			F f = memo.get(key);
 			if (f == null) {
@@ -88,13 +94,13 @@ public final class FunctorUtil {
 			}
 			return f;
 		}
-		
+
 		private static class Key {
-			
+
 			private final Symbol sym;
 			private final Term[] args;
 			private final int hashCode;
-			
+
 			public Key(Symbol sym, Term[] args) {
 				this.sym = sym;
 				this.args = args;
@@ -131,7 +137,7 @@ public final class FunctorUtil {
 					return false;
 				return true;
 			}
-			
+
 		}
 
 	}

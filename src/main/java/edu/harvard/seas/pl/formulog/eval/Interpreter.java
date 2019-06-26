@@ -461,7 +461,7 @@ public class Interpreter {
 
 			private void reportFacts(RuleSubstitution s) throws EvaluationException {
 				for (Atom a : rule.getHead()) {
-					Atom fact = Atoms.normalize(Atoms.applySubstitution(a, s));
+					Atom fact = Atoms.normalize(a, s);
 					boolean isNew = db.add((NormalAtom) fact);
 					if (isNew) {
 						if (factTrace) {

@@ -286,7 +286,7 @@ public final class Unification {
 			if (!c1.getSymbol().equals(c2.getSymbol())) {
 				return false;
 			}
-
+			
 			Term[] args1 = c1.getArgs();
 			Term[] args2 = c2.getArgs();
 			for (int i = 0; i < args1.length; ++i) {

@@ -33,9 +33,18 @@ import edu.harvard.seas.pl.formulog.ast.Annotation;
 import edu.harvard.seas.pl.formulog.ast.Atoms;
 import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
+import edu.harvard.seas.pl.formulog.ast.Constructor;
+import edu.harvard.seas.pl.formulog.ast.Expr;
+import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitorExn;
+import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
+import edu.harvard.seas.pl.formulog.ast.MatchClause;
+import edu.harvard.seas.pl.formulog.ast.MatchExpr;
+import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
+import edu.harvard.seas.pl.formulog.ast.Terms;
+import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitorExn;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
@@ -72,7 +81,7 @@ public class MagicSetTransformer {
 		if (qsym.getSymbolType().equals(SymbolType.SPECIAL_REL)) {
 			throw new InvalidProgramException("Cannot query built-in predicate: " + query.getSymbol());
 		}
-		query = normalizeQuery(query);
+		query = reduceQuery(query);
 		Program newProg;
 		if (query.getSymbol().getSymbolType().isEDBSymbol()) {
 			newProg = makeEdbProgram(query);
@@ -95,9 +104,60 @@ public class MagicSetTransformer {
 		return new Pair<>(newProg, query);
 	}
 
-	public Atom normalizeQuery(final Atom query) throws InvalidProgramException {
+	private static final TermVisitorExn<Void, Term, EvaluationException> termReducer = new TermVisitorExn<Void, Term, EvaluationException>() {
+
+		@Override
+		public Term visit(Var x, Void in) throws EvaluationException {
+			return x;
+		}
+
+		@Override
+		public Term visit(Constructor c, Void in) throws EvaluationException {
+			Term[] args = Terms.mapExn(c.getArgs(), t -> t.visit(this, null));
+			return c.copyWithNewArgs(args);
+		}
+
+		@Override
+		public Term visit(Primitive<?> p, Void in) throws EvaluationException {
+			return p;
+		}
+
+		@Override
+		public Term visit(Expr e, Void in) throws EvaluationException {
+			return e.visit(exprReducer, in);
+		}
+
+	};
+
+	private static final ExprVisitorExn<Void, Term, EvaluationException> exprReducer = new ExprVisitorExn<Void, Term, EvaluationException>() {
+
+		@Override
+		public Term visit(MatchExpr matchExpr, Void in) throws EvaluationException {
+			Term matchee = matchExpr.getMatchee().visit(termReducer, in);
+			List<MatchClause> clauses = new ArrayList<>();
+			for (MatchClause cl : matchExpr.getClauses()) {
+				Term rhs = cl.getRhs().visit(termReducer, in);
+				clauses.add(MatchClause.make(cl.getLhs(), rhs));
+			}
+			return MatchExpr.make(matchee, clauses);
+		}
+
+		@Override
+		public Term visit(FunctionCall funcCall, Void in) throws EvaluationException {
+			Term[] args = Terms.mapExn(funcCall.getArgs(), t -> t.visit(termReducer, null));
+			return funcCall.copyWithNewArgs(args);
+		}
+
+	};
+
+	public Atom reduceQuery(final Atom query) throws InvalidProgramException {
 		try {
-			return Atoms.normalize(query);
+			Term[] args = query.getArgs();
+			Term[] newArgs = new Term[args.length];
+			for (int i = 0; i < args.length; ++i) {
+				newArgs[i] = args[i].visit(termReducer, null);
+			}
+			return Atoms.get(query.getSymbol(), newArgs, query.isNegated());
 		} catch (EvaluationException e) {
 			throw new InvalidProgramException(
 					"Query contained function call that could not be normalized: " + query + "\n" + e);
