@@ -116,6 +116,7 @@ import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.RecordEntryC
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.RecordEntryDefContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.RecordTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.RecordUpdateTermContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.ReifyTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.RelDeclContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.SpecialFPTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.StringTermContext;
@@ -597,6 +598,19 @@ public class Parser {
 			}
 
 			@Override
+			public Term visitReifyTerm(ReifyTermContext ctx) {
+				Symbol predSym = symbolManager.lookupSymbol(ctx.ID().getText());
+				if (!predSym.getSymbolType().isRelationSym()) {
+					throw new RuntimeException("Cannot reify something that is not a relation: " + ctx.getText());
+				}
+				Symbol funcSym = symbolManager.createFunctionSymbolForPredicate(predSym, true);
+				if (!functionDefManager.hasDefinition(funcSym)) {
+					functionDefManager.register(new DummyFunctionDef(funcSym));
+				}
+				return functionCallFactory.make(funcSym, Terms.emptyArray());
+			}
+
+			@Override
 			public Term visitVarTerm(VarTermContext ctx) {
 				String var = ctx.VAR().getText();
 				if (var.equals("_")) {
@@ -660,7 +674,7 @@ public class Parser {
 			private Term makeFunctor(Symbol sym, Term[] args) {
 				SymbolType st = sym.getSymbolType();
 				if (st.isRelationSym()) {
-					Symbol newSym = symbolManager.createFunctionSymbolForPredicate(sym);
+					Symbol newSym = symbolManager.createFunctionSymbolForPredicate(sym, false);
 					if (!functionDefManager.hasDefinition(newSym)) {
 						functionDefManager.register(new DummyFunctionDef(newSym));
 					}

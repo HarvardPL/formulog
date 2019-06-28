@@ -29,6 +29,8 @@ syn match keywords ","
 syn match keywords "\."
 syn match keywords "{"
 syn match keywords "}"
+syn match keywords "<\["
+syn match keywords "]>"
 syn keyword keywords type fun constructor input output match let if then else end fun in with uninterpreted and sort
 syn keyword todo contained TODO XXX FIXME
 syn region comment start="(\*" end="\*)" fold contains=todo,comment

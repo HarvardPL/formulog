@@ -1,58 +1,60 @@
 package edu.harvard.seas.pl.formulog.symbols;
 
-/*-
- * #%L
- * FormuLog
- * %%
- * Copyright (C) 2018 - 2019 President and Fellows of Harvard College
- * %%
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * #L%
- */
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
+import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
+import edu.harvard.seas.pl.formulog.types.FunctorType;
+import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
+import edu.harvard.seas.pl.formulog.util.Util;
 
 public class FunctionSymbolForPredicateFactory {
 
 	private final SymbolManager symbolManager;
-	
+
 	public FunctionSymbolForPredicateFactory(SymbolManager symbolManager) {
 		this.symbolManager = symbolManager;
 	}
 
-	public FunctionSymbolForPredicate create(Symbol predSym) {
+	public PredicateFunctionSymbol create(Symbol predSym, boolean reify) {
 		if (!predSym.getSymbolType().isRelationSym()) {
-			throw new IllegalArgumentException("Expected a predicate symbol, but received non-predicate symbol " + predSym);
+			throw new IllegalArgumentException(
+					"Expected a predicate symbol, but received non-predicate symbol " + predSym);
 		}
-		FunctionSymbolForPredicate sym = new FunctionSymbolForPredicate(predSym);
+		if (predSym.getArity() == 0) {
+			reify = false;
+		}
+		PredicateFunctionSymbol sym;
+		if (reify) {
+			sym = Util.lookupOrCreate(reifyMemo, predSym, () -> new ReifyPredicateSymbol(predSym));
+		} else {
+			sym = Util.lookupOrCreate(queryMemo, predSym, () -> new QueryPredicateSymbol(predSym));
+		}
 		symbolManager.registerSymbol(sym, sym.getCompileTimeType());
 		return sym;
 	}
-	
-	private final AtomicInteger cnt = new AtomicInteger();
-	
-	public class FunctionSymbolForPredicate implements Symbol {
+
+	private final Map<Symbol, PredicateFunctionSymbol> queryMemo = new HashMap<>();
+	private final Map<Symbol, PredicateFunctionSymbol> reifyMemo = new HashMap<>();
+
+	public interface PredicateFunctionSymbol extends Symbol {
+
+		Symbol getPredicateSymbol();
+
+		boolean isReification();
+
+	}
+
+	private class QueryPredicateSymbol implements PredicateFunctionSymbol {
 
 		private final Symbol predSymbol;
-		private final int id;
-	
-		private FunctionSymbolForPredicate(Symbol predSymbol) {
+
+		private QueryPredicateSymbol(Symbol predSymbol) {
 			this.predSymbol = predSymbol;
-			this.id = cnt.getAndIncrement();
 		}
-		
+
 		@Override
 		public int getArity() {
 			return predSymbol.getArity();
@@ -62,10 +64,10 @@ public class FunctionSymbolForPredicateFactory {
 		public SymbolType getSymbolType() {
 			return SymbolType.FUNCTION;
 		}
-		
+
 		@Override
 		public String toString() {
-			return predSymbol + "$fun" + id;
+			return predSymbol + "$query";
 		}
 
 		public Symbol getPredicateSymbol() {
@@ -75,6 +77,62 @@ public class FunctionSymbolForPredicateFactory {
 		@Override
 		public Type getCompileTimeType() {
 			return predSymbol.getCompileTimeType();
+		}
+
+		@Override
+		public boolean isReification() {
+			return false;
+		}
+
+	}
+	
+	private class ReifyPredicateSymbol implements PredicateFunctionSymbol {
+
+		private final Symbol predSymbol;
+		private final FunctorType type;
+
+		private ReifyPredicateSymbol(Symbol predSymbol) {
+			assert predSymbol.getArity() != 0;
+			this.predSymbol = predSymbol;
+			FunctorType ft = (FunctorType) predSymbol.getCompileTimeType();
+			List<Type> types = ft.getArgTypes();
+			Type eltType;
+			if (types.size() == 1) {
+				eltType = types.get(0);
+			} else {
+				Symbol tupTypeSym = symbolManager.lookupTupleTypeSymbol(types.size());
+				eltType = AlgebraicDataType.make(tupTypeSym, types);
+			}
+			type = new FunctorType(BuiltInTypes.list(eltType));
+		}
+
+		@Override
+		public int getArity() {
+			return 0;
+		}
+
+		@Override
+		public SymbolType getSymbolType() {
+			return SymbolType.FUNCTION;
+		}
+
+		@Override
+		public String toString() {
+			return predSymbol + "$reify";
+		}
+
+		public Symbol getPredicateSymbol() {
+			return predSymbol;
+		}
+
+		@Override
+		public Type getCompileTimeType() {
+			return type;
+		}
+
+		@Override
+		public boolean isReification() {
+			return true;
 		}
 
 	}

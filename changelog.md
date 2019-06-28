@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Support for record types. 
 - Support external input facts via annotation `@external`.
 - Support sequential runtime (for debugging) via `sequential` system property.
+- Reify relations as lists of tuples using `<[...]>` syntax.
 
 ### Changed
 - Increased the amount of information printed with the `debugMst` option.

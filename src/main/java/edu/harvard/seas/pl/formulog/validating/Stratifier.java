@@ -49,7 +49,7 @@ import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
-import edu.harvard.seas.pl.formulog.symbols.FunctionSymbolForPredicateFactory.FunctionSymbolForPredicate;
+import edu.harvard.seas.pl.formulog.symbols.FunctionSymbolForPredicateFactory.PredicateFunctionSymbol;
 
 public class Stratifier {
 
@@ -184,8 +184,8 @@ public class Stratifier {
 			if (!visitedFunctions.add(s)) {
 				return;
 			}
-			if (s instanceof FunctionSymbolForPredicate) {
-				addNegative(((FunctionSymbolForPredicate) s).getPredicateSymbol());
+			if (s instanceof PredicateFunctionSymbol) {
+				addNegative(((PredicateFunctionSymbol) s).getPredicateSymbol());
 				return;
 			}
 			FunctionDef def1 = prog.getDef(s);

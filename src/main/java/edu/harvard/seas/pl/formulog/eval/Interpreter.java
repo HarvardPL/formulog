@@ -33,18 +33,17 @@ import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
 import edu.harvard.seas.pl.formulog.ast.Atoms.AtomVisitorExn;
 import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
 import edu.harvard.seas.pl.formulog.ast.Atoms.UnifyAtom;
-import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
 import edu.harvard.seas.pl.formulog.ast.Expr;
+import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
+import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
-import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
-import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
@@ -53,11 +52,10 @@ import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDB;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDB.IndexedFactDBBuilder;
 import edu.harvard.seas.pl.formulog.smt.Z3ThreadFactory;
-import edu.harvard.seas.pl.formulog.symbols.FunctionSymbolForPredicateFactory.FunctionSymbolForPredicate;
+import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.FunctionSymbolForPredicateFactory.PredicateFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolType;
-import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
-import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.unification.Unification;
 import edu.harvard.seas.pl.formulog.util.AbstractFJPTask;
 import edu.harvard.seas.pl.formulog.util.CountingFJP;
@@ -151,7 +149,7 @@ public class Interpreter {
 		private IndexedFactDB preprocessRules() {
 			IndexedFactDBBuilder dbb = new IndexedFactDBBuilder();
 			RulePreprocessor pp = new RulePreprocessor();
-			AtomPreprocessor ap = new AtomPreprocessor(dbb);
+			AtomPreprocessor ap = new AtomPreprocessor();
 			for (Symbol sym : prog.getRuleSymbols()) {
 				for (Rule r : prog.getRules(sym)) {
 					/*
@@ -187,12 +185,7 @@ public class Interpreter {
 		}
 
 		private class AtomPreprocessor {
-			private final IndexedFactDBBuilder dbb;
 			private final Set<Symbol> visitedFunctions = new HashSet<>();
-
-			public AtomPreprocessor(IndexedFactDBBuilder dbb) {
-				this.dbb = dbb;
-			}
 
 			public void preprocess(Atom a) {
 				for (Term arg : a.getArgs()) {
@@ -221,34 +214,8 @@ public class Interpreter {
 						Symbol funcSym = function.getSymbol();
 						if (!visitedFunctions.contains(funcSym)) {
 							visitedFunctions.add(funcSym);
-							if (funcSym instanceof FunctionSymbolForPredicate) {
-								Symbol predSym = ((FunctionSymbolForPredicate) funcSym).getPredicateSymbol();
-								DummyFunctionDef def = (DummyFunctionDef) prog.getDef(funcSym);
-								assert def.getDef() == null;
-								NormalAtom a = (NormalAtom) Atoms.getPositive(predSym, function.getArgs());
-								final int idx = dbb.addIndex(a, Terms.varSet(function));
-								Term trueBool = Constructors.makeTrue();
-								Term falseBool = Constructors.makeFalse();
-								def.setDef(new FunctionDef() {
-
-									@Override
-									public Symbol getSymbol() {
-										return def.getSymbol();
-									}
-
-									@Override
-									public Term evaluate(Term[] args) throws EvaluationException {
-										Substitution s = new SimpleSubstitution();
-										Unification.unify(a, Atoms.getPositive(predSym, args), s);
-										Iterable<NormalAtom> facts = db.query(idx, s);
-										if (facts.iterator().hasNext()) {
-											return trueBool;
-										} else {
-											return falseBool;
-										}
-									}
-
-								});
+							if (funcSym instanceof PredicateFunctionSymbol) {
+								makeFunctionForPredicate((PredicateFunctionSymbol) funcSym);
 							} else if (prog.getDef(funcSym) instanceof CustomFunctionDef) {
 								CustomFunctionDef def = (CustomFunctionDef) prog.getDef(funcSym);
 								preprocessTerm(def.getBody());
@@ -257,6 +224,72 @@ public class Interpreter {
 						return null;
 					}
 				}, null);
+			}
+
+			private void makeFunctionForPredicate(PredicateFunctionSymbol sym) {
+				DummyFunctionDef def = (DummyFunctionDef) prog.getDef(sym);
+				if (def.getDef() == null) {
+					if (sym.isReification()) {
+						makeReifyPredicate(sym, def);
+					} else {
+						makeQueryPredicate(sym, def);
+					}
+				}
+			}
+
+			private void makeReifyPredicate(PredicateFunctionSymbol sym, DummyFunctionDef def) {
+				Symbol predSym = sym.getPredicateSymbol();
+				int arity = predSym.getArity();
+				Symbol tupSym = (arity > 1) ? prog.getSymbolManager().lookupTupleSymbol(arity) : null;
+				def.setDef(new FunctionDef() {
+
+					
+					@Override
+					public Symbol getSymbol() {
+						return predSym;
+					}
+
+					@Override
+					public Term evaluate(Term[] args) throws EvaluationException {
+						Term t = Constructors.makeZeroAry(BuiltInConstructorSymbol.NIL);
+						for (NormalAtom fact : db.query(predSym)) {
+							Term tuple = makeTuple(fact.getArgs());
+							t = Constructors.make(BuiltInConstructorSymbol.CONS, new Term[] { tuple, t });
+						}
+						return t;
+					}
+					
+					private Term makeTuple(Term[] args) {
+						if (tupSym == null) {
+							return args[0];
+						} else {
+							return Constructors.make(tupSym, args); 
+						}
+					}
+					
+				});
+			}
+
+			private void makeQueryPredicate(PredicateFunctionSymbol sym, DummyFunctionDef def) {
+				Symbol predSym = sym.getPredicateSymbol();
+				def.setDef(new FunctionDef() {
+
+					@Override
+					public Symbol getSymbol() {
+						return def.getSymbol();
+					}
+
+					@Override
+					public Term evaluate(Term[] args) throws EvaluationException {
+						NormalAtom fact = (NormalAtom) Atoms.getPositive(predSym, args);
+						if (db.hasFact(fact)) {
+							return Constructors.makeTrue();
+						} else {
+							return Constructors.makeFalse();
+						}
+					}
+
+				});
 			}
 
 			private void preprocessTerm(Term t) {

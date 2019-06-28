@@ -197,7 +197,8 @@ termArgs
 
 term
 :
-	functor # functorTerm
+	'<[' ID ']>' # reifyTerm
+	| functor # functorTerm
 	| list # listTerm
 	| tuple # tupleTerm
 	| '(' term ')' # parensTerm

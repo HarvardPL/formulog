@@ -51,7 +51,7 @@ import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.symbols.FunctionSymbolForPredicateFactory.FunctionSymbolForPredicate;
+import edu.harvard.seas.pl.formulog.symbols.FunctionSymbolForPredicateFactory.PredicateFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.SymbolType;
@@ -712,8 +712,8 @@ public class MagicSetTransformer {
 			@Override
 			public Void visit(FunctionCall funcCall, Set<Symbol> in) {
 				Symbol sym = funcCall.getSymbol();
-				if (sym instanceof FunctionSymbolForPredicate) {
-					in.add(((FunctionSymbolForPredicate) sym).getPredicateSymbol());
+				if (sym instanceof PredicateFunctionSymbol) {
+					in.add(((PredicateFunctionSymbol) sym).getPredicateSymbol());
 				} else if (visitedFunctions.add(sym)) {
 					FunctionDef def = origProg.getDef(sym);
 					if (def instanceof CustomFunctionDef) {

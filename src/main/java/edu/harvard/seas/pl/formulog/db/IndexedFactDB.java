@@ -67,6 +67,10 @@ public class IndexedFactDB {
 		return true;
 	}
 
+	public boolean hasFact(NormalAtom fact) {
+		return getAllForSym(fact.getSymbol()).contains(fact);
+	}
+	
 	private Set<NormalAtom> getAllForSym(Symbol sym) {
 		return Util.lookupOrCreate(factsBySym, sym, () -> Util.concurrentSet());
 	}

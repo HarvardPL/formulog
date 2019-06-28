@@ -1,0 +1,33 @@
+input nums(i32, i32, i32)
+nums(1, 2, 3).
+nums(4, 3, 1).
+nums(3, 2, 3).
+
+input num(i32)
+num(6).
+num(12).
+num(18).
+
+input empty
+
+input full
+full.
+
+fun sum(Xs: i32 list) : i32 =
+  match Xs with
+  | [] => 0
+  | X :: Xs => X + sum(Xs)
+  end
+
+fun mulAndSum(Xs: (i32 * i32 * i32) list) : i32 =
+  match Xs with
+  | [] => 0
+  | (X1, X2, X3) :: Xs => X1 * X2 * X3 + mulAndSum(Xs)
+  end
+
+output ok
+ok :-
+  sum(<[num]>) = 36,
+  mulAndSum(<[nums]>) = 36,
+  !<[empty]>,
+  <[full]>.

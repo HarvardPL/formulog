@@ -614,4 +614,9 @@ public class EvaluationTest {
 		test("test192_ok.flg");
 	}
 
+	@Test
+	public void test193() {
+		test("test193_ok.flg");
+	}
+
 }

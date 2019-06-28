@@ -107,8 +107,8 @@ public class SymbolManager {
 		return tupleSymbolFactory.lookupType(arity).getSymbol();
 	}
 
-	public Symbol createFunctionSymbolForPredicate(Symbol sym) {
-		return functionSymbolForPredicateFactory.create(sym);
+	public Symbol createFunctionSymbolForPredicate(Symbol sym, boolean isReification) {
+		return functionSymbolForPredicateFactory.create(sym, isReification);
 	}
 
 	public Symbol lookupSolverSymbol(Type type) {
