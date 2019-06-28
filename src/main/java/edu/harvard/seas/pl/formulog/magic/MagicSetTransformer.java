@@ -35,6 +35,7 @@ import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Expr;
+import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitorExn;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
@@ -44,10 +45,13 @@ import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
+import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitorExn;
 import edu.harvard.seas.pl.formulog.ast.Var;
+import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
+import edu.harvard.seas.pl.formulog.symbols.FunctionSymbolForPredicateFactory.FunctionSymbolForPredicate;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.SymbolType;
@@ -248,7 +252,7 @@ public class MagicSetTransformer {
 		return magicProg;
 	}
 
-	private static Program stripAdornments(Program prog) {
+	private static Program stripAdornments(Program prog) throws InvalidProgramException {
 		Set<Rule> rules = new HashSet<>();
 		for (Symbol sym : prog.getRuleSymbols()) {
 			for (Rule r : prog.getRules(sym)) {
@@ -560,7 +564,7 @@ public class MagicSetTransformer {
 		return newRules;
 	}
 
-	private ProgramImpl stratify(Program p, Set<Rule> adornedRules) {
+	private ProgramImpl stratify(Program p, Set<Rule> adornedRules) throws InvalidProgramException {
 		Set<Rule> newRules = new HashSet<>();
 		for (Symbol sym : p.getRuleSymbols()) {
 			for (Rule r : p.getRules(sym)) {
@@ -648,6 +652,84 @@ public class MagicSetTransformer {
 
 	}
 
+	private static class HiddenPredicateFinder {
+
+		private final Program origProg;
+		private final Set<Symbol> visitedFunctions = new HashSet<>();
+		private final Set<Symbol> seenPredicates = new HashSet<>();
+
+		public HiddenPredicateFinder(Program origProg) {
+			this.origProg = origProg;
+		}
+
+		public void findHiddenPredicates(Term t) {
+			t.visit(predicatesInTermExtractor, seenPredicates);
+		}
+
+		public Set<Symbol> getSeenPredicates() {
+			return seenPredicates;
+		}
+
+		private TermVisitor<Set<Symbol>, Void> predicatesInTermExtractor = new TermVisitor<Set<Symbol>, Void>() {
+
+			@Override
+			public Void visit(Var t, Set<Symbol> in) {
+				return null;
+			}
+
+			@Override
+			public Void visit(Constructor c, Set<Symbol> in) {
+				for (Term t : c.getArgs()) {
+					t.visit(this, in);
+				}
+				return null;
+			}
+
+			@Override
+			public Void visit(Primitive<?> p, Set<Symbol> in) {
+				return null;
+			}
+
+			@Override
+			public Void visit(Expr e, Set<Symbol> in) {
+				e.visit(predicatesInExprExtractor, in);
+				return null;
+			}
+
+		};
+
+		private ExprVisitor<Set<Symbol>, Void> predicatesInExprExtractor = new ExprVisitor<Set<Symbol>, Void>() {
+
+			@Override
+			public Void visit(MatchExpr matchExpr, Set<Symbol> in) {
+				matchExpr.getMatchee().visit(predicatesInTermExtractor, in);
+				for (MatchClause cl : matchExpr.getClauses()) {
+					cl.getRhs().visit(predicatesInTermExtractor, in);
+				}
+				return null;
+			}
+
+			@Override
+			public Void visit(FunctionCall funcCall, Set<Symbol> in) {
+				Symbol sym = funcCall.getSymbol();
+				if (sym instanceof FunctionSymbolForPredicate) {
+					in.add(((FunctionSymbolForPredicate) sym).getPredicateSymbol());
+				} else if (visitedFunctions.add(sym)) {
+					FunctionDef def = origProg.getDef(sym);
+					if (def instanceof CustomFunctionDef) {
+						((CustomFunctionDef) def).getBody().visit(predicatesInTermExtractor, in);
+					}
+				}
+				for (Term t : funcCall.getArgs()) {
+					t.visit(predicatesInTermExtractor, in);
+				}
+				return null;
+			}
+
+		};
+
+	}
+
 	private static class ProgramImpl implements Program {
 
 		private final Map<Symbol, Set<Rule>> rules = new HashMap<>();
@@ -656,7 +738,10 @@ public class MagicSetTransformer {
 
 		public final Program origProg;
 
-		public ProgramImpl(Set<Rule> rs, Program origProg, boolean keepAllFacts) {
+		public ProgramImpl(Set<Rule> rs, Program origProg, boolean keepAllFacts) throws InvalidProgramException {
+			this.origProg = origProg;
+			this.keepAllFacts = keepAllFacts;
+			HiddenPredicateFinder hpf = new HiddenPredicateFinder(origProg);
 			for (Rule r : rs) {
 				for (Atom head : r.getHead()) {
 					Util.lookupOrCreate(rules, head.getSymbol(), () -> new HashSet<>()).add(r);
@@ -667,11 +752,23 @@ public class MagicSetTransformer {
 						if (sym.getSymbolType().isEDBSymbol()) {
 							facts.putIfAbsent(sym, origProg.getFacts(sym));
 						}
+						for (Term t : a.getArgs()) {
+							hpf.findHiddenPredicates(t);
+						}
 					}
+					for (Symbol psym : hpf.getSeenPredicates()) {
+						if (psym.getSymbolType().isEDBSymbol()) {
+							facts.putIfAbsent(psym, origProg.getFacts(psym));
+						} else {
+							assert psym.getSymbolType().isIDBSymbol();
+							throw new InvalidProgramException(
+									"Cannot use IDB predicates as functions in combination with top-down rewriting: "
+											+ psym);
+						}
+					}
+
 				}
 			}
-			this.origProg = origProg;
-			this.keepAllFacts = keepAllFacts;
 		}
 
 		@Override

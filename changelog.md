@@ -28,6 +28,11 @@ All notable changes to this project will be documented in this file.
 - Updated name of formula type in Vim syntax file.
 - Fixed a couple bugs in SMT-LIB parser.
 - Fixed bug with missing case in unification algorithm.
+- Boolean operators now short circuit.
+- Reject programs that use top-down rewriting in combination with IDB
+  predicates in the ML fragment.
+- Make sure that EDB relations are maintained during top-down rewriting, even
+  when they are only referenced in the ML fragment.
 
 ## [0.1.0] - 2019-04-21
 ### Added

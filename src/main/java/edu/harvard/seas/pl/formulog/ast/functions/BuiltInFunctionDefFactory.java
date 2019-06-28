@@ -165,14 +165,6 @@ public final class BuiltInFunctionDefFactory {
 			return Beq.INSTANCE;
 		case BNEQ:
 			return Bneq.INSTANCE;
-		case ANDB:
-			return Andb.INSTANCE;
-		case ORB:
-			return Orb.INSTANCE;
-		case NEGB:
-			return Negb.INSTANCE;
-		case ITE:
-			return Ite.INSTANCE;
 		case STRING_OF_I32:
 			return StringOfI32.INSTANCE;
 		case STRCMP:
@@ -1152,78 +1144,6 @@ public final class BuiltInFunctionDefFactory {
 
 	}
 
-	private enum Andb implements FunctionDef {
-
-		INSTANCE;
-
-		@Override
-		public Symbol getSymbol() {
-			return BuiltInFunctionSymbol.ANDB;
-		}
-
-		@Override
-		public Term evaluate(Term[] args) throws EvaluationException {
-			Constructor arg1 = (Constructor) args[0];
-			Constructor arg2 = (Constructor) args[1];
-			return boolToBoolTerm(boolTermToBool(arg1) && boolTermToBool(arg2));
-		}
-
-	}
-
-	private enum Orb implements FunctionDef {
-
-		INSTANCE;
-
-		@Override
-		public Symbol getSymbol() {
-			return BuiltInFunctionSymbol.ORB;
-		}
-
-		@Override
-		public Term evaluate(Term[] args) throws EvaluationException {
-			Constructor arg1 = (Constructor) args[0];
-			Constructor arg2 = (Constructor) args[1];
-			return boolToBoolTerm(boolTermToBool(arg1) || boolTermToBool(arg2));
-		}
-
-	}
-
-	private enum Negb implements FunctionDef {
-
-		INSTANCE;
-
-		@Override
-		public Symbol getSymbol() {
-			return BuiltInFunctionSymbol.NEGB;
-		}
-
-		@Override
-		public Term evaluate(Term[] args) throws EvaluationException {
-			Constructor t = (Constructor) args[0];
-			return boolToBoolTerm(!boolTermToBool(t));
-		}
-	}
-
-	private enum Ite implements FunctionDef {
-
-		INSTANCE;
-
-		@Override
-		public Symbol getSymbol() {
-			return BuiltInFunctionSymbol.ITE;
-		}
-
-		@Override
-		public Term evaluate(Term[] args) throws EvaluationException {
-			Constructor t = (Constructor) args[0];
-			if (boolTermToBool(t)) {
-				return args[1];
-			} else {
-				return args[2];
-			}
-		}
-	}
-
 	private enum StringOfI32 implements FunctionDef {
 
 		INSTANCE;
@@ -1539,16 +1459,6 @@ public final class BuiltInFunctionDefFactory {
 
 	private static final Constructor trueBool = Constructors.makeTrue();
 	private static final Constructor falseBool = Constructors.makeFalse();
-
-	private static boolean boolTermToBool(Constructor b) {
-		if (b.equals(trueBool)) {
-			return true;
-		}
-		if (b.equals(falseBool)) {
-			return false;
-		}
-		throw new AssertionError();
-	}
 
 	private static Constructor boolToBoolTerm(boolean b) {
 		if (b) {

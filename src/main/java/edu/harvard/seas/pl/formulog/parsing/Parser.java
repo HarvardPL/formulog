@@ -44,8 +44,6 @@ import java.util.stream.Stream;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
 import edu.harvard.seas.pl.formulog.ast.Annotation;
 import edu.harvard.seas.pl.formulog.ast.Atoms;
@@ -74,7 +72,6 @@ import edu.harvard.seas.pl.formulog.ast.functions.DummyFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDefManager;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogBaseListener;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogBaseVisitor;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogLexer;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser;
@@ -186,14 +183,12 @@ public class Parser {
 	public Pair<Program, Atom> parse(Reader r) throws ParseException {
 		return parse(r, Paths.get(""));
 	}
-	
+
 	public Pair<Program, Atom> parse(Reader r, Path inputDir) throws ParseException {
 		try {
 			DatalogParser parser = getParser(r);
-			ParseTree tree = parser.prog();
-			ParseTreeWalker walker = new ParseTreeWalker();
 			StmtProcessor stmtProcessor = new StmtProcessor(inputDir);
-			walker.walk(stmtProcessor, tree);
+			parser.prog().accept(stmtProcessor);
 			return new Pair<>(stmtProcessor.getProgram(), stmtProcessor.getQuery());
 		} catch (Exception e) {
 			throw new ParseException(e);
@@ -260,7 +255,7 @@ public class Parser {
 
 	};
 
-	private final class StmtProcessor extends DatalogBaseListener {
+	private final class StmtProcessor extends DatalogBaseVisitor<Void> {
 
 		private final Map<Symbol, Set<Atom>> initialFacts = new HashMap<>();
 		private final Map<Symbol, Set<Rule>> rules = new HashMap<>();
@@ -272,13 +267,13 @@ public class Parser {
 		private final Set<Symbol> externalEdbs = new HashSet<>();
 		private final Path inputDir;
 		private Atom query;
-		
+
 		public StmtProcessor(Path inputDir) {
 			this.inputDir = inputDir;
 		}
 
 		@Override
-		public void enterFunDecl(FunDeclContext ctx) {
+		public Void visitFunDecl(FunDeclContext ctx) {
 			List<Pair<Symbol, List<Var>>> ps = map(ctx.funDefLHS(), this::parseFunDefLHS);
 			Iterator<Term> bodies = map(ctx.term(), e -> e.accept(termExtractor)).iterator();
 			for (Pair<Symbol, List<Var>> p : ps) {
@@ -287,6 +282,7 @@ public class Parser {
 				Term body = bodies.next();
 				functionDefManager.register(CustomFunctionDef.get(sym, args.toArray(new Var[0]), body));
 			}
+			return null;
 		}
 
 		private Pair<Symbol, List<Var>> parseFunDefLHS(FunDefLHSContext ctx) {
@@ -304,7 +300,7 @@ public class Parser {
 		}
 
 		@Override
-		public void enterRelDecl(RelDeclContext ctx) {
+		public Void visitRelDecl(RelDeclContext ctx) {
 			String name = ctx.ID().getText();
 			List<Type> types = map(ctx.typeList().type(), t -> t.accept(typeExtractor));
 			if (!Types.getTypeVars(types).isEmpty()) {
@@ -342,10 +338,11 @@ public class Parser {
 				throw new RuntimeException("Cannot annotate predicate " + sym + " as being both topdown and bottomup");
 			}
 			annotations.put(sym, aset);
+			return null;
 		}
 
 		@Override
-		public void enterTypeAlias(TypeAliasContext ctx) {
+		public Void visitTypeAlias(TypeAliasContext ctx) {
 			Pair<Symbol, List<TypeVar>> p = parseTypeDefLHS(ctx.typeDefLHS(), SymbolType.TYPE_ALIAS);
 			Symbol sym = p.fst();
 			List<TypeVar> typeVars = p.snd();
@@ -354,10 +351,11 @@ public class Parser {
 				throw new RuntimeException("Unbound type variable in definition of " + sym);
 			}
 			typeManager.registerAlias(new TypeAlias(sym, typeVars, type));
+			return null;
 		}
 
 		@Override
-		public void enterTypeDecl(TypeDeclContext ctx) {
+		public Void visitTypeDecl(TypeDeclContext ctx) {
 			List<Pair<Symbol, List<TypeVar>>> lhss = map(ctx.typeDefLHS(),
 					lhs -> parseTypeDefLHS(lhs, SymbolType.TYPE));
 			Iterator<TypeDefRHSContext> it = ctx.typeDefRHS().iterator();
@@ -372,6 +370,7 @@ public class Parser {
 					handleRecordDef(rhs.recordDef(), type, typeVars);
 				}
 			}
+			return null;
 		}
 
 		private void handleAdtDef(AdtDefContext ctx, AlgebraicDataType type, List<TypeVar> typeVars) {
@@ -451,12 +450,13 @@ public class Parser {
 		}
 
 		@Override
-		public void enterUninterpSortDecl(UninterpSortDeclContext ctx) {
+		public Void visitUninterpSortDecl(UninterpSortDeclContext ctx) {
 			parseTypeDefLHS(ctx.typeDefLHS(), SymbolType.SOLVER_UNINTERPRETED_SORT);
+			return null;
 		}
 
 		@Override
-		public void enterUninterpFunDecl(UninterpFunDeclContext ctx) {
+		public Void visitUninterpFunDecl(UninterpFunDeclContext ctx) {
 			ConstructorTypeContext ctc = ctx.constructorType();
 			List<Type> typeArgs = map(ctc.typeList().type(), t -> t.accept(typeExtractor));
 			Type type = ctx.type().accept(typeExtractor);
@@ -470,10 +470,11 @@ public class Parser {
 			if (!Types.getTypeVars(typeArgs).isEmpty() || !Types.getTypeVars(type).isEmpty()) {
 				throw new RuntimeException("Unbound type variable in definition of " + csym);
 			}
+			return null;
 		}
 
 		@Override
-		public void enterClauseStmt(ClauseStmtContext ctx) {
+		public Void visitClauseStmt(ClauseStmtContext ctx) {
 			List<Atom> head = atomListContextToAtomList(ctx.clause().head);
 			List<Atom> body = atomListContextToAtomList(ctx.clause().body);
 			BasicRule rule = makeRule(head, body);
@@ -484,6 +485,7 @@ public class Parser {
 				}
 				Util.lookupOrCreate(rules, sym, () -> new HashSet<>()).add(rule);
 			}
+			return null;
 		}
 
 		private BasicRule makeRule(List<Atom> head, List<Atom> body) {
@@ -538,7 +540,7 @@ public class Parser {
 		}
 
 		@Override
-		public void enterFactStmt(FactStmtContext ctx) {
+		public Void visitFactStmt(FactStmtContext ctx) {
 			Atom fact = ctx.fact().atom().accept(atomExtractor);
 			Symbol sym = fact.getSymbol();
 			if (sym.getSymbolType().equals(SymbolType.IDB_REL)) {
@@ -549,15 +551,17 @@ public class Parser {
 			} else {
 				throw new RuntimeException("Fact has a non-EDB and non-IDB symbol: " + fact);
 			}
+			return null;
 		}
 
 		@Override
-		public void enterQueryStmt(QueryStmtContext ctx) {
+		public Void visitQueryStmt(QueryStmtContext ctx) {
 			Atom a = ctx.query().atom().accept(atomExtractor);
 			if (query != null) {
 				throw new RuntimeException("Cannot have multiple queries in the same program.");
 			}
 			query = a;
+			return null;
 		}
 
 		List<Atom> atomListContextToAtomList(AtomListContext ctx) {
@@ -805,59 +809,102 @@ public class Parser {
 			@Override
 			public Term visitUnopTerm(UnopTermContext ctx) {
 				Term t = ctx.term().accept(this);
-				Symbol sym;
-				if (ctx.op.getType() == DatalogParser.MINUS) {
-					sym = BuiltInFunctionSymbol.I32_NEG;
-				} else if (ctx.op.getType() == DatalogParser.BANG) {
-					sym = BuiltInFunctionSymbol.NEGB;
+				Symbol sym = tokenToUnopSym(ctx.op.getType());
+				if (sym == null) {
+					t = makeNonFunctionUnop(ctx.op.getType(), t);
 				} else {
-					throw new AssertionError();
+					t = functionCallFactory.make(sym, new Term[] { t });
 				}
-				t = functionCallFactory.make(sym, new Term[] { t });
-				assertNotInFormula("Cannot invoke a unop from within a formula; unquote the call " + t
+				if (t == null) {
+					throw new AssertionError("Unrecognized unop: " + ctx.getText());
+				}
+				assertNotInFormula("Cannot invoke a unop from within a formula; unquote the operation " + ctx.getText()
 						+ " by prefacing it with ,");
 				return t;
+			}
+
+			private Term makeNonFunctionUnop(int tokenType, Term t) {
+				switch (tokenType) {
+				case DatalogParser.BANG:
+					return makeBoolMatch(t, Constructors.makeFalse(), Constructors.makeTrue());
+				default:
+					return null;
+				}
+			}
+
+			private Term makeBoolMatch(Term matchee, Term ifTrue, Term ifFalse) {
+				MatchClause matchTrue = MatchClause.make(Constructors.makeTrue(), ifTrue);
+				MatchClause matchFalse = MatchClause.make(Constructors.makeFalse(), ifFalse);
+				return MatchExpr.make(matchee, Arrays.asList(matchTrue, matchFalse));
+			}
+
+			private Symbol tokenToUnopSym(int tokenType) {
+				switch (tokenType) {
+				case DatalogParser.MINUS:
+					return BuiltInFunctionSymbol.I32_NEG;
+				default:
+					return null;
+				}
+			}
+
+			private Symbol tokenToBinopSym(int tokenType) {
+				switch (tokenType) {
+				case DatalogParser.MUL:
+					return BuiltInFunctionSymbol.I32_MUL;
+				case DatalogParser.DIV:
+					return BuiltInFunctionSymbol.I32_DIV;
+				case DatalogParser.REM:
+					return BuiltInFunctionSymbol.I32_REM;
+				case DatalogParser.PLUS:
+					return BuiltInFunctionSymbol.I32_ADD;
+				case DatalogParser.MINUS:
+					return BuiltInFunctionSymbol.I32_SUB;
+				case DatalogParser.AMP:
+					return BuiltInFunctionSymbol.I32_AND;
+				case DatalogParser.CARET:
+					return BuiltInFunctionSymbol.I32_XOR;
+				case DatalogParser.EQ:
+					return BuiltInFunctionSymbol.BEQ;
+				case DatalogParser.NEQ:
+					return BuiltInFunctionSymbol.BNEQ;
+				case DatalogParser.LT:
+					return BuiltInFunctionSymbol.I32_LT;
+				case DatalogParser.LTE:
+					return BuiltInFunctionSymbol.I32_LE;
+				case DatalogParser.GT:
+					return BuiltInFunctionSymbol.I32_GT;
+				case DatalogParser.GTE:
+					return BuiltInFunctionSymbol.I32_GE;
+				default:
+					return null;
+				}
+			}
+
+			private Term makeNonFunctionBinop(int tokenType, Term lhs, Term rhs) {
+				switch (tokenType) {
+				case DatalogParser.AMPAMP:
+					return makeBoolMatch(lhs, rhs, Constructors.makeFalse());
+				case DatalogParser.BARBAR:
+					return makeBoolMatch(lhs, Constructors.makeTrue(), rhs);
+				default:
+					return null;
+				}
 			}
 
 			@Override
 			public Term visitBinopTerm(BinopTermContext ctx) {
 				Term[] args = { extract(ctx.term(0)), extract(ctx.term(1)) };
-				Symbol sym;
-				if (ctx.op.getType() == DatalogParser.MUL) {
-					sym = BuiltInFunctionSymbol.I32_MUL;
-				} else if (ctx.op.getType() == DatalogParser.DIV) {
-					sym = BuiltInFunctionSymbol.I32_DIV;
-				} else if (ctx.op.getType() == DatalogParser.REM) {
-					sym = BuiltInFunctionSymbol.I32_REM;
-				} else if (ctx.op.getType() == DatalogParser.PLUS) {
-					sym = BuiltInFunctionSymbol.I32_ADD;
-				} else if (ctx.op.getType() == DatalogParser.MINUS) {
-					sym = BuiltInFunctionSymbol.I32_SUB;
-				} else if (ctx.op.getType() == DatalogParser.AMP) {
-					sym = BuiltInFunctionSymbol.I32_AND;
-				} else if (ctx.op.getType() == DatalogParser.CARET) {
-					sym = BuiltInFunctionSymbol.I32_XOR;
-				} else if (ctx.op.getType() == DatalogParser.EQ) {
-					sym = BuiltInFunctionSymbol.BEQ;
-				} else if (ctx.op.getType() == DatalogParser.NEQ) {
-					sym = BuiltInFunctionSymbol.BNEQ;
-				} else if (ctx.op.getType() == DatalogParser.AMPAMP) {
-					sym = BuiltInFunctionSymbol.ANDB;
-				} else if (ctx.op.getType() == DatalogParser.BARBAR) {
-					sym = BuiltInFunctionSymbol.ORB;
-				} else if (ctx.op.getType() == DatalogParser.LT) {
-					sym = BuiltInFunctionSymbol.I32_LT;
-				} else if (ctx.op.getType() == DatalogParser.LTE) {
-					sym = BuiltInFunctionSymbol.I32_LE;
-				} else if (ctx.op.getType() == DatalogParser.GT) {
-					sym = BuiltInFunctionSymbol.I32_GT;
-				} else if (ctx.op.getType() == DatalogParser.GTE) {
-					sym = BuiltInFunctionSymbol.I32_GE;
+				Symbol sym = tokenToBinopSym(ctx.op.getType());
+				Term t;
+				if (sym == null) {
+					t = makeNonFunctionBinop(ctx.op.getType(), args[0], args[1]);
 				} else {
-					throw new AssertionError();
+					t = functionCallFactory.make(sym, args);
 				}
-				Term t = functionCallFactory.make(sym, args);
-				assertNotInFormula("Cannot invoke a binop from within a formula; unquote the call " + t
+				if (t == null) {
+					throw new AssertionError("Unrecognized binop: " + ctx.getText());
+				}
+				assertNotInFormula("Cannot invoke a binop from within a formula; unquote the operation " + ctx.getText()
 						+ " by prefacing it with ,");
 				return t;
 			}
@@ -998,7 +1045,7 @@ public class Parser {
 				if (inFormula) {
 					return Constructors.make(BuiltInConstructorSymbol.FORMULA_ITE, args);
 				} else {
-					return functionCallFactory.make(BuiltInFunctionSymbol.ITE, args);
+					return makeBoolMatch(args[0], args[1], args[2]);
 				}
 			}
 

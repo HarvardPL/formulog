@@ -151,14 +151,6 @@ public enum BuiltInFunctionSymbol implements Symbol {
 
 	BNEQ("bneq", a, a, bool),
 
-	NEGB("negb", bool, bool),
-
-	ANDB("andb", bool, bool, bool),
-
-	ORB("orb", bool, bool, bool),
-	
-	ITE("ite", bool, a, a, a),
-
 	STRING_OF_I32("string_of_i32", i32, string),
 
 	STRCMP("strcmp", string, string, cmp),
