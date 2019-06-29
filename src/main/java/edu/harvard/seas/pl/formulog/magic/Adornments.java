@@ -26,16 +26,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import edu.harvard.seas.pl.formulog.ast.Annotation;
 import edu.harvard.seas.pl.formulog.ast.Atoms;
+import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
+import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
-import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.unification.Unification;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
@@ -48,8 +47,8 @@ public final class Adornments {
 
 	public static Atom adorn(Atom a, Set<Var> boundVars, Program prog, boolean topDownIsDefault) {
 		Symbol origSym = a.getSymbol();
-		boolean defaultAdornment = topDownIsDefault || prog.getAnnotations(origSym).contains(Annotation.TOPDOWN);
-		if (prog.getAnnotations(origSym).contains(Annotation.BOTTOMUP)) {
+		boolean defaultAdornment = topDownIsDefault || prog.getRelationProperties(origSym).isTopDown();
+		if (prog.getRelationProperties(origSym).isBottomUp()) {
 			if (!topDownIsDefault) {
 				return a;
 			} else {

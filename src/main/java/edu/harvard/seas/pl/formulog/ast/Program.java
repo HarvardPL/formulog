@@ -43,6 +43,6 @@ public interface Program {
 	
 	SymbolManager getSymbolManager();
 	
-	Set<Annotation> getAnnotations(Symbol sym);
+	RelationProperties getRelationProperties(Symbol sym);
 
 }

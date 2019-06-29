@@ -20,7 +20,7 @@ metadata
 	(
 		INPUT
 		| OUTPUT
-	) ID typeList '.'? # relDecl
+	) ID aggTypeList '.'? # relDecl
 	| 'type' typeDefLHS EQ type '.'? # typeAlias
 	| 'type' typeDefLHS EQ typeDefRHS
 	(
@@ -45,6 +45,21 @@ varTypeList
 	'(' VAR ':' type
 	(
 		',' VAR ':' type
+	)* ')'
+	| // can be empty
+
+;
+
+aggType
+:
+	type ('<' func = ID ',' unit = term '>')?
+;
+
+aggTypeList
+:
+	'(' aggType
+	(
+		',' aggType
 	)* ')'
 	| // can be empty
 
@@ -179,7 +194,11 @@ predicate
 
 functor
 :
-	id = (ID | XID) index termArgs # indexedFunctor
+	id =
+	(
+		ID
+		| XID
+	) index termArgs # indexedFunctor
 ;
 
 termArgs
@@ -254,11 +273,15 @@ term
 		| FP64_POS_INFINITY
 		| FP64_NEG_INFINITY
 	) # specialFPTerm
-	| '{' recordEntries '}' #recordTerm
-	| '{' term 'with' recordEntries '}' #recordUpdateTerm
+	| '{' recordEntries '}' # recordTerm
+	| '{' term 'with' recordEntries '}' # recordUpdateTerm
 	| '`' term '`' # formulaTerm
 	| ',' term # unquoteTerm
-	| id = (XID | XVAR) '[' type ']' # constSymFormula
+	| id =
+	(
+		XID
+		| XVAR
+	) '[' type ']' # constSymFormula
 	| '#' '{' term '}' '[' type ']' # termSymFormula
 	| NOT term # notFormula
 	| < assoc = left > term op = FORMULA_EQ term # binopFormula
@@ -287,7 +310,10 @@ term
 
 recordEntries
 :
-	recordEntry (';' recordEntry)* ';'?
+	recordEntry
+	(
+		';' recordEntry
+	)* ';'?
 ;
 
 recordEntry
@@ -614,7 +640,7 @@ COMMENT
 
 XID
 :
-	'#'	 ID
+	'#' ID
 ;
 
 ID

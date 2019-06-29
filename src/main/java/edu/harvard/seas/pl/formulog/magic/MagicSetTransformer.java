@@ -29,7 +29,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import edu.harvard.seas.pl.formulog.ast.Annotation;
 import edu.harvard.seas.pl.formulog.ast.Atoms;
 import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
@@ -42,6 +41,7 @@ import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
+import edu.harvard.seas.pl.formulog.ast.RelationProperties;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
@@ -225,8 +225,8 @@ public class MagicSetTransformer {
 			}
 
 			@Override
-			public Set<Annotation> getAnnotations(Symbol sym) {
-				return origProg.getAnnotations(sym);
+			public RelationProperties getRelationProperties(Symbol sym) {
+				return origProg.getRelationProperties(sym);
 			}
 
 		};
@@ -236,7 +236,7 @@ public class MagicSetTransformer {
 		topDownIsDefault = false;
 		Set<Symbol> bottomUpSymbols = new HashSet<>();
 		for (Symbol sym : origProg.getRuleSymbols()) {
-			if (!origProg.getAnnotations(sym).contains(Annotation.TOPDOWN)) {
+			if (!origProg.getRelationProperties(sym).isTopDown()) {
 				bottomUpSymbols.add(sym);
 			}
 		}
@@ -336,8 +336,8 @@ public class MagicSetTransformer {
 		if (!sym.getSymbolType().isIDBSymbol()) {
 			return false;
 		}
-		Set<Annotation> annos = origProg.getAnnotations(sym);
-		return annos.contains(Annotation.TOPDOWN) || (topDownIsDefault && !annos.contains(Annotation.BOTTOMUP));
+		RelationProperties props = origProg.getRelationProperties(sym);
+		return props.isTopDown() || (topDownIsDefault && !props.isBottomUp());
 	}
 
 	private Set<Rule> makeMagicRules(Rule r, int number) {
@@ -815,8 +815,8 @@ public class MagicSetTransformer {
 		}
 
 		@Override
-		public Set<Annotation> getAnnotations(Symbol sym) {
-			return origProg.getAnnotations(sym);
+		public RelationProperties getRelationProperties(Symbol sym) {
+			return origProg.getRelationProperties(sym);
 		}
 
 	}
