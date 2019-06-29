@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
-import edu.harvard.seas.pl.formulog.ast.Functor;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 
@@ -74,20 +73,20 @@ public final class FunctorUtil {
 	//
 	// }
 
-	public static class Memoizer<F extends Functor> {
+	public static class Memoizer<T extends Term> {
 
-		private final Map<Key, F> memo = new ConcurrentHashMap<>();
-
-		public F lookupOrCreate(Symbol sym, Term[] args, Supplier<F> constructor) {
+		private final Map<Key, T> memo = new ConcurrentHashMap<>();
+		
+		public T lookupOrCreate(Symbol sym, Term[] args, Supplier<T> constructor) {
 			if (sym.getArity() != args.length) {
 				throw new IllegalArgumentException("Symbol " + sym + " has arity " + sym.getArity() + " but args "
 						+ Arrays.toString(args) + " have arity " + args.length);
 			}
 			Key key = new Key(sym, args);
-			F f = memo.get(key);
+			T f = memo.get(key);
 			if (f == null) {
 				f = constructor.get();
-				F f2 = memo.putIfAbsent(key, f);
+				T f2 = memo.putIfAbsent(key, f);
 				if (f2 != null) {
 					f = f2;
 				}

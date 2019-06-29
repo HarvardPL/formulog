@@ -42,8 +42,8 @@ import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.util.FunctorUtil;
-import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.util.FunctorUtil.Memoizer;
+import edu.harvard.seas.pl.formulog.util.Util;
 
 public final class Constructors {
 
@@ -51,9 +51,9 @@ public final class Constructors {
 		throw new AssertionError();
 	}
 
-	private static final Memoizer<Constructor> memo = new Memoizer<>();
+	private static final Memoizer<Term> memo = new Memoizer<>();
 
-	public static Constructor make(Symbol sym, Term[] args) {
+	public static Term make(Symbol sym, Term[] args) {
 		if (sym instanceof BuiltInConstructorSymbol) {
 			return lookupOrCreateBuiltInConstructor((BuiltInConstructorSymbol) sym, args);
 		}
@@ -79,20 +79,24 @@ public final class Constructors {
 		}
 	}
 
-	public static Constructor makeZeroAry(Symbol sym) {
+	public static Term makeZeroAry(Symbol sym) {
 		return make(sym, Terms.emptyArray());
 	}
-	
-	public static Constructor makeTrue() {
-		return makeZeroAry(BuiltInConstructorSymbol.TRUE);
-	}
-	
-	public static Constructor makeFalse() {
-		return makeZeroAry(BuiltInConstructorSymbol.FALSE);
+
+	private static final Term trueTerm = makeZeroAry(BuiltInConstructorSymbol.TRUE);
+
+	public static Term trueTerm() {
+		return trueTerm;
 	}
 
-	private static Constructor lookupOrCreateBuiltInConstructor(BuiltInConstructorSymbol sym, Term[] args) {
-		Function<String, Constructor> makeSolverOp = op -> memo.lookupOrCreate(sym, args,
+	private static final Term falseTerm = makeZeroAry(BuiltInConstructorSymbol.FALSE);
+
+	public static Term falseTerm() {
+		return falseTerm;
+	}
+
+	private static Term lookupOrCreateBuiltInConstructor(BuiltInConstructorSymbol sym, Term[] args) {
+		Function<String, Term> makeSolverOp = op -> memo.lookupOrCreate(sym, args,
 				() -> new SolverOperation(sym, args, op));
 		switch (sym) {
 		case FALSE:
@@ -110,7 +114,7 @@ public final class Constructors {
 		case SOME:
 			return memo.lookupOrCreate(sym, args, () -> new VanillaConstructor(sym, args));
 		case FORMULA_AND:
-			return makeSolverOp.apply("and");
+			return makeAnd(args);
 		case FORMULA_EQ:
 			return makeSolverOp.apply("=");
 		case FORMULA_IMP:
@@ -118,11 +122,11 @@ public final class Constructors {
 		case FORMULA_ITE:
 			return memo.lookupOrCreate(sym, args, () -> new SolverIte(sym, args));
 		case FORMULA_LET:
-			return memo.lookupOrCreate(sym, args, () -> new SolverLet(sym, args));
+			return SolverLet.make(sym, args);
 		case FORMULA_NOT:
 			return makeSolverOp.apply("not");
 		case FORMULA_OR:
-			return makeSolverOp.apply("or");
+			return makeOr(args);
 		case FORMULA_VAR_LIST_NIL:
 		case FORMULA_VAR_LIST_CONS:
 		case HETEROGENEOUS_LIST_NIL:
@@ -237,6 +241,56 @@ public final class Constructors {
 		throw new AssertionError("impossible");
 	}
 
+	private static Term makeAnd(Term[] args) {
+		Symbol sym = BuiltInConstructorSymbol.FORMULA_AND;
+		return memo.lookupOrCreate(sym, args, () -> {
+			Term x = args[0];
+			Term y = args[1];
+			if (x instanceof Constructor) {
+				Constructor c = (Constructor) x;
+				if (c.equals(trueTerm)) {
+					return y;
+				} else if (c.equals(falseTerm)) {
+					return falseTerm;
+				}
+			}
+			if (y instanceof Constructor) {
+				Constructor c = (Constructor) y;
+				if (c.equals(trueTerm)) {
+					return x;
+				} else if (c.equals(falseTerm)) {
+					return falseTerm;
+				}
+			}
+			return new SolverOperation(sym, args, "and");
+		});
+	}
+
+	private static Term makeOr(Term[] args) {
+		Symbol sym = BuiltInConstructorSymbol.FORMULA_OR;
+		return memo.lookupOrCreate(sym, args, () -> {
+			Term x = args[0];
+			Term y = args[1];
+			if (x instanceof Constructor) {
+				Constructor c = (Constructor) x;
+				if (c.equals(trueTerm)) {
+					return trueTerm;
+				} else if (c.equals(falseTerm)) {
+					return y;
+				}
+			}
+			if (y instanceof Constructor) {
+				Constructor c = (Constructor) y;
+				if (c.equals(trueTerm)) {
+					return trueTerm;
+				} else if (c.equals(falseTerm)) {
+					return x;
+				}
+			}
+			return new SolverOperation(sym, args, "or");
+		});
+	}
+
 	// Used for renaming variables to avoid capture.
 	private static Map<PMap<SolverVariable, SmtLibTerm>, SolverVariable> binderMemo = new ConcurrentHashMap<>();
 
@@ -268,7 +322,26 @@ public final class Constructors {
 
 	private static class SolverLet extends AbstractConstructor {
 
-		public SolverLet(Symbol sym, Term[] args) {
+		public static Term make(Symbol sym, Term[] args) {
+			return memo.lookupOrCreate(sym, args, () -> {
+				// This causes too much of a slowdown
+				// if (args[0] instanceof SolverVariable && args[2] instanceof SmtLibTerm
+				// && meetsInliningThreshold(args[1])) {
+				// PMap<SolverVariable, SmtLibTerm> subst =
+				// HashTreePMap.singleton((SolverVariable) args[0],
+				// (SmtLibTerm) args[1]);
+				// return ((SmtLibTerm) args[2]).substSolverTerms(subst);
+				// }
+				return new SolverLet(sym, args);
+			});
+		}
+
+		@SuppressWarnings("unused")
+		private static boolean meetsInliningThreshold(Term t) {
+			return t instanceof Primitive<?> || t instanceof SolverVariable;
+		}
+
+		private SolverLet(Symbol sym, Term[] args) {
 			super(sym, args);
 		}
 
@@ -292,14 +365,14 @@ public final class Constructors {
 			newArgs[0] = y;
 			newArgs[1] = ((SmtLibTerm) args[1]).substSolverTerms(subst);
 			newArgs[2] = ((SmtLibTerm) args[2]).substSolverTerms(subst.plus(x, y));
-			return copyWithNewArgs(newArgs);
+			return (SmtLibTerm) copyWithNewArgs(newArgs);
 		}
 
 		@Override
 		public String toString() {
 			return "(#let " + args[0] + " = " + args[1] + " in " + args[2] + ")";
 		}
-		
+
 		@Override
 		public Set<SolverVariable> freeVars() {
 			Set<SolverVariable> vars = new HashSet<>(((SmtLibTerm) args[2]).freeVars());
@@ -372,7 +445,7 @@ public final class Constructors {
 			newArgs[0] = makeFormulaVarList(newVars);
 			newArgs[1] = ((SmtLibTerm) args[1]).substSolverTerms(newSubst);
 			newArgs[2] = ((SmtLibTerm) args[2]).substSolverTerms(newSubst);
-			return copyWithNewArgs(newArgs);
+			return (SmtLibTerm) copyWithNewArgs(newArgs);
 		}
 
 		@Override
@@ -399,7 +472,7 @@ public final class Constructors {
 			}
 			return null;
 		}
-	
+
 		private static List<Term> breakList(Term list, Symbol cons) {
 			List<Term> terms = new ArrayList<>();
 			Constructor xs = (Constructor) list;
@@ -409,7 +482,7 @@ public final class Constructors {
 			}
 			return terms;
 		}
-		
+
 		private static List<Term> breakPatternList(Term patternList) {
 			return breakList(patternList, BuiltInConstructorSymbol.HETEROGENEOUS_LIST_CONS);
 		}
@@ -417,7 +490,7 @@ public final class Constructors {
 		private List<Term> getBoundVars() {
 			return breakList(args[0], BuiltInConstructorSymbol.FORMULA_VAR_LIST_CONS);
 		}
-		
+
 		private static Term makeFormulaVarList(List<SolverVariable> vars) {
 			Collections.reverse(vars);
 			Term t = Constructors.makeZeroAry(BuiltInConstructorSymbol.FORMULA_VAR_LIST_NIL);
@@ -426,14 +499,14 @@ public final class Constructors {
 			}
 			return t;
 		}
-		
+
 		@Override
 		public Set<SolverVariable> freeVars() {
 			Set<SolverVariable> vars = super.freeVars();
 			vars.removeAll(getBoundVars());
 			return vars;
 		}
-		
+
 	}
 
 	private static class Nil extends AbstractConstructor {
@@ -495,15 +568,15 @@ public final class Constructors {
 
 	}
 
-	private static Constructor makeNil(Symbol sym, Term[] args) {
+	private static Term makeNil(Symbol sym, Term[] args) {
 		return memo.lookupOrCreate(sym, args, () -> new Nil(sym, args));
 	}
 
-	private static Constructor makeCons(Symbol sym, Term[] args) {
+	private static Term makeCons(Symbol sym, Term[] args) {
 		return memo.lookupOrCreate(sym, args, () -> new Cons(sym, args));
 	}
 
-	private static Constructor makeIntConst(Symbol sym, Term[] args) {
+	private static Term makeIntConst(Symbol sym, Term[] args) {
 		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
 
 			@Override
@@ -514,7 +587,7 @@ public final class Constructors {
 		});
 	}
 
-	private static Constructor lookupOrCreateIndexedConstructor(IndexedSymbol sym, Term[] args) {
+	private static Term lookupOrCreateIndexedConstructor(IndexedSymbol sym, Term[] args) {
 		switch (sym) {
 		case BV_TO_BV_SIGNED:
 			return makeBvToBvSigned(sym, args);
@@ -538,7 +611,7 @@ public final class Constructors {
 		}
 	}
 
-	private static Constructor makeBVConst(Symbol sym, Term[] args) {
+	private static Term makeBVConst(Symbol sym, Term[] args) {
 		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
 
 			@Override
@@ -562,7 +635,7 @@ public final class Constructors {
 		});
 	}
 
-	private static Constructor makeBVBigConst(Symbol sym, Term[] args) {
+	private static Term makeBVBigConst(Symbol sym, Term[] args) {
 		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
 
 			@Override
@@ -586,7 +659,7 @@ public final class Constructors {
 		});
 	}
 
-	private static Constructor makeConstant(Symbol sym, Term[] args) {
+	private static Term makeConstant(Symbol sym, Term[] args) {
 		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
 
 			@Override
@@ -602,7 +675,7 @@ public final class Constructors {
 		return ((I32) t.getArgs()[0]).getVal();
 	}
 
-	private static Constructor makeBvToBvSigned(IndexedSymbol sym, Term[] args) {
+	private static Term makeBvToBvSigned(IndexedSymbol sym, Term[] args) {
 		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
 
 			@Override
@@ -628,7 +701,7 @@ public final class Constructors {
 		});
 	}
 
-	private static Constructor makeBvToBvUnsigned(IndexedSymbol sym, Term[] args) {
+	private static Term makeBvToBvUnsigned(IndexedSymbol sym, Term[] args) {
 		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
 
 			@Override
@@ -655,7 +728,7 @@ public final class Constructors {
 
 	}
 
-	private static Constructor makeBvToFp(IndexedSymbol sym, Term[] args) {
+	private static Term makeBvToFp(IndexedSymbol sym, Term[] args) {
 		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
 
 			@Override
@@ -670,7 +743,7 @@ public final class Constructors {
 		});
 	}
 
-	private static Constructor makeFpToFp(IndexedSymbol sym, Term[] args) {
+	private static Term makeFpToFp(IndexedSymbol sym, Term[] args) {
 		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
 
 			@Override
@@ -685,7 +758,7 @@ public final class Constructors {
 		});
 	}
 
-	private static Constructor makeFpToBv(IndexedSymbol sym, Term[] args) {
+	private static Term makeFpToBv(IndexedSymbol sym, Term[] args) {
 		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
 
 			@Override
@@ -745,7 +818,7 @@ public final class Constructors {
 		}
 
 		@Override
-		public Constructor copyWithNewArgs(Term[] args) {
+		public Term copyWithNewArgs(Term[] args) {
 			return make(sym, args);
 		}
 
@@ -758,18 +831,18 @@ public final class Constructors {
 			for (int i = 0; i < args.length; ++i) {
 				newArgs[i] = ((SmtLibTerm) args[i]).substSolverTerms(subst);
 			}
-			return copyWithNewArgs(newArgs);
+			return (SmtLibTerm) copyWithNewArgs(newArgs);
 		}
-		
+
 		@Override
 		public Set<SolverVariable> freeVars() {
 			Set<SolverVariable> vars = new HashSet<>();
-			for (Term t : args ) {
+			for (Term t : args) {
 				vars.addAll(((SmtLibTerm) t).freeVars());
 			}
 			return vars;
 		}
-		
+
 	}
 
 	public static class VanillaConstructor extends AbstractConstructor {
@@ -832,8 +905,7 @@ public final class Constructors {
 			ty = ((AlgebraicDataType) ty).getTypeArgs().get(0);
 			return "#x" + varIds.get(this) + "[" + ty + "]";
 		}
-		
-		
+
 		@Override
 		public Set<SolverVariable> freeVars() {
 			return Collections.singleton(this);
@@ -857,7 +929,7 @@ public final class Constructors {
 
 		};
 	}
-	
+
 	private static Constructor makeConstructorGetter(Symbol sym, Term[] args) {
 		String s = "|" + sym.toString() + "|";
 		return new AbstractConstructor(sym, args) {
@@ -975,7 +1047,7 @@ public final class Constructors {
 			shim.print(")");
 		}
 	}
-	
+
 	private static void toSmtLib(Constructor c, SmtLibShim shim) {
 		toSmtLib(c, c.getSymbol().toString(), shim);
 	}

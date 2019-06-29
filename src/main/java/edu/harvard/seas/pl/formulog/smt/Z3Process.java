@@ -58,8 +58,8 @@ public class Z3Process {
 		}
 	}
 	
-	private final boolean debug = System.getProperty("debugSmt") != null;
-	private final AtomicInteger cnt = new AtomicInteger();
+	private static final boolean debug = System.getProperty("debugSmt") != null;
+	private static final AtomicInteger cnt = new AtomicInteger();
 	private final SymbolManager symbolManager;
 	private Process z3;
 
@@ -86,6 +86,7 @@ public class Z3Process {
 		BufferedReader reader = new BufferedReader(new InputStreamReader(z3.getInputStream()));
 		PrintWriter writer;
 		if (debug) {
+			
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			writer = new PrintWriter(baos);
 			SmtLibShim shim = new SmtLibShim(reader, writer, symbolManager);
@@ -104,15 +105,19 @@ public class Z3Process {
 	}
 
 	public Pair<Status, Map<SolverVariable, Term>> check(SmtLibTerm t, Integer timeout) throws EvaluationException {
-		Integer id = null;
+		int id = 0;
 		if (debug) {
-			t = (new SmtLibSimplifier()).simplify(t);
 			id = cnt.getAndIncrement();
 		}
 		SmtLibShim shim = makeAssertion(t, id);
+		long start = 0;
+		if (debug) {
+			start = System.currentTimeMillis(); 
+		}
 		Status status = shim.checkSat(timeout);
 		if (debug) {
-			System.err.println("\nRES Z3 JOB #" + id + ": " + status);
+			double time = (System.currentTimeMillis() - start) / 1000.0;
+			System.err.println("\nRES Z3 JOB #" + id + ": " + status + " (" + time + "s)");
 		}
 		Map<SolverVariable, Term> m = null;
 		if (status.equals(Status.SATISFIABLE)) {

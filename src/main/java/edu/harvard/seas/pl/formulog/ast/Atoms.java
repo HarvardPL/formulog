@@ -251,10 +251,10 @@ public final class Atoms {
 	}
 	
 	public static Atom liftTerm(Term t, boolean negated) {
-		Term tru = Constructors.makeTrue();
+		Term tru = Constructors.trueTerm();
 		return Atoms.get(BuiltInPredicateSymbol.UNIFY, new Term[] { t, tru }, negated);
 	}
 	
-	public static final Atom trueAtom = liftTerm(Constructors.makeTrue(), false);
+	public static final Atom trueAtom = liftTerm(Constructors.trueTerm(), false);
 	
 }

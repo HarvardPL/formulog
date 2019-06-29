@@ -57,7 +57,7 @@ import edu.harvard.seas.pl.formulog.util.Util;
 public final class BuiltInFunctionDefFactory {
 
 	private final Z3Process z3;
-	
+
 	public BuiltInFunctionDefFactory(SymbolManager symbolManager) {
 		z3 = new Z3Process(symbolManager);
 		z3.start();
@@ -1260,9 +1260,9 @@ public final class BuiltInFunctionDefFactory {
 			Set<SolverVariable> vars = ((SmtLibTerm) args[1]).freeVars();
 			SolverVariable x = (SolverVariable) args[0];
 			if (vars.contains(x)) {
-				return trueBool;
+				return trueTerm;
 			} else {
-				return falseBool;
+				return falseTerm;
 			}
 		}
 
@@ -1285,7 +1285,7 @@ public final class BuiltInFunctionDefFactory {
 				Z3Process localZ3 = z3;
 				if (thread instanceof Z3Thread) {
 					localZ3 = ((Z3Thread) thread).getZ3Process();
-				} 
+				}
 				Pair<Status, Map<SolverVariable, Term>> p = localZ3.check(formula, timeout);
 				switch (p.fst()) {
 				case SATISFIABLE:
@@ -1324,9 +1324,9 @@ public final class BuiltInFunctionDefFactory {
 				throw new EvaluationException("Z3 returned \"unknown\"");
 			}
 			if (m.isPresent()) {
-				return trueBool;
+				return trueTerm;
 			} else {
-				return falseBool;
+				return falseTerm;
 			}
 		}
 
@@ -1349,9 +1349,9 @@ public final class BuiltInFunctionDefFactory {
 				return none;
 			}
 			if (m.isPresent()) {
-				return some(trueBool);
+				return some(trueTerm);
 			} else {
-				return some(falseBool);
+				return some(falseTerm);
 			}
 		}
 
@@ -1367,7 +1367,8 @@ public final class BuiltInFunctionDefFactory {
 		@Override
 		public Term evaluate(Term[] args) throws EvaluationException {
 			SmtLibTerm formula = (SmtLibTerm) args[0];
-			formula = Constructors.make(BuiltInConstructorSymbol.FORMULA_NOT, Terms.singletonArray(formula));
+			formula = (SmtLibTerm) Constructors.make(BuiltInConstructorSymbol.FORMULA_NOT,
+					Terms.singletonArray(formula));
 			Constructor timeoutOpt = (Constructor) args[1];
 			Integer timeout = extractOptionalTimeout(timeoutOpt);
 			Optional<Model> m = querySmt(formula, timeout);
@@ -1375,9 +1376,9 @@ public final class BuiltInFunctionDefFactory {
 				return none;
 			}
 			if (m.isPresent()) {
-				return some(falseBool);
+				return some(falseTerm);
 			} else {
-				return some(trueBool);
+				return some(trueTerm);
 			}
 		}
 
@@ -1393,15 +1394,15 @@ public final class BuiltInFunctionDefFactory {
 		@Override
 		public Term evaluate(Term[] args) throws EvaluationException {
 			SmtLibTerm formula = (SmtLibTerm) args[0];
-			formula = Constructors.make(BuiltInConstructorSymbol.FORMULA_NOT, args);
+			formula = (SmtLibTerm) Constructors.make(BuiltInConstructorSymbol.FORMULA_NOT, args);
 			Optional<Model> m = querySmt(formula, -1);
 			if (m == null) {
 				throw new EvaluationException("Z3 returned \"unknown\"");
 			}
 			if (m.isPresent()) {
-				return falseBool;
+				return falseTerm;
 			} else {
-				return trueBool;
+				return trueTerm;
 			}
 		}
 
@@ -1451,20 +1452,20 @@ public final class BuiltInFunctionDefFactory {
 
 	}
 
-	private static final Constructor none = Constructors.makeZeroAry(BuiltInConstructorSymbol.NONE);
+	private static final Term none = Constructors.makeZeroAry(BuiltInConstructorSymbol.NONE);
 
-	private static Constructor some(Term arg) {
+	private static Term some(Term arg) {
 		return Constructors.make(BuiltInConstructorSymbol.SOME, Terms.singletonArray(arg));
 	}
 
-	private static final Constructor trueBool = Constructors.makeTrue();
-	private static final Constructor falseBool = Constructors.makeFalse();
+	private static final Term trueTerm = Constructors.trueTerm();
+	private static final Term falseTerm = Constructors.falseTerm();
 
-	private static Constructor boolToBoolTerm(boolean b) {
+	private static Term boolToBoolTerm(boolean b) {
 		if (b) {
-			return trueBool;
+			return trueTerm;
 		} else {
-			return falseBool;
+			return falseTerm;
 		}
 	}
 
@@ -1501,7 +1502,7 @@ public final class BuiltInFunctionDefFactory {
 		@Override
 		public Term evaluate(Term[] args) throws EvaluationException {
 			System.out.println(args[0]);
-			return trueBool;
+			return trueTerm;
 		}
 
 	}

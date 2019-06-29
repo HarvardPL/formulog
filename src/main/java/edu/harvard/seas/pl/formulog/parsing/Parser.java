@@ -700,8 +700,7 @@ public class Parser {
 			@Override
 			public Term visitTupleTerm(TupleTermContext ctx) {
 				Term[] args = termContextsToTerms(ctx.tuple().term());
-				Constructor t = Constructors.make(symbolManager.lookupTupleSymbol(args.length), args);
-				return t;
+				return Constructors.make(symbolManager.lookupTupleSymbol(args.length), args);
 			}
 
 			private final Pattern hex = Pattern.compile("0x([0-9a-fA-F]+)[lL]?");
@@ -840,15 +839,15 @@ public class Parser {
 			private Term makeNonFunctionUnop(int tokenType, Term t) {
 				switch (tokenType) {
 				case DatalogParser.BANG:
-					return makeBoolMatch(t, Constructors.makeFalse(), Constructors.makeTrue());
+					return makeBoolMatch(t, Constructors.falseTerm(), Constructors.trueTerm());
 				default:
 					return null;
 				}
 			}
 
 			private Term makeBoolMatch(Term matchee, Term ifTrue, Term ifFalse) {
-				MatchClause matchTrue = MatchClause.make(Constructors.makeTrue(), ifTrue);
-				MatchClause matchFalse = MatchClause.make(Constructors.makeFalse(), ifFalse);
+				MatchClause matchTrue = MatchClause.make(Constructors.trueTerm(), ifTrue);
+				MatchClause matchFalse = MatchClause.make(Constructors.falseTerm(), ifFalse);
 				return MatchExpr.make(matchee, Arrays.asList(matchTrue, matchFalse));
 			}
 
@@ -897,9 +896,9 @@ public class Parser {
 			private Term makeNonFunctionBinop(int tokenType, Term lhs, Term rhs) {
 				switch (tokenType) {
 				case DatalogParser.AMPAMP:
-					return makeBoolMatch(lhs, rhs, Constructors.makeFalse());
+					return makeBoolMatch(lhs, rhs, Constructors.falseTerm());
 				case DatalogParser.BARBAR:
-					return makeBoolMatch(lhs, Constructors.makeTrue(), rhs);
+					return makeBoolMatch(lhs, Constructors.trueTerm(), rhs);
 				default:
 					return null;
 				}
@@ -1143,9 +1142,9 @@ public class Parser {
 						public Term evaluate(Term[] args) throws EvaluationException {
 							Constructor c = (Constructor) args[0];
 							if (c.getSymbol().equals(ctor)) {
-								return Constructors.makeFalse();
+								return Constructors.falseTerm();
 							}
-							return Constructors.makeTrue();
+							return Constructors.trueTerm();
 						}
 
 					});
@@ -1190,8 +1189,8 @@ public class Parser {
 				Term thenExpr = ctx.thenExpr.accept(this);
 				Term elseExpr = ctx.elseExpr.accept(this);
 				List<MatchClause> branches = new ArrayList<>();
-				branches.add(MatchClause.make(Constructors.makeTrue(), thenExpr));
-				branches.add(MatchClause.make(Constructors.makeFalse(), elseExpr));
+				branches.add(MatchClause.make(Constructors.trueTerm(), thenExpr));
+				branches.add(MatchClause.make(Constructors.falseTerm(), elseExpr));
 				return MatchExpr.make(guard, branches);
 			}
 

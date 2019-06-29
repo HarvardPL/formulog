@@ -283,9 +283,9 @@ public class Interpreter {
 					public Term evaluate(Term[] args) throws EvaluationException {
 						NormalAtom fact = (NormalAtom) Atoms.getPositive(predSym, args);
 						if (db.hasFact(fact)) {
-							return Constructors.makeTrue();
+							return Constructors.trueTerm();
 						} else {
-							return Constructors.makeFalse();
+							return Constructors.falseTerm();
 						}
 					}
 

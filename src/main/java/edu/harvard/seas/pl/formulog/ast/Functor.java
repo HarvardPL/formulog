@@ -28,6 +28,6 @@ public interface Functor extends Term {
 	
 	Term[] getArgs();
 	
-	Functor copyWithNewArgs(Term[] args);
+	Term copyWithNewArgs(Term[] args);
 	
 }

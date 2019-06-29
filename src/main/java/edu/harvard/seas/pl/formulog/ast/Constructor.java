@@ -38,24 +38,24 @@ public interface Constructor extends Functor, SmtLibTerm {
 	}
 
 	@Override
-	default Constructor applySubstitution(Substitution s) {
+	default Term applySubstitution(Substitution s) {
 		if (isGround()) {
 			return this;
 		}
 		Term[] newArgs = Terms.map(getArgs(), t -> t.applySubstitution(s));
-		return (Constructor) copyWithNewArgs(newArgs);
+		return copyWithNewArgs(newArgs);
 	}
 
 	@Override
-	Constructor copyWithNewArgs(Term[] newArgs);
+	Term copyWithNewArgs(Term[] newArgs);
 	
 	@Override
-	default Constructor normalize(Substitution s) throws EvaluationException {
+	default Term normalize(Substitution s) throws EvaluationException {
 		if (isGround() && !containsFunctionCall()) {
 			return this;
 		}
 		Term[] newArgs = Terms.mapExn(getArgs(), t -> t.normalize(s));
-		return (Constructor) copyWithNewArgs(newArgs);
+		return copyWithNewArgs(newArgs);
 	}
 	
 }
