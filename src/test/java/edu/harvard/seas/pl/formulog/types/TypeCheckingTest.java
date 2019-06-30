@@ -184,5 +184,40 @@ public class TypeCheckingTest {
 	public void test188() {
 		test("test188_bd.flg");
 	}
+	
+	@Test
+	public void test194() {
+		test("test194_ok.flg");
+	}
+	
+	@Test
+	public void test195() {
+		test("test195_ok.flg");
+	}
+	
+	@Test
+	public void test199() {
+		test("test199_ok.flg");
+	}
+	
+	@Test
+	public void test200() {
+		test("test200_bd.flg");
+	}
+	
+	@Test
+	public void test201() {
+		test("test201_bd.flg");
+	}
+	
+	@Test
+	public void test202() {
+		test("test202_bd.flg");
+	}
+	
+	@Test
+	public void test203() {
+		test("test203_bd.flg");
+	}
 
 }

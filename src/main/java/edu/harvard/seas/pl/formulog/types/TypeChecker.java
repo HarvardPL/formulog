@@ -22,6 +22,7 @@ package edu.harvard.seas.pl.formulog.types;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -83,6 +84,7 @@ public class TypeChecker {
 	public Program typeCheck() throws TypeException {
 		typeCheckFacts();
 		typeCheckFunctions();
+		typeCheckRelations();
 		Map<Symbol, Set<Rule>> newRules = typeCheckRules();
 		typeCheckQuery();
 		return new Program() {
@@ -129,6 +131,54 @@ public class TypeChecker {
 			}
 
 		};
+	}
+
+	private void typeCheckRelations() throws TypeException {
+		typeCheckRelations(prog.getFactSymbols());
+		typeCheckRelations(prog.getRuleSymbols());
+	}
+
+	private void typeCheckRelations(Set<Symbol> syms) throws TypeException {
+		for (Symbol sym : syms) {
+			typeCheckRelation(sym);
+		}
+	}
+
+	private void typeCheckRelation(Symbol sym) throws TypeException {
+		RelationProperties props = prog.getRelationProperties(sym);
+		if (props.isAggregated()) {
+			FunctorType ft = (FunctorType) sym.getCompileTimeType();
+			List<Type> argTypes = ft.getArgTypes();
+			Type aggType = argTypes.get(argTypes.size() - 1);
+			typeCheckAggregateUnit(sym, props.getAggrFuncUnit(), aggType);
+			typeCheckAggregateFunction(sym, props.getAggrFuncSymbol(), aggType);
+		}
+	}
+
+	private void typeCheckAggregateUnit(Symbol relSym, Term unit, Type aggType) throws TypeException {
+		try {
+			TypeCheckerContext ctx = new TypeCheckerContext();
+			ctx.typeCheckTerm(unit, aggType);
+		} catch (TypeException e) {
+			throw new TypeException("Error with aggregate unit term " + unit + " for relation " + relSym + "\n" + e.getMessage());
+		}
+	}
+
+	private void typeCheckAggregateFunction(Symbol relSym, Symbol funcSym, Type aggType) throws TypeException {
+		try {
+			if (funcSym.getArity() != 2) {
+				throw new TypeException("Function " + funcSym + " is not binary");
+			}
+			FunctorType funcType = (FunctorType) funcSym.getCompileTimeType();
+			List<Type> actualTypes = new ArrayList<>(funcType.getArgTypes());
+			actualTypes.add(funcType.getRetType());
+			List<Type> requiredTypes = Arrays.asList(aggType, aggType, aggType);
+			TypeCheckerContext ctx = new TypeCheckerContext();
+			ctx.checkUnifiability(actualTypes, requiredTypes);
+		} catch (TypeException e) {
+			throw new TypeException(
+					"Error with aggregate function " + funcSym + " for relation " + relSym + "\n" + e.getMessage());
+		}
 	}
 
 	private void typeCheckQuery() throws TypeException {
@@ -243,6 +293,23 @@ public class TypeChecker {
 			genConstraints(functionDef);
 			if (!checkConstraints()) {
 				throw new TypeException("Type error in function: " + functionDef.getSymbol() + "\n" + error);
+			}
+		}
+
+		public void typeCheckTerm(Term t, Type type) throws TypeException {
+			genConstraints(t, type, new HashMap<>(), false);
+			if (!checkConstraints()) {
+				throw new TypeException(error);
+			}
+		}
+
+		public void checkUnifiability(List<Type> xs, List<Type> ys) throws TypeException {
+			assert xs.size() == ys.size();
+			for (Iterator<Type> it1 = xs.iterator(), it2 = ys.iterator(); it1.hasNext();) {
+				addConstraint(it1.next(), it2.next(), false);
+			}
+			if (!checkConstraints()) {
+				throw new TypeException(error);
 			}
 		}
 
@@ -498,7 +565,7 @@ public class TypeChecker {
 			}
 			return true;
 		}
-		
+
 		private boolean handleVars(Type type1, Type type2) {
 			if (type1.isVar() && type2.isVar()) {
 				addBinding((TypeVar) type1, type2, typeVars);
@@ -567,7 +634,8 @@ public class TypeChecker {
 
 	}
 
-	// XXX This and lookupType should be factored into a class for type substitutions.
+	// XXX This and lookupType should be factored into a class for type
+	// substitutions.
 	public static void addBinding(TypeVar x, Type t, Map<TypeVar, Type> subst) {
 		if (t instanceof TypeVar) {
 			// Avoid cycles in map

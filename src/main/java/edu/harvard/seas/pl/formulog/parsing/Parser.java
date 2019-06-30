@@ -367,6 +367,11 @@ public class Parser {
 				}
 			}
 			relationProperties.put(sym, props);
+			if (sym.getSymbolType().isEDBSymbol()) {
+				initialFacts.put(sym, new HashSet<>());
+			} else {
+				rules.put(sym, new HashSet<>());
+			}
 			return null;
 		}
 
