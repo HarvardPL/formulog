@@ -226,7 +226,7 @@ public class MagicSetTransformer {
 
 			@Override
 			public RelationProperties getRelationProperties(Symbol sym) {
-				return origProg.getRelationProperties(sym);
+				throw new UnsupportedOperationException();
 			}
 
 		};
@@ -734,6 +734,7 @@ public class MagicSetTransformer {
 
 		private final Map<Symbol, Set<Rule>> rules = new HashMap<>();
 		private final Map<Symbol, Set<Atom>> facts = new HashMap<>();
+		private final Map<Symbol, RelationProperties> props = new HashMap<>();
 		private final boolean keepAllFacts;
 
 		public final Program origProg;
@@ -816,7 +817,11 @@ public class MagicSetTransformer {
 
 		@Override
 		public RelationProperties getRelationProperties(Symbol sym) {
-			return origProg.getRelationProperties(sym);
+			RelationProperties p = origProg.getRelationProperties(sym);
+			if (p == null) {
+				p = Util.lookupOrCreate(props, sym, () -> new RelationProperties(sym));
+			}
+			return p;
 		}
 
 	}
