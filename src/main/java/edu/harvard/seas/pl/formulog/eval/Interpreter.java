@@ -147,7 +147,7 @@ public class Interpreter {
 		}
 
 		private IndexedFactDB preprocessRules() {
-			IndexedFactDBBuilder dbb = new IndexedFactDBBuilder();
+			IndexedFactDBBuilder dbb = new IndexedFactDBBuilder(prog);
 			RulePreprocessor pp = new RulePreprocessor();
 			AtomPreprocessor ap = new AtomPreprocessor();
 			for (Symbol sym : prog.getRuleSymbols()) {

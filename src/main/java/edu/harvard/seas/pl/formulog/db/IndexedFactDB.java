@@ -21,6 +21,7 @@ package edu.harvard.seas.pl.formulog.db;
  */
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,7 +29,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import edu.harvard.seas.pl.formulog.ast.Var;
+import edu.harvard.seas.pl.formulog.ast.Atoms;
 import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
+import edu.harvard.seas.pl.formulog.ast.Program;
+import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolComparator;
@@ -37,41 +41,87 @@ import edu.harvard.seas.pl.formulog.util.Util;
 
 public class IndexedFactDB {
 
-	private final IndexedFactSet[] idxs;
+	private final IndexedNonAggregateFactSet[] nonAggregateIndices;
+	private final IndexedAggregateFactSet[] aggregateIndices;
+	private final Map<Symbol, Map<Key, Term>> aggregateFactsBySym = new ConcurrentHashMap<>();
 	private final Map<Symbol, Set<NormalAtom>> factsBySym = new ConcurrentHashMap<>();
 
-	private IndexedFactDB(IndexedFactSet[] idxs) {
-		this.idxs = idxs;
+	private IndexedFactDB(IndexedNonAggregateFactSet[] idxs, IndexedAggregateFactSet[] aggregateIndices,
+			Set<Symbol> aggregateSymbols) {
+		this.nonAggregateIndices = idxs;
+		this.aggregateIndices = aggregateIndices;
+		for (Symbol sym : aggregateSymbols) {
+			aggregateFactsBySym.put(sym, new ConcurrentHashMap<>());
+		}
 	}
 
 	public Iterable<Symbol> getSymbols() {
-		return factsBySym.keySet().stream().sorted(SymbolComparator.INSTANCE).collect(Collectors.toList());
+		Set<Symbol> syms = new HashSet<>(factsBySym.keySet());
+		syms.addAll(aggregateFactsBySym.keySet());
+		return syms.stream().sorted(SymbolComparator.INSTANCE).collect(Collectors.toList());
 	}
 
 	public Iterable<NormalAtom> query(Symbol sym) {
-		return getAllForSym(sym);
+		if (aggregateFactsBySym.containsKey(sym)) {
+			List<NormalAtom> atoms = new ArrayList<>();
+			for (Map.Entry<Key, Term> e : aggregateFactsBySym.get(sym).entrySet()) {
+				Term[] arr = e.getKey().getArr();
+				Term[] args = new Term[arr.length + 1];
+				for (int i = 0; i < arr.length; ++i) {
+					args[i] = arr[i];
+				}
+				args[arr.length] = e.getValue();
+				atoms.add((NormalAtom) Atoms.getPositive(sym, args));
+			}
+			return atoms;
+		} else {
+			return getAllForSym(sym);
+		}
 	}
 
 	public Iterable<NormalAtom> query(int idx, Substitution subst) throws EvaluationException {
-		assert idx >= 0 && idx < idxs.length;
-		return idxs[idx].query(subst);
+		if (idx < 0) {
+			idx = -(idx + 1);
+			return aggregateIndices[idx].query(subst);
+		} else {
+			return nonAggregateIndices[idx].query(subst);
+		}
 	}
 
 	public boolean add(NormalAtom fact) {
+		if (aggregateFactsBySym.containsKey(fact.getSymbol())) {
+			return addAggregate(fact);
+		}
 		if (!getAllForSym(fact.getSymbol()).add(fact)) {
 			return false;
 		}
-		for (IndexedFactSet idx : idxs) {
+		for (IndexedNonAggregateFactSet idx : nonAggregateIndices) {
 			idx.add(fact);
 		}
 		return true;
 	}
 
-	public boolean hasFact(NormalAtom fact) {
-		return getAllForSym(fact.getSymbol()).contains(fact);
+	public boolean addAggregate(NormalAtom fact) {
+		throw new UnsupportedOperationException();
 	}
-	
+
+	public boolean hasFact(NormalAtom fact) {
+		Map<Key, Term> m = aggregateFactsBySym.get(fact.getSymbol());
+		if (m != null) {
+			Term[] args = fact.getArgs();
+			Term[] arr = new Term[args.length - 1];
+			for (int i = 0; i < arr.length; ++i) {
+				arr[i] = args[i];
+			}
+			Term agg = m.get(new Key(arr));
+			return args[arr.length].equals(agg);
+		} else {
+			return getAllForSym(fact.getSymbol()).contains(fact);
+		}
+	}
+
 	private Set<NormalAtom> getAllForSym(Symbol sym) {
+		assert !aggregateFactsBySym.containsKey(sym);
 		return Util.lookupOrCreate(factsBySym, sym, () -> Util.concurrentSet());
 	}
 
@@ -83,23 +133,38 @@ public class IndexedFactDB {
 				sb.append(a + "\n");
 			}
 		}
-		for (int i = 0; i < idxs.length; ++i) {
-			sb.append(i + ": " + idxs[i] + "\n");
+		for (int i = 0; i < nonAggregateIndices.length; ++i) {
+			sb.append(i + ": " + nonAggregateIndices[i] + "\n");
 		}
 		return sb.toString();
 	}
 
 	public static class IndexedFactDBBuilder {
 
-		private final List<IndexedFactSet> idxs = new ArrayList<>();
+		private final Program prog;
+		private final List<IndexedNonAggregateFactSet> nonAggregateIndices = new ArrayList<>();
+		private final List<IndexedAggregateFactSet> aggregateIndices = new ArrayList<>();
+		Set<Symbol> aggregateSymbols = new HashSet<>();
+
+		public IndexedFactDBBuilder(Program prog) {
+			this.prog = prog;
+		}
 
 		public synchronized int addIndex(NormalAtom q, Set<Var> boundVars) {
-			idxs.add(new IndexedFactSet(q, boundVars));
-			return idxs.size() - 1;
+			Symbol sym = q.getSymbol();
+			if (prog.getRelationProperties(sym).isAggregated()) {
+				aggregateSymbols.add(sym);
+				aggregateIndices.add(new IndexedAggregateFactSet(prog, q, boundVars));
+				return -aggregateIndices.size();
+			} else {
+				nonAggregateIndices.add(new IndexedNonAggregateFactSet(q, boundVars));
+				return nonAggregateIndices.size() - 1;
+			}
 		}
 
 		public synchronized IndexedFactDB build() {
-			return new IndexedFactDB(idxs.toArray(new IndexedFactSet[0]));
+			return new IndexedFactDB(nonAggregateIndices.toArray(new IndexedNonAggregateFactSet[0]),
+					aggregateIndices.toArray(new IndexedAggregateFactSet[0]), aggregateSymbols);
 		}
 
 	}
