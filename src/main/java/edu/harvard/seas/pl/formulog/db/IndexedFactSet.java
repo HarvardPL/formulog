@@ -26,7 +26,7 @@ import edu.harvard.seas.pl.formulog.unification.Substitution;
 
 public interface IndexedFactSet {
 
-	boolean add(NormalAtom fact) throws EvaluationException;
+	void add(NormalAtom fact) throws EvaluationException;
 
 	Iterable<NormalAtom> query(Substitution s) throws EvaluationException;
 

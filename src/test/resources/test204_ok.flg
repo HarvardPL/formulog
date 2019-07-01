@@ -1,0 +1,15 @@
+input bar(i32)
+bar(1).
+bar(2).
+bar(3).
+
+fun max(X: i32, Y: i32) : i32 = if X > Y then X else Y
+
+output foo(i32<max,0>)
+foo(X) :- bar(X).
+
+output not_ok
+not_ok :- foo(X), X != 3.
+
+output ok.
+ok :- foo(3), !not_ok. 

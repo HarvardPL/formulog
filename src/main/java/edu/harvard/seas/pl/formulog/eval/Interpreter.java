@@ -107,7 +107,7 @@ public class Interpreter {
 		private final CountingFJP<EvaluationException> exec;
 		private final IndexedFactDB db;
 
-		public Eval(int nthreads) {
+		public Eval(int nthreads) throws EvaluationException {
 			if (sequential) {
 				exec = new MockCountingFJP<>();
 			} else {
@@ -138,7 +138,7 @@ public class Interpreter {
 			return db;
 		}
 
-		private void processInitFacts() {
+		private void processInitFacts() throws EvaluationException {
 			for (Symbol sym : prog.getFactSymbols()) {
 				for (Atom a : prog.getFacts(sym)) {
 					db.add((NormalAtom) a);
@@ -243,7 +243,6 @@ public class Interpreter {
 				Symbol tupSym = (arity > 1) ? prog.getSymbolManager().lookupTupleSymbol(arity) : null;
 				def.setDef(new FunctionDef() {
 
-					
 					@Override
 					public Symbol getSymbol() {
 						return predSym;
@@ -258,15 +257,15 @@ public class Interpreter {
 						}
 						return t;
 					}
-					
+
 					private Term makeTuple(Term[] args) {
 						if (tupSym == null) {
 							return args[0];
 						} else {
-							return Constructors.make(tupSym, args); 
+							return Constructors.make(tupSym, args);
 						}
 					}
-					
+
 				});
 			}
 
@@ -484,7 +483,8 @@ public class Interpreter {
 					it = stack.peek();
 				}
 				if (it.hasNext()) {
-					Unification.unsafeUnifyWithFact(curAtom, it.next(), s);
+					NormalAtom next = it.next();
+					Unification.unsafeUnifyWithFact(curAtom, next, s);
 					return true;
 				} else {
 					stack.pop();

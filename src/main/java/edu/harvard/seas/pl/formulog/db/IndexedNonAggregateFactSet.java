@@ -61,12 +61,12 @@ public class IndexedNonAggregateFactSet implements IndexedFactSet {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean add(NormalAtom fact) {
+	public void add(NormalAtom fact) {
 		assert Atoms.varSet(fact).isEmpty();
 		Substitution s = new SimpleSubstitution();
 		try {
 			if (!Unification.unify(fact, canonicalAtom, s)) {
-				return false;
+				return;
 			}
 		} catch (EvaluationException e) {
 			throw new AssertionError("There should not be any function reduction.");
@@ -75,7 +75,7 @@ public class IndexedNonAggregateFactSet implements IndexedFactSet {
 		for (IndexEntry e : idxs) {
 			m = (Map<Object, Object>) Util.lookupOrCreate(m, s.get(e.getV()), () -> new ConcurrentHashMap<>());
 		}
-		return m.putIfAbsent(fact, Boolean.TRUE) == null;
+		m.put(fact, Boolean.TRUE);
 	}
 
 	@Override

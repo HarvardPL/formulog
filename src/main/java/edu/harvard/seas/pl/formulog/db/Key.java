@@ -56,4 +56,10 @@ public class Key {
 			return false;
 		return true;
 	}
+
+	@Override
+	public String toString() {
+		return "Key [arr=" + Arrays.toString(arr) + "]";
+	}
+
 }

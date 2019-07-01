@@ -28,11 +28,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import edu.harvard.seas.pl.formulog.ast.Atoms;
 import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
-import edu.harvard.seas.pl.formulog.ast.Program;
-import edu.harvard.seas.pl.formulog.ast.RelationProperties;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
@@ -46,10 +43,8 @@ public class IndexedAggregateFactSet implements IndexedFactSet {
 	private final Var aggVar;
 	private final boolean aggVarIsBound;
 	private final NormalAtom atom;
-	private final Term aggInit;
-	private final FunctionDef aggFunc;
 
-	public IndexedAggregateFactSet(Program prog, NormalAtom atom, Set<Var> boundVars) {
+	public IndexedAggregateFactSet(NormalAtom atom, Set<Var> boundVars) {
 		this.atom = atom;
 		Term[] args = atom.getArgs();
 		assert allVars(args);
@@ -67,9 +62,6 @@ public class IndexedAggregateFactSet implements IndexedFactSet {
 		aggVarIsBound = boundVars.contains(aggVar);
 		index = bound.toArray(new Var[0]);
 		unboundIndex = unbound.toArray(new Var[0]);
-		RelationProperties props = prog.getRelationProperties(atom.getSymbol());
-		aggInit = props.getAggrFuncUnit();
-		aggFunc = prog.getDef(props.getAggrFuncSymbol());
 	}
 
 	private static boolean allVars(Term[] ts) {
@@ -84,31 +76,16 @@ public class IndexedAggregateFactSet implements IndexedFactSet {
 	Map<Key, Map<Key, Term>> map = new ConcurrentHashMap<>();
 
 	@Override
-	public boolean add(NormalAtom fact) throws EvaluationException {
+	public void add(NormalAtom fact) throws EvaluationException {
 		Substitution s = new SimpleSubstitution();
-		Unification.unsafeUnifyWithFact(atom, fact, s);
+		if (!Unification.unify(atom, fact, s)) {
+			return;
+		}
 		Term agg = s.get(aggVar);
 		Key primary = makePrimaryKey(s);
 		Map<Key, Term> m = Util.lookupOrCreate(map, primary, () -> new ConcurrentHashMap<>());
 		Key secondary = makeSecondaryKey(s);
-		if (!m.containsKey(secondary)) {
-			agg = aggFunc.evaluate(new Term[] { agg, aggInit });
-			Term oldAgg = m.putIfAbsent(secondary, agg);
-			if (oldAgg == null) {
-				return true;
-			}
-		}
-		Term oldAgg;
-		Term newAgg;
-		do {
-			oldAgg = m.get(secondary);
-			// Assumes aggregate function operates like join
-			if (oldAgg.equals(agg)) {
-				return false;
-			}
-			newAgg = aggFunc.evaluate(new Term[] { agg, oldAgg });
-		} while (!m.replace(secondary, oldAgg, newAgg));
-		return !newAgg.equals(oldAgg);
+		m.put(secondary, agg);
 	}
 
 	@Override
@@ -119,12 +96,13 @@ public class IndexedAggregateFactSet implements IndexedFactSet {
 		List<NormalAtom> atoms = new ArrayList<>();
 		for (Map.Entry<Key, Term> e : m.entrySet()) {
 			Term agg = e.getValue();
+			Substitution s2 = new SimpleSubstitution();
 			if (aggVarIsBound) {
 				if (!agg.equals(s.get(aggVar))) {
 					continue;
 				}
+				s2.put(aggVar, agg);
 			}
-			Substitution s2 = new SimpleSubstitution();
 			for (Var v : index) {
 				s2.put(v, s.get(v));
 			}
