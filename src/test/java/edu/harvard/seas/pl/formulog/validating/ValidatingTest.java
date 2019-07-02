@@ -29,6 +29,7 @@ import java.io.InputStreamReader;
 import org.junit.Test;
 
 import edu.harvard.seas.pl.formulog.ast.Program;
+import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
 import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
 import edu.harvard.seas.pl.formulog.parsing.Parser;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
@@ -47,7 +48,15 @@ public class ValidatingTest {
 			}
 			Pair<Program, Atom> p = (new Parser()).parse(new InputStreamReader(is));
 			Program prog = p.fst();
-			prog = (new TypeChecker(prog, p.snd())).typeCheck();
+			Atom query = p.snd();
+			prog = (new TypeChecker(prog, query)).typeCheck();
+			MagicSetTransformer mst = new MagicSetTransformer(prog);
+			if (query != null) {
+				p = mst.transform(query, true);
+				prog = p.fst();
+			} else {
+				prog = mst.transform(true);
+			}
 			(new Validator(prog)).validate();
 			if (isBad) {
 				fail("Test succeeded for a bad program");
@@ -84,6 +93,26 @@ public class ValidatingTest {
 	@Test
 	public void test133() {
 		test("test133_bd.flg");
+	}
+	
+	@Test
+	public void test216() {
+		test("test216_bd.flg");
+	}
+	
+	@Test
+	public void test217() {
+		test("test217_bd.flg");
+	}
+	
+	@Test
+	public void test218() {
+		test("test218_bd.flg");
+	}
+	
+	@Test
+	public void test219() {
+		test("test219_ok.flg");
 	}
 	
 }

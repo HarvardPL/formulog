@@ -53,7 +53,7 @@ import edu.harvard.seas.pl.formulog.db.IndexedFactDB;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDB.IndexedFactDBBuilder;
 import edu.harvard.seas.pl.formulog.smt.Z3ThreadFactory;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
-import edu.harvard.seas.pl.formulog.symbols.FunctionSymbolForPredicateFactory.PredicateFunctionSymbol;
+import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbolFactory.PredicateFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolType;
 import edu.harvard.seas.pl.formulog.unification.Unification;
@@ -107,7 +107,7 @@ public class Interpreter {
 		private final CountingFJP<EvaluationException> exec;
 		private final IndexedFactDB db;
 
-		public Eval(int nthreads) {
+		public Eval(int nthreads) throws EvaluationException {
 			if (sequential) {
 				exec = new MockCountingFJP<>();
 			} else {
@@ -138,7 +138,7 @@ public class Interpreter {
 			return db;
 		}
 
-		private void processInitFacts() {
+		private void processInitFacts() throws EvaluationException {
 			for (Symbol sym : prog.getFactSymbols()) {
 				for (Atom a : prog.getFacts(sym)) {
 					db.add((NormalAtom) a);
@@ -147,7 +147,7 @@ public class Interpreter {
 		}
 
 		private IndexedFactDB preprocessRules() {
-			IndexedFactDBBuilder dbb = new IndexedFactDBBuilder();
+			IndexedFactDBBuilder dbb = new IndexedFactDBBuilder(prog);
 			RulePreprocessor pp = new RulePreprocessor();
 			AtomPreprocessor ap = new AtomPreprocessor();
 			for (Symbol sym : prog.getRuleSymbols()) {
@@ -243,7 +243,6 @@ public class Interpreter {
 				Symbol tupSym = (arity > 1) ? prog.getSymbolManager().lookupTupleSymbol(arity) : null;
 				def.setDef(new FunctionDef() {
 
-					
 					@Override
 					public Symbol getSymbol() {
 						return predSym;
@@ -258,15 +257,15 @@ public class Interpreter {
 						}
 						return t;
 					}
-					
+
 					private Term makeTuple(Term[] args) {
 						if (tupSym == null) {
 							return args[0];
 						} else {
-							return Constructors.make(tupSym, args); 
+							return Constructors.make(tupSym, args);
 						}
 					}
-					
+
 				});
 			}
 
@@ -484,7 +483,8 @@ public class Interpreter {
 					it = stack.peek();
 				}
 				if (it.hasNext()) {
-					Unification.unsafeUnifyWithFact(curAtom, it.next(), s);
+					NormalAtom next = it.next();
+					Unification.unsafeUnifyWithFact(curAtom, next, s);
 					return true;
 				} else {
 					stack.pop();

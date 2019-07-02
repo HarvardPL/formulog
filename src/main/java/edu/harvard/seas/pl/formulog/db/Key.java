@@ -20,14 +20,46 @@ package edu.harvard.seas.pl.formulog.db;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
-import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.unification.Substitution;
+import java.util.Arrays;
 
-public interface IndexedFactSet {
+import edu.harvard.seas.pl.formulog.ast.Term;
 
-	void add(NormalAtom fact) throws EvaluationException;
+public class Key {
+	private final Term[] arr;
 
-	Iterable<NormalAtom> query(Substitution s) throws EvaluationException;
+	public Key(Term[] arr) {
+		this.arr = arr;
+	}
+	
+	public Term[] getArr() {
+		return arr;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + Arrays.hashCode(arr);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Key other = (Key) obj;
+		if (!Arrays.equals(arr, other.arr))
+			return false;
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "Key [arr=" + Arrays.toString(arr) + "]";
+	}
 
 }

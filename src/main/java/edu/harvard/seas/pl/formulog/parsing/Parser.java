@@ -45,7 +45,6 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
-import edu.harvard.seas.pl.formulog.ast.Annotation;
 import edu.harvard.seas.pl.formulog.ast.Atoms;
 import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
@@ -61,6 +60,7 @@ import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
+import edu.harvard.seas.pl.formulog.ast.RelationProperties;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.StringTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
@@ -76,6 +76,8 @@ import edu.harvard.seas.pl.formulog.parsing.generated.DatalogBaseVisitor;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogLexer;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.AdtDefContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.AggTypeContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.AggTypeListContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.AnnotationContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.AtomListContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.BinopFormulaContext;
@@ -262,7 +264,7 @@ public class Parser {
 		private final Map<Symbol, Set<Rule>> rules = new HashMap<>();
 		private final FunctionDefManager functionDefManager = new FunctionDefManager(symbolManager);
 		private final FunctionCallFactory functionCallFactory = new FunctionCallFactory(functionDefManager);
-		private final Map<Symbol, Set<Annotation>> annotations = new HashMap<>();
+		private final Map<Symbol, RelationProperties> relationProperties = new HashMap<>();
 		private final Map<Symbol, Pair<AlgebraicDataType, Integer>> recordLabels = new HashMap<>();
 		private final Map<Symbol, Symbol[]> constructorLabels = new HashMap<>();
 		private final Set<Symbol> externalEdbs = new HashSet<>();
@@ -300,30 +302,59 @@ public class Parser {
 			return new Pair<>(sym, args);
 		}
 
+		List<Type> getRelationTypes(AggTypeListContext ctx) {
+			List<Type> types = new ArrayList<>();
+			for (Iterator<AggTypeContext> it = ctx.aggType().iterator(); it.hasNext();) {
+				AggTypeContext agctx = it.next();
+				types.add(agctx.type().accept(typeExtractor));
+			}
+			return types;
+		}
+
+		void getAggregate(AggTypeListContext ctx, RelationProperties props) {
+			for (Iterator<AggTypeContext> it = ctx.aggType().iterator(); it.hasNext();) {
+				AggTypeContext agctx = it.next();
+				if (agctx.func != null) {
+					if (it.hasNext()) {
+						throw new RuntimeException("Aggregates can only be set for the last column of a relation: "
+								+ props.getRelationSymbol());
+					}
+					Symbol funcSym = symbolManager.lookupSymbol(agctx.func.getText());
+					if (!funcSym.getSymbolType().isFunctionSymbol()) {
+						throw new RuntimeException("Non-function used in aggregate: " + funcSym);
+					}
+					Term unit = extract(agctx.unit);
+					props.aggregate(funcSym, unit);
+				}
+			}
+
+		}
+
 		@Override
 		public Void visitRelDecl(RelDeclContext ctx) {
 			String name = ctx.ID().getText();
-			List<Type> types = map(ctx.typeList().type(), t -> t.accept(typeExtractor));
+			List<Type> types = getRelationTypes(ctx.aggTypeList());
 			if (!Types.getTypeVars(types).isEmpty()) {
 				throw new RuntimeException("Cannot use type variables in the signature of a relation: " + name);
 			}
 			SymbolType symType = ctx.relType.getType() == DatalogLexer.OUTPUT ? SymbolType.IDB_REL : SymbolType.EDB_REL;
 			Symbol sym = symbolManager.createSymbol(name, types.size(), symType,
 					new FunctorType(types, BuiltInTypes.bool));
-			Set<Annotation> aset = new HashSet<>();
+			RelationProperties props = new RelationProperties(sym);
+			getAggregate(ctx.aggTypeList(), props);
 			for (AnnotationContext actx : ctx.annotation()) {
 				switch (actx.getText()) {
 				case "@bottomup":
 					if (!sym.getSymbolType().isIDBSymbol()) {
 						throw new RuntimeException("Annotation @bottomup not relevant for non-IDB predicate " + sym);
 					}
-					aset.add(Annotation.BOTTOMUP);
+					props.bottomUp();
 					break;
 				case "@topdown":
 					if (!sym.getSymbolType().isIDBSymbol()) {
 						throw new RuntimeException("Annotation @bottomup not relevant for non-IDB predicate " + sym);
 					}
-					aset.add(Annotation.TOPDOWN);
+					props.topDown();
 					break;
 				case "@external":
 					if (!sym.getSymbolType().isEDBSymbol()) {
@@ -335,10 +366,12 @@ public class Parser {
 					throw new RuntimeException("Unrecognized annotation for predicate " + sym + ": " + actx.getText());
 				}
 			}
-			if (aset.contains(Annotation.BOTTOMUP) && aset.contains(Annotation.TOPDOWN)) {
-				throw new RuntimeException("Cannot annotate predicate " + sym + " as being both topdown and bottomup");
+			relationProperties.put(sym, props);
+			if (sym.getSymbolType().isEDBSymbol()) {
+				initialFacts.put(sym, new HashSet<>());
+			} else {
+				rules.put(sym, new HashSet<>());
 			}
-			annotations.put(sym, aset);
 			return null;
 		}
 
@@ -1325,9 +1358,9 @@ public class Parser {
 				}
 
 				@Override
-				public Set<Annotation> getAnnotations(Symbol sym) {
+				public RelationProperties getRelationProperties(Symbol sym) {
 					assert sym.getSymbolType().isRelationSym();
-					return annotations.get(sym);
+					return relationProperties.get(sym);
 				}
 
 			};

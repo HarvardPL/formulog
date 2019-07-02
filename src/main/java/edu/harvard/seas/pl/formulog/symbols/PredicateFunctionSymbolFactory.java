@@ -30,11 +30,11 @@ import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.util.Util;
 
-public class FunctionSymbolForPredicateFactory {
+public class PredicateFunctionSymbolFactory {
 
 	private final SymbolManager symbolManager;
 
-	public FunctionSymbolForPredicateFactory(SymbolManager symbolManager) {
+	public PredicateFunctionSymbolFactory(SymbolManager symbolManager) {
 		this.symbolManager = symbolManager;
 	}
 

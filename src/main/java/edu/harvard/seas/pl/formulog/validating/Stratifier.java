@@ -39,6 +39,7 @@ import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
+import edu.harvard.seas.pl.formulog.ast.RelationProperties;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Var;
@@ -49,7 +50,7 @@ import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
-import edu.harvard.seas.pl.formulog.symbols.FunctionSymbolForPredicateFactory.PredicateFunctionSymbol;
+import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbolFactory.PredicateFunctionSymbol;
 
 public class Stratifier {
 
@@ -86,7 +87,7 @@ public class Stratifier {
 			Graph<Symbol, BoolWrapper> component = topo.next();
 			for (BoolWrapper b : component.edgeSet()) {
 				if (b.getValue()) {
-					throw new InvalidProgramException("The program uses non-stratified negation");
+					throw new InvalidProgramException("The program uses non-stratified negation and/or aggregation");
 				}
 			}
 			strata.add(component.vertexSet());
@@ -100,8 +101,14 @@ public class Stratifier {
 		private final Set<Symbol> allDependencies = new HashSet<>();
 		private final Set<Symbol> negativeDependencies = new HashSet<>();
 
+		private boolean isAggregate(Atom a) {
+			Symbol sym = a.getSymbol();
+			RelationProperties props = prog.getRelationProperties(sym);
+			return props != null && props.isAggregated();
+		}
+		
 		public void processAtom(Atom a) {
-			if (a.isNegated()) {
+			if (a.isNegated() || isAggregate(a)) {
 				addNegative(a.getSymbol());
 			} else {
 				addPositive(a.getSymbol());

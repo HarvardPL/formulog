@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import edu.harvard.seas.pl.formulog.ast.Annotation;
 import edu.harvard.seas.pl.formulog.ast.Atoms;
 import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
 import edu.harvard.seas.pl.formulog.ast.Atoms.UnifyAtom;
@@ -44,6 +43,7 @@ import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
+import edu.harvard.seas.pl.formulog.ast.RelationProperties;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
@@ -57,6 +57,7 @@ import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInPredicateSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
+import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.unification.Unification;
 import edu.harvard.seas.pl.formulog.util.UnionFind;
@@ -93,8 +94,23 @@ public class Validator {
 		}
 	}
 
+	private void normalizeAggregateInit(Symbol sym) throws InvalidProgramException {
+		try {
+			RelationProperties props = prog.getRelationProperties(sym);
+			if (props.isAggregated()) {
+				Symbol funcSym = props.getAggrFuncSymbol();
+				Term init = props.getAggrFuncUnit();
+				props.aggregate(funcSym, init.normalize(new SimpleSubstitution()));
+			}
+		} catch (EvaluationException e) {
+			throw new InvalidProgramException(
+					"Could not normalize aggregate initial value for relation " + sym + "\n" + e.getMessage());
+		}
+	}
+
 	private void validateFacts() throws InvalidProgramException {
 		for (Symbol sym : prog.getFactSymbols()) {
+			normalizeAggregateInit(sym);
 			Set<Atom> s = new HashSet<>();
 			for (Atom fact : prog.getFacts(sym)) {
 				if (!sym.getSymbolType().isEDBSymbol()) {
@@ -111,6 +127,7 @@ public class Validator {
 
 	private void validateRules() throws InvalidProgramException {
 		for (Symbol sym : prog.getRuleSymbols()) {
+			normalizeAggregateInit(sym);
 			Set<Rule> s = new HashSet<>();
 			for (Rule r : prog.getRules(sym)) {
 				try {
@@ -220,12 +237,18 @@ public class Validator {
 			for (int i = 0; i < args.length; ++i) {
 				newArgs[i] = args[i].visit(this, in);
 			}
-			return c.copyWithNewArgs(newArgs);
+			Var x = Var.getFresh();
+			Atom eq = makeUnifier(x, c.copyWithNewArgs(newArgs), false);
+			in.add(eq);
+			return x;
 		}
 
 		@Override
 		public Term visit(Primitive<?> p, List<Atom> in) {
-			return p;
+			Var x = Var.getFresh();
+			Atom eq = makeUnifier(x, p, false);
+			in.add(eq);
+			return x;
 		}
 
 		@Override
@@ -253,6 +276,9 @@ public class Validator {
 	}
 
 	private Atom removeFuncs(Atom a, List<Atom> acc) {
+		if (a instanceof UnifyAtom) {
+			return a;
+		}
 		Term[] args = a.getArgs();
 		Term[] newArgs = new Term[args.length];
 		for (int i = 0; i < args.length; ++i) {
@@ -636,8 +662,8 @@ public class Validator {
 		}
 
 		@Override
-		public Set<Annotation> getAnnotations(Symbol sym) {
-			return prog.getAnnotations(sym);
+		public RelationProperties getRelationProperties(Symbol sym) {
+			return prog.getRelationProperties(sym);
 		}
 
 	}

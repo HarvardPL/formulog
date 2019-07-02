@@ -1,0 +1,5 @@
+fun max(X:i32, Y:i32) : i32 = if X > Y then X else Y
+
+output foo(i32<max,0>)
+foo(0).
+foo(X + 1) :- foo(X).

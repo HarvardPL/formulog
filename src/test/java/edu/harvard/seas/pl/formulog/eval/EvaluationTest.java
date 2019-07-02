@@ -619,4 +619,64 @@ public class EvaluationTest {
 		test("test193_ok.flg");
 	}
 
+	@Test
+	public void test204() {
+		test("test204_ok.flg");
+	}
+
+	@Test
+	public void test205() {
+		test("test205_ok.flg");
+	}
+
+	@Test
+	public void test206() {
+		test("test206_ok.flg");
+	}
+
+	@Test
+	public void test207() {
+		test("test207_ok.flg");
+	}
+
+	@Test
+	public void test208() {
+		test("test208_ok.flg");
+	}
+
+	@Test
+	public void test209() {
+		test("test209_ok.flg");
+	}
+
+	@Test
+	public void test210() {
+		test("test210_ok.flg");
+	}
+
+	@Test
+	public void test211() {
+		test("test211_ok.flg");
+	}
+
+	@Test
+	public void test212() {
+		test("test212_ok.flg");
+	}
+
+	@Test
+	public void test213() {
+		test("test213_ok.flg");
+	}
+
+	@Test
+	public void test214() {
+		test("test214_ok.flg");
+	}
+
+	@Test
+	public void test215() {
+		test("test215_ok.flg");
+	}
+
 }

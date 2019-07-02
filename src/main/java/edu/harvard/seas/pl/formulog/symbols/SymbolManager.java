@@ -38,7 +38,7 @@ public class SymbolManager {
 	private final Map<String, Symbol> memo = new HashMap<>();
 	private final Map<Symbol, Type> typeOf = new HashMap<>();
 	private TupleSymbolFactory tupleSymbolFactory;
-	private FunctionSymbolForPredicateFactory functionSymbolForPredicateFactory;
+	private PredicateFunctionSymbolFactory functionSymbolForPredicateFactory;
 
 	private boolean initialized = false;
 
@@ -47,7 +47,7 @@ public class SymbolManager {
 			throw new IllegalStateException("Cannot initialize symbol manager multiple times.");
 		}
 		tupleSymbolFactory = new TupleSymbolFactory(this);
-		functionSymbolForPredicateFactory = new FunctionSymbolForPredicateFactory(this);
+		functionSymbolForPredicateFactory = new PredicateFunctionSymbolFactory(this);
 		BuiltInTypeSymbol.registerAll(this);
 		BuiltInConstructorSymbol.registerAll(this);
 		BuiltInFunctionSymbol.registerAll(this);

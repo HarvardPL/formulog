@@ -29,7 +29,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import edu.harvard.seas.pl.formulog.ast.Annotation;
 import edu.harvard.seas.pl.formulog.ast.Atoms;
 import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
@@ -42,6 +41,7 @@ import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
+import edu.harvard.seas.pl.formulog.ast.RelationProperties;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
@@ -51,7 +51,7 @@ import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.symbols.FunctionSymbolForPredicateFactory.PredicateFunctionSymbol;
+import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbolFactory.PredicateFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.SymbolType;
@@ -94,7 +94,7 @@ public class MagicSetTransformer {
 			Set<Rule> adRules = adorn(Collections.singleton(adornedQuery.getSymbol()));
 			Set<Rule> magicRules = makeMagicRules(adRules);
 			magicRules.add(makeSeedRule(adornedQuery));
-			Program magicProg = new ProgramImpl(magicRules, origProg, false);
+			Program magicProg = new ProgramImpl(magicRules);
 			if (!isStratified(magicProg)) {
 				magicProg = stratify(magicProg, adRules);
 			}
@@ -225,8 +225,8 @@ public class MagicSetTransformer {
 			}
 
 			@Override
-			public Set<Annotation> getAnnotations(Symbol sym) {
-				return origProg.getAnnotations(sym);
+			public RelationProperties getRelationProperties(Symbol sym) {
+				throw new UnsupportedOperationException();
 			}
 
 		};
@@ -236,13 +236,13 @@ public class MagicSetTransformer {
 		topDownIsDefault = false;
 		Set<Symbol> bottomUpSymbols = new HashSet<>();
 		for (Symbol sym : origProg.getRuleSymbols()) {
-			if (!origProg.getAnnotations(sym).contains(Annotation.TOPDOWN)) {
+			if (!origProg.getRelationProperties(sym).isTopDown()) {
 				bottomUpSymbols.add(sym);
 			}
 		}
 		Set<Rule> adRules = adorn(bottomUpSymbols);
 		Set<Rule> magicRules = makeMagicRules(adRules);
-		Program magicProg = new ProgramImpl(magicRules, origProg, true);
+		Program magicProg = new ProgramImpl(magicRules);
 		if (!isStratified(magicProg)) {
 			magicProg = stratify(magicProg, adRules);
 		}
@@ -252,7 +252,7 @@ public class MagicSetTransformer {
 		return magicProg;
 	}
 
-	private static Program stripAdornments(Program prog) throws InvalidProgramException {
+	private Program stripAdornments(Program prog) throws InvalidProgramException {
 		Set<Rule> rules = new HashSet<>();
 		for (Symbol sym : prog.getRuleSymbols()) {
 			for (Rule r : prog.getRules(sym)) {
@@ -267,7 +267,7 @@ public class MagicSetTransformer {
 				rules.add(BasicRule.get(newHead, newBody));
 			}
 		}
-		return new ProgramImpl(rules, prog, true);
+		return new ProgramImpl(rules);
 	}
 
 	private static Atom stripAdornment(Atom atom) {
@@ -336,8 +336,8 @@ public class MagicSetTransformer {
 		if (!sym.getSymbolType().isIDBSymbol()) {
 			return false;
 		}
-		Set<Annotation> annos = origProg.getAnnotations(sym);
-		return annos.contains(Annotation.TOPDOWN) || (topDownIsDefault && !annos.contains(Annotation.BOTTOMUP));
+		RelationProperties props = origProg.getRelationProperties(sym);
+		return props.isTopDown() || (topDownIsDefault && !props.isBottomUp());
 	}
 
 	private Set<Rule> makeMagicRules(Rule r, int number) {
@@ -575,7 +575,7 @@ public class MagicSetTransformer {
 			}
 		}
 		newRules.addAll(adjustAdornedRules(adornedRules));
-		return new ProgramImpl(newRules, origProg, true);
+		return new ProgramImpl(newRules);
 	}
 
 	private List<Atom> makePositive(Iterable<Atom> atoms) {
@@ -730,43 +730,36 @@ public class MagicSetTransformer {
 
 	}
 
-	private static class ProgramImpl implements Program {
+	private class ProgramImpl implements Program {
 
 		private final Map<Symbol, Set<Rule>> rules = new HashMap<>();
 		private final Map<Symbol, Set<Atom>> facts = new HashMap<>();
-		private final boolean keepAllFacts;
+		private final Map<Symbol, RelationProperties> props = new HashMap<>();
 
-		public final Program origProg;
-
-		public ProgramImpl(Set<Rule> rs, Program origProg, boolean keepAllFacts) throws InvalidProgramException {
-			this.origProg = origProg;
-			this.keepAllFacts = keepAllFacts;
+		public ProgramImpl(Set<Rule> rs) throws InvalidProgramException {
 			HiddenPredicateFinder hpf = new HiddenPredicateFinder(origProg);
 			for (Rule r : rs) {
 				for (Atom head : r.getHead()) {
 					Util.lookupOrCreate(rules, head.getSymbol(), () -> new HashSet<>()).add(r);
 				}
-				if (!keepAllFacts) {
-					for (Atom a : r.getBody()) {
-						Symbol sym = a.getSymbol();
-						if (sym.getSymbolType().isEDBSymbol()) {
-							facts.putIfAbsent(sym, origProg.getFacts(sym));
-						}
-						for (Term t : a.getArgs()) {
-							hpf.findHiddenPredicates(t);
-						}
+				for (Atom a : r.getBody()) {
+					Symbol sym = a.getSymbol();
+					if (sym.getSymbolType().isEDBSymbol()) {
+						facts.putIfAbsent(sym, origProg.getFacts(sym));
 					}
-					for (Symbol psym : hpf.getSeenPredicates()) {
-						if (psym.getSymbolType().isEDBSymbol()) {
-							facts.putIfAbsent(psym, origProg.getFacts(psym));
-						} else {
-							assert psym.getSymbolType().isIDBSymbol();
-							throw new InvalidProgramException(
-									"Cannot use IDB predicates as functions in combination with top-down rewriting: "
-											+ psym);
-						}
+					for (Term t : a.getArgs()) {
+						hpf.findHiddenPredicates(t);
 					}
+				}
+				for (Symbol psym : hpf.getSeenPredicates()) {
+					if (exploreTopDown(psym)) {
+						throw new InvalidProgramException("Cannot refer to top-down IDB predicate " + psym
+								+ " in a function; consider annotating " + psym + " with @bottomup");
 
+					}
+					if (psym.getSymbolType().isEDBSymbol()) {
+						facts.putIfAbsent(psym, origProg.getFacts(psym));
+					}
 				}
 			}
 		}
@@ -778,9 +771,6 @@ public class MagicSetTransformer {
 
 		@Override
 		public Set<Symbol> getFactSymbols() {
-			if (keepAllFacts) {
-				return origProg.getFactSymbols();
-			}
 			return Collections.unmodifiableSet(facts.keySet());
 		}
 
@@ -797,9 +787,6 @@ public class MagicSetTransformer {
 		@Override
 		public Set<Atom> getFacts(Symbol sym) {
 			assert sym.getSymbolType().isEDBSymbol();
-			if (keepAllFacts) {
-				return origProg.getFacts(sym);
-			}
 			return Util.lookupOrCreate(facts, sym, () -> Collections.emptySet());
 		}
 
@@ -815,8 +802,12 @@ public class MagicSetTransformer {
 		}
 
 		@Override
-		public Set<Annotation> getAnnotations(Symbol sym) {
-			return origProg.getAnnotations(sym);
+		public RelationProperties getRelationProperties(Symbol sym) {
+			RelationProperties p = origProg.getRelationProperties(sym);
+			if (p == null) {
+				p = Util.lookupOrCreate(props, sym, () -> new RelationProperties(sym));
+			}
+			return p;
 		}
 
 	}
