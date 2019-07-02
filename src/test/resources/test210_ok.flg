@@ -1,0 +1,22 @@
+type abc = a | b | c
+
+fun max(X: abc, Y: abc) : abc =
+  match (X, Y) with
+  | (c, _) | (_, c) => c
+  | (b, _) | (_, b) => b
+  | _ => a
+  end
+  
+input bar(abc)
+bar(a).
+bar(b).
+bar(c).
+
+output foo(abc<max,a>)
+foo(X) :- bar(X).
+
+output not_ok
+not_ok :- foo(X), X != c.
+
+output ok
+ok :- foo(c), !not_ok. 

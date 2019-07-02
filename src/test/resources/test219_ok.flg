@@ -1,0 +1,9 @@
+@bottomup
+output foo
+output bar
+
+fun f : bool = foo
+
+bar :- f.
+
+:- bar.

@@ -94,7 +94,7 @@ public class MagicSetTransformer {
 			Set<Rule> adRules = adorn(Collections.singleton(adornedQuery.getSymbol()));
 			Set<Rule> magicRules = makeMagicRules(adRules);
 			magicRules.add(makeSeedRule(adornedQuery));
-			Program magicProg = new ProgramImpl(magicRules, origProg, false);
+			Program magicProg = new ProgramImpl(magicRules);
 			if (!isStratified(magicProg)) {
 				magicProg = stratify(magicProg, adRules);
 			}
@@ -242,7 +242,7 @@ public class MagicSetTransformer {
 		}
 		Set<Rule> adRules = adorn(bottomUpSymbols);
 		Set<Rule> magicRules = makeMagicRules(adRules);
-		Program magicProg = new ProgramImpl(magicRules, origProg, true);
+		Program magicProg = new ProgramImpl(magicRules);
 		if (!isStratified(magicProg)) {
 			magicProg = stratify(magicProg, adRules);
 		}
@@ -252,7 +252,7 @@ public class MagicSetTransformer {
 		return magicProg;
 	}
 
-	private static Program stripAdornments(Program prog) throws InvalidProgramException {
+	private Program stripAdornments(Program prog) throws InvalidProgramException {
 		Set<Rule> rules = new HashSet<>();
 		for (Symbol sym : prog.getRuleSymbols()) {
 			for (Rule r : prog.getRules(sym)) {
@@ -267,7 +267,7 @@ public class MagicSetTransformer {
 				rules.add(BasicRule.get(newHead, newBody));
 			}
 		}
-		return new ProgramImpl(rules, prog, true);
+		return new ProgramImpl(rules);
 	}
 
 	private static Atom stripAdornment(Atom atom) {
@@ -575,7 +575,7 @@ public class MagicSetTransformer {
 			}
 		}
 		newRules.addAll(adjustAdornedRules(adornedRules));
-		return new ProgramImpl(newRules, origProg, true);
+		return new ProgramImpl(newRules);
 	}
 
 	private List<Atom> makePositive(Iterable<Atom> atoms) {
@@ -730,44 +730,36 @@ public class MagicSetTransformer {
 
 	}
 
-	private static class ProgramImpl implements Program {
+	private class ProgramImpl implements Program {
 
 		private final Map<Symbol, Set<Rule>> rules = new HashMap<>();
 		private final Map<Symbol, Set<Atom>> facts = new HashMap<>();
 		private final Map<Symbol, RelationProperties> props = new HashMap<>();
-		private final boolean keepAllFacts;
 
-		public final Program origProg;
-
-		public ProgramImpl(Set<Rule> rs, Program origProg, boolean keepAllFacts) throws InvalidProgramException {
-			this.origProg = origProg;
-			this.keepAllFacts = keepAllFacts;
+		public ProgramImpl(Set<Rule> rs) throws InvalidProgramException {
 			HiddenPredicateFinder hpf = new HiddenPredicateFinder(origProg);
 			for (Rule r : rs) {
 				for (Atom head : r.getHead()) {
 					Util.lookupOrCreate(rules, head.getSymbol(), () -> new HashSet<>()).add(r);
 				}
-				if (!keepAllFacts) {
-					for (Atom a : r.getBody()) {
-						Symbol sym = a.getSymbol();
-						if (sym.getSymbolType().isEDBSymbol()) {
-							facts.putIfAbsent(sym, origProg.getFacts(sym));
-						}
-						for (Term t : a.getArgs()) {
-							hpf.findHiddenPredicates(t);
-						}
+				for (Atom a : r.getBody()) {
+					Symbol sym = a.getSymbol();
+					if (sym.getSymbolType().isEDBSymbol()) {
+						facts.putIfAbsent(sym, origProg.getFacts(sym));
 					}
-					for (Symbol psym : hpf.getSeenPredicates()) {
-						if (psym.getSymbolType().isEDBSymbol()) {
-							facts.putIfAbsent(psym, origProg.getFacts(psym));
-						} else {
-							assert psym.getSymbolType().isIDBSymbol();
-							throw new InvalidProgramException(
-									"Cannot use IDB predicates as functions in combination with top-down rewriting: "
-											+ psym);
-						}
+					for (Term t : a.getArgs()) {
+						hpf.findHiddenPredicates(t);
 					}
+				}
+				for (Symbol psym : hpf.getSeenPredicates()) {
+					if (exploreTopDown(psym)) {
+						throw new InvalidProgramException("Cannot refer to top-down IDB predicate " + psym
+								+ " in a function; consider annotating " + psym + " with @bottomup");
 
+					}
+					if (psym.getSymbolType().isEDBSymbol()) {
+						facts.putIfAbsent(psym, origProg.getFacts(psym));
+					}
 				}
 			}
 		}
@@ -779,9 +771,6 @@ public class MagicSetTransformer {
 
 		@Override
 		public Set<Symbol> getFactSymbols() {
-			if (keepAllFacts) {
-				return origProg.getFactSymbols();
-			}
 			return Collections.unmodifiableSet(facts.keySet());
 		}
 
@@ -798,9 +787,6 @@ public class MagicSetTransformer {
 		@Override
 		public Set<Atom> getFacts(Symbol sym) {
 			assert sym.getSymbolType().isEDBSymbol();
-			if (keepAllFacts) {
-				return origProg.getFacts(sym);
-			}
 			return Util.lookupOrCreate(facts, sym, () -> Collections.emptySet());
 		}
 
