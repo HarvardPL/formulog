@@ -158,18 +158,7 @@ public class Interpreter {
 			AtomPreprocessor ap = new AtomPreprocessor();
 			for (Symbol sym : prog.getRuleSymbols()) {
 				for (Rule r : prog.getRules(sym)) {
-					/*
-					 * If the rule has multiple head atoms, associate the rule with the lowest
-					 * stratum represented by one of the head atoms. It would be incorrect to
-					 * evaluate the rule at a higher stratum. For instance, consider the following
-					 * program: "a(0), b :- c. d :- !b. a(42) :- !d. c." The fact "a(42)" would not
-					 * be derived if the rule "a(0), b :- c." were evaluated at the stratum of "a"
-					 * instead of the lower stratum of "b".
-					 */
-					int stratum = Integer.MAX_VALUE;
-					for (Atom a : r.getHead()) {
-						stratum = Math.min(stratum, prog.getStratumRank(a.getSymbol()));
-					}
+					int stratum = prog.getStratumRank(r.getHead().getSymbol());
 					for (BasicRule q : pp.preprocess(r, prog)) {
 						IndexedRule indexed = new IndexedRule(q, dbb);
 						Atom first = indexed.getBody(0);
@@ -499,21 +488,20 @@ public class Interpreter {
 			}
 
 			private void reportFacts(RuleSubstitution s) throws EvaluationException {
-				for (Atom a : rule.getHead()) {
-					Atom fact = Atoms.normalize(a, s);
-					boolean isNew = db.add((NormalAtom) fact);
-					if (isNew) {
-						if (factTrace) {
-							String msg = "\nBEGIN NEW FACT\nFact:\n";
-							msg += fact;
-							msg += "\n\nDerived using this rule:\n" + rule;
-							msg += "\n\nUnder this substitution:\n" + s.toSimpleString();
-							msg += "\nEND NEW FACT";
-							System.err.println(msg);
-						}
-						for (IndexedRule r : lookupRulesInCurStratum(fact.getSymbol())) {
-							exec.recursivelyAddTask(new WorkItem(fact, r, getSubstitution(r)));
-						}
+				Atom a = rule.getHead();
+				Atom fact = Atoms.normalize(a, s);
+				boolean isNew = db.add((NormalAtom) fact);
+				if (isNew) {
+					if (factTrace) {
+						String msg = "\nBEGIN NEW FACT\nFact:\n";
+						msg += fact;
+						msg += "\n\nDerived using this rule:\n" + rule;
+						msg += "\n\nUnder this substitution:\n" + s.toSimpleString();
+						msg += "\nEND NEW FACT";
+						System.err.println(msg);
+					}
+					for (IndexedRule r : lookupRulesInCurStratum(fact.getSymbol())) {
+						exec.recursivelyAddTask(new WorkItem(fact, r, getSubstitution(r)));
 					}
 				}
 			}

@@ -29,37 +29,29 @@ import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
 
 public class BasicRule implements Rule {
 
-	private final List<Atom> head;
+	private final Atom head;
 	private final List<Atom> body;
 
-	private BasicRule(List<Atom> head, List<Atom> body) {
-		this.head = Collections.unmodifiableList(new ArrayList<>(head));
+	private BasicRule(Atom head, List<Atom> body) {
+		this.head = head;
 		this.body = Collections.unmodifiableList(new ArrayList<>(body));
-		if (this.head.isEmpty()) {
-			throw new IllegalArgumentException("A rule cannot have an empty head");
-		}
 		if (this.body.isEmpty()) {
 			throw new IllegalArgumentException("A rule cannot have an empty body");
 		}
-	}
-
-	public static BasicRule get(List<Atom> head, List<Atom> body) {
-		return new BasicRule(head, body);
 	}
 
 	public static BasicRule get(Atom head, List<Atom> body) {
 		if (body.isEmpty()) {
 			return get(head);
 		}
-		return get(Collections.singletonList(head), body);
+		return new BasicRule(head, body);
 	}
 
 	public static BasicRule get(Atom head) {
 		return get(head, Collections.singletonList(Atoms.trueAtom));
 	}
 
-	@Override
-	public Iterable<Atom> getHead() {
+	public Atom getHead() {
 		return head;
 	}
 
@@ -102,12 +94,7 @@ public class BasicRule implements Rule {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		for (Iterator<Atom> it = head.iterator(); it.hasNext();) {
-			sb.append(it.next());
-			if (it.hasNext()) {
-				sb.append(",\n");
-			}
-		}
+		sb.append(head);
 		sb.append(" :-");
 		if (body.size() == 1) {
 			sb.append(" ");
@@ -125,18 +112,8 @@ public class BasicRule implements Rule {
 	}
 
 	@Override
-	public int getHeadSize() {
-		return head.size();
-	}
-
-	@Override
 	public int getBodySize() {
 		return body.size();
-	}
-
-	@Override
-	public Atom getHead(int idx) {
-		return head.get(idx);
 	}
 
 	@Override

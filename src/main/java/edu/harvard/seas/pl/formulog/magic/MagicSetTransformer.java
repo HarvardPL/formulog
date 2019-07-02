@@ -257,10 +257,7 @@ public class MagicSetTransformer {
 		Set<Rule> rules = new HashSet<>();
 		for (Symbol sym : prog.getRuleSymbols()) {
 			for (Rule r : prog.getRules(sym)) {
-				List<Atom> newHead = new ArrayList<>();
-				for (Atom atom : r.getHead()) {
-					newHead.add(stripAdornment(atom));
-				}
+				Atom newHead = stripAdornment(r.getHead());
 				List<Atom> newBody = new ArrayList<>();
 				for (Atom atom : r.getBody()) {
 					newBody.add(stripAdornment(atom));
@@ -298,22 +295,21 @@ public class MagicSetTransformer {
 				origSym = ((AdornedSymbol) adSym).getSymbol();
 			}
 			for (Rule r : origProg.getRules(origSym)) {
-				for (Atom head : r.getHead()) {
-					if (head.getSymbol().equals(origSym)) {
-						Atom adHead = Atoms.get(adSym, head.getArgs(), head.isNegated());
-						Rule adRule = Adornments.adornRule(adHead, Util.iterableToList(r.getBody()), origProg,
-								topDownIsDefault);
-						for (Atom a : adRule.getBody()) {
-							Symbol sym = a.getSymbol();
-							if (sym.getSymbolType().isIDBSymbol()) {
-								worklist.push(sym);
-							}
+				Atom head = r.getHead();
+				if (head.getSymbol().equals(origSym)) {
+					Atom adHead = Atoms.get(adSym, head.getArgs(), head.isNegated());
+					Rule adRule = Adornments.adornRule(adHead, Util.iterableToList(r.getBody()), origProg,
+							topDownIsDefault);
+					for (Atom a : adRule.getBody()) {
+						Symbol sym = a.getSymbol();
+						if (sym.getSymbolType().isIDBSymbol()) {
+							worklist.push(sym);
 						}
-						if (debug) {
-							System.err.println(adRule);
-						}
-						adRules.add(adRule);
 					}
+					if (debug) {
+						System.err.println(adRule);
+					}
+					adRules.add(adRule);
 				}
 			}
 		}
@@ -346,8 +342,7 @@ public class MagicSetTransformer {
 		Set<Rule> magicRules = new HashSet<>();
 		List<Set<Var>> liveVarsByAtom = liveVarsByAtom(r);
 		List<Atom> l = new ArrayList<>();
-		assert r.getHeadSize() == 1;
-		Atom head = r.getHead(0);
+		Atom head = r.getHead();
 		Set<Var> curLiveVars = new HashSet<>();
 		if (exploreTopDown(head.getSymbol())) {
 			Atom inputAtom = createInputAtom(head);
@@ -386,8 +381,7 @@ public class MagicSetTransformer {
 
 	private List<Set<Var>> liveVarsByAtom(Rule r) {
 		List<Set<Var>> liveVars = new ArrayList<>();
-		assert r.getHeadSize() == 1;
-		Set<Var> acc = Atoms.varSet(r.getHead(0));
+		Set<Var> acc = Atoms.varSet(r.getHead());
 		liveVars.add(acc);
 		for (int i = r.getBodySize() - 1; i > 0; i--) {
 			acc.addAll(Atoms.varSet(r.getBody(i)));
@@ -556,8 +550,7 @@ public class MagicSetTransformer {
 	private Set<Rule> adjustAdornedRules(Set<Rule> adRules) {
 		Set<Rule> newRules = new HashSet<>();
 		for (Rule r : adRules) {
-			assert r.getHeadSize() == 1;
-			Atom head = r.getHead(0);
+			Atom head = r.getHead();
 			if (exploreTopDown(head.getSymbol())) {
 				List<Atom> body = new ArrayList<>();
 				body.add(createInputAtom(head));
@@ -574,8 +567,7 @@ public class MagicSetTransformer {
 		Set<Rule> newRules = new HashSet<>();
 		for (Symbol sym : p.getRuleSymbols()) {
 			for (Rule r : p.getRules(sym)) {
-				assert r.getHeadSize() == 1;
-				List<Atom> head = makePositive(r.getHead());
+				Atom head = makePositive(r.getHead());
 				List<Atom> body = makePositive(r.getBody());
 				newRules.add(BasicRule.get(head, body));
 			}
@@ -584,17 +576,33 @@ public class MagicSetTransformer {
 		return new ProgramImpl(newRules);
 	}
 
+	private Atom makePositive(Atom atom) {
+		Symbol sym = atom.getSymbol();
+		if (sym.getSymbolType().isIDBSymbol() && !(sym instanceof InputSymbol || sym instanceof SupSymbol)) {
+			if (atom.isNegated()) {
+				return null;
+			}
+			atom = Atoms.getPositive(new PositiveSymbol(sym), atom.getArgs());
+		}
+		return atom;
+	}
+
 	private List<Atom> makePositive(Iterable<Atom> atoms) {
 		List<Atom> l = new ArrayList<>();
 		for (Atom a : atoms) {
-			Symbol sym = a.getSymbol();
-			if (sym.getSymbolType().isIDBSymbol() && !(sym instanceof InputSymbol || sym instanceof SupSymbol)) {
-				if (a.isNegated()) {
-					continue;
-				}
-				a = Atoms.getPositive(new PositiveSymbol(sym), a.getArgs());
+			// Symbol sym = a.getSymbol();
+			// if (sym.getSymbolType().isIDBSymbol() && !(sym instanceof InputSymbol || sym
+			// instanceof SupSymbol)) {
+			// if (a.isNegated()) {
+			// continue;
+			// }
+			// a = Atoms.getPositive(new PositiveSymbol(sym), a.getArgs());
+			// }
+			// l.add(a);
+			Atom b = makePositive(a);
+			if (b != null) {
+				l.add(b);
 			}
-			l.add(a);
 		}
 		return l;
 	}
@@ -745,9 +753,8 @@ public class MagicSetTransformer {
 		public ProgramImpl(Set<Rule> rs) throws InvalidProgramException {
 			HiddenPredicateFinder hpf = new HiddenPredicateFinder(origProg);
 			for (Rule r : rs) {
-				for (Atom head : r.getHead()) {
-					Util.lookupOrCreate(rules, head.getSymbol(), () -> new HashSet<>()).add(r);
-				}
+				Atom head = r.getHead();
+				Util.lookupOrCreate(rules, head.getSymbol(), () -> new HashSet<>()).add(r);
 				for (Atom a : r.getBody()) {
 					Symbol sym = a.getSymbol();
 					if (sym.getSymbolType().isEDBSymbol()) {

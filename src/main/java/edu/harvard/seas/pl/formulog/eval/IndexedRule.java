@@ -38,14 +38,14 @@ import edu.harvard.seas.pl.formulog.util.Util;
 
 public class IndexedRule implements Rule {
 
-	private final List<Atom> head;
+	private final Atom head;
 	private final List<Atom> body;
 	private final List<Integer> idxs;
 
 	public IndexedRule(Rule rule, IndexedFactDBBuilder db) {
-		this.head = Util.iterableToList(rule.getHead());
-		this.body = Util.iterableToList(rule.getBody());
-		this.idxs = createIndexes(db);
+		head = rule.getHead();
+		body = Util.iterableToList(rule.getBody());
+		idxs = createIndexes(db);
 	}
 
 	private List<Integer> createIndexes(IndexedFactDBBuilder db) {
@@ -71,7 +71,7 @@ public class IndexedRule implements Rule {
 	}
 
 	@Override
-	public Iterable<Atom> getHead() {
+	public Atom getHead() {
 		return head;
 	}
 
@@ -81,18 +81,8 @@ public class IndexedRule implements Rule {
 	}
 
 	@Override
-	public int getHeadSize() {
-		return head.size();
-	}
-
-	@Override
 	public int getBodySize() {
 		return body.size();
-	}
-
-	@Override
-	public Atom getHead(int idx) {
-		return head.get(idx);
 	}
 
 	@Override
@@ -107,12 +97,7 @@ public class IndexedRule implements Rule {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		for (Iterator<Atom> it = head.iterator(); it.hasNext();) {
-			sb.append(it.next());
-			if (it.hasNext()) {
-				sb.append(",\n");
-			}
-		}
+		sb.append(head);
 		sb.append(" :-");
 		if (body.size() == 1) {
 			sb.append(" ");

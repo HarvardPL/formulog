@@ -245,25 +245,10 @@ public class TypeChecker {
 		public Rule typeCheckRule(Rule r) throws TypeException {
 			Map<Var, Type> subst = new HashMap<>();
 			processAtoms(r.getBody(), subst);
-			processAtoms(r.getHead(), subst);
+			genConstraints(r.getHead(), subst);
 			if (!checkConstraints()) {
 				String msg = "Type error in rule:\n";
-				for (Iterator<Atom> it = r.getHead().iterator(); it.hasNext();) {
-					msg += it.next();
-					if (it.hasNext()) {
-						msg += ",\n";
-					} else {
-						msg += " :-\n";
-					}
-				}
-				for (Iterator<Atom> it = r.getBody().iterator(); it.hasNext();) {
-					msg += "\t" + it.next();
-					if (it.hasNext()) {
-						msg += ",\n";
-					} else {
-						msg += ".\n";
-					}
-				}
+				msg += r + "\n";
 				msg += error;
 				throw new TypeException(msg);
 			}
@@ -278,10 +263,7 @@ public class TypeChecker {
 					m.put(x, c);
 				}
 			}
-			List<Atom> newHead = new ArrayList<>();
-			for (Atom a : r.getHead()) {
-				newHead.add(Atoms.applySubstitution(a, m));
-			}
+			Atom newHead = Atoms.applySubstitution(r.getHead(), m);
 			List<Atom> newBody = new ArrayList<>();
 			for (Atom a : r.getBody()) {
 				newBody.add(Atoms.applySubstitution(a, m));

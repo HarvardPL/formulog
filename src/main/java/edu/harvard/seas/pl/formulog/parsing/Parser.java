@@ -511,9 +511,9 @@ public class Parser {
 		public Void visitClauseStmt(ClauseStmtContext ctx) {
 			List<Atom> head = atomListContextToAtomList(ctx.clause().head);
 			List<Atom> body = atomListContextToAtomList(ctx.clause().body);
-			BasicRule rule = makeRule(head, body);
-			for (Atom a : head) {
-				Symbol sym = a.getSymbol();
+			List<BasicRule> newRules = makeRules(head, body);
+			for (BasicRule rule : newRules) {
+				Symbol sym = rule.getHead().getSymbol();
 				if (!sym.getSymbolType().equals(SymbolType.IDB_REL)) {
 					throw new RuntimeException("Cannot define a rule for a non-IDB symbol: " + sym);
 				}
@@ -522,17 +522,18 @@ public class Parser {
 			return null;
 		}
 
-		private BasicRule makeRule(List<Atom> head, List<Atom> body) {
+		private BasicRule makeRule(Atom head, List<Atom> body) {
 			List<Atom> newBody = new ArrayList<>(body);
-			List<Atom> newHead = new ArrayList<>();
-			for (Atom hd : head) {
-				newHead.add(removeFuncCallsFromAtom(hd, newBody));
-			}
-			if (newBody.isEmpty()) {
-				// Add a vacuous body.
-				newBody.add(Atoms.trueAtom);
-			}
+			Atom newHead = removeFuncCallsFromAtom(head, newBody);
 			return BasicRule.get(newHead, newBody);
+		}
+
+		private List<BasicRule> makeRules(List<Atom> head, List<Atom> body) {
+			List<BasicRule> rules = new ArrayList<>();
+			for (Atom hd : head) {
+				rules.add(makeRule(hd, body));
+			}
+			return rules;
 		}
 
 		private Atom removeFuncCallsFromAtom(Atom a, List<Atom> acc) {
@@ -578,7 +579,7 @@ public class Parser {
 			Atom fact = ctx.fact().atom().accept(atomExtractor);
 			Symbol sym = fact.getSymbol();
 			if (sym.getSymbolType().equals(SymbolType.IDB_REL)) {
-				BasicRule rule = makeRule(Arrays.asList(fact), Collections.emptyList());
+				BasicRule rule = makeRule(fact, Collections.emptyList());
 				Util.lookupOrCreate(rules, sym, () -> new HashSet<>()).add(rule);
 			} else if (sym.getSymbolType().equals(SymbolType.EDB_REL)) {
 				Util.lookupOrCreate(initialFacts, sym, () -> new HashSet<>()).add(fact);

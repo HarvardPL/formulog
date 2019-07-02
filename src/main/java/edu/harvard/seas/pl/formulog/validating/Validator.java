@@ -143,10 +143,7 @@ public class Validator {
 	}
 
 	private static Rule simplifyRule(Rule r) {
-		List<Atom> newHead = new ArrayList<>();
-		for (Atom a : r.getHead()) {
-			newHead.add(simplifyAtom(a));
-		}
+		Atom newHead = simplifyAtom(r.getHead());
 		List<Atom> newBody = new ArrayList<>();
 		for (Atom a : r.getBody()) {
 			newBody.add(simplifyAtom(a));
@@ -295,13 +292,10 @@ public class Validator {
 
 	private Rule removeNestedFuncs(Rule r) {
 		List<Atom> newBody = new ArrayList<>();
-		List<Atom> newHead = new ArrayList<>();
 		for (Atom a : r.getBody()) {
 			newBody.add(removeFuncs(a, newBody));
 		}
-		for (Atom a : r.getHead()) {
-			newHead.add(removeFuncs(a, newBody));
-		}
+		Atom newHead = removeFuncs(r.getHead(), newBody);
 		return BasicRule.get(newHead, newBody);
 	}
 
@@ -322,7 +316,7 @@ public class Validator {
 		if (newBody.isEmpty()) {
 			newBody.add(Atoms.trueAtom);
 		}
-		return BasicRule.get(Util.iterableToList(r.getHead()), newBody);
+		return BasicRule.get(r.getHead(), newBody);
 	}
 
 	private void simplifyNegatedUnification(UnifyAtom a, List<Atom> acc) {
@@ -375,14 +369,11 @@ public class Validator {
 	private Rule removeVarEqualities(Rule r) {
 		List<Atom> body = Util.iterableToList(r.getBody());
 		Substitution subst = removeVarEqualities(body);
-		List<Atom> newHead = new ArrayList<>();
 		List<Atom> newBody = new ArrayList<>();
 		for (Atom a : body) {
 			newBody.add(Atoms.applySubstitution(a, subst));
 		}
-		for (Atom a : r.getHead()) {
-			newHead.add(Atoms.applySubstitution(a, subst));
-		}
+		Atom newHead = Atoms.applySubstitution(r.getHead(), subst);
 		return BasicRule.get(newHead, newBody);
 	}
 
@@ -438,15 +429,15 @@ public class Validator {
 	}
 
 	private Set<Var> validateHead(Rule r) throws InvalidProgramException {
-		Set<Var> vars = new HashSet<>();
-		for (Atom a : r.getHead()) {
-			Symbol sym = a.getSymbol();
-			if (!sym.getSymbolType().isIDBSymbol()) {
-				throw new InvalidProgramException("Cannot define rules for non-IDB symbol " + sym);
-			}
-			vars.addAll(Atoms.varSet(a));
+		Atom hd = r.getHead();
+		if (hd.isNegated()) {
+			throw new InvalidProgramException("Cannot define a rule with a negated head\n" + r);
 		}
-		return vars;
+		Symbol sym = hd.getSymbol();
+		if (!sym.getSymbolType().isIDBSymbol()) {
+			throw new InvalidProgramException("Cannot define rules for non-IDB symbol " + sym);
+		}
+		return Atoms.varSet(hd);
 	}
 
 	private void validateBody(Iterable<Atom> body, Set<Var> unboundVars) throws InvalidProgramException {

@@ -50,7 +50,7 @@ public class RulePreprocessor {
 			}
 			++i;
 		}
-		List<Atom> head = Util.iterableToList(r.getHead());
+		Atom head = r.getHead();
 		List<Atom> body = Util.iterableToList(r.getBody());
 		if (idbIdxs.isEmpty()) {
 			List<Atom> newBody = new ArrayList<>(body);

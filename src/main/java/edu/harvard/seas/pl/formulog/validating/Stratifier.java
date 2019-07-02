@@ -55,11 +55,11 @@ import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbolFactory.Predi
 public class Stratifier {
 
 	private final Program prog;
-	
+
 	public Stratifier(Program prog) {
 		this.prog = prog;
 	}
-	
+
 	public List<Stratum> stratify() throws InvalidProgramException {
 		Graph<Symbol, DependencyTypeWrapper> g = new DefaultDirectedGraph<>(DependencyTypeWrapper.class);
 		for (Symbol sym : prog.getRuleSymbols()) {
@@ -68,13 +68,12 @@ public class Stratifier {
 				for (Atom bd : r.getBody()) {
 					depends.processAtom(bd);
 				}
-				for (Atom hd : r.getHead()) {
-					Symbol hdSym = hd.getSymbol();
-					g.addVertex(hd.getSymbol());
-					for (Symbol bdSym : depends) {
-						g.addVertex(bdSym);
-						g.addEdge(bdSym, hdSym, new DependencyTypeWrapper(depends.getDependencyType(bdSym)));
-					}
+				Atom hd = r.getHead();
+				Symbol hdSym = hd.getSymbol();
+				g.addVertex(hdSym);
+				for (Symbol bdSym : depends) {
+					g.addVertex(bdSym);
+					g.addEdge(bdSym, hdSym, new DependencyTypeWrapper(depends.getDependencyType(bdSym)));
 				}
 			}
 		}
@@ -110,7 +109,7 @@ public class Stratifier {
 			RelationProperties props = prog.getRelationProperties(sym);
 			return props != null && props.isAggregated();
 		}
-		
+
 		public void processAtom(Atom a) {
 			if (a.isNegated() || isAggregate(a)) {
 				addNegOrAggRel(a.getSymbol());
@@ -139,7 +138,7 @@ public class Stratifier {
 			negOrAggFunDependencies.add(sym);
 			allDependencies.add(sym);
 		}
-		
+
 		private void addNegOrAggRel(Symbol sym) {
 			negOrAggRelDependencies.add(sym);
 			allDependencies.add(sym);
@@ -178,7 +177,7 @@ public class Stratifier {
 
 			}, null);
 		}
-		
+
 		private void processExpr(Expr expr) {
 			expr.visit(new ExprVisitor<Void, Void>() {
 
@@ -200,7 +199,7 @@ public class Stratifier {
 					}
 					return null;
 				}
-				
+
 			}, null);
 		}
 
@@ -228,28 +227,28 @@ public class Stratifier {
 	}
 
 	private static enum DependencyType {
-		
+
 		NEG_OR_AGG_IN_FUN,
-		
+
 		NEG_OR_AGG_IN_REL,
-		
+
 		POSITIVE;
-		
+
 	}
 
 	// Needed because edges need to have unique objects as labels...
 	private static class DependencyTypeWrapper {
-		
+
 		private final DependencyType d;
-		
+
 		public DependencyTypeWrapper(DependencyType d) {
 			this.d = d;
 		}
-		
+
 		public DependencyType get() {
 			return d;
 		}
-		
+
 	}
 
 }
