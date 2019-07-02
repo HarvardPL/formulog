@@ -20,15 +20,26 @@ package edu.harvard.seas.pl.formulog.validating;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.ast.Program;
+import java.util.Set;
+
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 
-public interface ValidProgram extends Program {
+public class Stratum {
 
-	int getStratumRank(Symbol sym);
+	private final Set<Symbol> predicateSyms;
+	private final boolean hasRecursiveNegationOrAggregation;
+
+	public Stratum(Set<Symbol> predicateSyms, boolean hasRecursiveNegationOrAggregation) {
+		this.predicateSyms = predicateSyms;
+		this.hasRecursiveNegationOrAggregation = hasRecursiveNegationOrAggregation;
+	}
+
+	public Set<Symbol> getPredicateSyms() {
+		return predicateSyms;
+	}
 	
-	Stratum getStratum(int rank);
-	
-	int getNumberOfStrata();
+	public boolean hasRecursiveNegationOrAggregation() {
+		return hasRecursiveNegationOrAggregation;
+	}
 	
 }

@@ -97,7 +97,7 @@ public class ValidatingTest {
 	
 	@Test
 	public void test216() {
-		test("test216_bd.flg");
+		test("test216_ok.flg");
 	}
 	
 	@Test

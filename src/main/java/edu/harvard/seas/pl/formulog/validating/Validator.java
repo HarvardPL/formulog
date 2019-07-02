@@ -21,7 +21,6 @@ package edu.harvard.seas.pl.formulog.validating;
  */
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -79,7 +78,7 @@ public class Validator {
 			validateFacts();
 			validateRules();
 			validateFunctionDefs();
-			List<Set<Symbol>> strata = (new Stratifier(prog)).stratify();
+			List<Stratum> strata = (new Stratifier(prog)).stratify();
 			vprog = new ValidProgramImpl(strata);
 		}
 		return vprog;
@@ -587,14 +586,14 @@ public class Validator {
 	private class ValidProgramImpl implements ValidProgram {
 
 		private final Map<Symbol, Integer> ranks;
-		private final List<Set<Symbol>> strata;
+		private final List<Stratum> strata;
 
-		private ValidProgramImpl(List<Set<Symbol>> strata) {
+		private ValidProgramImpl(List<Stratum> strata) {
 			this.strata = strata;
 			ranks = new HashMap<>();
 			int i = 0;
-			for (Set<Symbol> stratum : strata) {
-				for (Symbol sym : stratum) {
+			for (Stratum stratum : strata) {
+				for (Symbol sym : stratum.getPredicateSyms()) {
 					assert !ranks.containsKey(sym);
 					ranks.put(sym, i);
 				}
@@ -643,12 +642,12 @@ public class Validator {
 		}
 
 		@Override
-		public Set<Symbol> getStratum(int rank) {
+		public Stratum getStratum(int rank) {
 			if (rank < 0 || rank >= strata.size()) {
 				throw new IllegalArgumentException(
 						"Rank of " + rank + " out of required range of [0, " + strata.size() + ")");
 			}
-			return Collections.unmodifiableSet(strata.get(rank));
+			return strata.get(rank);
 		}
 
 		@Override

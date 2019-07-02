@@ -82,6 +82,12 @@ public class Interpreter {
 	}
 
 	public synchronized IndexedFactDB run(int nthreads) throws EvaluationException {
+		for (int i = 0; i < prog.getNumberOfStrata(); ++i) {
+			if (prog.getStratum(i).hasRecursiveNegationOrAggregation()) {
+				throw new EvaluationException(
+						"This interpreter cannot evaluate a program with recursive negation or aggregation");
+			}
+		}
 		if (res == null) {
 			Eval e = new Eval(nthreads);
 			try {

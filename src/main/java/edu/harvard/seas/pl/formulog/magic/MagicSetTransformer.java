@@ -63,6 +63,7 @@ import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 import edu.harvard.seas.pl.formulog.validating.Stratifier;
+import edu.harvard.seas.pl.formulog.validating.Stratum;
 
 public class MagicSetTransformer {
 
@@ -540,7 +541,12 @@ public class MagicSetTransformer {
 
 	private boolean isStratified(Program p) {
 		try {
-			(new Stratifier(p)).stratify();
+			Stratifier stratifier = new Stratifier(p);
+			for (Stratum s : stratifier.stratify()) {
+				if (s.hasRecursiveNegationOrAggregation()) {
+					return false;
+				}
+			}
 			return true;
 		} catch (InvalidProgramException e) {
 			return false;

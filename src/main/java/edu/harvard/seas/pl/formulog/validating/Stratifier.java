@@ -60,8 +60,8 @@ public class Stratifier {
 		this.prog = prog;
 	}
 	
-	public List<Set<Symbol>> stratify() throws InvalidProgramException {
-		Graph<Symbol, BoolWrapper> g = new DefaultDirectedGraph<>(BoolWrapper.class);
+	public List<Stratum> stratify() throws InvalidProgramException {
+		Graph<Symbol, DependencyTypeWrapper> g = new DefaultDirectedGraph<>(DependencyTypeWrapper.class);
 		for (Symbol sym : prog.getRuleSymbols()) {
 			for (Rule r : prog.getRules(sym)) {
 				DependencyFinder depends = new DependencyFinder();
@@ -73,24 +73,27 @@ public class Stratifier {
 					g.addVertex(hd.getSymbol());
 					for (Symbol bdSym : depends) {
 						g.addVertex(bdSym);
-						g.addEdge(bdSym, hdSym, new BoolWrapper(depends.isNegativeDependency(bdSym)));
+						g.addEdge(bdSym, hdSym, new DependencyTypeWrapper(depends.getDependencyType(bdSym)));
 					}
 				}
 			}
 		}
-		StrongConnectivityAlgorithm<Symbol, BoolWrapper> k = new KosarajuStrongConnectivityInspector<>(g);
-		Graph<Graph<Symbol, BoolWrapper>, DefaultEdge> condensation = k.getCondensation();
-		TopologicalOrderIterator<Graph<Symbol, BoolWrapper>, DefaultEdge> topo = new TopologicalOrderIterator<>(
+		StrongConnectivityAlgorithm<Symbol, DependencyTypeWrapper> k = new KosarajuStrongConnectivityInspector<>(g);
+		Graph<Graph<Symbol, DependencyTypeWrapper>, DefaultEdge> condensation = k.getCondensation();
+		TopologicalOrderIterator<Graph<Symbol, DependencyTypeWrapper>, DefaultEdge> topo = new TopologicalOrderIterator<>(
 				condensation);
-		List<Set<Symbol>> strata = new ArrayList<>();
+		List<Stratum> strata = new ArrayList<>();
 		while (topo.hasNext()) {
-			Graph<Symbol, BoolWrapper> component = topo.next();
-			for (BoolWrapper b : component.edgeSet()) {
-				if (b.getValue()) {
-					throw new InvalidProgramException("The program uses non-stratified negation and/or aggregation");
+			boolean hasRecursiveNegationOrAggregation = false;
+			Graph<Symbol, DependencyTypeWrapper> component = topo.next();
+			for (DependencyTypeWrapper dw : component.edgeSet()) {
+				DependencyType d = dw.get();
+				if (d.equals(DependencyType.NEG_OR_AGG_IN_FUN)) {
+					throw new InvalidProgramException("Not stratified...");
 				}
+				hasRecursiveNegationOrAggregation |= d.equals(DependencyType.NEG_OR_AGG_IN_REL);
 			}
-			strata.add(component.vertexSet());
+			strata.add(new Stratum(component.vertexSet(), hasRecursiveNegationOrAggregation));
 		}
 		return strata;
 	}
@@ -99,7 +102,8 @@ public class Stratifier {
 
 		private final Set<Symbol> visitedFunctions = new HashSet<>();
 		private final Set<Symbol> allDependencies = new HashSet<>();
-		private final Set<Symbol> negativeDependencies = new HashSet<>();
+		private final Set<Symbol> negOrAggFunDependencies = new HashSet<>();
+		private final Set<Symbol> negOrAggRelDependencies = new HashSet<>();
 
 		private boolean isAggregate(Atom a) {
 			Symbol sym = a.getSymbol();
@@ -109,7 +113,7 @@ public class Stratifier {
 		
 		public void processAtom(Atom a) {
 			if (a.isNegated() || isAggregate(a)) {
-				addNegative(a.getSymbol());
+				addNegOrAggRel(a.getSymbol());
 			} else {
 				addPositive(a.getSymbol());
 			}
@@ -118,12 +122,26 @@ public class Stratifier {
 			}
 		}
 
-		public boolean isNegativeDependency(Symbol sym) {
-			return negativeDependencies.contains(sym);
+		public DependencyType getDependencyType(Symbol sym) {
+			// Order is important here, since having a negative or aggregate
+			// dependency within a function body subsumes having one in a
+			// relation definition.
+			if (negOrAggFunDependencies.contains(sym)) {
+				return DependencyType.NEG_OR_AGG_IN_FUN;
+			}
+			if (negOrAggRelDependencies.contains(sym)) {
+				return DependencyType.NEG_OR_AGG_IN_REL;
+			}
+			return DependencyType.POSITIVE;
 		}
 
-		private void addNegative(Symbol sym) {
-			negativeDependencies.add(sym);
+		private void addNegOrAggFun(Symbol sym) {
+			negOrAggFunDependencies.add(sym);
+			allDependencies.add(sym);
+		}
+		
+		private void addNegOrAggRel(Symbol sym) {
+			negOrAggRelDependencies.add(sym);
 			allDependencies.add(sym);
 		}
 
@@ -192,7 +210,7 @@ public class Stratifier {
 				return;
 			}
 			if (s instanceof PredicateFunctionSymbol) {
-				addNegative(((PredicateFunctionSymbol) s).getPredicateSymbol());
+				addNegOrAggFun(((PredicateFunctionSymbol) s).getPredicateSymbol());
 				return;
 			}
 			FunctionDef def1 = prog.getDef(s);
@@ -209,18 +227,29 @@ public class Stratifier {
 
 	}
 
-	private static class BoolWrapper {
+	private static enum DependencyType {
+		
+		NEG_OR_AGG_IN_FUN,
+		
+		NEG_OR_AGG_IN_REL,
+		
+		POSITIVE;
+		
+	}
 
-		private final boolean value;
-
-		public BoolWrapper(boolean value) {
-			this.value = value;
+	// Needed because edges need to have unique objects as labels...
+	private static class DependencyTypeWrapper {
+		
+		private final DependencyType d;
+		
+		public DependencyTypeWrapper(DependencyType d) {
+			this.d = d;
 		}
-
-		public boolean getValue() {
-			return value;
+		
+		public DependencyType get() {
+			return d;
 		}
-
+		
 	}
 
 }
