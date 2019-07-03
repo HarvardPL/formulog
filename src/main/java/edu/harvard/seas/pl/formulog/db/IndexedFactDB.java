@@ -107,7 +107,7 @@ public class IndexedFactDB {
 		return true;
 	}
 
-	public boolean addAggregate(NormalAtom fact) throws EvaluationException {
+	private boolean addAggregate(NormalAtom fact) throws EvaluationException {
 		Symbol sym = fact.getSymbol();
 		Term[] args = fact.getArgs();
 		Term[] arr = new Term[args.length - 1];
@@ -120,7 +120,7 @@ public class IndexedFactDB {
 		Pair<FunctionDef, Term> p = aggStuff.get(sym);
 		FunctionDef aggFunc = p.fst();
 		Term aggInit = p.snd();
-		
+
 		if (!m.containsKey(key)) {
 			agg = aggFunc.evaluate(new Term[] { agg, aggInit });
 			Term oldAgg = m.putIfAbsent(key, agg);
@@ -129,7 +129,7 @@ public class IndexedFactDB {
 				return true;
 			}
 		}
-		
+
 		Term oldAgg;
 		Term newAgg;
 		do {
@@ -142,7 +142,7 @@ public class IndexedFactDB {
 		addToAllAggregateIndices(fact, newAgg);
 		return true;
 	}
-	
+
 	private void addToAllAggregateIndices(NormalAtom atom, Term agg) throws EvaluationException {
 		Term[] args = atom.getArgs();
 		Term[] newArgs = new Term[args.length];
@@ -218,8 +218,12 @@ public class IndexedFactDB {
 		}
 
 		public synchronized IndexedFactDB build() {
-			return new IndexedFactDB(nonAggregateIndices.toArray(new IndexedNonAggregateFactSet[0]),
-					aggregateIndices.toArray(new IndexedAggregateFactSet[0]), aggStuff);
+			List<IndexedNonAggregateFactSet> nonAgg = nonAggregateIndices.stream()
+					.map(IndexedNonAggregateFactSet::makeCleanCopy).collect(Collectors.toList());
+			List<IndexedAggregateFactSet> agg = aggregateIndices.stream().map(IndexedAggregateFactSet::makeCleanCopy)
+					.collect(Collectors.toList());
+			return new IndexedFactDB(nonAgg.toArray(new IndexedNonAggregateFactSet[0]),
+					agg.toArray(new IndexedAggregateFactSet[0]), aggStuff);
 		}
 
 	}

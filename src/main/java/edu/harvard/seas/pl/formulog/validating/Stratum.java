@@ -26,14 +26,20 @@ import edu.harvard.seas.pl.formulog.symbols.Symbol;
 
 public class Stratum {
 
+	private final int rank;
 	private final Set<Symbol> predicateSyms;
 	private final boolean hasRecursiveNegationOrAggregation;
 
-	public Stratum(Set<Symbol> predicateSyms, boolean hasRecursiveNegationOrAggregation) {
+	public Stratum(int rank, Set<Symbol> predicateSyms, boolean hasRecursiveNegationOrAggregation) {
+		this.rank = rank;
 		this.predicateSyms = predicateSyms;
 		this.hasRecursiveNegationOrAggregation = hasRecursiveNegationOrAggregation;
 	}
 
+	public int getRank() {
+		return rank;
+	}
+	
 	public Set<Symbol> getPredicateSyms() {
 		return predicateSyms;
 	}

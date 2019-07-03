@@ -29,5 +29,7 @@ public interface IndexedFactSet {
 	void add(NormalAtom fact) throws EvaluationException;
 
 	Iterable<NormalAtom> query(Substitution s) throws EvaluationException;
+	
+	IndexedFactSet makeCleanCopy();
 
 }

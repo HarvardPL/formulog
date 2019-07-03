@@ -58,6 +58,16 @@ public class IndexedNonAggregateFactSet implements IndexedFactSet {
 		canonicalAtom = p.fst();
 		idxs = createIndex(p.snd(), boundVars);
 	}
+	
+	private IndexedNonAggregateFactSet(Atom canonicalAtom, IndexEntry[] idxs) {
+		this.canonicalAtom = canonicalAtom;
+		this.idxs = idxs;
+	}
+	
+	@Override
+	public IndexedNonAggregateFactSet makeCleanCopy() {
+		return new IndexedNonAggregateFactSet(canonicalAtom, idxs);
+	}
 
 	@SuppressWarnings("unchecked")
 	@Override

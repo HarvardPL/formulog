@@ -21,6 +21,7 @@ package edu.harvard.seas.pl.formulog.ast;
  */
 
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
+import edu.harvard.seas.pl.formulog.validating.Stratum;
 
 public class RelationProperties {
 
@@ -29,6 +30,7 @@ public class RelationProperties {
 	private boolean topDown;
 	private Symbol funcSym;
 	private Term unit;
+	private Stratum stratum;
 	
 	public RelationProperties(Symbol relSym) {
 		this.relSym = relSym;
@@ -75,6 +77,14 @@ public class RelationProperties {
 
 	public synchronized Term getAggrFuncUnit() {
 		return unit;
+	}
+	
+	public synchronized void setStratum(Stratum stratum) {
+		this.stratum = stratum;
+	}
+	
+	public synchronized Stratum getStratum() {
+		return stratum;
 	}
 
 }

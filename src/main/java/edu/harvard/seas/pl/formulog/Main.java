@@ -41,7 +41,7 @@ import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDB;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.eval.Interpreter;
+import edu.harvard.seas.pl.formulog.eval.InflationaryEvaluation;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
 import edu.harvard.seas.pl.formulog.parsing.ParseException;
 import edu.harvard.seas.pl.formulog.parsing.Parser;
@@ -53,6 +53,8 @@ import edu.harvard.seas.pl.formulog.unification.Unification;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
+import edu.harvard.seas.pl.formulog.validating.Stratifier;
+import edu.harvard.seas.pl.formulog.validating.Stratum;
 import edu.harvard.seas.pl.formulog.validating.ValidProgram;
 import edu.harvard.seas.pl.formulog.validating.Validator;
 
@@ -117,6 +119,16 @@ public final class Main {
 			handleException("Error while typechecking the program!", e);
 		}
 		try {
+			List<Stratum> strata = (new Stratifier(prog)).stratify();
+			for (Stratum stratum : strata) {
+				for (Symbol sym : stratum.getPredicateSyms()) {
+					prog.getRelationProperties(sym).setStratum(stratum);
+				}
+			}
+		} catch (InvalidProgramException e) {
+			handleException("Error while stratifying the program!", e);
+		}
+		try {
 			MagicSetTransformer mst = new MagicSetTransformer(prog);
 			if (q != null) {
 				System.out.println("Rewriting for query " + q + "...");
@@ -153,15 +165,14 @@ public final class Main {
 			handleException("Error while rewriting the program!", e);
 		}
 		System.out.println("Evaluating...");
-		Interpreter interp = new Interpreter(vprog);
+		InflationaryEvaluation eval = new InflationaryEvaluation(vprog);
+		System.out.println("Results:");
+		IndexedFactDB db = null;
 		try {
-			int nthreads = cl.hasOption("j") ? Integer.parseInt(cl.getOptionValue("j")) : 1;
-			interp.run(nthreads);
+			db = eval.get();
 		} catch (EvaluationException e) {
 			handleException("Error while evaluating the program!", e);
 		}
-		System.out.println("Results:");
-		IndexedFactDB db = interp.getResult();
 		boolean debugMst = System.getProperty("debugMst") != null;
 		if (q == null || debugMst) {
 			PrintStream out = System.out;

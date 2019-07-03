@@ -44,6 +44,8 @@ public class IndexedAggregateFactSet implements IndexedFactSet {
 	private final boolean aggVarIsBound;
 	private final NormalAtom atom;
 
+	private final Map<Key, Map<Key, Term>> map = new ConcurrentHashMap<>();
+
 	public IndexedAggregateFactSet(NormalAtom atom, Set<Var> boundVars) {
 		this.atom = atom;
 		Term[] args = atom.getArgs();
@@ -64,6 +66,19 @@ public class IndexedAggregateFactSet implements IndexedFactSet {
 		unboundIndex = unbound.toArray(new Var[0]);
 	}
 
+	private IndexedAggregateFactSet(Var[] index, Var[] unboundIndex, Var aggVar, boolean aggVarIsBound, NormalAtom atom) {
+		this.index = index;
+		this.unboundIndex = unboundIndex;
+		this.aggVar = aggVar;
+		this.aggVarIsBound = aggVarIsBound;
+		this.atom = atom;
+	}
+	
+	@Override
+	public IndexedAggregateFactSet makeCleanCopy() {
+		return new IndexedAggregateFactSet(index, unboundIndex, aggVar, aggVarIsBound, atom);
+	}
+
 	private static boolean allVars(Term[] ts) {
 		for (Term t : ts) {
 			if (!(t instanceof Var)) {
@@ -72,8 +87,6 @@ public class IndexedAggregateFactSet implements IndexedFactSet {
 		}
 		return true;
 	}
-
-	Map<Key, Map<Key, Term>> map = new ConcurrentHashMap<>();
 
 	@Override
 	public void add(NormalAtom fact) throws EvaluationException {

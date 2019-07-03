@@ -34,6 +34,7 @@ import edu.harvard.seas.pl.formulog.ast.Atoms.UnifyAtom;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDB.IndexedFactDBBuilder;
+import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.util.Util;
 
 public class IndexedRule implements Rule {
@@ -42,10 +43,10 @@ public class IndexedRule implements Rule {
 	private final List<Atom> body;
 	private final List<Integer> idxs;
 
-	public IndexedRule(Rule rule, IndexedFactDBBuilder db) {
+	public IndexedRule(Rule rule, IndexedFactDBBuilder dbb) {
 		head = rule.getHead();
 		body = Util.iterableToList(rule.getBody());
-		idxs = createIndexes(db);
+		idxs = createIndexes(dbb);
 	}
 
 	private List<Integer> createIndexes(IndexedFactDBBuilder db) {
@@ -56,6 +57,11 @@ public class IndexedRule implements Rule {
 
 				@Override
 				public Integer visit(NormalAtom normalAtom, Void in) {
+					Symbol sym = normalAtom.getSymbol();
+					if (sym instanceof SemiNaiveSymbol) {
+						sym = ((SemiNaiveSymbol) sym).getUnderlyingSymbol();
+						normalAtom = (NormalAtom) Atoms.get(sym, normalAtom.getArgs(), normalAtom.isNegated());
+					}
 					return db.addIndex(normalAtom, boundVars);
 				}
 

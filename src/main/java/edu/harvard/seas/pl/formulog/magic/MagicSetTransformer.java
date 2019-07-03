@@ -69,6 +69,7 @@ public class MagicSetTransformer {
 
 	private final Program origProg;
 	private boolean topDownIsDefault;
+	private final Map<Symbol, RelationProperties> relationProps = new HashMap<>();
 
 	private static final boolean debug = System.getProperty("debugMst") != null;
 
@@ -96,9 +97,9 @@ public class MagicSetTransformer {
 			Set<Rule> magicRules = makeMagicRules(adRules);
 			magicRules.add(makeSeedRule(adornedQuery));
 			Program magicProg = new ProgramImpl(magicRules);
-			if (!isStratified(magicProg)) {
-				magicProg = stratify(magicProg, adRules);
-			}
+			// if (!isStratified(magicProg)) {
+			// magicProg = stratify(magicProg, adRules);
+			// }
 			if (useDemandTransformation) {
 				magicProg = stripAdornments(magicProg);
 			} else {
@@ -244,9 +245,9 @@ public class MagicSetTransformer {
 		Set<Rule> adRules = adorn(bottomUpSymbols);
 		Set<Rule> magicRules = makeMagicRules(adRules);
 		Program magicProg = new ProgramImpl(magicRules);
-		if (!isStratified(magicProg)) {
-			magicProg = stratify(magicProg, adRules);
-		}
+		// if (!isStratified(magicProg)) {
+		// magicProg = stratify(magicProg, adRules);
+		// }
 		if (useDemandTransformation) {
 			magicProg = stripAdornments(magicProg);
 		}
@@ -357,7 +358,7 @@ public class MagicSetTransformer {
 			if (exploreTopDown(sym)) {
 				Set<Var> supVars = Atoms.varSet(a).stream().filter(curLiveVars::contains).collect(Collectors.toSet());
 				supVars.addAll(nextLiveVars);
-				Atom supAtom = createSupAtom(supVars, number, supCount);
+				Atom supAtom = createSupAtom(supVars, number, supCount, head.getSymbol());
 				magicRules.add(BasicRule.get(supAtom, l));
 				magicRules.add(BasicRule.get(createInputAtom(a), Collections.singletonList(supAtom)));
 				l = new ArrayList<>();
@@ -391,18 +392,28 @@ public class MagicSetTransformer {
 		return liveVars;
 	}
 
-	private static Atom createSupAtom(Set<Var> curLiveVars, int ruleNum, int supCount) {
+	private Atom createSupAtom(Set<Var> curLiveVars, int ruleNum, int supCount, Symbol headSym) {
 		Term[] args = (new ArrayList<>(curLiveVars)).toArray(new Term[0]);
-		SupSymbol sym = new SupSymbol(ruleNum, supCount, args.length);
-		return Atoms.getPositive(sym, args);
+		SupSymbol supSym = new SupSymbol(ruleNum, supCount, args.length);
+		if (!relationProps.containsKey(supSym)) {
+			RelationProperties p = new RelationProperties(supSym);
+			p.setStratum(lookupStratum(headSym));
+			relationProps.put(supSym, p);
+		}
+		return Atoms.getPositive(supSym, args);
 	}
 
-	private static Atom createInputAtom(Atom a) {
-		AdornedSymbol sym = (AdornedSymbol) a.getSymbol();
-		InputSymbol inputSym = new InputSymbol(sym);
+	private Atom createInputAtom(Atom a) {
+		AdornedSymbol headSym = (AdornedSymbol) a.getSymbol();
+		InputSymbol inputSym = new InputSymbol(headSym);
+		if (!relationProps.containsKey(inputSym)) {
+			RelationProperties p = new RelationProperties(inputSym);
+			p.setStratum(lookupStratum(headSym));
+			relationProps.put(inputSym, p);
+		}
 		Term[] inputArgs = new Term[inputSym.getArity()];
 		Term[] args = a.getArgs();
-		boolean[] adornment = sym.getAdornment();
+		boolean[] adornment = headSym.getAdornment();
 		for (int i = 0, j = 0; i < args.length; i++) {
 			if (adornment[i]) {
 				inputArgs[j] = args[i];
@@ -410,6 +421,14 @@ public class MagicSetTransformer {
 			}
 		}
 		return Atoms.getPositive(inputSym, inputArgs);
+	}
+	
+	private Stratum lookupStratum(Symbol sym) {
+		if (sym instanceof AdornedSymbol) {
+			Symbol unadorned = ((AdornedSymbol) sym).getSymbol();
+			return origProg.getRelationProperties(unadorned).getStratum();
+		}
+		return relationProps.get(sym).getStratum();
 	}
 
 	private static class SupSymbol implements Symbol {
@@ -748,7 +767,6 @@ public class MagicSetTransformer {
 
 		private final Map<Symbol, Set<Rule>> rules = new HashMap<>();
 		private final Map<Symbol, Set<Atom>> facts = new HashMap<>();
-		private final Map<Symbol, RelationProperties> props = new HashMap<>();
 
 		public ProgramImpl(Set<Rule> rs) throws InvalidProgramException {
 			HiddenPredicateFinder hpf = new HiddenPredicateFinder(origProg);
@@ -816,9 +834,9 @@ public class MagicSetTransformer {
 
 		@Override
 		public RelationProperties getRelationProperties(Symbol sym) {
-			RelationProperties p = origProg.getRelationProperties(sym);
+			RelationProperties p = relationProps.get(sym);
 			if (p == null) {
-				p = Util.lookupOrCreate(props, sym, () -> new RelationProperties(sym));
+				p = origProg.getRelationProperties(sym);
 			}
 			return p;
 		}

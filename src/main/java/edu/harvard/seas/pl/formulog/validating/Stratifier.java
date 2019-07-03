@@ -82,6 +82,7 @@ public class Stratifier {
 		TopologicalOrderIterator<Graph<Symbol, DependencyTypeWrapper>, DefaultEdge> topo = new TopologicalOrderIterator<>(
 				condensation);
 		List<Stratum> strata = new ArrayList<>();
+		int rank = 0;
 		while (topo.hasNext()) {
 			boolean hasRecursiveNegationOrAggregation = false;
 			Graph<Symbol, DependencyTypeWrapper> component = topo.next();
@@ -92,7 +93,8 @@ public class Stratifier {
 				}
 				hasRecursiveNegationOrAggregation |= d.equals(DependencyType.NEG_OR_AGG_IN_REL);
 			}
-			strata.add(new Stratum(component.vertexSet(), hasRecursiveNegationOrAggregation));
+			strata.add(new Stratum(rank, component.vertexSet(), hasRecursiveNegationOrAggregation));
+			rank++;
 		}
 		return strata;
 	}
