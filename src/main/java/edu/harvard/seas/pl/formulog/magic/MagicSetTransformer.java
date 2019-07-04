@@ -431,7 +431,7 @@ public class MagicSetTransformer {
 		return relationProps.get(sym).getStratum();
 	}
 
-	private static class SupSymbol implements Symbol {
+	public static class SupSymbol implements Symbol {
 
 		private final int ruleNum;
 		private final int supCount;
@@ -493,7 +493,7 @@ public class MagicSetTransformer {
 
 	}
 
-	private static class InputSymbol implements Symbol {
+	public static class InputSymbol implements Symbol {
 
 		private final AdornedSymbol underlyingSymbol;
 

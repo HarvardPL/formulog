@@ -1361,7 +1361,7 @@ public class Parser {
 				@Override
 				public RelationProperties getRelationProperties(Symbol sym) {
 					assert sym.getSymbolType().isRelationSym();
-					return relationProperties.get(sym);
+					return Util.lookupOrCreate(relationProperties, sym, () -> new RelationProperties(sym));
 				}
 
 			};

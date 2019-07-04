@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.file.Paths;
+import java.util.List;
 
 import org.junit.Test;
 
@@ -37,6 +38,8 @@ import edu.harvard.seas.pl.formulog.parsing.Parser;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
 import edu.harvard.seas.pl.formulog.util.Pair;
+import edu.harvard.seas.pl.formulog.validating.Stratifier;
+import edu.harvard.seas.pl.formulog.validating.Stratum;
 import edu.harvard.seas.pl.formulog.validating.ValidProgram;
 import edu.harvard.seas.pl.formulog.validating.Validator;
 
@@ -54,9 +57,15 @@ public class EvaluationTest {
 			Program prog = p.fst();
 			assert p.snd() == null;
 			prog = (new TypeChecker(prog, p.snd())).typeCheck();
+			List<Stratum> strata = (new Stratifier(prog)).stratify();
+			for (Stratum stratum : strata) {
+				for (Symbol sym : stratum.getPredicateSyms()) {
+					prog.getRelationProperties(sym).setStratum(stratum);
+				}
+			}
 			ValidProgram vprog = (new Validator(prog)).validate();
-			Interpreter interp = new Interpreter(vprog);
-			IndexedFactDB db = interp.run(1);
+			InflationaryEvaluation eval = new InflationaryEvaluation(vprog);
+			IndexedFactDB db = eval.get();
 			boolean ok = false;
 			for (Symbol sym : db.getSymbols()) {
 				if (sym.toString().equals("ok")) {
