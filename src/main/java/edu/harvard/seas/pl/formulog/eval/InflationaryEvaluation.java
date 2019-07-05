@@ -131,7 +131,7 @@ public class InflationaryEvaluation {
 			// System.out.println("EVALUATING STRATUM UNSAFE " + i);
 			// System.out.println(cumulativeDb);
 			for (IndexedRule r : delayedRules.get(i)) {
-				// System.out.println(r);
+//				 System.out.println(r);
 				changed |= evaluate(r, 0, new RuleSubstitution(r), 0);
 			}
 			if (changed) {
@@ -146,7 +146,7 @@ public class InflationaryEvaluation {
 		// System.out.println(cumulativeDb);
 		boolean changed = false;
 		for (IndexedRule r : firstRoundRules.get(stratum)) {
-			// System.out.println(r);
+//			 System.out.println(r);
 			changed |= evaluate(r, 0, new RuleSubstitution(r), 0);
 		}
 		boolean changedLastRound = true;
@@ -155,7 +155,7 @@ public class InflationaryEvaluation {
 			deltaOld.put(stratum, new HashMap<>(deltaNew.get(stratum)));
 			deltaNew.get(stratum).clear();
 			for (IndexedRule r : safeRules.get(stratum)) {
-				// System.out.println(r);
+//				 System.out.println(r);
 				changedLastRound |= evaluate(r, 0, new RuleSubstitution(r), 0);
 			}
 			changed |= changedLastRound;
@@ -234,7 +234,11 @@ public class InflationaryEvaluation {
 					boolean changed = false;
 					while (it.hasNext()) {
 						s.setToBefore(pos);
-						Unification.unsafeUnifyWithFact(a, it.next(), s);
+						NormalAtom fact = it.next();
+//						System.out.println(cumulativeDb);
+//						System.out.println("a " + a);
+//						System.out.println("fact " + fact);
+						Unification.unsafeUnifyWithFact(a, fact, s);
 						changed |= evaluate(r, pos + 1, s, gen);
 					}
 					return changed;
@@ -320,11 +324,10 @@ public class InflationaryEvaluation {
 		if (incrementGen(sym)) {
 			gen++;
 		}
-		// System.out.print("Discovered fact " + fact + " at generation " + gen + "...
-		// ");
-		RelationProperties props = prog.getRelationProperties(sym);
-		if (props.isAggregated() && (fact = checkAggregateFact(fact, gen)) != null
-				|| checkNonAggregateFact(fact, gen)) {
+//		System.out.println("Discovered fact " + fact + " at generation " + gen + "...");
+		boolean isAgg = prog.getRelationProperties(sym).isAggregated();
+		if (isAgg && (fact = checkAggregateFact(fact, gen)) != null || !isAgg && checkNonAggregateFact(fact, gen)) {
+//			System.out.println("adding " + fact);
 			for (Integer stratum : Util.lookupOrCreate(relevantStrata, sym, () -> Collections.emptySet())) {
 				Map<Symbol, Map<Integer, Set<NormalAtom>>> d = Util.lookupOrCreate(deltaNew, stratum,
 						() -> new HashMap<>());
@@ -362,8 +365,27 @@ public class InflationaryEvaluation {
 		return true;
 	}
 
-	private NormalAtom checkAggregateFact(NormalAtom fact, int gen) {
-		throw new UnsupportedOperationException("can't handle aggregates yet");
+	private NormalAtom checkAggregateFact(NormalAtom fact, int gen) throws EvaluationException {
+		Symbol sym = fact.getSymbol();
+		Term aggValue = fact.getArgs()[sym.getArity() - 1];
+		Symbol funcSym = prog.getRelationProperties(sym).getAggrFuncSymbol();
+		FunctionDef aggFunc = prog.getDef(funcSym);
+		for (int i = gen; i >= 0; --i) {
+			IndexedFactDB db = Util.lookupOrCreate(generationalDbs, i, () -> dbb.build());
+			Term oldAgg = db.getClosestAggregateValue(fact);
+			if (oldAgg != null) {
+				Term newAgg = aggFunc.evaluate(new Term[] { aggValue, oldAgg });
+				if (!newAgg.equals(oldAgg)) {
+					Term[] args = fact.getArgs();
+					Term[] newArgs = new Term[args.length];
+					System.arraycopy(args, 0, newArgs, 0, args.length - 1);
+					newArgs[args.length - 1] = newAgg;
+					return (NormalAtom) Atoms.getPositive(sym, newArgs);
+				}
+				return null;
+			}
+		}
+		return fact;
 	}
 
 	private void preprocessRules() {
@@ -507,14 +529,18 @@ public class InflationaryEvaluation {
 								return true;
 							}
 							FunctionDef def = prog.getDef(sym);
+							boolean safe = true;
 							if (sym instanceof PredicateFunctionSymbol) {
 								DummyFunctionDef dummy = (DummyFunctionDef) def;
 								setPredicateFunction(dummy);
+								safe = false;
+							} else if (def instanceof CustomFunctionDef) {
+								safe = preprocess(((CustomFunctionDef) def).getBody());
 							}
-							if (def instanceof CustomFunctionDef) {
-								return preprocess(((CustomFunctionDef) def).getBody());
+							for (Term t : funcCall.getArgs()) {
+								safe &= preprocess(t);
 							}
-							return true;
+							return safe;
 						}
 
 					}, null);
@@ -534,7 +560,7 @@ public class InflationaryEvaluation {
 				makeQueryPredicate(sym, def);
 			}
 		}
-		
+
 		private void makeQueryPredicate(PredicateFunctionSymbol sym, DummyFunctionDef def) {
 			Symbol predSym = sym.getPredicateSymbol();
 			def.setDef(new FunctionDef() {

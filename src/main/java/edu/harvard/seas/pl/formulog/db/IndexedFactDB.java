@@ -106,16 +106,27 @@ public class IndexedFactDB {
 		}
 		return true;
 	}
+	
+	public Term getClosestAggregateValue(NormalAtom aggFact) {
+		Map<Key, Term> m = aggregateFactsBySym.get(aggFact.getSymbol());
+		assert m != null;
+		Key key = makeAggKey(aggFact);
+		return m.get(key);
+	}
 
-	private boolean addAggregate(NormalAtom fact) throws EvaluationException {
-		Symbol sym = fact.getSymbol();
-		Term[] args = fact.getArgs();
+	private Key makeAggKey(NormalAtom aggFact) {
+		Term[] args = aggFact.getArgs();
 		Term[] arr = new Term[args.length - 1];
 		for (int i = 0; i < arr.length; ++i) {
 			arr[i] = args[i];
 		}
-		Term agg = args[args.length - 1];
-		Key key = new Key(arr);
+		return new Key(arr);
+	}
+	
+	private boolean addAggregate(NormalAtom fact) throws EvaluationException {
+		Symbol sym = fact.getSymbol();
+		Term agg = fact.getArgs()[sym.getArity() - 1];
+		Key key = makeAggKey(fact);
 		Map<Key, Term> m = aggregateFactsBySym.get(sym);
 		Pair<FunctionDef, Term> p = aggStuff.get(sym);
 		FunctionDef aggFunc = p.fst();

@@ -45,7 +45,7 @@ import edu.harvard.seas.pl.formulog.validating.Validator;
 
 public class EvaluationTest {
 
-	void test(String file, String inputDir) {
+	private void test(String file, String inputDir) {
 		boolean isBad = file.matches("test\\d\\d\\d_bd.flg");
 		try {
 			InputStream is = getClass().getClassLoader().getResourceAsStream(file);
@@ -84,7 +84,7 @@ public class EvaluationTest {
 		}
 	}
 
-	void test(String file) {
+	private void test(String file) {
 		test(file, "");
 	}
 

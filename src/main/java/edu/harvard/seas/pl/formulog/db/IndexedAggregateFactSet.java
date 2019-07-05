@@ -114,8 +114,8 @@ public class IndexedAggregateFactSet implements IndexedFactSet {
 				if (!agg.equals(s.get(aggVar))) {
 					continue;
 				}
-				s2.put(aggVar, agg);
 			}
+			s2.put(aggVar, agg);
 			for (Var v : index) {
 				s2.put(v, s.get(v));
 			}

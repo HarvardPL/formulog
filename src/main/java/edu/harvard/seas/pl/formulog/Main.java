@@ -171,6 +171,7 @@ public final class Main {
 		try {
 			db = eval.get();
 		} catch (EvaluationException e) {
+			e.printStackTrace();
 			handleException("Error while evaluating the program!", e);
 		}
 		boolean debugMst = System.getProperty("debugMst") != null;
