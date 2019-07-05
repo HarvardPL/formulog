@@ -37,6 +37,7 @@ import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
 import edu.harvard.seas.pl.formulog.ast.Atoms.UnifyAtom;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
+import edu.harvard.seas.pl.formulog.ast.Constructors;
 import edu.harvard.seas.pl.formulog.ast.Expr;
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
@@ -50,11 +51,13 @@ import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
+import edu.harvard.seas.pl.formulog.ast.functions.DummyFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDB;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDB.IndexedFactDBBuilder;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer.InputSymbol;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer.SupSymbol;
+import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbolFactory.PredicateFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
@@ -98,30 +101,37 @@ public class InflationaryEvaluation {
 	}
 
 	private void evaluate() throws EvaluationException {
-//		for (Map.Entry<Integer, Set<IndexedRule>> e : safeRules.entrySet()) {
-//			System.out.println("SAFE RULES FOR #" + e.getKey());
-//			for (IndexedRule r : e.getValue()) {
-//				System.out.println(r);
-//			}
-//		}
-//		for (Map.Entry<Integer, Set<IndexedRule>> e : delayedRules.entrySet()) {
-//			System.out.println("UNSAFE RULES FOR #" + e.getKey());
-//			for (IndexedRule r : e.getValue()) {
-//				System.out.println(r);
-//			}
-//		}
+		// for (Map.Entry<Integer, Set<IndexedRule>> e : safeRules.entrySet()) {
+		// System.out.println("SAFE RULES FOR #" + e.getKey());
+		// for (IndexedRule r : e.getValue()) {
+		// System.out.println(r);
+		// }
+		// }
+		// for (Map.Entry<Integer, Set<IndexedRule>> e : delayedRules.entrySet()) {
+		// System.out.println("UNSAFE RULES FOR #" + e.getKey());
+		// for (IndexedRule r : e.getValue()) {
+		// System.out.println(r);
+		// }
+		// }
+		// for (Map.Entry<Integer, Set<IndexedRule>> e : firstRoundRules.entrySet()) {
+		// System.out.println("FIRST ROUND RULES FOR #" + e.getKey());
+		// for (IndexedRule r : e.getValue()) {
+		// System.out.println(r);
+		// }
+		// }
 		boolean changed = true;
-		while(changed) {
+		while (changed) {
 			changed = false;
 			for (int i = botStratum; i <= topStratum; ++i) {
 				changed |= evaluateStratumSafe(i);
 			}
-		};
+		}
+		;
 		for (int i = botStratum; i <= topStratum; ++i) {
-//			System.out.println("EVALUATING STRATUM UNSAFE " + i);
-//			System.out.println(cumulativeDb);
+			// System.out.println("EVALUATING STRATUM UNSAFE " + i);
+			// System.out.println(cumulativeDb);
 			for (IndexedRule r : delayedRules.get(i)) {
-//				System.out.println(r);
+				// System.out.println(r);
 				changed |= evaluate(r, 0, new RuleSubstitution(r), 0);
 			}
 			if (changed) {
@@ -132,11 +142,11 @@ public class InflationaryEvaluation {
 	}
 
 	private boolean evaluateStratumSafe(int stratum) throws EvaluationException {
-//		System.out.println("EVALUATING STRATUM SAFE " + stratum);
-//		System.out.println(cumulativeDb);
+		// System.out.println("EVALUATING STRATUM SAFE " + stratum);
+		// System.out.println(cumulativeDb);
 		boolean changed = false;
 		for (IndexedRule r : firstRoundRules.get(stratum)) {
-//			System.out.println(r);
+			// System.out.println(r);
 			changed |= evaluate(r, 0, new RuleSubstitution(r), 0);
 		}
 		boolean changedLastRound = true;
@@ -145,11 +155,12 @@ public class InflationaryEvaluation {
 			deltaOld.put(stratum, new HashMap<>(deltaNew.get(stratum)));
 			deltaNew.get(stratum).clear();
 			for (IndexedRule r : safeRules.get(stratum)) {
-//				System.out.println(r);
+				// System.out.println(r);
 				changedLastRound |= evaluate(r, 0, new RuleSubstitution(r), 0);
 			}
 			changed |= changedLastRound;
-		};
+		}
+		;
 		return changed;
 	}
 
@@ -157,6 +168,7 @@ public class InflationaryEvaluation {
 		if (pos >= r.getBodySize()) {
 			return reportFact((NormalAtom) r.getHead(), s, gen);
 		}
+		s.setToBefore(pos);
 		return r.getBody(pos).visit(new AtomVisitorExn<Void, Boolean, EvaluationException>() {
 
 			@Override
@@ -308,7 +320,8 @@ public class InflationaryEvaluation {
 		if (incrementGen(sym)) {
 			gen++;
 		}
-//		System.out.print("Discovered fact " + fact + " at generation " + gen + "... ");
+		// System.out.print("Discovered fact " + fact + " at generation " + gen + "...
+		// ");
 		RelationProperties props = prog.getRelationProperties(sym);
 		if (props.isAggregated() && (fact = checkAggregateFact(fact, gen)) != null
 				|| checkNonAggregateFact(fact, gen)) {
@@ -320,10 +333,10 @@ public class InflationaryEvaluation {
 			}
 			generationalDbs.get(gen).add(fact);
 			cumulativeDb.add(fact);
-//			System.out.println("added");
+			// System.out.println("added");
 			return true;
 		} else {
-//			System.out.println("not added");
+			// System.out.println("not added");
 			return false;
 		}
 	}
@@ -365,7 +378,7 @@ public class InflationaryEvaluation {
 	private class SemiNaiveEvalPreprocessor {
 
 		private final Set<Symbol> visitedFunctions = new HashSet<>();
-		
+
 		public void preprocess(Rule original) {
 			boolean safe = checkSafetyAndSetDummyFunctions(original);
 			Symbol headSym = original.getHead().getSymbol();
@@ -396,7 +409,7 @@ public class InflationaryEvaluation {
 			topStratum = Math.max(topStratum, stratum);
 			botStratum = Math.min(botStratum, stratum);
 		}
-		
+
 		private boolean allVars(Term[] ts) {
 			for (Term t : ts) {
 				if (!(t instanceof Var)) {
@@ -495,8 +508,8 @@ public class InflationaryEvaluation {
 							}
 							FunctionDef def = prog.getDef(sym);
 							if (sym instanceof PredicateFunctionSymbol) {
-								// TODO Try to set it, and return false
-								throw new UnsupportedOperationException();
+								DummyFunctionDef dummy = (DummyFunctionDef) def;
+								setPredicateFunction(dummy);
 							}
 							if (def instanceof CustomFunctionDef) {
 								return preprocess(((CustomFunctionDef) def).getBody());
@@ -508,6 +521,72 @@ public class InflationaryEvaluation {
 				}
 
 			}, null);
+		}
+
+		private void setPredicateFunction(DummyFunctionDef def) {
+			if (def.getDef() != null) {
+				return;
+			}
+			PredicateFunctionSymbol sym = (PredicateFunctionSymbol) def.getSymbol();
+			if (sym.isReification()) {
+				makeReifyPredicate(sym, def);
+			} else {
+				makeQueryPredicate(sym, def);
+			}
+		}
+		
+		private void makeQueryPredicate(PredicateFunctionSymbol sym, DummyFunctionDef def) {
+			Symbol predSym = sym.getPredicateSymbol();
+			def.setDef(new FunctionDef() {
+
+				@Override
+				public Symbol getSymbol() {
+					return def.getSymbol();
+				}
+
+				@Override
+				public Term evaluate(Term[] args) throws EvaluationException {
+					NormalAtom fact = (NormalAtom) Atoms.getPositive(predSym, args);
+					if (cumulativeDb.hasFact(fact)) {
+						return Constructors.trueTerm();
+					} else {
+						return Constructors.falseTerm();
+					}
+				}
+
+			});
+		}
+
+		private void makeReifyPredicate(PredicateFunctionSymbol sym, DummyFunctionDef def) {
+			Symbol predSym = sym.getPredicateSymbol();
+			int arity = predSym.getArity();
+			Symbol tupSym = (arity > 1) ? prog.getSymbolManager().lookupTupleSymbol(arity) : null;
+			def.setDef(new FunctionDef() {
+
+				@Override
+				public Symbol getSymbol() {
+					return predSym;
+				}
+
+				@Override
+				public Term evaluate(Term[] args) throws EvaluationException {
+					Term t = Constructors.makeZeroAry(BuiltInConstructorSymbol.NIL);
+					for (NormalAtom fact : cumulativeDb.query(predSym)) {
+						Term tuple = makeTuple(fact.getArgs());
+						t = Constructors.make(BuiltInConstructorSymbol.CONS, new Term[] { tuple, t });
+					}
+					return t;
+				}
+
+				private Term makeTuple(Term[] args) {
+					if (tupSym == null) {
+						return args[0];
+					} else {
+						return Constructors.make(tupSym, args);
+					}
+				}
+
+			});
 		}
 
 		private Set<Rule> makeSemiNaiveRules(Rule original, int stratum, boolean isSafe) {
@@ -566,7 +645,7 @@ public class InflationaryEvaluation {
 			sort(newBody);
 			return BasicRule.get(r.getHead(), newBody);
 		}
-		
+
 		private void sort(List<Atom> body) {
 			try {
 				Set<Var> boundVars = new HashSet<>();
