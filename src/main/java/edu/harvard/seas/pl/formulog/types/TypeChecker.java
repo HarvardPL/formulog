@@ -74,20 +74,18 @@ import edu.harvard.seas.pl.formulog.util.Util;
 public class TypeChecker {
 
 	private final Program prog;
-	private final Atom query;
 
-	public TypeChecker(Program prog, Atom query) {
+	public TypeChecker(Program prog) {
 		this.prog = prog;
-		this.query = query;
 	}
 
-	public Program typeCheck() throws TypeException {
+	public WellTypedProgram typeCheck() throws TypeException {
 		typeCheckFacts();
 		typeCheckFunctions();
 		typeCheckRelations();
 		Map<Symbol, Set<Rule>> newRules = typeCheckRules();
 		typeCheckQuery();
-		return new Program() {
+		return new WellTypedProgram() {
 
 			@Override
 			public Set<Symbol> getFunctionSymbols() {
@@ -130,6 +128,16 @@ public class TypeChecker {
 				return prog.getRelationProperties(sym);
 			}
 
+			@Override
+			public boolean hasQuery() {
+				return prog.hasQuery();
+			}
+
+			@Override
+			public NormalAtom getQuery() {
+				return prog.getQuery();
+			}
+
 		};
 	}
 
@@ -150,8 +158,8 @@ public class TypeChecker {
 			FunctorType ft = (FunctorType) sym.getCompileTimeType();
 			List<Type> argTypes = ft.getArgTypes();
 			Type aggType = argTypes.get(argTypes.size() - 1);
-			typeCheckAggregateUnit(sym, props.getAggrFuncUnit(), aggType);
-			typeCheckAggregateFunction(sym, props.getAggrFuncSymbol(), aggType);
+			typeCheckAggregateUnit(sym, props.getAggFuncInit(), aggType);
+			typeCheckAggregateFunction(sym, props.getAggFuncSymbol(), aggType);
 		}
 	}
 
@@ -182,9 +190,9 @@ public class TypeChecker {
 	}
 
 	private void typeCheckQuery() throws TypeException {
-		if (query != null) {
+		if (prog.hasQuery()) {
 			TypeCheckerContext ctx = new TypeCheckerContext();
-			ctx.typeCheckQuery(query);
+			ctx.typeCheckQuery(prog.getQuery());
 		}
 	}
 

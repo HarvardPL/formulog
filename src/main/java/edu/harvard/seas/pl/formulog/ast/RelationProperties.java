@@ -28,12 +28,21 @@ public class RelationProperties {
 	private final Symbol relSym;
 	private boolean bottomUp;
 	private boolean topDown;
-	private Symbol funcSym;
-	private Term unit;
+	private Symbol aggFuncSym;
+	private Term aggInit;
 	private Stratum stratum;
 	
 	public RelationProperties(Symbol relSym) {
 		this.relSym = relSym;
+	}
+	
+	public RelationProperties(RelationProperties props) {
+		this(props.relSym);
+		bottomUp = props.bottomUp;
+		topDown = props.topDown;
+		aggFuncSym = props.aggFuncSym;
+		aggInit = props.aggInit;
+		stratum = props.stratum;
 	}
 
 	public Symbol getRelationSymbol() {
@@ -55,8 +64,8 @@ public class RelationProperties {
 	}
 	
 	public synchronized void aggregate(Symbol funcSym, Term unit) {
-		this.funcSym = funcSym;
-		this.unit = unit;
+		this.aggFuncSym = funcSym;
+		this.aggInit = unit;
 	}
 	
 	public synchronized boolean isBottomUp() {
@@ -68,15 +77,15 @@ public class RelationProperties {
 	}
 
 	public synchronized boolean isAggregated() {
-		return funcSym != null;
+		return aggFuncSym != null;
 	}
 	
-	public synchronized Symbol getAggrFuncSymbol() {
-		return funcSym;
+	public synchronized Symbol getAggFuncSymbol() {
+		return aggFuncSym;
 	}
 
-	public synchronized Term getAggrFuncUnit() {
-		return unit;
+	public synchronized Term getAggFuncInit() {
+		return aggInit;
 	}
 	
 	public synchronized void setStratum(Stratum stratum) {

@@ -42,6 +42,7 @@ import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
+import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
@@ -51,20 +52,24 @@ import edu.harvard.seas.pl.formulog.ast.functions.DummyFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDB;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDB.IndexedFactDBBuilder;
+import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
 import edu.harvard.seas.pl.formulog.smt.Z3ThreadFactory;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbolFactory.PredicateFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolType;
+import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 import edu.harvard.seas.pl.formulog.unification.Unification;
 import edu.harvard.seas.pl.formulog.util.AbstractFJPTask;
 import edu.harvard.seas.pl.formulog.util.CountingFJP;
 import edu.harvard.seas.pl.formulog.util.CountingFJPImpl;
 import edu.harvard.seas.pl.formulog.util.MockCountingFJP;
 import edu.harvard.seas.pl.formulog.util.Util;
+import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 import edu.harvard.seas.pl.formulog.validating.ValidProgram;
+import edu.harvard.seas.pl.formulog.validating.Validator;
 
-public class Interpreter {
+public class StratifiedEvaluation implements Evaluation {
 
 	private static final boolean softExceptions = System.getProperty("softExceptions") != null;
 	private static final boolean factTrace = System.getProperty("factTrace") != null;
@@ -73,22 +78,33 @@ public class Interpreter {
 	private final ValidProgram prog;
 	private IndexedFactDB res;
 
-	public Interpreter(ValidProgram prog) {
+	private StratifiedEvaluation(ValidProgram prog) {
 		this.prog = prog;
 	}
 
-	public synchronized IndexedFactDB run() throws EvaluationException {
-		return run(Runtime.getRuntime().availableProcessors());
+	public static StratifiedEvaluation setup(WellTypedProgram prog, boolean useDemandTransformation)
+			throws InvalidProgramException {
+		Program magicProg = (new MagicSetTransformer(prog)).transform(useDemandTransformation, true);
+		ValidProgram vprog = (new Validator(magicProg)).validate();
+		return new StratifiedEvaluation(vprog);
+	}
+	
+	public ValidProgram getProgram() {
+		return prog;
 	}
 
-	public synchronized IndexedFactDB run(int nthreads) throws EvaluationException {
-		for (int i = 0; i < prog.getNumberOfStrata(); ++i) {
-			if (prog.getStratum(i).hasRecursiveNegationOrAggregation()) {
-				throw new EvaluationException(
-						"This interpreter cannot evaluate a program with recursive negation or aggregation");
-			}
-		}
+	public synchronized void run() throws EvaluationException {
+		run(Runtime.getRuntime().availableProcessors());
+	}
+
+	public synchronized void run(int nthreads) throws EvaluationException {
 		if (res == null) {
+			for (int i = 0; i < prog.getNumberOfStrata(); ++i) {
+				if (prog.getStratum(i).hasRecursiveNegationOrAggregation()) {
+					throw new EvaluationException(
+							"This interpreter cannot evaluate a program with recursive negation or aggregation");
+				}
+			}
 			Eval e = new Eval(nthreads);
 			try {
 				res = e.eval();
@@ -97,10 +113,12 @@ public class Interpreter {
 				throw exn;
 			}
 		}
-		return res;
 	}
 
-	public synchronized IndexedFactDB getResult() {
+	public IndexedFactDB getResult() {
+		if (res == null) {
+			throw new IllegalStateException("Must run evaluation before requesting result.");
+		}
 		return res;
 	}
 

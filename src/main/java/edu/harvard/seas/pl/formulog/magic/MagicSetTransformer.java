@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 
 import edu.harvard.seas.pl.formulog.ast.Atoms;
 import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
+import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Expr;
@@ -59,7 +60,6 @@ import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Unification;
 import edu.harvard.seas.pl.formulog.util.DedupWorkList;
-import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 import edu.harvard.seas.pl.formulog.validating.Stratifier;
@@ -77,7 +77,30 @@ public class MagicSetTransformer {
 		this.origProg = prog;
 	}
 
-	public synchronized Pair<Program, Atom> transform(Atom query, boolean useDemandTransformation)
+	public Program transform(boolean useDemandTransformation, boolean restoreStratification)
+			throws InvalidProgramException {
+		List<Stratum> strata = (new Stratifier(origProg)).stratify();
+		for (Stratum stratum : strata) {
+			for (Symbol sym : stratum.getPredicateSyms()) {
+				Util.lookupOrCreate(relationProps, sym, () -> {
+					RelationProperties props = origProg.getRelationProperties(sym);
+					if (props == null) {
+						props = new RelationProperties(sym);
+					} else {
+						props = new RelationProperties(props);
+					}
+					return props;
+				}).setStratum(stratum);
+			}
+		}
+		if (origProg.hasQuery()) {
+			return transformForQuery(origProg.getQuery(), useDemandTransformation, restoreStratification);
+		} else {
+			return transformNoQuery(useDemandTransformation, restoreStratification);
+		}
+	}
+
+	public Program transformForQuery(NormalAtom query, boolean useDemandTransformation, boolean restoreStratification)
 			throws InvalidProgramException {
 		topDownIsDefault = true;
 		if (query.isNegated()) {
@@ -92,22 +115,21 @@ public class MagicSetTransformer {
 		if (query.getSymbol().getSymbolType().isEDBSymbol()) {
 			newProg = makeEdbProgram(query);
 		} else {
-			Atom adornedQuery = Adornments.adorn(query, Collections.emptySet(), origProg, topDownIsDefault);
+			NormalAtom adornedQuery = (NormalAtom) Adornments.adorn(query, Collections.emptySet(), origProg,
+					topDownIsDefault);
 			Set<Rule> adRules = adorn(Collections.singleton(adornedQuery.getSymbol()));
 			Set<Rule> magicRules = makeMagicRules(adRules);
 			magicRules.add(makeSeedRule(adornedQuery));
-			Program magicProg = new ProgramImpl(magicRules);
-			// if (!isStratified(magicProg)) {
-			// magicProg = stratify(magicProg, adRules);
-			// }
+			Program magicProg = new ProgramImpl(magicRules, adornedQuery);
+			if (restoreStratification && !isStratified(magicProg)) {
+				magicProg = stratify(magicProg, adRules);
+			}
 			if (useDemandTransformation) {
 				magicProg = stripAdornments(magicProg);
-			} else {
-				query = adornedQuery;
 			}
 			newProg = magicProg;
 		}
-		return new Pair<>(newProg, query);
+		return newProg;
 	}
 
 	private static final TermVisitorExn<Void, Term, EvaluationException> termReducer = new TermVisitorExn<Void, Term, EvaluationException>() {
@@ -156,14 +178,14 @@ public class MagicSetTransformer {
 
 	};
 
-	public Atom reduceQuery(final Atom query) throws InvalidProgramException {
+	public NormalAtom reduceQuery(final NormalAtom query) throws InvalidProgramException {
 		try {
 			Term[] args = query.getArgs();
 			Term[] newArgs = new Term[args.length];
 			for (int i = 0; i < args.length; ++i) {
 				newArgs[i] = args[i].visit(termReducer, null);
 			}
-			return Atoms.get(query.getSymbol(), newArgs, query.isNegated());
+			return (NormalAtom) Atoms.get(query.getSymbol(), newArgs, query.isNegated());
 		} catch (EvaluationException e) {
 			throw new InvalidProgramException(
 					"Query contained function call that could not be normalized: " + query + "\n" + e);
@@ -174,7 +196,7 @@ public class MagicSetTransformer {
 		return BasicRule.get(createInputAtom(adornedQuery));
 	}
 
-	private Program makeEdbProgram(Atom query) {
+	private Program makeEdbProgram(NormalAtom query) {
 		Symbol querySym = query.getSymbol();
 		Set<Atom> facts = new HashSet<>();
 		for (Atom fact : origProg.getFacts(querySym)) {
@@ -231,10 +253,21 @@ public class MagicSetTransformer {
 				throw new UnsupportedOperationException();
 			}
 
+			@Override
+			public boolean hasQuery() {
+				return true;
+			}
+
+			@Override
+			public NormalAtom getQuery() {
+				return query;
+			}
+
 		};
 	}
 
-	public synchronized Program transform(boolean useDemandTransformation) throws InvalidProgramException {
+	private Program transformNoQuery(boolean useDemandTransformation, boolean restoreStratification)
+			throws InvalidProgramException {
 		topDownIsDefault = false;
 		Set<Symbol> bottomUpSymbols = new HashSet<>();
 		for (Symbol sym : origProg.getRuleSymbols()) {
@@ -244,10 +277,10 @@ public class MagicSetTransformer {
 		}
 		Set<Rule> adRules = adorn(bottomUpSymbols);
 		Set<Rule> magicRules = makeMagicRules(adRules);
-		Program magicProg = new ProgramImpl(magicRules);
-		// if (!isStratified(magicProg)) {
-		// magicProg = stratify(magicProg, adRules);
-		// }
+		Program magicProg = new ProgramImpl(magicRules, null);
+		if (restoreStratification && !isStratified(magicProg)) {
+			magicProg = stratify(magicProg, adRules);
+		}
 		if (useDemandTransformation) {
 			magicProg = stripAdornments(magicProg);
 		}
@@ -266,7 +299,11 @@ public class MagicSetTransformer {
 				rules.add(BasicRule.get(newHead, newBody));
 			}
 		}
-		return new ProgramImpl(rules);
+		NormalAtom query = null;
+		if (prog.hasQuery()) {
+			query = (NormalAtom) stripAdornment(prog.getQuery());
+		}
+		return new ProgramImpl(rules, query);
 	}
 
 	private static Atom stripAdornment(Atom atom) {
@@ -422,7 +459,7 @@ public class MagicSetTransformer {
 		}
 		return Atoms.getPositive(inputSym, inputArgs);
 	}
-	
+
 	private Stratum lookupStratum(Symbol sym) {
 		if (sym instanceof AdornedSymbol) {
 			Symbol unadorned = ((AdornedSymbol) sym).getSymbol();
@@ -592,7 +629,7 @@ public class MagicSetTransformer {
 			}
 		}
 		newRules.addAll(adjustAdornedRules(adornedRules));
-		return new ProgramImpl(newRules);
+		return new ProgramImpl(newRules, p.getQuery());
 	}
 
 	private Atom makePositive(Atom atom) {
@@ -767,8 +804,9 @@ public class MagicSetTransformer {
 
 		private final Map<Symbol, Set<Rule>> rules = new HashMap<>();
 		private final Map<Symbol, Set<Atom>> facts = new HashMap<>();
+		private final NormalAtom query;
 
-		public ProgramImpl(Set<Rule> rs) throws InvalidProgramException {
+		public ProgramImpl(Set<Rule> rs, NormalAtom query) throws InvalidProgramException {
 			HiddenPredicateFinder hpf = new HiddenPredicateFinder(origProg);
 			for (Rule r : rs) {
 				Atom head = r.getHead();
@@ -793,6 +831,7 @@ public class MagicSetTransformer {
 					}
 				}
 			}
+			this.query = query;
 		}
 
 		@Override
@@ -839,6 +878,16 @@ public class MagicSetTransformer {
 				p = origProg.getRelationProperties(sym);
 			}
 			return p;
+		}
+
+		@Override
+		public boolean hasQuery() {
+			return query != null;
+		}
+
+		@Override
+		public NormalAtom getQuery() {
+			return query;
 		}
 
 	}

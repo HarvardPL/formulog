@@ -20,74 +20,10 @@ package edu.harvard.seas.pl.formulog.eval;
  * #L%
  */
 
-import static org.junit.Assert.fail;
-
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.nio.file.Paths;
-import java.util.List;
-
 import org.junit.Test;
 
-import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
-import edu.harvard.seas.pl.formulog.ast.Program;
-import edu.harvard.seas.pl.formulog.db.IndexedFactDB;
-import edu.harvard.seas.pl.formulog.parsing.Parser;
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
-import edu.harvard.seas.pl.formulog.types.TypeChecker;
-import edu.harvard.seas.pl.formulog.util.Pair;
-import edu.harvard.seas.pl.formulog.validating.Stratifier;
-import edu.harvard.seas.pl.formulog.validating.Stratum;
-import edu.harvard.seas.pl.formulog.validating.ValidProgram;
-import edu.harvard.seas.pl.formulog.validating.Validator;
-
-public class EvaluationTest {
-
-	private void test(String file, String inputDir) {
-		boolean isBad = file.matches("test\\d\\d\\d_bd.flg");
-		try {
-			InputStream is = getClass().getClassLoader().getResourceAsStream(file);
-			if (is == null) {
-				throw new FileNotFoundException(file + " not found");
-			}
-			URL dir = getClass().getClassLoader().getResource(inputDir);
-			Pair<Program, Atom> p = (new Parser()).parse(new InputStreamReader(is), Paths.get(dir.toURI()));
-			Program prog = p.fst();
-			assert p.snd() == null;
-			prog = (new TypeChecker(prog, p.snd())).typeCheck();
-			List<Stratum> strata = (new Stratifier(prog)).stratify();
-			for (Stratum stratum : strata) {
-				for (Symbol sym : stratum.getPredicateSyms()) {
-					prog.getRelationProperties(sym).setStratum(stratum);
-				}
-			}
-			ValidProgram vprog = (new Validator(prog)).validate();
-			InflationaryEvaluation eval = new InflationaryEvaluation(vprog);
-			IndexedFactDB db = eval.get();
-			boolean ok = false;
-			for (Symbol sym : db.getSymbols()) {
-				if (sym.toString().equals("ok")) {
-					ok = true;
-					break;
-				}
-			}
-			if (!ok && !isBad) {
-				fail("Test failed for a good program");
-			}
-			if (ok && isBad) {
-				fail("Test succeeded for a bad program");
-			}
-		} catch (Exception e) {
-			fail("Unexpected exception: " + e);
-		}
-	}
-
-	private void test(String file) {
-		test(file, "");
-	}
-
+public abstract class CommonEvaluationTest extends AbstractEvaluationTest {
+	
 	@Test
 	public void test018() {
 		test("test018_ok.flg");

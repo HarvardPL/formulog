@@ -20,66 +20,11 @@ package edu.harvard.seas.pl.formulog.magic;
  * #L%
  */
 
-import static org.junit.Assert.fail;
-
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-
 import org.junit.Test;
 
-import edu.harvard.seas.pl.formulog.ast.Program;
-import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
-import edu.harvard.seas.pl.formulog.db.IndexedFactDB;
-import edu.harvard.seas.pl.formulog.eval.Interpreter;
-import edu.harvard.seas.pl.formulog.parsing.Parser;
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
-import edu.harvard.seas.pl.formulog.types.TypeChecker;
-import edu.harvard.seas.pl.formulog.util.Pair;
-import edu.harvard.seas.pl.formulog.validating.ValidProgram;
-import edu.harvard.seas.pl.formulog.validating.Validator;
+import edu.harvard.seas.pl.formulog.eval.AbstractEvaluationTest;
 
-public class MagicTest {
-
-	void test(String file) {
-		boolean isBad = file.matches("test\\d\\d\\d_bd.flg");
-		try {
-			InputStream is = getClass().getClassLoader().getResourceAsStream(file);
-			if (is == null) {
-				throw new FileNotFoundException(file + " not found");
-			}
-			Pair<Program, Atom> p = (new Parser()).parse(new InputStreamReader(is));
-			Program prog = p.fst();
-			Atom query = p.snd();
-			prog = (new TypeChecker(prog, query)).typeCheck();
-			MagicSetTransformer mst = new MagicSetTransformer(prog);
-			if (query != null) {
-				p = mst.transform(query, true);
-				prog = p.fst();
-				query = p.snd();
-			} else {
-				prog = mst.transform(true);
-			}
-			ValidProgram vprog = (new Validator(prog)).validate();
-			Interpreter interp = new Interpreter(vprog);
-			IndexedFactDB db = interp.run(1);
-			boolean ok = false;
-			for (Symbol sym : db.getSymbols()) {
-				if (query == null && sym.toString().equals("ok") || query != null && sym.equals(query.getSymbol())) {
-					ok = true;
-					break;
-				}
-			}
-			if (!ok && !isBad) {
-				fail("Test failed for a good program");
-			}
-			if (ok && isBad) {
-				fail("Test succeeded for a bad program");
-			}
-		} catch (Exception e) {
-			fail("Unexpected exception: " + e);
-		}
-	}
+public abstract class CommonMagicSetTest extends AbstractEvaluationTest {
 
 	@Test
 	public void test140() {

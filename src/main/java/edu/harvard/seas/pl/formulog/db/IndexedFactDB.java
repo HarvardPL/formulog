@@ -217,8 +217,8 @@ public class IndexedFactDB {
 			RelationProperties props = prog.getRelationProperties(sym);
 			if (props.isAggregated()) {
 				if (!aggStuff.containsKey(sym)) {
-					FunctionDef def = prog.getDef(props.getAggrFuncSymbol());
-					aggStuff.put(sym, new Pair<>(def, props.getAggrFuncUnit()));
+					FunctionDef def = prog.getDef(props.getAggFuncSymbol());
+					aggStuff.put(sym, new Pair<>(def, props.getAggFuncInit()));
 				}
 				aggregateIndices.add(new IndexedAggregateFactSet(q, boundVars));
 				return -aggregateIndices.size();

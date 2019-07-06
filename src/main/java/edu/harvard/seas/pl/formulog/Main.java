@@ -26,7 +26,6 @@ import java.io.FileReader;
 import java.io.PrintStream;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
@@ -38,32 +37,124 @@ import org.apache.commons.cli.Options;
 import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
 import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
 import edu.harvard.seas.pl.formulog.ast.Program;
-import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDB;
+import edu.harvard.seas.pl.formulog.eval.Evaluation;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.eval.InflationaryEvaluation;
-import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
+import edu.harvard.seas.pl.formulog.eval.SemiInflationaryEvaluation;
+import edu.harvard.seas.pl.formulog.eval.StratifiedEvaluation;
 import edu.harvard.seas.pl.formulog.parsing.ParseException;
 import edu.harvard.seas.pl.formulog.parsing.Parser;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
 import edu.harvard.seas.pl.formulog.types.TypeException;
+import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Unification;
-import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
-import edu.harvard.seas.pl.formulog.validating.Stratifier;
-import edu.harvard.seas.pl.formulog.validating.Stratum;
 import edu.harvard.seas.pl.formulog.validating.ValidProgram;
-import edu.harvard.seas.pl.formulog.validating.Validator;
 
 public final class Main {
 
-	private Main() {
-		throw new AssertionError();
+	private final CommandLine cl;
+	private final boolean debugMst; 
+	
+	private Main(CommandLine cl, boolean debugMst) {
+		this.cl = cl;
+		this.debugMst = debugMst;
 	}
 
+	private void go() {
+		Program prog = parse();
+		WellTypedProgram typedProg = typeCheck(prog);
+		Evaluation eval = setup(typedProg);
+		evaluate(eval);
+		printResults(eval);
+	}
+	
+	private Program parse() {
+		System.out.println("Parsing...");
+		try {
+			String inputDir = "";
+			if (cl.hasOption("I")) {
+				inputDir = cl.getOptionValue("I");
+			}
+			FileReader reader = new FileReader(cl.getArgs()[0]);
+			return (new Parser()).parse(reader, Paths.get(inputDir));
+		} catch (ParseException | FileNotFoundException e) {
+			handleException("Error while parsing!", e);
+			throw new AssertionError("impossible");
+		}
+	}
+	
+	private WellTypedProgram typeCheck(Program prog) {
+		System.out.println("Type checking...");
+		TypeChecker typeChecker = new TypeChecker(prog);
+		try {
+			return typeChecker.typeCheck();
+		} catch (TypeException e) {
+			handleException("Error while typechecking the program!", e);
+			throw new AssertionError("impossible");
+		}
+	}
+	
+	private Evaluation setup(WellTypedProgram prog) {
+		System.out.println("Rewriting and validating...");
+		try {
+			if (cl.hasOption("s")) {
+				return SemiInflationaryEvaluation.setup(prog, true);
+			} else {
+				return StratifiedEvaluation.setup(prog, true);
+			}
+		} catch (InvalidProgramException e) {
+			handleException("Error while rewriting/validation!", e);
+			throw new AssertionError("impossible");
+		}
+	}
+	
+	private void evaluate(Evaluation eval) {
+		System.out.println("Evaluating...");
+		try {
+			int parallelism = cl.hasOption("j") ? Integer.valueOf(cl.getOptionValue("j")) : 1;
+			eval.run(parallelism);
+		} catch (EvaluationException e) {
+			handleException("Error while evaluating the program!", e);
+		}
+	}
+	
+	private void printResults(Evaluation eval) {
+		System.out.println("Results:");
+		IndexedFactDB db = eval.getResult();
+		ValidProgram vprog = eval.getProgram();
+		if (!vprog.hasQuery() || debugMst) {
+			PrintStream out = System.out;
+			if (debugMst) {
+				out = System.err;
+				out.println("\n*** All generated facts ***");
+			}
+			for (Symbol sym : db.getSymbols()) {
+				printSortedFacts(db.query(sym), out);
+			}
+		}
+		if (vprog.hasQuery()) {
+			if (debugMst) {
+				System.err.println("\n*** Query results ***");
+			}
+			List<NormalAtom> facts = new ArrayList<>();
+			NormalAtom q = vprog.getQuery();
+			try {
+				for (Atom fact : db.query(q.getSymbol())) {
+					if (Unification.unify(q, fact, new SimpleSubstitution())) {
+						facts.add((NormalAtom) fact);
+					}
+				}
+			} catch (EvaluationException e) {
+				throw new AssertionError("impossible");
+			}
+			printSortedFacts(facts, System.out);
+		}
+	}
+	
 	private static void printUsageAndDie(Options opts) {
 		HelpFormatter formatter = new HelpFormatter();
 		formatter.printHelp("formulog.jar input-file.flg", opts);
@@ -73,6 +164,7 @@ public final class Main {
 	private static CommandLine parseArgs(String[] args) {
 		Options opts = new Options();
 		opts.addOption("j", true, "Number of threads to use (defaults to 1).");
+		opts.addOption("s", "semiInflationary", false, "Use semi-inflationary evaluation.");
 		opts.addOption("v", "verbose", false, "Print a lot of stuff.");
 		opts.addOption("I", true, "Directory for (tab and/or space-delimited) CSVs with input facts.");
 		CommandLineParser clp = new DefaultParser();
@@ -98,109 +190,7 @@ public final class Main {
 
 	public static void main(String[] args) throws FileNotFoundException {
 		CommandLine cl = parseArgs(args);
-		System.out.println("Parsing program...");
-		Pair<Program, Atom> p = null;
-		try {
-			String inputDir = "";
-			if (cl.hasOption("I")) {
-				inputDir = cl.getOptionValue("I");
-			}
-			p = (new Parser()).parse(new FileReader(args[0]), Paths.get(inputDir));
-		} catch (ParseException e) {
-			handleException("Error while parsing!", e);
-		}
-		Program prog = p.fst();
-		Atom q = p.snd();
-		System.out.println("Type checking...");
-		TypeChecker typeChecker = new TypeChecker(prog, q);
-		try {
-			prog = typeChecker.typeCheck();
-		} catch (TypeException e) {
-			handleException("Error while typechecking the program!", e);
-		}
-		try {
-			List<Stratum> strata = (new Stratifier(prog)).stratify();
-			for (Stratum stratum : strata) {
-				for (Symbol sym : stratum.getPredicateSyms()) {
-					prog.getRelationProperties(sym).setStratum(stratum);
-				}
-			}
-		} catch (InvalidProgramException e) {
-			handleException("Error while stratifying the program!", e);
-		}
-		try {
-			MagicSetTransformer mst = new MagicSetTransformer(prog);
-			if (q != null) {
-				System.out.println("Rewriting for query " + q + "...");
-				p = mst.transform(q, true);
-				prog = p.fst();
-				q = p.snd();
-			} else {
-				System.out.println("Rewriting top-down relations...");
-				prog = mst.transform(true);
-			}
-		} catch (InvalidProgramException e) {
-			handleException("Error while rewriting the program!", e);
-		}
-		if (System.getProperty("debugMst") != null) {
-			System.err.println("\n*** New rules ***");
-			List<String> rules = new ArrayList<>();
-			for (Symbol sym : prog.getRuleSymbols()) {
-				for (Rule r : prog.getRules(sym)) {
-					rules.add(r.toString());
-				}
-			}
-			Collections.sort(rules);
-			for (String r : rules) {
-				System.err.println(r);
-			}
-			System.err.println();
-		}
-
-		System.out.println("Validating...");
-		ValidProgram vprog = null;
-		try {
-			vprog = (new Validator(prog)).validate();
-		} catch (InvalidProgramException e) {
-			handleException("Error while rewriting the program!", e);
-		}
-		System.out.println("Evaluating...");
-		InflationaryEvaluation eval = new InflationaryEvaluation(vprog);
-		System.out.println("Results:");
-		IndexedFactDB db = null;
-		try {
-			db = eval.get();
-		} catch (EvaluationException e) {
-			e.printStackTrace();
-			handleException("Error while evaluating the program!", e);
-		}
-		boolean debugMst = System.getProperty("debugMst") != null;
-		if (q == null || debugMst) {
-			PrintStream out = System.out;
-			if (debugMst) {
-				out = System.err;
-				out.println("\n*** All generated facts ***");
-			}
-			for (Symbol sym : db.getSymbols()) {
-				printSortedFacts(db.query(sym), out);
-			}
-		}
-		if (q != null) {
-			if (debugMst) {
-				System.err.println("\n*** Query results ***");
-			}
-			List<NormalAtom> facts = new ArrayList<>();
-			try {
-				for (Atom fact : db.query(q.getSymbol())) {
-					if (Unification.unify(q, fact, new SimpleSubstitution())) {
-						facts.add((NormalAtom) fact);
-					}
-				}
-			} catch (EvaluationException e) {
-				throw new AssertionError("impossible");
-			}
-			printSortedFacts(facts, System.out);
-		}
+		(new Main(cl, System.getProperty("debugMst") != null)).go();
 	}
 
 	private static void printSortedFacts(Iterable<NormalAtom> facts, PrintStream out) {

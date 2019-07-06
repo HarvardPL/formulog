@@ -29,11 +29,7 @@ import java.io.InputStreamReader;
 import org.junit.Test;
 
 import edu.harvard.seas.pl.formulog.ast.Program;
-import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
 import edu.harvard.seas.pl.formulog.parsing.Parser;
-import edu.harvard.seas.pl.formulog.types.TypeChecker;
-import edu.harvard.seas.pl.formulog.types.TypeException;
-import edu.harvard.seas.pl.formulog.util.Pair;
 
 public class TypeCheckingTest {
 
@@ -44,9 +40,8 @@ public class TypeCheckingTest {
 			if (is == null) {
 				throw new FileNotFoundException(file + " not found");
 			}
-			Pair<Program, Atom> p = (new Parser()).parse(new InputStreamReader(is));
-			Program prog = p.fst();
-			(new TypeChecker(prog, p.snd())).typeCheck();
+			Program prog = (new Parser()).parse(new InputStreamReader(is));
+			(new TypeChecker(prog)).typeCheck();
 		} catch (TypeException e) {
 			if (!isBad) {
 				fail("Test failed for a good program: " + e.getMessage());

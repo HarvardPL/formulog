@@ -23,6 +23,7 @@ package edu.harvard.seas.pl.formulog.ast;
 import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
+import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
@@ -44,5 +45,9 @@ public interface Program {
 	SymbolManager getSymbolManager();
 	
 	RelationProperties getRelationProperties(Symbol sym);
+	
+	boolean hasQuery();
+	
+	NormalAtom getQuery();
 
 }

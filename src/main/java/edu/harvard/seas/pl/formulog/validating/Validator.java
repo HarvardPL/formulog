@@ -30,6 +30,7 @@ import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.Atoms;
 import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
+import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
 import edu.harvard.seas.pl.formulog.ast.Atoms.UnifyAtom;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
@@ -97,8 +98,8 @@ public class Validator {
 		try {
 			RelationProperties props = prog.getRelationProperties(sym);
 			if (props.isAggregated()) {
-				Symbol funcSym = props.getAggrFuncSymbol();
-				Term init = props.getAggrFuncUnit();
+				Symbol funcSym = props.getAggFuncSymbol();
+				Term init = props.getAggFuncInit();
 				props.aggregate(funcSym, init.normalize(new SimpleSubstitution()));
 			}
 		} catch (EvaluationException e) {
@@ -249,16 +250,6 @@ public class Validator {
 
 		@Override
 		public Term visit(Expr expr, List<Atom> in) {
-			// Term[] args = f.getArgs();
-			// Term[] newArgs = new Term[args.length];
-			// for (int i = 0; i < args.length; ++i) {
-			// newArgs[i] = args[i].visit(this, in);
-			// }
-			// Var x = Var.getFresh();
-			// Atom eq = makeUnifier(x, f.copyWithNewArgs(newArgs), false);
-			// in.add(eq);
-			// XXX This doesn't totally flatten expressions like before, but I'm not sure
-			// why we'd have to.
 			Var x = Var.getFresh();
 			Atom eq = makeUnifier(x, expr, false);
 			in.add(eq);
@@ -654,6 +645,16 @@ public class Validator {
 		@Override
 		public RelationProperties getRelationProperties(Symbol sym) {
 			return prog.getRelationProperties(sym);
+		}
+
+		@Override
+		public boolean hasQuery() {
+			return prog.hasQuery();
+		}
+
+		@Override
+		public NormalAtom getQuery() {
+			return prog.getQuery();
 		}
 
 	}

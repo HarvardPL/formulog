@@ -45,7 +45,6 @@ import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
-import edu.harvard.seas.pl.formulog.ast.RelationProperties;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
@@ -55,70 +54,95 @@ import edu.harvard.seas.pl.formulog.ast.functions.DummyFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDB;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDB.IndexedFactDBBuilder;
+import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer.InputSymbol;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer.SupSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbolFactory.PredicateFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
+import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.unification.Unification;
 import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
+import edu.harvard.seas.pl.formulog.validating.ValidProgram;
+import edu.harvard.seas.pl.formulog.validating.Validator;
 
-public class InflationaryEvaluation {
+public class SemiInflationaryEvaluation implements Evaluation {
 
-	private final Program prog;
+	private final ValidProgram prog;
 	private final Map<Integer, Set<IndexedRule>> safeRules = new HashMap<>();
 	private final Map<Integer, Set<IndexedRule>> delayedRules = new HashMap<>();
 	private final Map<Integer, Set<IndexedRule>> firstRoundRules = new HashMap<>();
 	private final IndexedFactDBBuilder dbb;
 	private IndexedFactDB cumulativeDb;
 	private final Map<Integer, IndexedFactDB> generationalDbs = new HashMap<>();
-	private Map<Integer, Map<Symbol, Map<Integer, Set<NormalAtom>>>> deltaOld = new HashMap<>();
-	private Map<Integer, Map<Symbol, Map<Integer, Set<NormalAtom>>>> deltaNew = new HashMap<>();
+	private Map<Integer, Map<Symbol, IndexedFactDB>> deltaOld = new HashMap<>();
+	private Map<Integer, Map<Symbol, IndexedFactDB>> deltaNew = new HashMap<>();
+	private Map<NormalAtom, Integer> deltaOldGenerations = new HashMap<>();
 	private int botStratum = Integer.MAX_VALUE;
 	private int topStratum = 0;
 	private Map<Symbol, Set<Integer>> relevantStrata = new HashMap<>();
 
-	public InflationaryEvaluation(Program prog) {
+	public static SemiInflationaryEvaluation setup(WellTypedProgram prog, boolean useDemandTransformation)
+			throws InvalidProgramException {
+		Program magicProg = (new MagicSetTransformer(prog)).transform(useDemandTransformation, false);
+		ValidProgram vprog = (new Validator(magicProg)).validate();
+		return new SemiInflationaryEvaluation(vprog);
+	}
+
+	private SemiInflationaryEvaluation(ValidProgram prog) {
 		this.prog = prog;
 		this.dbb = new IndexedFactDBBuilder(prog);
 	}
 
-	public synchronized IndexedFactDB get() throws EvaluationException {
-		if (cumulativeDb != null) {
-			return cumulativeDb;
-		}
-		preprocessRules();
-		cumulativeDb = dbb.build();
-		for (Symbol sym : prog.getFactSymbols()) {
-			for (Atom fact : prog.getFacts(sym)) {
-				cumulativeDb.add((NormalAtom) fact);
+	public ValidProgram getProgram() {
+		return prog;
+	}
+
+	public synchronized void run(int parallelism) throws EvaluationException {
+		run();
+	}
+
+	public synchronized void run() throws EvaluationException {
+		if (cumulativeDb == null) {
+			preprocessRules();
+			cumulativeDb = dbb.build();
+			for (Symbol sym : prog.getFactSymbols()) {
+				for (Atom fact : prog.getFacts(sym)) {
+					cumulativeDb.add((NormalAtom) fact);
+				}
 			}
+			evaluate();
 		}
-		evaluate();
+	}
+
+	public synchronized IndexedFactDB getResult() {
+		if (cumulativeDb == null) {
+			throw new IllegalStateException("Must run evaluation before requesting result.");
+		}
 		return cumulativeDb;
 	}
 
 	private void evaluate() throws EvaluationException {
-		// for (Map.Entry<Integer, Set<IndexedRule>> e : safeRules.entrySet()) {
-		// System.out.println("SAFE RULES FOR #" + e.getKey());
-		// for (IndexedRule r : e.getValue()) {
-		// System.out.println(r);
-		// }
-		// }
-		// for (Map.Entry<Integer, Set<IndexedRule>> e : delayedRules.entrySet()) {
-		// System.out.println("UNSAFE RULES FOR #" + e.getKey());
-		// for (IndexedRule r : e.getValue()) {
-		// System.out.println(r);
-		// }
-		// }
-		// for (Map.Entry<Integer, Set<IndexedRule>> e : firstRoundRules.entrySet()) {
-		// System.out.println("FIRST ROUND RULES FOR #" + e.getKey());
-		// for (IndexedRule r : e.getValue()) {
-		// System.out.println(r);
-		// }
-		// }
+//		for (Map.Entry<Integer, Set<IndexedRule>> e : safeRules.entrySet()) {
+//			System.out.println("SAFE RULES FOR #" + e.getKey());
+//			for (IndexedRule r : e.getValue()) {
+//				System.out.println(r);
+//			}
+//		}
+//		for (Map.Entry<Integer, Set<IndexedRule>> e : delayedRules.entrySet()) {
+//			System.out.println("UNSAFE RULES FOR #" + e.getKey());
+//			for (IndexedRule r : e.getValue()) {
+//				System.out.println(r);
+//			}
+//		}
+//		for (Map.Entry<Integer, Set<IndexedRule>> e : firstRoundRules.entrySet()) {
+//			System.out.println("FIRST ROUND RULES FOR #" + e.getKey());
+//			for (IndexedRule r : e.getValue()) {
+//				System.out.println(r);
+//			}
+//		}
 		boolean changed = true;
 		while (changed) {
 			changed = false;
@@ -131,7 +155,7 @@ public class InflationaryEvaluation {
 			// System.out.println("EVALUATING STRATUM UNSAFE " + i);
 			// System.out.println(cumulativeDb);
 			for (IndexedRule r : delayedRules.get(i)) {
-//				 System.out.println(r);
+				// System.out.println(r);
 				changed |= evaluate(r, 0, new RuleSubstitution(r), 0);
 			}
 			if (changed) {
@@ -146,7 +170,7 @@ public class InflationaryEvaluation {
 		// System.out.println(cumulativeDb);
 		boolean changed = false;
 		for (IndexedRule r : firstRoundRules.get(stratum)) {
-//			 System.out.println(r);
+			// System.out.println(r);
 			changed |= evaluate(r, 0, new RuleSubstitution(r), 0);
 		}
 		boolean changedLastRound = true;
@@ -155,7 +179,7 @@ public class InflationaryEvaluation {
 			deltaOld.put(stratum, new HashMap<>(deltaNew.get(stratum)));
 			deltaNew.get(stratum).clear();
 			for (IndexedRule r : safeRules.get(stratum)) {
-//				 System.out.println(r);
+				// System.out.println(r);
 				changedLastRound |= evaluate(r, 0, new RuleSubstitution(r), 0);
 			}
 			changed |= changedLastRound;
@@ -203,24 +227,26 @@ public class InflationaryEvaluation {
 			private boolean handleDelta(NormalAtom a, boolean ignoreGen) throws EvaluationException {
 				Symbol sym = stripSemiNaiveAnnotation(a.getSymbol());
 				Symbol headSym = r.getHead().getSymbol();
-				Map<Symbol, Map<Integer, Set<NormalAtom>>> d = deltaOld.get(getStratumRank(headSym));
-				if (d == null) {
+				Map<Symbol, IndexedFactDB> m = deltaOld.get(getStratumRank(headSym));
+				if (m == null) {
 					return false;
 				}
-				Map<Integer, Set<NormalAtom>> m = d.get(sym);
-				if (m == null) {
+				IndexedFactDB db = m.get(sym);
+				if (db == null) {
+					return false;
+				}
+				Iterator<NormalAtom> it = db.query(sym).iterator();
+				if (!it.hasNext()) {
 					return false;
 				}
 				a = (NormalAtom) Atoms.get(sym, a.getArgs(), a.isNegated());
 				boolean changed = false;
-				for (Map.Entry<Integer, Set<NormalAtom>> e : m.entrySet()) {
-					int genToUse = ignoreGen ? gen : e.getKey();
-					Set<NormalAtom> newAtoms = e.getValue();
-					for (NormalAtom atom : newAtoms) {
-						s.setToBefore(pos);
-						if (Unification.unify(a, atom, s)) {
-							changed |= evaluate(r, pos + 1, s, genToUse);
-						}
+				while (it.hasNext()) {
+					NormalAtom fact = it.next();
+					int genToUse = ignoreGen ? gen : deltaOldGenerations.get(fact);
+					s.setToBefore(pos);
+					if (Unification.unify(a, fact, s)) {
+						changed |= evaluate(r, pos + 1, s, genToUse);
 					}
 				}
 				return changed;
@@ -235,9 +261,9 @@ public class InflationaryEvaluation {
 					while (it.hasNext()) {
 						s.setToBefore(pos);
 						NormalAtom fact = it.next();
-//						System.out.println(cumulativeDb);
-//						System.out.println("a " + a);
-//						System.out.println("fact " + fact);
+						// System.out.println(cumulativeDb);
+						// System.out.println("a " + a);
+						// System.out.println("fact " + fact);
 						Unification.unsafeUnifyWithFact(a, fact, s);
 						changed |= evaluate(r, pos + 1, s, gen);
 					}
@@ -329,11 +355,12 @@ public class InflationaryEvaluation {
 		if (isAgg && (fact = checkAggregateFact(fact, gen)) != null || !isAgg && checkNonAggregateFact(fact, gen)) {
 //			System.out.println("adding " + fact);
 			for (Integer stratum : Util.lookupOrCreate(relevantStrata, sym, () -> Collections.emptySet())) {
-				Map<Symbol, Map<Integer, Set<NormalAtom>>> d = Util.lookupOrCreate(deltaNew, stratum,
-						() -> new HashMap<>());
-				Map<Integer, Set<NormalAtom>> m = Util.lookupOrCreate(d, sym, () -> new HashMap<>());
-				Util.lookupOrCreate(m, gen, () -> new HashSet<>()).add(fact);
+				Map<Symbol, IndexedFactDB> m = Util.lookupOrCreate(deltaNew, stratum, () -> new HashMap<>());
+				IndexedFactDB db = Util.lookupOrCreate(m, sym, () -> dbb.build());
+				db.add(fact);
 			}
+			assert !deltaOldGenerations.containsKey(fact);
+			deltaOldGenerations.put(fact, gen);
 			generationalDbs.get(gen).add(fact);
 			cumulativeDb.add(fact);
 			// System.out.println("added");
@@ -368,7 +395,7 @@ public class InflationaryEvaluation {
 	private NormalAtom checkAggregateFact(NormalAtom fact, int gen) throws EvaluationException {
 		Symbol sym = fact.getSymbol();
 		Term aggValue = fact.getArgs()[sym.getArity() - 1];
-		Symbol funcSym = prog.getRelationProperties(sym).getAggrFuncSymbol();
+		Symbol funcSym = prog.getRelationProperties(sym).getAggFuncSymbol();
 		FunctionDef aggFunc = prog.getDef(funcSym);
 		for (int i = gen; i >= 0; --i) {
 			IndexedFactDB db = Util.lookupOrCreate(generationalDbs, i, () -> dbb.build());

@@ -47,6 +47,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 
 import edu.harvard.seas.pl.formulog.ast.Atoms;
 import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
+import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
@@ -183,16 +184,16 @@ public class Parser {
 		}
 	}
 
-	public Pair<Program, Atom> parse(Reader r) throws ParseException {
+	public Program parse(Reader r) throws ParseException {
 		return parse(r, Paths.get(""));
 	}
 
-	public Pair<Program, Atom> parse(Reader r, Path inputDir) throws ParseException {
+	public Program parse(Reader r, Path inputDir) throws ParseException {
 		try {
 			DatalogParser parser = getParser(r);
 			StmtProcessor stmtProcessor = new StmtProcessor(inputDir);
 			parser.prog().accept(stmtProcessor);
-			return new Pair<>(stmtProcessor.getProgram(), stmtProcessor.getQuery());
+			return stmtProcessor.getProgram();
 		} catch (Exception e) {
 			throw new ParseException(e);
 		}
@@ -1285,10 +1286,6 @@ public class Parser {
 
 		};
 
-		public Atom getQuery() {
-			return query;
-		}
-
 		private void readEdbFromFile(Symbol sym) throws ParseException {
 			Set<Atom> facts = Util.lookupOrCreate(initialFacts, sym, () -> new HashSet<>());
 			Path path = inputDir.resolve(sym.toString() + ".csv");
@@ -1362,6 +1359,16 @@ public class Parser {
 				public RelationProperties getRelationProperties(Symbol sym) {
 					assert sym.getSymbolType().isRelationSym();
 					return Util.lookupOrCreate(relationProperties, sym, () -> new RelationProperties(sym));
+				}
+
+				@Override
+				public boolean hasQuery() {
+					return query != null;
+				}
+
+				@Override
+				public NormalAtom getQuery() {
+					return (NormalAtom) query;
 				}
 
 			};
