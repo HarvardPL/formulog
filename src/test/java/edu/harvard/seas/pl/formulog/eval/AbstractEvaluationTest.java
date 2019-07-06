@@ -22,19 +22,25 @@ package edu.harvard.seas.pl.formulog.eval;
 
 import static org.junit.Assert.fail;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.net.URL;
 import java.nio.file.Paths;
 
+import edu.harvard.seas.pl.formulog.ast.Atoms;
+import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
 import edu.harvard.seas.pl.formulog.ast.Program;
+import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDB;
 import edu.harvard.seas.pl.formulog.parsing.Parser;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
+import edu.harvard.seas.pl.formulog.validating.ValidProgram;
 
 public abstract class AbstractEvaluationTest {
 
@@ -51,21 +57,27 @@ public abstract class AbstractEvaluationTest {
 			Evaluation eval = setup(wellTypedProg);
 			eval.run();
 			IndexedFactDB db = eval.getResult();
-			boolean ok = false;
-			for (Symbol sym : db.getSymbols()) {
-				if (sym.toString().equals("ok")) {
-					ok = true;
-					break;
-				}
+			ValidProgram vprog = eval.getProgram();
+			Symbol sym;
+			if (vprog.hasQuery()) {
+				sym = vprog.getQuery().getSymbol();
+			} else {
+				sym = vprog.getSymbolManager().lookupSymbol("ok");
 			}
+			NormalAtom okAtom = (NormalAtom) Atoms.get(sym, Terms.emptyArray(), false);
+			boolean ok = db.hasFact(okAtom);
 			if (!ok && !isBad) {
-				fail("Test failed for a good program");
+				fail("Test failed for a good program\n" + db);
 			}
 			if (ok && isBad) {
 				fail("Test succeeded for a bad program");
 			}
 		} catch (Exception e) {
-			fail("Unexpected exception: " + e);
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			PrintStream out = new PrintStream(baos);
+			out.println("Unexpected exception:");
+			e.printStackTrace(out);
+			fail(baos.toString());
 		}
 	}
 

@@ -22,7 +22,7 @@ package edu.harvard.seas.pl.formulog.magic;
 
 import edu.harvard.seas.pl.formulog.eval.Evaluation;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.eval.StratifiedEvaluation;
+import edu.harvard.seas.pl.formulog.eval.SemiInflationaryEvaluation;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 
@@ -30,7 +30,7 @@ public class SemiInflationaryMagicSetTest extends CommonMagicSetTest {
 
 	@Override
 	protected Evaluation setup(WellTypedProgram prog) throws InvalidProgramException, EvaluationException {
-		return StratifiedEvaluation.setup(prog, false);
+		return SemiInflationaryEvaluation.setup(prog, false);
 	}
 	
 }

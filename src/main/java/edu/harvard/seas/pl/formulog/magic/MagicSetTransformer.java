@@ -279,6 +279,7 @@ public class MagicSetTransformer {
 		Set<Rule> magicRules = makeMagicRules(adRules);
 		Program magicProg = new ProgramImpl(magicRules, null);
 		if (restoreStratification && !isStratified(magicProg)) {
+			System.out.println("restoring strat");
 			magicProg = stratify(magicProg, adRules);
 		}
 		if (useDemandTransformation) {
@@ -321,6 +322,9 @@ public class MagicSetTransformer {
 	}
 
 	private Set<Rule> adorn(Set<Symbol> seeds) throws InvalidProgramException {
+		if (debug) {
+			System.err.println("Adorning rules...");
+		}
 		Set<Rule> adRules = new HashSet<>();
 		DedupWorkList<Symbol> worklist = new DedupWorkList<>();
 		for (Symbol seed : seeds) {
@@ -429,25 +433,23 @@ public class MagicSetTransformer {
 		return liveVars;
 	}
 
+	private void setStratumInRelationProperties(Symbol sym, Stratum stratum) {
+		assert stratum != null;
+		RelationProperties props = Util.lookupOrCreate(relationProps, sym, () -> new RelationProperties(sym));
+		props.setStratum(stratum);
+	}
+	
 	private Atom createSupAtom(Set<Var> curLiveVars, int ruleNum, int supCount, Symbol headSym) {
 		Term[] args = (new ArrayList<>(curLiveVars)).toArray(new Term[0]);
 		SupSymbol supSym = new SupSymbol(ruleNum, supCount, args.length);
-		if (!relationProps.containsKey(supSym)) {
-			RelationProperties p = new RelationProperties(supSym);
-			p.setStratum(lookupStratum(headSym));
-			relationProps.put(supSym, p);
-		}
+		setStratumInRelationProperties(supSym, lookupStratum(headSym));
 		return Atoms.getPositive(supSym, args);
 	}
 
 	private Atom createInputAtom(Atom a) {
 		AdornedSymbol headSym = (AdornedSymbol) a.getSymbol();
 		InputSymbol inputSym = new InputSymbol(headSym);
-		if (!relationProps.containsKey(inputSym)) {
-			RelationProperties p = new RelationProperties(inputSym);
-			p.setStratum(lookupStratum(headSym));
-			relationProps.put(inputSym, p);
-		}
+		setStratumInRelationProperties(inputSym, lookupStratum(headSym));
 		Term[] inputArgs = new Term[inputSym.getArity()];
 		Term[] args = a.getArgs();
 		boolean[] adornment = headSym.getAdornment();
@@ -462,8 +464,7 @@ public class MagicSetTransformer {
 
 	private Stratum lookupStratum(Symbol sym) {
 		if (sym instanceof AdornedSymbol) {
-			Symbol unadorned = ((AdornedSymbol) sym).getSymbol();
-			return origProg.getRelationProperties(unadorned).getStratum();
+			sym = ((AdornedSymbol) sym).getSymbol();
 		}
 		return relationProps.get(sym).getStratum();
 	}
@@ -646,15 +647,6 @@ public class MagicSetTransformer {
 	private List<Atom> makePositive(Iterable<Atom> atoms) {
 		List<Atom> l = new ArrayList<>();
 		for (Atom a : atoms) {
-			// Symbol sym = a.getSymbol();
-			// if (sym.getSymbolType().isIDBSymbol() && !(sym instanceof InputSymbol || sym
-			// instanceof SupSymbol)) {
-			// if (a.isNegated()) {
-			// continue;
-			// }
-			// a = Atoms.getPositive(new PositiveSymbol(sym), a.getArgs());
-			// }
-			// l.add(a);
 			Atom b = makePositive(a);
 			if (b != null) {
 				l.add(b);
@@ -873,11 +865,13 @@ public class MagicSetTransformer {
 
 		@Override
 		public RelationProperties getRelationProperties(Symbol sym) {
-			RelationProperties p = relationProps.get(sym);
-			if (p == null) {
-				p = origProg.getRelationProperties(sym);
+			if (sym instanceof AdornedSymbol) {
+				sym = ((AdornedSymbol) sym).getSymbol();
 			}
-			return p;
+			if (sym instanceof PositiveSymbol) {
+				sym = ((PositiveSymbol) sym).getUnderlyingSymbol();
+			}
+			return relationProps.get(sym);
 		}
 
 		@Override
