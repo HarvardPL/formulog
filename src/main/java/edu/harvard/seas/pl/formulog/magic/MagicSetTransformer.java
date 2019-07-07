@@ -279,7 +279,6 @@ public class MagicSetTransformer {
 		Set<Rule> magicRules = makeMagicRules(adRules);
 		Program magicProg = new ProgramImpl(magicRules, null);
 		if (restoreStratification && !isStratified(magicProg)) {
-			System.out.println("restoring strat");
 			magicProg = stratify(magicProg, adRules);
 		}
 		if (useDemandTransformation) {

@@ -73,16 +73,21 @@ public class SemiInflationaryEvaluation implements Evaluation {
 	private final ValidProgram prog;
 	private final Map<Integer, Set<IndexedRule>> safeRules = new HashMap<>();
 	private final Map<Integer, Set<IndexedRule>> delayedRules = new HashMap<>();
-	private final Map<Integer, Set<IndexedRule>> firstRoundRules = new HashMap<>();
+	private final Map<Integer, Set<IndexedRule>> safeFirstRoundRules = new HashMap<>();
+	private final Map<Integer, Set<IndexedRule>> unsafeFirstRoundRules = new HashMap<>();
 	private final IndexedFactDBBuilder dbb;
 	private IndexedFactDB cumulativeDb;
 	private final Map<Integer, IndexedFactDB> generationalDbs = new HashMap<>();
-	private Map<Integer, Map<Symbol, IndexedFactDB>> deltaOld = new HashMap<>();
-	private Map<Integer, Map<Symbol, IndexedFactDB>> deltaNew = new HashMap<>();
+	private Map<Integer, IndexedFactDB> deltaOldSafe = new HashMap<>();
+	private Map<Integer, IndexedFactDB> deltaNewSafe = new HashMap<>();
+	private Map<Integer, IndexedFactDB> deltaOldUnsafe = new HashMap<>();
+	private Map<Integer, IndexedFactDB> deltaNewUnsafe = new HashMap<>();
 	private Map<NormalAtom, Integer> deltaOldGenerations = new HashMap<>();
 	private int botStratum = Integer.MAX_VALUE;
 	private int topStratum = 0;
 	private Map<Symbol, Set<Integer>> relevantStrata = new HashMap<>();
+	private Set<Integer> safeFirstRoundsCompleted = new HashSet<>();
+	private Set<Integer> unsafeFirstRoundsCompleted = new HashSet<>();
 
 	public static SemiInflationaryEvaluation setup(WellTypedProgram prog, boolean useDemandTransformation)
 			throws InvalidProgramException {
@@ -113,6 +118,43 @@ public class SemiInflationaryEvaluation implements Evaluation {
 					cumulativeDb.add((NormalAtom) fact);
 				}
 			}
+			for (Map.Entry<Integer, Set<IndexedRule>> e : safeFirstRoundRules.entrySet()) {
+				if (e.getValue().isEmpty()) {
+					continue;
+				}
+				System.out.println("SAFE FIRST ROUND RULES FOR #" + e.getKey());
+				for (IndexedRule r : e.getValue()) {
+					System.out.println(r);
+				}
+			}
+			for (Map.Entry<Integer, Set<IndexedRule>> e : safeRules.entrySet()) {
+				if (e.getValue().isEmpty()) {
+					continue;
+				}
+				System.out.println("SAFE RULES FOR #" + e.getKey());
+				for (IndexedRule r : e.getValue()) {
+					System.out.println(r);
+				}
+			}
+			for (Map.Entry<Integer, Set<IndexedRule>> e : unsafeFirstRoundRules.entrySet()) {
+				if (e.getValue().isEmpty()) {
+					continue;
+				}
+				System.out.println("UNSAFE FIRST ROUND RULES FOR #" + e.getKey());
+				for (IndexedRule r : e.getValue()) {
+					System.out.println(r);
+				}
+			}
+			for (Map.Entry<Integer, Set<IndexedRule>> e : delayedRules.entrySet()) {
+				if (e.getValue().isEmpty()) {
+					continue;
+				}
+				System.out.println("UNSAFE RULES FOR #" + e.getKey());
+				for (IndexedRule r : e.getValue()) {
+					System.out.println(r);
+				}
+			}
+			System.out.println("RELEVANT STRATA " + relevantStrata);
 			evaluate();
 		}
 	}
@@ -125,70 +167,58 @@ public class SemiInflationaryEvaluation implements Evaluation {
 	}
 
 	private void evaluate() throws EvaluationException {
-//		for (Map.Entry<Integer, Set<IndexedRule>> e : safeRules.entrySet()) {
-//			System.out.println("SAFE RULES FOR #" + e.getKey());
-//			for (IndexedRule r : e.getValue()) {
-//				System.out.println(r);
-//			}
-//		}
-//		for (Map.Entry<Integer, Set<IndexedRule>> e : delayedRules.entrySet()) {
-//			System.out.println("UNSAFE RULES FOR #" + e.getKey());
-//			for (IndexedRule r : e.getValue()) {
-//				System.out.println(r);
-//			}
-//		}
-//		for (Map.Entry<Integer, Set<IndexedRule>> e : firstRoundRules.entrySet()) {
-//			System.out.println("FIRST ROUND RULES FOR #" + e.getKey());
-//			for (IndexedRule r : e.getValue()) {
-//				System.out.println(r);
-//			}
-//		}
 		boolean changed = true;
-		while (changed) {
-			changed = false;
-			for (int i = botStratum; i <= topStratum; ++i) {
-				changed |= evaluateStratumSafe(i);
+		outer: while (true) {
+			while (changed) {
+				changed = false;
+				for (int stratum = botStratum; stratum <= topStratum; ++stratum) {
+					changed |= evaluateStratum(stratum, true);
+				}
 			}
-		}
-		;
-		for (int i = botStratum; i <= topStratum; ++i) {
-			// System.out.println("EVALUATING STRATUM UNSAFE " + i);
-			// System.out.println(cumulativeDb);
-			for (IndexedRule r : delayedRules.get(i)) {
-				// System.out.println(r);
-				changed |= evaluate(r, 0, new RuleSubstitution(r), 0);
+			for (int stratum = botStratum; stratum <= topStratum; ++stratum) {
+				changed |= evaluateStratum(stratum, false);
+				if (changed) {
+					continue outer;
+				}
 			}
-			if (changed) {
-				evaluate();
-				break;
-			}
+			break;
 		}
 	}
 
-	private boolean evaluateStratumSafe(int stratum) throws EvaluationException {
-		// System.out.println("EVALUATING STRATUM SAFE " + stratum);
+	private boolean evaluateStratum(int stratum, boolean safe) throws EvaluationException {
+		 System.out.println("EVALUATING STRATUM " + stratum + " (safe=" + safe + ")");
 		// System.out.println(cumulativeDb);
 		boolean changed = false;
-		for (IndexedRule r : firstRoundRules.get(stratum)) {
-			// System.out.println(r);
-			changed |= evaluate(r, 0, new RuleSubstitution(r), 0);
+		Set<Integer> s = safe ? safeFirstRoundsCompleted : unsafeFirstRoundsCompleted;
+		Map<Integer, IndexedFactDB> deltaOld = safe ? deltaOldSafe : deltaOldUnsafe;
+		Map<Integer, IndexedFactDB> deltaNew = safe ? deltaNewSafe : deltaNewUnsafe;
+		if (s.add(stratum)) {
+			deltaOld.put(stratum, deltaNew.get(stratum));
+			Map<Integer, Set<IndexedRule>> m = safe ? safeFirstRoundRules : unsafeFirstRoundRules;
+			for (IndexedRule r : m.get(stratum)) {
+				System.out.println("\n" + r);
+				changed |= evaluate(r, 0, new RuleSubstitution(r), 0, null);
+			}
+		}
+		if (!deltaOld.containsKey(stratum)) {
+			return changed;
 		}
 		boolean changedLastRound = true;
 		while (changedLastRound) {
 			changedLastRound = false;
-			deltaOld.put(stratum, new HashMap<>(deltaNew.get(stratum)));
-			deltaNew.get(stratum).clear();
-			for (IndexedRule r : safeRules.get(stratum)) {
-				// System.out.println(r);
-				changedLastRound |= evaluate(r, 0, new RuleSubstitution(r), 0);
+			deltaOld.put(stratum, deltaNew.get(stratum));
+			deltaNew.put(stratum, dbb.build());
+			Map<Integer, Set<IndexedRule>> m = safe ? safeRules : delayedRules;
+			for (IndexedRule r : m.get(stratum)) {
+				System.out.println("\n" + r);
+				changedLastRound |= evaluate(r, 0, new RuleSubstitution(r), 0, deltaOld.get(stratum));
 			}
 			changed |= changedLastRound;
 		}
-		;
 		return changed;
 	}
-
-	private boolean evaluate(IndexedRule r, int pos, RuleSubstitution s, int gen) throws EvaluationException {
+	
+	private boolean evaluate(IndexedRule r, int pos, RuleSubstitution s, int gen, IndexedFactDB delta) throws EvaluationException {
 		if (pos >= r.getBodySize()) {
 			return reportFact((NormalAtom) r.getHead(), s, gen);
 		}
@@ -225,17 +255,15 @@ public class SemiInflationaryEvaluation implements Evaluation {
 			}
 
 			private boolean handleDelta(NormalAtom a, boolean ignoreGen) throws EvaluationException {
+				System.out.println("DELTA " + a + " " + ignoreGen);
 				Symbol sym = stripSemiNaiveAnnotation(a.getSymbol());
-				Symbol headSym = r.getHead().getSymbol();
-				Map<Symbol, IndexedFactDB> m = deltaOld.get(getStratumRank(headSym));
-				if (m == null) {
-					return false;
-				}
-				IndexedFactDB db = m.get(sym);
-				if (db == null) {
-					return false;
-				}
-				Iterator<NormalAtom> it = db.query(sym).iterator();
+				assert delta != null;
+//				IndexedFactDB db = delta.get(sym);
+//				if (db == null) {
+//					System.out.println("db null");
+//					return false;
+//				}
+				Iterator<NormalAtom> it = delta.query(sym).iterator();
 				if (!it.hasNext()) {
 					return false;
 				}
@@ -243,10 +271,12 @@ public class SemiInflationaryEvaluation implements Evaluation {
 				boolean changed = false;
 				while (it.hasNext()) {
 					NormalAtom fact = it.next();
+					System.out.print("matching with " + fact);
 					int genToUse = ignoreGen ? gen : deltaOldGenerations.get(fact);
 					s.setToBefore(pos);
 					if (Unification.unify(a, fact, s)) {
-						changed |= evaluate(r, pos + 1, s, genToUse);
+						System.out.println("matched");
+						changed |= evaluate(r, pos + 1, s, genToUse, delta);
 					}
 				}
 				return changed;
@@ -255,7 +285,7 @@ public class SemiInflationaryEvaluation implements Evaluation {
 			private boolean handleAtom(NormalAtom a, Iterable<NormalAtom> facts, int gen) throws EvaluationException {
 				Iterator<NormalAtom> it = facts.iterator();
 				if (a.isNegated()) {
-					return !it.hasNext() && evaluate(r, pos + 1, s, gen);
+					return !it.hasNext() && evaluate(r, pos + 1, s, gen, delta);
 				} else {
 					boolean changed = false;
 					while (it.hasNext()) {
@@ -265,7 +295,7 @@ public class SemiInflationaryEvaluation implements Evaluation {
 						// System.out.println("a " + a);
 						// System.out.println("fact " + fact);
 						Unification.unsafeUnifyWithFact(a, fact, s);
-						changed |= evaluate(r, pos + 1, s, gen);
+						changed |= evaluate(r, pos + 1, s, gen, delta);
 					}
 					return changed;
 				}
@@ -275,7 +305,7 @@ public class SemiInflationaryEvaluation implements Evaluation {
 			public Boolean visit(UnifyAtom unifyAtom, Void in) throws EvaluationException {
 				Term[] args = unifyAtom.getArgs();
 				if (unifyAtom.isNegated() ^ Unification.unify(args[0], args[1], s)) {
-					return evaluate(r, pos + 1, s, gen);
+					return evaluate(r, pos + 1, s, gen, delta);
 				}
 				return false;
 			}
@@ -350,14 +380,19 @@ public class SemiInflationaryEvaluation implements Evaluation {
 		if (incrementGen(sym)) {
 			gen++;
 		}
-//		System.out.println("Discovered fact " + fact + " at generation " + gen + "...");
+		System.out.print("Discovered fact " + fact + " at generation " + gen + "...");
 		boolean isAgg = prog.getRelationProperties(sym).isAggregated();
 		if (isAgg && (fact = checkAggregateFact(fact, gen)) != null || !isAgg && checkNonAggregateFact(fact, gen)) {
-//			System.out.println("adding " + fact);
+			System.out.println(" added");
 			for (Integer stratum : Util.lookupOrCreate(relevantStrata, sym, () -> Collections.emptySet())) {
-				Map<Symbol, IndexedFactDB> m = Util.lookupOrCreate(deltaNew, stratum, () -> new HashMap<>());
-				IndexedFactDB db = Util.lookupOrCreate(m, sym, () -> dbb.build());
-				db.add(fact);
+//				Map<Symbol, IndexedFactDB> m = Util.lookupOrCreate(deltaNewSafe, stratum, () -> new HashMap<>());
+//				IndexedFactDB db = Util.lookupOrCreate(m, sym, () -> dbb.build());
+//				db.add(fact);
+//				m = Util.lookupOrCreate(deltaNewUnsafe, stratum, () -> new HashMap<>());
+//				db = Util.lookupOrCreate(m, sym, () -> dbb.build());
+//				db.add(fact);
+				Util.lookupOrCreate(deltaNewSafe, stratum, () -> dbb.build()).add(fact);
+				Util.lookupOrCreate(deltaNewUnsafe, stratum, () -> dbb.build()).add(fact);
 			}
 			assert !deltaOldGenerations.containsKey(fact);
 			deltaOldGenerations.put(fact, gen);
@@ -366,7 +401,7 @@ public class SemiInflationaryEvaluation implements Evaluation {
 			// System.out.println("added");
 			return true;
 		} else {
-			// System.out.println("not added");
+			System.out.println(" not added");
 			return false;
 		}
 	}
@@ -436,12 +471,13 @@ public class SemiInflationaryEvaluation implements Evaluation {
 			for (Rule semiNaiveRule : makeSemiNaiveRules(original, stratum, safe)) {
 				IndexedRule indexedRule = new IndexedRule(semiNaiveRule, dbb);
 				Map<Integer, Set<IndexedRule>> m;
-				if (safe) {
-					if (isFirstRoundRule(indexedRule, stratum)) {
-						m = firstRoundRules;
-					} else {
-						m = safeRules;
-					}
+				boolean firstRoundRule = isFirstRoundRule(indexedRule, stratum);
+				if (safe && firstRoundRule) {
+					m = safeFirstRoundRules;
+				} else if (safe) {
+					m = safeRules;
+				} else if (firstRoundRule) {
+					m = unsafeFirstRoundRules;
 				} else {
 					m = delayedRules;
 				}
@@ -452,9 +488,12 @@ public class SemiInflationaryEvaluation implements Evaluation {
 		private void recordStratum(int stratum) {
 			safeRules.putIfAbsent(stratum, new HashSet<>());
 			delayedRules.putIfAbsent(stratum, new HashSet<>());
-			firstRoundRules.putIfAbsent(stratum, new HashSet<>());
-			deltaOld.putIfAbsent(stratum, new HashMap<>());
-			deltaNew.putIfAbsent(stratum, new HashMap<>());
+			safeFirstRoundRules.putIfAbsent(stratum, new HashSet<>());
+			unsafeFirstRoundRules.putIfAbsent(stratum, new HashSet<>());
+			deltaOldSafe.putIfAbsent(stratum, dbb.build());
+			deltaNewSafe.putIfAbsent(stratum, dbb.build());
+			deltaOldUnsafe.putIfAbsent(stratum, dbb.build());
+			deltaNewUnsafe.putIfAbsent(stratum, dbb.build());
 			topStratum = Math.max(topStratum, stratum);
 			botStratum = Math.min(botStratum, stratum);
 		}
@@ -471,11 +510,7 @@ public class SemiInflationaryEvaluation implements Evaluation {
 		private boolean isFirstRoundRule(Rule r, int stratum) {
 			for (Atom a : r.getBody()) {
 				Symbol sym = a.getSymbol();
-				if (!sym.getSymbolType().isIDBSymbol()) {
-					continue;
-				}
-				int i = getStratumRank(sym);
-				if (stratum <= i) {
+				if (sym.getSymbolType().isIDBSymbol()) {
 					return false;
 				}
 			}
@@ -496,8 +531,8 @@ public class SemiInflationaryEvaluation implements Evaluation {
 				@Override
 				public Boolean visit(NormalAtom normalAtom, Void in) {
 					assert allVars(normalAtom.getArgs());
-					boolean notOk = normalAtom.isNegated();
 					Symbol sym = normalAtom.getSymbol();
+					boolean notOk = normalAtom.isNegated() && sym.getSymbolType().isIDBSymbol();
 					notOk |= prog.getRelationProperties(sym).isAggregated();
 					return !notOk;
 				}

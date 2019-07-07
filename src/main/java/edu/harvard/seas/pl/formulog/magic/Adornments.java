@@ -47,14 +47,10 @@ public final class Adornments {
 
 	public static Atom adorn(Atom a, Set<Var> boundVars, Program prog, boolean topDownIsDefault) {
 		Symbol origSym = a.getSymbol();
-		boolean defaultAdornment = topDownIsDefault || prog.getRelationProperties(origSym).isTopDown();
-		if (prog.getRelationProperties(origSym).isBottomUp()) {
-			if (!topDownIsDefault) {
-				return a;
-			} else {
-				defaultAdornment = false;
-			}
+		if (!topDownIsDefault && !prog.getRelationProperties(origSym).isTopDown()) {
+			return a;
 		}
+		boolean defaultAdornment = !prog.getRelationProperties(origSym).isBottomUp();
 		Term[] args = a.getArgs();
 		boolean[] adornment = new boolean[args.length];
 		for (int k = 0; k < args.length; k++) {
