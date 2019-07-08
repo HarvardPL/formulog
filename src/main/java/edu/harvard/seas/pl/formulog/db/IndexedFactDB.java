@@ -95,7 +95,7 @@ public class IndexedFactDB {
 	}
 
 	public boolean add(NormalAtom fact) throws EvaluationException {
-		if (aggregateFactsBySym.containsKey(fact.getSymbol())) {
+		if (aggStuff.containsKey(fact.getSymbol())) {
 			return addAggregate(fact);
 		}
 		if (!getAllForSym(fact.getSymbol()).add(fact)) {
@@ -127,7 +127,7 @@ public class IndexedFactDB {
 		Symbol sym = fact.getSymbol();
 		Term agg = fact.getArgs()[sym.getArity() - 1];
 		Key key = makeAggKey(fact);
-		Map<Key, Term> m = aggregateFactsBySym.get(sym);
+		Map<Key, Term> m = Util.lookupOrCreate(aggregateFactsBySym, sym, () -> new ConcurrentHashMap<>());
 		Pair<FunctionDef, Term> p = aggStuff.get(sym);
 		FunctionDef aggFunc = p.fst();
 		Term aggInit = p.snd();

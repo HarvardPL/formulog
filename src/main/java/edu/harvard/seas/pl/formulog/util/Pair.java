@@ -70,4 +70,9 @@ public class Pair<U, V> {
 		return true;
 	}
 	
+	@Override
+	public String toString() {
+		return "<" + fst + ", " + snd + ">";
+	}
+	
 }
