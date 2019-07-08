@@ -45,6 +45,7 @@ import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
+import edu.harvard.seas.pl.formulog.ast.RelationProperties;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
@@ -60,6 +61,7 @@ import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer.SupSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbolFactory.PredicateFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
+import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.unification.Unification;
@@ -91,7 +93,8 @@ public class SemiInflationaryEvaluation implements Evaluation {
 
 	public static SemiInflationaryEvaluation setup(WellTypedProgram prog, boolean useDemandTransformation)
 			throws InvalidProgramException {
-		Program magicProg = (new MagicSetTransformer(prog)).transform(useDemandTransformation, false);
+		Program reorderedProg = reorder(prog);
+		Program magicProg = (new MagicSetTransformer(reorderedProg)).transform(useDemandTransformation, false);
 		ValidProgram vprog = (new Validator(magicProg)).validate();
 		return new SemiInflationaryEvaluation(vprog);
 	}
@@ -282,8 +285,6 @@ public class SemiInflationaryEvaluation implements Evaluation {
 		private boolean evaluate(int pos, int runningGen) throws EvaluationException {
 			if (pos >= r.getBodySize()) {
 				NormalAtom hd = (NormalAtom) r.getHead();
-				System.out.println(hd);
-				System.out.println(s);
 				Symbol hdSym = hd.getSymbol();
 				int gen = -1;
 				switch (getGenToUse(hdSym)) {
@@ -345,16 +346,13 @@ public class SemiInflationaryEvaluation implements Evaluation {
 				}
 
 				private boolean go(NormalAtom atom, int dbIdx, boolean isPrevious) throws EvaluationException {
-					System.out.println("hello from go " + atom);
 					atom = (NormalAtom) Atoms.get(stripSemiNaiveAnnotation(atom.getSymbol()), atom.getArgs(), atom.isNegated());
 					boolean changed = false;
 					for (NormalAtom fact : getAll(dbIdx, s)) {
-						System.out.println("fact " + fact);
 						int gen = deltaOldGenerations.get(fact);
 						s.setToBefore(pos);
 						if (Unification.unify(atom, fact, s)) {
 							System.out.println("matched on " + fact + " at gen " + gen);
-							System.out.println(s);
 							changed |= evaluate(pos + 1, isPrevious ? gen + 1 : gen);
 						}
 					}
@@ -393,9 +391,9 @@ public class SemiInflationaryEvaluation implements Evaluation {
 					while (it.hasNext()) {
 						NormalAtom fact = it.next();
 						int genToUse = ignoreGen ? runningGen : deltaOldGenerations.get(fact);
-						System.out.println("matched " + fact + " at gen " + genToUse);
 						s.setToBefore(pos);
 						if (Unification.unify(a, fact, s)) {
+							System.out.println("matched " + fact + " at gen " + genToUse);
 							changed |= evaluate(pos + 1, genToUse);
 						}
 					}
@@ -855,7 +853,7 @@ public class SemiInflationaryEvaluation implements Evaluation {
 			sort(newBody);
 			return BasicRule.get(r.getHead(), newBody);
 		}
-
+		
 		private void sort(List<Atom> body) {
 			try {
 				Set<Var> boundVars = new HashSet<>();
@@ -873,6 +871,85 @@ public class SemiInflationaryEvaluation implements Evaluation {
 			}
 		}
 
+	}
+	
+	private static Program reorder(Program prog) {
+		Map<Symbol, Set<Rule>> newRules = new HashMap<>();
+		for (Symbol sym : prog.getRuleSymbols()) {
+			Set<Rule> s = new HashSet<>();
+			for (Rule r : prog.getRules(sym)) {
+				s.add(reorder(r));
+			}
+			newRules.put(sym, s);
+		}
+		return new Program() {
+
+			@Override
+			public Set<Symbol> getFunctionSymbols() {
+				return prog.getFunctionSymbols();
+			}
+
+			@Override
+			public Set<Symbol> getFactSymbols() {
+				return prog.getFactSymbols();
+			}
+
+			@Override
+			public Set<Symbol> getRuleSymbols() {
+				return prog.getRuleSymbols();
+			}
+
+			@Override
+			public FunctionDef getDef(Symbol sym) {
+				return prog.getDef(sym);
+			}
+
+			@Override
+			public Set<Atom> getFacts(Symbol sym) {
+				return prog.getFacts(sym);
+			}
+
+			@Override
+			public Set<Rule> getRules(Symbol sym) {
+				return newRules.get(sym);
+			}
+
+			@Override
+			public SymbolManager getSymbolManager() {
+				return prog.getSymbolManager();
+			}
+
+			@Override
+			public RelationProperties getRelationProperties(Symbol sym) {
+				return prog.getRelationProperties(sym);
+			}
+
+			@Override
+			public boolean hasQuery() {
+				return prog.hasQuery();
+			}
+
+			@Override
+			public NormalAtom getQuery() {
+				return prog.getQuery();
+			}
+			
+		};
+	}
+	
+	private static Rule reorder(Rule r) {
+		List<Atom> newBody = new ArrayList<>();
+		for (Atom a : r.getBody()) {
+			if (!a.isNegated()) {
+				newBody.add(a);
+			}
+		}
+		for (Atom a : r.getBody()) {
+			if (a.isNegated()) {
+				newBody.add(a);
+			}
+		}
+		return BasicRule.get(r.getHead(), newBody);
 	}
 
 }

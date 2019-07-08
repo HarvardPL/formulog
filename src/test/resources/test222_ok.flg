@@ -1,0 +1,15 @@
+output p
+output q
+output r1
+output r2
+output r3
+
+p :- r1, r2, !q, r3.
+q :- r1.
+r1 :- p.
+r1.
+r2.
+r3.
+
+output ok
+ok :- p.

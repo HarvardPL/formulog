@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.magic;
 
+import org.junit.Test;
+
 /*-
  * #%L
  * FormuLog
@@ -31,6 +33,26 @@ public class SemiInflationaryMagicSetTest extends CommonMagicSetTest {
 	@Override
 	protected Evaluation setup(WellTypedProgram prog) throws InvalidProgramException, EvaluationException {
 		return SemiInflationaryEvaluation.setup(prog, false);
+	}
+	
+	@Test
+	public void test224() {
+		test("test224_ok.flg");
+	}
+	
+	@Test
+	public void test225() {
+		test("test225_ok.flg");
+	}
+	
+	@Test
+	public void test226() {
+		test("test226_ok.flg");
+	}
+	
+	@Test
+	public void test227() {
+		test("test227_ok.flg");
 	}
 	
 }

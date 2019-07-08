@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.eval;
 
+import org.junit.Test;
+
 /*-
  * #%L
  * FormuLog
@@ -29,6 +31,26 @@ public class SemiInflationaryEvaluationTest extends CommonEvaluationTest {
 	protected Evaluation setup(WellTypedProgram prog) throws InvalidProgramException, EvaluationException {
 		assert !prog.hasQuery();
 		return SemiInflationaryEvaluation.setup(prog, true);
+	}
+	
+	@Test
+	public void test220() {
+		test("test220_ok.flg");
+	}
+	
+	@Test
+	public void test221() {
+		test("test221_ok.flg");
+	}
+	
+	@Test
+	public void test222() {
+		test("test222_ok.flg");
+	}
+	
+	@Test
+	public void test223() {
+		test("test223_ok.flg");
 	}
 
 }
