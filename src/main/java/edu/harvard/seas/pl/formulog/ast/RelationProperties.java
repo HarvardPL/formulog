@@ -96,4 +96,10 @@ public class RelationProperties {
 		return stratum;
 	}
 
+	@Override
+	public String toString() {
+		return "RelationProperties [relSym=" + relSym + ", bottomUp=" + bottomUp + ", topDown=" + topDown
+				+ ", aggFuncSym=" + aggFuncSym + ", aggInit=" + aggInit + ", stratum=" + stratum + "]";
+	}
+
 }

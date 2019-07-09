@@ -68,7 +68,7 @@ public class IndexedFactDB {
 	}
 
 	public Iterable<NormalAtom> query(Symbol sym) {
-		if (aggregateFactsBySym.containsKey(sym)) {
+		if (aggStuff.containsKey(sym)) {
 			List<NormalAtom> atoms = new ArrayList<>();
 			for (Map.Entry<Key, Term> e : aggregateFactsBySym.get(sym).entrySet()) {
 				Term[] arr = e.getKey().getArr();
@@ -108,8 +108,8 @@ public class IndexedFactDB {
 	}
 	
 	public Term getClosestAggregateValue(NormalAtom aggFact) {
+		assert aggStuff.containsKey(aggFact.getSymbol());
 		Map<Key, Term> m = aggregateFactsBySym.get(aggFact.getSymbol());
-		assert m != null;
 		Key key = makeAggKey(aggFact);
 		return m.get(key);
 	}
@@ -183,7 +183,7 @@ public class IndexedFactDB {
 	}
 
 	private Set<NormalAtom> getAllForSym(Symbol sym) {
-		assert !aggregateFactsBySym.containsKey(sym);
+		assert !aggStuff.containsKey(sym);
 		return Util.lookupOrCreate(factsBySym, sym, () -> Util.concurrentSet());
 	}
 
@@ -210,16 +210,24 @@ public class IndexedFactDB {
 
 		public IndexedFactDBBuilder(Program prog) {
 			this.prog = prog;
+			recordAggregates(prog.getFactSymbols());
+			recordAggregates(prog.getRuleSymbols());
+		}
+		
+		private void recordAggregates(Iterable<Symbol> syms) {
+			for (Symbol sym : syms) {
+				RelationProperties props = prog.getRelationProperties(sym);
+				if (props.isAggregated()) {
+					FunctionDef def = prog.getDef(props.getAggFuncSymbol());
+					aggStuff.put(sym, new Pair<>(def, props.getAggFuncInit()));
+				}
+			}
 		}
 
 		public synchronized int addIndex(NormalAtom q, Set<Var> boundVars) {
 			Symbol sym = q.getSymbol();
 			RelationProperties props = prog.getRelationProperties(sym);
 			if (props.isAggregated()) {
-				if (!aggStuff.containsKey(sym)) {
-					FunctionDef def = prog.getDef(props.getAggFuncSymbol());
-					aggStuff.put(sym, new Pair<>(def, props.getAggFuncInit()));
-				}
 				aggregateIndices.add(new IndexedAggregateFactSet(q, boundVars));
 				return -aggregateIndices.size();
 			} else {
