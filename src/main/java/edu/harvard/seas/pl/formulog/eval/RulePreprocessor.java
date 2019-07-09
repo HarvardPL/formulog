@@ -74,7 +74,7 @@ public class RulePreprocessor {
 				for (int j = 0; j < args.length; ++j) {
 					Term arg = args[j];
 					if (arg.containsFunctionCall()) {
-						Term var = Var.getFresh();
+						Term var = Var.getFresh(false);
 						newBody.add(0, Atoms.getPositive(BuiltInPredicateSymbol.UNIFY, new Term[] { var, arg }));
 						newArgs[j] = var;
 					} else {

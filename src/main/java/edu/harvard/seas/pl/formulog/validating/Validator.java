@@ -234,7 +234,7 @@ public class Validator {
 			for (int i = 0; i < args.length; ++i) {
 				newArgs[i] = args[i].visit(this, in);
 			}
-			Var x = Var.getFresh();
+			Var x = Var.getFresh(false);
 			Atom eq = makeUnifier(x, c.copyWithNewArgs(newArgs), false);
 			in.add(eq);
 			return x;
@@ -242,7 +242,7 @@ public class Validator {
 
 		@Override
 		public Term visit(Primitive<?> p, List<Atom> in) {
-			Var x = Var.getFresh();
+			Var x = Var.getFresh(false);
 			Atom eq = makeUnifier(x, p, false);
 			in.add(eq);
 			return x;
@@ -250,7 +250,7 @@ public class Validator {
 
 		@Override
 		public Term visit(Expr expr, List<Atom> in) {
-			Var x = Var.getFresh();
+			Var x = Var.getFresh(false);
 			Atom eq = makeUnifier(x, expr, false);
 			in.add(eq);
 			return x;
@@ -331,7 +331,7 @@ public class Validator {
 	private Term[] replaceTermsWithVars(Term[] args, List<Atom> acc) {
 		Term[] newArgs = new Term[args.length];
 		for (int i = 0; i < args.length; ++i) {
-			Var x = Var.getFresh();
+			Var x = Var.getFresh(false);
 			newArgs[i] = x;
 			acc.add(makeUnifier(x, args[i], false));
 		}

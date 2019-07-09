@@ -171,7 +171,7 @@ public class IndexedNonAggregateFactSet implements IndexedFactSet {
 
 				@Override
 				public Term visit(Expr expr, Void in) {
-					Var v = Var.getFresh();
+					Var v = Var.getFresh(false);
 					idxs.add(new IndexEntry(v, expr));
 					for (Var vv : Terms.varSet(expr)) {
 						if (!boundVars.contains(vv)) {

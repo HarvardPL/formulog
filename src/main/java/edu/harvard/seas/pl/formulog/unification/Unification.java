@@ -25,6 +25,7 @@ import java.util.Deque;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import edu.harvard.seas.pl.formulog.ast.Atoms;
 import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
@@ -50,7 +51,9 @@ public final class Unification {
 
 	public static boolean canBindVars(Atom atom, Set<Var> boundVars) throws InvalidProgramException {
 		if (atom.isNegated()) {
-			return boundVars.containsAll(Atoms.varSet(atom));
+			// Allow anonymous variables in negated atoms.
+			Set<Var> vars = Atoms.varSet(atom).stream().filter(v -> !v.isAnonymous()).collect(Collectors.toSet());
+			return boundVars.containsAll(vars);
 		}
 		return atom.visit(new AtomVisitorExn<Void, Boolean, InvalidProgramException>() {
 
@@ -247,7 +250,7 @@ public final class Unification {
 		while (!ts1.isEmpty()) {
 			t1 = ts1.removeLast().applySubstitution(s);
 			t2 = ts2.removeLast().applySubstitution(s);
-			
+
 			if (t1.equals(t2)) {
 				continue;
 			}
@@ -267,7 +270,7 @@ public final class Unification {
 			if (t2 instanceof Expr) {
 				t2 = t2.normalize(s);
 			}
-			
+
 			if (t1 instanceof Primitive) {
 				if (!t1.equals(t2)) {
 					return false;
@@ -286,7 +289,7 @@ public final class Unification {
 			if (!c1.getSymbol().equals(c2.getSymbol())) {
 				return false;
 			}
-			
+
 			Term[] args1 = c1.getArgs();
 			Term[] args2 = c2.getArgs();
 			for (int i = 0; i < args1.length; ++i) {
@@ -294,7 +297,7 @@ public final class Unification {
 				ts2.addLast(args2[i]);
 			}
 		}
-		
+
 		return true;
 	}
 

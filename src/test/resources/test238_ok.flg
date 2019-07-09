@@ -1,0 +1,23 @@
+input a(i32, i32)
+input b(i32, i32)
+output p(i32, i32)
+
+a(1, 2).
+a(1, 3).
+
+p(X, Y) :- a(X, Y).
+
+output not_ok
+not_ok :- !a(_, _).
+not_ok :- !a(_, 2).
+not_ok :- !a(_, 3).
+not_ok :- !p(_, _).
+not_ok :- !p(_, 2).
+not_ok :- !p(_, 3).
+
+output ok
+ok :-
+  !b(_, _),
+  !a(2, _),
+  !p(2, _),
+  !not_ok.

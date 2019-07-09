@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - Support aggregate columns in relations.
 - Support non-stratified negation and aggregation through semi-inflationary
   Datalog interpreter. 
+- Support existential anonymous variables in negated atoms.
 
 ### Changed
 - Increased the amount of information printed with the `debugMst` option.

@@ -37,17 +37,23 @@ public class Var implements Term {
 	static final AtomicInteger cnt = new AtomicInteger();
 	
 	private final String name;
+	private final boolean isAnonymous;
 	
-	protected Var(String name) {
+	protected Var(String name, boolean isAnonymous) {
 		this.name = name;
+		this.isAnonymous = isAnonymous;
 	}
 	
 	public static Var get(String name) {
-		return Util.lookupOrCreate(memo, name, () -> new Var(name));
+		return Util.lookupOrCreate(memo, name, () -> new Var(name, false));
 	}
 	
-	public static Var getFresh() {
-		return new Var("_%" + cnt.getAndIncrement());
+	public static Var getFresh(boolean isAnonymous) {
+		return new Var("_%" + cnt.getAndIncrement(), isAnonymous);
+	}
+	
+	public boolean isAnonymous() {
+		return isAnonymous;
 	}
 
 	@Override

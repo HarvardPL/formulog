@@ -565,7 +565,7 @@ public class Parser {
 
 					@Override
 					public Term visit(Expr expr, Void in) {
-						Var x = Var.getFresh();
+						Var x = Var.getFresh(false);
 						acc.add(Atoms.getPositive(BuiltInPredicateSymbol.UNIFY, new Term[] { x, expr }));
 						return x;
 					}
@@ -649,7 +649,7 @@ public class Parser {
 			public Term visitVarTerm(VarTermContext ctx) {
 				String var = ctx.VAR().getText();
 				if (var.equals("_")) {
-					return Var.getFresh();
+					return Var.getFresh(true);
 				}
 				return Var.get(ctx.VAR().getText());
 			}
@@ -681,7 +681,7 @@ public class Parser {
 					Integer idx = it.next();
 					Term t;
 					if (idx == null) {
-						t = Var.getFresh();
+						t = Var.getFresh(false);
 					} else {
 						Symbol csym = symbolManager.lookupIndexConstructorSymbol(idx);
 						t = Constructors.make(csym, Terms.singletonArray(I32.make(idx)));
