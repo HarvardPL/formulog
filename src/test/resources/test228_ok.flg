@@ -5,16 +5,17 @@ output r2
 output r3
 output s
 
-p :- r1, r2, r3, !q.
-q :- s.
+p :- !q, r1, r2, r3.
+q :- p.
 r1 :- p.
 r2 :- p.
 r3 :- p.
 s :- p.
-r1.
-r2.
-r3.
+r1 :- s.
+r2 :- s.
+r3 :- s.
 s.
+q.
 
 output ok
-ok :- p.
+ok :- !p.

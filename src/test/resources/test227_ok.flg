@@ -3,13 +3,20 @@ output q
 output r1
 output r2
 output r3
+output s
 
 p :- r1, r2, r3, !q.
-q :- r1.
+q :- s.
 r1 :- p.
+r2 :- p.
+r3 :- p.
+s :- p.
 r1.
 r2.
 r3.
+s.
 
 output ok
 ok :- p.
+
+:- ok.

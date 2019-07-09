@@ -55,4 +55,29 @@ public class SemiInflationaryMagicSetTest extends CommonMagicSetTest {
 		test("test227_ok.flg");
 	}
 	
+	@Test
+	public void test232() {
+		test("test232_ok.flg");
+	}
+	
+	@Test
+	public void test233() {
+		test("test233_ok.flg");
+	}
+	
+	@Test
+	public void test234() {
+		test("test234_ok.flg");
+	}
+	
+	@Test
+	public void test235() {
+		test("test235_ok.flg");
+	}
+	
+	@Test
+	public void test237() {
+		test("test237_ok.flg");
+	}
+	
 }

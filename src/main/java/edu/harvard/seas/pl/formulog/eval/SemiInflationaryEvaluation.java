@@ -121,43 +121,6 @@ public class SemiInflationaryEvaluation implements Evaluation {
 					cumulativeDb.add((NormalAtom) fact);
 				}
 			}
-			for (Map.Entry<Integer, Set<IndexedRule>> e : safeFirstRoundRules.entrySet()) {
-				if (e.getValue().isEmpty()) {
-					continue;
-				}
-				System.out.println("\nSAFE FIRST ROUND RULES FOR #" + e.getKey());
-				for (IndexedRule r : e.getValue()) {
-					System.out.println(r);
-				}
-			}
-			for (Map.Entry<Integer, Set<IndexedRule>> e : safeRules.entrySet()) {
-				if (e.getValue().isEmpty()) {
-					continue;
-				}
-				System.out.println("\nSAFE RULES FOR #" + e.getKey());
-				for (IndexedRule r : e.getValue()) {
-					System.out.println(r);
-				}
-			}
-			for (Map.Entry<Integer, Set<IndexedRule>> e : unsafeFirstRoundRules.entrySet()) {
-				if (e.getValue().isEmpty()) {
-					continue;
-				}
-				System.out.println("\nUNSAFE FIRST ROUND RULES FOR #" + e.getKey());
-				for (IndexedRule r : e.getValue()) {
-					System.out.println(r);
-				}
-			}
-			for (Map.Entry<Integer, Set<IndexedRule>> e : delayedRules.entrySet()) {
-				if (e.getValue().isEmpty()) {
-					continue;
-				}
-				System.out.println("\nUNSAFE RULES FOR #" + e.getKey());
-				for (IndexedRule r : e.getValue()) {
-					System.out.println(r);
-				}
-			}
-			System.out.println("\nRELEVANT STRATA " + relevantStrata);
 			evaluate();
 		}
 	}
@@ -189,7 +152,6 @@ public class SemiInflationaryEvaluation implements Evaluation {
 	}
 
 	private boolean evaluateStratum(int stratum, boolean safe) throws EvaluationException {
-		System.out.println("\n**********\nEVALUATING STRATUM " + stratum + " (safe=" + safe + ")");
 		boolean changed = false;
 		Set<Integer> s = safe ? safeFirstRoundsCompleted : unsafeFirstRoundsCompleted;
 		Map<Integer, IndexedFactDB> deltaOld = safe ? deltaOldSafe : deltaOldUnsafe;
@@ -221,7 +183,6 @@ public class SemiInflationaryEvaluation implements Evaluation {
 			}
 			changed |= changedLastRound;
 		}
-		System.out.println("**********");
 		return changed;
 	}
 
@@ -246,16 +207,12 @@ public class SemiInflationaryEvaluation implements Evaluation {
 			// int deltaStratum = -1;
 			boolean empty = false;
 			if (fst instanceof SemiNaiveSymbol) {
-				// SemiNaiveSymbol sym = (SemiNaiveSymbol) fst;
-				// assert sym.getSemiNaiveSymbolType().equals(SemiNaiveSymbolType.DELTA);
-				// deltaStratum = getStratumRank(sym);
 				if (!deltaDb.query(stripSemiNaiveAnnotation(fst)).iterator().hasNext()) {
 					empty = true;
 				}
 			}
 			this.empty = empty;
 			this.headStratum = getStratumRank(r.getHead().getSymbol());
-			// System.out.println("DELTA\n" + deltaDb);
 		}
 
 		private Gen getGenToUse(Symbol sym) {
@@ -267,18 +224,12 @@ public class SemiInflationaryEvaluation implements Evaluation {
 			} else {
 				return Gen.ZERO_GEN;
 			}
-			// if (stratum >= deltaStratum) {
-			// return Gen.DELTA_GEN;
-			// } else {
-			// return Gen.ALL_GEN;
-			// }
 		}
 
 		public boolean evaluate() throws EvaluationException {
 			if (empty) {
 				return false;
 			}
-			System.out.println("\n" + r);
 			return evaluate(0, -1);
 		}
 
@@ -287,21 +238,19 @@ public class SemiInflationaryEvaluation implements Evaluation {
 				NormalAtom hd = (NormalAtom) r.getHead();
 				Symbol hdSym = hd.getSymbol();
 				int gen = -1;
-				switch (getGenToUse(hdSym)) {
-				case ALL_GEN:
-					throw new AssertionError("impossible");
-				case DELTA_GEN:
-					gen = runningGen;
-					break;
-				case ZERO_GEN:
+				if (isInputOrSupSymbol(hdSym)) {
 					gen = 0;
-					break;
-				}
-				if (gen < 0) {
-					gen = 0;
-				}
-				if (incrementGen(hdSym)) {
-					gen++;
+				} else {
+					switch (getGenToUse(hdSym)) {
+					case ALL_GEN:
+						throw new AssertionError("impossible");
+					case DELTA_GEN:
+						gen = Math.max(1, runningGen + 1);
+						break;
+					case ZERO_GEN:
+						gen = 1;
+						break;
+					}
 				}
 				return reportFact(hd, s, gen);
 			}
@@ -325,10 +274,8 @@ public class SemiInflationaryEvaluation implements Evaluation {
 							facts = getFacts(sym, dbIdx, runningGen);
 							break;
 						case DELTA:
-							assert pos == 0;
 							return handleDelta(normalAtom, false);
 						case DELTA_LOWER:
-							assert pos == 0;
 							return handleDelta(normalAtom, true);
 						case PREVIOUS:
 							if (runningGen < 0) {
@@ -346,13 +293,13 @@ public class SemiInflationaryEvaluation implements Evaluation {
 				}
 
 				private boolean go(NormalAtom atom, int dbIdx, boolean isPrevious) throws EvaluationException {
-					atom = (NormalAtom) Atoms.get(stripSemiNaiveAnnotation(atom.getSymbol()), atom.getArgs(), atom.isNegated());
+					atom = (NormalAtom) Atoms.get(stripSemiNaiveAnnotation(atom.getSymbol()), atom.getArgs(),
+							atom.isNegated());
 					boolean changed = false;
 					for (NormalAtom fact : getAll(dbIdx, s)) {
 						int gen = deltaOldGenerations.get(fact);
 						s.setToBefore(pos);
 						if (Unification.unify(atom, fact, s)) {
-							System.out.println("matched on " + fact + " at gen " + gen);
 							changed |= evaluate(pos + 1, isPrevious ? gen + 1 : gen);
 						}
 					}
@@ -363,13 +310,10 @@ public class SemiInflationaryEvaluation implements Evaluation {
 						throws EvaluationException {
 					switch (getGenToUse(sym)) {
 					case ALL_GEN:
-						System.out.println("Looking up all for " + sym);
 						return getAll(dbIdx, s);
 					case DELTA_GEN:
-						System.out.println("Looking up " + sym + " at gen " + deltaRelativeGen);
 						return get(dbIdx, s, deltaRelativeGen);
 					case ZERO_GEN:
-						System.out.println("Looking up " + sym + " at gen 0");
 						return get(dbIdx, s, 0);
 					}
 					throw new AssertionError("impossible");
@@ -377,11 +321,6 @@ public class SemiInflationaryEvaluation implements Evaluation {
 
 				private boolean handleDelta(NormalAtom a, boolean ignoreGen) throws EvaluationException {
 					Symbol sym = stripSemiNaiveAnnotation(a.getSymbol());
-					// IndexedFactDB db = delta.get(sym);
-					// if (db == null) {
-					// System.out.println("db null");
-					// return false;
-					// }
 					Iterator<NormalAtom> it = deltaDb.query(sym).iterator();
 					if (!it.hasNext()) {
 						return false;
@@ -393,7 +332,6 @@ public class SemiInflationaryEvaluation implements Evaluation {
 						int genToUse = ignoreGen ? runningGen : deltaOldGenerations.get(fact);
 						s.setToBefore(pos);
 						if (Unification.unify(a, fact, s)) {
-							System.out.println("matched " + fact + " at gen " + genToUse);
 							changed |= evaluate(pos + 1, genToUse);
 						}
 					}
@@ -410,9 +348,6 @@ public class SemiInflationaryEvaluation implements Evaluation {
 						while (it.hasNext()) {
 							s.setToBefore(pos);
 							NormalAtom fact = it.next();
-							// System.out.println(cumulativeDb);
-							// System.out.println("a " + a);
-							// System.out.println("fact " + fact);
 							Unification.unsafeUnifyWithFact(a, fact, s);
 							changed |= evaluate(pos + 1, deltaGen);
 						}
@@ -498,18 +433,9 @@ public class SemiInflationaryEvaluation implements Evaluation {
 		NormalAtom fact = (NormalAtom) Atoms.normalize(atom, s);
 		Symbol sym = stripSemiNaiveAnnotation(atom.getSymbol());
 		fact = (NormalAtom) Atoms.getPositive(sym, fact.getArgs());
-		System.out.print("Discovered fact " + fact + " at generation " + gen + "...");
 		boolean isAgg = prog.getRelationProperties(sym).isAggregated();
 		if (isAgg && (fact = checkAggregateFact(fact, gen)) != null || !isAgg && checkNonAggregateFact(fact, gen)) {
-			System.out.println(" added");
 			for (Integer stratum : Util.lookupOrCreate(relevantStrata, sym, () -> Collections.emptySet())) {
-				// Map<Symbol, IndexedFactDB> m = Util.lookupOrCreate(deltaNewSafe, stratum, ()
-				// -> new HashMap<>());
-				// IndexedFactDB db = Util.lookupOrCreate(m, sym, () -> dbb.build());
-				// db.add(fact);
-				// m = Util.lookupOrCreate(deltaNewUnsafe, stratum, () -> new HashMap<>());
-				// db = Util.lookupOrCreate(m, sym, () -> dbb.build());
-				// db.add(fact);
 				Util.lookupOrCreate(deltaNewSafe, stratum, () -> dbb.build()).add(fact);
 				Util.lookupOrCreate(deltaNewUnsafe, stratum, () -> dbb.build()).add(fact);
 			}
@@ -517,12 +443,9 @@ public class SemiInflationaryEvaluation implements Evaluation {
 			deltaOldGenerations.put(fact, gen);
 			Util.lookupOrCreate(generationalDbs, gen, () -> dbb.build()).add(fact);
 			cumulativeDb.add(fact);
-			// System.out.println("added");
 			return true;
-		} else {
-			System.out.println(" not added");
-			return false;
 		}
+		return false;
 	}
 
 	private Symbol stripSemiNaiveAnnotation(Symbol sym) {
@@ -532,8 +455,8 @@ public class SemiInflationaryEvaluation implements Evaluation {
 		return sym;
 	}
 
-	private static boolean incrementGen(Symbol sym) {
-		return !(sym instanceof InputSymbol || sym instanceof SupSymbol);
+	private static boolean isInputOrSupSymbol(Symbol sym) {
+		return sym instanceof InputSymbol || sym instanceof SupSymbol;
 	}
 
 	private boolean checkNonAggregateFact(NormalAtom fact, int gen) {
@@ -836,13 +759,10 @@ public class SemiInflationaryEvaluation implements Evaluation {
 				i++;
 			}
 			Collections.swap(newBody, 0, deltaPos);
-			sort(newBody);
-			Rule newRule = BasicRule.get(original.getHead(), newBody);
-			return newRule;
+			return reorder(BasicRule.get(original.getHead(), newBody));
 		}
 
 		private boolean shouldBeAnnotated(Atom a, int stratum, boolean wouldBeDelta) {
-			// XXX Do we want to also exclude aggregates? I don't think so.
 			Symbol sym = a.getSymbol();
 			return !a.isNegated() && sym.getSymbolType().isIDBSymbol()
 					&& (wouldBeDelta || getStratumRank(sym) == stratum);
@@ -850,29 +770,11 @@ public class SemiInflationaryEvaluation implements Evaluation {
 
 		private Rule sort(Rule r) {
 			List<Atom> newBody = new ArrayList<>(Util.iterableToList(r.getBody()));
-			sort(newBody);
-			return BasicRule.get(r.getHead(), newBody);
-		}
-		
-		private void sort(List<Atom> body) {
-			try {
-				Set<Var> boundVars = new HashSet<>();
-				for (int i = 0; i < body.size(); ++i) {
-					for (int j = i; j < body.size(); ++j) {
-						if (Unification.canBindVars(body.get(j), boundVars)) {
-							boundVars.addAll(Atoms.varSet(body.get(j)));
-							Collections.swap(body, i, j);
-							break;
-						}
-					}
-				}
-			} catch (InvalidProgramException e) {
-				throw new AssertionError();
-			}
+			return reorder(BasicRule.get(r.getHead(), newBody));
 		}
 
 	}
-	
+
 	private static Program reorder(Program prog) {
 		Map<Symbol, Set<Rule>> newRules = new HashMap<>();
 		for (Symbol sym : prog.getRuleSymbols()) {
@@ -933,23 +835,70 @@ public class SemiInflationaryEvaluation implements Evaluation {
 			public NormalAtom getQuery() {
 				return prog.getQuery();
 			}
-			
+
 		};
 	}
-	
+
+	private static boolean isNegatedIdb(Atom a) {
+		return a.getSymbol().getSymbolType().isIDBSymbol() && a.isNegated();
+	}
+
 	private static Rule reorder(Rule r) {
 		List<Atom> newBody = new ArrayList<>();
 		for (Atom a : r.getBody()) {
-			if (!a.isNegated()) {
+			if (!isNegatedIdb(a)) {
 				newBody.add(a);
 			}
 		}
+		greedyOptimize(newBody);
 		for (Atom a : r.getBody()) {
-			if (a.isNegated()) {
+			if (isNegatedIdb(a)) {
 				newBody.add(a);
 			}
 		}
 		return BasicRule.get(r.getHead(), newBody);
+	}
+
+	// XXX This takes a while for some rules.
+	private static void greedyOptimize(List<Atom> body) {
+		Set<Var> boundVars = new HashSet<>();
+		for (int i = 0; i < body.size(); ++i) {
+			int bestScore = -1;
+			int bestPos = -1;
+			for (int j = i; j < body.size(); ++j) {
+				int score = calculateScore(body.get(j), boundVars);
+				if (score > bestScore) {
+					bestScore = score;
+					bestPos = j;
+				}
+				if (score == Integer.MAX_VALUE) {
+					break;
+				}
+			}
+			Collections.swap(body, i, bestPos);
+			boundVars.addAll(Atoms.varSet(body.get(i)));
+		}
+	}
+	
+	private static int calculateScore(Atom a, Set<Var> boundVars) {
+		try {
+			if (!Unification.canBindVars(a, boundVars)) {
+				return -1;
+			}
+		} catch (InvalidProgramException e) {
+			throw new AssertionError();
+		}
+		if (a instanceof UnifyAtom) {
+			return Integer.MAX_VALUE;
+		}
+		Symbol sym = a.getSymbol();
+		if (sym instanceof SemiNaiveSymbol) {
+			SemiNaiveSymbolType type = ((SemiNaiveSymbol) sym).getSemiNaiveSymbolType();
+			if (type.equals(SemiNaiveSymbolType.DELTA) || type.equals(SemiNaiveSymbolType.DELTA_LOWER)) {
+				return 1;
+			}
+		}
+		return 0;
 	}
 
 }

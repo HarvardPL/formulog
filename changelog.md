@@ -13,6 +13,9 @@ All notable changes to this project will be documented in this file.
 - Support external input facts via annotation `@external`.
 - Support sequential runtime (for debugging) via `sequential` system property.
 - Reify relations as lists of tuples using `<[...]>` syntax.
+- Support aggregate columns in relations.
+- Support non-stratified negation and aggregation through semi-inflationary
+  Datalog interpreter. 
 
 ### Changed
 - Increased the amount of information printed with the `debugMst` option.

@@ -1,0 +1,7 @@
+output q.
+q :- !q.
+
+output ok.
+ok :- q.
+
+:- ok.

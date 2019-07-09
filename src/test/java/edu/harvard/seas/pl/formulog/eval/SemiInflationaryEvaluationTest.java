@@ -52,5 +52,30 @@ public class SemiInflationaryEvaluationTest extends CommonEvaluationTest {
 	public void test223() {
 		test("test223_ok.flg");
 	}
+	
+	@Test
+	public void test228() {
+		test("test228_ok.flg");
+	}
+	
+	@Test
+	public void test229() {
+		test("test229_ok.flg");
+	}
+	
+	@Test
+	public void test230() {
+		test("test230_ok.flg");
+	}
+	
+	@Test
+	public void test231() {
+		test("test231_ok.flg");
+	}
+	
+	@Test
+	public void test236() {
+		test("test236_ok.flg");
+	}
 
 }
