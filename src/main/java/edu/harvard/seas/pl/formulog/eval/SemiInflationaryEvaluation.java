@@ -28,6 +28,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import edu.harvard.seas.pl.formulog.ast.Atoms;
 import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
@@ -71,6 +72,8 @@ import edu.harvard.seas.pl.formulog.validating.ValidProgram;
 import edu.harvard.seas.pl.formulog.validating.Validator;
 
 public class SemiInflationaryEvaluation implements Evaluation {
+
+	private final boolean debug = System.getProperty("debugSemiInflationary") != null;
 
 	private final ValidProgram prog;
 	private final Map<Integer, Set<IndexedRule>> safeRules = new HashMap<>();
@@ -121,7 +124,33 @@ public class SemiInflationaryEvaluation implements Evaluation {
 					cumulativeDb.add((NormalAtom) fact);
 				}
 			}
+			if (debug) {
+				printRules();
+			}
 			evaluate();
+		}
+	}
+
+	private void printRules() {
+		for (int i = botStratum; i <= topStratum; ++i) {
+			System.err.println("**********\nRULES FOR STRATUM " + i);
+			printRules("\nSAFE FIRST-ROUND RULES", safeFirstRoundRules.get(i));
+			printRules("\nSAFE LATER-ROUND RULES", safeRules.get(i));
+			printRules("\nUNSAFE FIRST-ROUND RULES", unsafeFirstRoundRules.get(i));
+			printRules("\nUNSAFE LATER-ROUND RULES", delayedRules.get(i));
+			System.err.println("**********\n");
+		}
+	}
+
+	private void printRules(String msg, Set<IndexedRule> rs) {
+		if (rs.isEmpty()) {
+			return;
+		}
+		List<String> ss = rs.stream().map(IndexedRule::toString).collect(Collectors.toList());
+		Collections.sort(ss);
+		System.err.println(msg);
+		for (String s : ss) {
+			System.err.println("\n" + s);
 		}
 	}
 
@@ -139,6 +168,9 @@ public class SemiInflationaryEvaluation implements Evaluation {
 				changed = false;
 				for (int stratum = botStratum; stratum <= topStratum; ++stratum) {
 					changed |= evaluateStratum(stratum, true);
+					if (changed) {
+						continue outer;
+					}
 				}
 			}
 			for (int stratum = botStratum; stratum <= topStratum; ++stratum) {
@@ -151,7 +183,51 @@ public class SemiInflationaryEvaluation implements Evaluation {
 		}
 	}
 
+//	private boolean evaluateStratum(int stratum, boolean safe) throws EvaluationException {
+//		if (debug) {
+//			System.err.println("**********\nEVALUATING STRATUM " + stratum + " (safe=" + safe + ")");
+//		}
+//		boolean changed = false;
+//		Set<Integer> s = safe ? safeFirstRoundsCompleted : unsafeFirstRoundsCompleted;
+//		Map<Integer, IndexedFactDB> deltaOld = safe ? deltaOldSafe : deltaOldUnsafe;
+//		Map<Integer, IndexedFactDB> deltaNew = safe ? deltaNewSafe : deltaNewUnsafe;
+//		if (s.add(stratum)) {
+//			deltaOld.put(stratum, deltaNew.get(stratum));
+//			Map<Integer, Set<IndexedRule>> m = safe ? safeFirstRoundRules : unsafeFirstRoundRules;
+//			Set<IndexedRule> rs = m.get(stratum);
+//			if (rs != null) {
+//				for (IndexedRule r : rs) {
+//					changed |= (new RuleEvaluator(r, deltaOld.get(stratum))).evaluate();
+//				}
+//			}
+//		}
+//		if (!deltaOld.containsKey(stratum)) {
+//			return changed;
+//		}
+//		boolean changedLastRound = true;
+//		while (changedLastRound) {
+//			changedLastRound = false;
+//			deltaOld.put(stratum, deltaNew.get(stratum));
+//			deltaNew.put(stratum, dbb.build());
+//			Map<Integer, Set<IndexedRule>> m = safe ? safeRules : delayedRules;
+//			Set<IndexedRule> rs = m.get(stratum);
+//			if (rs != null) {
+//				for (IndexedRule r : rs) {
+//					changedLastRound |= (new RuleEvaluator(r, deltaOld.get(stratum))).evaluate();
+//				}
+//			}
+//			changed |= changedLastRound;
+//		}
+//		if (debug) {
+//			System.err.println("**********\n");
+//		}
+//		return changed;
+//	}
+
 	private boolean evaluateStratum(int stratum, boolean safe) throws EvaluationException {
+		if (debug) {
+			System.err.println("**********\nEVALUATING STRATUM " + stratum + " (safe=" + safe + ")");
+		}
 		boolean changed = false;
 		Set<Integer> s = safe ? safeFirstRoundsCompleted : unsafeFirstRoundsCompleted;
 		Map<Integer, IndexedFactDB> deltaOld = safe ? deltaOldSafe : deltaOldUnsafe;
@@ -165,23 +241,22 @@ public class SemiInflationaryEvaluation implements Evaluation {
 					changed |= (new RuleEvaluator(r, deltaOld.get(stratum))).evaluate();
 				}
 			}
+			return changed;
 		}
 		if (!deltaOld.containsKey(stratum)) {
 			return changed;
 		}
-		boolean changedLastRound = true;
-		while (changedLastRound) {
-			changedLastRound = false;
-			deltaOld.put(stratum, deltaNew.get(stratum));
-			deltaNew.put(stratum, dbb.build());
-			Map<Integer, Set<IndexedRule>> m = safe ? safeRules : delayedRules;
-			Set<IndexedRule> rs = m.get(stratum);
-			if (rs != null) {
-				for (IndexedRule r : rs) {
-					changedLastRound |= (new RuleEvaluator(r, deltaOld.get(stratum))).evaluate();
-				}
+		deltaOld.put(stratum, deltaNew.get(stratum));
+		deltaNew.put(stratum, dbb.build());
+		Map<Integer, Set<IndexedRule>> m = safe ? safeRules : delayedRules;
+		Set<IndexedRule> rs = m.get(stratum);
+		if (rs != null) {
+			for (IndexedRule r : rs) {
+				changed |= (new RuleEvaluator(r, deltaOld.get(stratum))).evaluate();
 			}
-			changed |= changedLastRound;
+		}
+		if (debug) {
+			System.err.println("**********\n");
 		}
 		return changed;
 	}
@@ -195,7 +270,6 @@ public class SemiInflationaryEvaluation implements Evaluation {
 		private final IndexedRule r;
 		private final IndexedFactDB deltaDb;
 		private final RuleSubstitution s;
-		// private final int deltaStratum;
 		private final boolean empty;
 		private final int headStratum;
 
@@ -203,16 +277,27 @@ public class SemiInflationaryEvaluation implements Evaluation {
 			this.r = r;
 			this.deltaDb = deltaDb;
 			s = new RuleSubstitution(r);
-			Symbol fst = r.getBody(0).getSymbol();
-			// int deltaStratum = -1;
 			boolean empty = false;
-			if (fst instanceof SemiNaiveSymbol) {
-				if (!deltaDb.query(stripSemiNaiveAnnotation(fst)).iterator().hasNext()) {
-					empty = true;
-				}
+			Atom delta = findDeltaAtom(r);
+			if (delta != null) {
+				Symbol sym = stripSemiNaiveAnnotation(delta.getSymbol());
+				empty = !deltaDb.query(sym).iterator().hasNext();
 			}
 			this.empty = empty;
 			this.headStratum = getStratumRank(r.getHead().getSymbol());
+		}
+
+		private Atom findDeltaAtom(IndexedRule r) {
+			for (Atom a : r.getBody()) {
+				Symbol sym = a.getSymbol();
+				if (sym instanceof SemiNaiveSymbol) {
+					SemiNaiveSymbolType type = ((SemiNaiveSymbol) sym).getSemiNaiveSymbolType();
+					if (type.equals(SemiNaiveSymbolType.DELTA) || type.equals(SemiNaiveSymbolType.DELTA_LOWER)) {
+						return a;
+					}
+				}
+			}
+			return null;
 		}
 
 		private Gen getGenToUse(Symbol sym) {
@@ -230,6 +315,9 @@ public class SemiInflationaryEvaluation implements Evaluation {
 			if (empty) {
 				return false;
 			}
+			if (debug) {
+				System.err.println("\n" + r);
+			}
 			return evaluate(0, -1);
 		}
 
@@ -238,19 +326,24 @@ public class SemiInflationaryEvaluation implements Evaluation {
 				NormalAtom hd = (NormalAtom) r.getHead();
 				Symbol hdSym = hd.getSymbol();
 				int gen = -1;
-				if (isInputOrSupSymbol(hdSym)) {
+				if (hdSym instanceof SupSymbol) {
+					gen = runningGen;
+				} else if (hdSym instanceof InputSymbol) {
 					gen = 0;
 				} else {
 					switch (getGenToUse(hdSym)) {
 					case ALL_GEN:
 						throw new AssertionError("impossible");
 					case DELTA_GEN:
-						gen = Math.max(1, runningGen + 1);
+						gen = Math.max(runningGen + 1, 1);
 						break;
 					case ZERO_GEN:
 						gen = 1;
 						break;
 					}
+				}
+				if (gen < 0) {
+					gen = 0;
 				}
 				return reportFact(hd, s, gen);
 			}
@@ -326,6 +419,7 @@ public class SemiInflationaryEvaluation implements Evaluation {
 						return false;
 					}
 					a = (NormalAtom) Atoms.get(sym, a.getArgs(), a.isNegated());
+					ignoreGen |= sym instanceof InputSymbol;
 					boolean changed = false;
 					while (it.hasNext()) {
 						NormalAtom fact = it.next();
@@ -443,6 +537,9 @@ public class SemiInflationaryEvaluation implements Evaluation {
 			deltaOldGenerations.put(fact, gen);
 			Util.lookupOrCreate(generationalDbs, gen, () -> dbb.build()).add(fact);
 			cumulativeDb.add(fact);
+			if (debug) {
+				System.err.println("...added " + fact + " at generation " + gen);
+			}
 			return true;
 		}
 		return false;
@@ -879,7 +976,7 @@ public class SemiInflationaryEvaluation implements Evaluation {
 			boundVars.addAll(Atoms.varSet(body.get(i)));
 		}
 	}
-	
+
 	private static int calculateScore(Atom a, Set<Var> boundVars) {
 		try {
 			if (!Unification.canBindVars(a, boundVars)) {

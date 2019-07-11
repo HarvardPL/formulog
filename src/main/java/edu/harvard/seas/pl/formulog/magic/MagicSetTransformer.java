@@ -321,9 +321,6 @@ public class MagicSetTransformer {
 	}
 
 	private Set<Rule> adorn(Set<Symbol> seeds) throws InvalidProgramException {
-		if (debug) {
-			System.err.println("Adorning rules...");
-		}
 		Set<Rule> adRules = new HashSet<>();
 		DedupWorkList<Symbol> worklist = new DedupWorkList<>();
 		for (Symbol seed : seeds) {
@@ -346,9 +343,6 @@ public class MagicSetTransformer {
 						if (sym.getSymbolType().isIDBSymbol()) {
 							worklist.push(sym);
 						}
-					}
-					if (debug) {
-						System.err.println(adRule);
 					}
 					adRules.add(adRule);
 				}
@@ -379,6 +373,9 @@ public class MagicSetTransformer {
 	}
 
 	private Set<Rule> makeMagicRules(Rule r, int number) {
+		if (debug) {
+			System.err.println("\nMagic set rule number " + number + " is for this rule:\n" + r);
+		}
 		int supCount = 0;
 		Set<Rule> magicRules = new HashSet<>();
 		List<Set<Var>> liveVarsByAtom = liveVarsByAtom(r);

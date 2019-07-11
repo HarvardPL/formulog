@@ -1,0 +1,68 @@
+input store(i32, string, string)
+
+store(1, "x", "y").
+
+input var(string)
+
+var("x").
+var("y").
+
+type abs_loc = a(string)
+
+output env(string, abs_loc)
+
+env(X, a(X)) :- var(X).
+
+output ptsto(i32, abs_loc, abs_loc)
+
+ptsto(0, a("x"), a("a")).
+(*
+ptsto(0, a("a"), a("b")).
+*)
+ptsto(0, a("y"), a("c")).
+
+ptsto(P + 1, X, Y) :-
+  store(P + 1, Z, _),
+  env(Z, Az),
+  ptsto(P, X, Y),
+  ptsto(P, Az, _),
+  !ptsto(P, Az, X).
+
+(*
+ptsto(P + 1, A, C) :-
+  store(P + 1, X, Y),
+  env(X, Ax),
+  env(Y, Ay),
+  ptsto(P, Ax, A),
+  ptsto(P, Ay, C). 
+
+fun mem(X: 'a, Xs: 'a list) : bool =
+  match Xs with
+  | [] => false
+  | Y :: Ys => X = Y || mem(X, Ys)
+  end
+
+fun append(Xs: 'a list, Ys: 'a list) : 'a list =
+  match Xs with
+  | [] => Ys
+  | X :: Xs =>
+  	let Rest = append(Xs, Ys) in
+  	if mem(X, Rest) then Rest else X :: Rest
+  end
+
+output ptsto_agg((i32 * abs_loc * abs_loc) list<append,[] >)
+
+ptsto_agg([(X, Y, Z)]) :- ptsto(X, Y, Z).
+
+output ok.
+ok :-
+  ptsto_agg(L),
+  mem((0, a("x"), a("a")), L),
+  mem((0, a("a"), a("b")), L),
+  mem((0, a("y"), a("c")), L),
+  mem((1, a("x"), a("a")), L),
+  mem((1, a("a"), a("c")), L),
+  mem((1, a("y"), a("c")), L). 
+*)
+
+:- ptsto(_, _, _).

@@ -1,0 +1,41 @@
+input store(i32, string)
+
+@topdown
+output ptsto(i32, string, string)
+
+store(1, "x"). 
+
+ptsto(0, "x", "y").
+ptsto(0, "a", "b").
+
+ptsto(P + 1, X, Y) :-
+  store(P + 1, Z),
+  ptsto(P, X, Y),
+  ptsto(P, Z, _),
+  !ptsto(P, Z, X).
+
+fun mem(X: 'a, Xs: 'a list) : bool =
+  match Xs with
+  | [] => false
+  | Y :: Ys => X = Y || mem(X, Ys)
+  end
+
+fun append(Xs: 'a list, Ys: 'a list) : 'a list =
+  match Xs with
+  | [] => Ys
+  | X :: Xs =>
+  	let Rest = append(Xs, Ys) in
+  	if mem(X, Rest) then Rest else X :: Rest
+  end
+
+output ptsto_agg((i32 * string * string) list<append,[] >)
+
+ptsto_agg([(X, Y, Z)]) :- ptsto(X, Y, Z).
+
+output ok.
+ok :-
+  ptsto_agg(L),
+  mem((0, "x", "y"), L),
+  mem((0, "a", "b"), L),
+  mem((1, "x", "y"), L),
+  mem((1, "a", "b"), L).

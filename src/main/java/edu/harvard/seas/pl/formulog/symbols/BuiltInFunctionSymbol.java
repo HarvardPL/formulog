@@ -213,7 +213,7 @@ public enum BuiltInFunctionSymbol implements Symbol {
 	
 	// Debugging
 	
-	PRINT("print", a, bool)
+	PRINT("print", a, bool),
 	
 	;
 
