@@ -628,5 +628,50 @@ public abstract class CommonEvaluationTest extends AbstractEvaluationTest {
 	public void test238() {
 		test("test238_ok.flg");
 	}
+	
+	@Test
+	public void test239() {
+		test("test239_ok.flg");
+	}
+	
+	@Test
+	public void test240() {
+		test("test240_ok.flg");
+	}
+	
+	@Test
+	public void test241() {
+		test("test241_ok.flg");
+	}
+	
+	@Test
+	public void test242() {
+		test("test242_ok.flg");
+	}
+	
+	@Test
+	public void test243() {
+		test("test243_ok.flg");
+	}
+	
+	@Test
+	public void test244() {
+		test("test244_ok.flg");
+	}
+	
+	@Test
+	public void test245() {
+		test("test245_ok.flg");
+	}
+	
+	@Test
+	public void test246() {
+		test("test246_ok.flg");
+	}
+	
+	@Test
+	public void test247() {
+		test("test247_ok.flg");
+	}
 
 }

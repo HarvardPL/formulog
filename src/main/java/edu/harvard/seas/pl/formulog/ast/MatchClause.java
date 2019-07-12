@@ -1,5 +1,8 @@
 package edu.harvard.seas.pl.formulog.ast;
 
+import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
+import edu.harvard.seas.pl.formulog.unification.Substitution;
+
 /*-
  * #%L
  * FormuLog
@@ -26,7 +29,11 @@ public class MatchClause {
 	private final Term rhs;
 	
 	public static MatchClause make(Term lhs, Term rhs) {
-		return new MatchClause(lhs, rhs);
+		Substitution s = new SimpleSubstitution();
+		for (Var x : Terms.varSet(lhs)) {
+			s.put(x, Var.getFresh(false));
+		}
+		return new MatchClause(lhs.applySubstitution(s), rhs.applySubstitution(s));
 	}
 	
 	private MatchClause(Term lhs, Term rhs) {

@@ -41,6 +41,7 @@ import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
 import edu.harvard.seas.pl.formulog.ast.Expr;
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
+import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
@@ -931,6 +932,11 @@ public class SemiInflationaryEvaluation implements Evaluation {
 			@Override
 			public NormalAtom getQuery() {
 				return prog.getQuery();
+			}
+
+			@Override
+			public FunctionCallFactory getFunctionCallFactory() {
+				return prog.getFunctionCallFactory();
 			}
 
 		};

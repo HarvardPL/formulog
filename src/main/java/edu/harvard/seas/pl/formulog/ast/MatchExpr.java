@@ -75,18 +75,8 @@ public class MatchExpr implements Expr {
 	public Term normalize(Substitution s) throws EvaluationException {
 		Term e = matchee.normalize(s);
 		for (MatchClause m : match) {
-			// TODO We need to create a new substitution here because we don't want our
-			// previous bindings to be used in the match (since the variables in the pattern
-			// shadow the previous bindings). For efficiency sake, we might want to just
-			// rewrite patterns so that there is not variable shadowing.
-			Substitution s2 = new SimpleSubstitution();
-			if (Unification.unify(e, m.getLhs(), s2)) {
-				for (Var v : s.iterateKeys()) {
-					if (!s2.containsKey(v)) {
-						s2.put(v, s.get(v));
-					}
-				}
-				return m.getRhs().normalize(s2);
+			if (Unification.unify(e, m.getLhs(), s)) {
+				return m.getRhs().normalize(s);
 			}
 		}
 		throw new EvaluationException("No matching pattern in function for " + e + " under substitution " + s);

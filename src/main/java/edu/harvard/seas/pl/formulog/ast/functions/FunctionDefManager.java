@@ -33,7 +33,7 @@ public class FunctionDefManager {
 
 	private final Map<Symbol, FunctionDef> memo = new HashMap<>();
 	private final BuiltInFunctionDefFactory builtIns;
-	
+
 	public FunctionDefManager(SymbolManager symbolManager) {
 		builtIns = new BuiltInFunctionDefFactory(symbolManager);
 		for (BuiltInFunctionSymbol sym : BuiltInFunctionSymbol.values()) {
@@ -47,7 +47,14 @@ public class FunctionDefManager {
 					"Cannot register multiple definitions for the same function: " + def.getSymbol());
 		}
 	}
-	
+
+	public void reregister(FunctionDef def) {
+		if (memo.put(def.getSymbol(), def) == null) {
+			throw new IllegalArgumentException(
+					"Expected there to already be a definition for function " + def.getSymbol());
+		}
+	}
+
 	public FunctionDef lookup(Symbol symbol) {
 		FunctionDef def = memo.get(symbol);
 		if (def == null) {
@@ -55,11 +62,11 @@ public class FunctionDefManager {
 		}
 		return def;
 	}
-	
+
 	public boolean hasDefinition(Symbol sym) {
 		return memo.containsKey(sym);
 	}
-	
+
 	public Set<Symbol> getFunctionSymbols() {
 		return Collections.unmodifiableSet(memo.keySet());
 	}

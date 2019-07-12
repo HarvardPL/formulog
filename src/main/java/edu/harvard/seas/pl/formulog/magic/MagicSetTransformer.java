@@ -37,6 +37,7 @@ import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Expr;
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitorExn;
+import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
@@ -82,22 +83,29 @@ public class MagicSetTransformer {
 		List<Stratum> strata = (new Stratifier(origProg)).stratify();
 		for (Stratum stratum : strata) {
 			for (Symbol sym : stratum.getPredicateSyms()) {
-				Util.lookupOrCreate(relationProps, sym, () -> {
-					RelationProperties props = origProg.getRelationProperties(sym);
-					if (props == null) {
-						props = new RelationProperties(sym);
-					} else {
-						props = new RelationProperties(props);
-					}
-					return props;
-				}).setStratum(stratum);
+				setRelationProperties(sym).setStratum(stratum);
 			}
+		}
+		for (Symbol sym : origProg.getFactSymbols()) {
+			setRelationProperties(sym);
 		}
 		if (origProg.hasQuery()) {
 			return transformForQuery(origProg.getQuery(), useDemandTransformation, restoreStratification);
 		} else {
 			return transformNoQuery(useDemandTransformation, restoreStratification);
 		}
+	}
+
+	private RelationProperties setRelationProperties(Symbol sym) {
+		return Util.lookupOrCreate(relationProps, sym, () -> {
+			RelationProperties props = origProg.getRelationProperties(sym);
+			if (props == null) {
+				props = new RelationProperties(sym);
+			} else {
+				props = new RelationProperties(props);
+			}
+			return props;
+		});
 	}
 
 	public Program transformForQuery(NormalAtom query, boolean useDemandTransformation, boolean restoreStratification)
@@ -250,7 +258,8 @@ public class MagicSetTransformer {
 
 			@Override
 			public RelationProperties getRelationProperties(Symbol sym) {
-				throw new UnsupportedOperationException();
+				assert sym.equals(querySym);
+				return origProg.getRelationProperties(sym);
 			}
 
 			@Override
@@ -261,6 +270,11 @@ public class MagicSetTransformer {
 			@Override
 			public NormalAtom getQuery() {
 				return query;
+			}
+
+			@Override
+			public FunctionCallFactory getFunctionCallFactory() {
+				return origProg.getFunctionCallFactory();
 			}
 
 		};
@@ -434,7 +448,7 @@ public class MagicSetTransformer {
 		RelationProperties props = Util.lookupOrCreate(relationProps, sym, () -> new RelationProperties(sym));
 		props.setStratum(stratum);
 	}
-	
+
 	private Atom createSupAtom(Set<Var> curLiveVars, int ruleNum, int supCount, Symbol headSym) {
 		Term[] args = (new ArrayList<>(curLiveVars)).toArray(new Term[0]);
 		SupSymbol supSym = new SupSymbol(ruleNum, supCount, args.length);
@@ -819,6 +833,12 @@ public class MagicSetTransformer {
 					}
 				}
 			}
+			// Do not keep unnecessary facts around if there is a query.
+			if (query == null) {
+				for (Symbol sym : origProg.getFactSymbols()) {
+					facts.putIfAbsent(sym, origProg.getFacts(sym));
+				}
+			}
 			this.query = query;
 		}
 
@@ -878,6 +898,11 @@ public class MagicSetTransformer {
 		@Override
 		public NormalAtom getQuery() {
 			return query;
+		}
+
+		@Override
+		public FunctionCallFactory getFunctionCallFactory() {
+			return origProg.getFunctionCallFactory();
 		}
 
 	}
