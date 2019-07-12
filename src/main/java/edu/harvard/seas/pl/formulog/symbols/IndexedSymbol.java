@@ -149,7 +149,7 @@ public enum IndexedSymbol implements Symbol {
 		try {
 			sym = IndexedSymbol.valueOf(name.toUpperCase());
 		} catch (IllegalArgumentException e) {
-			return null;
+			throw new IllegalArgumentException("Unrecognized symbol name: " + name);
 		}
 		indices = expandIndices(sym, indices);
 		if (indices.size() != sym.getNumExplicitIndices()) {

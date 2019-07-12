@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInPredicateSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
-import edu.harvard.seas.pl.formulog.unification.EmptySubstitution;
+import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.Util;
 
@@ -247,7 +247,7 @@ public final class Atoms {
 	}
 	
 	public static Atom normalize(Atom a) throws EvaluationException {
-		return normalize(a, EmptySubstitution.INSTANCE);
+		return normalize(a, new SimpleSubstitution());
 	}
 	
 	public static Atom liftTerm(Term t, boolean negated) {

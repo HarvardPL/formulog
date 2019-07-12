@@ -51,13 +51,17 @@ public final class FunctionCallFactory {
 	public FunctionCallFactory(FunctionDefManager defManager) {
 		this.defManager = defManager;
 	}
-
+	
 	public FunctionCall make(Symbol sym, Term[] args) {
 		if (sym.getArity() != args.length) {
 			throw new IllegalArgumentException("Symbol " + sym + " has arity " + sym.getArity() + " but args "
 					+ Arrays.toString(args) + " have length " + args.length);
 		}
 		return memo.lookupOrCreate(sym, args, () -> new FunctionCall(sym, args));
+	}
+	
+	public FunctionDefManager getDefManager() {
+		return defManager;
 	}
 
 	public class FunctionCall implements Functor, Expr {

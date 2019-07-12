@@ -1371,6 +1371,11 @@ public class Parser {
 					return (NormalAtom) query;
 				}
 
+				@Override
+				public FunctionCallFactory getFunctionCallFactory() {
+					return functionCallFactory;
+				}
+
 			};
 		}
 	};

@@ -49,5 +49,7 @@ public interface Program {
 	boolean hasQuery();
 	
 	NormalAtom getQuery();
+	
+	FunctionCallFactory getFunctionCallFactory();
 
 }

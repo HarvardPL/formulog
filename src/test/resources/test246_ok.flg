@@ -1,0 +1,8 @@
+fun fst(X: 'a, Y: 'a) : 'a = X
+
+input foo(i32 smt<fst, `bv_to_bv_unsigned[32](0L)`>)
+
+foo(`bv_to_bv_unsigned[32](0L)`).
+
+output ok
+ok :- foo(X), is_valid(`X #= 0`).

@@ -38,6 +38,7 @@ import edu.harvard.seas.pl.formulog.ast.Constructors;
 import edu.harvard.seas.pl.formulog.ast.Expr;
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitorExn;
+import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
@@ -532,7 +533,7 @@ public class Validator {
 					Set<Var> boundVars = validateFunctionParams(cdef.getParams());
 					validateFunctionBody(cdef.getBody(), boundVars);
 				} catch (InvalidProgramException e) {
-					throw new InvalidProgramException("Invalid function definition (" + e.getMessage() + "): " + sym);
+					throw new InvalidProgramException("Invalid function definition (" + e.getMessage() + "): " + sym + "\n" + cdef.getBody());
 				}
 			}
 		}
@@ -655,6 +656,11 @@ public class Validator {
 		@Override
 		public NormalAtom getQuery() {
 			return prog.getQuery();
+		}
+
+		@Override
+		public FunctionCallFactory getFunctionCallFactory() {
+			return prog.getFunctionCallFactory();
 		}
 
 	}

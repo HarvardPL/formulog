@@ -37,6 +37,7 @@ import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Expr;
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitorExn;
+import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
@@ -269,6 +270,11 @@ public class MagicSetTransformer {
 			@Override
 			public NormalAtom getQuery() {
 				return query;
+			}
+
+			@Override
+			public FunctionCallFactory getFunctionCallFactory() {
+				return origProg.getFunctionCallFactory();
 			}
 
 		};
@@ -895,6 +901,11 @@ public class MagicSetTransformer {
 		@Override
 		public NormalAtom getQuery() {
 			return query;
+		}
+
+		@Override
+		public FunctionCallFactory getFunctionCallFactory() {
+			return origProg.getFunctionCallFactory();
 		}
 
 	}
