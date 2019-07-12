@@ -80,7 +80,7 @@ public class SemiInflationaryEvaluationTest extends CommonEvaluationTest {
 	
 	@Test
 	public void test240() {
-		test("test240_ok.flg");
+		test("tmp/test240_ok.flg");
 	}
 
 }
