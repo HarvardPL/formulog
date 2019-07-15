@@ -24,17 +24,17 @@ import edu.harvard.seas.pl.formulog.ast.Expr;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
+import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 
 public class CustomFunctionDef implements FunctionDef {
 
-	private final Symbol sym;
+	private final FunctionSymbol sym;
 	private final Var[] params;
 	private volatile Term body;
 
-	private CustomFunctionDef(Symbol sym, Var[] params, Term body) {
+	private CustomFunctionDef(FunctionSymbol sym, Var[] params, Term body) {
 		this.sym = sym;
 		this.params = params;
 		this.body = body;
@@ -53,7 +53,7 @@ public class CustomFunctionDef implements FunctionDef {
 	}
 
 	@Override
-	public Symbol getSymbol() {
+	public FunctionSymbol getSymbol() {
 		return sym;
 	}
 
@@ -71,7 +71,7 @@ public class CustomFunctionDef implements FunctionDef {
 		}
 	}
 
-	public static CustomFunctionDef get(Symbol sym, Var[] params, Term body) {
+	public static CustomFunctionDef get(FunctionSymbol sym, Var[] params, Term body) {
 		return new CustomFunctionDef(sym, params, body);
 	}
 

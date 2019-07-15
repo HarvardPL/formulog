@@ -26,7 +26,7 @@ import java.util.List;
 
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 
-public class BasicRule<R extends RelationSymbol> implements Rule<R, ComplexConjunct<R>> {
+public class BasicRule<R extends RelationSymbol> implements Rule<UserPredicate<R>, ComplexConjunct<R>> {
 
 	private final UserPredicate<R> head;
 	private final List<ComplexConjunct<R>> body;

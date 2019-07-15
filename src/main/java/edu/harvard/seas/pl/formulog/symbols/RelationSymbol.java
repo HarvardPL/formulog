@@ -35,5 +35,11 @@ public interface RelationSymbol extends TypedSymbol {
 	boolean setBottomUp();
 	
 	boolean setTopDown();
+
+	boolean isAggregated();
+
+	FunctionSymbol getAggFuncSym();
+	
+	Term getAggFuncUnit();
 	
 }

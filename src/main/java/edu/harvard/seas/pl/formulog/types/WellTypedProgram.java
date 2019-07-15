@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.types;
 
+import edu.harvard.seas.pl.formulog.ast.Conjunct;
+
 /*-
  * #%L
  * FormuLog
@@ -22,6 +24,6 @@ package edu.harvard.seas.pl.formulog.types;
 
 import edu.harvard.seas.pl.formulog.ast.Program;
 
-public interface WellTypedProgram extends Program {
+public interface WellTypedProgram<H extends Conjunct, B extends Conjunct> extends Program<H, B> {
 
 }

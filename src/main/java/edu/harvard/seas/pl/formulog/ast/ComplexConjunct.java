@@ -25,7 +25,7 @@ import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctVisitor;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 
-public interface ComplexConjunct<R extends RelationSymbol> extends Conjunct<R> {
+public interface ComplexConjunct<R extends RelationSymbol> extends Conjunct {
 
 	ComplexConjunct<R> applySubstitution(Substitution subst);
 

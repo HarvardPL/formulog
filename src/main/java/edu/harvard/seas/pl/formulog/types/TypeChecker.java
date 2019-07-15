@@ -32,36 +32,37 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import edu.harvard.seas.pl.formulog.ast.Atoms;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
+import edu.harvard.seas.pl.formulog.ast.ComplexConjunct;
+import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctVisitor;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
 import edu.harvard.seas.pl.formulog.ast.Expr;
+import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
+import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory;
+import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.I32;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
-import edu.harvard.seas.pl.formulog.ast.RelationProperties;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
-import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
-import edu.harvard.seas.pl.formulog.ast.Atoms.AtomVisitor;
-import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
-import edu.harvard.seas.pl.formulog.ast.Atoms.UnifyAtom;
-import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
-import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory;
-import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
+import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
+import edu.harvard.seas.pl.formulog.ast.UserPredicate;
+import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDefManager;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
+import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
+import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
+import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.OpaqueType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
@@ -73,56 +74,66 @@ import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
 
-public class TypeChecker {
+public class TypeChecker<R extends RelationSymbol> {
 
-	private final Program prog;
+	private final Program<UserPredicate<R>, ComplexConjunct<R>> prog;
 
-	public TypeChecker(Program prog) {
+	public TypeChecker(Program<UserPredicate<R>, ComplexConjunct<R>> prog) {
 		this.prog = prog;
 	}
 
-	public WellTypedProgram typeCheck() throws TypeException {
-		Map<Symbol, Set<Atom>> newFacts = typeCheckFacts();
-		Map<Symbol, FunctionDef> newFuncs = typeCheckFunctions();
+	public WellTypedProgram<UserPredicate<R>, ComplexConjunct<R>> typeCheck() throws TypeException {
+		typeCheckRelations();
+		Map<RelationSymbol, Set<Term[]>> newFacts = typeCheckFacts();
+		Map<FunctionSymbol, FunctionDef> newFuncs = typeCheckFunctions();
 		FunctionDefManager dm = prog.getFunctionCallFactory().getDefManager();
 		for (FunctionDef func : newFuncs.values()) {
 			dm.reregister(func);
 		}
-		Map<Symbol, RelationProperties> newProps = typeCheckRelations();
-		Map<Symbol, Set<Rule>> newRules = typeCheckRules();
-		Atom newQuery = typeCheckQuery();
-		return new WellTypedProgram() {
+		Map<RelationSymbol, Set<Rule<UserPredicate<R>, ComplexConjunct<R>>>> newRules = typeCheckRules();
+		UserPredicate<R> newQuery = typeCheckQuery();
+		return new WellTypedProgram<UserPredicate<R>, ComplexConjunct<R>>() {
 
 			@Override
-			public Set<Symbol> getFunctionSymbols() {
+			public Set<FunctionSymbol> getFunctionSymbols() {
 				return newFuncs.keySet();
 			}
 
 			@Override
-			public Set<Symbol> getFactSymbols() {
+			public Set<RelationSymbol> getFactSymbols() {
 				return Collections.unmodifiableSet(newFacts.keySet());
 			}
 
 			@Override
-			public Set<Symbol> getRuleSymbols() {
+			public Set<RelationSymbol> getRuleSymbols() {
 				return Collections.unmodifiableSet(newRules.keySet());
 			}
 
 			@Override
-			public FunctionDef getDef(Symbol sym) {
+			public FunctionDef getDef(FunctionSymbol sym) {
 				return newFuncs.get(sym);
 			}
 
 			@Override
-			public Set<Atom> getFacts(Symbol sym) {
-				assert sym.getSymbolType().isEDBSymbol();
-				return Util.lookupOrCreate(newFacts, sym, () -> Collections.emptySet());
+			public Set<Term[]> getFacts(RelationSymbol sym) {
+				if (!sym.isEdbSymbol()) {
+					throw new IllegalArgumentException();
+				}
+				if (!newFacts.containsKey(sym)) {
+					throw new IllegalArgumentException();
+				}
+				return newFacts.get(sym);
 			}
 
 			@Override
-			public Set<Rule> getRules(Symbol sym) {
-				assert sym.getSymbolType().isIDBSymbol();
-				return Util.lookupOrCreate(newRules, sym, () -> Collections.emptySet());
+			public Set<Rule<UserPredicate<R>, ComplexConjunct<R>>> getRules(RelationSymbol sym) {
+				if (!sym.isIdbSymbol()) {
+					throw new IllegalArgumentException();
+				}
+				if (!newRules.containsKey(sym)) {
+					throw new IllegalArgumentException();
+				}
+				return newRules.get(sym);
 			}
 
 			@Override
@@ -131,19 +142,13 @@ public class TypeChecker {
 			}
 
 			@Override
-			public RelationProperties getRelationProperties(Symbol sym) {
-				assert sym.getSymbolType().isRelationSym();
-				return Util.lookupOrCreate(newProps, sym, () -> new RelationProperties(sym));
-			}
-
-			@Override
 			public boolean hasQuery() {
 				return newQuery != null;
 			}
 
 			@Override
-			public NormalAtom getQuery() {
-				return (NormalAtom) newQuery;
+			public UserPredicate<R> getQuery() {
+				return newQuery;
 			}
 
 			@Override
@@ -154,33 +159,30 @@ public class TypeChecker {
 		};
 	}
 
-	private Map<Symbol, RelationProperties> typeCheckRelations() throws TypeException {
-		Map<Symbol, RelationProperties> props = new HashMap<>();
-		typeCheckRelations(prog.getFactSymbols(), props);
-		typeCheckRelations(prog.getRuleSymbols(), props);
-		return props;
+	private void typeCheckRelations() throws TypeException {
+		typeCheckRelations(prog.getFactSymbols());
+		typeCheckRelations(prog.getRuleSymbols());
 	}
 
-	private void typeCheckRelations(Set<Symbol> syms, Map<Symbol, RelationProperties> props) throws TypeException {
-		for (Symbol sym : syms) {
-			props.put(sym, typeCheckRelation(sym));
+	private void typeCheckRelations(Set<RelationSymbol> syms) throws TypeException {
+		for (RelationSymbol sym : syms) {
+			typeCheckRelation(sym);
 		}
 	}
 
-	private RelationProperties typeCheckRelation(Symbol sym) throws TypeException {
-		RelationProperties props = new RelationProperties(prog.getRelationProperties(sym));
-		if (props.isAggregated()) {
-			FunctorType ft = (FunctorType) sym.getCompileTimeType();
+	private void typeCheckRelation(RelationSymbol sym) throws TypeException {
+		if (sym.isAggregated()) {
+			FunctorType ft = sym.getCompileTimeType();
 			List<Type> argTypes = ft.getArgTypes();
 			Type aggType = argTypes.get(argTypes.size() - 1);
-			Term init = typeCheckAggregateUnit(sym, props.getAggFuncInit(), aggType);
-			typeCheckAggregateFunction(sym, props.getAggFuncSymbol(), aggType);
-			props.aggregate(props.getAggFuncSymbol(), init);
+			Term init = typeCheckAggregateUnit(sym, aggType);
+			typeCheckAggregateFunction(sym, aggType);
+			sym.setAggregate(sym.getAggFuncSym(), init);
 		}
-		return props;
 	}
 
-	private Term typeCheckAggregateUnit(Symbol relSym, Term unit, Type aggType) throws TypeException {
+	private Term typeCheckAggregateUnit(RelationSymbol relSym, Type aggType) throws TypeException {
+		Term unit = relSym.getAggFuncUnit();
 		try {
 			TypeCheckerContext ctx = new TypeCheckerContext();
 			return ctx.typeCheckTerm(unit, aggType);
@@ -190,7 +192,8 @@ public class TypeChecker {
 		}
 	}
 
-	private void typeCheckAggregateFunction(Symbol relSym, Symbol funcSym, Type aggType) throws TypeException {
+	private void typeCheckAggregateFunction(RelationSymbol relSym, Type aggType) throws TypeException {
+		FunctionSymbol funcSym = relSym.getAggFuncSym();
 		try {
 			if (funcSym.getArity() != 2) {
 				throw new TypeException("Function " + funcSym + " is not binary");
@@ -207,7 +210,7 @@ public class TypeChecker {
 		}
 	}
 
-	private Atom typeCheckQuery() throws TypeException {
+	private UserPredicate<R> typeCheckQuery() throws TypeException {
 		if (prog.hasQuery()) {
 			TypeCheckerContext ctx = new TypeCheckerContext();
 			return ctx.typeCheckQuery(prog.getQuery());
@@ -215,28 +218,28 @@ public class TypeChecker {
 		return null;
 	}
 
-	private Map<Symbol, Set<Atom>> typeCheckFacts() throws TypeException {
+	private Map<RelationSymbol, Set<Term[]>> typeCheckFacts() throws TypeException {
 		// Can use same type checker context for all, since there should be neither
 		// program variables (in a fact) or type variables (in a relation type).
 		// Addendum: there can be program variables (in type index positions),
 		// but they should be unique.
-		Map<Symbol, Set<Atom>> m = new HashMap<>();
+		Map<RelationSymbol, Set<Term[]>> m = new HashMap<>();
 		TypeCheckerContext ctx = new TypeCheckerContext();
-		for (Symbol sym : prog.getFactSymbols()) {
-			Set<Atom> s = new HashSet<>();
-			for (Atom a : prog.getFacts(sym)) {
-				s.add(ctx.typeCheckFact(a));
+		for (RelationSymbol sym : prog.getFactSymbols()) {
+			Set<Term[]> s = new HashSet<>();
+			for (Term[] args : prog.getFacts(sym)) {
+				s.add(ctx.typeCheckFact(sym, args));
 			}
 			m.put(sym, s);
 		}
 		return m;
 	}
 
-	private Map<Symbol, Set<Rule>> typeCheckRules() throws TypeException {
-		Map<Symbol, Set<Rule>> m = new HashMap<>();
-		for (Symbol sym : prog.getRuleSymbols()) {
-			Set<Rule> s = new HashSet<>();
-			for (Rule r : prog.getRules(sym)) {
+	private Map<RelationSymbol, Set<Rule<UserPredicate<R>, ComplexConjunct<R>>>> typeCheckRules() throws TypeException {
+		Map<RelationSymbol, Set<Rule<UserPredicate<R>, ComplexConjunct<R>>>> m = new HashMap<>();
+		for (RelationSymbol sym : prog.getRuleSymbols()) {
+			Set<Rule<UserPredicate<R>, ComplexConjunct<R>>> s = new HashSet<>();
+			for (Rule<UserPredicate<R>, ComplexConjunct<R>> r : prog.getRules(sym)) {
 				TypeCheckerContext ctx = new TypeCheckerContext();
 				s.add(ctx.typeCheckRule(r));
 			}
@@ -245,9 +248,9 @@ public class TypeChecker {
 		return m;
 	}
 
-	private Map<Symbol, FunctionDef> typeCheckFunctions() throws TypeException {
-		Map<Symbol, FunctionDef> m = new HashMap<>();
-		for (Symbol sym : prog.getFunctionSymbols()) {
+	private Map<FunctionSymbol, FunctionDef> typeCheckFunctions() throws TypeException {
+		Map<FunctionSymbol, FunctionDef> m = new HashMap<>();
+		for (FunctionSymbol sym : prog.getFunctionSymbols()) {
 			FunctionDef def = prog.getDef(sym);
 			if (def instanceof CustomFunctionDef) {
 				TypeCheckerContext ctx = new TypeCheckerContext();
@@ -265,29 +268,29 @@ public class TypeChecker {
 		private final Map<TypeVar, Type> typeVars = new HashMap<>();
 		private String error;
 
-		public Atom typeCheckFact(Atom a) throws TypeException {
+		public Term[] typeCheckFact(RelationSymbol sym, Term[] args) throws TypeException {
 			Map<Var, Type> subst = new HashMap<>();
-			genConstraints(a, subst);
+			genConstraints(sym, args, subst);
 			if (!checkConstraints()) {
-				throw new TypeException("Type error in fact: " + a + "\n" + error);
+				throw new TypeException("Type error in fact: " + UserPredicate.make(sym, args, false) + "\n" + error);
 			}
 			Substitution m = makeIndexSubstitution(subst);
-			return Atoms.applySubstitution(a, m);
+			return Terms.map(args, t -> t.applySubstitution(m));
 		}
 
-		public Atom typeCheckQuery(Atom q) throws TypeException {
+		public UserPredicate<R> typeCheckQuery(UserPredicate<R> q) throws TypeException {
 			Map<Var, Type> subst = new HashMap<>();
 			genConstraints(q, subst);
 			if (!checkConstraints()) {
 				throw new TypeException("Type error in query: " + q + "\n" + error);
 			}
 			Substitution m = makeIndexSubstitution(subst);
-			return Atoms.applySubstitution(q, m);
+			return q.applySubstitution(m);
 		}
 
-		public Rule typeCheckRule(Rule r) throws TypeException {
+		public Rule<UserPredicate<R>, ComplexConjunct<R>> typeCheckRule(Rule<UserPredicate<R>, ComplexConjunct<R>> r) throws TypeException {
 			Map<Var, Type> subst = new HashMap<>();
-			processAtoms(r.getBody(), subst);
+			processAtoms(r, subst);
 			genConstraints(r.getHead(), subst);
 			if (!checkConstraints()) {
 				String msg = "Type error in rule:\n";
@@ -296,12 +299,12 @@ public class TypeChecker {
 				throw new TypeException(msg);
 			}
 			Substitution m = makeIndexSubstitution(subst);
-			Atom newHead = Atoms.applySubstitution(r.getHead(), m);
-			List<Atom> newBody = new ArrayList<>();
-			for (Atom a : r.getBody()) {
-				newBody.add(Atoms.applySubstitution(a, m));
+			UserPredicate<R> newHead = r.getHead().applySubstitution(m);
+			List<ComplexConjunct<R>> newBody = new ArrayList<>();
+			for (ComplexConjunct<R> a : r) {
+				newBody.add(a.applySubstitution(m));
 			}
-			return BasicRule.get(newHead, newBody);
+			return BasicRule.make(newHead, newBody);
 		}
 
 		private Substitution makeIndexSubstitution(Map<Var, Type> subst) {
@@ -311,14 +314,14 @@ public class TypeChecker {
 				Type t = lookupType(e.getValue());
 				if (t instanceof TypeIndex) {
 					int idx = ((TypeIndex) t).getIndex();
-					Symbol csym = prog.getSymbolManager().lookupIndexConstructorSymbol(idx);
+					ConstructorSymbol csym = prog.getSymbolManager().lookupIndexConstructorSymbol(idx);
 					Term c = Constructors.make(csym, Terms.singletonArray(I32.make(idx)));
 					m.put(x, c);
 				}
 			}
 			return m;
 		}
-		
+
 		public CustomFunctionDef typeCheckFunction(CustomFunctionDef functionDef) throws TypeException {
 			Map<Var, Type> subst = new HashMap<>();
 			genConstraints(functionDef, subst);
@@ -326,7 +329,8 @@ public class TypeChecker {
 				throw new TypeException("Type error in function: " + functionDef.getSymbol() + "\n" + error);
 			}
 			Substitution m = makeIndexSubstitution(subst);
-			return CustomFunctionDef.get(functionDef.getSymbol(), functionDef.getParams(), functionDef.getBody().applySubstitution(m));
+			return CustomFunctionDef.get(functionDef.getSymbol(), functionDef.getParams(),
+					functionDef.getBody().applySubstitution(m));
 		}
 
 		public Term typeCheckTerm(Term t, Type type) throws TypeException {
@@ -349,43 +353,45 @@ public class TypeChecker {
 			}
 		}
 
-		private void processAtoms(Iterable<Atom> atoms, Map<Var, Type> subst) {
-			for (Atom a : atoms) {
+		private void processAtoms(Iterable<ComplexConjunct<R>> atoms, Map<Var, Type> subst) {
+			for (ComplexConjunct<R> a : atoms) {
 				genConstraints(a, subst);
 			}
 		}
 
-		private void genConstraints(Atom a, Map<Var, Type> subst) {
-			a.visit(new AtomVisitor<Void, Void>() {
+		private void genConstraints(RelationSymbol sym, Term[] args, Map<Var, Type> subst) {
+			FunctorType ftype = sym.getCompileTimeType().freshen();
+			assert ftype.getArgTypes().size() == args.length;
+			int i = 0;
+			for (Type type : ftype.getArgTypes()) {
+				genConstraints(args[i], type, subst, false);
+				++i;
+			}
+		}
+
+		private void genConstraints(ComplexConjunct<R> a, Map<Var, Type> subst) {
+			a.accept(new ComplexConjunctVisitor<R, Void, Void>() {
 
 				@Override
-				public Void visit(NormalAtom normalAtom, Void in) {
-					FunctorType ftype = (FunctorType) normalAtom.getSymbol().getCompileTimeType().freshen();
-					Term[] args = normalAtom.getArgs();
-					assert ftype.getArgTypes().size() == args.length;
-					int i = 0;
-					for (Type type : ftype.getArgTypes()) {
-						genConstraints(args[i], type, subst, false);
-						++i;
-					}
+				public Void visit(UserPredicate<R> normalAtom, Void in) {
+					genConstraints(normalAtom.getSymbol(), normalAtom.getArgs(), subst);
 					return null;
 				}
 
 				@Override
-				public Void visit(UnifyAtom unifyAtom, Void in) {
+				public Void visit(UnificationPredicate<R> unifyAtom, Void in) {
 					TypeVar var = TypeVar.fresh();
-					Term[] args = unifyAtom.getArgs();
-					genConstraints(args[0], var, subst, false);
-					genConstraints(args[1], var, subst, false);
+					genConstraints(unifyAtom.getLhs(), var, subst, false);
+					genConstraints(unifyAtom.getRhs(), var, subst, false);
 					return null;
 				}
 
 			}, null);
 		}
 
-		private void genConstraints(CustomFunctionDef def, Map<Var,Type> subst) {
-			Symbol sym = def.getSymbol();
-			FunctorType scheme = (FunctorType) sym.getCompileTimeType().freshen();
+		private void genConstraints(CustomFunctionDef def, Map<Var, Type> subst) {
+			FunctionSymbol sym = def.getSymbol();
+			FunctorType scheme = sym.getCompileTimeType().freshen();
 			Map<TypeVar, OpaqueType> opaqueTypes = new HashMap<>();
 			List<Type> argTypes = scheme.getArgTypes();
 			for (Type t : argTypes) {
@@ -418,27 +424,6 @@ public class TypeChecker {
 						genConstraints(cl.getRhs(), exprType, varTypes, allowSubtype);
 					}
 					return null;
-//					assert !allowSubtype;
-//					TypeVar guardType = TypeVar.fresh();
-//					Term guard = matchExpr.getMatchee();
-//					// We do not need to make a copy of varTypes here. We might worry that a
-//					// variable is bound in the guard expression and then that binding leaks into
-//					// this scope. However, variables are only bound in match patterns, and a fresh
-//					// var map is created for each match pattern.
-//					genConstraints(guard, guardType, varTypes, allowSubtype);
-//					for (MatchClause cl : matchExpr.getClauses()) {
-//						// Use a fresh var map when type checking a pattern (because of variable
-//						// shadowing).
-//						Map<Var, Type> newVarTypes = new HashMap<>();
-//						genConstraints(cl.getLhs(), guardType, newVarTypes, allowSubtype);
-//						// However, still need to propagate any variables that are not re-bound in
-//						// pattern.
-//						for (Map.Entry<Var, Type> e : varTypes.entrySet()) {
-//							newVarTypes.putIfAbsent(e.getKey(), e.getValue());
-//						}
-//						genConstraints(cl.getRhs(), exprType, newVarTypes, allowSubtype);
-//					}
-//					return null;
 				}
 
 				@Override
@@ -500,8 +485,8 @@ public class TypeChecker {
 
 		private void genConstraintsForConstructor(Constructor t, Type ttype, Map<Var, Type> subst,
 				boolean allowSubtype) {
-			Symbol cnstrSym = t.getSymbol();
-			FunctorType cnstrType = (FunctorType) cnstrSym.getCompileTimeType().freshen();
+			ConstructorSymbol cnstrSym = t.getSymbol();
+			FunctorType cnstrType = cnstrSym.getCompileTimeType().freshen();
 			Term[] args = t.getArgs();
 			List<Type> argTypes = cnstrType.getArgTypes();
 			for (int i = 0; i < args.length; ++i) {
@@ -735,7 +720,7 @@ public class TypeChecker {
 
 			@Override
 			public Type visit(AlgebraicDataType algebraicType, Void in) {
-				Symbol sym = algebraicType.getSymbol();
+				TypeSymbol sym = algebraicType.getSymbol();
 				List<Type> args = algebraicType.getTypeArgs();
 				if (sym.equals(BuiltInTypeSymbol.SMT_TYPE) || sym.equals(BuiltInTypeSymbol.SYM_TYPE)) {
 					return args.get(0).visit(this, in);

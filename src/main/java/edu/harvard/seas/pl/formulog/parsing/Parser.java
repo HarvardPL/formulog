@@ -186,11 +186,11 @@ public class Parser {
 		}
 	}
 
-	public Program<RelationSymbol, ComplexConjunct<RelationSymbol>> parse(Reader r) throws ParseException {
+	public Program<UserPredicate<RelationSymbol>, ComplexConjunct<RelationSymbol>> parse(Reader r) throws ParseException {
 		return parse(r, Paths.get(""));
 	}
 
-	public Program<RelationSymbol, ComplexConjunct<RelationSymbol>> parse(Reader r, Path inputDir) throws ParseException {
+	public Program<UserPredicate<RelationSymbol>, ComplexConjunct<RelationSymbol>> parse(Reader r, Path inputDir) throws ParseException {
 		try {
 			DatalogParser parser = getParser(r);
 			StmtProcessor stmtProcessor = new StmtProcessor(inputDir);
@@ -265,14 +265,14 @@ public class Parser {
 	private final class StmtProcessor extends DatalogBaseVisitor<Void> {
 
 		private final Map<RelationSymbol, Set<Term[]>> initialFacts = new HashMap<>();
-		private final Map<RelationSymbol, Set<Rule<RelationSymbol, ComplexConjunct<RelationSymbol>>>> rules = new HashMap<>();
+		private final Map<RelationSymbol, Set<Rule<UserPredicate<RelationSymbol>, ComplexConjunct<RelationSymbol>>>> rules = new HashMap<>();
 		private final FunctionDefManager functionDefManager = new FunctionDefManager(symbolManager);
 		private final FunctionCallFactory functionCallFactory = new FunctionCallFactory(functionDefManager);
 		private final Map<FunctionSymbol, Pair<AlgebraicDataType, Integer>> recordLabels = new HashMap<>();
 		private final Map<ConstructorSymbol, FunctionSymbol[]> constructorLabels = new HashMap<>();
 		private final Set<RelationSymbol> externalEdbs = new HashSet<>();
 		private final Path inputDir;
-		private ComplexConjunct<RelationSymbol> query;
+		private UserPredicate<RelationSymbol> query;
 
 		public StmtProcessor(Path inputDir) {
 			this.inputDir = inputDir;
@@ -280,10 +280,10 @@ public class Parser {
 
 		@Override
 		public Void visitFunDecl(FunDeclContext ctx) {
-			List<Pair<Symbol, List<Var>>> ps = map(ctx.funDefLHS(), this::parseFunDefLHS);
+			List<Pair<FunctionSymbol, List<Var>>> ps = map(ctx.funDefLHS(), this::parseFunDefLHS);
 			Iterator<Term> bodies = map(ctx.term(), e -> e.accept(termExtractor)).iterator();
-			for (Pair<Symbol, List<Var>> p : ps) {
-				Symbol sym = p.fst();
+			for (Pair<FunctionSymbol, List<Var>> p : ps) {
+				FunctionSymbol sym = p.fst();
 				List<Var> args = p.snd();
 				Term body = bodies.next();
 				functionDefManager.register(CustomFunctionDef.get(sym, args.toArray(new Var[0]), body));
@@ -291,7 +291,7 @@ public class Parser {
 			return null;
 		}
 
-		private Pair<Symbol, List<Var>> parseFunDefLHS(FunDefLHSContext ctx) {
+		private Pair<FunctionSymbol, List<Var>> parseFunDefLHS(FunDefLHSContext ctx) {
 			String name = ctx.ID().getText();
 			List<Type> argTypes = map(ctx.args.type(), t -> t.accept(typeExtractor));
 			Type retType = ctx.retType.accept(typeExtractor);
@@ -597,10 +597,13 @@ public class Parser {
 		@Override
 		public Void visitQueryStmt(QueryStmtContext ctx) {
 			ComplexConjunct<RelationSymbol> a = ctx.query().atom().accept(atomExtractor);
+			if (!(query instanceof UserPredicate<?>)) {
+				throw new RuntimeException("Query must be for a user-defined predicate.");
+			}
 			if (query != null) {
 				throw new RuntimeException("Cannot have multiple queries in the same program.");
 			}
-			query = a;
+			query = (UserPredicate<RelationSymbol>) a;
 			return null;
 		}
 
@@ -1316,11 +1319,11 @@ public class Parser {
 			facts.add(args);
 		}
 
-		public Program<RelationSymbol, ComplexConjunct<RelationSymbol>> getProgram() throws ParseException {
+		public Program<UserPredicate<RelationSymbol>, ComplexConjunct<RelationSymbol>> getProgram() throws ParseException {
 			for (RelationSymbol sym : externalEdbs) {
 				readEdbFromFile(sym);
 			}
-			return new Program<RelationSymbol, ComplexConjunct<RelationSymbol>>() {
+			return new Program<UserPredicate<RelationSymbol>, ComplexConjunct<RelationSymbol>>() {
 
 				@Override
 				public Set<FunctionSymbol> getFunctionSymbols() {
@@ -1354,7 +1357,7 @@ public class Parser {
 				}
 
 				@Override
-				public Set<Rule<RelationSymbol, ComplexConjunct<RelationSymbol>>> getRules(RelationSymbol sym) {
+				public Set<Rule<UserPredicate<RelationSymbol>, ComplexConjunct<RelationSymbol>>> getRules(RelationSymbol sym) {
 					if (!sym.isIdbSymbol()) {
 						throw new IllegalArgumentException();
 					}
@@ -1375,7 +1378,7 @@ public class Parser {
 				}
 
 				@Override
-				public ComplexConjunct<RelationSymbol> getQuery() {
+				public UserPredicate<RelationSymbol> getQuery() {
 					return query;
 				}
 

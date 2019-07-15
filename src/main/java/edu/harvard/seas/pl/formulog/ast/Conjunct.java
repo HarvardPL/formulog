@@ -1,7 +1,5 @@
 package edu.harvard.seas.pl.formulog.ast;
 
-import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
-
 /*-
  * #%L
  * FormuLog
@@ -22,6 +20,6 @@ import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
  * #L%
  */
 
-public interface Conjunct<R extends RelationSymbol> {
+public interface Conjunct {
 	
 }

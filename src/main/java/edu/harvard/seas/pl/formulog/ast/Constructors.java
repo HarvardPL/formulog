@@ -304,10 +304,10 @@ public final class Constructors {
 			}
 
 			@Override
-			public Type getCompileTimeType() {
+			public FunctorType getCompileTimeType() {
 				// Only want return type of other variable, just in case it is a solver symbol
 				// identified by a string argument.
-				FunctorType funTy = (FunctorType) x.getSymbol().getCompileTimeType();
+				FunctorType funTy = x.getSymbol().getCompileTimeType();
 				return new FunctorType(funTy.getRetType());
 			}
 

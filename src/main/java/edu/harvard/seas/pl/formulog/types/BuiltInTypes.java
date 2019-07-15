@@ -47,12 +47,12 @@ import java.util.Collections;
 import java.util.List;
 
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorGetterSymbol;
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
+import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
+import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType.ConstructorScheme;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
 import edu.harvard.seas.pl.formulog.types.Types.TypeVar;
-import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType.ConstructorScheme;
 
 public final class BuiltInTypes {
 
@@ -94,7 +94,7 @@ public final class BuiltInTypes {
 
 	private static void setListConstructors() {
 		ConstructorScheme nil = new ConstructorScheme(NIL, Collections.emptyList(), Collections.emptyList());
-		List<Symbol> consGetters = Arrays.asList(BuiltInConstructorGetterSymbol.CONS_1,
+		List<ConstructorSymbol> consGetters = Arrays.asList(BuiltInConstructorGetterSymbol.CONS_1,
 				BuiltInConstructorGetterSymbol.CONS_2);
 		ConstructorScheme cons = new ConstructorScheme(CONS, Arrays.asList(a, list(a)), consGetters);
 		AlgebraicDataType.setConstructors(LIST_TYPE, Collections.singletonList(a), Arrays.asList(nil, cons));
@@ -102,7 +102,7 @@ public final class BuiltInTypes {
 
 	private static void setOptionConstructors() {
 		ConstructorScheme none = new ConstructorScheme(NONE, Collections.emptyList(), Collections.emptyList());
-		List<Symbol> someGetters = Arrays.asList(BuiltInConstructorGetterSymbol.SOME_1);
+		List<ConstructorSymbol> someGetters = Arrays.asList(BuiltInConstructorGetterSymbol.SOME_1);
 		ConstructorScheme some = new ConstructorScheme(SOME, Collections.singletonList(a), someGetters);
 		AlgebraicDataType.setConstructors(OPTION_TYPE, Collections.singletonList(a), Arrays.asList(none, some));
 	}

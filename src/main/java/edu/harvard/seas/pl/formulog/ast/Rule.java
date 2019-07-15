@@ -20,14 +20,12 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
+public interface Rule <H extends Conjunct, B extends Conjunct> extends Iterable<B> {
 
-public interface Rule <R extends RelationSymbol, C extends Conjunct<R>> extends Iterable<C> {
-
-	public C getHead();
+	public H getHead();
 	
 	public int getBodySize();
 	
-	public C getBody(int idx);
+	public B getBody(int idx);
 	
 }
