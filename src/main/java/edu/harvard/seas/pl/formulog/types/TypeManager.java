@@ -25,8 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
-import edu.harvard.seas.pl.formulog.symbols.SymbolType;
+import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 
@@ -41,18 +40,15 @@ public class TypeManager {
 		}
 	}
 
-	public Type lookup(Symbol typeSym, List<Type> typeArgs) {
-		if (typeSym.getSymbolType().isTypeSymbol()) {
+	public Type lookup(TypeSymbol typeSym, List<Type> typeArgs) {
+		if (!typeSym.isAlias()) {
 			return AlgebraicDataType.make(typeSym, typeArgs);
 		}
-		if (typeSym.getSymbolType().equals(SymbolType.TYPE_ALIAS)) {
-			TypeAlias alias = aliases.get(typeSym);
-			if (alias == null) {
-				throw new NoSuchElementException("No type associated with symbol " + typeSym);
-			}
-			return alias.instantiate(typeArgs);
+		TypeAlias alias = aliases.get(typeSym);
+		if (alias == null) {
+			throw new NoSuchElementException("No type associated with symbol " + typeSym);
 		}
-		throw new IllegalArgumentException("Symbol " + typeSym + " is not a type symbol or type alias symbol.");
+		return alias.instantiate(typeArgs);
 	}
 
 }

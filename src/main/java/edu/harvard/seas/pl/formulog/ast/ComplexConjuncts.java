@@ -28,12 +28,12 @@ public final class ComplexConjuncts {
 		throw new AssertionError("impossible");
 	}
 	
-	public static <R extends RelationSymbol> UnificationPredicate<R> unifyWithTrue(Term t) {
-		return UnificationPredicate.make(t, Constructors.trueTerm(), false);
+	public static <R extends RelationSymbol> UnificationPredicate<R> unifyWithBool(Term t, boolean bool) {
+		return UnificationPredicate.make(t, bool ? Constructors.trueTerm() : Constructors.falseTerm(), false);
 	}
 	
 	public static <R extends RelationSymbol> UnificationPredicate<R> trueAtom() {
-		return unifyWithTrue(Constructors.trueTerm());
+		return unifyWithBool(Constructors.trueTerm(), true);
 	}
 	
 	public static interface ComplexConjunctVisitor<R extends RelationSymbol, I, O> {

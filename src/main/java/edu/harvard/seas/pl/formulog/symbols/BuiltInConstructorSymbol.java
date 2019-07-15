@@ -239,13 +239,13 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 		}
 	}
 
-	private Type makeType(Type...types) {
+	private FunctorType makeType(Type...types) {
 		assert types.length == arity + 1;
 		return new FunctorType(types);
 	}
 	
 	@Override
-	public Type getCompileTimeType() {
+	public FunctorType getCompileTimeType() {
 		switch (this) {
 		case CMP_EQ:
 		case CMP_GT:

@@ -39,8 +39,8 @@ import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.OPTION_TYPE
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.SMT_TYPE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.STRING_TYPE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.SYM_TYPE;
-import static edu.harvard.seas.pl.formulog.symbols.IndexedSymbol.BV;
-import static edu.harvard.seas.pl.formulog.symbols.IndexedSymbol.FP;
+import static edu.harvard.seas.pl.formulog.symbols.IndexedTypeSymbol.BV;
+import static edu.harvard.seas.pl.formulog.symbols.IndexedTypeSymbol.FP;
 
 import java.util.Arrays;
 import java.util.Collections;

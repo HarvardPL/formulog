@@ -31,8 +31,8 @@ import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitorExn;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDefManager;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
+import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
-import edu.harvard.seas.pl.formulog.symbols.SymbolType;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.FunctorUtil;
 import edu.harvard.seas.pl.formulog.util.FunctorUtil.Memoizer;
@@ -52,7 +52,7 @@ public final class FunctionCallFactory {
 		this.defManager = defManager;
 	}
 	
-	public FunctionCall make(Symbol sym, Term[] args) {
+	public FunctionCall make(FunctionSymbol sym, Term[] args) {
 		if (sym.getArity() != args.length) {
 			throw new IllegalArgumentException("Symbol " + sym + " has arity " + sym.getArity() + " but args "
 					+ Arrays.toString(args) + " have length " + args.length);
@@ -64,13 +64,13 @@ public final class FunctionCallFactory {
 		return defManager;
 	}
 
-	public class FunctionCall implements Functor, Expr {
+	public class FunctionCall implements Functor<FunctionSymbol>, Expr {
 
-		private final Symbol sym;
+		private final FunctionSymbol sym;
 		private final Term[] args;
 		private final boolean isGround;
 
-		private FunctionCall(Symbol sym, Term[] args) {
+		private FunctionCall(FunctionSymbol sym, Term[] args) {
 			this.sym = sym;
 			this.args = args;
 			boolean b = true;
@@ -78,13 +78,10 @@ public final class FunctionCallFactory {
 				b &= t.isGround();
 			}
 			isGround = b;
-			if (!sym.getSymbolType().equals(SymbolType.FUNCTION)) {
-				throw new IllegalArgumentException("Cannot create a function call for a non-function symbol: " + this);
-			}
 		}
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return sym;
 		}
 

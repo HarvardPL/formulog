@@ -22,32 +22,30 @@ package edu.harvard.seas.pl.formulog.ast;
 
 import java.util.Set;
 
-import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
+import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
+import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 
-public interface Program<C extends Conjunct> {
+public interface Program<R extends RelationSymbol, C extends Conjunct<R>> {
 
-	Set<Symbol> getFunctionSymbols();
+	Set<FunctionSymbol> getFunctionSymbols();
 	
-	Set<Symbol> getFactSymbols();
+	Set<RelationSymbol> getFactSymbols();
 	
-	Set<Symbol> getRuleSymbols();
+	Set<RelationSymbol> getRuleSymbols();
 	
-	FunctionDef getDef(Symbol sym);
+	FunctionDef getDef(FunctionSymbol sym);
 	
-	Set<Term[]> getFacts(Symbol sym);
+	Set<Term[]> getFacts(RelationSymbol sym);
 
-	Set<Rule<C>> getRules(Symbol sym);
+	Set<Rule<R, C>> getRules(RelationSymbol sym);
 	
 	SymbolManager getSymbolManager();
 	
-	RelationProperties getRelationProperties(Symbol sym);
-	
 	boolean hasQuery();
 	
-	NormalAtom getQuery();
+	C getQuery();
 	
 	FunctionCallFactory getFunctionCallFactory();
 

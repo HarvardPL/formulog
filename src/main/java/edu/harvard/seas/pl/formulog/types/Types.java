@@ -34,6 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
@@ -313,18 +314,18 @@ public final class Types {
 
 		public static class ConstructorScheme {
 
-			private final Symbol sym;
+			private final ConstructorSymbol sym;
 			private final List<Type> typeArgs;
-			private final List<Symbol> getterSyms;
+			private final List<ConstructorSymbol> getterSyms;
 
-			public ConstructorScheme(Symbol sym, List<Type> typeArgs, List<Symbol> getterSyms) {
+			public ConstructorScheme(ConstructorSymbol sym, List<Type> typeArgs, List<ConstructorSymbol> getterSyms) {
 				this.sym = sym;
 				this.typeArgs = typeArgs;
 				this.getterSyms = getterSyms;
 				assert sym != null;
 			}
 
-			public Symbol getSymbol() {
+			public ConstructorSymbol getSymbol() {
 				return sym;
 			}
 
@@ -332,7 +333,7 @@ public final class Types {
 				return typeArgs;
 			}
 
-			public List<Symbol> getGetterSymbols() {
+			public List<ConstructorSymbol> getGetterSymbols() {
 				return getterSyms;
 			}
 

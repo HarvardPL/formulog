@@ -57,8 +57,10 @@ public class SimplifiedRule<R extends RelationSymbol> implements Rule<R, SimpleC
 		}
 		UserPredicate<R> head = rule.getHead();
 		Set<Var> boundVars = simplifier.getBoundVars();
-		if (!boundVars.containsAll(head.varSet())) {
-			throw new InvalidProgramException("Unbound variables in head of rule:\n" + rule);
+		for (Term t : head.getArgs()) {
+			if (!boundVars.containsAll(Terms.varSet(t))) {
+				throw new InvalidProgramException("Unbound variables in head of rule:\n" + rule);
+			}
 		}
 		Predicate<R> newHead = Predicate.make(head.getSymbol(), head.getArgs(), boundVars, head.isNegated());
 		return new SimplifiedRule<>(newHead, simplifier.getConjuncts());

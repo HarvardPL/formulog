@@ -1,5 +1,25 @@
 package edu.harvard.seas.pl.formulog.symbols;
 
+/*-
+ * #%L
+ * FormuLog
+ * %%
+ * Copyright (C) 2018 - 2019 President and Fellows of Harvard College
+ * %%
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * #L%
+ */
+
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.a;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.b;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.bv;
@@ -13,7 +33,6 @@ import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.i64;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.smt;
 
 import edu.harvard.seas.pl.formulog.types.FunctorType;
-import edu.harvard.seas.pl.formulog.types.Types.Type;
 
 public enum IndexedConstructorSymbol implements ConstructorSymbol, IndexedSymbol {
 
@@ -54,7 +73,7 @@ public enum IndexedConstructorSymbol implements ConstructorSymbol, IndexedSymbol
 	}
 
 	@Override
-	public Type getCompileTimeType() {
+	public FunctorType getCompileTimeType() {
 		switch (this) {
 		case BV_CONST:
 			return new FunctorType(i32, a, smt(bv(a)));

@@ -21,9 +21,15 @@ package edu.harvard.seas.pl.formulog.symbols;
  */
 
 public interface TypeSymbol extends Symbol {
+
+	TypeSymbolType getTypeSymbolType();
 	
-	boolean isAlias();
+	default boolean isAlias() {
+		return getTypeSymbolType().equals(TypeSymbolType.TYPE_ALIAS);
+	}
 	
-	boolean isUninterpretedSort();
+	default boolean isUninterpretedSort() {
+		return getTypeSymbolType().equals(TypeSymbolType.UNINTERPRETED_SORT);
+	}
 
 }

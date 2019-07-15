@@ -45,13 +45,11 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
-import edu.harvard.seas.pl.formulog.ast.Atoms;
-import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
-import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
+import edu.harvard.seas.pl.formulog.ast.ComplexConjunct;
+import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
-import edu.harvard.seas.pl.formulog.ast.Expr;
 import edu.harvard.seas.pl.formulog.ast.FP32;
 import edu.harvard.seas.pl.formulog.ast.FP64;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory;
@@ -59,14 +57,13 @@ import edu.harvard.seas.pl.formulog.ast.I32;
 import edu.harvard.seas.pl.formulog.ast.I64;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
-import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
-import edu.harvard.seas.pl.formulog.ast.RelationProperties;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.StringTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
-import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
+import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
+import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.DummyFunctionDef;
@@ -143,12 +140,17 @@ import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.VarTermConte
 import edu.harvard.seas.pl.formulog.parsing.generated.DatalogVisitor;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
-import edu.harvard.seas.pl.formulog.symbols.BuiltInPredicateSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;
-import edu.harvard.seas.pl.formulog.symbols.IndexedSymbol;
+import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbolType;
+import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
+import edu.harvard.seas.pl.formulog.symbols.IndexedConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.IndexedTypeSymbol;
+import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
-import edu.harvard.seas.pl.formulog.symbols.SymbolType;
+import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
+import edu.harvard.seas.pl.formulog.symbols.TypeSymbolType;
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.TypeAlias;
@@ -184,11 +186,11 @@ public class Parser {
 		}
 	}
 
-	public Program parse(Reader r) throws ParseException {
+	public Program<RelationSymbol, ComplexConjunct<RelationSymbol>> parse(Reader r) throws ParseException {
 		return parse(r, Paths.get(""));
 	}
 
-	public Program parse(Reader r, Path inputDir) throws ParseException {
+	public Program<RelationSymbol, ComplexConjunct<RelationSymbol>> parse(Reader r, Path inputDir) throws ParseException {
 		try {
 			DatalogParser parser = getParser(r);
 			StmtProcessor stmtProcessor = new StmtProcessor(inputDir);
@@ -208,7 +210,7 @@ public class Parser {
 		@Override
 		public Type visitTupleType(TupleTypeContext ctx) {
 			List<Type> typeArgs = map(ctx.type(), t -> t.accept(this));
-			Symbol sym = symbolManager.lookupTupleTypeSymbol(typeArgs.size());
+			TypeSymbol sym = symbolManager.lookupTupleTypeSymbol(typeArgs.size());
 			return AlgebraicDataType.make(sym, typeArgs);
 		}
 
@@ -249,8 +251,9 @@ public class Parser {
 				}
 				return BuiltInTypes.string;
 			default:
-				Pair<Symbol, List<Integer>> p = symbolManager.lookupIndexedSymbol(ctx.ID().getText(), indices);
-				Symbol sym = p.fst();
+				Pair<IndexedTypeSymbol, List<Integer>> p = symbolManager.lookupIndexedTypeSymbol(ctx.ID().getText(),
+						indices);
+				TypeSymbol sym = p.fst();
 				indices = p.snd();
 				params.addAll(map(indices, i -> TypeIndex.make(i)));
 				return typeManager.lookup(sym, params);
@@ -261,16 +264,15 @@ public class Parser {
 
 	private final class StmtProcessor extends DatalogBaseVisitor<Void> {
 
-		private final Map<Symbol, Set<Atom>> initialFacts = new HashMap<>();
-		private final Map<Symbol, Set<Rule>> rules = new HashMap<>();
+		private final Map<RelationSymbol, Set<Term[]>> initialFacts = new HashMap<>();
+		private final Map<RelationSymbol, Set<Rule<RelationSymbol, ComplexConjunct<RelationSymbol>>>> rules = new HashMap<>();
 		private final FunctionDefManager functionDefManager = new FunctionDefManager(symbolManager);
 		private final FunctionCallFactory functionCallFactory = new FunctionCallFactory(functionDefManager);
-		private final Map<Symbol, RelationProperties> relationProperties = new HashMap<>();
-		private final Map<Symbol, Pair<AlgebraicDataType, Integer>> recordLabels = new HashMap<>();
-		private final Map<Symbol, Symbol[]> constructorLabels = new HashMap<>();
-		private final Set<Symbol> externalEdbs = new HashSet<>();
+		private final Map<FunctionSymbol, Pair<AlgebraicDataType, Integer>> recordLabels = new HashMap<>();
+		private final Map<ConstructorSymbol, FunctionSymbol[]> constructorLabels = new HashMap<>();
+		private final Set<RelationSymbol> externalEdbs = new HashSet<>();
 		private final Path inputDir;
-		private Atom query;
+		private ComplexConjunct<RelationSymbol> query;
 
 		public StmtProcessor(Path inputDir) {
 			this.inputDir = inputDir;
@@ -293,7 +295,7 @@ public class Parser {
 			String name = ctx.ID().getText();
 			List<Type> argTypes = map(ctx.args.type(), t -> t.accept(typeExtractor));
 			Type retType = ctx.retType.accept(typeExtractor);
-			Symbol sym = symbolManager.createSymbol(name, argTypes.size(), SymbolType.FUNCTION,
+			FunctionSymbol sym = symbolManager.createFunctionSymbol(name, argTypes.size(),
 					new FunctorType(argTypes, retType));
 			List<Var> args = map(ctx.args.VAR(), x -> Var.get(x.getText()));
 			if (args.size() != new HashSet<>(args).size()) {
@@ -312,23 +314,22 @@ public class Parser {
 			return types;
 		}
 
-		void getAggregate(AggTypeListContext ctx, RelationProperties props) {
+		void setAggregate(RelationSymbol rel, AggTypeListContext ctx) {
 			for (Iterator<AggTypeContext> it = ctx.aggType().iterator(); it.hasNext();) {
 				AggTypeContext agctx = it.next();
 				if (agctx.func != null) {
 					if (it.hasNext()) {
-						throw new RuntimeException("Aggregates can only be set for the last column of a relation: "
-								+ props.getRelationSymbol());
+						throw new RuntimeException(
+								"Aggregates can only be set for the last column of a relation: " + rel);
 					}
 					Symbol funcSym = symbolManager.lookupSymbol(agctx.func.getText());
-					if (!funcSym.getSymbolType().isFunctionSymbol()) {
+					if (!(funcSym instanceof FunctionSymbol)) {
 						throw new RuntimeException("Non-function used in aggregate: " + funcSym);
 					}
 					Term unit = extract(agctx.unit);
-					props.aggregate(funcSym, unit);
+					rel.setAggregate((FunctionSymbol) funcSym, unit);
 				}
 			}
-
 		}
 
 		@Override
@@ -338,27 +339,26 @@ public class Parser {
 			if (!Types.getTypeVars(types).isEmpty()) {
 				throw new RuntimeException("Cannot use type variables in the signature of a relation: " + name);
 			}
-			SymbolType symType = ctx.relType.getType() == DatalogLexer.OUTPUT ? SymbolType.IDB_REL : SymbolType.EDB_REL;
-			Symbol sym = symbolManager.createSymbol(name, types.size(), symType,
+			boolean isIdb = ctx.relType.getType() == DatalogLexer.OUTPUT;
+			RelationSymbol sym = symbolManager.createRelationSymbol(name, types.size(), isIdb,
 					new FunctorType(types, BuiltInTypes.bool));
-			RelationProperties props = new RelationProperties(sym);
-			getAggregate(ctx.aggTypeList(), props);
+			setAggregate(sym, ctx.aggTypeList());
 			for (AnnotationContext actx : ctx.annotation()) {
 				switch (actx.getText()) {
 				case "@bottomup":
-					if (!sym.getSymbolType().isIDBSymbol()) {
+					if (!sym.isIdbSymbol()) {
 						throw new RuntimeException("Annotation @bottomup not relevant for non-IDB predicate " + sym);
 					}
-					props.bottomUp();
+					sym.setBottomUp();
 					break;
 				case "@topdown":
-					if (!sym.getSymbolType().isIDBSymbol()) {
+					if (!sym.isIdbSymbol()) {
 						throw new RuntimeException("Annotation @bottomup not relevant for non-IDB predicate " + sym);
 					}
-					props.topDown();
+					sym.setTopDown();
 					break;
 				case "@external":
-					if (!sym.getSymbolType().isEDBSymbol()) {
+					if (!sym.isEdbSymbol()) {
 						throw new RuntimeException("Annotation @external cannot be used for non-EDB predicate " + sym);
 					}
 					externalEdbs.add(sym);
@@ -367,8 +367,7 @@ public class Parser {
 					throw new RuntimeException("Unrecognized annotation for predicate " + sym + ": " + actx.getText());
 				}
 			}
-			relationProperties.put(sym, props);
-			if (sym.getSymbolType().isEDBSymbol()) {
+			if (sym.isEdbSymbol()) {
 				initialFacts.put(sym, new HashSet<>());
 			} else {
 				rules.put(sym, new HashSet<>());
@@ -378,8 +377,8 @@ public class Parser {
 
 		@Override
 		public Void visitTypeAlias(TypeAliasContext ctx) {
-			Pair<Symbol, List<TypeVar>> p = parseTypeDefLHS(ctx.typeDefLHS(), SymbolType.TYPE_ALIAS);
-			Symbol sym = p.fst();
+			Pair<TypeSymbol, List<TypeVar>> p = parseTypeDefLHS(ctx.typeDefLHS(), TypeSymbolType.TYPE_ALIAS);
+			TypeSymbol sym = p.fst();
 			List<TypeVar> typeVars = p.snd();
 			Type type = ctx.type().accept(typeExtractor);
 			if (!typeVars.containsAll(Types.getTypeVars(type))) {
@@ -391,11 +390,11 @@ public class Parser {
 
 		@Override
 		public Void visitTypeDecl(TypeDeclContext ctx) {
-			List<Pair<Symbol, List<TypeVar>>> lhss = map(ctx.typeDefLHS(),
-					lhs -> parseTypeDefLHS(lhs, SymbolType.TYPE));
+			List<Pair<TypeSymbol, List<TypeVar>>> lhss = map(ctx.typeDefLHS(),
+					lhs -> parseTypeDefLHS(lhs, TypeSymbolType.NORMAL_TYPE));
 			Iterator<TypeDefRHSContext> it = ctx.typeDefRHS().iterator();
-			for (Pair<Symbol, List<TypeVar>> p : lhss) {
-				Symbol sym = p.fst();
+			for (Pair<TypeSymbol, List<TypeVar>> p : lhss) {
+				TypeSymbol sym = p.fst();
 				List<TypeVar> typeVars = p.snd();
 				AlgebraicDataType type = AlgebraicDataType.make(sym, new ArrayList<>(typeVars));
 				TypeDefRHSContext rhs = it.next();
@@ -412,18 +411,19 @@ public class Parser {
 			Set<ConstructorScheme> constructors = new HashSet<>();
 			for (ConstructorTypeContext ctc : ctx.constructorType()) {
 				List<Type> typeArgs = map(ctc.typeList().type(), t -> t.accept(typeExtractor));
-				Symbol csym = symbolManager.createSymbol(ctc.ID().getText(), typeArgs.size(),
-						SymbolType.VANILLA_CONSTRUCTOR, new FunctorType(typeArgs, type));
+				ConstructorSymbol csym = symbolManager.createConstructorSymbol(ctc.ID().getText(), typeArgs.size(),
+						ConstructorSymbolType.VANILLA_CONSTRUCTOR, new FunctorType(typeArgs, type));
 				if (!typeVars.containsAll(Types.getTypeVars(typeArgs))) {
 					throw new RuntimeException("Unbound type variable in definition of " + csym);
 				}
-				symbolManager.createSymbol("#is_" + csym.toString(), 1, SymbolType.SOLVER_CONSTRUCTOR_TESTER,
-						new FunctorType(type, BuiltInTypes.bool));
-				List<Symbol> getterSyms = new ArrayList<>();
+				symbolManager.createConstructorSymbol("#is_" + csym.toString(), 1,
+						ConstructorSymbolType.SOLVER_CONSTRUCTOR_TESTER, new FunctorType(type, BuiltInTypes.bool));
+				List<ConstructorSymbol> getterSyms = new ArrayList<>();
 				for (int i = 0; i < csym.getArity(); ++i) {
-					Type t = new FunctorType(type, typeArgs.get(i));
+					FunctorType t = new FunctorType(type, typeArgs.get(i));
 					String name = "#" + csym.toString() + "_" + (i + 1);
-					getterSyms.add(symbolManager.createSymbol(name, 1, SymbolType.SOLVER_CONSTRUCTOR_GETTER, t));
+					getterSyms.add(symbolManager.createConstructorSymbol(name, 1,
+							ConstructorSymbolType.SOLVER_CONSTRUCTOR_GETTER, t));
 				}
 				constructors.add(new ConstructorScheme(csym, typeArgs, getterSyms));
 			}
@@ -432,20 +432,20 @@ public class Parser {
 
 		private void handleRecordDef(RecordDefContext ctx, AlgebraicDataType type, List<TypeVar> typeVars) {
 			List<Type> entryTypes = new ArrayList<>();
-			List<Symbol> getterSyms = new ArrayList<>();
-			List<Symbol> labels = new ArrayList<>();
+			List<ConstructorSymbol> getterSyms = new ArrayList<>();
+			List<FunctionSymbol> labels = new ArrayList<>();
 			int i = 0;
 			for (RecordEntryDefContext entry : ctx.recordEntryDef()) {
 				Type entryType = entry.type().accept(typeExtractor);
 				entryTypes.add(entryType);
-				Type labelType = new FunctorType(type, entryType);
-				Symbol label = symbolManager.createSymbol(entry.ID().getText(), 1, SymbolType.FUNCTION, labelType);
+				FunctorType labelType = new FunctorType(type, entryType);
+				FunctionSymbol label = symbolManager.createFunctionSymbol(entry.ID().getText(), 1, labelType);
 				labels.add(label);
 				final int j = i;
 				functionDefManager.register(new FunctionDef() {
 
 					@Override
-					public Symbol getSymbol() {
+					public FunctionSymbol getSymbol() {
 						return label;
 					}
 
@@ -456,27 +456,27 @@ public class Parser {
 					}
 
 				});
-				Symbol getter = symbolManager.createSymbol("#" + label, 1, SymbolType.SOLVER_CONSTRUCTOR_GETTER,
-						labelType);
+				ConstructorSymbol getter = symbolManager.createConstructorSymbol("#" + label, 1,
+						ConstructorSymbolType.SOLVER_CONSTRUCTOR_GETTER, labelType);
 				getterSyms.add(getter);
 				recordLabels.put(label, new Pair<>(type, i));
 				i++;
 			}
-			Symbol sym = type.getSymbol();
+			TypeSymbol sym = type.getSymbol();
 			if (!typeVars.containsAll(Types.getTypeVars(entryTypes))) {
 				throw new RuntimeException("Unbound type variable in definition of " + sym);
 			}
 			FunctorType ctype = new FunctorType(entryTypes, type);
-			Symbol csym = symbolManager.createSymbol("_rec_" + sym, entryTypes.size(), SymbolType.VANILLA_CONSTRUCTOR,
-					ctype);
+			ConstructorSymbol csym = symbolManager.createConstructorSymbol("_rec_" + sym, entryTypes.size(),
+					ConstructorSymbolType.VANILLA_CONSTRUCTOR, ctype);
 			ConstructorScheme ctor = new ConstructorScheme(csym, entryTypes, getterSyms);
 			AlgebraicDataType.setConstructors(sym, typeVars, Collections.singleton(ctor));
-			constructorLabels.put(csym, labels.toArray(new Symbol[0]));
+			constructorLabels.put(csym, labels.toArray(new FunctionSymbol[0]));
 		}
 
-		private Pair<Symbol, List<TypeVar>> parseTypeDefLHS(TypeDefLHSContext ctx, SymbolType symType) {
+		private Pair<TypeSymbol, List<TypeVar>> parseTypeDefLHS(TypeDefLHSContext ctx, TypeSymbolType symType) {
 			List<TypeVar> typeVars = map(ctx.TYPEVAR(), t -> TypeVar.get(t.getText()));
-			Symbol sym = symbolManager.createSymbol(ctx.ID().getText(), typeVars.size(), symType, null);
+			TypeSymbol sym = symbolManager.createTypeSymbol(ctx.ID().getText(), typeVars.size(), symType);
 			if (typeVars.size() != (new HashSet<>(typeVars)).size()) {
 				throw new RuntimeException(
 						"Cannot use the same type variable multiple times in a type declaration: " + sym);
@@ -486,7 +486,7 @@ public class Parser {
 
 		@Override
 		public Void visitUninterpSortDecl(UninterpSortDeclContext ctx) {
-			parseTypeDefLHS(ctx.typeDefLHS(), SymbolType.SOLVER_UNINTERPRETED_SORT);
+			parseTypeDefLHS(ctx.typeDefLHS(), TypeSymbolType.UNINTERPRETED_SORT);
 			return null;
 		}
 
@@ -495,8 +495,8 @@ public class Parser {
 			ConstructorTypeContext ctc = ctx.constructorType();
 			List<Type> typeArgs = map(ctc.typeList().type(), t -> t.accept(typeExtractor));
 			Type type = ctx.type().accept(typeExtractor);
-			Symbol csym = symbolManager.createSymbol(ctc.ID().getText(), typeArgs.size(),
-					SymbolType.SOLVER_UNINTERPRETED_FUNCTION, new FunctorType(typeArgs, type));
+			ConstructorSymbol csym = symbolManager.createConstructorSymbol(ctc.ID().getText(), typeArgs.size(),
+					ConstructorSymbolType.SOLVER_UNINTERPRETED_FUNCTION, new FunctorType(typeArgs, type));
 			if (!(type instanceof AlgebraicDataType)
 					|| !((AlgebraicDataType) type).getSymbol().equals(BuiltInTypeSymbol.SMT_TYPE)) {
 				throw new RuntimeException("Uninterpreted function must have an "
@@ -510,12 +510,12 @@ public class Parser {
 
 		@Override
 		public Void visitClauseStmt(ClauseStmtContext ctx) {
-			List<Atom> head = atomListContextToAtomList(ctx.clause().head);
-			List<Atom> body = atomListContextToAtomList(ctx.clause().body);
-			List<BasicRule> newRules = makeRules(head, body);
-			for (BasicRule rule : newRules) {
-				Symbol sym = rule.getHead().getSymbol();
-				if (!sym.getSymbolType().equals(SymbolType.IDB_REL)) {
+			List<ComplexConjunct<RelationSymbol>> head = atomListContextToAtomList(ctx.clause().head);
+			List<ComplexConjunct<RelationSymbol>> body = atomListContextToAtomList(ctx.clause().body);
+			List<BasicRule<RelationSymbol>> newRules = makeRules(head, body);
+			for (BasicRule<RelationSymbol> rule : newRules) {
+				RelationSymbol sym = rule.getHead().getSymbol();
+				if (!sym.isIdbSymbol()) {
 					throw new RuntimeException("Cannot define a rule for a non-IDB symbol: " + sym);
 				}
 				Util.lookupOrCreate(rules, sym, () -> new HashSet<>()).add(rule);
@@ -523,76 +523,80 @@ public class Parser {
 			return null;
 		}
 
-		private BasicRule makeRule(Atom head, List<Atom> body) {
-			List<Atom> newBody = new ArrayList<>(body);
-			Atom newHead = removeFuncCallsFromAtom(head, newBody);
-			return BasicRule.get(newHead, newBody);
+		private BasicRule<RelationSymbol> makeRule(ComplexConjunct<RelationSymbol> head,
+				List<ComplexConjunct<RelationSymbol>> body) {
+			List<ComplexConjunct<RelationSymbol>> newBody = new ArrayList<>(body);
+			if (!(head instanceof UserPredicate)) {
+				throw new RuntimeException("Cannot create rule with non-user predicate in head: " + head);
+			}
+			return BasicRule.make((UserPredicate<RelationSymbol>) head, newBody);
 		}
 
-		private List<BasicRule> makeRules(List<Atom> head, List<Atom> body) {
-			List<BasicRule> rules = new ArrayList<>();
-			for (Atom hd : head) {
+		private List<BasicRule<RelationSymbol>> makeRules(List<ComplexConjunct<RelationSymbol>> head,
+				List<ComplexConjunct<RelationSymbol>> body) {
+			List<BasicRule<RelationSymbol>> rules = new ArrayList<>();
+			for (ComplexConjunct<RelationSymbol> hd : head) {
 				rules.add(makeRule(hd, body));
 			}
 			return rules;
 		}
 
-		private Atom removeFuncCallsFromAtom(Atom a, List<Atom> acc) {
-			Term[] args = a.getArgs();
-			Term[] newArgs = new Term[args.length];
-			for (int i = 0; i < args.length; ++i) {
-				newArgs[i] = args[i].visit(new TermVisitor<Void, Term>() {
-
-					@Override
-					public Term visit(Var var, Void in) {
-						return var;
-					}
-
-					@Override
-					public Term visit(Constructor constr, Void in) {
-						Term[] args = constr.getArgs();
-						Term[] newArgs = new Term[args.length];
-						for (int i = 0; i < args.length; ++i) {
-							newArgs[i] = args[i].visit(this, null);
-						}
-						return constr.copyWithNewArgs(newArgs);
-					}
-
-					@Override
-					public Term visit(Primitive<?> prim, Void in) {
-						return prim;
-					}
-
-					@Override
-					public Term visit(Expr expr, Void in) {
-						Var x = Var.getFresh(false);
-						acc.add(Atoms.getPositive(BuiltInPredicateSymbol.UNIFY, new Term[] { x, expr }));
-						return x;
-					}
-
-				}, null);
-			}
-			return Atoms.get(a.getSymbol(), newArgs, a.isNegated());
-		}
+		// private Atom removeFuncCallsFromAtom(Atom a, List<Atom> acc) {
+		// Term[] args = a.getArgs();
+		// Term[] newArgs = new Term[args.length];
+		// for (int i = 0; i < args.length; ++i) {
+		// newArgs[i] = args[i].visit(new TermVisitor<Void, Term>() {
+		//
+		// @Override
+		// public Term visit(Var var, Void in) {
+		// return var;
+		// }
+		//
+		// @Override
+		// public Term visit(Constructor constr, Void in) {
+		// Term[] args = constr.getArgs();
+		// Term[] newArgs = new Term[args.length];
+		// for (int i = 0; i < args.length; ++i) {
+		// newArgs[i] = args[i].visit(this, null);
+		// }
+		// return constr.copyWithNewArgs(newArgs);
+		// }
+		//
+		// @Override
+		// public Term visit(Primitive<?> prim, Void in) {
+		// return prim;
+		// }
+		//
+		// @Override
+		// public Term visit(Expr expr, Void in) {
+		// Var x = Var.getFresh(false);
+		// acc.add(Atoms.getPositive(BuiltInPredicateSymbol.UNIFY, new Term[] { x, expr
+		// }));
+		// return x;
+		// }
+		//
+		// }, null);
+		// }
+		// return Atoms.get(a.getSymbol(), newArgs, a.isNegated());
+		// }
 
 		@Override
 		public Void visitFactStmt(FactStmtContext ctx) {
-			Atom fact = ctx.fact().atom().accept(atomExtractor);
-			Symbol sym = fact.getSymbol();
-			if (sym.getSymbolType().equals(SymbolType.IDB_REL)) {
-				BasicRule rule = makeRule(fact, Collections.emptyList());
-				Util.lookupOrCreate(rules, sym, () -> new HashSet<>()).add(rule);
-			} else if (sym.getSymbolType().equals(SymbolType.EDB_REL)) {
-				Util.lookupOrCreate(initialFacts, sym, () -> new HashSet<>()).add(fact);
+			UserPredicate<RelationSymbol> fact = (UserPredicate<RelationSymbol>) ctx.fact().atom()
+					.accept(atomExtractor);
+			RelationSymbol sym = fact.getSymbol();
+			if (sym.isIdbSymbol()) {
+				BasicRule<RelationSymbol> rule = makeRule(fact, Collections.emptyList());
+				rules.get(sym).add(rule);
 			} else {
-				throw new RuntimeException("Fact has a non-EDB and non-IDB symbol: " + fact);
+				initialFacts.get(sym).add(fact.getArgs());
 			}
 			return null;
 		}
 
 		@Override
 		public Void visitQueryStmt(QueryStmtContext ctx) {
-			Atom a = ctx.query().atom().accept(atomExtractor);
+			ComplexConjunct<RelationSymbol> a = ctx.query().atom().accept(atomExtractor);
 			if (query != null) {
 				throw new RuntimeException("Cannot have multiple queries in the same program.");
 			}
@@ -600,7 +604,7 @@ public class Parser {
 			return null;
 		}
 
-		List<Atom> atomListContextToAtomList(AtomListContext ctx) {
+		List<ComplexConjunct<RelationSymbol>> atomListContextToAtomList(AtomListContext ctx) {
 			return map(ctx.atom(), a -> a.accept(atomExtractor));
 		}
 
@@ -635,10 +639,10 @@ public class Parser {
 			@Override
 			public Term visitReifyTerm(ReifyTermContext ctx) {
 				Symbol predSym = symbolManager.lookupSymbol(ctx.ID().getText());
-				if (!predSym.getSymbolType().isRelationSym()) {
+				if (!(predSym instanceof RelationSymbol)) {
 					throw new RuntimeException("Cannot reify something that is not a relation: " + ctx.getText());
 				}
-				Symbol funcSym = symbolManager.createFunctionSymbolForPredicate(predSym, true);
+				FunctionSymbol funcSym = symbolManager.createFunctionSymbolForPredicate((RelationSymbol) predSym, true);
 				if (!functionDefManager.hasDefinition(funcSym)) {
 					functionDefManager.register(new DummyFunctionDef(funcSym));
 				}
@@ -671,8 +675,13 @@ public class Parser {
 				Term[] args = termContextsToTerms(ctx.termArgs().term());
 				String name = ctx.id.getText();
 				List<Integer> indices = getIndices(ctx.index());
-				Pair<Symbol, List<Integer>> p = symbolManager.lookupIndexedSymbol(name, indices);
-				Symbol sym = p.fst();
+				if (indices.isEmpty()) {
+					Symbol sym = symbolManager.lookupSymbol(name);
+					return makeFunctor(sym, args);
+				}
+				Pair<IndexedConstructorSymbol, List<Integer>> p = symbolManager.lookupIndexedConstructorSymbol(name,
+						indices);
+				IndexedConstructorSymbol sym = p.fst();
 				indices = p.snd();
 				Term[] expandedArgs = new Term[args.length + indices.size()];
 				System.arraycopy(args, 0, expandedArgs, 0, args.length);
@@ -683,7 +692,7 @@ public class Parser {
 					if (idx == null) {
 						t = Var.getFresh(false);
 					} else {
-						Symbol csym = symbolManager.lookupIndexConstructorSymbol(idx);
+						ConstructorSymbol csym = symbolManager.lookupIndexConstructorSymbol(idx);
 						t = Constructors.make(csym, Terms.singletonArray(I32.make(idx)));
 					}
 					expandedArgs[i] = t;
@@ -692,36 +701,34 @@ public class Parser {
 				// For a couple constructors, we want to make sure that their arguments are
 				// forced to be non-formula types. For example, the constructor bv_const needs
 				// to take something of type i32, not i32 expr.
-				if (sym instanceof IndexedSymbol) {
-					switch ((IndexedSymbol) sym) {
-					case BV_BIG_CONST:
-					case BV_CONST:
-					case FP_BIG_CONST:
-					case FP_CONST:
-						t = makeExitFormula(t);
-					default:
-						break;
-					}
+				switch (sym) {
+				case BV_BIG_CONST:
+				case BV_CONST:
+				case FP_BIG_CONST:
+				case FP_CONST:
+					t = makeExitFormula(t);
+				default:
+					break;
 				}
 				return t;
 			}
 
 			private Term makeFunctor(Symbol sym, Term[] args) {
-				SymbolType st = sym.getSymbolType();
-				if (st.isRelationSym()) {
-					Symbol newSym = symbolManager.createFunctionSymbolForPredicate(sym, false);
+				if (sym instanceof RelationSymbol) {
+					FunctionSymbol newSym = symbolManager.createFunctionSymbolForPredicate((RelationSymbol) sym, false);
 					if (!functionDefManager.hasDefinition(newSym)) {
 						functionDefManager.register(new DummyFunctionDef(newSym));
 					}
 					return functionCallFactory.make(newSym, args);
-				} else if (st.isFunctionSymbol()) {
-					Term t = functionCallFactory.make(sym, args);
+				} else if (sym instanceof FunctionSymbol) {
+					Term t = functionCallFactory.make((FunctionSymbol) sym, args);
 					assertNotInFormula("Cannot invoke a function from within a formula; unquote the call " + t
 							+ " by prefacing it with ,");
 					return t;
-				} else if (st.isConstructorSymbol()) {
-					Term t = Constructors.make(sym, args);
-					if (st.isSolverConstructorSymbol()) {
+				} else if (sym instanceof ConstructorSymbol) {
+					ConstructorSymbol csym = (ConstructorSymbol) sym;
+					Term t = Constructors.make(csym, args);
+					if (csym.isSolverConstructorSymbol()) {
 						assertInFormula(
 								"Can only use an uninterpreted function or solver expression within a formula: " + t);
 					}
@@ -798,8 +805,8 @@ public class Parser {
 
 			@Override
 			public Term visitRecordTerm(RecordTermContext ctx) {
-				Pair<Symbol, Map<Integer, Term>> p = handleRecordEntries(ctx.recordEntries().recordEntry());
-				Symbol csym = p.fst();
+				Pair<ConstructorSymbol, Map<Integer, Term>> p = handleRecordEntries(ctx.recordEntries().recordEntry());
+				ConstructorSymbol csym = p.fst();
 				Map<Integer, Term> argMap = p.snd();
 				Term[] args = new Term[csym.getArity()];
 				if (args.length != argMap.keySet().size()) {
@@ -813,16 +820,16 @@ public class Parser {
 
 			@Override
 			public Term visitRecordUpdateTerm(RecordUpdateTermContext ctx) {
-				Pair<Symbol, Map<Integer, Term>> p = handleRecordEntries(ctx.recordEntries().recordEntry());
-				Symbol csym = p.fst();
+				Pair<ConstructorSymbol, Map<Integer, Term>> p = handleRecordEntries(ctx.recordEntries().recordEntry());
+				ConstructorSymbol csym = p.fst();
 				Map<Integer, Term> argMap = p.snd();
 				Term[] args = new Term[csym.getArity()];
-				Symbol[] labels = constructorLabels.get(csym);
+				FunctionSymbol[] labels = constructorLabels.get(csym);
 				Term orig = extract(ctx.term());
 				for (int i = 0; i < args.length; ++i) {
 					Term t = argMap.get(i);
 					if (t == null) {
-						Symbol label = labels[i];
+						FunctionSymbol label = labels[i];
 						t = functionCallFactory.make(label, Terms.singletonArray(orig));
 					}
 					args[i] = t;
@@ -830,7 +837,7 @@ public class Parser {
 				return Constructors.make(csym, args);
 			}
 
-			private Pair<Symbol, Map<Integer, Term>> handleRecordEntries(List<RecordEntryContext> entries) {
+			private Pair<ConstructorSymbol, Map<Integer, Term>> handleRecordEntries(List<RecordEntryContext> entries) {
 				AlgebraicDataType type = null;
 				Map<Integer, Term> argMap = new HashMap<>();
 				for (RecordEntryContext entry : entries) {
@@ -850,14 +857,14 @@ public class Parser {
 								"Cannot use the same label " + label + " multiple times when creating a record");
 					}
 				}
-				Symbol csym = type.getConstructors().iterator().next().getSymbol();
+				ConstructorSymbol csym = type.getConstructors().iterator().next().getSymbol();
 				return new Pair<>(csym, argMap);
 			}
 
 			@Override
 			public Term visitUnopTerm(UnopTermContext ctx) {
 				Term t = ctx.term().accept(this);
-				Symbol sym = tokenToUnopSym(ctx.op.getType());
+				FunctionSymbol sym = tokenToUnopSym(ctx.op.getType());
 				if (sym == null) {
 					t = makeNonFunctionUnop(ctx.op.getType(), t);
 				} else {
@@ -886,7 +893,7 @@ public class Parser {
 				return MatchExpr.make(matchee, Arrays.asList(matchTrue, matchFalse));
 			}
 
-			private Symbol tokenToUnopSym(int tokenType) {
+			private FunctionSymbol tokenToUnopSym(int tokenType) {
 				switch (tokenType) {
 				case DatalogParser.MINUS:
 					return BuiltInFunctionSymbol.I32_NEG;
@@ -895,7 +902,7 @@ public class Parser {
 				}
 			}
 
-			private Symbol tokenToBinopSym(int tokenType) {
+			private FunctionSymbol tokenToBinopSym(int tokenType) {
 				switch (tokenType) {
 				case DatalogParser.MUL:
 					return BuiltInFunctionSymbol.I32_MUL;
@@ -942,7 +949,7 @@ public class Parser {
 			@Override
 			public Term visitBinopTerm(BinopTermContext ctx) {
 				Term[] args = { extract(ctx.term(0)), extract(ctx.term(1)) };
-				Symbol sym = tokenToBinopSym(ctx.op.getType());
+				FunctionSymbol sym = tokenToBinopSym(ctx.op.getType());
 				Term t;
 				if (sym == null) {
 					t = makeNonFunctionBinop(ctx.op.getType(), args[0], args[1]);
@@ -1011,7 +1018,7 @@ public class Parser {
 			public Term visitBinopFormula(BinopFormulaContext ctx) {
 				assertInFormula("Formula binop can only be used from within a formula: " + ctx.getText());
 				Term[] args = termContextsToTerms(ctx.term());
-				Symbol sym;
+				ConstructorSymbol sym;
 				switch (ctx.op.getType()) {
 				case DatalogParser.FORMULA_EQ:
 				case DatalogParser.IFF:
@@ -1053,7 +1060,7 @@ public class Parser {
 				} else {
 					args[2] = Constructors.makeZeroAry(BuiltInConstructorSymbol.NONE);
 				}
-				Symbol sym;
+				ConstructorSymbol sym;
 				switch (ctx.quantifier.getType()) {
 				case DatalogParser.FORALL:
 					sym = BuiltInConstructorSymbol.FORMULA_FORALL;
@@ -1077,7 +1084,8 @@ public class Parser {
 						BuiltInConstructorSymbol.HETEROGENEOUS_LIST_CONS);
 			}
 
-			private Term parseNonEmptyTermList(NonEmptyTermListContext ctx, Symbol nil, Symbol cons) {
+			private Term parseNonEmptyTermList(NonEmptyTermListContext ctx, ConstructorSymbol nil,
+					ConstructorSymbol cons) {
 				Term t = Constructors.makeZeroAry(nil);
 				List<TermContext> ctxs = new ArrayList<>(ctx.term());
 				Collections.reverse(ctxs);
@@ -1143,24 +1151,24 @@ public class Parser {
 					}
 
 				}, null);
-				Symbol sym = symbolManager.lookupSolverSymbol(type);
+				ConstructorSymbol sym = symbolManager.lookupSolverSymbol(type);
 				return makeExitFormula(Constructors.make(sym, Terms.singletonArray(id)));
 			}
 
 			public Term visitOutermostCtor(OutermostCtorContext ctx) {
 				Symbol ctor = symbolManager.lookupSymbol(ctx.ID().getText());
-				if (!ctor.getSymbolType().isConstructorSymbol()) {
+				if (!(ctor instanceof ConstructorSymbol)) {
 					throw new RuntimeException("Cannot use non-constructor symbol " + ctor + " in a `not` term.");
 				}
 
 				// we'll call a fixed function name
-				FunctorType ctorType = (FunctorType) ctor.getCompileTimeType();
+				FunctorType ctorType = ((ConstructorSymbol) ctor).getCompileTimeType();
 				String name = "not%" + ctor;
-				Symbol isNotFun;
+				FunctionSymbol isNotFun;
 				if (symbolManager.hasSymbol(name)) {
-					isNotFun = symbolManager.lookupSymbol(name);
+					isNotFun = (FunctionSymbol) symbolManager.lookupSymbol(name);
 				} else {
-					isNotFun = symbolManager.createSymbol("not%" + ctor, 1, SymbolType.FUNCTION,
+					isNotFun = symbolManager.createFunctionSymbol("not%" + ctor, 1,
 							new FunctorType(ctorType.getRetType(), BuiltInTypes.bool));
 				}
 
@@ -1169,7 +1177,7 @@ public class Parser {
 					functionDefManager.register(new FunctionDef() {
 
 						@Override
-						public Symbol getSymbol() {
+						public FunctionSymbol getSymbol() {
 							return isNotFun;
 						}
 
@@ -1235,59 +1243,57 @@ public class Parser {
 			return map(ctxs, this::extract).toArray(Terms.emptyArray());
 		}
 
-		private final DatalogVisitor<Atom> atomExtractor = new DatalogBaseVisitor<Atom>() {
+		private final DatalogVisitor<ComplexConjunct<RelationSymbol>> atomExtractor = new DatalogBaseVisitor<ComplexConjunct<RelationSymbol>>() {
 
-			private Atom extractAtom(PredicateContext ctx, boolean negated) {
+			private ComplexConjunct<RelationSymbol> extractAtom(PredicateContext ctx, boolean negated) {
 				Term[] args = termContextsToTerms(ctx.termArgs().term());
 				Symbol sym = symbolManager.lookupSymbol(ctx.ID().getText());
-				SymbolType symType = sym.getSymbolType();
-				if (symType.isFunctionSymbol()) {
-					Term f = functionCallFactory.make(sym, args);
-					return Atoms.liftTerm(f, negated);
+				if (sym instanceof FunctionSymbol) {
+					Term f = functionCallFactory.make((FunctionSymbol) sym, args);
+					return ComplexConjuncts.unifyWithBool(f, !negated);
 				}
-				if (symType.isConstructorSymbol()) {
-					Term c = Constructors.make(sym, args);
-					return Atoms.liftTerm(c, negated);
+				if (sym instanceof ConstructorSymbol) {
+					Term c = Constructors.make((ConstructorSymbol) sym, args);
+					return ComplexConjuncts.unifyWithBool(c, !negated);
 				}
-				if (symType.isRelationSym()) {
-					return Atoms.get(sym, args, negated);
+				if (sym instanceof RelationSymbol) {
+					return UserPredicate.make((RelationSymbol) sym, args, negated);
 				}
 				throw new AssertionError("impossible");
 			}
 
 			@Override
-			public Atom visitNormalAtom(NormalAtomContext ctx) {
+			public ComplexConjunct<RelationSymbol> visitNormalAtom(NormalAtomContext ctx) {
 				return extractAtom(ctx.predicate(), false);
 			}
 
 			@Override
-			public Atom visitNegatedAtom(NegatedAtomContext ctx) {
+			public ComplexConjunct<RelationSymbol> visitNegatedAtom(NegatedAtomContext ctx) {
 				return extractAtom(ctx.predicate(), true);
 			}
 
 			@Override
-			public Atom visitUnification(UnificationContext ctx) {
+			public ComplexConjunct<RelationSymbol> visitUnification(UnificationContext ctx) {
 				Term[] args = termContextsToTerms(ctx.term());
-				return Atoms.getPositive(BuiltInPredicateSymbol.UNIFY, args);
+				return UnificationPredicate.make(args[0], args[1], false);
 			}
 
 			@Override
-			public Atom visitDisunification(DisunificationContext ctx) {
+			public ComplexConjunct<RelationSymbol> visitDisunification(DisunificationContext ctx) {
 				Term[] args = termContextsToTerms(ctx.term());
-				return Atoms.getNegated(BuiltInPredicateSymbol.UNIFY, args);
+				return UnificationPredicate.make(args[0], args[1], true);
 			}
 
 			@Override
-			public Atom visitTermAtom(TermAtomContext ctx) {
+			public ComplexConjunct<RelationSymbol> visitTermAtom(TermAtomContext ctx) {
 				Term arg = extract(ctx.term());
-				return Atoms.getPositive(BuiltInPredicateSymbol.UNIFY,
-						new Term[] { arg, Constructors.makeZeroAry(BuiltInConstructorSymbol.TRUE) });
+				return ComplexConjuncts.unifyWithBool(arg, true);
 			}
 
 		};
 
-		private void readEdbFromFile(Symbol sym) throws ParseException {
-			Set<Atom> facts = Util.lookupOrCreate(initialFacts, sym, () -> new HashSet<>());
+		private void readEdbFromFile(RelationSymbol sym) throws ParseException {
+			Set<Term[]> facts = initialFacts.get(sym);
 			Path path = inputDir.resolve(sym.toString() + ".csv");
 			try {
 				Stream<String> lines;
@@ -1301,53 +1307,61 @@ public class Parser {
 			}
 		}
 
-		private void readLineFromCsv(Symbol sym, Reader r, Set<Atom> facts) throws ParseException {
+		private void readLineFromCsv(RelationSymbol sym, Reader r, Set<Term[]> facts) throws ParseException {
 			DatalogParser parser = getParser(r);
 			Term[] args = new Term[sym.getArity()];
 			for (int i = 0; i < args.length; i++) {
 				args[i] = extract(parser.term());
 			}
-			Atom fact = Atoms.getPositive(sym, args);
-			facts.add(fact);
+			facts.add(args);
 		}
 
-		public Program getProgram() throws ParseException {
-			for (Symbol sym : externalEdbs) {
+		public Program<RelationSymbol, ComplexConjunct<RelationSymbol>> getProgram() throws ParseException {
+			for (RelationSymbol sym : externalEdbs) {
 				readEdbFromFile(sym);
 			}
-			return new Program() {
+			return new Program<RelationSymbol, ComplexConjunct<RelationSymbol>>() {
 
 				@Override
-				public Set<Symbol> getFunctionSymbols() {
+				public Set<FunctionSymbol> getFunctionSymbols() {
 					return functionDefManager.getFunctionSymbols();
 				}
 
 				@Override
-				public Set<Symbol> getFactSymbols() {
+				public Set<RelationSymbol> getFactSymbols() {
 					return Collections.unmodifiableSet(initialFacts.keySet());
 				}
 
 				@Override
-				public Set<Symbol> getRuleSymbols() {
+				public Set<RelationSymbol> getRuleSymbols() {
 					return Collections.unmodifiableSet(rules.keySet());
 				}
 
 				@Override
-				public FunctionDef getDef(Symbol sym) {
-					assert sym.getSymbolType().isFunctionSymbol();
+				public FunctionDef getDef(FunctionSymbol sym) {
 					return functionDefManager.lookup(sym);
 				}
 
 				@Override
-				public Set<Atom> getFacts(Symbol sym) {
-					assert sym.getSymbolType().isEDBSymbol();
-					return Util.lookupOrCreate(initialFacts, sym, () -> Collections.emptySet());
+				public Set<Term[]> getFacts(RelationSymbol sym) {
+					if (!sym.isEdbSymbol()) {
+						throw new IllegalArgumentException();
+					}
+					if (!initialFacts.containsKey(sym)) {
+						throw new IllegalArgumentException();
+					}
+					return initialFacts.get(sym);
 				}
 
 				@Override
-				public Set<Rule> getRules(Symbol sym) {
-					assert sym.getSymbolType().isIDBSymbol();
-					return Util.lookupOrCreate(rules, sym, () -> Collections.emptySet());
+				public Set<Rule<RelationSymbol, ComplexConjunct<RelationSymbol>>> getRules(RelationSymbol sym) {
+					if (!sym.isIdbSymbol()) {
+						throw new IllegalArgumentException();
+					}
+					if (!rules.containsKey(sym)) {
+						throw new IllegalArgumentException();
+					}
+					return rules.get(sym);
 				}
 
 				@Override
@@ -1356,19 +1370,13 @@ public class Parser {
 				}
 
 				@Override
-				public RelationProperties getRelationProperties(Symbol sym) {
-					assert sym.getSymbolType().isRelationSym();
-					return Util.lookupOrCreate(relationProperties, sym, () -> new RelationProperties(sym));
-				}
-
-				@Override
 				public boolean hasQuery() {
 					return query != null;
 				}
 
 				@Override
-				public NormalAtom getQuery() {
-					return (NormalAtom) query;
+				public ComplexConjunct<RelationSymbol> getQuery() {
+					return query;
 				}
 
 				@Override

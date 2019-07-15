@@ -86,7 +86,7 @@ public class PredicateFunctionSymbolFactory {
 		}
 
 		@Override
-		public Type getCompileTimeType() {
+		public FunctorType getCompileTimeType() {
 			return predSymbol.getCompileTimeType();
 		}
 
@@ -111,7 +111,7 @@ public class PredicateFunctionSymbolFactory {
 			if (types.size() == 1) {
 				eltType = types.get(0);
 			} else {
-				Symbol tupTypeSym = symbolManager.lookupTupleTypeSymbol(types.size());
+				TypeSymbol tupTypeSym = symbolManager.lookupTupleTypeSymbol(types.size());
 				eltType = AlgebraicDataType.make(tupTypeSym, types);
 			}
 			type = new FunctorType(BuiltInTypes.list(eltType));
@@ -132,7 +132,7 @@ public class PredicateFunctionSymbolFactory {
 		}
 
 		@Override
-		public Type getCompileTimeType() {
+		public FunctorType getCompileTimeType() {
 			return type;
 		}
 

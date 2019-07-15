@@ -40,11 +40,11 @@ public class TupleSymbolFactory {
 		this.symbolManager = symbolManager;
 	}
 
-	private final Map<Integer, Symbol> constructorMemo = new ConcurrentHashMap<>();
+	private final Map<Integer, ConstructorSymbol> constructorMemo = new ConcurrentHashMap<>();
 	private final Map<Integer, AlgebraicDataType> typeMemo = new ConcurrentHashMap<>();
 
-	public Symbol lookup(int arity) {
-		Symbol sym = constructorMemo.get(arity);
+	public ConstructorSymbol lookup(int arity) {
+		ConstructorSymbol sym = constructorMemo.get(arity);
 		if (sym == null) {
 			instantiate(arity);
 			return constructorMemo.get(arity);
@@ -62,23 +62,30 @@ public class TupleSymbolFactory {
 	}
 
 	private synchronized void instantiate(int arity) {
-		Symbol tupSym = constructorMemo.get(arity);
+		ConstructorSymbol tupSym = constructorMemo.get(arity);
 		if (tupSym != null) {
 			return;
 		}
-		Symbol typeSym = symbolManager.createSymbol("tuple$" + arity, arity, SymbolType.TYPE, null);
+		TypeSymbol typeSym = symbolManager.createTypeSymbol("tuple$" + arity, arity, TypeSymbolType.NORMAL_TYPE);
 		List<Type> typeArgs = new ArrayList<>();
 		List<TypeVar> typeVars = new ArrayList<>();
-		List<Symbol> getters = new ArrayList<>();
 		for (int i = 0; i < arity; ++i) {
 			TypeVar x = TypeVar.fresh();
 			typeArgs.add(x);
 			typeVars.add(x);
-			String getter = "tuple" + arity + "_" + (i + 1);
-			getters.add(symbolManager.createSymbol(getter, arity, SymbolType.SOLVER_CONSTRUCTOR_GETTER, x));
 		}
 		AlgebraicDataType type = AlgebraicDataType.make(typeSym, typeArgs);
-		tupSym = symbolManager.createSymbol("Tuple$" + arity, arity, SymbolType.TUPLE, new FunctorType(typeArgs, type));
+		List<ConstructorSymbol> getters = new ArrayList<>();
+		int i = 0;
+		for (Type ty : typeArgs) {
+			String getter = "#tuple$" + arity + "_" + (i + 1);
+			FunctorType ft = new FunctorType(type, ty);
+			getters.add(symbolManager.createConstructorSymbol(getter, arity,
+					ConstructorSymbolType.SOLVER_CONSTRUCTOR_GETTER, ft));
+			++i;
+		}
+		tupSym = symbolManager.createConstructorSymbol("Tuple$" + arity, arity, ConstructorSymbolType.TUPLE,
+				new FunctorType(typeArgs, type));
 		ConstructorScheme cs = new ConstructorScheme(tupSym, typeArgs, getters);
 		AlgebraicDataType.setConstructors(typeSym, typeVars, Collections.singleton(cs));
 		constructorMemo.put(arity, tupSym);

@@ -20,23 +20,22 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
 import edu.harvard.seas.pl.formulog.util.Pair;
-import edu.harvard.seas.pl.formulog.util.Util;
 
 public class SymbolManager {
 	private final Map<String, Symbol> memo = new HashMap<>();
-	private final Map<Symbol, Type> typeOf = new HashMap<>();
+	private final Map<Symbol, FunctorType> typeOf = new HashMap<>();
 	private TupleSymbolFactory tupleSymbolFactory;
 	private PredicateFunctionSymbolFactory functionSymbolForPredicateFactory;
 
@@ -64,17 +63,46 @@ public class SymbolManager {
 		}
 	}
 
-	public Symbol createSymbol(String name, int arity, SymbolType st, Type type) {
+	public TypeSymbol createTypeSymbol(String name, int arity, TypeSymbolType st) {
 		assertInitialized();
+		checkNotUsed(name);
+		TypeSymbol sym = new TypeSymbolImpl(name, arity, st);
+		registerSymbol(sym);
+		return sym;
+	}
+
+	public ConstructorSymbol createConstructorSymbol(String name, int arity, ConstructorSymbolType st,
+			FunctorType type) {
+		assertInitialized();
+		checkNotUsed(name);
+		ConstructorSymbol sym = new ConstructorSymbolImpl(name, arity, st, type);
+		registerSymbol(sym, type);
+		return sym;
+	}
+
+	public FunctionSymbol createFunctionSymbol(String name, int arity, FunctorType type) {
+		assertInitialized();
+		checkNotUsed(name);
+		FunctionSymbol sym = new FunctionSymbolImpl(name, arity, type);
+		registerSymbol(sym, type);
+		return sym;
+	}
+
+	public RelationSymbol createRelationSymbol(String name, int arity, boolean isIdb, FunctorType type) {
+		assertInitialized();
+		checkNotUsed(name);
+		RelationSymbol sym = new RelationSymbolImpl(name, arity, isIdb, type);
+		registerSymbol(sym, type);
+		return sym;
+	}
+
+	public void checkNotUsed(String name) {
 		if (memo.containsKey(name)) {
 			throw new IllegalArgumentException(
 					"Cannot create symbol " + name + "; a symbol already exists with that name.");
 		}
-		Symbol sym = new VanillaSymbol(name, arity, st);
-		registerSymbol(sym, type);
-		return sym;
 	}
-	
+
 	public boolean hasSymbol(String name) {
 		return memo.containsKey(name);
 	}
@@ -91,61 +119,70 @@ public class SymbolManager {
 		return sym;
 	}
 
-	public Pair<Symbol, List<Integer>> lookupIndexedSymbol(String name, List<Integer> indices) {
+	public Pair<IndexedConstructorSymbol, List<Integer>> lookupIndexedConstructorSymbol(String name,
+			List<Integer> indices) {
 		assertInitialized();
-		if (indices.isEmpty()) {
-			return new Pair<>(lookupSymbol(name), Collections.emptyList());
-		}
-		return IndexedSymbol.lookup(name, indices);
+		assert !indices.isEmpty();
+		return IndexedSymbols.lookupConstructorSymbol(name, indices);
 	}
 
-	public Symbol lookupTupleSymbol(int arity) {
+	public Pair<IndexedTypeSymbol, List<Integer>> lookupIndexedTypeSymbol(String name, List<Integer> indices) {
+		assertInitialized();
+		assert !indices.isEmpty();
+		return IndexedSymbols.lookupTypeSymbol(name, indices);
+	}
+
+	public ConstructorSymbol lookupTupleSymbol(int arity) {
 		return tupleSymbolFactory.lookup(arity);
 	}
 
-	public Symbol lookupTupleTypeSymbol(int arity) {
+	public TypeSymbol lookupTupleTypeSymbol(int arity) {
 		return tupleSymbolFactory.lookupType(arity).getSymbol();
 	}
 
-	public Symbol createFunctionSymbolForPredicate(Symbol sym, boolean isReification) {
+	public FunctionSymbol createFunctionSymbolForPredicate(RelationSymbol sym, boolean isReification) {
 		return functionSymbolForPredicateFactory.create(sym, isReification);
 	}
 
-	public Symbol lookupSolverSymbol(Type type) {
+	public ConstructorSymbol lookupSolverSymbol(Type type) {
 		assert Types.getTypeVars(type).isEmpty();
 		String name = "`symbol[" + type + "]";
-		return Util.lookupOrCreate(memo, name, () -> createSymbol(name, 1, SymbolType.SOLVER_VARIABLE,
-				new FunctorType(BuiltInTypes.a, BuiltInTypes.sym(type))));
+		ConstructorSymbol sym = (ConstructorSymbol) memo.get(name);
+		if (sym == null) {
+			sym = createConstructorSymbol(name, 1, ConstructorSymbolType.SOLVER_VARIABLE,
+					new FunctorType(BuiltInTypes.a, BuiltInTypes.sym(type)));
+			memo.put(name, sym);
+		}
+		return sym;
 	}
 
 	private int cnt;
 
-	public Symbol createFreshSymbol(String namePrefix, int arity, SymbolType st, Type type) {
-		String name = namePrefix + cnt++;
-		return createSymbol(name, arity, st, type);
-	}
+	// public Symbol createFreshSymbol(String namePrefix, int arity, SymbolType st,
+	// Type type) {
+	// String name = namePrefix + cnt++;
+	// return createSymbol(name, arity, st, type);
+	// }
 
-	public Symbol lookupIndexConstructorSymbol(int index) {
+	public ConstructorSymbol lookupIndexConstructorSymbol(int index) {
 		String name = "index$" + index;
-		Symbol sym = memo.get(name);
+		ConstructorSymbol sym = (ConstructorSymbol) memo.get(name);
 		if (sym == null) {
-			sym = createSymbol(name, 1, SymbolType.INDEX_CONSTRUCTOR,
+			sym = createConstructorSymbol(name, 1, ConstructorSymbolType.INDEX_CONSTRUCTOR,
 					new FunctorType(BuiltInTypes.i32, TypeIndex.make(index)));
 			memo.put(name, sym);
 		}
 		return sym;
 	}
 
-	private class VanillaSymbol implements Symbol {
+	private abstract class AbstractSymbol implements Symbol {
 
 		private final String name;
 		private final int arity;
-		private final SymbolType st;
 
-		public VanillaSymbol(String name, int arity, SymbolType st) {
+		public AbstractSymbol(String name, int arity) {
 			this.name = name;
 			this.arity = arity;
-			this.st = st;
 		}
 
 		@Override
@@ -158,42 +195,106 @@ public class SymbolManager {
 			return name;
 		}
 
-		@Override
-		public SymbolType getSymbolType() {
-			return st;
+	}
+
+	private class TypeSymbolImpl extends AbstractSymbol implements TypeSymbol {
+
+		private final TypeSymbolType st;
+
+		public TypeSymbolImpl(String name, int arity, TypeSymbolType st) {
+			super(name, arity);
+			this.st = st;
 		}
 
 		@Override
-		public Type getCompileTimeType() {
-			return getType(this);
+		public TypeSymbolType getTypeSymbolType() {
+			return st;
 		}
 
 	}
 
-	public void registerSymbol(Symbol sym, Type type) {
+	private abstract class AbstractTypedSymbol extends AbstractSymbol implements TypedSymbol {
+
+		private final FunctorType type;
+
+		public AbstractTypedSymbol(String name, int arity, FunctorType type) {
+			super(name, arity);
+			this.type = type;
+		}
+
+		@Override
+		public FunctorType getCompileTimeType() {
+			return type;
+		}
+
+	}
+
+	private class FunctionSymbolImpl extends AbstractTypedSymbol implements FunctionSymbol {
+
+		public FunctionSymbolImpl(String name, int arity, FunctorType type) {
+			super(name, arity, type);
+		}
+
+	}
+
+	private class ConstructorSymbolImpl extends AbstractTypedSymbol implements ConstructorSymbol {
+
+		private final ConstructorSymbolType cst;
+
+		public ConstructorSymbolImpl(String name, int arity, ConstructorSymbolType cst, FunctorType type) {
+			super(name, arity, type);
+			this.cst = cst;
+		}
+
+		@Override
+		public ConstructorSymbolType getConstructorSymbolType() {
+			return cst;
+		}
+
+	}
+
+	private class RelationSymbolImpl extends AbstractTypedSymbol implements RelationSymbol {
+
+		private final boolean idb;
+		private FunctionSymbol aggFunc;
+		private Term unit;
+
+		public RelationSymbolImpl(String name, int arity, boolean isIdb, FunctorType type) {
+			super(name, arity, type);
+			this.idb = isIdb;
+		}
+
+		@Override
+		public boolean isIdbSymbol() {
+			return idb;
+		}
+
+		@Override
+		public void setAggregate(FunctionSymbol aggFunc, Term unit) {
+			this.aggFunc = aggFunc;
+			this.unit = unit;
+		}
+
+	}
+
+	public void registerSymbol(TypedSymbol sym, FunctorType type) {
+		registerSymbol(sym);
+		FunctorType type2 = typeOf.putIfAbsent(sym, type);
+		if (type2 != null && !type2.equals(type)) {
+			throw new IllegalArgumentException("Cannot register multiple types for the same symbol " + sym + ".");
+		}
+	}
+
+	public void registerSymbol(Symbol sym) {
 		Symbol sym2 = memo.putIfAbsent(sym.toString(), sym);
 		if (sym2 != null && !sym2.equals(sym)) {
 			throw new IllegalArgumentException(
 					"Cannot register symbol " + sym + "; a different symbol is already registered with that name.");
 		}
-		if (type == null) {
-			if (!sym.getSymbolType().isTypeOrTypeAliasSymbol()) {
-				throw new IllegalArgumentException("Must register a type for non-type symbol " + sym + ".");
-			}
-		} else {
-			if (sym.getSymbolType().isTypeOrTypeAliasSymbol()) {
-				throw new IllegalArgumentException(
-						"Cannot register type for symbol " + sym + " since it represents a type.");
-			}
-			Type type2 = typeOf.putIfAbsent(sym, type);
-			if (type2 != null && !type2.equals(type)) {
-				throw new IllegalArgumentException("Cannot register multiple types for the same symbol " + sym + ".");
-			}
-		}
 	}
 
-	public Type getType(Symbol sym) {
-		Type type = typeOf.get(sym);
+	public FunctorType getType(TypedSymbol sym) {
+		FunctorType type = typeOf.get(sym);
 		if (type == null) {
 			throw new NoSuchElementException("No type associated with symbol " + sym);
 		}

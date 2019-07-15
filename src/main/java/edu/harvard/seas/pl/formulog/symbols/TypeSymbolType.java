@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.ast.functions;
+package edu.harvard.seas.pl.formulog.symbols;
 
 /*-
  * #%L
@@ -20,14 +20,14 @@ package edu.harvard.seas.pl.formulog.ast.functions;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.ast.Term;
-import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
+public enum TypeSymbolType {
 
-public interface FunctionDef {
-
-	FunctionSymbol getSymbol();
+	NORMAL_TYPE,
 	
-	Term evaluate(Term[] args) throws EvaluationException;
+	TYPE_ALIAS,
+	
+	UNINTERPRETED_SORT,
+	
+	;
 	
 }

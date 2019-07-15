@@ -23,5 +23,21 @@ package edu.harvard.seas.pl.formulog.symbols;
 public interface ConstructorSymbol extends TypedSymbol {
 
 	ConstructorSymbolType getConstructorSymbolType();
+
+	default boolean isSolverConstructorSymbol() {
+		switch (getConstructorSymbolType()) {
+		case SOLVER_CONSTRUCTOR_GETTER:
+		case SOLVER_CONSTRUCTOR_TESTER:
+		case SOLVER_EXPR:
+		case SOLVER_UNINTERPRETED_FUNCTION:
+		case SOLVER_VARIABLE:
+			return true;
+		case INDEX_CONSTRUCTOR:
+		case TUPLE:
+		case VANILLA_CONSTRUCTOR:
+			return false;
+		}
+		throw new AssertionError("impossible");
+	}
 	
 }

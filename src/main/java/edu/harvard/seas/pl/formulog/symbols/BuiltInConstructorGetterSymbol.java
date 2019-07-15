@@ -58,7 +58,7 @@ public enum BuiltInConstructorGetterSymbol implements ConstructorSymbol {
 	}
 
 	@Override
-	public Type getCompileTimeType() {
+	public FunctorType getCompileTimeType() {
 		return type;
 	}
 	

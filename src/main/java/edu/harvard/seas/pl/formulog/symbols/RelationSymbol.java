@@ -20,7 +20,7 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.types.FunctorType;
+import edu.harvard.seas.pl.formulog.ast.Term;
 
 public interface RelationSymbol extends TypedSymbol {
 
@@ -29,8 +29,11 @@ public interface RelationSymbol extends TypedSymbol {
 	default boolean isEdbSymbol() {
 		return !isIdbSymbol();
 	}
+
+	void setAggregate(FunctionSymbol funcSym, Term unit);
 	
-	@Override
-	FunctorType getCompileTimeType();
+	boolean setBottomUp();
+	
+	boolean setTopDown();
 	
 }

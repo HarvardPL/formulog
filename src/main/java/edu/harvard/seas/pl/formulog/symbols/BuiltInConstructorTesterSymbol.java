@@ -52,7 +52,7 @@ public enum BuiltInConstructorTesterSymbol implements ConstructorSymbol {
 	
 	;
 
-	private final Type type;
+	private final FunctorType type;
 	private final String name;
 
 	private BuiltInConstructorTesterSymbol(String name, Type...types) {
@@ -73,7 +73,7 @@ public enum BuiltInConstructorTesterSymbol implements ConstructorSymbol {
 	}
 
 	@Override
-	public Type getCompileTimeType() {
+	public FunctorType getCompileTimeType() {
 		return type;
 	}
 	

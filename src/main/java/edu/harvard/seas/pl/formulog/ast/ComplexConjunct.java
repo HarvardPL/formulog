@@ -20,8 +20,6 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-import java.util.Set;
-
 import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctExnVisitor;
 import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctVisitor;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
@@ -32,8 +30,6 @@ public interface ComplexConjunct<R extends RelationSymbol> extends Conjunct<R> {
 	ComplexConjunct<R> applySubstitution(Substitution subst);
 
 	boolean isNegated();
-	
-	Set<Var> varSet();
 	
 	<I, O> O accept(ComplexConjunctVisitor<R, I, O> visitor, I input);
 	

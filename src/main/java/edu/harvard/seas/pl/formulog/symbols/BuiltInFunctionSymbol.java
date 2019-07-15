@@ -246,7 +246,7 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 	}
 
 	@Override
-	public Type getCompileTimeType() {
+	public FunctorType getCompileTimeType() {
 		return new FunctorType(argTypes, retType);
 	}
 

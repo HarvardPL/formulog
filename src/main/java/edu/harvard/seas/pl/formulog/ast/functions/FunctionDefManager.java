@@ -26,12 +26,12 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
+import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 
 public class FunctionDefManager {
 
-	private final Map<Symbol, FunctionDef> memo = new HashMap<>();
+	private final Map<FunctionSymbol, FunctionDef> memo = new HashMap<>();
 	private final BuiltInFunctionDefFactory builtIns;
 
 	public FunctionDefManager(SymbolManager symbolManager) {
@@ -55,7 +55,7 @@ public class FunctionDefManager {
 		}
 	}
 
-	public FunctionDef lookup(Symbol symbol) {
+	public FunctionDef lookup(FunctionSymbol symbol) {
 		FunctionDef def = memo.get(symbol);
 		if (def == null) {
 			throw new IllegalArgumentException("No function defined for symbol: " + symbol);
@@ -63,11 +63,11 @@ public class FunctionDefManager {
 		return def;
 	}
 
-	public boolean hasDefinition(Symbol sym) {
+	public boolean hasDefinition(FunctionSymbol sym) {
 		return memo.containsKey(sym);
 	}
 
-	public Set<Symbol> getFunctionSymbols() {
+	public Set<FunctionSymbol> getFunctionSymbols() {
 		return Collections.unmodifiableSet(memo.keySet());
 	}
 
