@@ -21,6 +21,7 @@ package edu.harvard.seas.pl.formulog.eval;
  */
 
 import java.util.ArrayDeque;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -59,6 +60,7 @@ import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbolFactory.Predi
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolType;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
+import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Unification;
 import edu.harvard.seas.pl.formulog.util.AbstractFJPTask;
 import edu.harvard.seas.pl.formulog.util.CountingFJP;
@@ -66,8 +68,8 @@ import edu.harvard.seas.pl.formulog.util.CountingFJPImpl;
 import edu.harvard.seas.pl.formulog.util.MockCountingFJP;
 import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
-import edu.harvard.seas.pl.formulog.validating.ValidProgram;
 import edu.harvard.seas.pl.formulog.validating.Validator;
+import edu.harvard.seas.pl.formulog.validating.ast.ValidProgram;
 
 public class StratifiedEvaluation implements Evaluation {
 
@@ -76,7 +78,7 @@ public class StratifiedEvaluation implements Evaluation {
 	private static final boolean sequential = System.getProperty("sequential") != null;
 
 	private final ValidProgram prog;
-	private IndexedFactDB res;
+	private EvaluationResult res;
 
 	private StratifiedEvaluation(ValidProgram prog) {
 		this.prog = prog;
@@ -88,7 +90,7 @@ public class StratifiedEvaluation implements Evaluation {
 		ValidProgram vprog = (new Validator(magicProg)).validate();
 		return new StratifiedEvaluation(vprog);
 	}
-	
+
 	public ValidProgram getProgram() {
 		return prog;
 	}
@@ -106,16 +108,59 @@ public class StratifiedEvaluation implements Evaluation {
 				}
 			}
 			Eval e = new Eval(nthreads);
+			EvaluationException exception = null;
+			IndexedFactDB db;
 			try {
-				res = e.eval();
+				db = e.eval();
 			} catch (EvaluationException exn) {
-				res = e.db;
-				throw exn;
+				db = e.db;
+				exception = exn;
+			}
+			final IndexedFactDB finalDb = db;
+			res = makeEvaluationResult(db);
+			if (exception != null) {
+				throw exception;
 			}
 		}
 	}
 
-	public IndexedFactDB getResult() {
+	private EvaluationResult makeEvaluationResult(IndexedFactDB db) {
+		Set<NormalAtom> ans = null;
+		if (prog.hasQuery()) {
+			NormalAtom q = prog.getQuery();
+			ans = new HashSet<>();
+			try {
+				for (NormalAtom a : db.query(q.getSymbol())) {
+					if (Unification.unify(a, q, new SimpleSubstitution())) {
+						ans.add(a);
+					}
+				}
+			} catch (EvaluationException e) {
+				throw new AssertionError("impossible");
+			}
+		}
+		Set<NormalAtom> ans2 = Collections.unmodifiableSet(ans);
+		return new EvaluationResult() {
+
+			@Override
+			public Set<NormalAtom> getAll(Symbol sym) {
+				return Collections.unmodifiableSet(db.query(sym));
+			}
+
+			@Override
+			public Set<NormalAtom> getQueryAnswer() {
+				return ans2;
+			}
+
+			@Override
+			public Set<Symbol> getSymbols() {
+				return Collections.unmodifiableSet(db.getSymbols());
+			}
+
+		};
+	}
+
+	public EvaluationResult getResult() {
 		if (res == null) {
 			throw new IllegalStateException("Must run evaluation before requesting result.");
 		}

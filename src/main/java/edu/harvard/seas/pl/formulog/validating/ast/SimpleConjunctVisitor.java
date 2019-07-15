@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.eval;
+package edu.harvard.seas.pl.formulog.validating.ast;
 
 /*-
  * #%L
@@ -20,16 +20,16 @@ package edu.harvard.seas.pl.formulog.eval;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.validating.ast.ValidProgram;
+import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 
-public interface Evaluation {
+public interface SimpleConjunctVisitor<R extends RelationSymbol, I, O> {
 
-	public void run() throws EvaluationException;
-	
-	public void run(int parallelism) throws EvaluationException;
-	
-	public EvaluationResult getResult();
-	
-	public ValidProgram getProgram();
-	
+	O visit(Assignment<R> assignment, I input);
+
+	O visit(Check<R> check, I input);
+
+	O visit(Destructor<R> destructor, I input);
+
+	O visit(Predicate<R> predicate, I input);
+
 }

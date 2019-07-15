@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.eval;
+package edu.harvard.seas.pl.formulog.symbols;
 
 /*-
  * #%L
@@ -20,16 +20,10 @@ package edu.harvard.seas.pl.formulog.eval;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.validating.ast.ValidProgram;
+import edu.harvard.seas.pl.formulog.types.Types.Type;
 
-public interface Evaluation {
-
-	public void run() throws EvaluationException;
+public interface TypedSymbol extends Symbol {
 	
-	public void run(int parallelism) throws EvaluationException;
-	
-	public EvaluationResult getResult();
-	
-	public ValidProgram getProgram();
+	Type getCompileTimeType();
 	
 }

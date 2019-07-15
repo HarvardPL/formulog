@@ -40,7 +40,7 @@ import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
-import edu.harvard.seas.pl.formulog.validating.ValidProgram;
+import edu.harvard.seas.pl.formulog.validating.ast.ValidProgram;
 
 public abstract class AbstractEvaluationTest {
 

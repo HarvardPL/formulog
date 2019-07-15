@@ -20,44 +20,40 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
+import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 
-public class BasicRule implements Rule {
+public class BasicRule<R extends RelationSymbol> implements Rule<R, ComplexConjunct<R>> {
 
-	private final Atom head;
-	private final List<Atom> body;
+	private final UserPredicate<R> head;
+	private final List<ComplexConjunct<R>> body;
 
-	private BasicRule(Atom head, List<Atom> body) {
+	private BasicRule(UserPredicate<R> head, List<ComplexConjunct<R>> body) {
+		if (!head.getSymbol().isIdbSymbol()) {
+			throw new IllegalArgumentException(
+					"Cannot create rule with non-IDB predicate for head: " + head.getSymbol());
+		}
 		this.head = head;
-		this.body = Collections.unmodifiableList(new ArrayList<>(body));
-		if (this.body.isEmpty()) {
-			throw new IllegalArgumentException("A rule cannot have an empty body");
-		}
+		this.body = body;
 	}
 
-	public static BasicRule get(Atom head, List<Atom> body) {
+	public static <R extends RelationSymbol> BasicRule<R> make(UserPredicate<R> head, List<ComplexConjunct<R>> body) {
 		if (body.isEmpty()) {
-			return get(head);
+			return make(head);
 		}
-		return new BasicRule(head, body);
+		return new BasicRule<>(head, body);
 	}
 
-	public static BasicRule get(Atom head) {
-		return get(head, Collections.singletonList(Atoms.trueAtom));
-	}
-
-	public Atom getHead() {
-		return head;
+	public static <R extends RelationSymbol> BasicRule<R> make(UserPredicate<R> head) {
+		return make(head, Collections.singletonList(ComplexConjuncts.trueAtom()));
 	}
 
 	@Override
-	public Iterable<Atom> getBody() {
-		return body;
+	public UserPredicate<R> getHead() {
+		return head;
 	}
 
 	@Override
@@ -77,7 +73,7 @@ public class BasicRule implements Rule {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		BasicRule other = (BasicRule) obj;
+		BasicRule<?> other = (BasicRule<?>) obj;
 		if (body == null) {
 			if (other.body != null)
 				return false;
@@ -101,7 +97,7 @@ public class BasicRule implements Rule {
 		} else {
 			sb.append("\n\t");
 		}
-		for (Iterator<Atom> it = body.iterator(); it.hasNext();) {
+		for (Iterator<ComplexConjunct<R>> it = body.iterator(); it.hasNext();) {
 			sb.append(it.next());
 			if (it.hasNext()) {
 				sb.append(",\n\t");
@@ -117,8 +113,13 @@ public class BasicRule implements Rule {
 	}
 
 	@Override
-	public Atom getBody(int idx) {
+	public ComplexConjunct<R> getBody(int idx) {
 		return body.get(idx);
+	}
+
+	@Override
+	public Iterator<ComplexConjunct<R>> iterator() {
+		return body.iterator();
 	}
 
 }

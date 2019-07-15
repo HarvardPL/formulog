@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.eval;
+package edu.harvard.seas.pl.formulog.db;
 
 /*-
  * #%L
@@ -20,16 +20,17 @@ package edu.harvard.seas.pl.formulog.eval;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.validating.ast.ValidProgram;
+import java.util.Set;
 
-public interface Evaluation {
+import edu.harvard.seas.pl.formulog.ast.Term;
+import edu.harvard.seas.pl.formulog.symbols.Symbol;
 
-	public void run() throws EvaluationException;
+public interface IndexedFactDB {
+
+	Set<Symbol> getSymbols();
 	
-	public void run(int parallelism) throws EvaluationException;
+	Set<Term[]> getAll(Symbol sym);
 	
-	public EvaluationResult getResult();
-	
-	public ValidProgram getProgram();
+	Set<Term[]> get(Term[] key, int index);
 	
 }

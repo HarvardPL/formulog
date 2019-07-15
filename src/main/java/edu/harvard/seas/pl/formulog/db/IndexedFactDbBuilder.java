@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.eval;
+package edu.harvard.seas.pl.formulog.db;
 
 /*-
  * #%L
@@ -20,16 +20,15 @@ package edu.harvard.seas.pl.formulog.eval;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.validating.ast.ValidProgram;
+import java.util.Set;
 
-public interface Evaluation {
+import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
+import edu.harvard.seas.pl.formulog.ast.Var;
 
-	public void run() throws EvaluationException;
+public interface IndexedFactDbBuilder<T extends IndexedFactDB> {
+
+	int makeIndex(NormalAtom atom, Set<Var> boundVars);
 	
-	public void run(int parallelism) throws EvaluationException;
-	
-	public EvaluationResult getResult();
-	
-	public ValidProgram getProgram();
+	T build();
 	
 }

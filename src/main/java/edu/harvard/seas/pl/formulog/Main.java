@@ -25,8 +25,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.PrintStream;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -34,12 +32,11 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 
-import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
 import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
 import edu.harvard.seas.pl.formulog.ast.Program;
-import edu.harvard.seas.pl.formulog.db.IndexedFactDB;
 import edu.harvard.seas.pl.formulog.eval.Evaluation;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
+import edu.harvard.seas.pl.formulog.eval.EvaluationResult;
 import edu.harvard.seas.pl.formulog.eval.SemiInflationaryEvaluation;
 import edu.harvard.seas.pl.formulog.eval.StratifiedEvaluation;
 import edu.harvard.seas.pl.formulog.parsing.ParseException;
@@ -48,11 +45,9 @@ import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
 import edu.harvard.seas.pl.formulog.types.TypeException;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
-import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
-import edu.harvard.seas.pl.formulog.unification.Unification;
 import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
-import edu.harvard.seas.pl.formulog.validating.ValidProgram;
+import edu.harvard.seas.pl.formulog.validating.ast.ValidProgram;
 
 public final class Main {
 
@@ -124,7 +119,7 @@ public final class Main {
 	
 	private void printResults(Evaluation eval) {
 		System.out.println("Results:");
-		IndexedFactDB db = eval.getResult();
+		EvaluationResult res = eval.getResult();
 		ValidProgram vprog = eval.getProgram();
 		if (!vprog.hasQuery() || debugMst) {
 			PrintStream out = System.out;
@@ -132,26 +127,15 @@ public final class Main {
 				out = System.err;
 				out.println("\n*** All generated facts ***");
 			}
-			for (Symbol sym : db.getSymbols()) {
-				printSortedFacts(db.query(sym), out);
+			for (Symbol sym : res.getSymbols()) {
+				printSortedFacts(res.getAll(sym), out);
 			}
 		}
 		if (vprog.hasQuery()) {
 			if (debugMst) {
 				System.err.println("\n*** Query results ***");
 			}
-			List<NormalAtom> facts = new ArrayList<>();
-			NormalAtom q = vprog.getQuery();
-			try {
-				for (Atom fact : db.query(q.getSymbol())) {
-					if (Unification.unify(q, fact, new SimpleSubstitution())) {
-						facts.add((NormalAtom) fact);
-					}
-				}
-			} catch (EvaluationException e) {
-				throw new AssertionError("impossible");
-			}
-			printSortedFacts(facts, System.out);
+			printSortedFacts(res.getQueryAnswer(), System.out);
 		}
 	}
 	

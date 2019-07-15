@@ -20,14 +20,23 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
+import java.util.Set;
 
-public interface Functor<S extends Symbol> extends Term {
+import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctExnVisitor;
+import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctVisitor;
+import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
+import edu.harvard.seas.pl.formulog.unification.Substitution;
 
-	S getSymbol();
+public interface ComplexConjunct<R extends RelationSymbol> extends Conjunct<R> {
+
+	ComplexConjunct<R> applySubstitution(Substitution subst);
+
+	boolean isNegated();
 	
-	Term[] getArgs();
+	Set<Var> varSet();
 	
-	Term copyWithNewArgs(Term[] args);
+	<I, O> O accept(ComplexConjunctVisitor<R, I, O> visitor, I input);
+	
+	<I, O, E extends Throwable> O accept(ComplexConjunctExnVisitor<R, I, O, E> visitor, I input) throws E;
 	
 }

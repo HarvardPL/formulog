@@ -43,7 +43,7 @@ import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
 
-public class IndexedFactDB {
+public class IndexedFactDBOld {
 
 	private final IndexedNonAggregateFactSet[] nonAggregateIndices;
 	private final IndexedAggregateFactSet[] aggregateIndices;
@@ -51,7 +51,7 @@ public class IndexedFactDB {
 	private final Map<Symbol, Set<NormalAtom>> factsBySym = new ConcurrentHashMap<>();
 	private final Map<Symbol, Pair<FunctionDef, Term>> aggStuff;
 
-	private IndexedFactDB(IndexedNonAggregateFactSet[] idxs, IndexedAggregateFactSet[] aggregateIndices,
+	private IndexedFactDBOld(IndexedNonAggregateFactSet[] idxs, IndexedAggregateFactSet[] aggregateIndices,
 			Map<Symbol, Pair<FunctionDef, Term>> aggStuff) {
 		this.nonAggregateIndices = idxs;
 		this.aggregateIndices = aggregateIndices;

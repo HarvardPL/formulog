@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.symbols;
+package edu.harvard.seas.pl.formulog.validating.ast;
 
 /*-
  * #%L
@@ -20,15 +20,16 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-public final class Namespaces {
+import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 
-	private Namespaces() {
-		throw new AssertionError("impossible");
-	}
-	
-	public static final String std = "std";
-	public static final String magic = "magic";
-	
-	public static final String separator = ".";
-	
+public interface SimpleConjunctExnVisitor<R extends RelationSymbol, I, O, E extends Throwable> {
+
+	O visit(Assignment<R> assignment, I input) throws E;
+
+	O visit(Check<R> check, I input) throws E;
+
+	O visit(Destructor<R> destructor, I input) throws E;
+
+	O visit(Predicate<R> predicate, I input) throws E;
+
 }

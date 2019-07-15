@@ -20,16 +20,17 @@ package edu.harvard.seas.pl.formulog.eval;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.validating.ast.ValidProgram;
+import java.util.Set;
 
-public interface Evaluation {
+import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
+import edu.harvard.seas.pl.formulog.symbols.Symbol;
 
-	public void run() throws EvaluationException;
+public interface EvaluationResult {
+
+	Set<NormalAtom> getAll(Symbol sym);
 	
-	public void run(int parallelism) throws EvaluationException;
+	Set<NormalAtom> getQueryAnswer();
 	
-	public EvaluationResult getResult();
-	
-	public ValidProgram getProgram();
+	Set<Symbol> getSymbols();
 	
 }

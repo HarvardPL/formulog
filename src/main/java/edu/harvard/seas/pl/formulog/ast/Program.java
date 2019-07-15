@@ -22,13 +22,12 @@ package edu.harvard.seas.pl.formulog.ast;
 
 import java.util.Set;
 
-import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
 import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 
-public interface Program {
+public interface Program<C extends Conjunct> {
 
 	Set<Symbol> getFunctionSymbols();
 	
@@ -38,9 +37,9 @@ public interface Program {
 	
 	FunctionDef getDef(Symbol sym);
 	
-	Set<Atom> getFacts(Symbol sym);
+	Set<Term[]> getFacts(Symbol sym);
 
-	Set<Rule> getRules(Symbol sym);
+	Set<Rule<C>> getRules(Symbol sym);
 	
 	SymbolManager getSymbolManager();
 	

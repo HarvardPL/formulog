@@ -23,9 +23,10 @@ package edu.harvard.seas.pl.formulog.ast;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitorExn;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
+import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 
-public interface Constructor extends Functor, SmtLibTerm {
+public interface Constructor extends Functor<ConstructorSymbol>, SmtLibTerm {
 
 	@Override
 	default <I, O> O visit(TermVisitor<I, O> v, I in) {

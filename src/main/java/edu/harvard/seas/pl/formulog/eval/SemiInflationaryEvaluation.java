@@ -68,8 +68,8 @@ import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.unification.Unification;
 import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
-import edu.harvard.seas.pl.formulog.validating.ValidProgram;
 import edu.harvard.seas.pl.formulog.validating.Validator;
+import edu.harvard.seas.pl.formulog.validating.ast.ValidProgram;
 
 public class SemiInflationaryEvaluation implements Evaluation {
 

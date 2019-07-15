@@ -20,16 +20,14 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
+import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 
-public interface Rule {
+public interface Rule <R extends RelationSymbol, C extends Conjunct<R>> extends Iterable<C> {
 
-	public Atom getHead();
-
-	public Iterable<Atom> getBody();
+	public C getHead();
 	
 	public int getBodySize();
 	
-	public Atom getBody(int idx);
-
+	public C getBody(int idx);
+	
 }

@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.validating;
+package edu.harvard.seas.pl.formulog.symbols;
 
 /*-
  * #%L
@@ -20,15 +20,17 @@ package edu.harvard.seas.pl.formulog.validating;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.ast.Program;
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
+import edu.harvard.seas.pl.formulog.types.FunctorType;
 
-public interface ValidProgram extends Program {
+public interface RelationSymbol extends TypedSymbol {
 
-	int getStratumRank(Symbol sym);
+	boolean isIdbSymbol();
+
+	default boolean isEdbSymbol() {
+		return !isIdbSymbol();
+	}
 	
-	Stratum getStratum(int rank);
-	
-	int getNumberOfStrata();
+	@Override
+	FunctorType getCompileTimeType();
 	
 }

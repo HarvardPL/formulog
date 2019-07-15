@@ -37,7 +37,7 @@ import edu.harvard.seas.pl.formulog.symbols.BuiltInPredicateSymbol;
 import edu.harvard.seas.pl.formulog.unification.Unification;
 import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
-import edu.harvard.seas.pl.formulog.validating.ValidProgram;
+import edu.harvard.seas.pl.formulog.validating.ast.ValidProgram;
 
 public class RulePreprocessor {
 
