@@ -20,8 +20,8 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-import static edu.harvard.seas.pl.formulog.symbols.SymbolType.SOLVER_EXPR;
-import static edu.harvard.seas.pl.formulog.symbols.SymbolType.VANILLA_CONSTRUCTOR;
+import static edu.harvard.seas.pl.formulog.symbols.ConstructorSymbolType.SOLVER_EXPR;
+import static edu.harvard.seas.pl.formulog.symbols.ConstructorSymbolType.VANILLA_CONSTRUCTOR;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.a;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.array;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.b;
@@ -41,7 +41,7 @@ import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.sym;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 
-public enum BuiltInConstructorSymbol implements Symbol {
+public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 
 	// Lists
 	
@@ -215,9 +215,9 @@ public enum BuiltInConstructorSymbol implements Symbol {
 
 	private final String name;
 	private final int arity;
-	private final SymbolType st;
+	private final ConstructorSymbolType st;
 	
-	private BuiltInConstructorSymbol(String name, int arity, SymbolType st) {
+	private BuiltInConstructorSymbol(String name, int arity, ConstructorSymbolType st) {
 		this.name = name;
 		this.arity = arity;
 		this.st = st;
@@ -228,12 +228,6 @@ public enum BuiltInConstructorSymbol implements Symbol {
 		return arity;
 	}
 
-
-	@Override
-	public SymbolType getSymbolType() {
-		return st;
-	}
-	
 	@Override
 	public String toString() {
 		return name;
@@ -370,6 +364,11 @@ public enum BuiltInConstructorSymbol implements Symbol {
 			return makeType(int_, int_, smt(int_));
 		}
 		throw new AssertionError("impossible");
+	}
+
+	@Override
+	public ConstructorSymbolType getConstructorSymbolType() {
+		return st;
 	}
 
 }

@@ -1,0 +1,23 @@
+package edu.harvard.seas.pl.formulog.symbols;
+
+public enum ConstructorSymbolType {
+
+	SOLVER_UNINTERPRETED_FUNCTION,
+
+	SOLVER_VARIABLE,
+
+	TUPLE,
+
+	VANILLA_CONSTRUCTOR,
+
+	SOLVER_EXPR,
+
+	SOLVER_CONSTRUCTOR_GETTER,
+
+	SOLVER_CONSTRUCTOR_TESTER,
+
+	INDEX_CONSTRUCTOR,
+
+	;
+
+}

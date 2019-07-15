@@ -38,11 +38,7 @@ public class PredicateFunctionSymbolFactory {
 		this.symbolManager = symbolManager;
 	}
 
-	public PredicateFunctionSymbol create(Symbol predSym, boolean reify) {
-		if (!predSym.getSymbolType().isRelationSym()) {
-			throw new IllegalArgumentException(
-					"Expected a predicate symbol, but received non-predicate symbol " + predSym);
-		}
+	public PredicateFunctionSymbol create(RelationSymbol predSym, boolean reify) {
 		if (predSym.getArity() == 0) {
 			reify = false;
 		}
@@ -59,7 +55,7 @@ public class PredicateFunctionSymbolFactory {
 	private final Map<Symbol, PredicateFunctionSymbol> queryMemo = new HashMap<>();
 	private final Map<Symbol, PredicateFunctionSymbol> reifyMemo = new HashMap<>();
 
-	public interface PredicateFunctionSymbol extends Symbol {
+	public interface PredicateFunctionSymbol extends FunctionSymbol {
 
 		Symbol getPredicateSymbol();
 
@@ -69,20 +65,15 @@ public class PredicateFunctionSymbolFactory {
 
 	private class QueryPredicateSymbol implements PredicateFunctionSymbol {
 
-		private final Symbol predSymbol;
+		private final RelationSymbol predSymbol;
 
-		private QueryPredicateSymbol(Symbol predSymbol) {
+		private QueryPredicateSymbol(RelationSymbol predSymbol) {
 			this.predSymbol = predSymbol;
 		}
 
 		@Override
 		public int getArity() {
 			return predSymbol.getArity();
-		}
-
-		@Override
-		public SymbolType getSymbolType() {
-			return SymbolType.FUNCTION;
 		}
 
 		@Override
@@ -111,10 +102,10 @@ public class PredicateFunctionSymbolFactory {
 		private final Symbol predSymbol;
 		private final FunctorType type;
 
-		private ReifyPredicateSymbol(Symbol predSymbol) {
+		private ReifyPredicateSymbol(RelationSymbol predSymbol) {
 			assert predSymbol.getArity() != 0;
 			this.predSymbol = predSymbol;
-			FunctorType ft = (FunctorType) predSymbol.getCompileTimeType();
+			FunctorType ft = predSymbol.getCompileTimeType();
 			List<Type> types = ft.getArgTypes();
 			Type eltType;
 			if (types.size() == 1) {
@@ -129,11 +120,6 @@ public class PredicateFunctionSymbolFactory {
 		@Override
 		public int getArity() {
 			return 0;
-		}
-
-		@Override
-		public SymbolType getSymbolType() {
-			return SymbolType.FUNCTION;
 		}
 
 		@Override

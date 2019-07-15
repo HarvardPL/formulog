@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
-import edu.harvard.seas.pl.formulog.symbols.SymbolType;
+import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
 
@@ -151,29 +151,29 @@ public final class Types {
 
 	public static class AlgebraicDataType implements Type, Iterable<Type> {
 
-		private final Symbol sym;
+		private final TypeSymbol sym;
 		private final List<Type> typeArgs;
 		private final AtomicReference<Set<ConstructorScheme>> constructors = new AtomicReference<>();
 
 		private static final Map<Symbol, Pair<List<TypeVar>, Set<ConstructorScheme>>> memo = new ConcurrentHashMap<>();
 
-		private AlgebraicDataType(Symbol sym, List<Type> typeArgs) {
+		private AlgebraicDataType(TypeSymbol sym, List<Type> typeArgs) {
 			this.sym = sym;
 			this.typeArgs = new ArrayList<>(typeArgs);
 			if (sym.getArity() != typeArgs.size()) {
 				throw new IllegalArgumentException(
 						"Arity of symbol " + sym + " does not match number of provided type parameters");
 			}
-			if (!sym.getSymbolType().isTypeSymbol()) {
-				throw new IllegalArgumentException("Cannot create a type with non-type symbol " + sym);
+			if (sym.isAlias()) {
+				throw new IllegalArgumentException("Cannot create a type with alias symbol " + sym);
 			}
 		}
 
-		public static AlgebraicDataType make(Symbol sym, List<Type> typeArgs) {
+		public static AlgebraicDataType make(TypeSymbol sym, List<Type> typeArgs) {
 			return new AlgebraicDataType(sym, typeArgs);
 		}
 
-		public static AlgebraicDataType make(Symbol sym) {
+		public static AlgebraicDataType make(TypeSymbol sym) {
 			List<Type> typeVars = new ArrayList<>();
 			for (int i = 0; i < sym.getArity(); ++i) {
 				typeVars.add(TypeVar.fresh());
@@ -181,10 +181,10 @@ public final class Types {
 			return make(sym, typeVars);
 		}
 
-		public static void setConstructors(Symbol sym, List<TypeVar> typeParams,
+		public static void setConstructors(TypeSymbol sym, List<TypeVar> typeParams,
 				Collection<ConstructorScheme> constructors) {
-			if (!sym.getSymbolType().equals(SymbolType.TYPE)) {
-				throw new IllegalArgumentException("Cannot set constructors for non-type symbol " + sym + ".");
+			if (sym.isAlias()) {
+				throw new IllegalArgumentException("Cannot set constructors for type alias symbol " + sym + ".");
 			}
 			if (typeParams.size() != (new HashSet<>(typeParams).size())) {
 				throw new IllegalArgumentException("Each type variable must be unique.");
@@ -230,7 +230,7 @@ public final class Types {
 			return s;
 		}
 
-		public Symbol getSymbol() {
+		public TypeSymbol getSymbol() {
 			return sym;
 		}
 

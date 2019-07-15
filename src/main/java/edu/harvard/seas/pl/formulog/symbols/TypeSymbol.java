@@ -21,5 +21,9 @@ package edu.harvard.seas.pl.formulog.symbols;
  */
 
 public interface TypeSymbol extends Symbol {
+	
+	boolean isAlias();
+	
+	boolean isUninterpretedSort();
 
 }

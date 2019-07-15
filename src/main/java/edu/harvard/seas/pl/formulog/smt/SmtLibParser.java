@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.Constructors;
+import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.FP32;
 import edu.harvard.seas.pl.formulog.ast.FP64;
 import edu.harvard.seas.pl.formulog.ast.I32;
@@ -38,17 +39,17 @@ import edu.harvard.seas.pl.formulog.ast.I64;
 import edu.harvard.seas.pl.formulog.ast.StringTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
-import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;
-import edu.harvard.seas.pl.formulog.symbols.IndexedSymbol;
+import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.IndexedTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
-import edu.harvard.seas.pl.formulog.symbols.SymbolType;
+import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
+import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType.ConstructorScheme;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
-import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType.ConstructorScheme;
 
 public class SmtLibParser {
 
@@ -142,12 +143,12 @@ public class SmtLibParser {
 	}
 
 	private boolean shouldRecord1(AlgebraicDataType type, Set<Symbol> seen) throws SmtLibParseException {
-		Symbol sym = type.getSymbol();
+		TypeSymbol sym = type.getSymbol();
 		if (!seen.add(sym)) {
 			return true;
 		}
-		if (sym instanceof IndexedSymbol) {
-			switch ((IndexedSymbol) sym) {
+		if (sym instanceof IndexedTypeSymbol) {
+			switch ((IndexedTypeSymbol) sym) {
 			case BV: {
 				TypeIndex idx = (TypeIndex) type.getTypeArgs().get(0);
 				int w = idx.getIndex();
@@ -182,7 +183,7 @@ public class SmtLibParser {
 				die("unexpected built-in symbol: " + sym);
 			}
 		}
-		if (sym.getSymbolType().equals(SymbolType.SOLVER_UNINTERPRETED_SORT)) {
+		if (sym.isUninterpretedSort()) {
 			return false;
 		}
 		boolean ok = true;
@@ -199,9 +200,9 @@ public class SmtLibParser {
 	}
 
 	private TermType getTermType(AlgebraicDataType type) throws SmtLibParseException {
-		Symbol sym = type.getSymbol();
-		if (sym instanceof IndexedSymbol) {
-			switch ((IndexedSymbol) sym) {
+		TypeSymbol sym = type.getSymbol();
+		if (sym instanceof IndexedTypeSymbol) {
+			switch ((IndexedTypeSymbol) sym) {
 			case BV: {
 				TypeIndex idx = (TypeIndex) type.getTypeArgs().get(0);
 				int w = idx.getIndex();
@@ -409,7 +410,7 @@ public class SmtLibParser {
 				return term;
 			}
 		}
-		Symbol sym = symbolManager.lookupSymbol(id);
+		ConstructorSymbol sym = (ConstructorSymbol) symbolManager.lookupSymbol(id);
 		Term[] args = Terms.emptyArray();
 		if (sym.getArity() > 0) {
 			List<Type> argTypes = null;

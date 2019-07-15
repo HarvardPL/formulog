@@ -32,7 +32,7 @@ import java.util.List;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 
-public enum BuiltInConstructorGetterSymbol implements Symbol {
+public enum BuiltInConstructorGetterSymbol implements ConstructorSymbol {
 
 	CONS_1("#cons_1", list(a), smt(a)),
 	
@@ -58,11 +58,6 @@ public enum BuiltInConstructorGetterSymbol implements Symbol {
 	}
 
 	@Override
-	public SymbolType getSymbolType() {
-		return SymbolType.SOLVER_CONSTRUCTOR_GETTER;
-	}
-
-	@Override
 	public Type getCompileTimeType() {
 		return type;
 	}
@@ -73,9 +68,14 @@ public enum BuiltInConstructorGetterSymbol implements Symbol {
 	}
 	
 	public static void registerAll(SymbolManager symbolManager) {
-		for (Symbol sym : BuiltInConstructorGetterSymbol.values()) {
+		for (ConstructorSymbol sym : BuiltInConstructorGetterSymbol.values()) {
 			symbolManager.registerSymbol(sym, sym.getCompileTimeType());
 		}
+	}
+
+	@Override
+	public ConstructorSymbolType getConstructorSymbolType() {
+		return ConstructorSymbolType.SOLVER_CONSTRUCTOR_GETTER;
 	}
 	
 }

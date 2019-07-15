@@ -34,7 +34,7 @@ import java.util.List;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 
-public enum BuiltInConstructorTesterSymbol implements Symbol {
+public enum BuiltInConstructorTesterSymbol implements ConstructorSymbol {
 
 	IS_CMP_LT("#is_cmp_lt", cmp, smt(bool)),
 	
@@ -68,8 +68,8 @@ public enum BuiltInConstructorTesterSymbol implements Symbol {
 	}
 
 	@Override
-	public SymbolType getSymbolType() {
-		return SymbolType.SOLVER_CONSTRUCTOR_TESTER;
+	public ConstructorSymbolType getConstructorSymbolType() {
+		return ConstructorSymbolType.SOLVER_CONSTRUCTOR_TESTER;
 	}
 
 	@Override
@@ -83,7 +83,7 @@ public enum BuiltInConstructorTesterSymbol implements Symbol {
 	}
 	
 	public static void registerAll(SymbolManager symbolManager) {
-		for (Symbol sym : BuiltInConstructorTesterSymbol.values()) {
+		for (ConstructorSymbol sym : BuiltInConstructorTesterSymbol.values()) {
 			symbolManager.registerSymbol(sym, sym.getCompileTimeType());
 		}
 	}

@@ -41,7 +41,7 @@ import java.util.List;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 
-public enum BuiltInFunctionSymbol implements Symbol {
+public enum BuiltInFunctionSymbol implements FunctionSymbol {
 
 	// i32 operations
 
@@ -232,11 +232,6 @@ public enum BuiltInFunctionSymbol implements Symbol {
 	@Override
 	public int getArity() {
 		return arity;
-	}
-
-	@Override
-	public SymbolType getSymbolType() {
-		return SymbolType.FUNCTION;
 	}
 
 	@Override

@@ -32,7 +32,7 @@ import edu.harvard.seas.pl.formulog.types.Types.Type;
 
 public class TypeManager {
 
-	private final Map<Symbol, TypeAlias> aliases = new HashMap<>();
+	private final Map<TypeSymbol, TypeAlias> aliases = new HashMap<>();
 
 	public void registerAlias(TypeAlias alias) {
 		TypeAlias alias2 = aliases.putIfAbsent(alias.getSymbol(), alias);

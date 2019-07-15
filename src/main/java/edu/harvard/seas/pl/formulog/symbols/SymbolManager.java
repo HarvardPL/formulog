@@ -51,10 +51,10 @@ public class SymbolManager {
 		BuiltInTypeSymbol.registerAll(this);
 		BuiltInConstructorSymbol.registerAll(this);
 		BuiltInFunctionSymbol.registerAll(this);
-		BuiltInPredicateSymbol.registerAll(this);
 		BuiltInConstructorTesterSymbol.registerAll(this);
 		BuiltInConstructorGetterSymbol.registerAll(this);
-		IndexedSymbol.registerAll(this);
+		IndexedTypeSymbol.registerAll(this);
+		IndexedConstructorSymbol.registerAll(this);
 		initialized = true;
 	}
 

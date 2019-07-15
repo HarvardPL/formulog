@@ -1,28 +1,6 @@
 package edu.harvard.seas.pl.formulog.symbols;
 
-/*-
- * #%L
- * FormuLog
- * %%
- * Copyright (C) 2018 - 2019 President and Fellows of Harvard College
- * %%
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * #L%
- */
-
-import edu.harvard.seas.pl.formulog.types.Types.Type;
-
-public enum BuiltInTypeSymbol implements Symbol {
+public enum BuiltInTypeSymbol implements TypeSymbol {
 
 	BOOL_TYPE("bool", 0),
 
@@ -64,13 +42,13 @@ public enum BuiltInTypeSymbol implements Symbol {
 	}
 
 	@Override
-	public SymbolType getSymbolType() {
-		return SymbolType.TYPE;
-	}
-
-	@Override
 	public String toString() {
 		return name;
+	}
+	
+	@Override
+	public boolean isAlias() {
+		return false;
 	}
 	
 	public static void registerAll(SymbolManager symbolManager) {
@@ -80,8 +58,8 @@ public enum BuiltInTypeSymbol implements Symbol {
 	}
 
 	@Override
-	public Type getCompileTimeType() {
-		throw new UnsupportedOperationException("Type symbols do not themselves have types.");
+	public boolean isUninterpretedSort() {
+		return false;
 	}
 
 }

@@ -26,21 +26,21 @@ import java.util.List;
 import java.util.Map;
 
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
-import edu.harvard.seas.pl.formulog.symbols.SymbolType;
+import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.types.Types.TypeVar;
 
 public class TypeAlias {
 
-	private final Symbol sym;
+	private final TypeSymbol sym;
 	private final List<TypeVar> params;
 	private final Type type;
 
-	public TypeAlias(Symbol sym, List<TypeVar> params, Type type) {
+	public TypeAlias(TypeSymbol sym, List<TypeVar> params, Type type) {
 		this.sym = sym;
 		this.params = params;
 		this.type = type;
-		if (!sym.getSymbolType().equals(SymbolType.TYPE_ALIAS)) {
+		if (!sym.isAlias()) {
 			throw new IllegalArgumentException("Cannot create an alias for non-type alias symbol " + sym);
 		}
 		if (this.sym.getArity() != this.params.size()) {
@@ -52,11 +52,11 @@ public class TypeAlias {
 		}
 	}
 
-	public static TypeAlias get(Symbol sym, List<TypeVar> params, Type type) {
+	public static TypeAlias get(TypeSymbol sym, List<TypeVar> params, Type type) {
 		return new TypeAlias(sym, params, type);
 	}
 
-	public Symbol getSymbol() {
+	public TypeSymbol getSymbol() {
 		return sym;
 	}
 

@@ -20,6 +20,8 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-public interface ConstructorSymbol extends Symbol {
+public interface ConstructorSymbol extends TypedSymbol {
 
+	ConstructorSymbolType getConstructorSymbolType();
+	
 }
