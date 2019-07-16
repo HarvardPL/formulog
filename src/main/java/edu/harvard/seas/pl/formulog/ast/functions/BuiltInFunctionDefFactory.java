@@ -48,7 +48,7 @@ import edu.harvard.seas.pl.formulog.smt.Z3Process;
 import edu.harvard.seas.pl.formulog.smt.Z3Thread;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
+import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
@@ -229,7 +229,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.I32_ADD;
 		}
 
@@ -247,7 +247,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.I32_SUB;
 		}
 
@@ -265,7 +265,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.I32_MUL;
 		}
 
@@ -283,7 +283,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.I32_DIV;
 		}
 
@@ -304,7 +304,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.I32_REM;
 		}
 
@@ -325,7 +325,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.I32_GT;
 		}
 
@@ -343,7 +343,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.I32_GE;
 		}
 
@@ -361,7 +361,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.I32_LT;
 		}
 
@@ -379,7 +379,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.I32_LE;
 		}
 
@@ -397,7 +397,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.I32_AND;
 		}
 
@@ -415,7 +415,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.I32_OR;
 		}
 
@@ -433,7 +433,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.I32_XOR;
 		}
 
@@ -451,7 +451,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.I32_NEG;
 		}
 
@@ -468,7 +468,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.I64_ADD;
 		}
 
@@ -486,7 +486,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.I64_SUB;
 		}
 
@@ -504,7 +504,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.I64_MUL;
 		}
 
@@ -522,7 +522,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.I64_DIV;
 		}
 
@@ -543,7 +543,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.I64_REM;
 		}
 
@@ -564,7 +564,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.I64_GT;
 		}
 
@@ -582,7 +582,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.I64_GE;
 		}
 
@@ -600,7 +600,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.I64_LT;
 		}
 
@@ -618,7 +618,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.I64_LE;
 		}
 
@@ -636,7 +636,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.I64_AND;
 		}
 
@@ -654,7 +654,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.I64_OR;
 		}
 
@@ -672,7 +672,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.I64_XOR;
 		}
 
@@ -690,7 +690,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.I64_NEG;
 		}
 
@@ -707,7 +707,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.FP32_ADD;
 		}
 
@@ -725,7 +725,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.FP32_SUB;
 		}
 
@@ -743,7 +743,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.FP32_MUL;
 		}
 
@@ -761,7 +761,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.FP32_DIV;
 		}
 
@@ -782,7 +782,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.FP32_REM;
 		}
 
@@ -803,7 +803,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.FP32_GT;
 		}
 
@@ -821,7 +821,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.FP32_GE;
 		}
 
@@ -839,7 +839,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.FP32_LT;
 		}
 
@@ -857,7 +857,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.FP32_LE;
 		}
 
@@ -875,7 +875,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.FP32_EQ;
 		}
 
@@ -893,7 +893,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.FP32_NEG;
 		}
 
@@ -910,7 +910,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.FP64_ADD;
 		}
 
@@ -928,7 +928,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.FP64_SUB;
 		}
 
@@ -946,7 +946,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.FP64_MUL;
 		}
 
@@ -964,7 +964,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.FP64_DIV;
 		}
 
@@ -985,7 +985,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.FP64_REM;
 		}
 
@@ -1006,7 +1006,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.FP64_GT;
 		}
 
@@ -1024,7 +1024,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.FP64_GE;
 		}
 
@@ -1042,7 +1042,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.FP64_LT;
 		}
 
@@ -1060,7 +1060,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.FP64_LE;
 		}
 
@@ -1078,7 +1078,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.FP64_EQ;
 		}
 
@@ -1096,7 +1096,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.FP64_NEG;
 		}
 
@@ -1113,7 +1113,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.BEQ;
 		}
 
@@ -1131,7 +1131,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.BNEQ;
 		}
 
@@ -1149,7 +1149,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.STRING_OF_I32;
 		}
 
@@ -1166,7 +1166,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.STRCMP;
 		}
 
@@ -1190,7 +1190,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.I32CMP;
 		}
 
@@ -1214,7 +1214,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.STRCAT;
 		}
 
@@ -1232,7 +1232,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.SUBSTITUTE;
 		}
 
@@ -1251,7 +1251,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.IS_FREE;
 		}
 
@@ -1312,7 +1312,7 @@ public final class BuiltInFunctionDefFactory {
 	private final FunctionDef isSat = new FunctionDef() {
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.IS_SAT;
 		}
 
@@ -1335,7 +1335,7 @@ public final class BuiltInFunctionDefFactory {
 	private final FunctionDef isSatOpt = new FunctionDef() {
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.IS_SAT_OPT;
 		}
 
@@ -1360,7 +1360,7 @@ public final class BuiltInFunctionDefFactory {
 	private final FunctionDef isValidOpt = new FunctionDef() {
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.IS_VALID_OPT;
 		}
 
@@ -1387,7 +1387,7 @@ public final class BuiltInFunctionDefFactory {
 	private final FunctionDef isValid = new FunctionDef() {
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.IS_VALID;
 		}
 
@@ -1418,7 +1418,7 @@ public final class BuiltInFunctionDefFactory {
 	private final FunctionDef getModel = new FunctionDef() {
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.GET_MODEL;
 		}
 
@@ -1438,7 +1438,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.QUERY_MODEL;
 		}
 
@@ -1471,15 +1471,15 @@ public final class BuiltInFunctionDefFactory {
 
 	private static class Id implements FunctionDef {
 
-		private final Symbol sym;
+		private final FunctionSymbol sym;
 
-		public Id(Symbol sym) {
+		public Id(FunctionSymbol sym) {
 			assert sym.getArity() == 1;
 			this.sym = sym;
 		}
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return sym;
 		}
 
@@ -1495,7 +1495,7 @@ public final class BuiltInFunctionDefFactory {
 		INSTANCE;
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.PRINT;
 		}
 
@@ -1512,7 +1512,7 @@ public final class BuiltInFunctionDefFactory {
 	// INSTANCE;
 	//
 	// @Override
-	// public Symbol getSymbol() {
+	// public FunctionSymbol getSymbol() {
 	// return BuiltInFunctionSymbol.PATH_INTERPOLANT;
 	// }
 	//

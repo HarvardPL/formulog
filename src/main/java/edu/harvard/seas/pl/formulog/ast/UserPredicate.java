@@ -21,6 +21,8 @@ package edu.harvard.seas.pl.formulog.ast;
  */
 
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctExnVisitor;
 import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctVisitor;
@@ -125,6 +127,15 @@ public class UserPredicate<R extends RelationSymbol> implements ComplexConjunct<
 	@Override
 	public <I, O, E extends Throwable> O accept(ComplexConjunctExnVisitor<R, I, O, E> visitor, I input) throws E {
 		return visitor.visit(this, input);
+	}
+
+	@Override
+	public Set<Var> varSet() {
+		Set<Var> vars = new HashSet<>();
+		for (Term arg : args) {
+			arg.varSet(vars);
+		}
+		return vars;
 	}
 	
 }

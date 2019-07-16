@@ -27,7 +27,7 @@ import edu.harvard.seas.pl.formulog.ast.I64;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
+import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 
 public final class PrimitiveConversions {
 	
@@ -38,7 +38,7 @@ public final class PrimitiveConversions {
 	public static final FunctionDef i32ToI64 = new FunctionDef() {
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.i32ToI64;
 		}
 
@@ -53,7 +53,7 @@ public final class PrimitiveConversions {
 	public static final FunctionDef i32ToFp32 = new FunctionDef() {
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.i32ToFp32;
 		}
 
@@ -68,7 +68,7 @@ public final class PrimitiveConversions {
 	public static final FunctionDef i32ToFp64 = new FunctionDef() {
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.i32ToFp64;
 		}
 
@@ -83,7 +83,7 @@ public final class PrimitiveConversions {
 	public static final FunctionDef i64ToI32 = new FunctionDef() {
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.i64ToI32;
 		}
 
@@ -98,7 +98,7 @@ public final class PrimitiveConversions {
 	public static final FunctionDef i64ToFp32 = new FunctionDef() {
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.i64ToFp32;
 		}
 
@@ -113,7 +113,7 @@ public final class PrimitiveConversions {
 	public static final FunctionDef i64ToFp64 = new FunctionDef() {
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.i64ToFp64;
 		}
 
@@ -128,7 +128,7 @@ public final class PrimitiveConversions {
 	public static final FunctionDef fp32ToI32 = new FunctionDef() {
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.fp32ToI32;
 		}
 
@@ -143,7 +143,7 @@ public final class PrimitiveConversions {
 	public static final FunctionDef fp32ToI64 = new FunctionDef() {
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.fp32ToI64;
 		}
 
@@ -158,7 +158,7 @@ public final class PrimitiveConversions {
 	public static final FunctionDef fp32ToFp64 = new FunctionDef() {
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.fp32ToFp64;
 		}
 
@@ -173,7 +173,7 @@ public final class PrimitiveConversions {
 	public static final FunctionDef fp64ToI32 = new FunctionDef() {
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.fp64ToI32;
 		}
 
@@ -188,7 +188,7 @@ public final class PrimitiveConversions {
 	public static final FunctionDef fp64ToI64 = new FunctionDef() {
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.fp64ToI64;
 		}
 
@@ -203,7 +203,7 @@ public final class PrimitiveConversions {
 	public static final FunctionDef fp64ToFp32 = new FunctionDef() {
 
 		@Override
-		public Symbol getSymbol() {
+		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.fp64ToFp32;
 		}
 

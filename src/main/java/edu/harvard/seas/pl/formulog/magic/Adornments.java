@@ -26,16 +26,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import edu.harvard.seas.pl.formulog.ast.Atoms;
-import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
-import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
-import edu.harvard.seas.pl.formulog.ast.Program;
-import edu.harvard.seas.pl.formulog.ast.Rule;
+import edu.harvard.seas.pl.formulog.ast.ComplexConjunct;
+import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctVisitor;
 import edu.harvard.seas.pl.formulog.ast.Term;
-import edu.harvard.seas.pl.formulog.ast.Terms;
+import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
+import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
+import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.unification.Unification;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 
@@ -45,24 +43,24 @@ public final class Adornments {
 		throw new AssertionError();
 	}
 
-	public static Atom adorn(Atom a, Set<Var> boundVars, Program prog, boolean topDownIsDefault) {
-		Symbol origSym = a.getSymbol();
-		if (!topDownIsDefault && !prog.getRelationProperties(origSym).isTopDown()) {
+	public static UserPredicate<?> adorn(UserPredicate<?> a, Set<Var> boundVars, boolean topDownIsDefault) {
+		RelationSymbol origSym = a.getSymbol();
+		if (!topDownIsDefault && !origSym.isTopDown()) {
 			return a;
 		}
-		boolean defaultAdornment = !prog.getRelationProperties(origSym).isBottomUp();
+		boolean defaultAdornment = !origSym.isBottomUp();
 		Term[] args = a.getArgs();
 		boolean[] adornment = new boolean[args.length];
 		for (int k = 0; k < args.length; k++) {
-			adornment[k] = defaultAdornment && boundVars.containsAll(Terms.varSet(args[k]));
+			adornment[k] = defaultAdornment && boundVars.containsAll(args[k].varSet());
 		}
 		AdornedSymbol sym = new AdornedSymbol(origSym, adornment);
-		return Atoms.get(sym, args, a.isNegated());
+		return UserPredicate.make(sym, args, a.isNegated());
 	}
 
-	public static Rule adornRule(Atom head, List<Atom> body, Program prog, boolean topDownIsDefault)
-			throws InvalidProgramException {
-		Symbol sym = head.getSymbol();
+	public static <R extends RelationSymbol> BasicRule<?> adornRule(UserPredicate<R> head,
+			List<ComplexConjunct<R>> body, boolean topDownIsDefault) throws InvalidProgramException {
+		RelationSymbol sym = head.getSymbol();
 		boolean[] headAdornment;
 		if (sym instanceof AdornedSymbol) {
 			headAdornment = ((AdornedSymbol) head.getSymbol()).getAdornment();
@@ -72,34 +70,48 @@ public final class Adornments {
 				headAdornment[i] = false;
 			}
 		}
-		body = new ArrayList<>(body);
 		Set<Var> boundVars = new HashSet<>();
 		Term[] headArgs = head.getArgs();
 		for (int i = 0; i < headArgs.length; i++) {
 			if (headAdornment[i]) {
-				boundVars.addAll(Terms.varSet(headArgs[i]));
+				boundVars.addAll(headArgs[i].varSet());
 			}
 		}
-		for (int i = 0; i < body.size(); i++) {
+		List<ComplexConjunct<?>> newBody = new ArrayList<>(body);
+		for (int i = 0; i < newBody.size(); i++) {
 			boolean ok = false;
-			for (int j = i; j < body.size(); j++) {
-				Atom a = body.get(j);
+			for (int j = i; j < newBody.size(); j++) {
+				ComplexConjunct<R> a = body.get(j);
 				if (Unification.canBindVars(a, boundVars)) {
 					Collections.swap(body, i, j);
-					if (a.getSymbol().getSymbolType().isIDBSymbol()) {
-						body.set(i, adorn((NormalAtom) a, boundVars, prog, topDownIsDefault));
-					}
-					boundVars.addAll(Atoms.varSet(a));
+					int pos = i;
+					newBody.add(a.accept(new ComplexConjunctVisitor<R, Void, ComplexConjunct<?>>() {
+
+						@Override
+						public ComplexConjunct<?> visit(UnificationPredicate<R> unificationPredicate, Void input) {
+							return null;
+						}
+
+						@Override
+						public ComplexConjunct<?> visit(UserPredicate<R> userPredicate, Void input) {
+							if (userPredicate.getSymbol().isIdbSymbol()) {
+								newBody.set(pos, adorn(userPredicate, boundVars, topDownIsDefault));
+							}
+							return null;
+						}
+
+					}, null));
+					boundVars.addAll(a.varSet());
 					ok = true;
 					break;
 				}
 			}
 			if (!ok) {
 				throw new InvalidProgramException(
-						"Cannot reorder rule to meet well-modeness restrictions: " + BasicRule.get(head, body));
+						"Cannot reorder rule to meet well-modeness restrictions: " + BasicRule.make(head, body));
 			}
 		}
-		return BasicRule.get(head, body);
+		return BasicRule.make(head, body);
 	}
 
 }

@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.ast;
 
+import java.util.Set;
+
 /*-
  * #%L
  * FormuLog
@@ -60,5 +62,10 @@ public interface Primitive<T> extends Term {
 	}
 	
 	Type getType();
+	
+	@Override
+	public default void varSet(Set<Var> acc) {
+		// do nothing
+	}
 	
 }

@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 import edu.harvard.seas.pl.formulog.ast.Atoms;
 import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
 import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
+import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Expr;
@@ -43,20 +44,20 @@ import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
-import edu.harvard.seas.pl.formulog.ast.RelationProperties;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitorExn;
+import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbolFactory.PredicateFunctionSymbol;
+import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
-import edu.harvard.seas.pl.formulog.symbols.SymbolType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Unification;
@@ -66,29 +67,19 @@ import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 import edu.harvard.seas.pl.formulog.validating.Stratifier;
 import edu.harvard.seas.pl.formulog.validating.Stratum;
 
-public class MagicSetTransformer {
+public class MagicSetTransformer<R extends RelationSymbol> {
 
 	private final Program origProg;
 	private boolean topDownIsDefault;
-	private final Map<Symbol, RelationProperties> relationProps = new HashMap<>();
 
 	private static final boolean debug = System.getProperty("debugMst") != null;
 
-	public MagicSetTransformer(Program prog) {
+	public MagicSetTransformer(BasicProgram<R> prog) {
 		this.origProg = prog;
 	}
 
 	public Program transform(boolean useDemandTransformation, boolean restoreStratification)
 			throws InvalidProgramException {
-		List<Stratum> strata = (new Stratifier(origProg)).stratify();
-		for (Stratum stratum : strata) {
-			for (Symbol sym : stratum.getPredicateSyms()) {
-				setRelationProperties(sym).setStratum(stratum);
-			}
-		}
-		for (Symbol sym : origProg.getFactSymbols()) {
-			setRelationProperties(sym);
-		}
 		if (origProg.hasQuery()) {
 			return transformForQuery(origProg.getQuery(), useDemandTransformation, restoreStratification);
 		} else {
@@ -96,31 +87,15 @@ public class MagicSetTransformer {
 		}
 	}
 
-	private RelationProperties setRelationProperties(Symbol sym) {
-		return Util.lookupOrCreate(relationProps, sym, () -> {
-			RelationProperties props = origProg.getRelationProperties(sym);
-			if (props == null) {
-				props = new RelationProperties(sym);
-			} else {
-				props = new RelationProperties(props);
-			}
-			return props;
-		});
-	}
-
-	public Program transformForQuery(NormalAtom query, boolean useDemandTransformation, boolean restoreStratification)
+	public Program transformForQuery(UserPredicate<R> query, boolean useDemandTransformation, boolean restoreStratification)
 			throws InvalidProgramException {
 		topDownIsDefault = true;
 		if (query.isNegated()) {
 			throw new InvalidProgramException("Query cannot be negated");
 		}
-		Symbol qsym = query.getSymbol();
-		if (qsym.getSymbolType().equals(SymbolType.SPECIAL_REL)) {
-			throw new InvalidProgramException("Cannot query built-in predicate: " + query.getSymbol());
-		}
 		query = reduceQuery(query);
 		Program newProg;
-		if (query.getSymbol().getSymbolType().isEDBSymbol()) {
+		if (query.getSymbol().isEdbSymbol()) {
 			newProg = makeEdbProgram(query);
 		} else {
 			NormalAtom adornedQuery = (NormalAtom) Adornments.adorn(query, Collections.emptySet(), origProg,
@@ -186,14 +161,14 @@ public class MagicSetTransformer {
 
 	};
 
-	public NormalAtom reduceQuery(final NormalAtom query) throws InvalidProgramException {
+	public UserPredicate<R> reduceQuery(UserPredicate<R> query) throws InvalidProgramException {
 		try {
 			Term[] args = query.getArgs();
 			Term[] newArgs = new Term[args.length];
 			for (int i = 0; i < args.length; ++i) {
 				newArgs[i] = args[i].visit(termReducer, null);
 			}
-			return (NormalAtom) Atoms.get(query.getSymbol(), newArgs, query.isNegated());
+			return UserPredicate.make(query.getSymbol(), newArgs, query.isNegated());
 		} catch (EvaluationException e) {
 			throw new InvalidProgramException(
 					"Query contained function call that could not be normalized: " + query + "\n" + e);

@@ -22,19 +22,21 @@ package edu.harvard.seas.pl.formulog.magic;
 
 import java.util.Arrays;
 
+import edu.harvard.seas.pl.formulog.ast.Term;
+import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
+import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
-import edu.harvard.seas.pl.formulog.symbols.SymbolType;
-import edu.harvard.seas.pl.formulog.types.Types.Type;
+import edu.harvard.seas.pl.formulog.types.FunctorType;
 
-class AdornedSymbol implements Symbol {
+class AdornedSymbol implements RelationSymbol {
 
-	private final Symbol symbol;
+	private final RelationSymbol symbol;
 	private final boolean[] adornment;
 
-	public AdornedSymbol(Symbol symbol, boolean[] adornment) {
+	public AdornedSymbol(RelationSymbol symbol, boolean[] adornment) {
 		assert adornment != null;
-		assert symbol.getSymbolType().equals(SymbolType.IDB_REL);
 		assert !(symbol instanceof AdornedSymbol);
+		assert symbol.isIdbSymbol();
 		this.symbol = symbol;
 		this.adornment = adornment;
 	}
@@ -79,11 +81,6 @@ class AdornedSymbol implements Symbol {
 	public int getArity() {
 		return symbol.getArity();
 	}
-
-	@Override
-	public SymbolType getSymbolType() {
-		return symbol.getSymbolType();
-	}
 	
 	@Override
 	public String toString() {
@@ -95,8 +92,53 @@ class AdornedSymbol implements Symbol {
 	}
 
 	@Override
-	public Type getCompileTimeType() {
+	public FunctorType getCompileTimeType() {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean isIdbSymbol() {
+		return true;
+	}
+
+	@Override
+	public void setAggregate(FunctionSymbol funcSym, Term unit) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean setBottomUp() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean setTopDown() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean isAggregated() {
+		return symbol.isAggregated();
+	}
+
+	@Override
+	public FunctionSymbol getAggFuncSym() {
+		return symbol.getAggFuncSym();
+	}
+
+	@Override
+	public Term getAggFuncUnit() {
+		return symbol.getAggFuncUnit();
+	}
+
+	@Override
+	public boolean isBottomUp() {
+		return symbol.isBottomUp();
+	}
+
+	@Override
+	public boolean isTopDown() {
+		return symbol.isTopDown();
 	}
 
 }

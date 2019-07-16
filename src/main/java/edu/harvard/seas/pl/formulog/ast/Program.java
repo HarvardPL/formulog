@@ -27,25 +27,25 @@ import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 
-public interface Program<H extends Conjunct, B extends Conjunct> {
+public interface Program<S extends RelationSymbol, Q extends Conjunct, R extends Rule<Q, ?>> {
 
 	Set<FunctionSymbol> getFunctionSymbols();
 	
-	Set<RelationSymbol> getFactSymbols();
+	Set<S> getFactSymbols();
 	
-	Set<RelationSymbol> getRuleSymbols();
+	Set<S> getRuleSymbols();
 	
 	FunctionDef getDef(FunctionSymbol sym);
 	
-	Set<Term[]> getFacts(RelationSymbol sym);
+	Set<Term[]> getFacts(S sym);
 
-	Set<Rule<H, B>> getRules(RelationSymbol sym);
+	Set<R> getRules(S sym);
 	
 	SymbolManager getSymbolManager();
 	
 	boolean hasQuery();
 	
-	H getQuery();
+	Q getQuery();
 	
 	FunctionCallFactory getFunctionCallFactory();
 

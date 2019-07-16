@@ -22,19 +22,19 @@ package edu.harvard.seas.pl.formulog.ast.functions;
 
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
+import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 
 public class DummyFunctionDef implements FunctionDef {
 
-	private final Symbol sym;
+	private final FunctionSymbol sym;
 	private volatile FunctionDef def;
 	
-	public DummyFunctionDef(Symbol sym) {
+	public DummyFunctionDef(FunctionSymbol sym) {
 		this.sym = sym;
 	}
 	
 	@Override
-	public Symbol getSymbol() {
+	public FunctionSymbol getSymbol() {
 		return sym;
 	}
 

@@ -1,6 +1,6 @@
 package edu.harvard.seas.pl.formulog.types;
 
-import edu.harvard.seas.pl.formulog.ast.Conjunct;
+import edu.harvard.seas.pl.formulog.ast.BasicRule;
 
 /*-
  * #%L
@@ -23,7 +23,9 @@ import edu.harvard.seas.pl.formulog.ast.Conjunct;
  */
 
 import edu.harvard.seas.pl.formulog.ast.Program;
+import edu.harvard.seas.pl.formulog.ast.UserPredicate;
+import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 
-public interface WellTypedProgram<H extends Conjunct, B extends Conjunct> extends Program<H, B> {
+public interface WellTypedProgram<S extends RelationSymbol> extends Program<S, UserPredicate<S>, BasicRule<S>> {
 
 }

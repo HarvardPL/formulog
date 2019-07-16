@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.ast;
 
+import java.util.Set;
+
 /*-
  * #%L
  * FormuLog
@@ -25,9 +27,18 @@ import edu.harvard.seas.pl.formulog.symbols.Symbol;
 public interface Functor<S extends Symbol> extends Term {
 
 	S getSymbol();
-	
+
 	Term[] getArgs();
-	
+
 	Term copyWithNewArgs(Term[] args);
-	
+
+	@Override
+	default void varSet(Set<Var> acc) {
+		if (!isGround()) {
+			for (Term arg : getArgs()) {
+				arg.varSet(acc);
+			}
+		}
+	}
+
 }

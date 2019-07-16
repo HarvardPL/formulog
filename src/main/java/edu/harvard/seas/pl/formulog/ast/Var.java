@@ -21,6 +21,7 @@ package edu.harvard.seas.pl.formulog.ast;
  */
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -93,6 +94,11 @@ public class Var implements Term {
 	public Term normalize(Substitution s) throws EvaluationException {
 		assert s.containsKey(this);
 		return s.get(this);
+	}
+
+	@Override
+	public void varSet(Set<Var> acc) {
+		acc.add(this);
 	}
 	
 }

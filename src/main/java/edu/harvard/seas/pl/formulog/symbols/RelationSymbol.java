@@ -31,15 +31,19 @@ public interface RelationSymbol extends TypedSymbol {
 	}
 
 	void setAggregate(FunctionSymbol funcSym, Term unit);
-	
+
+	boolean isBottomUp();
+
 	boolean setBottomUp();
+
+	boolean isTopDown();
 	
 	boolean setTopDown();
 
 	boolean isAggregated();
 
 	FunctionSymbol getAggFuncSym();
-	
+
 	Term getAggFuncUnit();
-	
+
 }

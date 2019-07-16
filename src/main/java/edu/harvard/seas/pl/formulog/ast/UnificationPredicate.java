@@ -1,5 +1,8 @@
 package edu.harvard.seas.pl.formulog.ast;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /*-
  * #%L
  * FormuLog
@@ -108,6 +111,14 @@ public class UnificationPredicate<R extends RelationSymbol> implements ComplexCo
 	@Override
 	public <I, O, E extends Throwable> O accept(ComplexConjunctExnVisitor<R, I, O, E> visitor, I input) throws E {
 		return visitor.visit(this, input);
+	}
+
+	@Override
+	public Set<Var> varSet() {
+		Set<Var> vars = new HashSet<>();
+		lhs.varSet(vars);
+		rhs.varSet(vars);
+		return vars;
 	}
 
 }

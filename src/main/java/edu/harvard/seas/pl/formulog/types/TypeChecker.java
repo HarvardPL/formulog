@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.ComplexConjunct;
 import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctVisitor;
@@ -45,7 +46,6 @@ import edu.harvard.seas.pl.formulog.ast.I32;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
-import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
@@ -76,23 +76,23 @@ import edu.harvard.seas.pl.formulog.util.Util;
 
 public class TypeChecker<R extends RelationSymbol> {
 
-	private final Program<UserPredicate<R>, ComplexConjunct<R>> prog;
+	private final BasicProgram<R> prog;
 
-	public TypeChecker(Program<UserPredicate<R>, ComplexConjunct<R>> prog) {
+	public TypeChecker(BasicProgram<R> prog) {
 		this.prog = prog;
 	}
 
-	public WellTypedProgram<UserPredicate<R>, ComplexConjunct<R>> typeCheck() throws TypeException {
+	public WellTypedProgram<R> typeCheck() throws TypeException {
 		typeCheckRelations();
-		Map<RelationSymbol, Set<Term[]>> newFacts = typeCheckFacts();
+		Map<R, Set<Term[]>> newFacts = typeCheckFacts();
 		Map<FunctionSymbol, FunctionDef> newFuncs = typeCheckFunctions();
 		FunctionDefManager dm = prog.getFunctionCallFactory().getDefManager();
 		for (FunctionDef func : newFuncs.values()) {
 			dm.reregister(func);
 		}
-		Map<RelationSymbol, Set<Rule<UserPredicate<R>, ComplexConjunct<R>>>> newRules = typeCheckRules();
+		Map<R, Set<BasicRule<R>>> newRules = typeCheckRules();
 		UserPredicate<R> newQuery = typeCheckQuery();
-		return new WellTypedProgram<UserPredicate<R>, ComplexConjunct<R>>() {
+		return new WellTypedProgram<R>() {
 
 			@Override
 			public Set<FunctionSymbol> getFunctionSymbols() {
@@ -100,12 +100,12 @@ public class TypeChecker<R extends RelationSymbol> {
 			}
 
 			@Override
-			public Set<RelationSymbol> getFactSymbols() {
+			public Set<R> getFactSymbols() {
 				return Collections.unmodifiableSet(newFacts.keySet());
 			}
 
 			@Override
-			public Set<RelationSymbol> getRuleSymbols() {
+			public Set<R> getRuleSymbols() {
 				return Collections.unmodifiableSet(newRules.keySet());
 			}
 
@@ -126,7 +126,7 @@ public class TypeChecker<R extends RelationSymbol> {
 			}
 
 			@Override
-			public Set<Rule<UserPredicate<R>, ComplexConjunct<R>>> getRules(RelationSymbol sym) {
+			public Set<BasicRule<R>> getRules(RelationSymbol sym) {
 				if (!sym.isIdbSymbol()) {
 					throw new IllegalArgumentException();
 				}
@@ -164,13 +164,13 @@ public class TypeChecker<R extends RelationSymbol> {
 		typeCheckRelations(prog.getRuleSymbols());
 	}
 
-	private void typeCheckRelations(Set<RelationSymbol> syms) throws TypeException {
-		for (RelationSymbol sym : syms) {
+	private void typeCheckRelations(Set<R> syms) throws TypeException {
+		for (R sym : syms) {
 			typeCheckRelation(sym);
 		}
 	}
 
-	private void typeCheckRelation(RelationSymbol sym) throws TypeException {
+	private void typeCheckRelation(R sym) throws TypeException {
 		if (sym.isAggregated()) {
 			FunctorType ft = sym.getCompileTimeType();
 			List<Type> argTypes = ft.getArgTypes();
@@ -181,7 +181,7 @@ public class TypeChecker<R extends RelationSymbol> {
 		}
 	}
 
-	private Term typeCheckAggregateUnit(RelationSymbol relSym, Type aggType) throws TypeException {
+	private Term typeCheckAggregateUnit(R relSym, Type aggType) throws TypeException {
 		Term unit = relSym.getAggFuncUnit();
 		try {
 			TypeCheckerContext ctx = new TypeCheckerContext();
@@ -218,14 +218,14 @@ public class TypeChecker<R extends RelationSymbol> {
 		return null;
 	}
 
-	private Map<RelationSymbol, Set<Term[]>> typeCheckFacts() throws TypeException {
+	private Map<R, Set<Term[]>> typeCheckFacts() throws TypeException {
 		// Can use same type checker context for all, since there should be neither
 		// program variables (in a fact) or type variables (in a relation type).
 		// Addendum: there can be program variables (in type index positions),
 		// but they should be unique.
-		Map<RelationSymbol, Set<Term[]>> m = new HashMap<>();
+		Map<R, Set<Term[]>> m = new HashMap<>();
 		TypeCheckerContext ctx = new TypeCheckerContext();
-		for (RelationSymbol sym : prog.getFactSymbols()) {
+		for (R sym : prog.getFactSymbols()) {
 			Set<Term[]> s = new HashSet<>();
 			for (Term[] args : prog.getFacts(sym)) {
 				s.add(ctx.typeCheckFact(sym, args));
@@ -235,11 +235,11 @@ public class TypeChecker<R extends RelationSymbol> {
 		return m;
 	}
 
-	private Map<RelationSymbol, Set<Rule<UserPredicate<R>, ComplexConjunct<R>>>> typeCheckRules() throws TypeException {
-		Map<RelationSymbol, Set<Rule<UserPredicate<R>, ComplexConjunct<R>>>> m = new HashMap<>();
-		for (RelationSymbol sym : prog.getRuleSymbols()) {
-			Set<Rule<UserPredicate<R>, ComplexConjunct<R>>> s = new HashSet<>();
-			for (Rule<UserPredicate<R>, ComplexConjunct<R>> r : prog.getRules(sym)) {
+	private Map<R, Set<BasicRule<R>>> typeCheckRules() throws TypeException {
+		Map<R, Set<BasicRule<R>>> m = new HashMap<>();
+		for (R sym : prog.getRuleSymbols()) {
+			Set<BasicRule<R>> s = new HashSet<>();
+			for (BasicRule<R> r : prog.getRules(sym)) {
 				TypeCheckerContext ctx = new TypeCheckerContext();
 				s.add(ctx.typeCheckRule(r));
 			}
@@ -288,7 +288,7 @@ public class TypeChecker<R extends RelationSymbol> {
 			return q.applySubstitution(m);
 		}
 
-		public Rule<UserPredicate<R>, ComplexConjunct<R>> typeCheckRule(Rule<UserPredicate<R>, ComplexConjunct<R>> r) throws TypeException {
+		public BasicRule<R> typeCheckRule(Rule<UserPredicate<R>, ComplexConjunct<R>> r) throws TypeException {
 			Map<Var, Type> subst = new HashMap<>();
 			processAtoms(r, subst);
 			genConstraints(r.getHead(), subst);

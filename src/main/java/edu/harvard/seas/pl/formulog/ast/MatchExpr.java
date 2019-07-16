@@ -47,8 +47,8 @@ public class MatchExpr implements Expr {
 		boolean isGround = matchee.isGround();
 		if (isGround) {
 			for (MatchClause cl : match) {
-				Set<Var> vars = Terms.varSet(cl.getRhs());
-				Set<Var> patVars = Terms.varSet(cl.getLhs());
+				Set<Var> vars = cl.getRhs().varSet();
+				Set<Var> patVars = cl.getLhs().varSet();
 				if (!patVars.containsAll(vars)) {
 					isGround = false;
 					break;
@@ -94,7 +94,7 @@ public class MatchExpr implements Expr {
 		for (MatchClause cl : match) {
 			Substitution newS = new SimpleSubstitution();
 			Term pat = cl.getLhs();
-			Set<Var> patVars = Terms.varSet(pat);
+			Set<Var> patVars = pat.varSet();
 			for (Var x : s.iterateKeys()) {
 				if (!patVars.contains(x)) {
 					newS.put(x, s.get(x));
@@ -150,6 +150,17 @@ public class MatchExpr implements Expr {
 	@Override
 	public boolean isGround() {
 		return isGround;
+	}
+
+	@Override
+	public void varSet(Set<Var> acc) {
+		if (!isGround) {
+			matchee.varSet(acc);
+			for (MatchClause cl : match) {
+				cl.getLhs().varSet(acc);
+				cl.getRhs().varSet(acc);
+			}
+		}
 	}
 
 }

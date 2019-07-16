@@ -32,8 +32,10 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 
-import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
+import edu.harvard.seas.pl.formulog.ast.ComplexConjunct;
 import edu.harvard.seas.pl.formulog.ast.Program;
+import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
+import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.eval.Evaluation;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.eval.EvaluationResult;
@@ -41,33 +43,33 @@ import edu.harvard.seas.pl.formulog.eval.SemiInflationaryEvaluation;
 import edu.harvard.seas.pl.formulog.eval.StratifiedEvaluation;
 import edu.harvard.seas.pl.formulog.parsing.ParseException;
 import edu.harvard.seas.pl.formulog.parsing.Parser;
+import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
 import edu.harvard.seas.pl.formulog.types.TypeException;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
-import edu.harvard.seas.pl.formulog.validating.ast.ValidProgram;
 
 public final class Main {
 
 	private final CommandLine cl;
-	private final boolean debugMst; 
-	
+	private final boolean debugMst;
+
 	private Main(CommandLine cl, boolean debugMst) {
 		this.cl = cl;
 		this.debugMst = debugMst;
 	}
 
 	private void go() {
-		Program prog = parse();
-		WellTypedProgram typedProg = typeCheck(prog);
+		Program<UserPredicate<RelationSymbol>, ComplexConjunct<RelationSymbol>> prog = parse();
+		WellTypedProgram<UserPredicate<RelationSymbol>, ComplexConjunct<RelationSymbol>> typedProg = typeCheck(prog);
 		Evaluation eval = setup(typedProg);
 		evaluate(eval);
 		printResults(eval);
 	}
-	
-	private Program parse() {
+
+	private Program<UserPredicate<RelationSymbol>, ComplexConjunct<RelationSymbol>> parse() {
 		System.out.println("Parsing...");
 		try {
 			String inputDir = "";
@@ -81,10 +83,11 @@ public final class Main {
 			throw new AssertionError("impossible");
 		}
 	}
-	
-	private WellTypedProgram typeCheck(Program prog) {
+
+	private WellTypedProgram<UserPredicate<RelationSymbol>, ComplexConjunct<RelationSymbol>> typeCheck(
+			Program<UserPredicate<RelationSymbol>, ComplexConjunct<RelationSymbol>> prog) {
 		System.out.println("Type checking...");
-		TypeChecker typeChecker = new TypeChecker(prog);
+		TypeChecker<RelationSymbol> typeChecker = new TypeChecker<>(prog);
 		try {
 			return typeChecker.typeCheck();
 		} catch (TypeException e) {
@@ -92,8 +95,8 @@ public final class Main {
 			throw new AssertionError("impossible");
 		}
 	}
-	
-	private Evaluation setup(WellTypedProgram prog) {
+
+	private Evaluation setup(WellTypedProgram<UserPredicate<RelationSymbol>, ComplexConjunct<RelationSymbol>> prog) {
 		System.out.println("Rewriting and validating...");
 		try {
 			if (cl.hasOption("s")) {
@@ -106,7 +109,7 @@ public final class Main {
 			throw new AssertionError("impossible");
 		}
 	}
-	
+
 	private void evaluate(Evaluation eval) {
 		System.out.println("Evaluating...");
 		try {
@@ -116,7 +119,7 @@ public final class Main {
 			handleException("Error while evaluating the program!", e);
 		}
 	}
-	
+
 	private void printResults(Evaluation eval) {
 		System.out.println("Results:");
 		EvaluationResult res = eval.getResult();
@@ -138,7 +141,7 @@ public final class Main {
 			printSortedFacts(res.getQueryAnswer(), System.out);
 		}
 	}
-	
+
 	private static void printUsageAndDie(Options opts) {
 		HelpFormatter formatter = new HelpFormatter();
 		formatter.printHelp("formulog.jar input-file.flg", opts);

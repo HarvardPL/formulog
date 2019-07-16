@@ -1,5 +1,8 @@
 package edu.harvard.seas.pl.formulog.ast;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /*-
  * #%L
  * FormuLog
@@ -38,5 +41,13 @@ public interface Term {
 	Term applySubstitution(Substitution s);
 	
 	Term normalize(Substitution s) throws EvaluationException;
+	
+	void varSet(Set<Var> acc);
+	
+	default Set<Var> varSet() {
+		Set<Var> vars = new HashSet<>();
+		varSet(vars);
+		return vars;
+	}
 	
 }

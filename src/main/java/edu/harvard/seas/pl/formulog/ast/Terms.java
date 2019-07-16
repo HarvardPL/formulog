@@ -60,79 +60,79 @@ public final class Terms {
 		return ys;
 	}
 
-	private static final ExprVisitor<Set<Var>, Void> exprVarExtractor = new ExprVisitor<Set<Var>, Void>() {
+//	private static final ExprVisitor<Set<Var>, Void> exprVarExtractor = new ExprVisitor<Set<Var>, Void>() {
+//
+//		@Override
+//		public Void visit(MatchExpr matchExpr, Set<Var> in) {
+//			varSetOfTerm(matchExpr.getMatchee(), in);
+//			for (MatchClause cl : matchExpr.getClauses()) {
+//				Set<Var> patternVars = varSet(cl.getLhs());
+//				Set<Var> rhsVars = varSet(cl.getRhs());
+//				rhsVars.removeAll(patternVars);
+//				in.addAll(rhsVars);
+//			}
+//			return null;
+//		}
+//
+//		@Override
+//		public Void visit(FunctionCall funcCall, Set<Var> in) {
+//			for (Term arg : funcCall.getArgs()) {
+//				varSetOfTerm(arg, in);
+//			}
+//			return null;
+//		}
+//
+//	};
+//
+//	private static final TermVisitor<Set<Var>, Void> termVarExtractor = new TermVisitor<Set<Var>, Void>() {
+//
+//		@Override
+//		public Void visit(Var t, Set<Var> in) {
+//			in.add(t);
+//			return null;
+//		}
+//
+//		@Override
+//		public Void visit(Constructor c, Set<Var> in) {
+//			for (Term arg : c.getArgs()) {
+//				varSetOfTerm(arg, in);
+//			}
+//			return null;
+//		}
+//
+//		@Override
+//		public Void visit(Primitive<?> p, Set<Var> in) {
+//			return null;
+//		}
+//
+//		@Override
+//		public Void visit(Expr e, Set<Var> in) {
+//			varSetOfExpr(e, in);
+//			return null;
+//		}
+//
+//	};
 
-		@Override
-		public Void visit(MatchExpr matchExpr, Set<Var> in) {
-			varSetOfTerm(matchExpr.getMatchee(), in);
-			for (MatchClause cl : matchExpr.getClauses()) {
-				Set<Var> patternVars = varSet(cl.getLhs());
-				Set<Var> rhsVars = varSet(cl.getRhs());
-				rhsVars.removeAll(patternVars);
-				in.addAll(rhsVars);
-			}
-			return null;
-		}
-
-		@Override
-		public Void visit(FunctionCall funcCall, Set<Var> in) {
-			for (Term arg : funcCall.getArgs()) {
-				varSetOfTerm(arg, in);
-			}
-			return null;
-		}
-
-	};
-
-	private static final TermVisitor<Set<Var>, Void> termVarExtractor = new TermVisitor<Set<Var>, Void>() {
-
-		@Override
-		public Void visit(Var t, Set<Var> in) {
-			in.add(t);
-			return null;
-		}
-
-		@Override
-		public Void visit(Constructor c, Set<Var> in) {
-			for (Term arg : c.getArgs()) {
-				varSetOfTerm(arg, in);
-			}
-			return null;
-		}
-
-		@Override
-		public Void visit(Primitive<?> p, Set<Var> in) {
-			return null;
-		}
-
-		@Override
-		public Void visit(Expr e, Set<Var> in) {
-			varSetOfExpr(e, in);
-			return null;
-		}
-
-	};
-
-	private static void varSetOfExpr(Expr e, Set<Var> vars) {
-		if (!e.isGround()) {
-			e.visit(exprVarExtractor, vars);
-		}
-	}
-
-	private static void varSetOfTerm(Term t, Set<Var> vars) {
-		if (!t.isGround()) {
-			t.visit(termVarExtractor, vars);
-		}
-	}
-
-	public static Set<Var> varSet(Term t) {
-		Set<Var> vars = new HashSet<>();
-		varSetOfTerm(t, vars);
-		return vars;
-	}
+//	private static void varSetOfExpr(Expr e, Set<Var> vars) {
+//		if (!e.isGround()) {
+//			e.visit(exprVarExtractor, vars);
+//		}
+//	}
+//
+//	private static void varSetOfTerm(Term t, Set<Var> vars) {
+//		if (!t.isGround()) {
+//			t.visit(termVarExtractor, vars);
+//		}
+//	}
+//
+//	public static Set<Var> varSet(Term t) {
+//		Set<Var> vars = new HashSet<>();
+//		varSetOfTerm(t, vars);
+//		return vars;
+//	}
 
 	public static boolean isGround(Term t, Set<Var> boundVars) {
-		return boundVars.containsAll(varSet(t));
+		return boundVars.containsAll(t.varSet());
 	}
 
 	public static Set<Var> getNonBindingVarInstances(Term t) {
@@ -159,7 +159,7 @@ public final class Terms {
 
 			@Override
 			public Void visit(Expr expr, Void in) {
-				vars.addAll(Terms.varSet(expr));
+				vars.addAll(expr.varSet());
 				return null;
 			}
 

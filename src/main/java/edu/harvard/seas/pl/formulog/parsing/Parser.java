@@ -57,8 +57,7 @@ import edu.harvard.seas.pl.formulog.ast.I32;
 import edu.harvard.seas.pl.formulog.ast.I64;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
-import edu.harvard.seas.pl.formulog.ast.Program;
-import edu.harvard.seas.pl.formulog.ast.Rule;
+import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.ast.StringTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
@@ -186,11 +185,11 @@ public class Parser {
 		}
 	}
 
-	public Program<UserPredicate<RelationSymbol>, ComplexConjunct<RelationSymbol>> parse(Reader r) throws ParseException {
+	public BasicProgram<RelationSymbol> parse(Reader r) throws ParseException {
 		return parse(r, Paths.get(""));
 	}
 
-	public Program<UserPredicate<RelationSymbol>, ComplexConjunct<RelationSymbol>> parse(Reader r, Path inputDir) throws ParseException {
+	public BasicProgram<RelationSymbol> parse(Reader r, Path inputDir) throws ParseException {
 		try {
 			DatalogParser parser = getParser(r);
 			StmtProcessor stmtProcessor = new StmtProcessor(inputDir);
@@ -265,7 +264,7 @@ public class Parser {
 	private final class StmtProcessor extends DatalogBaseVisitor<Void> {
 
 		private final Map<RelationSymbol, Set<Term[]>> initialFacts = new HashMap<>();
-		private final Map<RelationSymbol, Set<Rule<UserPredicate<RelationSymbol>, ComplexConjunct<RelationSymbol>>>> rules = new HashMap<>();
+		private final Map<RelationSymbol, Set<BasicRule<RelationSymbol>>> rules = new HashMap<>();
 		private final FunctionDefManager functionDefManager = new FunctionDefManager(symbolManager);
 		private final FunctionCallFactory functionCallFactory = new FunctionCallFactory(functionDefManager);
 		private final Map<FunctionSymbol, Pair<AlgebraicDataType, Integer>> recordLabels = new HashMap<>();
@@ -1319,11 +1318,11 @@ public class Parser {
 			facts.add(args);
 		}
 
-		public Program<UserPredicate<RelationSymbol>, ComplexConjunct<RelationSymbol>> getProgram() throws ParseException {
+		public BasicProgram<RelationSymbol> getProgram() throws ParseException {
 			for (RelationSymbol sym : externalEdbs) {
 				readEdbFromFile(sym);
 			}
-			return new Program<UserPredicate<RelationSymbol>, ComplexConjunct<RelationSymbol>>() {
+			return new BasicProgram<RelationSymbol>() {
 
 				@Override
 				public Set<FunctionSymbol> getFunctionSymbols() {
@@ -1357,7 +1356,7 @@ public class Parser {
 				}
 
 				@Override
-				public Set<Rule<UserPredicate<RelationSymbol>, ComplexConjunct<RelationSymbol>>> getRules(RelationSymbol sym) {
+				public Set<BasicRule<RelationSymbol>> getRules(RelationSymbol sym) {
 					if (!sym.isIdbSymbol()) {
 						throw new IllegalArgumentException();
 					}
