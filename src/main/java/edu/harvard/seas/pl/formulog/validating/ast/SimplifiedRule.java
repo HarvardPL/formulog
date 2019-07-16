@@ -33,21 +33,19 @@ import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctExnVisit
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
-import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 
-public class SimplifiedRule<R extends RelationSymbol> implements Rule<R, SimpleConjunct<R>> {
+public class SimplifiedRule implements Rule<Predicate, SimpleConjunct> {
 
-	private final Predicate<R> head;
-	private final List<SimpleConjunct<R>> body;
+	private final Predicate head;
+	private final List<SimpleConjunct> body;
 
-	public static <R extends RelationSymbol> SimplifiedRule<R> make(BasicRule<R> rule) throws InvalidProgramException {
-		Simplifier<R> simplifier = new Simplifier<>();
-		for (ComplexConjunct<R> atom : rule) {
+	public static SimplifiedRule make(BasicRule rule) throws InvalidProgramException {
+		Simplifier simplifier = new Simplifier();
+		for (ComplexConjunct atom : rule) {
 			try {
 				simplifier.add(atom);
 			} catch (InvalidProgramException e) {
@@ -55,24 +53,22 @@ public class SimplifiedRule<R extends RelationSymbol> implements Rule<R, SimpleC
 						+ "\nCould not simplify this atom: " + atom + "\nReason:\n" + e.getMessage());
 			}
 		}
-		UserPredicate<R> head = rule.getHead();
+		UserPredicate head = rule.getHead();
 		Set<Var> boundVars = simplifier.getBoundVars();
-		for (Term t : head.getArgs()) {
-			if (!boundVars.containsAll(Terms.varSet(t))) {
-				throw new InvalidProgramException("Unbound variables in head of rule:\n" + rule);
-			}
+		if (!boundVars.containsAll(head.varSet())) {
+			throw new InvalidProgramException("Unbound variables in head of rule:\n" + rule);
 		}
-		Predicate<R> newHead = Predicate.make(head.getSymbol(), head.getArgs(), boundVars, head.isNegated());
-		return new SimplifiedRule<>(newHead, simplifier.getConjuncts());
+		Predicate newHead = Predicate.make(head.getSymbol(), head.getArgs(), boundVars, head.isNegated());
+		return new SimplifiedRule(newHead, simplifier.getConjuncts());
 	}
 
-	private SimplifiedRule(Predicate<R> head, List<SimpleConjunct<R>> body) {
+	private SimplifiedRule(Predicate head, List<SimpleConjunct> body) {
 		this.head = head;
 		this.body = body;
 	}
 
 	@Override
-	public Predicate<R> getHead() {
+	public Predicate getHead() {
 		return head;
 	}
 
@@ -82,12 +78,12 @@ public class SimplifiedRule<R extends RelationSymbol> implements Rule<R, SimpleC
 	}
 
 	@Override
-	public SimpleConjunct<R> getBody(int idx) {
+	public SimpleConjunct getBody(int idx) {
 		return body.get(idx);
 	}
 
 	@Override
-	public Iterator<SimpleConjunct<R>> iterator() {
+	public Iterator<SimpleConjunct> iterator() {
 		return body.iterator();
 	}
 
@@ -108,7 +104,7 @@ public class SimplifiedRule<R extends RelationSymbol> implements Rule<R, SimpleC
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		SimplifiedRule<?> other = (SimplifiedRule<?>) obj;
+		SimplifiedRule other = (SimplifiedRule) obj;
 		if (body == null) {
 			if (other.body != null)
 				return false;
@@ -127,23 +123,23 @@ public class SimplifiedRule<R extends RelationSymbol> implements Rule<R, SimpleC
 		return "SimplifiedRule [head=" + head + ", body=" + body + "]";
 	}
 
-	private static class Simplifier<R extends RelationSymbol> {
+	private static class Simplifier {
 
-		private final List<SimpleConjunct<R>> acc = new ArrayList<>();
+		private final List<SimpleConjunct> acc = new ArrayList<>();
 		private final Set<Var> boundVars = new HashSet<>();
 
-		public void add(ComplexConjunct<R> atom) throws InvalidProgramException {
-			List<ComplexConjunct<R>> todo = new ArrayList<>();
-			SimpleConjunct<R> c = atom
-					.accept(new ComplexConjunctExnVisitor<R, Void, SimpleConjunct<R>, InvalidProgramException>() {
+		public void add(ComplexConjunct atom) throws InvalidProgramException {
+			List<ComplexConjunct> todo = new ArrayList<>();
+			SimpleConjunct c = atom
+					.accept(new ComplexConjunctExnVisitor<Void, SimpleConjunct, InvalidProgramException>() {
 
 						@Override
-						public SimpleConjunct<R> visit(UnificationPredicate<R> unificationPredicate, Void input)
+						public SimpleConjunct visit(UnificationPredicate unificationPredicate, Void input)
 								throws InvalidProgramException {
 							Term lhs = unificationPredicate.getLhs();
 							Term rhs = unificationPredicate.getRhs();
-							boolean leftBound = boundVars.containsAll(Terms.varSet(lhs));
-							boolean rightBound = boundVars.containsAll(Terms.varSet(rhs));
+							boolean leftBound = boundVars.containsAll(lhs.varSet());
+							boolean rightBound = boundVars.containsAll(rhs.varSet());
 							if (unificationPredicate.isNegated() && !(leftBound && rightBound)) {
 								throw new InvalidProgramException();
 							}
@@ -183,8 +179,8 @@ public class SimplifiedRule<R extends RelationSymbol> implements Rule<R, SimpleC
 							}
 						}
 
-						private Destructor<R> makeDestructor(Term boundTerm, Constructor unboundCtor,
-								List<ComplexConjunct<R>> todo) {
+						private Destructor makeDestructor(Term boundTerm, Constructor unboundCtor,
+								List<ComplexConjunct> todo) {
 							Term[] args = unboundCtor.getArgs();
 							Var[] vars = new Var[args.length];
 							for (int i = 0; i < args.length; ++i) {
@@ -197,13 +193,13 @@ public class SimplifiedRule<R extends RelationSymbol> implements Rule<R, SimpleC
 						}
 
 						@Override
-						public SimpleConjunct<R> visit(UserPredicate<R> userPredicate, Void input) {
+						public SimpleConjunct visit(UserPredicate userPredicate, Void input) {
 							Term[] args = userPredicate.getArgs();
 							Term[] newArgs = new Term[args.length];
 							Set<Var> seen = new HashSet<>();
 							for (int i = 0; i < args.length; ++i) {
 								Term arg = args[i];
-								if (boundVars.containsAll(Terms.varSet(arg))) {
+								if (boundVars.containsAll(arg.varSet())) {
 									newArgs[i] = arg;
 								} else if (arg instanceof Var && seen.add((Var) arg)) {
 									newArgs[i] = arg;
@@ -213,7 +209,7 @@ public class SimplifiedRule<R extends RelationSymbol> implements Rule<R, SimpleC
 									todo.add(UnificationPredicate.make(y, arg, false));
 								}
 							}
-							SimpleConjunct<R> c = Predicate.make(userPredicate.getSymbol(), newArgs, boundVars,
+							SimpleConjunct c = Predicate.make(userPredicate.getSymbol(), newArgs, boundVars,
 									userPredicate.isNegated());
 							boundVars.addAll(seen);
 							return c;
@@ -223,12 +219,12 @@ public class SimplifiedRule<R extends RelationSymbol> implements Rule<R, SimpleC
 			if (c != null) {
 				acc.add(c);
 			}
-			for (ComplexConjunct<R> x : todo) {
+			for (ComplexConjunct x : todo) {
 				add(x);
 			}
 		}
 
-		public List<SimpleConjunct<R>> getConjuncts() {
+		public List<SimpleConjunct> getConjuncts() {
 			return acc;
 		}
 

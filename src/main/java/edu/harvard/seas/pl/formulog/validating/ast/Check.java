@@ -22,17 +22,16 @@ package edu.harvard.seas.pl.formulog.validating.ast;
 
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 
-public class Check<R extends RelationSymbol> implements SimpleConjunct<R> {
+public class Check implements SimpleConjunct {
 
 	private final Term lhs;
 	private final Term rhs;
 	private final boolean negated;
 
-	public static <R extends RelationSymbol> Check<R> make(Term lhs, Term rhs, boolean negated) {
-		return new Check<>(lhs, rhs, negated);
+	public static Check make(Term lhs, Term rhs, boolean negated) {
+		return new Check(lhs, rhs, negated);
 	}
 	
 	private Check(Term lhs, Term rhs, boolean negated) {
@@ -52,12 +51,12 @@ public class Check<R extends RelationSymbol> implements SimpleConjunct<R> {
 	}
 	
 	@Override
-	public <I, O> O accept(SimpleConjunctVisitor<R, I, O> visitor, I input) {
+	public <I, O> O accept(SimpleConjunctVisitor<I, O> visitor, I input) {
 		return visitor.visit(this, input);
 	}
 
 	@Override
-	public <I, O, E extends Throwable> O accept(SimpleConjunctExnVisitor<R, I, O, E> visitor, I input) throws E {
+	public <I, O, E extends Throwable> O accept(SimpleConjunctExnVisitor<I, O, E> visitor, I input) throws E {
 		return visitor.visit(this, input);
 	}
 

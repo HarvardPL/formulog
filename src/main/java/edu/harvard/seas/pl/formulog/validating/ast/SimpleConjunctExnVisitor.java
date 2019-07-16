@@ -20,16 +20,14 @@ package edu.harvard.seas.pl.formulog.validating.ast;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
+public interface SimpleConjunctExnVisitor<I, O, E extends Throwable> {
 
-public interface SimpleConjunctExnVisitor<R extends RelationSymbol, I, O, E extends Throwable> {
+	O visit(Assignment assignment, I input) throws E;
 
-	O visit(Assignment<R> assignment, I input) throws E;
+	O visit(Check check, I input) throws E;
 
-	O visit(Check<R> check, I input) throws E;
+	O visit(Destructor destructor, I input) throws E;
 
-	O visit(Destructor<R> destructor, I input) throws E;
-
-	O visit(Predicate<R> predicate, I input) throws E;
+	O visit(Predicate predicate, I input) throws E;
 
 }

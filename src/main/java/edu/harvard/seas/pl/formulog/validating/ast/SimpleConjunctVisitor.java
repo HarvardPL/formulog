@@ -20,16 +20,14 @@ package edu.harvard.seas.pl.formulog.validating.ast;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
+public interface SimpleConjunctVisitor<I, O> {
 
-public interface SimpleConjunctVisitor<R extends RelationSymbol, I, O> {
+	O visit(Assignment assignment, I input);
 
-	O visit(Assignment<R> assignment, I input);
+	O visit(Check check, I input);
 
-	O visit(Check<R> check, I input);
+	O visit(Destructor destructor, I input);
 
-	O visit(Destructor<R> destructor, I input);
-
-	O visit(Predicate<R> predicate, I input);
+	O visit(Predicate predicate, I input);
 
 }

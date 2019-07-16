@@ -57,7 +57,7 @@ public class PredicateFunctionSymbolFactory {
 
 	public interface PredicateFunctionSymbol extends FunctionSymbol {
 
-		Symbol getPredicateSymbol();
+		RelationSymbol getPredicateSymbol();
 
 		boolean isReification();
 
@@ -81,7 +81,7 @@ public class PredicateFunctionSymbolFactory {
 			return predSymbol + "$query";
 		}
 
-		public Symbol getPredicateSymbol() {
+		public RelationSymbol getPredicateSymbol() {
 			return predSymbol;
 		}
 
@@ -99,7 +99,7 @@ public class PredicateFunctionSymbolFactory {
 	
 	private class ReifyPredicateSymbol implements PredicateFunctionSymbol {
 
-		private final Symbol predSymbol;
+		private final RelationSymbol predSymbol;
 		private final FunctorType type;
 
 		private ReifyPredicateSymbol(RelationSymbol predSymbol) {
@@ -127,7 +127,7 @@ public class PredicateFunctionSymbolFactory {
 			return predSymbol + "$reify";
 		}
 
-		public Symbol getPredicateSymbol() {
+		public RelationSymbol getPredicateSymbol() {
 			return predSymbol;
 		}
 

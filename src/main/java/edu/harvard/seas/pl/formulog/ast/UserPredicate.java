@@ -29,23 +29,23 @@ import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctVisitor;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 
-public class UserPredicate<R extends RelationSymbol> implements ComplexConjunct<R> {
+public class UserPredicate implements ComplexConjunct {
 
-	private final R symbol;
+	private final RelationSymbol symbol;
 	private final Term[] args;
 	private final boolean negated;
 	
-	public static <R extends RelationSymbol> UserPredicate<R> make(R symbol, Term[] args, boolean negated) {
-		return new UserPredicate<>(symbol, args, negated);
+	public static UserPredicate make(RelationSymbol symbol, Term[] args, boolean negated) {
+		return new UserPredicate(symbol, args, negated);
 	}
 	
-	private UserPredicate(R symbol, Term[] args, boolean negated) {
+	private UserPredicate(RelationSymbol symbol, Term[] args, boolean negated) {
 		this.symbol = symbol;
 		this.args = args;
 		this.negated = negated;
 	}
 
-	public R getSymbol() {
+	public RelationSymbol getSymbol() {
 		return symbol;
 	}
 
@@ -59,7 +59,7 @@ public class UserPredicate<R extends RelationSymbol> implements ComplexConjunct<
 	}
 
 	@Override
-	public UserPredicate<R> applySubstitution(Substitution subst) {
+	public UserPredicate applySubstitution(Substitution subst) {
 		Term[] newArgs = new Term[args.length];
 		for (int i = 0; i < args.length; ++i) {
 			newArgs[i] = args[i].applySubstitution(subst);
@@ -85,7 +85,7 @@ public class UserPredicate<R extends RelationSymbol> implements ComplexConjunct<
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		UserPredicate<?> other = (UserPredicate<?>) obj;
+		UserPredicate other = (UserPredicate) obj;
 		if (!Arrays.equals(args, other.args))
 			return false;
 		if (negated != other.negated)
@@ -120,12 +120,12 @@ public class UserPredicate<R extends RelationSymbol> implements ComplexConjunct<
 	}
 
 	@Override
-	public <I, O> O accept(ComplexConjunctVisitor<R, I, O> visitor, I input) {
+	public <I, O> O accept(ComplexConjunctVisitor<I, O> visitor, I input) {
 		return visitor.visit(this, input);
 	}
 
 	@Override
-	public <I, O, E extends Throwable> O accept(ComplexConjunctExnVisitor<R, I, O, E> visitor, I input) throws E {
+	public <I, O, E extends Throwable> O accept(ComplexConjunctExnVisitor<I, O, E> visitor, I input) throws E {
 		return visitor.visit(this, input);
 	}
 

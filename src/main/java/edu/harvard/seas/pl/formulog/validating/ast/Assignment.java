@@ -23,16 +23,15 @@ package edu.harvard.seas.pl.formulog.validating.ast;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 
-public class Assignment<R extends RelationSymbol> implements SimpleConjunct<R> {
+public class Assignment implements SimpleConjunct {
 
 	private final Var var;
 	private final Term rhs;
 	
-	public static <R extends RelationSymbol> Assignment<R> make(Var var, Term rhs) {
-		return new Assignment<>(var, rhs);
+	public static Assignment make(Var var, Term rhs) {
+		return new Assignment(var, rhs);
 	}
 	
 	public Assignment(Var var, Term rhs) {
@@ -45,12 +44,12 @@ public class Assignment<R extends RelationSymbol> implements SimpleConjunct<R> {
 	}
 	
 	@Override
-	public <I, O> O accept(SimpleConjunctVisitor<R, I, O> visitor, I input) {
+	public <I, O> O accept(SimpleConjunctVisitor<I, O> visitor, I input) {
 		return visitor.visit(this, input);
 	}
 
 	@Override
-	public <I, O, E extends Throwable> O accept(SimpleConjunctExnVisitor<R, I, O, E> visitor, I input) throws E {
+	public <I, O, E extends Throwable> O accept(SimpleConjunctExnVisitor<I, O, E> visitor, I input) throws E {
 		return visitor.visit(this, input);
 	}
 

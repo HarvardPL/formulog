@@ -21,12 +21,11 @@ package edu.harvard.seas.pl.formulog.validating.ast;
  */
 
 import edu.harvard.seas.pl.formulog.ast.Conjunct;
-import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 
-public interface SimpleConjunct<R extends RelationSymbol> extends Conjunct<R> {
+public interface SimpleConjunct extends Conjunct {
 
-	<I, O> O accept(SimpleConjunctVisitor<R, I, O> visitor, I input);
+	<I, O> O accept(SimpleConjunctVisitor<I, O> visitor, I input);
 	
-	<I, O, E extends Throwable> O accept(SimpleConjunctExnVisitor<R, I, O, E> visitor, I input) throws E;
+	<I, O, E extends Throwable> O accept(SimpleConjunctExnVisitor<I, O, E> visitor, I input) throws E;
 	
 }

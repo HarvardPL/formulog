@@ -26,26 +26,25 @@ import java.util.List;
 import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.Term;
-import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 
-public class Predicate<R extends RelationSymbol> implements SimpleConjunct<R> {
+public class Predicate implements SimpleConjunct {
 
-	private final R symbol;
+	private final RelationSymbol symbol;
 	private final Term[] boundTerms;
 	private final Var[] unboundVars;
 	private final boolean[] bindingPattern;
 	private final boolean negated;
 
-	public static <R extends RelationSymbol> Predicate<R> make(R symbol, Term[] args, Set<Var> boundVars, boolean negated) {
+	public static Predicate make(RelationSymbol symbol, Term[] args, Set<Var> boundVars, boolean negated) {
 		assert symbol.getArity() == args.length : "Symbol does not match argument arity";
 		List<Var> unbound = new ArrayList<>();
 		List<Term> bound = new ArrayList<>();
 		boolean[] pattern = new boolean[symbol.getArity()];
 		int i = 0;
 		for (Term t : args) {
-			if ((pattern[i] = boundVars.containsAll(Terms.varSet(t)))) {
+			if ((pattern[i] = boundVars.containsAll(t.varSet()))) {
 				bound.add(t);
 			} else {
 				assert t instanceof Var;
@@ -56,10 +55,10 @@ public class Predicate<R extends RelationSymbol> implements SimpleConjunct<R> {
 		}
 		Term[] bv = bound.toArray(new Term[0]);
 		Var[] uv = unbound.toArray(new Var[0]);
-		return new Predicate<>(symbol, bv, uv, pattern, negated);
+		return new Predicate(symbol, bv, uv, pattern, negated);
 	}
 
-	private Predicate(R symbol, Term[] boundTerms, Var[] unboundVars, boolean[] bindingPattern, boolean negated) {
+	private Predicate(RelationSymbol symbol, Term[] boundTerms, Var[] unboundVars, boolean[] bindingPattern, boolean negated) {
 		this.symbol = symbol;
 		this.boundTerms = boundTerms;
 		this.unboundVars = unboundVars;
@@ -67,7 +66,7 @@ public class Predicate<R extends RelationSymbol> implements SimpleConjunct<R> {
 		this.negated = negated;
 	}
 
-	public R getSymbol() {
+	public RelationSymbol getSymbol() {
 		return symbol;
 	}
 
@@ -88,12 +87,12 @@ public class Predicate<R extends RelationSymbol> implements SimpleConjunct<R> {
 	}
 
 	@Override
-	public <I, O> O accept(SimpleConjunctVisitor<R, I, O> visitor, I input) {
+	public <I, O> O accept(SimpleConjunctVisitor<I, O> visitor, I input) {
 		return visitor.visit(this, input);
 	}
 
 	@Override
-	public <I, O, E extends Throwable> O accept(SimpleConjunctExnVisitor<R, I, O, E> visitor, I input) throws E {
+	public <I, O, E extends Throwable> O accept(SimpleConjunctExnVisitor<I, O, E> visitor, I input) throws E {
 		return visitor.visit(this, input);
 	}
 

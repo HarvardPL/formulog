@@ -145,6 +145,7 @@ import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbolType;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.IndexedConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.IndexedTypeSymbol;
+import edu.harvard.seas.pl.formulog.symbols.MutableRelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
@@ -185,11 +186,11 @@ public class Parser {
 		}
 	}
 
-	public BasicProgram<RelationSymbol> parse(Reader r) throws ParseException {
+	public BasicProgram parse(Reader r) throws ParseException {
 		return parse(r, Paths.get(""));
 	}
 
-	public BasicProgram<RelationSymbol> parse(Reader r, Path inputDir) throws ParseException {
+	public BasicProgram parse(Reader r, Path inputDir) throws ParseException {
 		try {
 			DatalogParser parser = getParser(r);
 			StmtProcessor stmtProcessor = new StmtProcessor(inputDir);
@@ -264,14 +265,14 @@ public class Parser {
 	private final class StmtProcessor extends DatalogBaseVisitor<Void> {
 
 		private final Map<RelationSymbol, Set<Term[]>> initialFacts = new HashMap<>();
-		private final Map<RelationSymbol, Set<BasicRule<RelationSymbol>>> rules = new HashMap<>();
+		private final Map<RelationSymbol, Set<BasicRule>> rules = new HashMap<>();
 		private final FunctionDefManager functionDefManager = new FunctionDefManager(symbolManager);
 		private final FunctionCallFactory functionCallFactory = new FunctionCallFactory(functionDefManager);
 		private final Map<FunctionSymbol, Pair<AlgebraicDataType, Integer>> recordLabels = new HashMap<>();
 		private final Map<ConstructorSymbol, FunctionSymbol[]> constructorLabels = new HashMap<>();
 		private final Set<RelationSymbol> externalEdbs = new HashSet<>();
 		private final Path inputDir;
-		private UserPredicate<RelationSymbol> query;
+		private UserPredicate query;
 
 		public StmtProcessor(Path inputDir) {
 			this.inputDir = inputDir;
@@ -314,21 +315,22 @@ public class Parser {
 		}
 
 		void setAggregate(RelationSymbol rel, AggTypeListContext ctx) {
-			for (Iterator<AggTypeContext> it = ctx.aggType().iterator(); it.hasNext();) {
-				AggTypeContext agctx = it.next();
-				if (agctx.func != null) {
-					if (it.hasNext()) {
-						throw new RuntimeException(
-								"Aggregates can only be set for the last column of a relation: " + rel);
-					}
-					Symbol funcSym = symbolManager.lookupSymbol(agctx.func.getText());
-					if (!(funcSym instanceof FunctionSymbol)) {
-						throw new RuntimeException("Non-function used in aggregate: " + funcSym);
-					}
-					Term unit = extract(agctx.unit);
-					rel.setAggregate((FunctionSymbol) funcSym, unit);
-				}
-			}
+			throw new UnsupportedOperationException();
+//			for (Iterator<AggTypeContext> it = ctx.aggType().iterator(); it.hasNext();) {
+//				AggTypeContext agctx = it.next();
+//				if (agctx.func != null) {
+//					if (it.hasNext()) {
+//						throw new RuntimeException(
+//								"Aggregates can only be set for the last column of a relation: " + rel);
+//					}
+//					Symbol funcSym = symbolManager.lookupSymbol(agctx.func.getText());
+//					if (!(funcSym instanceof FunctionSymbol)) {
+//						throw new RuntimeException("Non-function used in aggregate: " + funcSym);
+//					}
+//					Term unit = extract(agctx.unit);
+//					rel.setAggregate((FunctionSymbol) funcSym, unit);
+//				}
+//			}
 		}
 
 		@Override
@@ -339,7 +341,7 @@ public class Parser {
 				throw new RuntimeException("Cannot use type variables in the signature of a relation: " + name);
 			}
 			boolean isIdb = ctx.relType.getType() == DatalogLexer.OUTPUT;
-			RelationSymbol sym = symbolManager.createRelationSymbol(name, types.size(), isIdb,
+			MutableRelationSymbol sym = symbolManager.createRelationSymbol(name, types.size(), isIdb,
 					new FunctorType(types, BuiltInTypes.bool));
 			setAggregate(sym, ctx.aggTypeList());
 			for (AnnotationContext actx : ctx.annotation()) {
@@ -509,10 +511,10 @@ public class Parser {
 
 		@Override
 		public Void visitClauseStmt(ClauseStmtContext ctx) {
-			List<ComplexConjunct<RelationSymbol>> head = atomListContextToAtomList(ctx.clause().head);
-			List<ComplexConjunct<RelationSymbol>> body = atomListContextToAtomList(ctx.clause().body);
-			List<BasicRule<RelationSymbol>> newRules = makeRules(head, body);
-			for (BasicRule<RelationSymbol> rule : newRules) {
+			List<ComplexConjunct> head = atomListContextToAtomList(ctx.clause().head);
+			List<ComplexConjunct> body = atomListContextToAtomList(ctx.clause().body);
+			List<BasicRule> newRules = makeRules(head, body);
+			for (BasicRule rule : newRules) {
 				RelationSymbol sym = rule.getHead().getSymbol();
 				if (!sym.isIdbSymbol()) {
 					throw new RuntimeException("Cannot define a rule for a non-IDB symbol: " + sym);
@@ -522,19 +524,17 @@ public class Parser {
 			return null;
 		}
 
-		private BasicRule<RelationSymbol> makeRule(ComplexConjunct<RelationSymbol> head,
-				List<ComplexConjunct<RelationSymbol>> body) {
-			List<ComplexConjunct<RelationSymbol>> newBody = new ArrayList<>(body);
+		private BasicRule makeRule(ComplexConjunct head, List<ComplexConjunct> body) {
+			List<ComplexConjunct> newBody = new ArrayList<>(body);
 			if (!(head instanceof UserPredicate)) {
 				throw new RuntimeException("Cannot create rule with non-user predicate in head: " + head);
 			}
-			return BasicRule.make((UserPredicate<RelationSymbol>) head, newBody);
+			return BasicRule.make((UserPredicate) head, newBody);
 		}
 
-		private List<BasicRule<RelationSymbol>> makeRules(List<ComplexConjunct<RelationSymbol>> head,
-				List<ComplexConjunct<RelationSymbol>> body) {
-			List<BasicRule<RelationSymbol>> rules = new ArrayList<>();
-			for (ComplexConjunct<RelationSymbol> hd : head) {
+		private List<BasicRule> makeRules(List<ComplexConjunct> head, List<ComplexConjunct> body) {
+			List<BasicRule> rules = new ArrayList<>();
+			for (ComplexConjunct hd : head) {
 				rules.add(makeRule(hd, body));
 			}
 			return rules;
@@ -581,11 +581,10 @@ public class Parser {
 
 		@Override
 		public Void visitFactStmt(FactStmtContext ctx) {
-			UserPredicate<RelationSymbol> fact = (UserPredicate<RelationSymbol>) ctx.fact().atom()
-					.accept(atomExtractor);
+			UserPredicate fact = (UserPredicate) ctx.fact().atom().accept(atomExtractor);
 			RelationSymbol sym = fact.getSymbol();
 			if (sym.isIdbSymbol()) {
-				BasicRule<RelationSymbol> rule = makeRule(fact, Collections.emptyList());
+				BasicRule rule = makeRule(fact, Collections.emptyList());
 				rules.get(sym).add(rule);
 			} else {
 				initialFacts.get(sym).add(fact.getArgs());
@@ -595,18 +594,18 @@ public class Parser {
 
 		@Override
 		public Void visitQueryStmt(QueryStmtContext ctx) {
-			ComplexConjunct<RelationSymbol> a = ctx.query().atom().accept(atomExtractor);
-			if (!(query instanceof UserPredicate<?>)) {
+			ComplexConjunct a = ctx.query().atom().accept(atomExtractor);
+			if (!(query instanceof UserPredicate)) {
 				throw new RuntimeException("Query must be for a user-defined predicate.");
 			}
 			if (query != null) {
 				throw new RuntimeException("Cannot have multiple queries in the same program.");
 			}
-			query = (UserPredicate<RelationSymbol>) a;
+			query = (UserPredicate) a;
 			return null;
 		}
 
-		List<ComplexConjunct<RelationSymbol>> atomListContextToAtomList(AtomListContext ctx) {
+		List<ComplexConjunct> atomListContextToAtomList(AtomListContext ctx) {
 			return map(ctx.atom(), a -> a.accept(atomExtractor));
 		}
 
@@ -1245,9 +1244,9 @@ public class Parser {
 			return map(ctxs, this::extract).toArray(Terms.emptyArray());
 		}
 
-		private final DatalogVisitor<ComplexConjunct<RelationSymbol>> atomExtractor = new DatalogBaseVisitor<ComplexConjunct<RelationSymbol>>() {
+		private final DatalogVisitor<ComplexConjunct> atomExtractor = new DatalogBaseVisitor<ComplexConjunct>() {
 
-			private ComplexConjunct<RelationSymbol> extractAtom(PredicateContext ctx, boolean negated) {
+			private ComplexConjunct extractAtom(PredicateContext ctx, boolean negated) {
 				Term[] args = termContextsToTerms(ctx.termArgs().term());
 				Symbol sym = symbolManager.lookupSymbol(ctx.ID().getText());
 				if (sym instanceof FunctionSymbol) {
@@ -1265,29 +1264,29 @@ public class Parser {
 			}
 
 			@Override
-			public ComplexConjunct<RelationSymbol> visitNormalAtom(NormalAtomContext ctx) {
+			public ComplexConjunct visitNormalAtom(NormalAtomContext ctx) {
 				return extractAtom(ctx.predicate(), false);
 			}
 
 			@Override
-			public ComplexConjunct<RelationSymbol> visitNegatedAtom(NegatedAtomContext ctx) {
+			public ComplexConjunct visitNegatedAtom(NegatedAtomContext ctx) {
 				return extractAtom(ctx.predicate(), true);
 			}
 
 			@Override
-			public ComplexConjunct<RelationSymbol> visitUnification(UnificationContext ctx) {
+			public ComplexConjunct visitUnification(UnificationContext ctx) {
 				Term[] args = termContextsToTerms(ctx.term());
 				return UnificationPredicate.make(args[0], args[1], false);
 			}
 
 			@Override
-			public ComplexConjunct<RelationSymbol> visitDisunification(DisunificationContext ctx) {
+			public ComplexConjunct visitDisunification(DisunificationContext ctx) {
 				Term[] args = termContextsToTerms(ctx.term());
 				return UnificationPredicate.make(args[0], args[1], true);
 			}
 
 			@Override
-			public ComplexConjunct<RelationSymbol> visitTermAtom(TermAtomContext ctx) {
+			public ComplexConjunct visitTermAtom(TermAtomContext ctx) {
 				Term arg = extract(ctx.term());
 				return ComplexConjuncts.unifyWithBool(arg, true);
 			}
@@ -1318,11 +1317,11 @@ public class Parser {
 			facts.add(args);
 		}
 
-		public BasicProgram<RelationSymbol> getProgram() throws ParseException {
+		public BasicProgram getProgram() throws ParseException {
 			for (RelationSymbol sym : externalEdbs) {
 				readEdbFromFile(sym);
 			}
-			return new BasicProgram<RelationSymbol>() {
+			return new BasicProgram() {
 
 				@Override
 				public Set<FunctionSymbol> getFunctionSymbols() {
@@ -1356,7 +1355,7 @@ public class Parser {
 				}
 
 				@Override
-				public Set<BasicRule<RelationSymbol>> getRules(RelationSymbol sym) {
+				public Set<BasicRule> getRules(RelationSymbol sym) {
 					if (!sym.isIdbSymbol()) {
 						throw new IllegalArgumentException();
 					}
@@ -1377,7 +1376,7 @@ public class Parser {
 				}
 
 				@Override
-				public UserPredicate<RelationSymbol> getQuery() {
+				public UserPredicate getQuery() {
 					return query;
 				}
 

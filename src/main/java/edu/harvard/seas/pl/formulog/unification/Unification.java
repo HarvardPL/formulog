@@ -39,7 +39,6 @@ import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 
@@ -49,23 +48,23 @@ public final class Unification {
 		throw new AssertionError();
 	}
 
-	public static <R extends RelationSymbol> boolean canBindVars(ComplexConjunct<R> atom, Set<Var> boundVars) throws InvalidProgramException {
-		return atom.accept(new ComplexConjunctExnVisitor<R, Void, Boolean, InvalidProgramException>() {
+	public static boolean canBindVars(ComplexConjunct atom, Set<Var> boundVars) throws InvalidProgramException {
+		return atom.accept(new ComplexConjunctExnVisitor<Void, Boolean, InvalidProgramException>() {
 
 			@Override
-			public Boolean visit(UserPredicate<R> normalAtom, Void in) throws InvalidProgramException {
+			public Boolean visit(UserPredicate normalAtom, Void in) throws InvalidProgramException {
 				return handleNormalAtom(normalAtom, boundVars);
 			}
 
 			@Override
-			public Boolean visit(UnificationPredicate<R> unifyAtom, Void in) throws InvalidProgramException {
+			public Boolean visit(UnificationPredicate unifyAtom, Void in) throws InvalidProgramException {
 				return handleUnifyAtom(unifyAtom, boundVars);
 			}
 
 		}, null);
 	}
 
-	private static boolean handleNormalAtom(UserPredicate<?> atom, Set<Var> boundVars) {
+	private static boolean handleNormalAtom(UserPredicate atom, Set<Var> boundVars) {
 		if (atom.isNegated()) {
 			// Allow anonymous variables in negated atoms.
 			Set<Var> vars = atom.varSet().stream().filter(v -> !v.isAnonymous()).collect(Collectors.toSet());
@@ -86,7 +85,7 @@ public final class Unification {
 		return true;
 	}
 
-	private static boolean handleUnifyAtom(UnificationPredicate<?> atom, Set<Var> boundVars) throws InvalidProgramException {
+	private static boolean handleUnifyAtom(UnificationPredicate atom, Set<Var> boundVars) throws InvalidProgramException {
 		Term t1 = atom.getLhs();
 		Term t2 = atom.getRhs();
 		Set<Var> maybeBoundVars = new HashSet<>(boundVars);

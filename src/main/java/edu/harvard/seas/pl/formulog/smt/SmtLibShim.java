@@ -45,9 +45,9 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.traverse.TopologicalOrderIterator;
 
 import edu.harvard.seas.pl.formulog.ast.Constructor;
-import edu.harvard.seas.pl.formulog.ast.Expr;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverUninterpretedFunction;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
+import edu.harvard.seas.pl.formulog.ast.Expr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
@@ -56,9 +56,11 @@ import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.smt.SmtLibParser.SmtLibParseException;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;
-import edu.harvard.seas.pl.formulog.symbols.IndexedSymbol;
+import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.IndexedTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
+import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
@@ -182,8 +184,8 @@ public class SmtLibShim {
 	}
 
 	public String getTypeAnnotation(Constructor c) {
-		Symbol sym = c.getSymbol();
-		FunctorType ft = (FunctorType) sym.getCompileTimeType();
+		ConstructorSymbol sym = c.getSymbol();
+		FunctorType ft = sym.getCompileTimeType();
 		if (needsTypeAnnotation(sym, ft.getArgTypes(), ft.getRetType())) {
 			return stringifyType(typeAnnotations.next());
 		}
@@ -221,10 +223,10 @@ public class SmtLibShim {
 					arg.visit(this, in);
 				}
 				if (c instanceof SolverUninterpretedFunction) {
-					Symbol sym = c.getSymbol();
+					ConstructorSymbol sym = c.getSymbol();
 					if (declaredUninterpFuns.add(sym)) {
 						print("(declare-fun " + stringifySymbol(sym) + " (");
-						FunctorType ft = (FunctorType) sym.getCompileTimeType();
+						FunctorType ft = sym.getCompileTimeType();
 						for (Iterator<Type> it = ft.getArgTypes().iterator(); it.hasNext();) {
 							print(stringifyType(it.next()));
 							if (it.hasNext()) {
@@ -252,42 +254,42 @@ public class SmtLibShim {
 
 	private void declareSorts(SmtLibTerm t) {
 		SortDependencyFinder depends = new SortDependencyFinder(t);
-		StrongConnectivityAlgorithm<Symbol, DefaultEdge> k = new KosarajuStrongConnectivityInspector<>(
+		StrongConnectivityAlgorithm<TypeSymbol, DefaultEdge> k = new KosarajuStrongConnectivityInspector<>(
 				depends.compute());
-		TopologicalOrderIterator<Graph<Symbol, DefaultEdge>, DefaultEdge> topo = new TopologicalOrderIterator<>(
+		TopologicalOrderIterator<Graph<TypeSymbol, DefaultEdge>, DefaultEdge> topo = new TopologicalOrderIterator<>(
 				k.getCondensation());
 		while (topo.hasNext()) {
-			Graph<Symbol, DefaultEdge> scc = topo.next();
+			Graph<TypeSymbol, DefaultEdge> scc = topo.next();
 			declareSorts(scc.vertexSet());
 		}
 	}
 
-	private void declareSorts(Set<Symbol> sorts) {
+	private void declareSorts(Set<TypeSymbol> sorts) {
 		assert !sorts.isEmpty();
-		Symbol sym = sorts.iterator().next();
-		if (sym.getSymbolType().equals(SymbolType.SOLVER_UNINTERPRETED_SORT)) {
+		TypeSymbol sym = sorts.iterator().next();
+		if (sym.isUninterpretedSort()) {
 			assert sorts.size() == 1;
 			declareUninterpretedSort(sym);
 		} else {
-			assert sym.getSymbolType().equals(SymbolType.TYPE);
+			assert sym.isNormalType();
 			declareAdtSorts(sorts);
 		}
 	}
 
-	private void declareUninterpretedSort(Symbol sort) {
-		assert sort.getSymbolType().equals(SymbolType.SOLVER_UNINTERPRETED_SORT);
+	private void declareUninterpretedSort(TypeSymbol sort) {
+		assert sort.isUninterpretedSort();
 		println("(declare-sort " + stringifySymbol(sort) + " " + sort.getArity() + ")");
 	}
-	
-	private void declareAdtSorts(Set<Symbol> sorts) {
+
+	private void declareAdtSorts(Set<TypeSymbol> sorts) {
 		assert !sorts.isEmpty();
 		print("(declare-datatypes ( ");
-		for (Symbol sym : sorts) {
-			assert sym.getSymbolType().equals(SymbolType.TYPE);
+		for (TypeSymbol sym : sorts) {
+			assert !sym.isNormalType();
 			print("(" + stringifySymbol(sym) + " " + sym.getArity() + ") ");
 		}
 		print(") (");
-		for (Symbol sym : sorts) {
+		for (TypeSymbol sym : sorts) {
 			declareAdtSort(AlgebraicDataType.make(sym));
 		}
 		println("))");
@@ -311,7 +313,7 @@ public class SmtLibShim {
 	private void declareConstructor(ConstructorScheme c) {
 		print("\n    (");
 		print(stringifySymbol(c.getSymbol()));
-		Iterator<Symbol> getterSyms = c.getGetterSymbols().iterator();
+		Iterator<ConstructorSymbol> getterSyms = c.getGetterSymbols().iterator();
 		for (Type t : c.getTypeArgs()) {
 			String getter = stringifySymbol(getterSyms.next());
 			print(" (" + getter + " " + stringifyType(t) + ")");
@@ -333,9 +335,9 @@ public class SmtLibShim {
 
 			@Override
 			public String visit(AlgebraicDataType algebraicType, Void in) {
-				Symbol sym = algebraicType.getSymbol();
-				if (sym instanceof IndexedSymbol) {
-					return stringifyIndexedSymbol((IndexedSymbol) sym, algebraicType.getTypeArgs());
+				TypeSymbol sym = algebraicType.getSymbol();
+				if (sym instanceof IndexedTypeSymbol) {
+					return stringifyIndexedSymbol((IndexedTypeSymbol) sym, algebraicType.getTypeArgs());
 				}
 				if (sym instanceof BuiltInTypeSymbol) {
 					switch ((BuiltInTypeSymbol) sym) {
@@ -374,7 +376,7 @@ public class SmtLibShim {
 				throw new AssertionError("impossible");
 			}
 
-			private String stringifyIndexedSymbol(IndexedSymbol sym, List<Type> typeArgs) {
+			private String stringifyIndexedSymbol(IndexedTypeSymbol sym, List<Type> typeArgs) {
 				Function<Type, Integer> forceIdx = t -> ((TypeIndex) t).getIndex();
 				switch (sym) {
 				case BV:
@@ -404,13 +406,13 @@ public class SmtLibShim {
 			this.t = t;
 		}
 
-		public Graph<Symbol, DefaultEdge> compute() {
-			DedupWorkList<Symbol> w = extractTypesFromTerm();
+		public Graph<TypeSymbol, DefaultEdge> compute() {
+			DedupWorkList<TypeSymbol> w = extractTypesFromTerm();
 			return createGraph(w);
 		}
 
-		private DedupWorkList<Symbol> extractTypesFromTerm() {
-			DedupWorkList<Symbol> w = new DedupWorkList<>();
+		private DedupWorkList<TypeSymbol> extractTypesFromTerm() {
+			DedupWorkList<TypeSymbol> w = new DedupWorkList<>();
 			t.visit(new TermVisitor<Void, Void>() {
 
 				@Override
@@ -422,7 +424,7 @@ public class SmtLibShim {
 				public Void visit(Constructor c, Void in) {
 					FunctorType ft = (FunctorType) c.getSymbol().getCompileTimeType();
 					Type type = ft.getRetType();
-					for (Symbol sym : extractTypeSymbols(type)) {
+					for (TypeSymbol sym : extractTypeSymbols(type)) {
 						push(sym, w);
 					}
 					if (!(c instanceof SolverVariable)) {
@@ -447,25 +449,25 @@ public class SmtLibShim {
 			return w;
 		}
 
-		private void push(Symbol sym, DedupWorkList<Symbol> w) {
+		private void push(TypeSymbol sym, DedupWorkList<TypeSymbol> w) {
 			if (isDeclarableTypeSymbol(sym)) {
 				w.push(sym);
 			}
 		}
 
-		private Graph<Symbol, DefaultEdge> createGraph(DedupWorkList<Symbol> w) {
-			Graph<Symbol, DefaultEdge> g = new DefaultDirectedGraph<>(DefaultEdge.class);
+		private Graph<TypeSymbol, DefaultEdge> createGraph(DedupWorkList<TypeSymbol> w) {
+			Graph<TypeSymbol, DefaultEdge> g = new DefaultDirectedGraph<>(DefaultEdge.class);
 			while (!w.isEmpty()) {
-				Symbol sym = w.pop();
+				TypeSymbol sym = w.pop();
 				assert isDeclarableTypeSymbol(sym);
 				g.addVertex(sym);
 				AlgebraicDataType type = AlgebraicDataType.make(sym);
-				if (sym.getSymbolType().equals(SymbolType.SOLVER_UNINTERPRETED_SORT)) {
+				if (sym.isUninterpretedSort()) {
 					continue;
 				}
 				for (ConstructorScheme c : type.getConstructors()) {
 					for (Type typeArg : c.getTypeArgs()) {
-						for (Symbol other : extractTypeSymbols(typeArg)) {
+						for (TypeSymbol other : extractTypeSymbols(typeArg)) {
 							push(other, w);
 							if (isDeclarableTypeSymbol(other)) {
 								g.addVertex(other);
@@ -478,8 +480,8 @@ public class SmtLibShim {
 			return g;
 		}
 
-		private Set<Symbol> extractTypeSymbols(Type type) {
-			Set<Symbol> syms = new HashSet<>();
+		private Set<TypeSymbol> extractTypeSymbols(Type type) {
+			Set<TypeSymbol> syms = new HashSet<>();
 			type.visit(new TypeVisitor<Void, Void>() {
 
 				@Override
@@ -510,10 +512,9 @@ public class SmtLibShim {
 			return syms;
 		}
 
-		private boolean isDeclarableTypeSymbol(Symbol sym) {
-			assert sym.getSymbolType().isTypeSymbol();
-			if (sym instanceof IndexedSymbol) {
-				switch ((IndexedSymbol) sym) {
+		private boolean isDeclarableTypeSymbol(TypeSymbol sym) {
+			if (sym instanceof IndexedTypeSymbol) {
+				switch ((IndexedTypeSymbol) sym) {
 				case BV:
 				case FP:
 					return false;
@@ -576,8 +577,8 @@ public class SmtLibShim {
 
 				@Override
 				public Type visit(Constructor c, Void in) {
-					Symbol sym = c.getSymbol();
-					FunctorType ft = (FunctorType) sym.getCompileTimeType().freshen();
+					ConstructorSymbol sym = c.getSymbol();
+					FunctorType ft = sym.getCompileTimeType().freshen();
 					Type ty = ft.getRetType();
 					List<Type> args = ft.getArgTypes();
 					if (needsTypeAnnotation(sym, args, ty)) {

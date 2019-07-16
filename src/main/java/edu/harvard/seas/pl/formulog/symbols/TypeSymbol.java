@@ -23,6 +23,10 @@ package edu.harvard.seas.pl.formulog.symbols;
 public interface TypeSymbol extends Symbol {
 
 	TypeSymbolType getTypeSymbolType();
+
+	default boolean isNormalType() {
+		return getTypeSymbolType().equals(TypeSymbolType.NORMAL_TYPE);
+	}
 	
 	default boolean isAlias() {
 		return getTypeSymbolType().equals(TypeSymbolType.TYPE_ALIAS);

@@ -20,35 +20,33 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
-
 public final class ComplexConjuncts {
 
 	private ComplexConjuncts() {
 		throw new AssertionError("impossible");
 	}
 	
-	public static <R extends RelationSymbol> UnificationPredicate<R> unifyWithBool(Term t, boolean bool) {
+	public static UnificationPredicate unifyWithBool(Term t, boolean bool) {
 		return UnificationPredicate.make(t, bool ? Constructors.trueTerm() : Constructors.falseTerm(), false);
 	}
 	
-	public static <R extends RelationSymbol> UnificationPredicate<R> trueAtom() {
+	public static UnificationPredicate trueAtom() {
 		return unifyWithBool(Constructors.trueTerm(), true);
 	}
 	
-	public static interface ComplexConjunctVisitor<R extends RelationSymbol, I, O> {
+	public static interface ComplexConjunctVisitor<I, O> {
 
-		O visit(UnificationPredicate<R> unificationPredicate, I input);
+		O visit(UnificationPredicate unificationPredicate, I input);
 
-		O visit(UserPredicate<R> userPredicate, I input);
+		O visit(UserPredicate userPredicate, I input);
 		
 	}
 	
-	public static interface ComplexConjunctExnVisitor<R extends RelationSymbol, I, O, E extends Throwable> {
+	public static interface ComplexConjunctExnVisitor<I, O, E extends Throwable> {
 
-		O visit(UnificationPredicate<R> unificationPredicate, I input) throws E;
+		O visit(UnificationPredicate unificationPredicate, I input) throws E;
 
-		O visit(UserPredicate<R> userPredicate, I input) throws E;
+		O visit(UserPredicate userPredicate, I input) throws E;
 		
 	}
 	

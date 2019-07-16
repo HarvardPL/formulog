@@ -74,25 +74,25 @@ import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
 
-public class TypeChecker<R extends RelationSymbol> {
+public class TypeChecker {
 
-	private final BasicProgram<R> prog;
+	private final BasicProgram prog;
 
-	public TypeChecker(BasicProgram<R> prog) {
+	public TypeChecker(BasicProgram prog) {
 		this.prog = prog;
 	}
 
-	public WellTypedProgram<R> typeCheck() throws TypeException {
-		typeCheckRelations();
-		Map<R, Set<Term[]>> newFacts = typeCheckFacts();
+	public WellTypedProgram typeCheck() throws TypeException {
+//		typeCheckRelations();
+		Map<RelationSymbol, Set<Term[]>> newFacts = typeCheckFacts();
 		Map<FunctionSymbol, FunctionDef> newFuncs = typeCheckFunctions();
 		FunctionDefManager dm = prog.getFunctionCallFactory().getDefManager();
 		for (FunctionDef func : newFuncs.values()) {
 			dm.reregister(func);
 		}
-		Map<R, Set<BasicRule<R>>> newRules = typeCheckRules();
-		UserPredicate<R> newQuery = typeCheckQuery();
-		return new WellTypedProgram<R>() {
+		Map<RelationSymbol, Set<BasicRule>> newRules = typeCheckRules();
+		UserPredicate newQuery = typeCheckQuery();
+		return new WellTypedProgram() {
 
 			@Override
 			public Set<FunctionSymbol> getFunctionSymbols() {
@@ -100,12 +100,12 @@ public class TypeChecker<R extends RelationSymbol> {
 			}
 
 			@Override
-			public Set<R> getFactSymbols() {
+			public Set<RelationSymbol> getFactSymbols() {
 				return Collections.unmodifiableSet(newFacts.keySet());
 			}
 
 			@Override
-			public Set<R> getRuleSymbols() {
+			public Set<RelationSymbol> getRuleSymbols() {
 				return Collections.unmodifiableSet(newRules.keySet());
 			}
 
@@ -126,7 +126,7 @@ public class TypeChecker<R extends RelationSymbol> {
 			}
 
 			@Override
-			public Set<BasicRule<R>> getRules(RelationSymbol sym) {
+			public Set<BasicRule> getRules(RelationSymbol sym) {
 				if (!sym.isIdbSymbol()) {
 					throw new IllegalArgumentException();
 				}
@@ -147,7 +147,7 @@ public class TypeChecker<R extends RelationSymbol> {
 			}
 
 			@Override
-			public UserPredicate<R> getQuery() {
+			public UserPredicate getQuery() {
 				return newQuery;
 			}
 
@@ -159,58 +159,58 @@ public class TypeChecker<R extends RelationSymbol> {
 		};
 	}
 
-	private void typeCheckRelations() throws TypeException {
-		typeCheckRelations(prog.getFactSymbols());
-		typeCheckRelations(prog.getRuleSymbols());
-	}
+//	private void typeCheckRelations() throws TypeException {
+//		typeCheckRelations(prog.getFactSymbols());
+//		typeCheckRelations(prog.getRuleSymbols());
+//	}
+//
+//	private void typeCheckRelations(Set<RelationSymbol> syms) throws TypeException {
+//		for (RelationSymbol sym : syms) {
+//			typeCheckRelation(sym);
+//		}
+//	}
 
-	private void typeCheckRelations(Set<R> syms) throws TypeException {
-		for (R sym : syms) {
-			typeCheckRelation(sym);
-		}
-	}
+//	private void typeCheckRelation(RelationSymbol sym) throws TypeException {
+//		if (sym.isAggregated()) {
+//			FunctorType ft = sym.getCompileTimeType();
+//			List<Type> argTypes = ft.getArgTypes();
+//			Type aggType = argTypes.get(argTypes.size() - 1);
+//			Term init = typeCheckAggregateUnit(sym, aggType);
+//			typeCheckAggregateFunction(sym, aggType);
+//			sym.setAggregate(sym.getAggFuncSym(), init);
+//		}
+//	}
+//
+//	private Term typeCheckAggregateUnit(RelationSymbol relSym, Type aggType) throws TypeException {
+//		Term unit = relSym.getAggFuncUnit();
+//		try {
+//			TypeCheckerContext ctx = new TypeCheckerContext();
+//			return ctx.typeCheckTerm(unit, aggType);
+//		} catch (TypeException e) {
+//			throw new TypeException(
+//					"Error with aggregate unit term " + unit + " for relation " + relSym + "\n" + e.getMessage());
+//		}
+//	}
+//
+//	private void typeCheckAggregateFunction(RelationSymbol relSym, Type aggType) throws TypeException {
+//		FunctionSymbol funcSym = relSym.getAggFuncSym();
+//		try {
+//			if (funcSym.getArity() != 2) {
+//				throw new TypeException("Function " + funcSym + " is not binary");
+//			}
+//			FunctorType funcType = (FunctorType) funcSym.getCompileTimeType();
+//			List<Type> actualTypes = new ArrayList<>(funcType.getArgTypes());
+//			actualTypes.add(funcType.getRetType());
+//			List<Type> requiredTypes = Arrays.asList(aggType, aggType, aggType);
+//			TypeCheckerContext ctx = new TypeCheckerContext();
+//			ctx.checkUnifiability(actualTypes, requiredTypes);
+//		} catch (TypeException e) {
+//			throw new TypeException(
+//					"Error with aggregate function " + funcSym + " for relation " + relSym + "\n" + e.getMessage());
+//		}
+//	}
 
-	private void typeCheckRelation(R sym) throws TypeException {
-		if (sym.isAggregated()) {
-			FunctorType ft = sym.getCompileTimeType();
-			List<Type> argTypes = ft.getArgTypes();
-			Type aggType = argTypes.get(argTypes.size() - 1);
-			Term init = typeCheckAggregateUnit(sym, aggType);
-			typeCheckAggregateFunction(sym, aggType);
-			sym.setAggregate(sym.getAggFuncSym(), init);
-		}
-	}
-
-	private Term typeCheckAggregateUnit(R relSym, Type aggType) throws TypeException {
-		Term unit = relSym.getAggFuncUnit();
-		try {
-			TypeCheckerContext ctx = new TypeCheckerContext();
-			return ctx.typeCheckTerm(unit, aggType);
-		} catch (TypeException e) {
-			throw new TypeException(
-					"Error with aggregate unit term " + unit + " for relation " + relSym + "\n" + e.getMessage());
-		}
-	}
-
-	private void typeCheckAggregateFunction(RelationSymbol relSym, Type aggType) throws TypeException {
-		FunctionSymbol funcSym = relSym.getAggFuncSym();
-		try {
-			if (funcSym.getArity() != 2) {
-				throw new TypeException("Function " + funcSym + " is not binary");
-			}
-			FunctorType funcType = (FunctorType) funcSym.getCompileTimeType();
-			List<Type> actualTypes = new ArrayList<>(funcType.getArgTypes());
-			actualTypes.add(funcType.getRetType());
-			List<Type> requiredTypes = Arrays.asList(aggType, aggType, aggType);
-			TypeCheckerContext ctx = new TypeCheckerContext();
-			ctx.checkUnifiability(actualTypes, requiredTypes);
-		} catch (TypeException e) {
-			throw new TypeException(
-					"Error with aggregate function " + funcSym + " for relation " + relSym + "\n" + e.getMessage());
-		}
-	}
-
-	private UserPredicate<R> typeCheckQuery() throws TypeException {
+	private UserPredicate typeCheckQuery() throws TypeException {
 		if (prog.hasQuery()) {
 			TypeCheckerContext ctx = new TypeCheckerContext();
 			return ctx.typeCheckQuery(prog.getQuery());
@@ -218,14 +218,14 @@ public class TypeChecker<R extends RelationSymbol> {
 		return null;
 	}
 
-	private Map<R, Set<Term[]>> typeCheckFacts() throws TypeException {
+	private Map<RelationSymbol, Set<Term[]>> typeCheckFacts() throws TypeException {
 		// Can use same type checker context for all, since there should be neither
 		// program variables (in a fact) or type variables (in a relation type).
 		// Addendum: there can be program variables (in type index positions),
 		// but they should be unique.
-		Map<R, Set<Term[]>> m = new HashMap<>();
+		Map<RelationSymbol, Set<Term[]>> m = new HashMap<>();
 		TypeCheckerContext ctx = new TypeCheckerContext();
-		for (R sym : prog.getFactSymbols()) {
+		for (RelationSymbol sym : prog.getFactSymbols()) {
 			Set<Term[]> s = new HashSet<>();
 			for (Term[] args : prog.getFacts(sym)) {
 				s.add(ctx.typeCheckFact(sym, args));
@@ -235,11 +235,11 @@ public class TypeChecker<R extends RelationSymbol> {
 		return m;
 	}
 
-	private Map<R, Set<BasicRule<R>>> typeCheckRules() throws TypeException {
-		Map<R, Set<BasicRule<R>>> m = new HashMap<>();
-		for (R sym : prog.getRuleSymbols()) {
-			Set<BasicRule<R>> s = new HashSet<>();
-			for (BasicRule<R> r : prog.getRules(sym)) {
+	private Map<RelationSymbol, Set<BasicRule>> typeCheckRules() throws TypeException {
+		Map<RelationSymbol, Set<BasicRule>> m = new HashMap<>();
+		for (RelationSymbol sym : prog.getRuleSymbols()) {
+			Set<BasicRule> s = new HashSet<>();
+			for (BasicRule r : prog.getRules(sym)) {
 				TypeCheckerContext ctx = new TypeCheckerContext();
 				s.add(ctx.typeCheckRule(r));
 			}
@@ -278,7 +278,7 @@ public class TypeChecker<R extends RelationSymbol> {
 			return Terms.map(args, t -> t.applySubstitution(m));
 		}
 
-		public UserPredicate<R> typeCheckQuery(UserPredicate<R> q) throws TypeException {
+		public UserPredicate typeCheckQuery(UserPredicate q) throws TypeException {
 			Map<Var, Type> subst = new HashMap<>();
 			genConstraints(q, subst);
 			if (!checkConstraints()) {
@@ -288,7 +288,7 @@ public class TypeChecker<R extends RelationSymbol> {
 			return q.applySubstitution(m);
 		}
 
-		public BasicRule<R> typeCheckRule(Rule<UserPredicate<R>, ComplexConjunct<R>> r) throws TypeException {
+		public BasicRule typeCheckRule(Rule<UserPredicate, ComplexConjunct> r) throws TypeException {
 			Map<Var, Type> subst = new HashMap<>();
 			processAtoms(r, subst);
 			genConstraints(r.getHead(), subst);
@@ -299,9 +299,9 @@ public class TypeChecker<R extends RelationSymbol> {
 				throw new TypeException(msg);
 			}
 			Substitution m = makeIndexSubstitution(subst);
-			UserPredicate<R> newHead = r.getHead().applySubstitution(m);
-			List<ComplexConjunct<R>> newBody = new ArrayList<>();
-			for (ComplexConjunct<R> a : r) {
+			UserPredicate newHead = r.getHead().applySubstitution(m);
+			List<ComplexConjunct> newBody = new ArrayList<>();
+			for (ComplexConjunct a : r) {
 				newBody.add(a.applySubstitution(m));
 			}
 			return BasicRule.make(newHead, newBody);
@@ -353,8 +353,8 @@ public class TypeChecker<R extends RelationSymbol> {
 			}
 		}
 
-		private void processAtoms(Iterable<ComplexConjunct<R>> atoms, Map<Var, Type> subst) {
-			for (ComplexConjunct<R> a : atoms) {
+		private void processAtoms(Iterable<ComplexConjunct> atoms, Map<Var, Type> subst) {
+			for (ComplexConjunct a : atoms) {
 				genConstraints(a, subst);
 			}
 		}
@@ -369,17 +369,17 @@ public class TypeChecker<R extends RelationSymbol> {
 			}
 		}
 
-		private void genConstraints(ComplexConjunct<R> a, Map<Var, Type> subst) {
-			a.accept(new ComplexConjunctVisitor<R, Void, Void>() {
+		private void genConstraints(ComplexConjunct a, Map<Var, Type> subst) {
+			a.accept(new ComplexConjunctVisitor<Void, Void>() {
 
 				@Override
-				public Void visit(UserPredicate<R> normalAtom, Void in) {
+				public Void visit(UserPredicate normalAtom, Void in) {
 					genConstraints(normalAtom.getSymbol(), normalAtom.getArgs(), subst);
 					return null;
 				}
 
 				@Override
-				public Void visit(UnificationPredicate<R> unifyAtom, Void in) {
+				public Void visit(UnificationPredicate unifyAtom, Void in) {
 					TypeVar var = TypeVar.fresh();
 					genConstraints(unifyAtom.getLhs(), var, subst, false);
 					genConstraints(unifyAtom.getRhs(), var, subst, false);

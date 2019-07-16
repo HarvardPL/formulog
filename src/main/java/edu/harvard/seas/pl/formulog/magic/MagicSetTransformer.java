@@ -29,11 +29,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import edu.harvard.seas.pl.formulog.ast.Atoms;
-import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
-import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
 import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
+import edu.harvard.seas.pl.formulog.ast.ComplexConjunct;
+import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctVisitor;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Expr;
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
@@ -49,15 +48,18 @@ import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitorExn;
+import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
+import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbolFactory.PredicateFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
+import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Unification;
@@ -69,7 +71,7 @@ import edu.harvard.seas.pl.formulog.validating.Stratum;
 
 public class MagicSetTransformer<R extends RelationSymbol> {
 
-	private final Program origProg;
+	private final BasicProgram<R> origProg;
 	private boolean topDownIsDefault;
 
 	private static final boolean debug = System.getProperty("debugMst") != null;
@@ -78,7 +80,7 @@ public class MagicSetTransformer<R extends RelationSymbol> {
 		this.origProg = prog;
 	}
 
-	public Program transform(boolean useDemandTransformation, boolean restoreStratification)
+	public BasicProgram<?> transform(boolean useDemandTransformation, boolean restoreStratification)
 			throws InvalidProgramException {
 		if (origProg.hasQuery()) {
 			return transformForQuery(origProg.getQuery(), useDemandTransformation, restoreStratification);
@@ -87,23 +89,22 @@ public class MagicSetTransformer<R extends RelationSymbol> {
 		}
 	}
 
-	public Program transformForQuery(UserPredicate<R> query, boolean useDemandTransformation, boolean restoreStratification)
-			throws InvalidProgramException {
+	public BasicProgram<?> transformForQuery(UserPredicate<R> query, boolean useDemandTransformation,
+			boolean restoreStratification) throws InvalidProgramException {
 		topDownIsDefault = true;
 		if (query.isNegated()) {
 			throw new InvalidProgramException("Query cannot be negated");
 		}
 		query = reduceQuery(query);
-		Program newProg;
+		BasicProgram<?> newProg;
 		if (query.getSymbol().isEdbSymbol()) {
 			newProg = makeEdbProgram(query);
 		} else {
-			NormalAtom adornedQuery = (NormalAtom) Adornments.adorn(query, Collections.emptySet(), origProg,
-					topDownIsDefault);
+			UserPredicate<?> adornedQuery = Adornments.adorn(query, Collections.emptySet(), topDownIsDefault);
 			Set<Rule> adRules = adorn(Collections.singleton(adornedQuery.getSymbol()));
 			Set<Rule> magicRules = makeMagicRules(adRules);
 			magicRules.add(makeSeedRule(adornedQuery));
-			Program magicProg = new ProgramImpl(magicRules, adornedQuery);
+			BasicProgram<?> magicProg = new ProgramImpl(magicRules, adornedQuery);
 			if (restoreStratification && !isStratified(magicProg)) {
 				magicProg = stratify(magicProg, adRules);
 			}
@@ -179,10 +180,10 @@ public class MagicSetTransformer<R extends RelationSymbol> {
 		return BasicRule.get(createInputAtom(adornedQuery));
 	}
 
-	private Program makeEdbProgram(NormalAtom query) {
-		Symbol querySym = query.getSymbol();
-		Set<Atom> facts = new HashSet<>();
-		for (Atom fact : origProg.getFacts(querySym)) {
+	private BasicProgram<?> makeEdbProgram(UserPredicate<R> query) {
+		RelationSymbol querySym = query.getSymbol();
+		Set<Term[]> facts = new HashSet<>();
+		for (Term[] fact : origProg.getFacts(querySym)) {
 			try {
 				if (Unification.unify(query, fact, new SimpleSubstitution())) {
 					facts.add(fact);
@@ -621,21 +622,33 @@ public class MagicSetTransformer<R extends RelationSymbol> {
 		return new ProgramImpl(newRules, p.getQuery());
 	}
 
-	private Atom makePositive(Atom atom) {
-		Symbol sym = atom.getSymbol();
-		if (sym.getSymbolType().isIDBSymbol() && !(sym instanceof InputSymbol || sym instanceof SupSymbol)) {
-			if (atom.isNegated()) {
-				return null;
+	private <S extends RelationSymbol> ComplexConjunct<RelationSymbol> makePositive(ComplexConjunct<S> atom) {
+		return atom.accept(new ComplexConjunctVisitor<S, Void, ComplexConjunct<RelationSymbol>>() {
+
+			@Override
+			public ComplexConjunct<RelationSymbol> visit(UnificationPredicate<S> unificationPredicate, Void input) {
+				return unificationPredicate;
 			}
-			atom = Atoms.getPositive(new PositiveSymbol(sym), atom.getArgs());
-		}
-		return atom;
+
+			@Override
+			public ComplexConjunct<RelationSYmbol> visit(UserPredicate<S> userPredicate, Void input) {
+				S sym = userPredicate.getSymbol();
+				if (sym.isIdbSymbol() && !(sym instanceof InputSymbol || sym instanceof SupSymbol)) {
+					if (userPredicate.isNegated()) {
+						return null;
+					}
+					userPredicate = UserPredicate.make(new PositiveSymbol(sym), userPredicate.getArgs(), false);
+				}
+				return userPredicate;
+			}
+			
+		}, null);
 	}
 
-	private List<Atom> makePositive(Iterable<Atom> atoms) {
-		List<Atom> l = new ArrayList<>();
-		for (Atom a : atoms) {
-			Atom b = makePositive(a);
+	private List<ComplexConjunct<?>> makePositive(Iterable<ComplexConjunct<?>> atoms) {
+		List<ComplexConjunct<?>> l = new ArrayList<>();
+		for (ComplexConjunct<?> a : atoms) {
+			ComplexConjunct<?> b = makePositive(a);
 			if (b != null) {
 				l.add(b);
 			}
@@ -643,7 +656,7 @@ public class MagicSetTransformer<R extends RelationSymbol> {
 		return l;
 	}
 
-	private static class PositiveSymbol implements Symbol {
+	private static class PositiveSymbol implements RelationSymbol {
 
 		private final Symbol underlyingSymbol;
 
@@ -658,11 +671,6 @@ public class MagicSetTransformer<R extends RelationSymbol> {
 		@Override
 		public int getArity() {
 			return underlyingSymbol.getArity();
-		}
-
-		@Override
-		public SymbolType getSymbolType() {
-			return SymbolType.IDB_REL;
 		}
 
 		@Override
@@ -696,7 +704,52 @@ public class MagicSetTransformer<R extends RelationSymbol> {
 		}
 
 		@Override
-		public Type getCompileTimeType() {
+		public FunctorType getCompileTimeType() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean isIdbSymbol() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void setAggregate(FunctionSymbol funcSym, Term unit) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean isBottomUp() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean setBottomUp() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean isTopDown() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean setTopDown() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean isAggregated() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public FunctionSymbol getAggFuncSym() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Term getAggFuncUnit() {
 			throw new UnsupportedOperationException();
 		}
 
@@ -704,11 +757,11 @@ public class MagicSetTransformer<R extends RelationSymbol> {
 
 	private static class HiddenPredicateFinder {
 
-		private final Program origProg;
-		private final Set<Symbol> visitedFunctions = new HashSet<>();
-		private final Set<Symbol> seenPredicates = new HashSet<>();
+		private final BasicProgram<?> origProg;
+		private final Set<FunctionSymbol> visitedFunctions = new HashSet<>();
+		private final Set<RelationSymbol> seenPredicates = new HashSet<>();
 
-		public HiddenPredicateFinder(Program origProg) {
+		public HiddenPredicateFinder(BasicProgram<?> origProg) {
 			this.origProg = origProg;
 		}
 
@@ -716,19 +769,19 @@ public class MagicSetTransformer<R extends RelationSymbol> {
 			t.visit(predicatesInTermExtractor, seenPredicates);
 		}
 
-		public Set<Symbol> getSeenPredicates() {
+		public Set<RelationSymbol> getSeenPredicates() {
 			return seenPredicates;
 		}
 
-		private TermVisitor<Set<Symbol>, Void> predicatesInTermExtractor = new TermVisitor<Set<Symbol>, Void>() {
+		private TermVisitor<Set<RelationSymbol>, Void> predicatesInTermExtractor = new TermVisitor<Set<RelationSymbol>, Void>() {
 
 			@Override
-			public Void visit(Var t, Set<Symbol> in) {
+			public Void visit(Var t, Set<RelationSymbol> in) {
 				return null;
 			}
 
 			@Override
-			public Void visit(Constructor c, Set<Symbol> in) {
+			public Void visit(Constructor c, Set<RelationSymbol> in) {
 				for (Term t : c.getArgs()) {
 					t.visit(this, in);
 				}
@@ -736,22 +789,22 @@ public class MagicSetTransformer<R extends RelationSymbol> {
 			}
 
 			@Override
-			public Void visit(Primitive<?> p, Set<Symbol> in) {
+			public Void visit(Primitive<?> p, Set<RelationSymbol> in) {
 				return null;
 			}
 
 			@Override
-			public Void visit(Expr e, Set<Symbol> in) {
+			public Void visit(Expr e, Set<RelationSymbol> in) {
 				e.visit(predicatesInExprExtractor, in);
 				return null;
 			}
 
 		};
 
-		private ExprVisitor<Set<Symbol>, Void> predicatesInExprExtractor = new ExprVisitor<Set<Symbol>, Void>() {
+		private ExprVisitor<Set<RelationSymbol>, Void> predicatesInExprExtractor = new ExprVisitor<Set<RelationSymbol>, Void>() {
 
 			@Override
-			public Void visit(MatchExpr matchExpr, Set<Symbol> in) {
+			public Void visit(MatchExpr matchExpr, Set<RelationSymbol> in) {
 				matchExpr.getMatchee().visit(predicatesInTermExtractor, in);
 				for (MatchClause cl : matchExpr.getClauses()) {
 					cl.getRhs().visit(predicatesInTermExtractor, in);
@@ -760,8 +813,8 @@ public class MagicSetTransformer<R extends RelationSymbol> {
 			}
 
 			@Override
-			public Void visit(FunctionCall funcCall, Set<Symbol> in) {
-				Symbol sym = funcCall.getSymbol();
+			public Void visit(FunctionCall funcCall, Set<RelationSymbol> in) {
+				FunctionSymbol sym = funcCall.getSymbol();
 				if (sym instanceof PredicateFunctionSymbol) {
 					in.add(((PredicateFunctionSymbol) sym).getPredicateSymbol());
 				} else if (visitedFunctions.add(sym)) {
@@ -780,75 +833,90 @@ public class MagicSetTransformer<R extends RelationSymbol> {
 
 	}
 
-	private class ProgramImpl implements Program {
+	private class ProgramImpl<S extends RelationSymbol> implements BasicProgram<S> {
 
-		private final Map<Symbol, Set<Rule>> rules = new HashMap<>();
-		private final Map<Symbol, Set<Atom>> facts = new HashMap<>();
-		private final NormalAtom query;
+		private final Map<S, Set<BasicRule<S>>> rules = new HashMap<>();
+		private final Map<S, Set<Term[]>> facts = new HashMap<>();
+		private final UserPredicate<S> query;
 
-		public ProgramImpl(Set<Rule> rs, NormalAtom query) throws InvalidProgramException {
+		public ProgramImpl(Set<BasicRule<S>> rs, UserPredicate<S> query) throws InvalidProgramException {
 			HiddenPredicateFinder hpf = new HiddenPredicateFinder(origProg);
-			for (Rule r : rs) {
-				Atom head = r.getHead();
+			for (BasicRule<S> r : rs) {
+				UserPredicate<S> head = r.getHead();
 				Util.lookupOrCreate(rules, head.getSymbol(), () -> new HashSet<>()).add(r);
-				for (Atom a : r.getBody()) {
-					Symbol sym = a.getSymbol();
-					if (sym.getSymbolType().isEDBSymbol()) {
-						facts.putIfAbsent(sym, origProg.getFacts(sym));
-					}
-					for (Term t : a.getArgs()) {
-						hpf.findHiddenPredicates(t);
-					}
+				for (ComplexConjunct<S> a : r) {
+					a.accept(new ComplexConjunctVisitor<S, Void, Void>() {
+
+						@Override
+						public Void visit(UnificationPredicate<S> unificationPredicate, Void input) {
+							hpf.findHiddenPredicates(unificationPredicate.getLhs());
+							hpf.findHiddenPredicates(unificationPredicate.getRhs());
+							return null;
+						}
+
+						@Override
+						public Void visit(UserPredicate<S> userPredicate, Void input) {
+							S sym = userPredicate.getSymbol();
+							if (sym.isEdbSymbol()) {
+								facts.putIfAbsent(sym, origProg.getFacts((R) sym));
+							}
+							for (Term t : userPredicate.getArgs()) {
+								hpf.findHiddenPredicates(t);
+							}
+							return null;
+						}
+
+					}, null);
 				}
-				for (Symbol psym : hpf.getSeenPredicates()) {
+				for (RelationSymbol psym : hpf.getSeenPredicates()) {
 					if (exploreTopDown(psym)) {
 						throw new InvalidProgramException("Cannot refer to top-down IDB predicate " + psym
 								+ " in a function; consider annotating " + psym + " with @bottomup");
 
 					}
-					if (psym.getSymbolType().isEDBSymbol()) {
-						facts.putIfAbsent(psym, origProg.getFacts(psym));
+					if (psym.isEdbSymbol()) {
+						facts.putIfAbsent((S) psym, origProg.getFacts((R) psym));
 					}
 				}
 			}
 			// Do not keep unnecessary facts around if there is a query.
 			if (query == null) {
-				for (Symbol sym : origProg.getFactSymbols()) {
-					facts.putIfAbsent(sym, origProg.getFacts(sym));
+				for (R sym : origProg.getFactSymbols()) {
+					facts.putIfAbsent((S) sym, origProg.getFacts(sym));
 				}
 			}
 			this.query = query;
 		}
 
 		@Override
-		public Set<Symbol> getFunctionSymbols() {
+		public Set<FunctionSymbol> getFunctionSymbols() {
 			return origProg.getFunctionSymbols();
 		}
 
 		@Override
-		public Set<Symbol> getFactSymbols() {
+		public Set<S> getFactSymbols() {
 			return Collections.unmodifiableSet(facts.keySet());
 		}
 
 		@Override
-		public Set<Symbol> getRuleSymbols() {
+		public Set<S> getRuleSymbols() {
 			return Collections.unmodifiableSet(rules.keySet());
 		}
 
 		@Override
-		public FunctionDef getDef(Symbol sym) {
+		public FunctionDef getDef(FunctionSymbol sym) {
 			return origProg.getDef(sym);
 		}
 
 		@Override
-		public Set<Atom> getFacts(Symbol sym) {
-			assert sym.getSymbolType().isEDBSymbol();
+		public Set<Term[]> getFacts(S sym) {
+			assert sym.isEdbSymbol();
 			return Util.lookupOrCreate(facts, sym, () -> Collections.emptySet());
 		}
 
 		@Override
-		public Set<Rule> getRules(Symbol sym) {
-			assert sym.getSymbolType().isIDBSymbol();
+		public Set<BasicRule<S>> getRules(S sym) {
+			assert sym.isIdbSymbol();
 			return Util.lookupOrCreate(rules, sym, () -> Collections.emptySet());
 		}
 
@@ -858,23 +926,12 @@ public class MagicSetTransformer<R extends RelationSymbol> {
 		}
 
 		@Override
-		public RelationProperties getRelationProperties(Symbol sym) {
-			if (sym instanceof AdornedSymbol) {
-				sym = ((AdornedSymbol) sym).getSymbol();
-			}
-			if (sym instanceof PositiveSymbol) {
-				sym = ((PositiveSymbol) sym).getUnderlyingSymbol();
-			}
-			return relationProps.get(sym);
-		}
-
-		@Override
 		public boolean hasQuery() {
 			return query != null;
 		}
 
 		@Override
-		public NormalAtom getQuery() {
+		public UserPredicate<S> getQuery() {
 			return query;
 		}
 

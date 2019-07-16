@@ -24,19 +24,18 @@ import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctExnVisitor;
 import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctVisitor;
-import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 
-public interface ComplexConjunct<R extends RelationSymbol> extends Conjunct {
+public interface ComplexConjunct extends Conjunct {
 
-	ComplexConjunct<R> applySubstitution(Substitution subst);
+	ComplexConjunct applySubstitution(Substitution subst);
 
 	boolean isNegated();
 	
 	Set<Var> varSet();
 	
-	<I, O> O accept(ComplexConjunctVisitor<R, I, O> visitor, I input);
+	<I, O> O accept(ComplexConjunctVisitor<I, O> visitor, I input);
 	
-	<I, O, E extends Throwable> O accept(ComplexConjunctExnVisitor<R, I, O, E> visitor, I input) throws E;
+	<I, O, E extends Throwable> O accept(ComplexConjunctExnVisitor<I, O, E> visitor, I input) throws E;
 	
 }

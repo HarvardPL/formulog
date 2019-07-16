@@ -33,59 +33,63 @@ import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.traverse.TopologicalOrderIterator;
 
+import edu.harvard.seas.pl.formulog.ast.BasicProgram;
+import edu.harvard.seas.pl.formulog.ast.BasicRule;
+import edu.harvard.seas.pl.formulog.ast.ComplexConjunct;
+import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctVisitor;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Expr;
+import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
+import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
-import edu.harvard.seas.pl.formulog.ast.Program;
-import edu.harvard.seas.pl.formulog.ast.RelationProperties;
-import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
-import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
-import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
-import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
+import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
+import edu.harvard.seas.pl.formulog.ast.UserPredicate;
+import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
+import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbolFactory.PredicateFunctionSymbol;
+import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 
 public class Stratifier {
 
-	private final Program prog;
+	private final BasicProgram prog;
 
-	public Stratifier(Program prog) {
+	public Stratifier(BasicProgram prog) {
 		this.prog = prog;
 	}
 
 	public List<Stratum> stratify() throws InvalidProgramException {
-		Graph<Symbol, DependencyTypeWrapper> g = new DefaultDirectedGraph<>(DependencyTypeWrapper.class);
-		for (Symbol sym : prog.getRuleSymbols()) {
-			for (Rule r : prog.getRules(sym)) {
+		Graph<RelationSymbol, DependencyTypeWrapper> g = new DefaultDirectedGraph<>(DependencyTypeWrapper.class);
+		for (RelationSymbol sym : prog.getRuleSymbols()) {
+			for (BasicRule r : prog.getRules(sym)) {
 				DependencyFinder depends = new DependencyFinder();
-				for (Atom bd : r.getBody()) {
+				for (ComplexConjunct bd : r) {
 					depends.processAtom(bd);
 				}
-				Atom hd = r.getHead();
-				Symbol hdSym = hd.getSymbol();
+				UserPredicate hd = r.getHead();
+				RelationSymbol hdSym = hd.getSymbol();
 				g.addVertex(hdSym);
-				for (Symbol bdSym : depends) {
+				for (RelationSymbol bdSym : depends) {
 					g.addVertex(bdSym);
 					g.addEdge(bdSym, hdSym, new DependencyTypeWrapper(depends.getDependencyType(bdSym)));
 				}
 			}
 		}
-		StrongConnectivityAlgorithm<Symbol, DependencyTypeWrapper> k = new KosarajuStrongConnectivityInspector<>(g);
-		Graph<Graph<Symbol, DependencyTypeWrapper>, DefaultEdge> condensation = k.getCondensation();
-		TopologicalOrderIterator<Graph<Symbol, DependencyTypeWrapper>, DefaultEdge> topo = new TopologicalOrderIterator<>(
+		StrongConnectivityAlgorithm<RelationSymbol, DependencyTypeWrapper> k = new KosarajuStrongConnectivityInspector<>(
+				g);
+		Graph<Graph<RelationSymbol, DependencyTypeWrapper>, DefaultEdge> condensation = k.getCondensation();
+		TopologicalOrderIterator<Graph<RelationSymbol, DependencyTypeWrapper>, DefaultEdge> topo = new TopologicalOrderIterator<>(
 				condensation);
 		List<Stratum> strata = new ArrayList<>();
 		int rank = 0;
 		while (topo.hasNext()) {
 			boolean hasRecursiveNegationOrAggregation = false;
-			Graph<Symbol, DependencyTypeWrapper> component = topo.next();
+			Graph<RelationSymbol, DependencyTypeWrapper> component = topo.next();
 			for (DependencyTypeWrapper dw : component.edgeSet()) {
 				DependencyType d = dw.get();
 				if (d.equals(DependencyType.NEG_OR_AGG_IN_FUN)) {
@@ -99,31 +103,46 @@ public class Stratifier {
 		return strata;
 	}
 
-	private class DependencyFinder implements Iterable<Symbol> {
+	private class DependencyFinder implements Iterable<RelationSymbol> {
 
-		private final Set<Symbol> visitedFunctions = new HashSet<>();
-		private final Set<Symbol> allDependencies = new HashSet<>();
-		private final Set<Symbol> negOrAggFunDependencies = new HashSet<>();
-		private final Set<Symbol> negOrAggRelDependencies = new HashSet<>();
+		private final Set<FunctionSymbol> visitedFunctions = new HashSet<>();
+		private final Set<RelationSymbol> allDependencies = new HashSet<>();
+		private final Set<RelationSymbol> negOrAggFunDependencies = new HashSet<>();
+		private final Set<RelationSymbol> negOrAggRelDependencies = new HashSet<>();
 
-		private boolean isAggregate(Atom a) {
-			Symbol sym = a.getSymbol();
-			RelationProperties props = prog.getRelationProperties(sym);
-			return props != null && props.isAggregated();
+		// private boolean isAggregate(Atom a) {
+		// Symbol sym = a.getSymbol();
+		// RelationProperties props = prog.getRelationProperties(sym);
+		// return props != null && props.isAggregated();
+		// }
+
+		public void processAtom(ComplexConjunct a) {
+			a.accept(new ComplexConjunctVisitor<Void, Void>() {
+
+				@Override
+				public Void visit(UnificationPredicate unificationPredicate, Void input) {
+					processTerm(unificationPredicate.getLhs());
+					processTerm(unificationPredicate.getRhs());
+					return null;
+				}
+
+				@Override
+				public Void visit(UserPredicate userPredicate, Void input) {
+					if (userPredicate.isNegated()) {
+						addNegOrAggRel(userPredicate.getSymbol());
+					} else {
+						addPositive(userPredicate.getSymbol());
+					}
+					for (Term t : userPredicate.getArgs()) {
+						processTerm(t);
+					}
+					return null;
+				}
+
+			}, null);
 		}
 
-		public void processAtom(Atom a) {
-			if (a.isNegated() || isAggregate(a)) {
-				addNegOrAggRel(a.getSymbol());
-			} else {
-				addPositive(a.getSymbol());
-			}
-			for (Term t : a.getArgs()) {
-				processTerm(t);
-			}
-		}
-
-		public DependencyType getDependencyType(Symbol sym) {
+		public DependencyType getDependencyType(RelationSymbol sym) {
 			// Order is important here, since having a negative or aggregate
 			// dependency within a function body subsumes having one in a
 			// relation definition.
@@ -136,17 +155,17 @@ public class Stratifier {
 			return DependencyType.POSITIVE;
 		}
 
-		private void addNegOrAggFun(Symbol sym) {
+		private void addNegOrAggFun(RelationSymbol sym) {
 			negOrAggFunDependencies.add(sym);
 			allDependencies.add(sym);
 		}
 
-		private void addNegOrAggRel(Symbol sym) {
+		private void addNegOrAggRel(RelationSymbol sym) {
 			negOrAggRelDependencies.add(sym);
 			allDependencies.add(sym);
 		}
 
-		private void addPositive(Symbol sym) {
+		private void addPositive(RelationSymbol sym) {
 			allDependencies.add(sym);
 		}
 
@@ -205,7 +224,7 @@ public class Stratifier {
 			}, null);
 		}
 
-		private void processFunctionSymbol(Symbol s) {
+		private void processFunctionSymbol(FunctionSymbol s) {
 			assert prog.getFunctionSymbols().contains(s);
 			if (!visitedFunctions.add(s)) {
 				return;
@@ -222,7 +241,7 @@ public class Stratifier {
 		}
 
 		@Override
-		public Iterator<Symbol> iterator() {
+		public Iterator<RelationSymbol> iterator() {
 			return allDependencies.iterator();
 		}
 

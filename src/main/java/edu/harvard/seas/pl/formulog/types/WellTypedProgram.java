@@ -24,8 +24,7 @@ import edu.harvard.seas.pl.formulog.ast.BasicRule;
 
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
-import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 
-public interface WellTypedProgram<S extends RelationSymbol> extends Program<S, UserPredicate<S>, BasicRule<S>> {
+public interface WellTypedProgram extends Program<UserPredicate, BasicRule> {
 
 }

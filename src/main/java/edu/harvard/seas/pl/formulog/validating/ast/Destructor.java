@@ -28,21 +28,20 @@ import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
-import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 
-public class Destructor<R extends RelationSymbol> implements SimpleConjunct<R> {
+public class Destructor implements SimpleConjunct {
 
 	private final Term x;
 	private final Symbol symbol;
 	private final Var[] vars;
 
-	public static <R extends RelationSymbol> Destructor<R> make(Term x, ConstructorSymbol symbol, Var[] vars) {
+	public static Destructor make(Term x, ConstructorSymbol symbol, Var[] vars) {
 		assert !Arrays.asList(vars).contains(x) : "A variable cannot be on both sides of a destructor";
 		assert symbol.getArity() == vars.length : "Symbol arity does not match number of variables";
 		assert vars.length == new HashSet<>(Arrays.asList(vars)).size() : "All variables must be distinct";
-		return new Destructor<R>(x, symbol, vars);
+		return new Destructor(x, symbol, vars);
 	}
 	
 	private Destructor(Term x, Symbol symbol, Var[] vars) {
@@ -64,12 +63,12 @@ public class Destructor<R extends RelationSymbol> implements SimpleConjunct<R> {
 	}
 	
 	@Override
-	public <I, O> O accept(SimpleConjunctVisitor<R, I, O> visitor, I input) {
+	public <I, O> O accept(SimpleConjunctVisitor<I, O> visitor, I input) {
 		return visitor.visit(this, input);
 	}
 
 	@Override
-	public <I, O, E extends Throwable> O accept(SimpleConjunctExnVisitor<R, I, O, E> visitor, I input) throws E {
+	public <I, O, E extends Throwable> O accept(SimpleConjunctExnVisitor<I, O, E> visitor, I input) throws E {
 		return visitor.visit(this, input);
 	}
 

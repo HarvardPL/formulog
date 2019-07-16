@@ -25,17 +25,16 @@ import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctExnVisitor;
 import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctVisitor;
-import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 
-public class UnificationPredicate<R extends RelationSymbol> implements ComplexConjunct<R> {
+public class UnificationPredicate implements ComplexConjunct {
 
 	private final Term lhs;
 	private final Term rhs;
 	private final boolean negated;
 
-	public static <R extends RelationSymbol> UnificationPredicate<R> make(Term lhs, Term rhs, boolean negated) {
-		return new UnificationPredicate<>(lhs, rhs, negated);
+	public static UnificationPredicate make(Term lhs, Term rhs, boolean negated) {
+		return new UnificationPredicate(lhs, rhs, negated);
 	}
 	
 	private UnificationPredicate(Term lhs, Term rhs, boolean negated) {
@@ -53,7 +52,7 @@ public class UnificationPredicate<R extends RelationSymbol> implements ComplexCo
 	}
 
 	@Override
-	public ComplexConjunct<R> applySubstitution(Substitution subst) {
+	public UnificationPredicate applySubstitution(Substitution subst) {
 		Term newLhs = lhs.applySubstitution(subst);
 		Term newRhs = rhs.applySubstitution(subst);
 		return make(newLhs, newRhs, negated);
@@ -82,7 +81,7 @@ public class UnificationPredicate<R extends RelationSymbol> implements ComplexCo
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		UnificationPredicate<?> other = (UnificationPredicate<?>) obj;
+		UnificationPredicate other = (UnificationPredicate) obj;
 		if (lhs == null) {
 			if (other.lhs != null)
 				return false;
@@ -104,12 +103,12 @@ public class UnificationPredicate<R extends RelationSymbol> implements ComplexCo
 	}
 
 	@Override
-	public <I, O> O accept(ComplexConjunctVisitor<R, I, O> visitor, I input) {
+	public <I, O> O accept(ComplexConjunctVisitor<I, O> visitor, I input) {
 		return visitor.visit(this, input);
 	}
 
 	@Override
-	public <I, O, E extends Throwable> O accept(ComplexConjunctExnVisitor<R, I, O, E> visitor, I input) throws E {
+	public <I, O, E extends Throwable> O accept(ComplexConjunctExnVisitor<I, O, E> visitor, I input) throws E {
 		return visitor.visit(this, input);
 	}
 

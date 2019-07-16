@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types;
@@ -88,10 +87,10 @@ public class SymbolManager {
 		return sym;
 	}
 
-	public RelationSymbol createRelationSymbol(String name, int arity, boolean isIdb, FunctorType type) {
+	public MutableRelationSymbol createRelationSymbol(String name, int arity, boolean isIdb, FunctorType type) {
 		assertInitialized();
 		checkNotUsed(name);
-		RelationSymbol sym = new RelationSymbolImpl(name, arity, isIdb, type);
+		MutableRelationSymbol sym = new RelationSymbolImpl(name, arity, isIdb, type);
 		registerSymbol(sym, type);
 		return sym;
 	}
@@ -155,14 +154,6 @@ public class SymbolManager {
 		}
 		return sym;
 	}
-
-	private int cnt;
-
-	// public Symbol createFreshSymbol(String namePrefix, int arity, SymbolType st,
-	// Type type) {
-	// String name = namePrefix + cnt++;
-	// return createSymbol(name, arity, st, type);
-	// }
 
 	public ConstructorSymbol lookupIndexConstructorSymbol(int index) {
 		String name = "index$" + index;
@@ -253,11 +244,11 @@ public class SymbolManager {
 
 	}
 
-	private class RelationSymbolImpl extends AbstractTypedSymbol implements RelationSymbol {
+	private class RelationSymbolImpl extends AbstractTypedSymbol implements MutableRelationSymbol {
 
 		private final boolean idb;
-		private FunctionSymbol aggFunc;
-		private Term unit;
+		private boolean bottomUp;
+		private boolean topDown;
 
 		public RelationSymbolImpl(String name, int arity, boolean isIdb, FunctorType type) {
 			super(name, arity, type);
@@ -270,9 +261,29 @@ public class SymbolManager {
 		}
 
 		@Override
-		public void setAggregate(FunctionSymbol aggFunc, Term unit) {
-			this.aggFunc = aggFunc;
-			this.unit = unit;
+		public synchronized boolean isBottomUp() {
+			return bottomUp;
+		}
+
+		@Override
+		public synchronized boolean isTopDown() {
+			return topDown;
+		}
+
+		@Override
+		public synchronized void setTopDown() {
+			if (bottomUp) {
+				throw new IllegalStateException("Relation cannot be both top-down and bottom-up");
+			}
+			topDown = true;
+		}
+
+		@Override
+		public synchronized void setBottomUp() {
+			if (topDown) {
+				throw new IllegalStateException("Relation cannot be both top-down and bottom-up");
+			}
+			bottomUp = true;
 		}
 
 	}

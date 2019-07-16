@@ -20,8 +20,6 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
-
-public interface BasicProgram<S extends RelationSymbol> extends Program<S, UserPredicate<S>, BasicRule<S>> {
+public interface BasicProgram extends Program<UserPredicate, BasicRule> {
 
 }

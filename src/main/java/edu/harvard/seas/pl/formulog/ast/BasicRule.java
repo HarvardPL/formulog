@@ -24,14 +24,12 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
+public class BasicRule implements Rule<UserPredicate, ComplexConjunct> {
 
-public class BasicRule<R extends RelationSymbol> implements Rule<UserPredicate<R>, ComplexConjunct<R>> {
+	private final UserPredicate head;
+	private final List<ComplexConjunct> body;
 
-	private final UserPredicate<R> head;
-	private final List<ComplexConjunct<R>> body;
-
-	private BasicRule(UserPredicate<R> head, List<ComplexConjunct<R>> body) {
+	private BasicRule(UserPredicate head, List<ComplexConjunct> body) {
 		if (!head.getSymbol().isIdbSymbol()) {
 			throw new IllegalArgumentException(
 					"Cannot create rule with non-IDB predicate for head: " + head.getSymbol());
@@ -40,19 +38,19 @@ public class BasicRule<R extends RelationSymbol> implements Rule<UserPredicate<R
 		this.body = body;
 	}
 
-	public static <R extends RelationSymbol> BasicRule<R> make(UserPredicate<R> head, List<ComplexConjunct<R>> body) {
+	public static BasicRule make(UserPredicate head, List<ComplexConjunct> body) {
 		if (body.isEmpty()) {
 			return make(head);
 		}
-		return new BasicRule<>(head, body);
+		return new BasicRule(head, body);
 	}
 
-	public static <R extends RelationSymbol> BasicRule<R> make(UserPredicate<R> head) {
+	public static BasicRule make(UserPredicate head) {
 		return make(head, Collections.singletonList(ComplexConjuncts.trueAtom()));
 	}
 
 	@Override
-	public UserPredicate<R> getHead() {
+	public UserPredicate getHead() {
 		return head;
 	}
 
@@ -73,7 +71,7 @@ public class BasicRule<R extends RelationSymbol> implements Rule<UserPredicate<R
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		BasicRule<?> other = (BasicRule<?>) obj;
+		BasicRule other = (BasicRule) obj;
 		if (body == null) {
 			if (other.body != null)
 				return false;
@@ -97,7 +95,7 @@ public class BasicRule<R extends RelationSymbol> implements Rule<UserPredicate<R
 		} else {
 			sb.append("\n\t");
 		}
-		for (Iterator<ComplexConjunct<R>> it = body.iterator(); it.hasNext();) {
+		for (Iterator<ComplexConjunct> it = body.iterator(); it.hasNext();) {
 			sb.append(it.next());
 			if (it.hasNext()) {
 				sb.append(",\n\t");
@@ -113,12 +111,12 @@ public class BasicRule<R extends RelationSymbol> implements Rule<UserPredicate<R
 	}
 
 	@Override
-	public ComplexConjunct<R> getBody(int idx) {
+	public ComplexConjunct getBody(int idx) {
 		return body.get(idx);
 	}
 
 	@Override
-	public Iterator<ComplexConjunct<R>> iterator() {
+	public Iterator<ComplexConjunct> iterator() {
 		return body.iterator();
 	}
 

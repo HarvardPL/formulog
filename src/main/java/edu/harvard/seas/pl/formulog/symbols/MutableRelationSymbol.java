@@ -20,16 +20,10 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-public interface RelationSymbol extends TypedSymbol {
+public interface MutableRelationSymbol extends RelationSymbol {
 
-	boolean isIdbSymbol();
-
-	default boolean isEdbSymbol() {
-		return !isIdbSymbol();
-	}
-
-	boolean isBottomUp();
-
-	boolean isTopDown();
+	void setTopDown();
+	
+	void setBottomUp();
 	
 }

@@ -22,15 +22,15 @@ package edu.harvard.seas.pl.formulog.validating;
 
 import java.util.Set;
 
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
+import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 
 public class Stratum {
 
 	private final int rank;
-	private final Set<Symbol> predicateSyms;
+	private final Set<RelationSymbol> predicateSyms;
 	private final boolean hasRecursiveNegationOrAggregation;
 
-	public Stratum(int rank, Set<Symbol> predicateSyms, boolean hasRecursiveNegationOrAggregation) {
+	public Stratum(int rank, Set<RelationSymbol> predicateSyms, boolean hasRecursiveNegationOrAggregation) {
 		this.rank = rank;
 		this.predicateSyms = predicateSyms;
 		this.hasRecursiveNegationOrAggregation = hasRecursiveNegationOrAggregation;
@@ -40,7 +40,7 @@ public class Stratum {
 		return rank;
 	}
 	
-	public Set<Symbol> getPredicateSyms() {
+	public Set<RelationSymbol> getPredicateSyms() {
 		return predicateSyms;
 	}
 	
