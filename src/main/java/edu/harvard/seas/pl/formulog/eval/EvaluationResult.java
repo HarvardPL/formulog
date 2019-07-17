@@ -22,15 +22,15 @@ package edu.harvard.seas.pl.formulog.eval;
 
 import java.util.Set;
 
-import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
+import edu.harvard.seas.pl.formulog.ast.Term;
+import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 
 public interface EvaluationResult {
 
-	Set<NormalAtom> getAll(Symbol sym);
+	Set<Term[]> getAll(RelationSymbol sym);
 	
-	Set<NormalAtom> getQueryAnswer();
+	Set<Term[]> getQueryAnswer();
 	
-	Set<Symbol> getSymbols();
+	Set<RelationSymbol> getSymbols();
 	
 }

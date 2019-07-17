@@ -29,7 +29,7 @@ import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 
-public class Predicate implements SimpleConjunct {
+public class SimplePredicate implements SimpleConjunct {
 
 	private final RelationSymbol symbol;
 	private final Term[] boundTerms;
@@ -37,7 +37,7 @@ public class Predicate implements SimpleConjunct {
 	private final boolean[] bindingPattern;
 	private final boolean negated;
 
-	public static Predicate make(RelationSymbol symbol, Term[] args, Set<Var> boundVars, boolean negated) {
+	public static SimplePredicate make(RelationSymbol symbol, Term[] args, Set<Var> boundVars, boolean negated) {
 		assert symbol.getArity() == args.length : "Symbol does not match argument arity";
 		List<Var> unbound = new ArrayList<>();
 		List<Term> bound = new ArrayList<>();
@@ -55,10 +55,10 @@ public class Predicate implements SimpleConjunct {
 		}
 		Term[] bv = bound.toArray(new Term[0]);
 		Var[] uv = unbound.toArray(new Var[0]);
-		return new Predicate(symbol, bv, uv, pattern, negated);
+		return new SimplePredicate(symbol, bv, uv, pattern, negated);
 	}
 
-	private Predicate(RelationSymbol symbol, Term[] boundTerms, Var[] unboundVars, boolean[] bindingPattern, boolean negated) {
+	private SimplePredicate(RelationSymbol symbol, Term[] boundTerms, Var[] unboundVars, boolean[] bindingPattern, boolean negated) {
 		this.symbol = symbol;
 		this.boundTerms = boundTerms;
 		this.unboundVars = unboundVars;

@@ -38,9 +38,9 @@ import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 
-public class SimplifiedRule implements Rule<Predicate, SimpleConjunct> {
+public class SimplifiedRule implements Rule<SimplePredicate, SimpleConjunct> {
 
-	private final Predicate head;
+	private final SimplePredicate head;
 	private final List<SimpleConjunct> body;
 
 	public static SimplifiedRule make(BasicRule rule) throws InvalidProgramException {
@@ -58,17 +58,17 @@ public class SimplifiedRule implements Rule<Predicate, SimpleConjunct> {
 		if (!boundVars.containsAll(head.varSet())) {
 			throw new InvalidProgramException("Unbound variables in head of rule:\n" + rule);
 		}
-		Predicate newHead = Predicate.make(head.getSymbol(), head.getArgs(), boundVars, head.isNegated());
+		SimplePredicate newHead = SimplePredicate.make(head.getSymbol(), head.getArgs(), boundVars, head.isNegated());
 		return new SimplifiedRule(newHead, simplifier.getConjuncts());
 	}
 
-	private SimplifiedRule(Predicate head, List<SimpleConjunct> body) {
+	private SimplifiedRule(SimplePredicate head, List<SimpleConjunct> body) {
 		this.head = head;
 		this.body = body;
 	}
 
 	@Override
-	public Predicate getHead() {
+	public SimplePredicate getHead() {
 		return head;
 	}
 
@@ -209,7 +209,7 @@ public class SimplifiedRule implements Rule<Predicate, SimpleConjunct> {
 									todo.add(UnificationPredicate.make(y, arg, false));
 								}
 							}
-							SimpleConjunct c = Predicate.make(userPredicate.getSymbol(), newArgs, boundVars,
+							SimpleConjunct c = SimplePredicate.make(userPredicate.getSymbol(), newArgs, boundVars,
 									userPredicate.isNegated());
 							boundVars.addAll(seen);
 							return c;

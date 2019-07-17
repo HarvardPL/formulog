@@ -20,11 +20,11 @@ package edu.harvard.seas.pl.formulog.db;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.validating.ast.Predicate;
+import edu.harvard.seas.pl.formulog.validating.ast.SimplePredicate;
 
 public interface IndexedFactDbBuilder<T extends IndexedFactDb> {
 
-	int makeIndex(Predicate atom);
+	int makeIndex(SimplePredicate atom);
 	
 	T build();
 	

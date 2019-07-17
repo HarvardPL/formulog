@@ -28,6 +28,6 @@ public interface SimpleConjunctExnVisitor<I, O, E extends Throwable> {
 
 	O visit(Destructor destructor, I input) throws E;
 
-	O visit(Predicate predicate, I input) throws E;
+	O visit(SimplePredicate predicate, I input) throws E;
 
 }

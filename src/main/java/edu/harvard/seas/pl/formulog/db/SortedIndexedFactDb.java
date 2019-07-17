@@ -35,7 +35,7 @@ import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.util.Util;
-import edu.harvard.seas.pl.formulog.validating.ast.Predicate;
+import edu.harvard.seas.pl.formulog.validating.ast.SimplePredicate;
 
 public class SortedIndexedFactDb implements IndexedFactDb {
 
@@ -81,7 +81,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 		private final Map<RelationSymbol, Map<BooleanArrayWrapper, Integer>> pats = new HashMap<>();
 
 		@Override
-		public synchronized int makeIndex(Predicate atom) {
+		public synchronized int makeIndex(SimplePredicate atom) {
 			boolean[] pat = atom.getBindingPattern();
 			Map<BooleanArrayWrapper, Integer> m = Util.lookupOrCreate(pats, atom.getSymbol(), () -> new HashMap<>());
 			BooleanArrayWrapper key = new BooleanArrayWrapper(pat);

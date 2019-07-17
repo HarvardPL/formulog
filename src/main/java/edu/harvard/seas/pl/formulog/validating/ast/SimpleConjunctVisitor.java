@@ -28,6 +28,6 @@ public interface SimpleConjunctVisitor<I, O> {
 
 	O visit(Destructor destructor, I input);
 
-	O visit(Predicate predicate, I input);
+	O visit(SimplePredicate predicate, I input);
 
 }

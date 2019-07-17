@@ -21,69 +21,70 @@ package edu.harvard.seas.pl.formulog.eval;
  */
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
+import java.util.function.Predicate;
 
-import edu.harvard.seas.pl.formulog.ast.Atoms;
-import edu.harvard.seas.pl.formulog.ast.Atoms.Atom;
-import edu.harvard.seas.pl.formulog.ast.Atoms.AtomVisitor;
-import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
-import edu.harvard.seas.pl.formulog.ast.Atoms.UnifyAtom;
 import edu.harvard.seas.pl.formulog.ast.Rule;
-import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.db.IndexedFactDb.IndexedFactDBBuilder;
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
+import edu.harvard.seas.pl.formulog.db.IndexedFactDbBuilder;
+import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.util.Util;
+import edu.harvard.seas.pl.formulog.validating.ast.Assignment;
+import edu.harvard.seas.pl.formulog.validating.ast.Check;
+import edu.harvard.seas.pl.formulog.validating.ast.Destructor;
+import edu.harvard.seas.pl.formulog.validating.ast.SimplePredicate;
+import edu.harvard.seas.pl.formulog.validating.ast.SimpleConjunct;
+import edu.harvard.seas.pl.formulog.validating.ast.SimpleConjunctVisitor;
 
-public class IndexedRule implements Rule {
+public class IndexedRule implements Rule<SimplePredicate, SimpleConjunct> {
 
-	private final Atom head;
-	private final List<Atom> body;
+	private final SimplePredicate head;
+	private final List<SimpleConjunct> body;
 	private final List<Integer> idxs;
 
-	public IndexedRule(Rule rule, IndexedFactDBBuilder dbb) {
+	public IndexedRule(Rule<SimplePredicate, SimpleConjunct> rule, IndexedFactDbBuilder<?> dbb,
+			Predicate<RelationSymbol> makeIndex) {
 		head = rule.getHead();
-		body = Util.iterableToList(rule.getBody());
-		idxs = createIndexes(dbb);
+		body = Util.iterableToList(rule);
+		idxs = createIndexes(dbb, makeIndex);
 	}
 
-	private List<Integer> createIndexes(IndexedFactDBBuilder db) {
+	private List<Integer> createIndexes(IndexedFactDbBuilder<?> dbb, Predicate<RelationSymbol> makeIndex) {
 		List<Integer> idxs = new ArrayList<>();
-		Set<Var> boundVars = new HashSet<>();
-		for (Atom a : body) {
-			idxs.add(a.visit(new AtomVisitor<Void, Integer>() {
+		for (SimpleConjunct a : body) {
+			idxs.add(a.accept(new SimpleConjunctVisitor<Void, Integer>() {
 
 				@Override
-				public Integer visit(NormalAtom normalAtom, Void in) {
-					Symbol sym = normalAtom.getSymbol();
-					if (sym instanceof SemiNaiveSymbol) {
-						sym = ((SemiNaiveSymbol) sym).getUnderlyingSymbol();
-						normalAtom = (NormalAtom) Atoms.get(sym, normalAtom.getArgs(), normalAtom.isNegated());
-					}
-					return db.addIndex(normalAtom, boundVars);
+				public Integer visit(Assignment assignment, Void input) {
+					return null;
 				}
 
 				@Override
-				public Integer visit(UnifyAtom unifyAtom, Void in) {
+				public Integer visit(Check check, Void input) {
+					return null;
+				}
+
+				@Override
+				public Integer visit(Destructor destructor, Void input) {
+					return null;
+				}
+
+				@Override
+				public Integer visit(SimplePredicate predicate, Void input) {
+					if (makeIndex.test(predicate.getSymbol())) {
+						dbb.makeIndex(predicate);
+					}
 					return null;
 				}
 
 			}, null));
-			boundVars.addAll(Atoms.varSet(a));
 		}
 		return idxs;
 	}
 
 	@Override
-	public Atom getHead() {
+	public SimplePredicate getHead() {
 		return head;
-	}
-
-	@Override
-	public Iterable<Atom> getBody() {
-		return body;
 	}
 
 	@Override
@@ -92,7 +93,7 @@ public class IndexedRule implements Rule {
 	}
 
 	@Override
-	public Atom getBody(int idx) {
+	public SimpleConjunct getBody(int idx) {
 		return body.get(idx);
 	}
 
@@ -110,7 +111,7 @@ public class IndexedRule implements Rule {
 		} else {
 			sb.append("\n\t");
 		}
-		for (Iterator<Atom> it = body.iterator(); it.hasNext();) {
+		for (Iterator<SimpleConjunct> it = body.iterator(); it.hasNext();) {
 			sb.append(it.next());
 			if (it.hasNext()) {
 				sb.append(",\n\t");
@@ -118,6 +119,11 @@ public class IndexedRule implements Rule {
 		}
 		sb.append(".");
 		return sb.toString();
+	}
+
+	@Override
+	public Iterator<SimpleConjunct> iterator() {
+		return body.iterator();
 	}
 
 }
