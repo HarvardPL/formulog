@@ -1,5 +1,8 @@
 package edu.harvard.seas.pl.formulog.db;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 /*-
  * #%L
  * FormuLog
@@ -22,6 +25,7 @@ package edu.harvard.seas.pl.formulog.db;
 
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Set;
@@ -30,44 +34,57 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
-import edu.harvard.seas.pl.formulog.util.ArrayWrapper;
 import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.ast.Predicate;
 
 public class SortedIndexedFactDb implements IndexedFactDB {
 
+	private final Map<RelationSymbol, Set<Term[]>> all;
+	private final IndexedFactSet[] indices;
+	private final Map<RelationSymbol, Iterable<Integer>> relevantIndices;
+
+	private SortedIndexedFactDb(Map<RelationSymbol, Set<Term[]>> all, IndexedFactSet[] indices, Map<RelationSymbol, Iterable<Integer>> relevantIndices) {
+		this.all = all;
+		this.indices = indices;
+		this.relevantIndices = relevantIndices;
+	}
+
 	@Override
 	public Set<RelationSymbol> getSymbols() {
-		// TODO Auto-generated method stub
-		return null;
+		return all.keySet();
 	}
 
 	@Override
 	public Set<Term[]> getAll(RelationSymbol sym) {
-		// TODO Auto-generated method stub
-		return null;
+		return all.get(sym);
 	}
 
 	@Override
 	public Set<Term[]> get(Term[] key, int index) {
-		// TODO Auto-generated method stub
-		return null;
+		return indices[index].lookup(key);
+	}
+	
+	@Override
+	public boolean add(RelationSymbol sym, Term[] args) {
+		if (!all.get(sym).add(args)) {
+			return false;
+		}
+		for (Integer idx : relevantIndices.get(sym)) {
+			indices[idx].add(args);
+		}
+		return true;
 	}
 
 	public static class SortedIndexedFactDbBuilder implements IndexedFactDbBuilder<SortedIndexedFactDb> {
 
 		private int cnt = 0;
-		private final Map<RelationSymbol, Map<ArrayWrapper<Boolean>, Integer>> pats = new HashMap<>();
+		private final Map<RelationSymbol, Map<BooleanArrayWrapper, Integer>> pats = new HashMap<>();
 
 		@Override
 		public synchronized int makeIndex(Predicate atom) {
 			boolean[] pat = atom.getBindingPattern();
-			Boolean[] pat2 = new Boolean[pat.length];
-			for (int i = 0; i < pat.length; ++i) {
-				pat2[i] = pat[i];
-			}
-			Map<ArrayWrapper<Boolean>, Integer> m = Util.lookupOrCreate(pats, atom.getSymbol(), () -> new HashMap<>());
-			ArrayWrapper<Boolean> key = new ArrayWrapper<>(pat2);
+			Map<BooleanArrayWrapper, Integer> m = Util.lookupOrCreate(pats, atom.getSymbol(), () -> new HashMap<>());
+			BooleanArrayWrapper key = new BooleanArrayWrapper(pat);
 			Integer idx = m.get(key);
 			if (idx == null) {
 				idx = cnt++;
@@ -78,8 +95,26 @@ public class SortedIndexedFactDb implements IndexedFactDB {
 
 		@Override
 		public SortedIndexedFactDb build() {
-			// TODO Auto-generated method stub
-			return null;
+			Map<RelationSymbol, Set<Term[]>> all = new HashMap<>();
+			IndexedFactSet[] indices = new IndexedFactSet[cnt];
+			Map<RelationSymbol, Iterable<Integer>> relevantIndices = new HashMap<>();
+			for (Map.Entry<RelationSymbol, Map<BooleanArrayWrapper, Integer>> e : pats.entrySet()) {
+				RelationSymbol sym = e.getKey();
+				int[] order = new int[sym.getArity()];
+				for (int i = 0; i < order.length; ++i) {
+					order[i] = i;
+				}
+				Comparator<Term[]> cmp = new ArrayComparator<>(order, null);
+				all.put(sym, new ConcurrentSkipListSet<>(cmp));
+				List<Integer> idxs = new ArrayList<>();
+				for (Map.Entry<BooleanArrayWrapper, Integer> e2 : e.getValue().entrySet()) {
+					int idx = e2.getValue();
+					indices[idx] = IndexedFactSet.make(e2.getKey().getArr());
+					idxs.add(idx);
+				}
+				relevantIndices.put(sym, idxs);
+			}
+			return new SortedIndexedFactDb(all, indices, relevantIndices);
 		}
 
 	}
@@ -87,10 +122,9 @@ public class SortedIndexedFactDb implements IndexedFactDB {
 	private static class IndexedFactSet {
 
 		private final boolean[] pat;
-		private final Comparator<Term[]> cmp;
 		private final NavigableSet<Term[]> s;
-	
-		public IndexedFactSet make(boolean[] pat) {
+
+		public static IndexedFactSet make(boolean[] pat) {
 			int[] order = new int[pat.length];
 			int pos = 0;
 			for (int i = 0; i < pat.length; ++i) {
@@ -106,19 +140,18 @@ public class SortedIndexedFactDb implements IndexedFactDB {
 				}
 			}
 			Comparator<Term[]> cmp = new ArrayComparator<>(order, null);
-			return new IndexedFactSet(pat, cmp);
+			return new IndexedFactSet(pat, new ConcurrentSkipListSet<>(cmp));
 		}
-		
-		private IndexedFactSet(boolean[] pat, Comparator<Term[]> cmp) {
+
+		private IndexedFactSet(boolean[] pat, NavigableSet<Term[]> s) {
 			this.pat = pat;
-			this.cmp = cmp;
-			s = new ConcurrentSkipListSet<>(cmp);
+			this.s = s;
 		}
-		
+
 		public void add(Term[] arr) {
 			s.add(arr);
 		}
-		
+
 		public Set<Term[]> lookup(Term[] arr) {
 			Term[] lower = new Term[arr.length];
 			Term[] upper = new Term[arr.length];
@@ -133,7 +166,7 @@ public class SortedIndexedFactDb implements IndexedFactDB {
 			}
 			return s.subSet(lower, true, upper, true);
 		}
-		
+
 	}
 
 	private static class ArrayComparator<T> implements Comparator<T[]> {
@@ -156,6 +189,41 @@ public class SortedIndexedFactDb implements IndexedFactDB {
 				}
 			}
 			return 0;
+		}
+
+	}
+
+	public static class BooleanArrayWrapper {
+		private final boolean[] arr;
+
+		public BooleanArrayWrapper(boolean[] arr) {
+			this.arr = arr;
+		}
+
+		public boolean[] getArr() {
+			return arr;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + Arrays.hashCode(arr);
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			BooleanArrayWrapper other = (BooleanArrayWrapper) obj;
+			if (!Arrays.equals(arr, other.arr))
+				return false;
+			return true;
 		}
 
 	}

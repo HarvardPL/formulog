@@ -33,4 +33,6 @@ public interface IndexedFactDB {
 	
 	Set<Term[]> get(Term[] key, int index);
 	
+	boolean add(RelationSymbol sym, Term[] args);
+	
 }
