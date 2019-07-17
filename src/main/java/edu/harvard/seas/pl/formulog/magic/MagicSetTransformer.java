@@ -42,6 +42,7 @@ import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
+import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
@@ -68,12 +69,12 @@ import edu.harvard.seas.pl.formulog.validating.Stratum;
 
 public class MagicSetTransformer {
 
-	private final BasicProgram origProg;
+	private final Program<UserPredicate, BasicRule> origProg;
 	private boolean topDownIsDefault;
 
 	private static final boolean debug = System.getProperty("debugMst") != null;
 
-	public MagicSetTransformer(BasicProgram prog) {
+	public MagicSetTransformer(Program<UserPredicate, BasicRule> prog) {
 		this.origProg = prog;
 	}
 
@@ -766,11 +767,11 @@ public class MagicSetTransformer {
 
 	private static class HiddenPredicateFinder {
 
-		private final BasicProgram origProg;
+		private final Program<UserPredicate, BasicRule> origProg;
 		private final Set<FunctionSymbol> visitedFunctions = new HashSet<>();
 		private final Set<RelationSymbol> seenPredicates = new HashSet<>();
 
-		public HiddenPredicateFinder(BasicProgram origProg) {
+		public HiddenPredicateFinder(Program<UserPredicate, BasicRule> origProg) {
 			this.origProg = origProg;
 		}
 

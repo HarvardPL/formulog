@@ -23,18 +23,16 @@ package edu.harvard.seas.pl.formulog.eval;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.Predicate;
+import java.util.function.Function;
 
 import edu.harvard.seas.pl.formulog.ast.Rule;
-import edu.harvard.seas.pl.formulog.db.IndexedFactDbBuilder;
-import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.ast.Assignment;
 import edu.harvard.seas.pl.formulog.validating.ast.Check;
 import edu.harvard.seas.pl.formulog.validating.ast.Destructor;
-import edu.harvard.seas.pl.formulog.validating.ast.SimplePredicate;
 import edu.harvard.seas.pl.formulog.validating.ast.SimpleConjunct;
 import edu.harvard.seas.pl.formulog.validating.ast.SimpleConjunctVisitor;
+import edu.harvard.seas.pl.formulog.validating.ast.SimplePredicate;
 
 public class IndexedRule implements Rule<SimplePredicate, SimpleConjunct> {
 
@@ -42,14 +40,13 @@ public class IndexedRule implements Rule<SimplePredicate, SimpleConjunct> {
 	private final List<SimpleConjunct> body;
 	private final List<Integer> idxs;
 
-	public IndexedRule(Rule<SimplePredicate, SimpleConjunct> rule, IndexedFactDbBuilder<?> dbb,
-			Predicate<RelationSymbol> makeIndex) {
+	public IndexedRule(Rule<SimplePredicate, SimpleConjunct> rule, Function<SimplePredicate, Integer> makeIndex) {
 		head = rule.getHead();
 		body = Util.iterableToList(rule);
-		idxs = createIndexes(dbb, makeIndex);
+		idxs = createIndexes(makeIndex);
 	}
 
-	private List<Integer> createIndexes(IndexedFactDbBuilder<?> dbb, Predicate<RelationSymbol> makeIndex) {
+	private List<Integer> createIndexes(Function<SimplePredicate, Integer> makeIndex) {
 		List<Integer> idxs = new ArrayList<>();
 		for (SimpleConjunct a : body) {
 			idxs.add(a.accept(new SimpleConjunctVisitor<Void, Integer>() {
@@ -71,10 +68,7 @@ public class IndexedRule implements Rule<SimplePredicate, SimpleConjunct> {
 
 				@Override
 				public Integer visit(SimplePredicate predicate, Void input) {
-					if (makeIndex.test(predicate.getSymbol())) {
-						dbb.makeIndex(predicate);
-					}
-					return null;
+					return makeIndex.apply(predicate);
 				}
 
 			}, null));

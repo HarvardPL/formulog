@@ -27,7 +27,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.ComplexConjunct;
 import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctExnVisitor;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
@@ -37,13 +36,14 @@ import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
+import edu.harvard.seas.pl.formulog.validating.ValidRule;
 
-public class SimplifiedRule implements Rule<SimplePredicate, SimpleConjunct> {
+public class SimpleRule implements Rule<SimplePredicate, SimpleConjunct> {
 
 	private final SimplePredicate head;
 	private final List<SimpleConjunct> body;
 
-	public static SimplifiedRule make(BasicRule rule) throws InvalidProgramException {
+	public static SimpleRule make(ValidRule rule) throws InvalidProgramException {
 		Simplifier simplifier = new Simplifier();
 		for (ComplexConjunct atom : rule) {
 			try {
@@ -59,10 +59,10 @@ public class SimplifiedRule implements Rule<SimplePredicate, SimpleConjunct> {
 			throw new InvalidProgramException("Unbound variables in head of rule:\n" + rule);
 		}
 		SimplePredicate newHead = SimplePredicate.make(head.getSymbol(), head.getArgs(), boundVars, head.isNegated());
-		return new SimplifiedRule(newHead, simplifier.getConjuncts());
+		return new SimpleRule(newHead, simplifier.getConjuncts());
 	}
 
-	private SimplifiedRule(SimplePredicate head, List<SimpleConjunct> body) {
+	private SimpleRule(SimplePredicate head, List<SimpleConjunct> body) {
 		this.head = head;
 		this.body = body;
 	}
@@ -104,7 +104,7 @@ public class SimplifiedRule implements Rule<SimplePredicate, SimpleConjunct> {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		SimplifiedRule other = (SimplifiedRule) obj;
+		SimpleRule other = (SimpleRule) obj;
 		if (body == null) {
 			if (other.body != null)
 				return false;

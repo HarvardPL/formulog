@@ -22,10 +22,12 @@ package edu.harvard.seas.pl.formulog.eval;
 
 public interface Evaluation {
 
-	public void run() throws EvaluationException;
+	default void run() throws EvaluationException {
+		run(1);
+	}
 	
-	public void run(int parallelism) throws EvaluationException;
+	void run(int parallelism) throws EvaluationException;
 	
-	public EvaluationResult getResult();
+	EvaluationResult getResult();
 	
 }

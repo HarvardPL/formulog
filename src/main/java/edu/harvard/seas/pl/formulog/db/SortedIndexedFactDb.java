@@ -34,7 +34,6 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
-import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.ast.SimplePredicate;
 
 public class SortedIndexedFactDb implements IndexedFactDb {
@@ -80,10 +79,16 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 		private int cnt = 0;
 		private final Map<RelationSymbol, Map<BooleanArrayWrapper, Integer>> pats = new HashMap<>();
 
+		public SortedIndexedFactDbBuilder(Set<RelationSymbol> allSyms) {
+			for (RelationSymbol sym : allSyms) {
+				pats.put(sym, new HashMap<>());
+			}
+		}
+		
 		@Override
 		public synchronized int makeIndex(SimplePredicate atom) {
 			boolean[] pat = atom.getBindingPattern();
-			Map<BooleanArrayWrapper, Integer> m = Util.lookupOrCreate(pats, atom.getSymbol(), () -> new HashMap<>());
+			Map<BooleanArrayWrapper, Integer> m = pats.get(atom.getSymbol());
 			BooleanArrayWrapper key = new BooleanArrayWrapper(pat);
 			Integer idx = m.get(key);
 			if (idx == null) {
