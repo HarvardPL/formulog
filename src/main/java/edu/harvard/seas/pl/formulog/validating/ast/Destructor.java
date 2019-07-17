@@ -74,7 +74,15 @@ public class Destructor implements SimpleConjunct {
 
 	@Override
 	public String toString() {
-		return "Destructor [x=" + x + ", symbol=" + symbol + ", vars=" + Arrays.toString(vars) + "]";
+		String s = symbol + "(";
+		for (int i = 0; i < vars.length; ++i) {
+			s += vars[i];
+			if (i < vars.length - 1) {
+				s += ", ";
+			}
+		}
+		s += ") <- " + x;
+		return s;
 	}
 	
 }

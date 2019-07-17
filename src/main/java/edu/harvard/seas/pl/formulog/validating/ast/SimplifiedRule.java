@@ -120,7 +120,22 @@ public class SimplifiedRule implements Rule<SimplePredicate, SimpleConjunct> {
 
 	@Override
 	public String toString() {
-		return "SimplifiedRule [head=" + head + ", body=" + body + "]";
+		StringBuilder sb = new StringBuilder();
+		sb.append(head);
+		sb.append(" :-");
+		if (body.size() == 1) {
+			sb.append(" ");
+		} else {
+			sb.append("\n\t");
+		}
+		for (Iterator<SimpleConjunct> it = body.iterator(); it.hasNext();) {
+			sb.append(it.next());
+			if (it.hasNext()) {
+				sb.append(",\n\t");
+			}
+		}
+		sb.append(".");
+		return sb.toString();
 	}
 
 	private static class Simplifier {

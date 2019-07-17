@@ -62,7 +62,7 @@ public class Check implements SimpleConjunct {
 
 	@Override
 	public String toString() {
-		return "Check [lhs=" + lhs + ", rhs=" + rhs + ", negated=" + negated + "]";
+		return lhs + (negated ? " != " : " = ") + rhs;
 	}
 
 }

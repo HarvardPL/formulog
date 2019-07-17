@@ -1,28 +1,5 @@
 package edu.harvard.seas.pl.formulog.validating.ast;
 
-/*-
- * #%L
- * FormuLog
- * %%
- * Copyright (C) 2018 - 2019 President and Fellows of Harvard College
- * %%
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * #L%
- */
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.Term;
@@ -32,36 +9,22 @@ import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 public class SimplePredicate implements SimpleConjunct {
 
 	private final RelationSymbol symbol;
-	private final Term[] boundTerms;
-	private final Var[] unboundVars;
+	private final Term[] args;
 	private final boolean[] bindingPattern;
 	private final boolean negated;
 
 	public static SimplePredicate make(RelationSymbol symbol, Term[] args, Set<Var> boundVars, boolean negated) {
 		assert symbol.getArity() == args.length : "Symbol does not match argument arity";
-		List<Var> unbound = new ArrayList<>();
-		List<Term> bound = new ArrayList<>();
 		boolean[] pattern = new boolean[symbol.getArity()];
-		int i = 0;
-		for (Term t : args) {
-			if ((pattern[i] = boundVars.containsAll(t.varSet()))) {
-				bound.add(t);
-			} else {
-				assert t instanceof Var;
-				Var x = (Var) t;
-				assert !unbound.contains(x);
-				unbound.add(x);
-			}
+		for (int i = 0; i < args.length; ++i) {
+			pattern[i] = boundVars.containsAll(args[i].varSet());
 		}
-		Term[] bv = bound.toArray(new Term[0]);
-		Var[] uv = unbound.toArray(new Var[0]);
-		return new SimplePredicate(symbol, bv, uv, pattern, negated);
+		return new SimplePredicate(symbol, args, pattern, negated);
 	}
 
-	private SimplePredicate(RelationSymbol symbol, Term[] boundTerms, Var[] unboundVars, boolean[] bindingPattern, boolean negated) {
+	private SimplePredicate(RelationSymbol symbol, Term[] args, boolean[] bindingPattern, boolean negated) {
 		this.symbol = symbol;
-		this.boundTerms = boundTerms;
-		this.unboundVars = unboundVars;
+		this.args = args;
 		this.bindingPattern = bindingPattern;
 		this.negated = negated;
 	}
@@ -70,18 +33,14 @@ public class SimplePredicate implements SimpleConjunct {
 		return symbol;
 	}
 
-	public Term[] getBoundTerms() {
-		return boundTerms;
-	}
-
-	public Var[] getUnboundVars() {
-		return unboundVars;
+	public Term[] getArgs() {
+		return args;
 	}
 
 	public boolean[] getBindingPattern() {
 		return bindingPattern;
 	}
-	
+
 	public boolean isNegated() {
 		return negated;
 	}
@@ -98,9 +57,22 @@ public class SimplePredicate implements SimpleConjunct {
 
 	@Override
 	public String toString() {
-		return "Predicate [symbol=" + symbol + ", boundVars=" + Arrays.toString(boundTerms) + ", unboundVars="
-				+ Arrays.toString(unboundVars) + ", bindingPattern=" + Arrays.toString(bindingPattern) + ", negated="
-				+ negated + "]";
+		String s = "";
+		if (negated) {
+			s += "!";
+		}
+		s += symbol;
+		if (args.length > 0) {
+			s += "(";
+			for (int i = 0; i < args.length; ++i) {
+				s += args[i] + " : " + (bindingPattern[i] ? "b" : "f");
+				if (i < args.length - 1) {
+					s += ", ";
+				}
+			}
+			s += ")";
+		}
+		return s;
 	}
 
 }

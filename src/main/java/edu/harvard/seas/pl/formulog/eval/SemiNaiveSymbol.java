@@ -23,31 +23,31 @@ package edu.harvard.seas.pl.formulog.eval;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
-import edu.harvard.seas.pl.formulog.symbols.SymbolType;
-import edu.harvard.seas.pl.formulog.types.Types.Type;
+import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
 
-public class SemiNaiveSymbol implements Symbol {
+public class SemiNaiveSymbol implements RelationSymbol {
 
-	private final Symbol underlyingSymbol;
+	private final RelationSymbol baseSymbol;
 	private final SemiNaiveSymbolType semiNaiveType;
 
-	private static final Map<Pair<Symbol, SemiNaiveSymbolType>, SemiNaiveSymbol> memo = new ConcurrentHashMap<>();
+	private static final Map<Pair<RelationSymbol, SemiNaiveSymbolType>, SemiNaiveSymbol> memo = new ConcurrentHashMap<>();
 
-	public static SemiNaiveSymbol make(Symbol underlyingSymbol, SemiNaiveSymbolType semiNaiveType) {
-		Pair<Symbol, SemiNaiveSymbolType> key = new Pair<>(underlyingSymbol, semiNaiveType);
-		return Util.lookupOrCreate(memo, key, () -> new SemiNaiveSymbol(underlyingSymbol, semiNaiveType));
+	public static SemiNaiveSymbol make(RelationSymbol baseSymbol, SemiNaiveSymbolType semiNaiveType) {
+		Pair<RelationSymbol, SemiNaiveSymbolType> key = new Pair<>(baseSymbol, semiNaiveType);
+		return Util.lookupOrCreate(memo, key, () -> new SemiNaiveSymbol(baseSymbol, semiNaiveType));
 	}
 
-	private SemiNaiveSymbol(Symbol underlyingSymbol, SemiNaiveSymbolType semiNaiveType) {
-		this.underlyingSymbol = underlyingSymbol;
+	private SemiNaiveSymbol(RelationSymbol baseSymbol, SemiNaiveSymbolType semiNaiveType) {
+		this.baseSymbol = baseSymbol;
 		this.semiNaiveType = semiNaiveType;
 	}
 
-	public Symbol getUnderlyingSymbol() {
-		return underlyingSymbol;
+	public Symbol getBaseSymbol() {
+		return baseSymbol;
 	}
 	
 	public SemiNaiveSymbolType getSemiNaiveSymbolType() {
@@ -56,22 +56,32 @@ public class SemiNaiveSymbol implements Symbol {
 
 	@Override
 	public int getArity() {
-		return underlyingSymbol.getArity();
+		return baseSymbol.getArity();
 	}
 
 	@Override
-	public SymbolType getSymbolType() {
-		return underlyingSymbol.getSymbolType();
+	public FunctorType getCompileTimeType() {
+		return baseSymbol.getCompileTimeType();
 	}
 
 	@Override
-	public Type getCompileTimeType() {
-		return underlyingSymbol.getCompileTimeType();
+	public boolean isIdbSymbol() {
+		return baseSymbol.isIdbSymbol();
 	}
 
+	@Override
+	public boolean isBottomUp() {
+		return baseSymbol.isBottomUp();
+	}
+
+	@Override
+	public boolean isTopDown() {
+		return baseSymbol.isTopDown();
+	}
+	
 	@Override
 	public String toString() {
-		return underlyingSymbol + "<" + semiNaiveType + ">";
+		return baseSymbol + "<" + semiNaiveType + ">";
 	}
 
 }

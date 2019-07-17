@@ -55,7 +55,7 @@ public class Assignment implements SimpleConjunct {
 
 	@Override
 	public String toString() {
-		return "Assignment [var=" + var + ", rhs=" + rhs + "]";
+		return var + " <- " + rhs;
 	}
 
 }
