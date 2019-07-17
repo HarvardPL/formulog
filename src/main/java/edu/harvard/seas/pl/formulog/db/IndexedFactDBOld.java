@@ -40,6 +40,7 @@ import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolComparator;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
+import edu.harvard.seas.pl.formulog.util.ArrayWrapper;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
 
@@ -47,7 +48,7 @@ public class IndexedFactDBOld {
 
 	private final IndexedNonAggregateFactSet[] nonAggregateIndices;
 	private final IndexedAggregateFactSet[] aggregateIndices;
-	private final Map<Symbol, Map<Key, Term>> aggregateFactsBySym = new ConcurrentHashMap<>();
+	private final Map<Symbol, Map<ArrayWrapper, Term>> aggregateFactsBySym = new ConcurrentHashMap<>();
 	private final Map<Symbol, Set<NormalAtom>> factsBySym = new ConcurrentHashMap<>();
 	private final Map<Symbol, Pair<FunctionDef, Term>> aggStuff;
 
@@ -70,7 +71,7 @@ public class IndexedFactDBOld {
 	public Iterable<NormalAtom> query(Symbol sym) {
 		if (aggStuff.containsKey(sym)) {
 			List<NormalAtom> atoms = new ArrayList<>();
-			for (Map.Entry<Key, Term> e : aggregateFactsBySym.get(sym).entrySet()) {
+			for (Map.Entry<ArrayWrapper, Term> e : aggregateFactsBySym.get(sym).entrySet()) {
 				Term[] arr = e.getKey().getArr();
 				Term[] args = new Term[arr.length + 1];
 				for (int i = 0; i < arr.length; ++i) {
@@ -109,25 +110,25 @@ public class IndexedFactDBOld {
 	
 	public Term getClosestAggregateValue(NormalAtom aggFact) {
 		assert aggStuff.containsKey(aggFact.getSymbol());
-		Map<Key, Term> m = aggregateFactsBySym.get(aggFact.getSymbol());
-		Key key = makeAggKey(aggFact);
+		Map<ArrayWrapper, Term> m = aggregateFactsBySym.get(aggFact.getSymbol());
+		ArrayWrapper key = makeAggKey(aggFact);
 		return m.get(key);
 	}
 
-	private Key makeAggKey(NormalAtom aggFact) {
+	private ArrayWrapper makeAggKey(NormalAtom aggFact) {
 		Term[] args = aggFact.getArgs();
 		Term[] arr = new Term[args.length - 1];
 		for (int i = 0; i < arr.length; ++i) {
 			arr[i] = args[i];
 		}
-		return new Key(arr);
+		return new ArrayWrapper(arr);
 	}
 	
 	private boolean addAggregate(NormalAtom fact) throws EvaluationException {
 		Symbol sym = fact.getSymbol();
 		Term agg = fact.getArgs()[sym.getArity() - 1];
-		Key key = makeAggKey(fact);
-		Map<Key, Term> m = Util.lookupOrCreate(aggregateFactsBySym, sym, () -> new ConcurrentHashMap<>());
+		ArrayWrapper key = makeAggKey(fact);
+		Map<ArrayWrapper, Term> m = Util.lookupOrCreate(aggregateFactsBySym, sym, () -> new ConcurrentHashMap<>());
 		Pair<FunctionDef, Term> p = aggStuff.get(sym);
 		FunctionDef aggFunc = p.fst();
 		Term aggInit = p.snd();
@@ -168,14 +169,14 @@ public class IndexedFactDBOld {
 	}
 
 	public boolean hasFact(NormalAtom fact) {
-		Map<Key, Term> m = aggregateFactsBySym.get(fact.getSymbol());
+		Map<ArrayWrapper, Term> m = aggregateFactsBySym.get(fact.getSymbol());
 		if (m != null) {
 			Term[] args = fact.getArgs();
 			Term[] arr = new Term[args.length - 1];
 			for (int i = 0; i < arr.length; ++i) {
 				arr[i] = args[i];
 			}
-			Term agg = m.get(new Key(arr));
+			Term agg = m.get(new ArrayWrapper(arr));
 			return args[arr.length].equals(agg);
 		} else {
 			return getAllForSym(fact.getSymbol()).contains(fact);

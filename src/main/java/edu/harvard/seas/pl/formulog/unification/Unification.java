@@ -181,6 +181,16 @@ public final class Unification {
 
 		}, t2);
 	}
+	
+	public static boolean unify(Term[] ts1, Term[] ts2, Substitution s) throws EvaluationException {
+		assert ts1.length == ts2.length;
+		for (int i = 0; i < ts1.length; ++i) {
+			if (!unify(ts1[i], ts2[i], s)) {
+				return false;
+			}
+		}
+		return true;
+	}
 
 	public static boolean unify(Term t1, Term t2, Substitution s) throws EvaluationException {
 		return unify2Iterative(t1, t2, s);

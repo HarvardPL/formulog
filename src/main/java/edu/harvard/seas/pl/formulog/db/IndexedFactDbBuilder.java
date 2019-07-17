@@ -20,14 +20,11 @@ package edu.harvard.seas.pl.formulog.db;
  * #L%
  */
 
-import java.util.Set;
-
-import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
-import edu.harvard.seas.pl.formulog.ast.Var;
+import edu.harvard.seas.pl.formulog.validating.ast.Predicate;
 
 public interface IndexedFactDbBuilder<T extends IndexedFactDB> {
 
-	int makeIndex(NormalAtom atom, Set<Var> boundVars);
+	int makeIndex(Predicate atom);
 	
 	T build();
 	

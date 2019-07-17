@@ -23,13 +23,13 @@ package edu.harvard.seas.pl.formulog.db;
 import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.Term;
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
+import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 
 public interface IndexedFactDB {
 
-	Set<Symbol> getSymbols();
+	Set<RelationSymbol> getSymbols();
 	
-	Set<Term[]> getAll(Symbol sym);
+	Set<Term[]> getAll(RelationSymbol sym);
 	
 	Set<Term[]> get(Term[] key, int index);
 	

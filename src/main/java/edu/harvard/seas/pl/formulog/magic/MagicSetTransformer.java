@@ -42,8 +42,6 @@ import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
-import edu.harvard.seas.pl.formulog.ast.Program;
-import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
@@ -60,7 +58,6 @@ import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
-import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Unification;
 import edu.harvard.seas.pl.formulog.util.DedupWorkList;
@@ -185,7 +182,7 @@ public class MagicSetTransformer {
 		Set<Term[]> facts = new HashSet<>();
 		for (Term[] fact : origProg.getFacts(querySym)) {
 			try {
-				if (Unification.unify(query, fact, new SimpleSubstitution())) {
+				if (Unification.unify(query.getArgs(), fact, new SimpleSubstitution())) {
 					facts.add(fact);
 				}
 			} catch (EvaluationException e) {
@@ -389,7 +386,7 @@ public class MagicSetTransformer {
 	}
 
 	private Set<BasicRule> makeMagicRules(BasicRule r, int number) {
-		int supCount = 0;
+		int supCount[] = { 0 };
 		Set<BasicRule> magicRules = new HashSet<>();
 		List<Set<Var>> liveVarsByAtom = liveVarsByAtom(r);
 		List<ComplexConjunct> l = new ArrayList<>();
@@ -418,13 +415,13 @@ public class MagicSetTransformer {
 					if (exploreTopDown(sym)) {
 						Set<Var> supVars = a.varSet().stream().filter(curLiveVars::contains).collect(Collectors.toSet());
 						supVars.addAll(nextLiveVars);
-						UserPredicate supAtom = createSupAtom(supVars, number, supCount, head.getSymbol());
+						UserPredicate supAtom = createSupAtom(supVars, number, supCount[0], head.getSymbol());
 						magicRules.add(BasicRule.make(supAtom, l));
 						magicRules.add(BasicRule.make(createInputAtom(userPredicate), Collections.singletonList(supAtom)));
 						l = new ArrayList<>();
 						l.add(supAtom);
 						l.add(a);
-						supCount++;
+						supCount[0]++;
 					} else {
 						l.add(a);
 					}
@@ -432,7 +429,8 @@ public class MagicSetTransformer {
 				}
 				
 			}, null);
-			curLiveVars = nextLiveVars;
+			curLiveVars.clear();
+			curLiveVars.addAll(nextLiveVars);
 			for (Var v : a.varSet()) {
 				if (futureLiveVars.contains(v)) {
 					curLiveVars.add(v);

@@ -26,6 +26,8 @@ import java.util.function.Function;
 
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
+import edu.harvard.seas.pl.formulog.eval.EvaluationException;
+import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.ExceptionalFunction;
 
 public final class Terms {
@@ -222,5 +224,84 @@ public final class Terms {
 		O visit(Expr e, I in) throws E;
 
 	}
+	
+	public static final Term minTerm = new Term() {
+
+		@Override
+		public <I, O> O visit(TermVisitor<I, O> v, I in) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public <I, O, E extends Throwable> O visit(TermVisitorExn<I, O, E> v, I in) throws E {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean isGround() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean containsFunctionCall() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Term applySubstitution(Substitution s) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Term normalize(Substitution s) throws EvaluationException {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void varSet(Set<Var> acc) {
+			throw new UnsupportedOperationException();
+		}
+		
+	};
+	
+	
+	public static final Term maxTerm = new Term() {
+
+		@Override
+		public <I, O> O visit(TermVisitor<I, O> v, I in) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public <I, O, E extends Throwable> O visit(TermVisitorExn<I, O, E> v, I in) throws E {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean isGround() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean containsFunctionCall() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Term applySubstitution(Substitution s) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Term normalize(Substitution s) throws EvaluationException {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void varSet(Set<Var> acc) {
+			throw new UnsupportedOperationException();
+		}
+		
+	};
 
 }

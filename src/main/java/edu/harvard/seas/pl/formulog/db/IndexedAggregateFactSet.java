@@ -34,6 +34,7 @@ import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.unification.Unification;
+import edu.harvard.seas.pl.formulog.util.ArrayWrapper;
 import edu.harvard.seas.pl.formulog.util.Util;
 
 public class IndexedAggregateFactSet implements IndexedFactSet {
@@ -44,7 +45,7 @@ public class IndexedAggregateFactSet implements IndexedFactSet {
 	private final boolean aggVarIsBound;
 	private final NormalAtom atom;
 
-	private final Map<Key, Map<Key, Term>> map = new ConcurrentHashMap<>();
+	private final Map<ArrayWrapper, Map<ArrayWrapper, Term>> map = new ConcurrentHashMap<>();
 
 	public IndexedAggregateFactSet(NormalAtom atom, Set<Var> boundVars) {
 		this.atom = atom;
@@ -95,19 +96,19 @@ public class IndexedAggregateFactSet implements IndexedFactSet {
 			return;
 		}
 		Term agg = s.get(aggVar);
-		Key primary = makePrimaryKey(s);
-		Map<Key, Term> m = Util.lookupOrCreate(map, primary, () -> new ConcurrentHashMap<>());
-		Key secondary = makeSecondaryKey(s);
+		ArrayWrapper primary = makePrimaryKey(s);
+		Map<ArrayWrapper, Term> m = Util.lookupOrCreate(map, primary, () -> new ConcurrentHashMap<>());
+		ArrayWrapper secondary = makeSecondaryKey(s);
 		m.put(secondary, agg);
 	}
 
 	@Override
 	public Iterable<NormalAtom> query(Substitution s) throws EvaluationException {
-		Key primaryKey = makePrimaryKey(s);
-		Map<Key, Term> m = Util.lookupOrCreate(map, primaryKey, () -> new ConcurrentHashMap<>());
+		ArrayWrapper primaryKey = makePrimaryKey(s);
+		Map<ArrayWrapper, Term> m = Util.lookupOrCreate(map, primaryKey, () -> new ConcurrentHashMap<>());
 		// XXX This is inefficient
 		List<NormalAtom> atoms = new ArrayList<>();
-		for (Map.Entry<Key, Term> e : m.entrySet()) {
+		for (Map.Entry<ArrayWrapper, Term> e : m.entrySet()) {
 			Term agg = e.getValue();
 			Substitution s2 = new SimpleSubstitution();
 			if (aggVarIsBound) {
@@ -119,7 +120,7 @@ public class IndexedAggregateFactSet implements IndexedFactSet {
 			for (Var v : index) {
 				s2.put(v, s.get(v));
 			}
-			Key secondaryKey = e.getKey();
+			ArrayWrapper secondaryKey = e.getKey();
 			for (int i = 0; i < unboundIndex.length; ++i) {
 				s2.put(unboundIndex[i], secondaryKey.getArr()[i]);
 			}
@@ -128,20 +129,20 @@ public class IndexedAggregateFactSet implements IndexedFactSet {
 		return atoms;
 	}
 
-	private Key makePrimaryKey(Substitution s) {
+	private ArrayWrapper makePrimaryKey(Substitution s) {
 		Term[] arr = new Term[index.length];
 		for (int i = 0; i < index.length; ++i) {
 			arr[i] = s.get(index[i]);
 		}
-		return new Key(arr);
+		return new ArrayWrapper(arr);
 	}
 	
-	private Key makeSecondaryKey(Substitution s) {
+	private ArrayWrapper makeSecondaryKey(Substitution s) {
 		Term[] arr = new Term[unboundIndex.length];
 		for (int i = 0; i < unboundIndex.length; ++i) {
 			arr[i] = s.get(unboundIndex[i]);
 		}
-		return new Key(arr);
+		return new ArrayWrapper(arr);
 	}
 
 }

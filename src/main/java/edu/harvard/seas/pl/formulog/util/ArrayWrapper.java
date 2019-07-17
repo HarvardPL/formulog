@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.db;
+package edu.harvard.seas.pl.formulog.util;
 
 /*-
  * #%L
@@ -22,16 +22,14 @@ package edu.harvard.seas.pl.formulog.db;
 
 import java.util.Arrays;
 
-import edu.harvard.seas.pl.formulog.ast.Term;
+public class ArrayWrapper<T> {
+	private final T[] arr;
 
-public class Key {
-	private final Term[] arr;
-
-	public Key(Term[] arr) {
+	public ArrayWrapper(T[] arr) {
 		this.arr = arr;
 	}
 	
-	public Term[] getArr() {
+	public T[] getArr() {
 		return arr;
 	}
 
@@ -51,7 +49,7 @@ public class Key {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		Key other = (Key) obj;
+		ArrayWrapper<?> other = (ArrayWrapper<?>) obj;
 		if (!Arrays.equals(arr, other.arr))
 			return false;
 		return true;
