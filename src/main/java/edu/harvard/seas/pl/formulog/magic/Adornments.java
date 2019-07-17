@@ -43,7 +43,7 @@ public final class Adornments {
 		throw new AssertionError();
 	}
 
-	public static UserPredicate<?> adorn(UserPredicate<?> a, Set<Var> boundVars, boolean topDownIsDefault) {
+	public static UserPredicate adorn(UserPredicate a, Set<Var> boundVars, boolean topDownIsDefault) {
 		RelationSymbol origSym = a.getSymbol();
 		if (!topDownIsDefault && !origSym.isTopDown()) {
 			return a;
@@ -58,8 +58,8 @@ public final class Adornments {
 		return UserPredicate.make(sym, args, a.isNegated());
 	}
 
-	public static <R extends RelationSymbol> BasicRule<?> adornRule(UserPredicate<R> head,
-			List<ComplexConjunct<R>> body, boolean topDownIsDefault) throws InvalidProgramException {
+	public static BasicRule adornRule(UserPredicate head, List<ComplexConjunct> body, boolean topDownIsDefault)
+			throws InvalidProgramException {
 		RelationSymbol sym = head.getSymbol();
 		boolean[] headAdornment;
 		if (sym instanceof AdornedSymbol) {
@@ -77,23 +77,23 @@ public final class Adornments {
 				boundVars.addAll(headArgs[i].varSet());
 			}
 		}
-		List<ComplexConjunct<?>> newBody = new ArrayList<>(body);
+		List<ComplexConjunct> newBody = new ArrayList<>(body);
 		for (int i = 0; i < newBody.size(); i++) {
 			boolean ok = false;
 			for (int j = i; j < newBody.size(); j++) {
-				ComplexConjunct<R> a = body.get(j);
+				ComplexConjunct a = body.get(j);
 				if (Unification.canBindVars(a, boundVars)) {
 					Collections.swap(body, i, j);
 					int pos = i;
-					newBody.add(a.accept(new ComplexConjunctVisitor<R, Void, ComplexConjunct<?>>() {
+					newBody.add(a.accept(new ComplexConjunctVisitor<Void, ComplexConjunct>() {
 
 						@Override
-						public ComplexConjunct<?> visit(UnificationPredicate<R> unificationPredicate, Void input) {
+						public ComplexConjunct visit(UnificationPredicate unificationPredicate, Void input) {
 							return null;
 						}
 
 						@Override
-						public ComplexConjunct<?> visit(UserPredicate<R> userPredicate, Void input) {
+						public ComplexConjunct visit(UserPredicate userPredicate, Void input) {
 							if (userPredicate.getSymbol().isIdbSymbol()) {
 								newBody.set(pos, adorn(userPredicate, boundVars, topDownIsDefault));
 							}

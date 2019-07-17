@@ -22,10 +22,7 @@ package edu.harvard.seas.pl.formulog.magic;
 
 import java.util.Arrays;
 
-import edu.harvard.seas.pl.formulog.ast.Term;
-import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 
 class AdornedSymbol implements RelationSymbol {
@@ -41,7 +38,7 @@ class AdornedSymbol implements RelationSymbol {
 		this.adornment = adornment;
 	}
 
-	public Symbol getSymbol() {
+	public RelationSymbol getSymbol() {
 		return symbol;
 	}
 
@@ -99,36 +96,6 @@ class AdornedSymbol implements RelationSymbol {
 	@Override
 	public boolean isIdbSymbol() {
 		return true;
-	}
-
-	@Override
-	public void setAggregate(FunctionSymbol funcSym, Term unit) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public boolean setBottomUp() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public boolean setTopDown() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public boolean isAggregated() {
-		return symbol.isAggregated();
-	}
-
-	@Override
-	public FunctionSymbol getAggFuncSym() {
-		return symbol.getAggFuncSym();
-	}
-
-	@Override
-	public Term getAggFuncUnit() {
-		return symbol.getAggFuncUnit();
 	}
 
 	@Override
