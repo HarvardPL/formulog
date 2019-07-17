@@ -54,8 +54,8 @@ import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.DummyFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
-import edu.harvard.seas.pl.formulog.db.IndexedFactDB;
-import edu.harvard.seas.pl.formulog.db.IndexedFactDB.IndexedFactDBBuilder;
+import edu.harvard.seas.pl.formulog.db.IndexedFactDb;
+import edu.harvard.seas.pl.formulog.db.IndexedFactDb.IndexedFactDBBuilder;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer.InputSymbol;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer.SupSymbol;
@@ -79,12 +79,12 @@ public class SemiInflationaryEvaluation implements Evaluation {
 	private final Map<Integer, Set<IndexedRule>> safeFirstRoundRules = new HashMap<>();
 	private final Map<Integer, Set<IndexedRule>> unsafeFirstRoundRules = new HashMap<>();
 	private final IndexedFactDBBuilder dbb;
-	private IndexedFactDB cumulativeDb;
-	private final Map<Integer, IndexedFactDB> generationalDbs = new HashMap<>();
-	private Map<Integer, IndexedFactDB> deltaOldSafe = new HashMap<>();
-	private Map<Integer, IndexedFactDB> deltaNewSafe = new HashMap<>();
-	private Map<Integer, IndexedFactDB> deltaOldUnsafe = new HashMap<>();
-	private Map<Integer, IndexedFactDB> deltaNewUnsafe = new HashMap<>();
+	private IndexedFactDb cumulativeDb;
+	private final Map<Integer, IndexedFactDb> generationalDbs = new HashMap<>();
+	private Map<Integer, IndexedFactDb> deltaOldSafe = new HashMap<>();
+	private Map<Integer, IndexedFactDb> deltaNewSafe = new HashMap<>();
+	private Map<Integer, IndexedFactDb> deltaOldUnsafe = new HashMap<>();
+	private Map<Integer, IndexedFactDb> deltaNewUnsafe = new HashMap<>();
 	private Map<NormalAtom, Integer> deltaOldGenerations = new HashMap<>();
 	private int botStratum = Integer.MAX_VALUE;
 	private int topStratum = 0;
@@ -126,7 +126,7 @@ public class SemiInflationaryEvaluation implements Evaluation {
 		}
 	}
 
-	public synchronized IndexedFactDB getResult() {
+	public synchronized IndexedFactDb getResult() {
 		if (cumulativeDb == null) {
 			throw new IllegalStateException("Must run evaluation before requesting result.");
 		}
@@ -155,8 +155,8 @@ public class SemiInflationaryEvaluation implements Evaluation {
 	private boolean evaluateStratum(int stratum, boolean safe) throws EvaluationException {
 		boolean changed = false;
 		Set<Integer> s = safe ? safeFirstRoundsCompleted : unsafeFirstRoundsCompleted;
-		Map<Integer, IndexedFactDB> deltaOld = safe ? deltaOldSafe : deltaOldUnsafe;
-		Map<Integer, IndexedFactDB> deltaNew = safe ? deltaNewSafe : deltaNewUnsafe;
+		Map<Integer, IndexedFactDb> deltaOld = safe ? deltaOldSafe : deltaOldUnsafe;
+		Map<Integer, IndexedFactDb> deltaNew = safe ? deltaNewSafe : deltaNewUnsafe;
 		if (s.add(stratum)) {
 			deltaOld.put(stratum, deltaNew.get(stratum));
 			Map<Integer, Set<IndexedRule>> m = safe ? safeFirstRoundRules : unsafeFirstRoundRules;
@@ -194,13 +194,13 @@ public class SemiInflationaryEvaluation implements Evaluation {
 	private class RuleEvaluator {
 
 		private final IndexedRule r;
-		private final IndexedFactDB deltaDb;
+		private final IndexedFactDb deltaDb;
 		private final RuleSubstitution s;
 		// private final int deltaStratum;
 		private final boolean empty;
 		private final int headStratum;
 
-		public RuleEvaluator(IndexedRule r, IndexedFactDB deltaDb) {
+		public RuleEvaluator(IndexedRule r, IndexedFactDb deltaDb) {
 			this.r = r;
 			this.deltaDb = deltaDb;
 			s = new RuleSubstitution(r);
@@ -388,7 +388,7 @@ public class SemiInflationaryEvaluation implements Evaluation {
 		}
 		List<Iterator<NormalAtom>> its = new ArrayList<>();
 		for (int i = 0; i <= gen; ++i) {
-			IndexedFactDB db = generationalDbs.get(i);
+			IndexedFactDb db = generationalDbs.get(i);
 			if (db != null) {
 				its.add(db.query(idx, s).iterator());
 			}
@@ -462,7 +462,7 @@ public class SemiInflationaryEvaluation implements Evaluation {
 
 	private boolean checkNonAggregateFact(NormalAtom fact, int gen) {
 		for (int i = 0; i <= gen; ++i) {
-			IndexedFactDB db = Util.lookupOrCreate(generationalDbs, i, () -> dbb.build());
+			IndexedFactDb db = Util.lookupOrCreate(generationalDbs, i, () -> dbb.build());
 			if (db.hasFact(fact)) {
 				return false;
 			}
@@ -476,7 +476,7 @@ public class SemiInflationaryEvaluation implements Evaluation {
 		Symbol funcSym = prog.getRelationProperties(sym).getAggFuncSymbol();
 		FunctionDef aggFunc = prog.getDef(funcSym);
 		for (int i = gen; i >= 0; --i) {
-			IndexedFactDB db = Util.lookupOrCreate(generationalDbs, i, () -> dbb.build());
+			IndexedFactDb db = Util.lookupOrCreate(generationalDbs, i, () -> dbb.build());
 			Term oldAgg = db.getClosestAggregateValue(fact);
 			if (oldAgg != null) {
 				Term newAgg = aggFunc.evaluate(new Term[] { aggValue, oldAgg });

@@ -34,7 +34,7 @@ import edu.harvard.seas.pl.formulog.ast.Atoms;
 import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Terms;
-import edu.harvard.seas.pl.formulog.db.IndexedFactDB;
+import edu.harvard.seas.pl.formulog.db.IndexedFactDb;
 import edu.harvard.seas.pl.formulog.parsing.Parser;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
@@ -56,7 +56,7 @@ public abstract class AbstractEvaluationTest {
 			WellTypedProgram wellTypedProg = (new TypeChecker(prog)).typeCheck();
 			Evaluation eval = setup(wellTypedProg);
 			eval.run();
-			IndexedFactDB db = eval.getResult();
+			IndexedFactDb db = eval.getResult();
 			ValidProgram vprog = eval.getProgram();
 			Symbol sym;
 			if (vprog.hasQuery()) {

@@ -51,8 +51,8 @@ import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.DummyFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
-import edu.harvard.seas.pl.formulog.db.IndexedFactDB;
-import edu.harvard.seas.pl.formulog.db.IndexedFactDB.IndexedFactDBBuilder;
+import edu.harvard.seas.pl.formulog.db.IndexedFactDb;
+import edu.harvard.seas.pl.formulog.db.IndexedFactDb.IndexedFactDBBuilder;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
 import edu.harvard.seas.pl.formulog.smt.Z3ThreadFactory;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
@@ -109,14 +109,14 @@ public class StratifiedEvaluation implements Evaluation {
 			}
 			Eval e = new Eval(nthreads);
 			EvaluationException exception = null;
-			IndexedFactDB db;
+			IndexedFactDb db;
 			try {
 				db = e.eval();
 			} catch (EvaluationException exn) {
 				db = e.db;
 				exception = exn;
 			}
-			final IndexedFactDB finalDb = db;
+			final IndexedFactDb finalDb = db;
 			res = makeEvaluationResult(db);
 			if (exception != null) {
 				throw exception;
@@ -124,7 +124,7 @@ public class StratifiedEvaluation implements Evaluation {
 		}
 	}
 
-	private EvaluationResult makeEvaluationResult(IndexedFactDB db) {
+	private EvaluationResult makeEvaluationResult(IndexedFactDb db) {
 		Set<NormalAtom> ans = null;
 		if (prog.hasQuery()) {
 			NormalAtom q = prog.getQuery();
@@ -174,7 +174,7 @@ public class StratifiedEvaluation implements Evaluation {
 		private final Map<IndexedRule, RuleSubstitution> substitutions = new ConcurrentHashMap<>();
 		private volatile int curStratum;
 		private final CountingFJP<EvaluationException> exec;
-		private final IndexedFactDB db;
+		private final IndexedFactDb db;
 
 		public Eval(int nthreads) throws EvaluationException {
 			if (sequential) {
@@ -186,7 +186,7 @@ public class StratifiedEvaluation implements Evaluation {
 			processInitFacts();
 		}
 
-		public IndexedFactDB eval() throws EvaluationException {
+		public IndexedFactDb eval() throws EvaluationException {
 			for (; curStratum < prog.getNumberOfStrata(); ++curStratum) {
 				for (IndexedRule r : Util.lookupOrCreate(specialRules, curStratum, () -> Util.concurrentSet())) {
 					exec.externallyAddTask(new SpecialWorkItem(r, getSubstitution(r)));
@@ -215,7 +215,7 @@ public class StratifiedEvaluation implements Evaluation {
 			}
 		}
 
-		private IndexedFactDB preprocessRules() {
+		private IndexedFactDb preprocessRules() {
 			IndexedFactDBBuilder dbb = new IndexedFactDBBuilder(prog);
 			RulePreprocessor pp = new RulePreprocessor();
 			AtomPreprocessor ap = new AtomPreprocessor();

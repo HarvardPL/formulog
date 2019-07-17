@@ -20,16 +20,19 @@ package edu.harvard.seas.pl.formulog.db;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
-import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.unification.Substitution;
+import java.util.Set;
 
-public interface IndexedFactSet {
+import edu.harvard.seas.pl.formulog.ast.Term;
+import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 
-	void add(NormalAtom fact) throws EvaluationException;
+public interface IndexedFactDb {
 
-	Iterable<NormalAtom> query(Substitution s) throws EvaluationException;
+	Set<RelationSymbol> getSymbols();
 	
-	IndexedFactSet makeCleanCopy();
-
+	Set<Term[]> getAll(RelationSymbol sym);
+	
+	Set<Term[]> get(Term[] key, int index);
+	
+	boolean add(RelationSymbol sym, Term[] args);
+	
 }

@@ -37,7 +37,7 @@ import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.ast.Predicate;
 
-public class SortedIndexedFactDb implements IndexedFactDB {
+public class SortedIndexedFactDb implements IndexedFactDb {
 
 	private final Map<RelationSymbol, Set<Term[]>> all;
 	private final IndexedFactSet[] indices;

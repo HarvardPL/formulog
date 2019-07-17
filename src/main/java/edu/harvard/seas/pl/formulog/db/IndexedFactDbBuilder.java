@@ -22,7 +22,7 @@ package edu.harvard.seas.pl.formulog.db;
 
 import edu.harvard.seas.pl.formulog.validating.ast.Predicate;
 
-public interface IndexedFactDbBuilder<T extends IndexedFactDB> {
+public interface IndexedFactDbBuilder<T extends IndexedFactDb> {
 
 	int makeIndex(Predicate atom);
 	

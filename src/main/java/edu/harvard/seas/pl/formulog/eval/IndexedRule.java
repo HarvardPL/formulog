@@ -33,7 +33,7 @@ import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
 import edu.harvard.seas.pl.formulog.ast.Atoms.UnifyAtom;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.db.IndexedFactDB.IndexedFactDBBuilder;
+import edu.harvard.seas.pl.formulog.db.IndexedFactDb.IndexedFactDBBuilder;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.util.Util;
 
