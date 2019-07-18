@@ -85,22 +85,22 @@ public final class Adornments {
 				if (Unification.canBindVars(a, boundVars)) {
 					Collections.swap(body, i, j);
 					int pos = i;
-					newBody.add(a.accept(new ComplexConjunctVisitor<Void, ComplexConjunct>() {
+					a.accept(new ComplexConjunctVisitor<Void, Void>() {
 
 						@Override
-						public ComplexConjunct visit(UnificationPredicate unificationPredicate, Void input) {
+						public Void visit(UnificationPredicate unificationPredicate, Void input) {
 							return null;
 						}
 
 						@Override
-						public ComplexConjunct visit(UserPredicate userPredicate, Void input) {
+						public Void visit(UserPredicate userPredicate, Void input) {
 							if (userPredicate.getSymbol().isIdbSymbol()) {
 								newBody.set(pos, adorn(userPredicate, boundVars, topDownIsDefault));
 							}
 							return null;
 						}
 
-					}, null));
+					}, null);
 					boundVars.addAll(a.varSet());
 					ok = true;
 					break;

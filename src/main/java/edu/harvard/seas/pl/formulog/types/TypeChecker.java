@@ -22,7 +22,6 @@ package edu.harvard.seas.pl.formulog.types;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -32,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.ComplexConjunct;
 import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctVisitor;
@@ -46,6 +44,7 @@ import edu.harvard.seas.pl.formulog.ast.I32;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
+import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
@@ -76,10 +75,10 @@ import edu.harvard.seas.pl.formulog.util.Util;
 
 public class TypeChecker {
 
-	private final BasicProgram prog;
+	private final Program<UserPredicate, BasicRule> prog;
 
-	public TypeChecker(BasicProgram prog) {
-		this.prog = prog;
+	public TypeChecker(Program<UserPredicate, BasicRule> prog2) {
+		this.prog = prog2;
 	}
 
 	public WellTypedProgram typeCheck() throws TypeException {

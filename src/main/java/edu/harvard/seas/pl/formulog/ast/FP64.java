@@ -34,7 +34,7 @@ import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.util.Util;
 
-public class FP64 implements Primitive<Double>, SmtLibTerm {
+public class FP64 extends AbstractTerm implements Primitive<Double>, SmtLibTerm {
 
 	private static final Map<Double, FP64> memo = new ConcurrentHashMap<>();
 	private final double val;

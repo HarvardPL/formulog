@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.ast;
 
+import java.util.Comparator;
+
 /*-
  * #%L
  * FormuLog
@@ -22,6 +24,7 @@ package edu.harvard.seas.pl.formulog.ast;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
@@ -261,6 +264,11 @@ public final class Terms {
 		public void varSet(Set<Var> acc) {
 			throw new UnsupportedOperationException();
 		}
+
+		@Override
+		public int getId() {
+			return Integer.MIN_VALUE;
+		}
 		
 	};
 	
@@ -300,6 +308,26 @@ public final class Terms {
 		@Override
 		public void varSet(Set<Var> acc) {
 			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public int getId() {
+			return Integer.MAX_VALUE;
+		}
+		
+	};
+	
+	private static final AtomicInteger idCnt = new AtomicInteger(Integer.MIN_VALUE);
+	
+	public static int nextId() {
+		return idCnt.incrementAndGet();
+	}
+	
+	public static final Comparator<Term> comparator = new Comparator<Term>() {
+
+		@Override
+		public int compare(Term o1, Term o2) {
+			return Integer.compare(o1.getId(), o2.getId());
 		}
 		
 	};

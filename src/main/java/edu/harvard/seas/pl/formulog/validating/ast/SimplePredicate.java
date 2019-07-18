@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.validating.ast;
 
+import java.util.Arrays;
+
 /*-
  * #%L
  * FormuLog
@@ -24,7 +26,10 @@ import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Var;
+import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
+import edu.harvard.seas.pl.formulog.unification.OverwriteSubstitution;
+import edu.harvard.seas.pl.formulog.unification.Substitution;
 
 public class SimplePredicate implements SimpleConjunct {
 
@@ -93,6 +98,48 @@ public class SimplePredicate implements SimpleConjunct {
 			s += ")";
 		}
 		return s;
+	}
+
+	public SimplePredicate normalize(Substitution s) throws EvaluationException {
+		Term[] newArgs = new Term[args.length];
+		for (int i = 0; i < args.length; ++i) {
+			newArgs[i] = args[i].normalize(s);
+		}
+		return new SimplePredicate(symbol, newArgs, bindingPattern, negated);
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + Arrays.hashCode(args);
+		result = prime * result + Arrays.hashCode(bindingPattern);
+		result = prime * result + (negated ? 1231 : 1237);
+		result = prime * result + ((symbol == null) ? 0 : symbol.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		SimplePredicate other = (SimplePredicate) obj;
+		if (!Arrays.equals(args, other.args))
+			return false;
+		if (!Arrays.equals(bindingPattern, other.bindingPattern))
+			return false;
+		if (negated != other.negated)
+			return false;
+		if (symbol == null) {
+			if (other.symbol != null)
+				return false;
+		} else if (!symbol.equals(other.symbol))
+			return false;
+		return true;
 	}
 
 }

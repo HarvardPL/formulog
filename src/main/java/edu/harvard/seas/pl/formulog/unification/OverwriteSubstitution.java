@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.eval;
+package edu.harvard.seas.pl.formulog.unification;
 
 /*-
  * #%L
@@ -20,17 +20,35 @@ package edu.harvard.seas.pl.formulog.eval;
  * #L%
  */
 
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
-import edu.harvard.seas.pl.formulog.ast.UserPredicate;
-import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
+import edu.harvard.seas.pl.formulog.ast.Term;
+import edu.harvard.seas.pl.formulog.ast.Var;
 
-public interface EvaluationResult {
+public class OverwriteSubstitution implements Substitution {
 
-	Iterable<UserPredicate> getAll(RelationSymbol sym);
+	private final Map<Var, Term> m = new HashMap<>();
 	
-	Iterable<UserPredicate> getQueryAnswer();
-	
-	Set<RelationSymbol> getSymbols();
-	
+	@Override
+	public void put(Var v, Term t) {
+		m.put(v, t);
+	}
+
+	@Override
+	public Term get(Var v) {
+		assert m.containsKey(v);
+		return m.get(v);
+	}
+
+	@Override
+	public boolean containsKey(Var v) {
+		return m.containsKey(v);
+	}
+
+	@Override
+	public Iterable<Var> iterateKeys() {
+		return m.keySet();
+	}
+
 }

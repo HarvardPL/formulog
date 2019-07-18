@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.eval;
+package edu.harvard.seas.pl.formulog.ast;
 
 /*-
  * #%L
@@ -20,17 +20,17 @@ package edu.harvard.seas.pl.formulog.eval;
  * #L%
  */
 
-import java.util.Set;
+public abstract class AbstractTerm implements Term {
 
-import edu.harvard.seas.pl.formulog.ast.UserPredicate;
-import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
+	private final int id;
+	
+	public AbstractTerm() {
+		this.id = Terms.nextId();
+	}
 
-public interface EvaluationResult {
+	@Override
+	public int getId() {
+		return id;
+	}
 
-	Iterable<UserPredicate> getAll(RelationSymbol sym);
-	
-	Iterable<UserPredicate> getQueryAnswer();
-	
-	Set<RelationSymbol> getSymbols();
-	
 }

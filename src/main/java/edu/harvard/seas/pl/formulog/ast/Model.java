@@ -22,23 +22,25 @@ package edu.harvard.seas.pl.formulog.ast;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
+import edu.harvard.seas.pl.formulog.util.Util;
 
-public class Model implements Primitive<Map<SolverVariable, Term>> {
+public class Model extends AbstractTerm implements Primitive<Map<SolverVariable, Term>> {
 
+	private static final Map<Map<SolverVariable, Term>, Model> memo = new ConcurrentHashMap<>();
+	
 	private final Map<SolverVariable, Term> m;
-	private Integer hashCode;
 
 	private Model(Map<SolverVariable, Term> m) {
 		this.m = m;
 	}
 
-	// I think this should be thread-safe, as long as m is not modified.
 	public static Model make(Map<SolverVariable, Term> m) {
-		return new Model(m);
+		return Util.lookupOrCreate(memo, m, () -> new Model(m));
 	}
 
 	@Override
@@ -51,35 +53,6 @@ public class Model implements Primitive<Map<SolverVariable, Term>> {
 		return BuiltInTypes.model;
 	}
 
-	@Override
-	public int hashCode() {
-		if (hashCode == null) {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + ((m == null) ? 0 : m.hashCode());
-			return (hashCode = result);
-		} else {
-			return hashCode;
-		}
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Model other = (Model) obj;
-		if (m == null) {
-			if (other.m != null)
-				return false;
-		} else if (!m.equals(other.m))
-			return false;
-		return true;
-	}
-	
 	@Override
 	public String toString() {
 		String s = "[";

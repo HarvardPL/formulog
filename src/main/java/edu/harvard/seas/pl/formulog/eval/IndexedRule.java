@@ -40,10 +40,15 @@ public class IndexedRule implements Rule<SimplePredicate, SimpleConjunct> {
 	private final List<SimpleConjunct> body;
 	private final List<Integer> idxs;
 
-	public IndexedRule(Rule<SimplePredicate, SimpleConjunct> rule, Function<SimplePredicate, Integer> makeIndex) {
+	private IndexedRule(Rule<SimplePredicate, SimpleConjunct> rule, Function<SimplePredicate, Integer> makeIndex) {
 		head = rule.getHead();
 		body = Util.iterableToList(rule);
 		idxs = createIndexes(makeIndex);
+	}
+
+	public static IndexedRule make(Rule<SimplePredicate, SimpleConjunct> rule,
+			Function<SimplePredicate, Integer> makeIndex) {
+		return new IndexedRule(rule, makeIndex);
 	}
 
 	private List<Integer> createIndexes(Function<SimplePredicate, Integer> makeIndex) {
@@ -105,11 +110,17 @@ public class IndexedRule implements Rule<SimplePredicate, SimpleConjunct> {
 		} else {
 			sb.append("\n\t");
 		}
+		int i = 0;
 		for (Iterator<SimpleConjunct> it = body.iterator(); it.hasNext();) {
+			Integer idx = idxs.get(i);
+			if (idx != null) {
+				sb.append(idx + ": ");
+			}
 			sb.append(it.next());
 			if (it.hasNext()) {
 				sb.append(",\n\t");
 			}
+			++i;
 		}
 		sb.append(".");
 		return sb.toString();

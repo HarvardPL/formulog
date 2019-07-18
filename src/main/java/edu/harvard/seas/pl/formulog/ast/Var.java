@@ -31,7 +31,7 @@ import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.Util;
 
-public class Var implements Term {
+public class Var extends AbstractTerm implements Term {
 
 	private static final Map<String, Var> memo = new ConcurrentHashMap<>();
 	

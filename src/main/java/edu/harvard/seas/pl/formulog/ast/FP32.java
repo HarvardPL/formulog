@@ -34,7 +34,7 @@ import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.util.Util;
 
-public class FP32 implements Primitive<Float>, SmtLibTerm {
+public class FP32 extends AbstractTerm implements Primitive<Float>, SmtLibTerm {
 
 	private static final Map<Float, FP32> memo = new ConcurrentHashMap<>();
 	private final float val;

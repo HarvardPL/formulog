@@ -93,7 +93,6 @@ public class MagicSetTransformer {
 		if (query.isNegated()) {
 			throw new InvalidProgramException("Query cannot be negated");
 		}
-		query = reduceQuery(query);
 		BasicProgram newProg;
 		if (query.getSymbol().isEdbSymbol()) {
 			newProg = makeEdbProgram(query);
@@ -102,7 +101,9 @@ public class MagicSetTransformer {
 			Set<BasicRule> adRules = adorn(Collections.singleton(adornedQuery.getSymbol()));
 			Set<BasicRule> magicRules = makeMagicRules(adRules);
 			magicRules.add(makeSeedRule(adornedQuery));
-			BasicProgram magicProg = new ProgramImpl(magicRules, adornedQuery);
+			BasicRule queryRule = makeQueryRule(adornedQuery);
+			magicRules.add(queryRule);
+			BasicProgram magicProg = new ProgramImpl(magicRules, queryRule.getHead());
 			if (restoreStratification && !isStratified(magicProg)) {
 				magicProg = stratify(magicProg, adRules);
 			}
@@ -114,74 +115,124 @@ public class MagicSetTransformer {
 		return newProg;
 	}
 
-	private static final TermVisitorExn<Void, Term, EvaluationException> termReducer = new TermVisitorExn<Void, Term, EvaluationException>() {
-
-		@Override
-		public Term visit(Var x, Void in) throws EvaluationException {
-			return x;
-		}
-
-		@Override
-		public Term visit(Constructor c, Void in) throws EvaluationException {
-			Term[] args = Terms.mapExn(c.getArgs(), t -> t.visit(this, null));
-			return c.copyWithNewArgs(args);
-		}
-
-		@Override
-		public Term visit(Primitive<?> p, Void in) throws EvaluationException {
-			return p;
-		}
-
-		@Override
-		public Term visit(Expr e, Void in) throws EvaluationException {
-			return e.visit(exprReducer, in);
-		}
-
-	};
-
-	private static final ExprVisitorExn<Void, Term, EvaluationException> exprReducer = new ExprVisitorExn<Void, Term, EvaluationException>() {
-
-		@Override
-		public Term visit(MatchExpr matchExpr, Void in) throws EvaluationException {
-			Term matchee = matchExpr.getMatchee().visit(termReducer, in);
-			List<MatchClause> clauses = new ArrayList<>();
-			for (MatchClause cl : matchExpr.getClauses()) {
-				Term rhs = cl.getRhs().visit(termReducer, in);
-				clauses.add(MatchClause.make(cl.getLhs(), rhs));
-			}
-			return MatchExpr.make(matchee, clauses);
-		}
-
-		@Override
-		public Term visit(FunctionCall funcCall, Void in) throws EvaluationException {
-			Term[] args = Terms.mapExn(funcCall.getArgs(), t -> t.visit(termReducer, null));
-			return funcCall.copyWithNewArgs(args);
-		}
-
-	};
-
-	public UserPredicate reduceQuery(UserPredicate query) throws InvalidProgramException {
-		try {
-			Term[] args = query.getArgs();
-			Term[] newArgs = new Term[args.length];
-			for (int i = 0; i < args.length; ++i) {
-				newArgs[i] = args[i].visit(termReducer, null);
-			}
-			return UserPredicate.make(query.getSymbol(), newArgs, query.isNegated());
-		} catch (EvaluationException e) {
-			throw new InvalidProgramException(
-					"Query contained function call that could not be normalized: " + query + "\n" + e);
-		}
-	}
+//	private static final TermVisitorExn<Void, Term, EvaluationException> termReducer = new TermVisitorExn<Void, Term, EvaluationException>() {
+//
+//		@Override
+//		public Term visit(Var x, Void in) throws EvaluationException {
+//			return x;
+//		}
+//
+//		@Override
+//		public Term visit(Constructor c, Void in) throws EvaluationException {
+//			Term[] args = Terms.mapExn(c.getArgs(), t -> t.visit(this, null));
+//			return c.copyWithNewArgs(args);
+//		}
+//
+//		@Override
+//		public Term visit(Primitive<?> p, Void in) throws EvaluationException {
+//			return p;
+//		}
+//
+//		@Override
+//		public Term visit(Expr e, Void in) throws EvaluationException {
+//			return e.visit(exprReducer, in);
+//		}
+//
+//	};
+//
+//	private static final ExprVisitorExn<Void, Term, EvaluationException> exprReducer = new ExprVisitorExn<Void, Term, EvaluationException>() {
+//
+//		@Override
+//		public Term visit(MatchExpr matchExpr, Void in) throws EvaluationException {
+//			Term matchee = matchExpr.getMatchee().visit(termReducer, in);
+//			List<MatchClause> clauses = new ArrayList<>();
+//			for (MatchClause cl : matchExpr.getClauses()) {
+//				Term rhs = cl.getRhs().visit(termReducer, in);
+//				clauses.add(MatchClause.make(cl.getLhs(), rhs));
+//			}
+//			return MatchExpr.make(matchee, clauses);
+//		}
+//
+//		@Override
+//		public Term visit(FunctionCall funcCall, Void in) throws EvaluationException {
+//			Term[] args = Terms.mapExn(funcCall.getArgs(), t -> t.visit(termReducer, null));
+//			return funcCall.copyWithNewArgs(args);
+//		}
+//
+//	};
+//
+//	public UserPredicate reduceQuery(UserPredicate query) throws InvalidProgramException {
+//		try {
+//			Term[] args = query.getArgs();
+//			Term[] newArgs = new Term[args.length];
+//			for (int i = 0; i < args.length; ++i) {
+//				newArgs[i] = args[i].visit(termReducer, null);
+//			}
+//			return UserPredicate.make(query.getSymbol(), newArgs, query.isNegated());
+//		} catch (EvaluationException e) {
+//			throw new InvalidProgramException(
+//					"Query contained function call that could not be normalized: " + query + "\n" + e);
+//		}
+//	}
 
 	private BasicRule makeSeedRule(UserPredicate adornedQuery) {
 		return BasicRule.make(createInputAtom(adornedQuery));
 	}
+	
+	private BasicRule makeQueryRule(UserPredicate query) {
+		RelationSymbol oldSym = query.getSymbol();
+		RelationSymbol querySym = new RelationSymbol() {
+
+			@Override
+			public FunctorType getCompileTimeType() {
+				return oldSym.getCompileTimeType();
+			}
+
+			@Override
+			public int getArity() {
+				return oldSym.getArity();
+			}
+
+			@Override
+			public boolean isIdbSymbol() {
+				return oldSym.isIdbSymbol();
+			}
+
+			@Override
+			public boolean isBottomUp() {
+				return oldSym.isBottomUp();
+			}
+
+			@Override
+			public boolean isTopDown() {
+				return oldSym.isTopDown();
+			}
+			
+		};
+		Term[] args = query.getArgs();
+		Term[] newArgs = new Term[args.length];
+		Term[] hdArgs = new Term[args.length];
+		List<ComplexConjunct> body = new ArrayList<>();
+		Set<Var> seen = new HashSet<>();
+		for (int i = 0; i < args.length; ++i) {
+			Term t = args[i];
+			if (!(t instanceof Var) || !seen.add((Var) t)) {
+				Var x = Var.getFresh(false);
+				body.add(UnificationPredicate.make(x, t, false));
+				t = x;
+			}
+			newArgs[i] = hdArgs[i] = t;
+		}
+		body.add(0, UserPredicate.make(oldSym, newArgs, query.isNegated()));
+		UserPredicate hd = UserPredicate.make(querySym, hdArgs, query.isNegated());
+		return BasicRule.make(hd, body);
+	}
 
 	private BasicProgram makeEdbProgram(UserPredicate query) {
-		RelationSymbol querySym = query.getSymbol();
+		BasicRule queryRule = makeQueryRule(query);
+		RelationSymbol oldQuerySym = query.getSymbol();
 		Set<Term[]> facts = new HashSet<>();
-		for (Term[] fact : origProg.getFacts(querySym)) {
+		for (Term[] fact : origProg.getFacts(oldQuerySym)) {
 			try {
 				if (Unification.unify(query.getArgs(), fact, new SimpleSubstitution())) {
 					facts.add(fact);
@@ -199,7 +250,7 @@ public class MagicSetTransformer {
 
 			@Override
 			public Set<RelationSymbol> getFactSymbols() {
-				return Collections.singleton(querySym);
+				return Collections.singleton(oldQuerySym);
 			}
 
 			@Override
@@ -214,7 +265,7 @@ public class MagicSetTransformer {
 
 			@Override
 			public Set<Term[]> getFacts(RelationSymbol sym) {
-				if (querySym.equals(sym)) {
+				if (oldQuerySym.equals(sym)) {
 					return facts;
 				}
 				return Collections.emptySet();
@@ -222,7 +273,10 @@ public class MagicSetTransformer {
 
 			@Override
 			public Set<BasicRule> getRules(RelationSymbol sym) {
-				return Collections.emptySet();
+				if (!sym.equals(getQuery().getSymbol())) {
+					return Collections.emptySet();
+				}
+				return Collections.singleton(queryRule);
 			}
 
 			@Override
@@ -237,7 +291,7 @@ public class MagicSetTransformer {
 
 			@Override
 			public UserPredicate getQuery() {
-				return query;
+				return queryRule.getHead();
 			}
 
 			@Override
@@ -402,16 +456,16 @@ public class MagicSetTransformer {
 		for (ComplexConjunct a : r) {
 			Set<Var> futureLiveVars = liveVarsByAtom.get(i);
 			Set<Var> nextLiveVars = curLiveVars.stream().filter(futureLiveVars::contains).collect(Collectors.toSet());
-			a.accept(new ComplexConjunctVisitor<List<ComplexConjunct>, Void>() {
+			a.accept(new ComplexConjunctVisitor<List<ComplexConjunct>, List<ComplexConjunct>>() {
 
 				@Override
-				public Void visit(UnificationPredicate unificationPredicate, List<ComplexConjunct> l) {
+				public List<ComplexConjunct> visit(UnificationPredicate unificationPredicate, List<ComplexConjunct> l) {
 					l.add(a);
 					return null;
 				}
 
 				@Override
-				public Void visit(UserPredicate userPredicate, List<ComplexConjunct> l) {
+				public List<ComplexConjunct> visit(UserPredicate userPredicate, List<ComplexConjunct> l) {
 					RelationSymbol sym = userPredicate.getSymbol();
 					if (exploreTopDown(sym)) {
 						Set<Var> supVars = a.varSet().stream().filter(curLiveVars::contains).collect(Collectors.toSet());
@@ -426,10 +480,10 @@ public class MagicSetTransformer {
 					} else {
 						l.add(a);
 					}
-					return null;
+					return l;
 				}
 				
-			}, null);
+			}, l);
 			curLiveVars.clear();
 			curLiveVars.addAll(nextLiveVars);
 			for (Var v : a.varSet()) {

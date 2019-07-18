@@ -32,19 +32,16 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 
-import edu.harvard.seas.pl.formulog.ast.ComplexConjunct;
+import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Program;
-import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.eval.Evaluation;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.eval.EvaluationResult;
-import edu.harvard.seas.pl.formulog.eval.SemiInflationaryEvaluation;
-import edu.harvard.seas.pl.formulog.eval.StratifiedEvaluation;
+import edu.harvard.seas.pl.formulog.eval.NaiveEvaluation;
 import edu.harvard.seas.pl.formulog.parsing.ParseException;
 import edu.harvard.seas.pl.formulog.parsing.Parser;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
 import edu.harvard.seas.pl.formulog.types.TypeException;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
@@ -62,14 +59,14 @@ public final class Main {
 	}
 
 	private void go() {
-		Program<UserPredicate<RelationSymbol>, ComplexConjunct<RelationSymbol>> prog = parse();
-		WellTypedProgram<UserPredicate<RelationSymbol>, ComplexConjunct<RelationSymbol>> typedProg = typeCheck(prog);
+		Program<UserPredicate, BasicRule> prog = parse();
+		WellTypedProgram typedProg = typeCheck(prog);
 		Evaluation eval = setup(typedProg);
 		evaluate(eval);
 		printResults(eval);
 	}
 
-	private Program<UserPredicate<RelationSymbol>, ComplexConjunct<RelationSymbol>> parse() {
+	private Program<UserPredicate, BasicRule> parse() {
 		System.out.println("Parsing...");
 		try {
 			String inputDir = "";
@@ -84,10 +81,9 @@ public final class Main {
 		}
 	}
 
-	private WellTypedProgram<UserPredicate<RelationSymbol>, ComplexConjunct<RelationSymbol>> typeCheck(
-			Program<UserPredicate<RelationSymbol>, ComplexConjunct<RelationSymbol>> prog) {
+	private WellTypedProgram typeCheck(Program<UserPredicate, BasicRule> prog) {
 		System.out.println("Type checking...");
-		TypeChecker<RelationSymbol> typeChecker = new TypeChecker<>(prog);
+		TypeChecker typeChecker = new TypeChecker(prog);
 		try {
 			return typeChecker.typeCheck();
 		} catch (TypeException e) {
@@ -96,14 +92,10 @@ public final class Main {
 		}
 	}
 
-	private Evaluation setup(WellTypedProgram<UserPredicate<RelationSymbol>, ComplexConjunct<RelationSymbol>> prog) {
+	private Evaluation setup(WellTypedProgram prog) {
 		System.out.println("Rewriting and validating...");
 		try {
-			if (cl.hasOption("s")) {
-				return SemiInflationaryEvaluation.setup(prog, true);
-			} else {
-				return StratifiedEvaluation.setup(prog, true);
-			}
+			return NaiveEvaluation.setup(prog);
 		} catch (InvalidProgramException e) {
 			handleException("Error while rewriting/validation!", e);
 			throw new AssertionError("impossible");
@@ -123,22 +115,22 @@ public final class Main {
 	private void printResults(Evaluation eval) {
 		System.out.println("Results:");
 		EvaluationResult res = eval.getResult();
-		ValidProgram vprog = eval.getProgram();
-		if (!vprog.hasQuery() || debugMst) {
+		Iterable<UserPredicate> queryRes = res.getQueryAnswer();
+		if (queryRes == null || debugMst) {
 			PrintStream out = System.out;
 			if (debugMst) {
 				out = System.err;
 				out.println("\n*** All generated facts ***");
 			}
-			for (Symbol sym : res.getSymbols()) {
+			for (RelationSymbol sym : res.getSymbols()) {
 				printSortedFacts(res.getAll(sym), out);
 			}
 		}
-		if (vprog.hasQuery()) {
+		if (queryRes != null) {
 			if (debugMst) {
 				System.err.println("\n*** Query results ***");
 			}
-			printSortedFacts(res.getQueryAnswer(), System.out);
+			printSortedFacts(queryRes, System.out);
 		}
 	}
 
@@ -180,7 +172,7 @@ public final class Main {
 		(new Main(cl, System.getProperty("debugMst") != null)).go();
 	}
 
-	private static void printSortedFacts(Iterable<NormalAtom> facts, PrintStream out) {
+	private static void printSortedFacts(Iterable<UserPredicate> facts, PrintStream out) {
 		Util.iterableToList(facts).stream().map(a -> {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			PrintStream ps = new PrintStream(baos);
@@ -192,6 +184,7 @@ public final class Main {
 	private static void handleException(String msg, Exception e) {
 		System.out.println(msg);
 		System.out.println(e.getMessage());
+		e.printStackTrace(System.out);
 		System.exit(1);
 	}
 

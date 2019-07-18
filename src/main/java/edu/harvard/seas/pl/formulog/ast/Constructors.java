@@ -772,7 +772,7 @@ public final class Constructors {
 		});
 	}
 
-	private static abstract class AbstractConstructor implements Constructor {
+	private static abstract class AbstractConstructor extends AbstractTerm implements Constructor {
 
 		protected final ConstructorSymbol sym;
 		protected final Term[] args;

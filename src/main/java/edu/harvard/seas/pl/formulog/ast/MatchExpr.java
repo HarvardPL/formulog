@@ -31,7 +31,7 @@ import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.unification.Unification;
 
-public class MatchExpr implements Expr {
+public class MatchExpr extends AbstractTerm implements Expr {
 
 	private final Term matchee;
 	private final List<MatchClause> match;

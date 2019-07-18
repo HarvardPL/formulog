@@ -64,7 +64,7 @@ public final class FunctionCallFactory {
 		return defManager;
 	}
 
-	public class FunctionCall implements Functor<FunctionSymbol>, Expr {
+	public class FunctionCall extends AbstractTerm implements Functor<FunctionSymbol>, Expr {
 
 		private final FunctionSymbol sym;
 		private final Term[] args;

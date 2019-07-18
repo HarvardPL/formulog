@@ -109,7 +109,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 				for (int i = 0; i < order.length; ++i) {
 					order[i] = i;
 				}
-				Comparator<Term[]> cmp = new ArrayComparator<>(order, null);
+				Comparator<Term[]> cmp = new ArrayComparator<>(order, Terms.comparator);
 				all.put(sym, new ConcurrentSkipListSet<>(cmp));
 				List<Integer> idxs = new ArrayList<>();
 				for (Map.Entry<BooleanArrayWrapper, Integer> e2 : e.getValue().entrySet()) {
@@ -144,7 +144,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 					pos++;
 				}
 			}
-			Comparator<Term[]> cmp = new ArrayComparator<>(order, null);
+			Comparator<Term[]> cmp = new ArrayComparator<>(order, Terms.comparator);
 			return new IndexedFactSet(pat, new ConcurrentSkipListSet<>(cmp));
 		}
 

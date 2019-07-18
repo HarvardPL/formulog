@@ -34,7 +34,7 @@ import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.util.Util;
 
-public class I64 implements Primitive<Long>, SmtLibTerm {
+public class I64 extends AbstractTerm implements Primitive<Long>, SmtLibTerm {
 
 	private static final Map<Long, I64> memo = new ConcurrentHashMap<>();
 	private final long val;

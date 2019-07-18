@@ -70,7 +70,6 @@ public final class Unification {
 			Set<Var> vars = atom.varSet().stream().filter(v -> !v.isAnonymous()).collect(Collectors.toSet());
 			return boundVars.containsAll(vars);
 		}
-		assert !atom.isNegated();
 		Set<Var> nonFuncVars = new HashSet<>();
 		Set<Var> funcVars = new HashSet<>();
 		for (Term t : atom.getArgs()) {
@@ -88,6 +87,9 @@ public final class Unification {
 	private static boolean handleUnifyAtom(UnificationPredicate atom, Set<Var> boundVars) throws InvalidProgramException {
 		Term t1 = atom.getLhs();
 		Term t2 = atom.getRhs();
+		if (atom.isNegated()) {
+			return boundVars.containsAll(t1.varSet()) && boundVars.containsAll(t2.varSet());
+		}
 		Set<Var> maybeBoundVars = new HashSet<>(boundVars);
 		while (handleUnifyAtomHelper(t1, t2, maybeBoundVars)) {
 

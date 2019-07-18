@@ -50,4 +50,6 @@ public interface Term {
 		return vars;
 	}
 	
+	int getId();
+	
 }

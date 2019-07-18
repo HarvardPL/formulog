@@ -251,11 +251,20 @@ public class Parser {
 				}
 				return BuiltInTypes.string;
 			default:
-				Pair<IndexedTypeSymbol, List<Integer>> p = symbolManager.lookupIndexedTypeSymbol(ctx.ID().getText(),
-						indices);
-				TypeSymbol sym = p.fst();
-				indices = p.snd();
-				params.addAll(map(indices, i -> TypeIndex.make(i)));
+				String name = ctx.ID().getText();
+				TypeSymbol sym;
+				if (!indices.isEmpty()) {
+					Pair<IndexedTypeSymbol, List<Integer>> p = symbolManager.lookupIndexedTypeSymbol(name, indices);
+					sym = p.fst();
+					indices = p.snd();
+					params.addAll(map(indices, i -> TypeIndex.make(i)));
+				} else {
+					Symbol sym2 = symbolManager.lookupSymbol(name);
+					if (!(sym2 instanceof TypeSymbol)) {
+						throw new RuntimeException("Not a type symbol: " + sym2);
+					}
+					sym = (TypeSymbol) sym2;
+				}
 				return typeManager.lookup(sym, params);
 			}
 		}
@@ -315,22 +324,21 @@ public class Parser {
 		}
 
 		void setAggregate(RelationSymbol rel, AggTypeListContext ctx) {
-			throw new UnsupportedOperationException();
-//			for (Iterator<AggTypeContext> it = ctx.aggType().iterator(); it.hasNext();) {
-//				AggTypeContext agctx = it.next();
-//				if (agctx.func != null) {
-//					if (it.hasNext()) {
-//						throw new RuntimeException(
-//								"Aggregates can only be set for the last column of a relation: " + rel);
-//					}
-//					Symbol funcSym = symbolManager.lookupSymbol(agctx.func.getText());
-//					if (!(funcSym instanceof FunctionSymbol)) {
-//						throw new RuntimeException("Non-function used in aggregate: " + funcSym);
-//					}
-//					Term unit = extract(agctx.unit);
-//					rel.setAggregate((FunctionSymbol) funcSym, unit);
-//				}
-//			}
+			// for (Iterator<AggTypeContext> it = ctx.aggType().iterator(); it.hasNext();) {
+			// AggTypeContext agctx = it.next();
+			// if (agctx.func != null) {
+			// if (it.hasNext()) {
+			// throw new RuntimeException(
+			// "Aggregates can only be set for the last column of a relation: " + rel);
+			// }
+			// Symbol funcSym = symbolManager.lookupSymbol(agctx.func.getText());
+			// if (!(funcSym instanceof FunctionSymbol)) {
+			// throw new RuntimeException("Non-function used in aggregate: " + funcSym);
+			// }
+			// Term unit = extract(agctx.unit);
+			// rel.setAggregate((FunctionSymbol) funcSym, unit);
+			// }
+			// }
 		}
 
 		@Override
