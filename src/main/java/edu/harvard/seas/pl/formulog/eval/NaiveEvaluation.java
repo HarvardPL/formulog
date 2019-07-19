@@ -142,11 +142,11 @@ public class NaiveEvaluation implements Evaluation {
 						key[i] = args[i];
 					}
 				}
-				boolean changed = false;
-				Iterable<Term[]> answers = db.get(key, idx);
+				Set<Term[]> answers = db.get(key, idx);
 				if (predicate.isNegated()) {
-					return !answers.iterator().hasNext() && evaluateRule(r, pos + 1, s);
+					return answers.isEmpty() && evaluateRule(r, pos + 1, s);
 				} else {
+					boolean changed = false;
 					for (Term[] ans : answers) {
 						for (int i = 0; i < pat.length; ++i) {
 							if (!pat[i]) {
