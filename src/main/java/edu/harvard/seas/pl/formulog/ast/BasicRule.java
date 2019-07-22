@@ -24,12 +24,12 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public class BasicRule implements Rule<UserPredicate, ComplexConjunct> {
+public class BasicRule implements Rule<UserPredicate, ComplexLiteral> {
 
 	private final UserPredicate head;
-	private final List<ComplexConjunct> body;
+	private final List<ComplexLiteral> body;
 
-	private BasicRule(UserPredicate head, List<ComplexConjunct> body) {
+	private BasicRule(UserPredicate head, List<ComplexLiteral> body) {
 		if (!head.getSymbol().isIdbSymbol()) {
 			throw new IllegalArgumentException(
 					"Cannot create rule with non-IDB predicate for head: " + head.getSymbol());
@@ -38,7 +38,7 @@ public class BasicRule implements Rule<UserPredicate, ComplexConjunct> {
 		this.body = body;
 	}
 
-	public static BasicRule make(UserPredicate head, List<ComplexConjunct> body) {
+	public static BasicRule make(UserPredicate head, List<ComplexLiteral> body) {
 		if (body.isEmpty()) {
 			return make(head);
 		}
@@ -46,7 +46,7 @@ public class BasicRule implements Rule<UserPredicate, ComplexConjunct> {
 	}
 
 	public static BasicRule make(UserPredicate head) {
-		return make(head, Collections.singletonList(ComplexConjuncts.trueAtom()));
+		return make(head, Collections.singletonList(ComplexLiterals.trueAtom()));
 	}
 
 	@Override
@@ -95,7 +95,7 @@ public class BasicRule implements Rule<UserPredicate, ComplexConjunct> {
 		} else {
 			sb.append("\n\t");
 		}
-		for (Iterator<ComplexConjunct> it = body.iterator(); it.hasNext();) {
+		for (Iterator<ComplexLiteral> it = body.iterator(); it.hasNext();) {
 			sb.append(it.next());
 			if (it.hasNext()) {
 				sb.append(",\n\t");
@@ -111,12 +111,12 @@ public class BasicRule implements Rule<UserPredicate, ComplexConjunct> {
 	}
 
 	@Override
-	public ComplexConjunct getBody(int idx) {
+	public ComplexLiteral getBody(int idx) {
 		return body.get(idx);
 	}
 
 	@Override
-	public Iterator<ComplexConjunct> iterator() {
+	public Iterator<ComplexLiteral> iterator() {
 		return body.iterator();
 	}
 

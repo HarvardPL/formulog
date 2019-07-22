@@ -20,9 +20,9 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-public final class ComplexConjuncts {
+public final class ComplexLiterals {
 
-	private ComplexConjuncts() {
+	private ComplexLiterals() {
 		throw new AssertionError("impossible");
 	}
 	
@@ -34,7 +34,7 @@ public final class ComplexConjuncts {
 		return unifyWithBool(Constructors.trueTerm(), true);
 	}
 	
-	public static interface ComplexConjunctVisitor<I, O> {
+	public static interface ComplexLiteralVisitor<I, O> {
 
 		O visit(UnificationPredicate unificationPredicate, I input);
 
@@ -42,7 +42,7 @@ public final class ComplexConjuncts {
 		
 	}
 	
-	public static interface ComplexConjunctExnVisitor<I, O, E extends Throwable> {
+	public static interface ComplexLiteralExnVisitor<I, O, E extends Throwable> {
 
 		O visit(UnificationPredicate unificationPredicate, I input) throws E;
 

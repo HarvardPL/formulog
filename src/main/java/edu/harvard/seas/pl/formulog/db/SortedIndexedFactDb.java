@@ -73,6 +73,21 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 		}
 		return true;
 	}
+	
+	@Override
+	public boolean hasFact(RelationSymbol sym, Term[] args) {
+		assert allGround(args);
+		return all.get(sym).contains(args);
+	}
+	
+	private boolean allGround(Term[] args) {
+		for (Term arg : args) {
+			if (!arg.isGround()) {
+				return false;
+			}
+		}
+		return true;
+	}
 
 	public static class SortedIndexedFactDbBuilder implements IndexedFactDbBuilder<SortedIndexedFactDb> {
 

@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.validating.ast;
 
+import java.util.Set;
+
 /*-
  * #%L
  * FormuLog
@@ -21,11 +23,14 @@ package edu.harvard.seas.pl.formulog.validating.ast;
  */
 
 import edu.harvard.seas.pl.formulog.ast.Conjunct;
+import edu.harvard.seas.pl.formulog.ast.Var;
 
 public interface SimpleConjunct extends Conjunct {
 
 	<I, O> O accept(SimpleConjunctVisitor<I, O> visitor, I input);
 	
 	<I, O, E extends Throwable> O accept(SimpleConjunctExnVisitor<I, O, E> visitor, I input) throws E;
+
+	Set<Var> varSet();
 	
 }

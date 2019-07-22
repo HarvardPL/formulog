@@ -31,12 +31,11 @@ import java.util.stream.Collectors;
 
 import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
-import edu.harvard.seas.pl.formulog.ast.ComplexConjunct;
-import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctVisitor;
+import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
+import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralVisitor;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Expr;
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
-import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitorExn;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
@@ -44,9 +43,7 @@ import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Term;
-import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
-import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitorExn;
 import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
@@ -212,7 +209,7 @@ public class MagicSetTransformer {
 		Term[] args = query.getArgs();
 		Term[] newArgs = new Term[args.length];
 		Term[] hdArgs = new Term[args.length];
-		List<ComplexConjunct> body = new ArrayList<>();
+		List<ComplexLiteral> body = new ArrayList<>();
 		Set<Var> seen = new HashSet<>();
 		for (int i = 0; i < args.length; ++i) {
 			Term t = args[i];
@@ -328,8 +325,8 @@ public class MagicSetTransformer {
 		for (RelationSymbol sym : prog.getRuleSymbols()) {
 			for (BasicRule r : prog.getRules(sym)) {
 				UserPredicate newHead = stripAdornment(r.getHead());
-				List<ComplexConjunct> newBody = new ArrayList<>();
-				for (ComplexConjunct atom : r) {
+				List<ComplexLiteral> newBody = new ArrayList<>();
+				for (ComplexLiteral atom : r) {
 					newBody.add(stripAdornment(atom));
 				}
 				rules.add(BasicRule.make(newHead, newBody));
@@ -342,8 +339,8 @@ public class MagicSetTransformer {
 		return new ProgramImpl(rules, query);
 	}
 
-	private static <C extends ComplexConjunct> C stripAdornment(C atom) {
-		return atom.accept(new ComplexConjunctVisitor<Void, C>() {
+	private static <C extends ComplexLiteral> C stripAdornment(C atom) {
+		return atom.accept(new ComplexLiteralVisitor<Void, C>() {
 
 			@SuppressWarnings("unchecked")
 			@Override
@@ -390,8 +387,8 @@ public class MagicSetTransformer {
 				if (head.getSymbol().equals(origSym)) {
 					UserPredicate adHead = UserPredicate.make(adSym, head.getArgs(), head.isNegated());
 					BasicRule adRule = Adornments.adornRule(adHead, Util.iterableToList(r), topDownIsDefault);
-					for (ComplexConjunct a : adRule) {
-						a.accept(new ComplexConjunctVisitor<Void, Void>() {
+					for (ComplexLiteral a : adRule) {
+						a.accept(new ComplexLiteralVisitor<Void, Void>() {
 
 							@Override
 							public Void visit(UnificationPredicate unificationPredicate, Void input) {
@@ -444,7 +441,7 @@ public class MagicSetTransformer {
 		int supCount[] = { 0 };
 		Set<BasicRule> magicRules = new HashSet<>();
 		List<Set<Var>> liveVarsByAtom = liveVarsByAtom(r);
-		List<ComplexConjunct> l = new ArrayList<>();
+		List<ComplexLiteral> l = new ArrayList<>();
 		UserPredicate head = r.getHead();
 		Set<Var> curLiveVars = new HashSet<>();
 		if (exploreTopDown(head.getSymbol())) {
@@ -453,19 +450,19 @@ public class MagicSetTransformer {
 			curLiveVars.addAll(inputAtom.varSet());
 		}
 		int i = 0;
-		for (ComplexConjunct a : r) {
+		for (ComplexLiteral a : r) {
 			Set<Var> futureLiveVars = liveVarsByAtom.get(i);
 			Set<Var> nextLiveVars = curLiveVars.stream().filter(futureLiveVars::contains).collect(Collectors.toSet());
-			a.accept(new ComplexConjunctVisitor<List<ComplexConjunct>, List<ComplexConjunct>>() {
+			a.accept(new ComplexLiteralVisitor<List<ComplexLiteral>, List<ComplexLiteral>>() {
 
 				@Override
-				public List<ComplexConjunct> visit(UnificationPredicate unificationPredicate, List<ComplexConjunct> l) {
+				public List<ComplexLiteral> visit(UnificationPredicate unificationPredicate, List<ComplexLiteral> l) {
 					l.add(a);
 					return null;
 				}
 
 				@Override
-				public List<ComplexConjunct> visit(UserPredicate userPredicate, List<ComplexConjunct> l) {
+				public List<ComplexLiteral> visit(UserPredicate userPredicate, List<ComplexLiteral> l) {
 					RelationSymbol sym = userPredicate.getSymbol();
 					if (exploreTopDown(sym)) {
 						Set<Var> supVars = a.varSet().stream().filter(curLiveVars::contains).collect(Collectors.toSet());
@@ -690,7 +687,7 @@ public class MagicSetTransformer {
 		for (BasicRule r : adRules) {
 			UserPredicate head = r.getHead();
 			if (exploreTopDown(head.getSymbol())) {
-				List<ComplexConjunct> body = new ArrayList<>();
+				List<ComplexLiteral> body = new ArrayList<>();
 				body.add(createInputAtom(head));
 				r.forEach(body::add);
 				newRules.add(BasicRule.make(head, body));
@@ -706,7 +703,7 @@ public class MagicSetTransformer {
 		for (RelationSymbol sym : p.getRuleSymbols()) {
 			for (BasicRule r : p.getRules(sym)) {
 				UserPredicate head = makePositive(r.getHead());
-				List<ComplexConjunct> body = makePositive(r);
+				List<ComplexLiteral> body = makePositive(r);
 				newRules.add(BasicRule.make(head, body));
 			}
 		}
@@ -714,8 +711,8 @@ public class MagicSetTransformer {
 		return new ProgramImpl(newRules, p.getQuery());
 	}
 
-	private <C extends ComplexConjunct> C makePositive(C atom) {
-		return atom.accept(new ComplexConjunctVisitor<Void, C>() {
+	private <C extends ComplexLiteral> C makePositive(C atom) {
+		return atom.accept(new ComplexLiteralVisitor<Void, C>() {
 
 			@SuppressWarnings("unchecked")
 			@Override
@@ -739,10 +736,10 @@ public class MagicSetTransformer {
 		}, null);
 	}
 
-	private List<ComplexConjunct> makePositive(Iterable<ComplexConjunct> atoms) {
-		List<ComplexConjunct> l = new ArrayList<>();
-		for (ComplexConjunct a : atoms) {
-			ComplexConjunct b = makePositive(a);
+	private List<ComplexLiteral> makePositive(Iterable<ComplexLiteral> atoms) {
+		List<ComplexLiteral> l = new ArrayList<>();
+		for (ComplexLiteral a : atoms) {
+			ComplexLiteral b = makePositive(a);
 			if (b != null) {
 				l.add(b);
 			}
@@ -870,7 +867,7 @@ public class MagicSetTransformer {
 			@Override
 			public Void visit(MatchExpr matchExpr, Set<RelationSymbol> in) {
 				matchExpr.getMatchee().visit(predicatesInTermExtractor, in);
-				for (MatchClause cl : matchExpr.getClauses()) {
+				for (MatchClause cl : matchExpr) {
 					cl.getRhs().visit(predicatesInTermExtractor, in);
 				}
 				return null;
@@ -908,8 +905,8 @@ public class MagicSetTransformer {
 			for (BasicRule r : rs) {
 				UserPredicate head = r.getHead();
 				Util.lookupOrCreate(rules, head.getSymbol(), () -> new HashSet<>()).add(r);
-				for (ComplexConjunct a : r) {
-					a.accept(new ComplexConjunctVisitor<Void, Void>() {
+				for (ComplexLiteral a : r) {
+					a.accept(new ComplexLiteralVisitor<Void, Void>() {
 
 						@Override
 						public Void visit(UnificationPredicate unificationPredicate, Void input) {

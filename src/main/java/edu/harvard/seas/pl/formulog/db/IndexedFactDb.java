@@ -35,4 +35,6 @@ public interface IndexedFactDb {
 	
 	boolean add(RelationSymbol sym, Term[] args);
 	
+	boolean hasFact(RelationSymbol sym, Term[] args);
+	
 }

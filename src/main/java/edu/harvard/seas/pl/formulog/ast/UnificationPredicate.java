@@ -1,7 +1,6 @@
 package edu.harvard.seas.pl.formulog.ast;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Arrays;
 
 /*-
  * #%L
@@ -23,38 +22,41 @@ import java.util.Set;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctExnVisitor;
-import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctVisitor;
+import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralExnVisitor;
+import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralVisitor;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 
-public class UnificationPredicate implements ComplexConjunct {
+public class UnificationPredicate implements ComplexLiteral {
 
-	private final Term lhs;
-	private final Term rhs;
+	private final Term[] args;
 	private final boolean negated;
 
 	public static UnificationPredicate make(Term lhs, Term rhs, boolean negated) {
-		return new UnificationPredicate(lhs, rhs, negated);
+		return new UnificationPredicate(new Term[] { lhs, rhs }, negated);
 	}
 	
-	private UnificationPredicate(Term lhs, Term rhs, boolean negated) {
-		this.lhs = lhs;
-		this.rhs = rhs;
+	private UnificationPredicate(Term[] args, boolean negated) {
+		this.args = args;
 		this.negated = negated;
 	}
 	
+	@Override
+	public Term[] getArgs() {
+		return args;
+	}
+	
 	public Term getLhs() {
-		return lhs;
+		return args[0] ;
 	}
 
 	public Term getRhs() {
-		return rhs;
+		return args[1];
 	}
 
 	@Override
 	public UnificationPredicate applySubstitution(Substitution subst) {
-		Term newLhs = lhs.applySubstitution(subst);
-		Term newRhs = rhs.applySubstitution(subst);
+		Term newLhs = getLhs().applySubstitution(subst);
+		Term newRhs = getRhs().applySubstitution(subst);
 		return make(newLhs, newRhs, negated);
 	}
 
@@ -62,14 +64,28 @@ public class UnificationPredicate implements ComplexConjunct {
 	public boolean isNegated() {
 		return negated;
 	}
-	
+
+	@Override
+	public String toString() {
+		return getLhs() + (negated ? " != " : " = ") + getRhs();
+	}
+
+	@Override
+	public <I, O> O accept(ComplexLiteralVisitor<I, O> visitor, I input) {
+		return visitor.visit(this, input);
+	}
+
+	@Override
+	public <I, O, E extends Throwable> O accept(ComplexLiteralExnVisitor<I, O, E> visitor, I input) throws E {
+		return visitor.visit(this, input);
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((lhs == null) ? 0 : lhs.hashCode());
+		result = prime * result + Arrays.hashCode(args);
 		result = prime * result + (negated ? 1231 : 1237);
-		result = prime * result + ((rhs == null) ? 0 : rhs.hashCode());
 		return result;
 	}
 
@@ -82,42 +98,11 @@ public class UnificationPredicate implements ComplexConjunct {
 		if (getClass() != obj.getClass())
 			return false;
 		UnificationPredicate other = (UnificationPredicate) obj;
-		if (lhs == null) {
-			if (other.lhs != null)
-				return false;
-		} else if (!lhs.equals(other.lhs))
+		if (!Arrays.equals(args, other.args))
 			return false;
 		if (negated != other.negated)
 			return false;
-		if (rhs == null) {
-			if (other.rhs != null)
-				return false;
-		} else if (!rhs.equals(other.rhs))
-			return false;
 		return true;
 	}
-
-	@Override
-	public String toString() {
-		return lhs + (negated ? " != " : " = ") + rhs;
-	}
-
-	@Override
-	public <I, O> O accept(ComplexConjunctVisitor<I, O> visitor, I input) {
-		return visitor.visit(this, input);
-	}
-
-	@Override
-	public <I, O, E extends Throwable> O accept(ComplexConjunctExnVisitor<I, O, E> visitor, I input) throws E {
-		return visitor.visit(this, input);
-	}
-
-	@Override
-	public Set<Var> varSet() {
-		Set<Var> vars = new HashSet<>();
-		lhs.varSet(vars);
-		rhs.varSet(vars);
-		return vars;
-	}
-
+	
 }

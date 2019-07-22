@@ -1,6 +1,4 @@
-package edu.harvard.seas.pl.formulog.ast;
-
-import java.util.Set;
+package edu.harvard.seas.pl.formulog.eval;
 
 /*-
  * #%L
@@ -22,20 +20,14 @@ import java.util.Set;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctExnVisitor;
-import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctVisitor;
-import edu.harvard.seas.pl.formulog.unification.Substitution;
+import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
+import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 
-public interface ComplexConjunct extends Conjunct {
+public class NaiveEvaluationTest extends CommonEvaluationTest {
 
-	ComplexConjunct applySubstitution(Substitution subst);
+	@Override
+	protected Evaluation setup(WellTypedProgram prog) throws InvalidProgramException, EvaluationException {
+		return NaiveEvaluation.setup(prog);
+	}
 
-	boolean isNegated();
-	
-	Set<Var> varSet();
-	
-	<I, O> O accept(ComplexConjunctVisitor<I, O> visitor, I input);
-	
-	<I, O, E extends Throwable> O accept(ComplexConjunctExnVisitor<I, O, E> visitor, I input) throws E;
-	
 }

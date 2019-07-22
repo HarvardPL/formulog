@@ -35,8 +35,8 @@ import org.jgrapht.traverse.TopologicalOrderIterator;
 
 import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
-import edu.harvard.seas.pl.formulog.ast.ComplexConjunct;
-import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctVisitor;
+import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
+import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralVisitor;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Expr;
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
@@ -68,7 +68,7 @@ public class Stratifier {
 		for (RelationSymbol sym : prog.getRuleSymbols()) {
 			for (BasicRule r : prog.getRules(sym)) {
 				DependencyFinder depends = new DependencyFinder();
-				for (ComplexConjunct bd : r) {
+				for (ComplexLiteral bd : r) {
 					depends.processAtom(bd);
 				}
 				UserPredicate hd = r.getHead();
@@ -116,8 +116,8 @@ public class Stratifier {
 		// return props != null && props.isAggregated();
 		// }
 
-		public void processAtom(ComplexConjunct a) {
-			a.accept(new ComplexConjunctVisitor<Void, Void>() {
+		public void processAtom(ComplexLiteral a) {
+			a.accept(new ComplexLiteralVisitor<Void, Void>() {
 
 				@Override
 				public Void visit(UnificationPredicate unificationPredicate, Void input) {
@@ -205,7 +205,7 @@ public class Stratifier {
 				@Override
 				public Void visit(MatchExpr matchExpr, Void in) {
 					processTerm(matchExpr.getMatchee());
-					for (MatchClause cl : matchExpr.getClauses()) {
+					for (MatchClause cl : matchExpr) {
 						processTerm(cl.getLhs());
 						processTerm(cl.getRhs());
 					}

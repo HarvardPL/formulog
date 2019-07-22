@@ -21,6 +21,7 @@ package edu.harvard.seas.pl.formulog.ast;
  */
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -31,7 +32,7 @@ import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.unification.Unification;
 
-public class MatchExpr extends AbstractTerm implements Expr {
+public class MatchExpr extends AbstractTerm implements Expr, Iterable<MatchClause> {
 
 	private final Term matchee;
 	private final List<MatchClause> match;
@@ -60,10 +61,6 @@ public class MatchExpr extends AbstractTerm implements Expr {
 
 	public Term getMatchee() {
 		return matchee;
-	}
-
-	public List<MatchClause> getClauses() {
-		return match;
 	}
 
 	@Override
@@ -161,6 +158,11 @@ public class MatchExpr extends AbstractTerm implements Expr {
 				cl.getRhs().varSet(acc);
 			}
 		}
+	}
+
+	@Override
+	public Iterator<MatchClause> iterator() {
+		return match.iterator();
 	}
 
 }

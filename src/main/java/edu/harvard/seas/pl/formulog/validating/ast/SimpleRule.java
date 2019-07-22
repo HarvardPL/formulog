@@ -27,8 +27,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import edu.harvard.seas.pl.formulog.ast.ComplexConjunct;
-import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctExnVisitor;
+import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
+import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralExnVisitor;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
@@ -45,7 +45,7 @@ public class SimpleRule implements Rule<SimplePredicate, SimpleConjunct> {
 
 	public static SimpleRule make(ValidRule rule) throws InvalidProgramException {
 		Simplifier simplifier = new Simplifier();
-		for (ComplexConjunct atom : rule) {
+		for (ComplexLiteral atom : rule) {
 			try {
 				simplifier.add(atom);
 			} catch (InvalidProgramException e) {
@@ -143,10 +143,10 @@ public class SimpleRule implements Rule<SimplePredicate, SimpleConjunct> {
 		private final List<SimpleConjunct> acc = new ArrayList<>();
 		private final Set<Var> boundVars = new HashSet<>();
 
-		public void add(ComplexConjunct atom) throws InvalidProgramException {
-			List<ComplexConjunct> todo = new ArrayList<>();
+		public void add(ComplexLiteral atom) throws InvalidProgramException {
+			List<ComplexLiteral> todo = new ArrayList<>();
 			SimpleConjunct c = atom
-					.accept(new ComplexConjunctExnVisitor<Void, SimpleConjunct, InvalidProgramException>() {
+					.accept(new ComplexLiteralExnVisitor<Void, SimpleConjunct, InvalidProgramException>() {
 
 						@Override
 						public SimpleConjunct visit(UnificationPredicate unificationPredicate, Void input)
@@ -182,26 +182,31 @@ public class SimpleRule implements Rule<SimplePredicate, SimpleConjunct> {
 								}
 								Constructor c1 = (Constructor) lhs;
 								Constructor c2 = (Constructor) rhs;
+								System.out.println(c1 + " " + c2);
 								if (!c1.getSymbol().equals(c2.getSymbol())) {
 									throw new InvalidProgramException("Unsatisfiable unification conjunct");
 								}
+								List<ComplexLiteral> cs = new ArrayList<>();
 								Term[] args1 = c1.getArgs();
 								Term[] args2 = c2.getArgs();
 								for (int i = 0; i < args1.length; ++i) {
-									todo.add(UnificationPredicate.make(args1[i], args2[i], false));
+									cs.add(UnificationPredicate.make(args1[i], args2[i], false));
+								}
+								ValidRule.order(cs, (p, xs) -> 1, new HashSet<>(boundVars));
+								for (ComplexLiteral c : cs) {
+									todo.add(c);
 								}
 								return null;
 							}
 						}
 
 						private Destructor makeDestructor(Term boundTerm, Constructor unboundCtor,
-								List<ComplexConjunct> todo) {
+								List<ComplexLiteral> todo) {
 							Term[] args = unboundCtor.getArgs();
 							Var[] vars = new Var[args.length];
 							for (int i = 0; i < args.length; ++i) {
 								Var y = Var.getFresh(false);
 								vars[i] = y;
-								boundVars.add(y);
 								todo.add(UnificationPredicate.make(y, args[i], false));
 							}
 							return Destructor.make(boundTerm, unboundCtor.getSymbol(), vars);
@@ -226,15 +231,15 @@ public class SimpleRule implements Rule<SimplePredicate, SimpleConjunct> {
 							}
 							SimpleConjunct c = SimplePredicate.make(userPredicate.getSymbol(), newArgs, boundVars,
 									userPredicate.isNegated());
-							boundVars.addAll(seen);
 							return c;
 						}
 
 					}, null);
 			if (c != null) {
 				acc.add(c);
+				boundVars.addAll(c.varSet());
 			}
-			for (ComplexConjunct x : todo) {
+			for (ComplexLiteral x : todo) {
 				add(x);
 			}
 		}

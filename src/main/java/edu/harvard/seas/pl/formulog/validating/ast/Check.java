@@ -1,5 +1,8 @@
 package edu.harvard.seas.pl.formulog.validating.ast;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /*-
  * #%L
  * FormuLog
@@ -21,6 +24,7 @@ package edu.harvard.seas.pl.formulog.validating.ast;
  */
 
 import edu.harvard.seas.pl.formulog.ast.Term;
+import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 
@@ -63,6 +67,14 @@ public class Check implements SimpleConjunct {
 	@Override
 	public String toString() {
 		return lhs + (negated ? " != " : " = ") + rhs;
+	}
+
+	@Override
+	public Set<Var> varSet() {
+		Set<Var> vars = new HashSet<>();
+		lhs.varSet(vars);
+		rhs.varSet(vars);
+		return vars;
 	}
 
 }

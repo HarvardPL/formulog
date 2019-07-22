@@ -27,8 +27,8 @@ import java.util.List;
 import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
-import edu.harvard.seas.pl.formulog.ast.ComplexConjunct;
-import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctVisitor;
+import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
+import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralVisitor;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
@@ -58,7 +58,7 @@ public final class Adornments {
 		return UserPredicate.make(sym, args, a.isNegated());
 	}
 
-	public static BasicRule adornRule(UserPredicate head, List<ComplexConjunct> body, boolean topDownIsDefault)
+	public static BasicRule adornRule(UserPredicate head, List<ComplexLiteral> body, boolean topDownIsDefault)
 			throws InvalidProgramException {
 		RelationSymbol sym = head.getSymbol();
 		boolean[] headAdornment;
@@ -77,15 +77,15 @@ public final class Adornments {
 				boundVars.addAll(headArgs[i].varSet());
 			}
 		}
-		List<ComplexConjunct> newBody = new ArrayList<>(body);
+		List<ComplexLiteral> newBody = new ArrayList<>(body);
 		for (int i = 0; i < newBody.size(); i++) {
 			boolean ok = false;
 			for (int j = i; j < newBody.size(); j++) {
-				ComplexConjunct a = body.get(j);
+				ComplexLiteral a = body.get(j);
 				if (Unification.canBindVars(a, boundVars)) {
 					Collections.swap(body, i, j);
 					int pos = i;
-					a.accept(new ComplexConjunctVisitor<Void, Void>() {
+					a.accept(new ComplexLiteralVisitor<Void, Void>() {
 
 						@Override
 						public Void visit(UnificationPredicate unificationPredicate, Void input) {

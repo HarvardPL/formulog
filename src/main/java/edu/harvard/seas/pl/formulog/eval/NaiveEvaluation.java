@@ -66,19 +66,23 @@ public class NaiveEvaluation implements Evaluation {
 		Set<RelationSymbol> allRelations = new HashSet<>(magicProg.getFactSymbols());
 		allRelations.addAll(magicProg.getRuleSymbols());
 		SortedIndexedFactDbBuilder dbb = new SortedIndexedFactDbBuilder(allRelations);
+		IndexedFactDbWrapper wrappedDb = new IndexedFactDbWrapper();
+		PredicateFunctionSetter predFuncs = new PredicateFunctionSetter(
+				magicProg.getFunctionCallFactory().getDefManager(), magicProg.getSymbolManager(), wrappedDb);
 		Map<RelationSymbol, Iterable<IndexedRule>> rules = new HashMap<>();
 		for (RelationSymbol sym : magicProg.getRuleSymbols()) {
 			List<IndexedRule> rs = new ArrayList<>();
 			for (BasicRule br : magicProg.getRules(sym)) {
 				ValidRule vr = ValidRule.make(br, (p, vs) -> 0);
+				predFuncs.preprocess(vr);
 				SimpleRule sr = SimpleRule.make(vr);
 				IndexedRule ir = IndexedRule.make(sr, dbb::makeIndex);
-				System.out.println(ir);
 				rs.add(ir);
 			}
 			rules.put(sym, rs);
 		}
 		IndexedFactDb db = dbb.build();
+		wrappedDb.set(db);
 		for (RelationSymbol sym : magicProg.getFactSymbols()) {
 			for (Term[] args : magicProg.getFacts(sym)) {
 				db.add(sym, args);
@@ -225,6 +229,51 @@ public class NaiveEvaluation implements Evaluation {
 			return UserPredicate.make(sym, bindings.next(), false);
 		}
 
+	}
+
+	@Override
+	public boolean hasQuery() {
+		return query != null;
+	}
+
+	@Override
+	public UserPredicate getQuery() {
+		return query;
+	}
+	
+	private static class IndexedFactDbWrapper implements IndexedFactDb {
+
+		private IndexedFactDb db;
+	
+		public void set(IndexedFactDb db) {
+			this.db = db;
+		}
+		
+		@Override
+		public Set<RelationSymbol> getSymbols() {
+			return db.getSymbols();
+		}
+
+		@Override
+		public Set<Term[]> getAll(RelationSymbol sym) {
+			return db.getAll(sym);
+		}
+
+		@Override
+		public Set<Term[]> get(Term[] key, int index) {
+			return db.get(key, index);
+		}
+
+		@Override
+		public boolean add(RelationSymbol sym, Term[] args) {
+			return db.add(sym, args);
+		}
+
+		@Override
+		public boolean hasFact(RelationSymbol sym, Term[] args) {
+			return db.hasFact(sym, args);
+		}
+		
 	}
 
 }

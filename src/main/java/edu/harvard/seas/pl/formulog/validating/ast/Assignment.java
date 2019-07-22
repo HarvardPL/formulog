@@ -1,5 +1,8 @@
 package edu.harvard.seas.pl.formulog.validating.ast;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /*-
  * #%L
  * FormuLog
@@ -56,6 +59,14 @@ public class Assignment implements SimpleConjunct {
 	@Override
 	public String toString() {
 		return var + " <- " + rhs;
+	}
+
+	@Override
+	public Set<Var> varSet() {
+		Set<Var> vars = new HashSet<>();
+		vars.add(var);
+		rhs.varSet(vars);
+		return vars;
 	}
 
 }

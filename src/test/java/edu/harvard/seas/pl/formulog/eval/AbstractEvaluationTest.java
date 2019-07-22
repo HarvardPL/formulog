@@ -30,17 +30,12 @@ import java.io.PrintStream;
 import java.net.URL;
 import java.nio.file.Paths;
 
-import edu.harvard.seas.pl.formulog.ast.Atoms;
-import edu.harvard.seas.pl.formulog.ast.Atoms.NormalAtom;
-import edu.harvard.seas.pl.formulog.ast.Program;
-import edu.harvard.seas.pl.formulog.ast.Terms;
-import edu.harvard.seas.pl.formulog.db.IndexedFactDb;
+import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.parsing.Parser;
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
+import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
-import edu.harvard.seas.pl.formulog.validating.ast.ValidProgram;
 
 public abstract class AbstractEvaluationTest {
 
@@ -52,22 +47,20 @@ public abstract class AbstractEvaluationTest {
 				throw new FileNotFoundException(file + " not found");
 			}
 			URL dir = getClass().getClassLoader().getResource(inputDir);
-			Program prog = (new Parser()).parse(new InputStreamReader(is), Paths.get(dir.toURI()));
+			BasicProgram prog = (new Parser()).parse(new InputStreamReader(is), Paths.get(dir.toURI()));
 			WellTypedProgram wellTypedProg = (new TypeChecker(prog)).typeCheck();
 			Evaluation eval = setup(wellTypedProg);
 			eval.run();
-			IndexedFactDb db = eval.getResult();
-			ValidProgram vprog = eval.getProgram();
-			Symbol sym;
-			if (vprog.hasQuery()) {
-				sym = vprog.getQuery().getSymbol();
+			EvaluationResult res = eval.getResult();
+			RelationSymbol sym;
+			if (eval.hasQuery()) {
+				sym = eval.getQuery().getSymbol();
 			} else {
-				sym = vprog.getSymbolManager().lookupSymbol("ok");
+				sym = (RelationSymbol) wellTypedProg.getSymbolManager().lookupSymbol("ok");
 			}
-			NormalAtom okAtom = (NormalAtom) Atoms.get(sym, Terms.emptyArray(), false);
-			boolean ok = db.hasFact(okAtom);
+			boolean ok = res.getAll(sym).iterator().hasNext();
 			if (!ok && !isBad) {
-				fail("Test failed for a good program\n" + db);
+				fail("Test failed for a good program");
 			}
 			if (ok && isBad) {
 				fail("Test succeeded for a bad program");

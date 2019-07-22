@@ -21,7 +21,9 @@ package edu.harvard.seas.pl.formulog.validating.ast;
  */
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Term;
@@ -35,19 +37,28 @@ public class Destructor implements SimpleConjunct {
 
 	private final Term x;
 	private final Symbol symbol;
-	private final Var[] vars;
+	private final Var[] bindings;
 
-	public static Destructor make(Term x, ConstructorSymbol symbol, Var[] vars) {
-		assert !Arrays.asList(vars).contains(x) : "A variable cannot be on both sides of a destructor";
-		assert symbol.getArity() == vars.length : "Symbol arity does not match number of variables";
-		assert vars.length == new HashSet<>(Arrays.asList(vars)).size() : "All variables must be distinct";
-		return new Destructor(x, symbol, vars);
+	public static Destructor make(Term x, ConstructorSymbol symbol, Var[] bindings) {
+		assert assertDisjoint(x.varSet(), Arrays.asList(bindings)) : "A variable cannot be on both sides of a destructor";
+		assert symbol.getArity() == bindings.length : "Symbol arity does not match number of variables";
+		assert bindings.length == new HashSet<>(Arrays.asList(bindings)).size() : "All variables must be distinct";
+		return new Destructor(x, symbol, bindings);
 	}
-	
+
+	private static boolean assertDisjoint(Collection<Var> xs, Collection<Var> ys) {
+		for (Var x : xs) {
+			if (ys.contains(x)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	private Destructor(Term x, Symbol symbol, Var[] vars) {
 		this.x = x;
 		this.symbol = symbol;
-		this.vars = vars;
+		this.bindings = vars;
 	}
 
 	public boolean destruct(Substitution subst) throws EvaluationException {
@@ -57,11 +68,11 @@ public class Destructor implements SimpleConjunct {
 		}
 		Term[] args = ctor.getArgs();
 		for (int i = 0; i < args.length; ++i) {
-			subst.put(vars[i], args[i]);
+			subst.put(bindings[i], args[i]);
 		}
 		return true;
 	}
-	
+
 	@Override
 	public <I, O> O accept(SimpleConjunctVisitor<I, O> visitor, I input) {
 		return visitor.visit(this, input);
@@ -75,14 +86,22 @@ public class Destructor implements SimpleConjunct {
 	@Override
 	public String toString() {
 		String s = symbol + "(";
-		for (int i = 0; i < vars.length; ++i) {
-			s += vars[i];
-			if (i < vars.length - 1) {
+		for (int i = 0; i < bindings.length; ++i) {
+			s += bindings[i];
+			if (i < bindings.length - 1) {
 				s += ", ";
 			}
 		}
 		s += ") <- " + x;
 		return s;
 	}
-	
+
+	@Override
+	public Set<Var> varSet() {
+		Set<Var> vars = new HashSet<>();
+		x.varSet(vars);
+		vars.addAll(Arrays.asList(bindings));
+		return vars;
+	}
+
 }

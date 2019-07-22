@@ -21,15 +21,13 @@ package edu.harvard.seas.pl.formulog.ast;
  */
 
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
-import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctExnVisitor;
-import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctVisitor;
+import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralExnVisitor;
+import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralVisitor;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 
-public class UserPredicate implements ComplexConjunct {
+public class UserPredicate implements ComplexLiteral {
 
 	private final RelationSymbol symbol;
 	private final Term[] args;
@@ -49,6 +47,7 @@ public class UserPredicate implements ComplexConjunct {
 		return symbol;
 	}
 
+	@Override
 	public Term[] getArgs() {
 		return args;
 	}
@@ -120,22 +119,13 @@ public class UserPredicate implements ComplexConjunct {
 	}
 
 	@Override
-	public <I, O> O accept(ComplexConjunctVisitor<I, O> visitor, I input) {
+	public <I, O> O accept(ComplexLiteralVisitor<I, O> visitor, I input) {
 		return visitor.visit(this, input);
 	}
 
 	@Override
-	public <I, O, E extends Throwable> O accept(ComplexConjunctExnVisitor<I, O, E> visitor, I input) throws E {
+	public <I, O, E extends Throwable> O accept(ComplexLiteralExnVisitor<I, O, E> visitor, I input) throws E {
 		return visitor.visit(this, input);
-	}
-
-	@Override
-	public Set<Var> varSet() {
-		Set<Var> vars = new HashSet<>();
-		for (Term arg : args) {
-			arg.varSet(vars);
-		}
-		return vars;
 	}
 	
 }

@@ -32,8 +32,8 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
-import edu.harvard.seas.pl.formulog.ast.ComplexConjunct;
-import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctVisitor;
+import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
+import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralVisitor;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
 import edu.harvard.seas.pl.formulog.ast.Expr;
@@ -287,7 +287,7 @@ public class TypeChecker {
 			return q.applySubstitution(m);
 		}
 
-		public BasicRule typeCheckRule(Rule<UserPredicate, ComplexConjunct> r) throws TypeException {
+		public BasicRule typeCheckRule(Rule<UserPredicate, ComplexLiteral> r) throws TypeException {
 			Map<Var, Type> subst = new HashMap<>();
 			processAtoms(r, subst);
 			genConstraints(r.getHead(), subst);
@@ -299,8 +299,8 @@ public class TypeChecker {
 			}
 			Substitution m = makeIndexSubstitution(subst);
 			UserPredicate newHead = r.getHead().applySubstitution(m);
-			List<ComplexConjunct> newBody = new ArrayList<>();
-			for (ComplexConjunct a : r) {
+			List<ComplexLiteral> newBody = new ArrayList<>();
+			for (ComplexLiteral a : r) {
 				newBody.add(a.applySubstitution(m));
 			}
 			return BasicRule.make(newHead, newBody);
@@ -352,8 +352,8 @@ public class TypeChecker {
 			}
 		}
 
-		private void processAtoms(Iterable<ComplexConjunct> atoms, Map<Var, Type> subst) {
-			for (ComplexConjunct a : atoms) {
+		private void processAtoms(Iterable<ComplexLiteral> atoms, Map<Var, Type> subst) {
+			for (ComplexLiteral a : atoms) {
 				genConstraints(a, subst);
 			}
 		}
@@ -368,8 +368,8 @@ public class TypeChecker {
 			}
 		}
 
-		private void genConstraints(ComplexConjunct a, Map<Var, Type> subst) {
-			a.accept(new ComplexConjunctVisitor<Void, Void>() {
+		private void genConstraints(ComplexLiteral a, Map<Var, Type> subst) {
+			a.accept(new ComplexLiteralVisitor<Void, Void>() {
 
 				@Override
 				public Void visit(UserPredicate normalAtom, Void in) {
@@ -418,7 +418,7 @@ public class TypeChecker {
 					TypeVar guardType = TypeVar.fresh();
 					Term guard = matchExpr.getMatchee();
 					genConstraints(guard, guardType, varTypes, allowSubtype);
-					for (MatchClause cl : matchExpr.getClauses()) {
+					for (MatchClause cl : matchExpr) {
 						genConstraints(cl.getLhs(), guardType, varTypes, allowSubtype);
 						genConstraints(cl.getRhs(), exprType, varTypes, allowSubtype);
 					}

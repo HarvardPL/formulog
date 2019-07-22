@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.eval;
 
+import edu.harvard.seas.pl.formulog.ast.UserPredicate;
+
 /*-
  * #%L
  * FormuLog
@@ -29,5 +31,9 @@ public interface Evaluation {
 	void run(int parallelism) throws EvaluationException;
 	
 	EvaluationResult getResult();
+
+	boolean hasQuery();
+	
+	UserPredicate getQuery();
 	
 }

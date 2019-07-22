@@ -1,6 +1,7 @@
 package edu.harvard.seas.pl.formulog.validating.ast;
 
 import java.util.Arrays;
+import java.util.HashSet;
 
 /*-
  * #%L
@@ -28,7 +29,6 @@ import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
-import edu.harvard.seas.pl.formulog.unification.OverwriteSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 
 public class SimplePredicate implements SimpleConjunct {
@@ -140,6 +140,15 @@ public class SimplePredicate implements SimpleConjunct {
 		} else if (!symbol.equals(other.symbol))
 			return false;
 		return true;
+	}
+
+	@Override
+	public Set<Var> varSet() {
+		Set<Var> vars = new HashSet<>();
+		for (Term arg : args) {
+			arg.varSet(vars);
+		}
+		return vars;
 	}
 
 }

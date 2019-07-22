@@ -46,8 +46,8 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
-import edu.harvard.seas.pl.formulog.ast.ComplexConjunct;
-import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts;
+import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
+import edu.harvard.seas.pl.formulog.ast.ComplexLiterals;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
 import edu.harvard.seas.pl.formulog.ast.FP32;
@@ -519,8 +519,8 @@ public class Parser {
 
 		@Override
 		public Void visitClauseStmt(ClauseStmtContext ctx) {
-			List<ComplexConjunct> head = atomListContextToAtomList(ctx.clause().head);
-			List<ComplexConjunct> body = atomListContextToAtomList(ctx.clause().body);
+			List<ComplexLiteral> head = atomListContextToAtomList(ctx.clause().head);
+			List<ComplexLiteral> body = atomListContextToAtomList(ctx.clause().body);
 			List<BasicRule> newRules = makeRules(head, body);
 			for (BasicRule rule : newRules) {
 				RelationSymbol sym = rule.getHead().getSymbol();
@@ -532,17 +532,17 @@ public class Parser {
 			return null;
 		}
 
-		private BasicRule makeRule(ComplexConjunct head, List<ComplexConjunct> body) {
-			List<ComplexConjunct> newBody = new ArrayList<>(body);
+		private BasicRule makeRule(ComplexLiteral head, List<ComplexLiteral> body) {
+			List<ComplexLiteral> newBody = new ArrayList<>(body);
 			if (!(head instanceof UserPredicate)) {
 				throw new RuntimeException("Cannot create rule with non-user predicate in head: " + head);
 			}
 			return BasicRule.make((UserPredicate) head, newBody);
 		}
 
-		private List<BasicRule> makeRules(List<ComplexConjunct> head, List<ComplexConjunct> body) {
+		private List<BasicRule> makeRules(List<ComplexLiteral> head, List<ComplexLiteral> body) {
 			List<BasicRule> rules = new ArrayList<>();
-			for (ComplexConjunct hd : head) {
+			for (ComplexLiteral hd : head) {
 				rules.add(makeRule(hd, body));
 			}
 			return rules;
@@ -602,7 +602,7 @@ public class Parser {
 
 		@Override
 		public Void visitQueryStmt(QueryStmtContext ctx) {
-			ComplexConjunct a = ctx.query().atom().accept(atomExtractor);
+			ComplexLiteral a = ctx.query().atom().accept(atomExtractor);
 			if (!(query instanceof UserPredicate)) {
 				throw new RuntimeException("Query must be for a user-defined predicate.");
 			}
@@ -613,7 +613,7 @@ public class Parser {
 			return null;
 		}
 
-		List<ComplexConjunct> atomListContextToAtomList(AtomListContext ctx) {
+		List<ComplexLiteral> atomListContextToAtomList(AtomListContext ctx) {
 			return map(ctx.atom(), a -> a.accept(atomExtractor));
 		}
 
@@ -1252,18 +1252,18 @@ public class Parser {
 			return map(ctxs, this::extract).toArray(Terms.emptyArray());
 		}
 
-		private final DatalogVisitor<ComplexConjunct> atomExtractor = new DatalogBaseVisitor<ComplexConjunct>() {
+		private final DatalogVisitor<ComplexLiteral> atomExtractor = new DatalogBaseVisitor<ComplexLiteral>() {
 
-			private ComplexConjunct extractAtom(PredicateContext ctx, boolean negated) {
+			private ComplexLiteral extractAtom(PredicateContext ctx, boolean negated) {
 				Term[] args = termContextsToTerms(ctx.termArgs().term());
 				Symbol sym = symbolManager.lookupSymbol(ctx.ID().getText());
 				if (sym instanceof FunctionSymbol) {
 					Term f = functionCallFactory.make((FunctionSymbol) sym, args);
-					return ComplexConjuncts.unifyWithBool(f, !negated);
+					return ComplexLiterals.unifyWithBool(f, !negated);
 				}
 				if (sym instanceof ConstructorSymbol) {
 					Term c = Constructors.make((ConstructorSymbol) sym, args);
-					return ComplexConjuncts.unifyWithBool(c, !negated);
+					return ComplexLiterals.unifyWithBool(c, !negated);
 				}
 				if (sym instanceof RelationSymbol) {
 					return UserPredicate.make((RelationSymbol) sym, args, negated);
@@ -1272,31 +1272,31 @@ public class Parser {
 			}
 
 			@Override
-			public ComplexConjunct visitNormalAtom(NormalAtomContext ctx) {
+			public ComplexLiteral visitNormalAtom(NormalAtomContext ctx) {
 				return extractAtom(ctx.predicate(), false);
 			}
 
 			@Override
-			public ComplexConjunct visitNegatedAtom(NegatedAtomContext ctx) {
+			public ComplexLiteral visitNegatedAtom(NegatedAtomContext ctx) {
 				return extractAtom(ctx.predicate(), true);
 			}
 
 			@Override
-			public ComplexConjunct visitUnification(UnificationContext ctx) {
+			public ComplexLiteral visitUnification(UnificationContext ctx) {
 				Term[] args = termContextsToTerms(ctx.term());
 				return UnificationPredicate.make(args[0], args[1], false);
 			}
 
 			@Override
-			public ComplexConjunct visitDisunification(DisunificationContext ctx) {
+			public ComplexLiteral visitDisunification(DisunificationContext ctx) {
 				Term[] args = termContextsToTerms(ctx.term());
 				return UnificationPredicate.make(args[0], args[1], true);
 			}
 
 			@Override
-			public ComplexConjunct visitTermAtom(TermAtomContext ctx) {
+			public ComplexLiteral visitTermAtom(TermAtomContext ctx) {
 				Term arg = extract(ctx.term());
-				return ComplexConjuncts.unifyWithBool(arg, true);
+				return ComplexLiterals.unifyWithBool(arg, true);
 			}
 
 		};

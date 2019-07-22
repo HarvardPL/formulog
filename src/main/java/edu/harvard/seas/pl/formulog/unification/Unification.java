@@ -27,8 +27,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import edu.harvard.seas.pl.formulog.ast.ComplexConjunct;
-import edu.harvard.seas.pl.formulog.ast.ComplexConjuncts.ComplexConjunctExnVisitor;
+import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
+import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralExnVisitor;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Expr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
@@ -48,8 +48,8 @@ public final class Unification {
 		throw new AssertionError();
 	}
 
-	public static boolean canBindVars(ComplexConjunct atom, Set<Var> boundVars) throws InvalidProgramException {
-		return atom.accept(new ComplexConjunctExnVisitor<Void, Boolean, InvalidProgramException>() {
+	public static boolean canBindVars(ComplexLiteral atom, Set<Var> boundVars) throws InvalidProgramException {
+		return atom.accept(new ComplexLiteralExnVisitor<Void, Boolean, InvalidProgramException>() {
 
 			@Override
 			public Boolean visit(UserPredicate normalAtom, Void in) throws InvalidProgramException {
