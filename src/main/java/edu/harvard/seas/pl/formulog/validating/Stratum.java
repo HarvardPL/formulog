@@ -47,5 +47,11 @@ public class Stratum {
 	public boolean hasRecursiveNegationOrAggregation() {
 		return hasRecursiveNegationOrAggregation;
 	}
+
+	@Override
+	public String toString() {
+		return "Stratum [rank=" + rank + ", predicateSyms=" + predicateSyms + ", hasRecursiveNegationOrAggregation="
+				+ hasRecursiveNegationOrAggregation + "]";
+	}	
 	
 }

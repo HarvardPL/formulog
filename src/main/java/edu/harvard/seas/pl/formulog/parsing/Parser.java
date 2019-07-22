@@ -603,11 +603,11 @@ public class Parser {
 		@Override
 		public Void visitQueryStmt(QueryStmtContext ctx) {
 			ComplexLiteral a = ctx.query().atom().accept(atomExtractor);
-			if (!(query instanceof UserPredicate)) {
-				throw new RuntimeException("Query must be for a user-defined predicate.");
+			if (!(a instanceof UserPredicate)) {
+				throw new RuntimeException("Query must be for a user-defined predicate: " + a);
 			}
 			if (query != null) {
-				throw new RuntimeException("Cannot have multiple queries in the same program.");
+				throw new RuntimeException("Cannot have multiple queries in the same program: " + query + " and " + a);
 			}
 			query = (UserPredicate) a;
 			return null;

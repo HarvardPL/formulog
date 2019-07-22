@@ -154,8 +154,9 @@ public class MatchExpr extends AbstractTerm implements Expr, Iterable<MatchClaus
 		if (!isGround) {
 			matchee.varSet(acc);
 			for (MatchClause cl : match) {
-				cl.getLhs().varSet(acc);
-				cl.getRhs().varSet(acc);
+				Set<Var> vars = cl.getRhs().varSet();
+				vars.removeAll(cl.getLhs().varSet());
+				acc.addAll(vars);
 			}
 		}
 	}

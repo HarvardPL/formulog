@@ -43,6 +43,8 @@ import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 import edu.harvard.seas.pl.formulog.unification.OverwriteSubstitution;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
+import edu.harvard.seas.pl.formulog.validating.Stratifier;
+import edu.harvard.seas.pl.formulog.validating.Stratum;
 import edu.harvard.seas.pl.formulog.validating.ValidRule;
 import edu.harvard.seas.pl.formulog.validating.ast.Assignment;
 import edu.harvard.seas.pl.formulog.validating.ast.Check;
@@ -55,6 +57,7 @@ public class NaiveEvaluation implements Evaluation {
 
 	private final IndexedFactDb db;
 	private final Map<RelationSymbol, Iterable<IndexedRule>> rules;
+	private final List<Stratum> strata;
 	private final UserPredicate query;
 
 	public static NaiveEvaluation setup(WellTypedProgram prog) throws InvalidProgramException {
@@ -65,6 +68,14 @@ public class NaiveEvaluation implements Evaluation {
 		} else {
 			magicProg = mst.transform(true, true);
 		}
+		
+		List<Stratum> strata = new Stratifier(magicProg).stratify();
+		for (Stratum stratum : strata) {
+			if (stratum.hasRecursiveNegationOrAggregation()) {
+				throw new InvalidProgramException("Cannot handle recursive negation or aggregation");
+			}
+		}
+		
 		Set<RelationSymbol> allRelations = new HashSet<>(magicProg.getFactSymbols());
 		allRelations.addAll(magicProg.getRuleSymbols());
 		SortedIndexedFactDbBuilder dbb = new SortedIndexedFactDbBuilder(allRelations);
@@ -85,6 +96,7 @@ public class NaiveEvaluation implements Evaluation {
 		}
 		IndexedFactDb db = dbb.build();
 		wrappedDb.set(db);
+
 		for (RelationSymbol sym : magicProg.getFactSymbols()) {
 			for (Term[] args : magicProg.getFacts(sym)) {
 				try {
@@ -95,24 +107,33 @@ public class NaiveEvaluation implements Evaluation {
 				}
 			}
 		}
-		return new NaiveEvaluation(db, rules, magicProg.getQuery());
+		return new NaiveEvaluation(db, rules, magicProg.getQuery(), strata);
 	}
 
-	private NaiveEvaluation(IndexedFactDb db, Map<RelationSymbol, Iterable<IndexedRule>> rules, UserPredicate query) {
+	private NaiveEvaluation(IndexedFactDb db, Map<RelationSymbol, Iterable<IndexedRule>> rules, UserPredicate query,
+			List<Stratum> strata) {
 		this.db = db;
 		this.rules = rules;
 		this.query = query;
+		this.strata = strata;
 	}
 
 	@Override
 	public synchronized void run(int parallelism) throws EvaluationException {
+		for (Stratum stratum : strata) {
+			evaluateStratum(stratum);
+		}
+	}
+
+	private void evaluateStratum(Stratum stratum) throws EvaluationException {
 		boolean changed = true;
 		while (changed) {
 			changed = false;
-			for (Iterable<IndexedRule> rs : rules.values()) {
-				for (IndexedRule r : rs) {
+			for (RelationSymbol sym : stratum.getPredicateSyms()) {
+				for (IndexedRule r : rules.get(sym)) {
 					changed |= evaluateRule(r, 0, new OverwriteSubstitution());
 				}
+
 			}
 		}
 	}
@@ -247,15 +268,15 @@ public class NaiveEvaluation implements Evaluation {
 	public UserPredicate getQuery() {
 		return query;
 	}
-	
+
 	private static class IndexedFactDbWrapper implements IndexedFactDb {
 
 		private IndexedFactDb db;
-	
+
 		public void set(IndexedFactDb db) {
 			this.db = db;
 		}
-		
+
 		@Override
 		public Set<RelationSymbol> getSymbols() {
 			return db.getSymbols();
@@ -280,7 +301,7 @@ public class NaiveEvaluation implements Evaluation {
 		public boolean hasFact(RelationSymbol sym, Term[] args) {
 			return db.hasFact(sym, args);
 		}
-		
+
 	}
 
 }

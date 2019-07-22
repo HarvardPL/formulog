@@ -28,7 +28,7 @@ import java.io.InputStreamReader;
 
 import org.junit.Test;
 
-import edu.harvard.seas.pl.formulog.ast.Program;
+import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.parsing.Parser;
 
 public class TypeCheckingTest {
@@ -40,7 +40,7 @@ public class TypeCheckingTest {
 			if (is == null) {
 				throw new FileNotFoundException(file + " not found");
 			}
-			Program prog = (new Parser()).parse(new InputStreamReader(is));
+			BasicProgram prog = (new Parser()).parse(new InputStreamReader(is));
 			(new TypeChecker(prog)).typeCheck();
 		} catch (TypeException e) {
 			if (!isBad) {
@@ -180,39 +180,4 @@ public class TypeCheckingTest {
 		test("test188_bd.flg");
 	}
 	
-	@Test
-	public void test194() {
-		test("test194_ok.flg");
-	}
-	
-	@Test
-	public void test195() {
-		test("test195_ok.flg");
-	}
-	
-	@Test
-	public void test199() {
-		test("test199_ok.flg");
-	}
-	
-	@Test
-	public void test200() {
-		test("test200_bd.flg");
-	}
-	
-	@Test
-	public void test201() {
-		test("test201_bd.flg");
-	}
-	
-	@Test
-	public void test202() {
-		test("test202_bd.flg");
-	}
-	
-	@Test
-	public void test203() {
-		test("test203_bd.flg");
-	}
-
 }

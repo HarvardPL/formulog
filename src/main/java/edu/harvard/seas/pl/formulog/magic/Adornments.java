@@ -81,9 +81,9 @@ public final class Adornments {
 		for (int i = 0; i < newBody.size(); i++) {
 			boolean ok = false;
 			for (int j = i; j < newBody.size(); j++) {
-				ComplexLiteral a = body.get(j);
+				ComplexLiteral a = newBody.get(j);
 				if (Unification.canBindVars(a, boundVars)) {
-					Collections.swap(body, i, j);
+					Collections.swap(newBody, i, j);
 					int pos = i;
 					a.accept(new ComplexLiteralVisitor<Void, Void>() {
 
@@ -111,7 +111,7 @@ public final class Adornments {
 						"Cannot reorder rule to meet well-modeness restrictions: " + BasicRule.make(head, body));
 			}
 		}
-		return BasicRule.make(head, body);
+		return BasicRule.make(head, newBody);
 	}
 
 }

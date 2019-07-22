@@ -28,11 +28,14 @@ import java.io.InputStreamReader;
 
 import org.junit.Test;
 
-import edu.harvard.seas.pl.formulog.ast.Program;
-import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
+import edu.harvard.seas.pl.formulog.ast.BasicProgram;
+import edu.harvard.seas.pl.formulog.eval.Evaluation;
+import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.parsing.Parser;
+import edu.harvard.seas.pl.formulog.types.TypeChecker;
+import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 
-public class ValidatingTest {
+public abstract class ValidatingTest {
 
 	void test(String file) {
 		boolean isBad = file.matches("test\\d\\d\\d_bd.flg");
@@ -41,10 +44,8 @@ public class ValidatingTest {
 			if (is == null) {
 				throw new FileNotFoundException(file + " not found");
 			}
-			Program prog = (new Parser()).parse(new InputStreamReader(is));
-			MagicSetTransformer mst = new MagicSetTransformer(prog);
-			prog = mst.transform(true, false);
-			(new Validator(prog)).validate();
+			BasicProgram prog = (new Parser()).parse(new InputStreamReader(is));
+			setup(new TypeChecker(prog).typeCheck());
 			if (isBad) {
 				fail("Test succeeded for a bad program");
 			}
@@ -56,7 +57,9 @@ public class ValidatingTest {
 			fail("Unexpected exception: " + e.getMessage());
 		}
 	}
-	
+
+	protected abstract Evaluation setup(WellTypedProgram prog) throws InvalidProgramException, EvaluationException;
+
 	@Test
 	public void test025() {
 		test("test025_bd.flg");
@@ -66,40 +69,35 @@ public class ValidatingTest {
 	public void test026() {
 		test("test026_ok.flg");
 	}
-	
+
 	@Test
 	public void test050() {
 		test("test050_bd.flg");
 	}
-	
+
 	@Test
 	public void test051() {
 		test("test051_bd.flg");
 	}
-	
+
 	@Test
 	public void test133() {
 		test("test133_bd.flg");
 	}
-	
-	@Test
-	public void test216() {
-		test("test216_ok.flg");
-	}
-	
+
 	@Test
 	public void test217() {
 		test("test217_bd.flg");
 	}
-	
+
 	@Test
 	public void test218() {
 		test("test218_bd.flg");
 	}
-	
+
 	@Test
 	public void test219() {
 		test("test219_ok.flg");
 	}
-	
+
 }

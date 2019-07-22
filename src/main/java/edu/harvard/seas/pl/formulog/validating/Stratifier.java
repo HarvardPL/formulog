@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.jgrapht.Graph;
 import org.jgrapht.alg.KosarajuStrongConnectivityInspector;
@@ -90,6 +91,13 @@ public class Stratifier {
 		while (topo.hasNext()) {
 			boolean hasRecursiveNegationOrAggregation = false;
 			Graph<RelationSymbol, DependencyTypeWrapper> component = topo.next();
+			Set<RelationSymbol> edbs = component.vertexSet().stream().filter(r -> r.isEdbSymbol()).collect(Collectors.toSet());
+			if (!edbs.isEmpty()) {
+				if (!component.edgeSet().isEmpty()) {
+					throw new InvalidProgramException("EDB predicates cannot have dependencies: " + edbs);
+				}
+				continue;
+			}
 			for (DependencyTypeWrapper dw : component.edgeSet()) {
 				DependencyType d = dw.get();
 				if (d.equals(DependencyType.NEG_OR_AGG_IN_FUN)) {

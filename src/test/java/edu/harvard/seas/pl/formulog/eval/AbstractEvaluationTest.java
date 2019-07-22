@@ -78,7 +78,6 @@ public abstract class AbstractEvaluationTest {
 		test(file, "");
 	}
 
-	protected abstract Evaluation setup(WellTypedProgram prog)
-			throws InvalidProgramException, EvaluationException;
+	protected abstract Evaluation setup(WellTypedProgram prog) throws InvalidProgramException, EvaluationException;
 
 }

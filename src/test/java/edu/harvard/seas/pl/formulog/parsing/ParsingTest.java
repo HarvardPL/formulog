@@ -134,29 +134,4 @@ public class ParsingTest {
 		test("test076_ok.flg");
 	}
 	
-	@Test
-	public void test194() {
-		test("test194_ok.flg");
-	}
-	
-	@Test
-	public void test195() {
-		test("test195_ok.flg");
-	}
-	
-	@Test
-	public void test196() {
-		test("test196_bd.flg");
-	}
-	
-	@Test
-	public void test197() {
-		test("test197_bd.flg");
-	}
-	
-	@Test
-	public void test198() {
-		test("test198_bd.flg");
-	}
-
 }
