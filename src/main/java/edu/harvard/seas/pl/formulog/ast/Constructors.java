@@ -312,8 +312,7 @@ public final class Constructors {
 
 			@Override
 			public ConstructorSymbolType getConstructorSymbolType() {
-				// TODO Auto-generated method stub
-				return null;
+				return ConstructorSymbolType.SOLVER_VARIABLE;
 			}
 
 		};

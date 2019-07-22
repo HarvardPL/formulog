@@ -65,11 +65,21 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 	
 	@Override
 	public boolean add(RelationSymbol sym, Term[] args) {
+		assert allNormal(args);
 		if (!all.get(sym).add(args)) {
 			return false;
 		}
 		for (Integer idx : relevantIndices.get(sym)) {
 			indices[idx].add(args);
+		}
+		return true;
+	}
+	
+	private boolean allNormal(Term[] args) {
+		for (Term arg : args) {
+			if (!arg.isGround() || arg.containsFunctionCall()) {
+				return false;
+			}
 		}
 		return true;
 	}

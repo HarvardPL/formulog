@@ -64,6 +64,14 @@ public final class Terms {
 		}
 		return ys;
 	}
+	
+	public static Term[] normalize(Term[] ts, Substitution s) throws EvaluationException {
+		Term[] newTs = new Term[ts.length];
+		for (int i = 0; i < ts.length; ++i) {
+			newTs[i] = ts[i].normalize(s);
+		}
+		return newTs;
+	}
 
 //	private static final ExprVisitor<Set<Var>, Void> exprVarExtractor = new ExprVisitor<Set<Var>, Void>() {
 //

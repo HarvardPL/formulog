@@ -182,7 +182,6 @@ public class SimpleRule implements Rule<SimplePredicate, SimpleConjunct> {
 								}
 								Constructor c1 = (Constructor) lhs;
 								Constructor c2 = (Constructor) rhs;
-								System.out.println(c1 + " " + c2);
 								if (!c1.getSymbol().equals(c2.getSymbol())) {
 									throw new InvalidProgramException("Unsatisfiable unification conjunct");
 								}

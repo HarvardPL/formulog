@@ -285,7 +285,7 @@ public class SmtLibShim {
 		assert !sorts.isEmpty();
 		print("(declare-datatypes ( ");
 		for (TypeSymbol sym : sorts) {
-			assert !sym.isNormalType();
+			assert sym.isNormalType();
 			print("(" + stringifySymbol(sym) + " " + sym.getArity() + ") ");
 		}
 		print(") (");

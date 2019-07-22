@@ -32,6 +32,7 @@ import java.util.Set;
 import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Term;
+import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDb;
@@ -40,6 +41,7 @@ import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 import edu.harvard.seas.pl.formulog.unification.OverwriteSubstitution;
+import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 import edu.harvard.seas.pl.formulog.validating.ValidRule;
 import edu.harvard.seas.pl.formulog.validating.ast.Assignment;
@@ -85,7 +87,12 @@ public class NaiveEvaluation implements Evaluation {
 		wrappedDb.set(db);
 		for (RelationSymbol sym : magicProg.getFactSymbols()) {
 			for (Term[] args : magicProg.getFacts(sym)) {
-				db.add(sym, args);
+				try {
+					db.add(sym, Terms.normalize(args, new SimpleSubstitution()));
+				} catch (EvaluationException e) {
+					UserPredicate p = UserPredicate.make(sym, args, false);
+					throw new InvalidProgramException("Cannot normalize fact " + p + "\n" + e.getMessage());
+				}
 			}
 		}
 		return new NaiveEvaluation(db, rules, magicProg.getQuery());
@@ -113,7 +120,7 @@ public class NaiveEvaluation implements Evaluation {
 	private boolean evaluateRule(IndexedRule r, int pos, OverwriteSubstitution s) throws EvaluationException {
 		if (pos >= r.getBodySize()) {
 			SimplePredicate hd = r.getHead().normalize(s);
-			return db.add(hd.getSymbol(), hd.getArgs());
+			return db.add(hd.getSymbol(), Terms.normalize(hd.getArgs(), s));
 		}
 		return r.getBody(pos).accept(new SimpleConjunctExnVisitor<Void, Boolean, EvaluationException>() {
 
