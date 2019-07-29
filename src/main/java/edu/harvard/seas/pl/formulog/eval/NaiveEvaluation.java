@@ -62,12 +62,7 @@ public class NaiveEvaluation implements Evaluation {
 
 	public static NaiveEvaluation setup(WellTypedProgram prog) throws InvalidProgramException {
 		MagicSetTransformer mst = new MagicSetTransformer(prog);
-		BasicProgram magicProg;
-		if (prog.hasQuery()) {
-			magicProg = mst.transformForQuery(prog.getQuery(), true, true);
-		} else {
-			magicProg = mst.transform(true, true);
-		}
+		BasicProgram magicProg = mst.transform(true, true);
 		
 		List<Stratum> strata = new Stratifier(magicProg).stratify();
 		for (Stratum stratum : strata) {

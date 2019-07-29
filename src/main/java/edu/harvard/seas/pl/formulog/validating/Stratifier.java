@@ -91,10 +91,11 @@ public class Stratifier {
 		while (topo.hasNext()) {
 			boolean hasRecursiveNegationOrAggregation = false;
 			Graph<RelationSymbol, DependencyTypeWrapper> component = topo.next();
-			Set<RelationSymbol> edbs = component.vertexSet().stream().filter(r -> r.isEdbSymbol()).collect(Collectors.toSet());
+			Set<RelationSymbol> edbs = component.vertexSet().stream().filter(r -> r.isEdbSymbol())
+					.collect(Collectors.toSet());
 			if (!edbs.isEmpty()) {
 				if (!component.edgeSet().isEmpty()) {
-					throw new InvalidProgramException("EDB predicates cannot have dependencies: " + edbs);
+					throw new InvalidProgramException("EDB relations cannot have dependencies: " + edbs);
 				}
 				continue;
 			}
