@@ -22,21 +22,27 @@ package edu.harvard.seas.pl.formulog.util;
 
 import java.util.concurrent.RecursiveAction;
 
+import edu.harvard.seas.pl.formulog.eval.EvaluationException;
+
 @SuppressWarnings("serial")
-public abstract class AbstractFJPTask<T> extends RecursiveAction {
+public abstract class AbstractFJPTask extends RecursiveAction {
 
-	private final CountingFJP<T> exec;
+	private final CountingFJP exec;
 
-	protected AbstractFJPTask(CountingFJP<T> exec) {
+	protected AbstractFJPTask(CountingFJP exec) {
 		this.exec = exec;
 	}
 
 	@Override
 	protected void compute() {
-		doTask();
-		exec.reportTaskCompletion();
+		try {
+			doTask();
+			exec.reportTaskCompletion();
+		} catch (EvaluationException e) {
+			exec.fail(e);
+		}
 	}
 
-	public abstract void doTask();
+	public abstract void doTask() throws EvaluationException;
 
 }

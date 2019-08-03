@@ -28,6 +28,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Spliterator;
 
 import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
@@ -45,6 +46,9 @@ import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 import edu.harvard.seas.pl.formulog.unification.OverwriteSubstitution;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
+import edu.harvard.seas.pl.formulog.unification.Substitution;
+import edu.harvard.seas.pl.formulog.util.AbstractFJPTask;
+import edu.harvard.seas.pl.formulog.util.CountingFJP;
 import edu.harvard.seas.pl.formulog.validating.FunctionDefValidation;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 import edu.harvard.seas.pl.formulog.validating.Stratifier;
@@ -68,6 +72,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 	private final Map<RelationSymbol, Iterable<IndexedRule>> laterRoundRules = new HashMap<>();
 	private final List<Stratum> strata;
 	private final UserPredicate query;
+	boolean changed;
 
 	public static SemiNaiveEvaluation setup(WellTypedProgram prog) throws InvalidProgramException {
 		FunctionDefValidation.validate(prog);
@@ -290,6 +295,116 @@ public class SemiNaiveEvaluation implements Evaluation {
 			}
 
 		}, null);
+	}
+
+	private void reportFact(SimplePredicate atom) {
+		RelationSymbol sym = atom.getSymbol();
+		Term[] args = atom.getArgs();
+		if (!db.hasFact(sym, args)) {
+			nextDeltaDb.add(sym, args);
+			changed = true;
+		}
+	}
+
+	private static final int minTaskSize = 1;
+
+	private class WorkSplitter extends AbstractFJPTask {
+
+		private final IndexedRule rule;
+		private final int pos;
+		private final Spliterator<Term[]> split;
+
+		protected WorkSplitter(IndexedRule rule, int pos, Spliterator<Term[]> split) {
+			// XXX
+			super(null);
+			this.rule = rule;
+			this.pos = pos;
+			this.split = split;
+		}
+
+		@Override
+		public void doTask() throws EvaluationException {
+			if (split.estimateSize() > minTaskSize) {
+				Spliterator<Term[]> split2 = split.trySplit();
+				if (split2 != null) {
+					new WorkSplitter(rule, pos, split).fork();
+					new WorkSplitter(rule, pos, split2).fork();
+					return;
+				}
+			}
+			// XXX Create a RuleEvaluator
+		}
+
+	}
+
+	private class RuleSuffixEvaluator extends AbstractFJPTask {
+
+		protected RuleSuffixEvaluator(CountingFJP exec) {
+			super(exec);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public void doTask() throws EvaluationException {
+			// TODO Auto-generated method stub
+
+		}
+
+	}
+
+	private class RulePrefixEvaluator extends AbstractFJPTask {
+
+		private final IndexedRule rule;
+
+		protected RulePrefixEvaluator(IndexedRule rule) {
+			// XXX
+			super(null);
+			this.rule = rule;
+		}
+
+		@Override
+		public void doTask() throws EvaluationException {
+			try {
+				int len = rule.getBodySize();
+				int pos = 0;
+				OverwriteSubstitution s = new OverwriteSubstitution();
+				for (; pos < len; ++pos) {
+					SimpleLiteral l = rule.getBody(pos);
+					try {
+						if (l instanceof Assignment) {
+							((Assignment) l).assign(s);
+						} else if (l instanceof Check) {
+							if (!((Check) l).check(s)) {
+								return;
+							}
+						} else if (l instanceof Destructor) {
+							if (!((Destructor) l).destruct(s)) {
+								return;
+							}
+						} else {
+							assert l instanceof SimplePredicate;
+							break;
+						}
+					} catch (EvaluationException e) {
+						throw new EvaluationException(
+								"Exception raised while evaluating the literal: " + l + "\n\n" + e.getMessage());
+					}
+				}
+				if (pos == len) {
+					try {
+						reportFact(rule.getHead().normalize(s));
+					} catch (EvaluationException e) {
+						throw new EvaluationException("Exception raised while evaluationg the literal: "
+								+ rule.getHead() + e.getLocalizedMessage());
+					}
+				}
+
+			} catch (EvaluationException e) {
+				throw new EvaluationException(
+						"Exception raised while evaluating this rule:\n" + rule + "\n\n" + e.getMessage());
+			}
+		}
+
 	}
 
 	@Override

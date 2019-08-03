@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.util;
 
+import edu.harvard.seas.pl.formulog.eval.EvaluationException;
+
 /*-
  * #%L
  * FormuLog
@@ -20,11 +22,11 @@ package edu.harvard.seas.pl.formulog.util;
  * #L%
  */
 
-public interface CountingFJP<T> {
+public interface CountingFJP {
 
-	void externallyAddTask(AbstractFJPTask<T> w);
+	void externallyAddTask(AbstractFJPTask w);
 
-	void recursivelyAddTask(AbstractFJPTask<T> w);
+	void recursivelyAddTask(AbstractFJPTask w);
 	
 	void reportTaskCompletion();
 
@@ -32,10 +34,10 @@ public interface CountingFJP<T> {
 
 	void shutdown();
 	
-	void fail(T cause);
+	void fail(EvaluationException cause);
 	
 	boolean hasFailed();
 	
-	T getFailureCause();
+	EvaluationException getFailureCause();
 	
 }
