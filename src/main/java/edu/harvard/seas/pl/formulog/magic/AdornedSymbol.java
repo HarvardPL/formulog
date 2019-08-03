@@ -20,26 +20,19 @@ package edu.harvard.seas.pl.formulog.magic;
  * #L%
  */
 
-import java.util.Arrays;
-
+import edu.harvard.seas.pl.formulog.symbols.AbstractWrappedRelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
-import edu.harvard.seas.pl.formulog.types.FunctorType;
 
-class AdornedSymbol implements RelationSymbol {
+class AdornedSymbol extends AbstractWrappedRelationSymbol<RelationSymbol> {
 
-	private final RelationSymbol symbol;
 	private final boolean[] adornment;
 
 	public AdornedSymbol(RelationSymbol symbol, boolean[] adornment) {
+		super(symbol);
 		assert adornment != null;
 		assert !(symbol instanceof AdornedSymbol);
 		assert symbol.isIdbSymbol();
-		this.symbol = symbol;
 		this.adornment = adornment;
-	}
-
-	public RelationSymbol getSymbol() {
-		return symbol;
 	}
 
 	public boolean[] getAdornment() {
@@ -47,65 +40,12 @@ class AdornedSymbol implements RelationSymbol {
 	}
 
 	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + Arrays.hashCode(adornment);
-		result = prime * result + ((symbol == null) ? 0 : symbol.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		AdornedSymbol other = (AdornedSymbol) obj;
-		if (!Arrays.equals(adornment, other.adornment))
-			return false;
-		if (symbol == null) {
-			if (other.symbol != null)
-				return false;
-		} else if (!symbol.equals(other.symbol))
-			return false;
-		return true;
-	}
-
-	@Override
-	public int getArity() {
-		return symbol.getArity();
-	}
-	
-	@Override
 	public String toString() {
-		String s = symbol + "_";
+		String s = getBaseSymbol() + "_";
 		for (boolean b : adornment) {
 			s += b ? "b" : "f";
 		}
 		return s;
-	}
-
-	@Override
-	public FunctorType getCompileTimeType() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public boolean isIdbSymbol() {
-		return true;
-	}
-
-	@Override
-	public boolean isBottomUp() {
-		return symbol.isBottomUp();
-	}
-
-	@Override
-	public boolean isTopDown() {
-		return symbol.isTopDown();
 	}
 
 }

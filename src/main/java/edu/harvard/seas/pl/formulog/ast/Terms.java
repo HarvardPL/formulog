@@ -27,8 +27,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
-import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
-import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.ExceptionalFunction;
@@ -150,7 +148,7 @@ public final class Terms {
 
 	public static Set<Var> getNonBindingVarInstances(Term t) {
 		Set<Var> vars = new HashSet<>();
-		t.visit(new TermVisitor<Void, Void>() {
+		t.accept(new TermVisitor<Void, Void>() {
 
 			@Override
 			public Void visit(Var t, Void in) {
@@ -160,7 +158,7 @@ public final class Terms {
 			@Override
 			public Void visit(Constructor t, Void in) {
 				for (Term arg : t.getArgs()) {
-					arg.visit(this, in);
+					arg.accept(this, in);
 				}
 				return null;
 			}
@@ -182,7 +180,7 @@ public final class Terms {
 
 	public static Set<Var> getBindingVarInstances(Term t) {
 		Set<Var> vars = new HashSet<>();
-		t.visit(new TermVisitor<Void, Void>() {
+		t.accept(new TermVisitor<Void, Void>() {
 
 			@Override
 			public Void visit(Var t, Void in) {
@@ -193,7 +191,7 @@ public final class Terms {
 			@Override
 			public Void visit(Constructor t, Void in) {
 				for (Term arg : t.getArgs()) {
-					arg.visit(this, in);
+					arg.accept(this, in);
 				}
 				return null;
 			}
@@ -239,12 +237,12 @@ public final class Terms {
 	public static final Term minTerm = new Term() {
 
 		@Override
-		public <I, O> O visit(TermVisitor<I, O> v, I in) {
+		public <I, O> O accept(TermVisitor<I, O> v, I in) {
 			throw new UnsupportedOperationException();
 		}
 
 		@Override
-		public <I, O, E extends Throwable> O visit(TermVisitorExn<I, O, E> v, I in) throws E {
+		public <I, O, E extends Throwable> O accept(TermVisitorExn<I, O, E> v, I in) throws E {
 			throw new UnsupportedOperationException();
 		}
 
@@ -284,12 +282,12 @@ public final class Terms {
 	public static final Term maxTerm = new Term() {
 
 		@Override
-		public <I, O> O visit(TermVisitor<I, O> v, I in) {
+		public <I, O> O accept(TermVisitor<I, O> v, I in) {
 			throw new UnsupportedOperationException();
 		}
 
 		@Override
-		public <I, O, E extends Throwable> O visit(TermVisitorExn<I, O, E> v, I in) throws E {
+		public <I, O, E extends Throwable> O accept(TermVisitorExn<I, O, E> v, I in) throws E {
 			throw new UnsupportedOperationException();
 		}
 

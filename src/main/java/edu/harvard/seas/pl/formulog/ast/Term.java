@@ -30,9 +30,9 @@ import edu.harvard.seas.pl.formulog.unification.Substitution;
 
 public interface Term {
 	
-	<I, O> O visit(TermVisitor<I, O> v, I in);
+	<I, O> O accept(TermVisitor<I, O> v, I in);
 	
-	<I, O, E extends Throwable> O visit(TermVisitorExn<I, O, E> v, I in) throws E;
+	<I, O, E extends Throwable> O accept(TermVisitorExn<I, O, E> v, I in) throws E;
 	
 	boolean isGround();
 

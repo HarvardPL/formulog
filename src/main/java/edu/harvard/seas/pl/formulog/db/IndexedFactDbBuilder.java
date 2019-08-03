@@ -20,11 +20,11 @@ package edu.harvard.seas.pl.formulog.db;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.validating.ast.SimplePredicate;
+import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 
 public interface IndexedFactDbBuilder<T extends IndexedFactDb> {
 
-	int makeIndex(SimplePredicate atom);
+	int makeIndex(RelationSymbol sym, boolean[] pat);
 	
 	T build();
 	

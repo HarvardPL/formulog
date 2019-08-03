@@ -63,12 +63,12 @@ public class Var extends AbstractTerm implements Term {
 	}
 
 	@Override
-	public <I, O> O visit(TermVisitor<I, O> v, I in) {
+	public <I, O> O accept(TermVisitor<I, O> v, I in) {
 		return v.visit(this, in);
 	}
 
 	@Override
-	public <I, O, E extends Throwable> O visit(TermVisitorExn<I, O, E> v, I in) throws E {
+	public <I, O, E extends Throwable> O accept(TermVisitorExn<I, O, E> v, I in) throws E {
 		return v.visit(this, in);
 	}
 

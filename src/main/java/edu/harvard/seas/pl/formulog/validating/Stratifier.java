@@ -179,7 +179,7 @@ public class Stratifier {
 		}
 
 		private void processTerm(Term t) {
-			t.visit(new TermVisitor<Void, Void>() {
+			t.accept(new TermVisitor<Void, Void>() {
 
 				@Override
 				public Void visit(Var t, Void in) {
@@ -189,7 +189,7 @@ public class Stratifier {
 				@Override
 				public Void visit(Constructor t, Void in) {
 					for (Term arg : t.getArgs()) {
-						arg.visit(this, null);
+						arg.accept(this, null);
 					}
 					return null;
 				}

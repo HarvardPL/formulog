@@ -22,14 +22,14 @@ package edu.harvard.seas.pl.formulog.validating;
 
 import edu.harvard.seas.pl.formulog.eval.Evaluation;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.eval.NaiveEvaluation;
+import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 
 public class NaiveValidatingTest extends ValidatingTest {
 
 	@Override
 	protected Evaluation setup(WellTypedProgram prog) throws InvalidProgramException, EvaluationException {
-		return NaiveEvaluation.setup(prog);
+		return SemiNaiveEvaluation.setup(prog);
 	}
 
 }

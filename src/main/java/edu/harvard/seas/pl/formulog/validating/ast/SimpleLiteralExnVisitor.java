@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.ast;
+package edu.harvard.seas.pl.formulog.validating.ast;
 
 /*-
  * #%L
@@ -20,6 +20,14 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-public interface Conjunct {
-	
+public interface SimpleLiteralExnVisitor<I, O, E extends Throwable> {
+
+	O visit(Assignment assignment, I input) throws E;
+
+	O visit(Check check, I input) throws E;
+
+	O visit(Destructor destructor, I input) throws E;
+
+	O visit(SimplePredicate predicate, I input) throws E;
+
 }

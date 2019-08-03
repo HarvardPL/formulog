@@ -30,31 +30,31 @@ import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.ast.Assignment;
 import edu.harvard.seas.pl.formulog.validating.ast.Check;
 import edu.harvard.seas.pl.formulog.validating.ast.Destructor;
-import edu.harvard.seas.pl.formulog.validating.ast.SimpleConjunct;
-import edu.harvard.seas.pl.formulog.validating.ast.SimpleConjunctVisitor;
+import edu.harvard.seas.pl.formulog.validating.ast.SimpleLiteral;
+import edu.harvard.seas.pl.formulog.validating.ast.SimpleLiteralVisitor;
 import edu.harvard.seas.pl.formulog.validating.ast.SimplePredicate;
 
-public class IndexedRule implements Rule<SimplePredicate, SimpleConjunct> {
+public class IndexedRule implements Rule<SimplePredicate, SimpleLiteral> {
 
 	private final SimplePredicate head;
-	private final List<SimpleConjunct> body;
+	private final List<SimpleLiteral> body;
 	private final List<Integer> idxs;
 
-	private IndexedRule(Rule<SimplePredicate, SimpleConjunct> rule, Function<SimplePredicate, Integer> makeIndex) {
+	private IndexedRule(Rule<SimplePredicate, SimpleLiteral> rule, Function<SimplePredicate, Integer> makeIndex) {
 		head = rule.getHead();
 		body = Util.iterableToList(rule);
 		idxs = createIndexes(makeIndex);
 	}
 
-	public static IndexedRule make(Rule<SimplePredicate, SimpleConjunct> rule,
+	public static IndexedRule make(Rule<SimplePredicate, SimpleLiteral> rule,
 			Function<SimplePredicate, Integer> makeIndex) {
 		return new IndexedRule(rule, makeIndex);
 	}
 
 	private List<Integer> createIndexes(Function<SimplePredicate, Integer> makeIndex) {
 		List<Integer> idxs = new ArrayList<>();
-		for (SimpleConjunct a : body) {
-			idxs.add(a.accept(new SimpleConjunctVisitor<Void, Integer>() {
+		for (SimpleLiteral a : body) {
+			idxs.add(a.accept(new SimpleLiteralVisitor<Void, Integer>() {
 
 				@Override
 				public Integer visit(Assignment assignment, Void input) {
@@ -92,7 +92,7 @@ public class IndexedRule implements Rule<SimplePredicate, SimpleConjunct> {
 	}
 
 	@Override
-	public SimpleConjunct getBody(int idx) {
+	public SimpleLiteral getBody(int idx) {
 		return body.get(idx);
 	}
 
@@ -111,7 +111,7 @@ public class IndexedRule implements Rule<SimplePredicate, SimpleConjunct> {
 			sb.append("\n\t");
 		}
 		int i = 0;
-		for (Iterator<SimpleConjunct> it = body.iterator(); it.hasNext();) {
+		for (Iterator<SimpleLiteral> it = body.iterator(); it.hasNext();) {
 			Integer idx = idxs.get(i);
 			if (idx != null) {
 				sb.append(idx + ": ");
@@ -127,7 +127,7 @@ public class IndexedRule implements Rule<SimplePredicate, SimpleConjunct> {
 	}
 
 	@Override
-	public Iterator<SimpleConjunct> iterator() {
+	public Iterator<SimpleLiteral> iterator() {
 		return body.iterator();
 	}
 

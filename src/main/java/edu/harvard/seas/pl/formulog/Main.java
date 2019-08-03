@@ -38,7 +38,7 @@ import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.eval.Evaluation;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.eval.EvaluationResult;
-import edu.harvard.seas.pl.formulog.eval.NaiveEvaluation;
+import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
 import edu.harvard.seas.pl.formulog.parsing.ParseException;
 import edu.harvard.seas.pl.formulog.parsing.Parser;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
@@ -95,7 +95,7 @@ public final class Main {
 	private Evaluation setup(WellTypedProgram prog) {
 		System.out.println("Rewriting and validating...");
 		try {
-			return NaiveEvaluation.setup(prog);
+			return SemiNaiveEvaluation.setup(prog);
 		} catch (InvalidProgramException e) {
 			handleException("Error while rewriting/validation!", e);
 			throw new AssertionError("impossible");

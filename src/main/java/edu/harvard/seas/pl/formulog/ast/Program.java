@@ -27,7 +27,7 @@ import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 
-public interface Program<Q extends Conjunct, R extends Rule<Q, ?>> {
+public interface Program<Q extends Literal, R extends Rule<Q, ?>> {
 
 	Set<FunctionSymbol> getFunctionSymbols();
 	

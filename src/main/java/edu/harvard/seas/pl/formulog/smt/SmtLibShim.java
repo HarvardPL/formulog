@@ -197,7 +197,7 @@ public class SmtLibShim {
 	}
 
 	private void declareSymbolsAndFuns(SmtLibTerm t) {
-		t.visit(new TermVisitor<Void, Void>() {
+		t.accept(new TermVisitor<Void, Void>() {
 
 			@Override
 			public Void visit(Var t, Void in) {
@@ -220,7 +220,7 @@ public class SmtLibShim {
 					return null;
 				}
 				for (Term arg : c.getArgs()) {
-					arg.visit(this, in);
+					arg.accept(this, in);
 				}
 				if (c instanceof SolverUninterpretedFunction) {
 					ConstructorSymbol sym = c.getSymbol();
@@ -413,7 +413,7 @@ public class SmtLibShim {
 
 		private DedupWorkList<TypeSymbol> extractTypesFromTerm() {
 			DedupWorkList<TypeSymbol> w = new DedupWorkList<>();
-			t.visit(new TermVisitor<Void, Void>() {
+			t.accept(new TermVisitor<Void, Void>() {
 
 				@Override
 				public Void visit(Var t, Void in) {
@@ -429,7 +429,7 @@ public class SmtLibShim {
 					}
 					if (!(c instanceof SolverVariable)) {
 						for (Term tt : c.getArgs()) {
-							tt.visit(this, in);
+							tt.accept(this, in);
 						}
 					}
 					return null;
@@ -568,7 +568,7 @@ public class SmtLibShim {
 
 		private List<Type> inferTypes1(Term t) {
 			List<Type> types = new ArrayList<>();
-			t.visit(new TermVisitor<Void, Type>() {
+			t.accept(new TermVisitor<Void, Type>() {
 
 				@Override
 				public Type visit(Var t, Void in) {
@@ -587,7 +587,7 @@ public class SmtLibShim {
 					if (!(c instanceof SolverVariable)) {
 						Iterator<Type> it = args.iterator();
 						for (Term tt : c.getArgs()) {
-							constraints.add(new Pair<>(tt.visit(this, in), it.next()));
+							constraints.add(new Pair<>(tt.accept(this, in), it.next()));
 						}
 					}
 					return ty;

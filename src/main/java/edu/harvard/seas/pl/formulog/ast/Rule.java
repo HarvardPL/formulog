@@ -20,7 +20,7 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-public interface Rule <H extends Conjunct, B extends Conjunct> extends Iterable<B> {
+public interface Rule <H extends Literal, B extends Literal> extends Iterable<B> {
 
 	public H getHead();
 	

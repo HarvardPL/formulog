@@ -76,7 +76,7 @@ public class PredicateFunctionSetter {
 	}
 	
 	public void preprocess(Term t) {
-		t.visit(tv, null);
+		t.accept(tv, null);
 	}
 	
 	private final TermVisitor<Void, Void> tv = new TermVisitor<Void, Void>() {
@@ -89,7 +89,7 @@ public class PredicateFunctionSetter {
 		@Override
 		public Void visit(Constructor c, Void in) {
 			for (Term arg : c.getArgs()) {
-				arg.visit(this, in);
+				arg.accept(this, in);
 			}
 			return null;
 		}
@@ -111,10 +111,10 @@ public class PredicateFunctionSetter {
 
 		@Override
 		public Void visit(MatchExpr matchExpr, Void in) {
-			matchExpr.getMatchee().visit(tv, in);
+			matchExpr.getMatchee().accept(tv, in);
 			for (MatchClause cl : matchExpr) {
-				cl.getLhs().visit(tv, in);
-				cl.getRhs().visit(tv, in);
+				cl.getLhs().accept(tv, in);
+				cl.getRhs().accept(tv, in);
 			}
 			return null;
 		}
@@ -122,7 +122,7 @@ public class PredicateFunctionSetter {
 		@Override
 		public Void visit(FunctionCall funcCall, Void in) {
 			for (Term arg : funcCall.getArgs()) {
-				arg.visit(tv, in);
+				arg.accept(tv, in);
 			}
 			FunctionSymbol sym = funcCall.getSymbol();
 			if (!visitedFunctions.add(sym)) {
@@ -133,7 +133,7 @@ public class PredicateFunctionSetter {
 				DummyFunctionDef dummy = (DummyFunctionDef) def;
 				setPredicateFunction(dummy);
 			} else if (def instanceof CustomFunctionDef) {
-				((CustomFunctionDef) def).getBody().visit(tv, in);
+				((CustomFunctionDef) def).getBody().accept(tv, in);
 			}
 			return null;
 		}

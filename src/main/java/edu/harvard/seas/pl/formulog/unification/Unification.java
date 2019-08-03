@@ -153,7 +153,7 @@ public final class Unification {
 //	}
 
 	private static void unsafeUnify(Term t1, Term t2, Substitution s) {
-		t1.visit(new TermVisitor<Term, Void>() {
+		t1.accept(new TermVisitor<Term, Void>() {
 
 			@Override
 			public Void visit(Var t, Term in) {
@@ -166,7 +166,7 @@ public final class Unification {
 				Term[] args1 = t.getArgs();
 				Term[] args2 = ((Constructor) in).getArgs();
 				for (int i = 0; i < args1.length; ++i) {
-					args1[i].visit(this, args2[i]);
+					args1[i].accept(this, args2[i]);
 				}
 				return null;
 			}

@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.magic;
+package edu.harvard.seas.pl.formulog.ast;
 
 /*-
  * #%L
@@ -20,17 +20,6 @@ package edu.harvard.seas.pl.formulog.magic;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.eval.Evaluation;
-import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.eval.NaiveEvaluation;
-import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
-import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
-
-public class NaiveMagicSetTest extends CommonMagicSetTest {
-
-	@Override
-	protected Evaluation setup(WellTypedProgram prog) throws InvalidProgramException, EvaluationException {
-		return NaiveEvaluation.setup(prog);
-	}
-
+public interface Literal {
+	
 }

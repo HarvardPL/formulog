@@ -779,6 +779,7 @@ public final class Constructors {
 		protected final boolean containsFunctionCall;
 
 		protected AbstractConstructor(ConstructorSymbol sym, Term[] args) {
+			assert noneNull(args) : sym;
 			this.sym = sym;
 			this.args = args;
 			boolean g = true;
@@ -789,6 +790,15 @@ public final class Constructors {
 			}
 			isGround = g;
 			containsFunctionCall = f;
+		}
+		
+		private boolean noneNull(Term[] ts) {
+			for (Term t : ts) {
+				if (t == null) {
+					return false;
+				}
+			}
+			return true;
 		}
 
 		@Override

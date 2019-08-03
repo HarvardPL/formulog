@@ -22,12 +22,11 @@ package edu.harvard.seas.pl.formulog.validating;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiFunction;
 
-import edu.harvard.seas.pl.formulog.ast.BasicRule;
+import edu.harvard.seas.pl.formulog.ast.AbstractRule;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
@@ -35,18 +34,18 @@ import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.unification.Unification;
 import edu.harvard.seas.pl.formulog.util.Util;
 
-public class ValidRule implements Rule<UserPredicate, ComplexLiteral> {
+public class ValidRule extends AbstractRule<UserPredicate, ComplexLiteral> {
 
-	private final UserPredicate head;
-	private final List<ComplexLiteral> body;
-
-	public static ValidRule make(BasicRule rule, BiFunction<ComplexLiteral, Set<Var>, Integer> score)
+	public static ValidRule make(Rule<UserPredicate, ComplexLiteral> rule, BiFunction<ComplexLiteral, Set<Var>, Integer> score)
 			throws InvalidProgramException {
 		try {
 			List<ComplexLiteral> body = Util.iterableToList(rule);
 			Set<Var> vars = new HashSet<>();
 			order(body, score, vars);
 			UserPredicate head = rule.getHead();
+			if (!head.getSymbol().isIdbSymbol()) {
+				throw new InvalidProgramException("Cannot create a rule for non-IDB symbol " + head.getSymbol());
+			}
 			if (!vars.containsAll(head.varSet())) {
 				String msg = "There are unbound variables in the head of a rule:";
 				for (Var x : head.varSet()) {
@@ -86,48 +85,7 @@ public class ValidRule implements Rule<UserPredicate, ComplexLiteral> {
 	}
 
 	private ValidRule(UserPredicate head, List<ComplexLiteral> body) {
-		this.head = head;
-		this.body = body;
-	}
-
-	@Override
-	public Iterator<ComplexLiteral> iterator() {
-		return body.iterator();
-	}
-
-	@Override
-	public UserPredicate getHead() {
-		return head;
-	}
-
-	@Override
-	public int getBodySize() {
-		return body.size();
-	}
-
-	@Override
-	public ComplexLiteral getBody(int idx) {
-		return body.get(idx);
-	}
-
-	@Override
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append(head);
-		sb.append(" :-");
-		if (body.size() == 1) {
-			sb.append(" ");
-		} else {
-			sb.append("\n\t");
-		}
-		for (Iterator<ComplexLiteral> it = body.iterator(); it.hasNext();) {
-			sb.append(it.next());
-			if (it.hasNext()) {
-				sb.append(",\n\t");
-			}
-		}
-		sb.append(".");
-		return sb.toString();
+		super(head, body);
 	}
 
 }

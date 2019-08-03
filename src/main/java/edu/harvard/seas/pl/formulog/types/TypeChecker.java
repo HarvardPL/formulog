@@ -444,7 +444,7 @@ public class TypeChecker {
 		}
 
 		private void genConstraints(Term t, Type ttype, Map<Var, Type> subst, boolean allowSubtype) {
-			t.visit(new TermVisitor<Void, Void>() {
+			t.accept(new TermVisitor<Void, Void>() {
 
 				@Override
 				public Void visit(Var t, Void in) {

@@ -27,7 +27,7 @@ import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralExnVisitor
 import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralVisitor;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 
-public interface ComplexLiteral extends Conjunct {
+public interface ComplexLiteral extends Literal {
 
 	Term[] getArgs();
 	

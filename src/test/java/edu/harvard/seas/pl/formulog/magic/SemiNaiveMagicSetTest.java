@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.validating.ast;
+package edu.harvard.seas.pl.formulog.magic;
 
 /*-
  * #%L
@@ -20,14 +20,17 @@ package edu.harvard.seas.pl.formulog.validating.ast;
  * #L%
  */
 
-public interface SimpleConjunctExnVisitor<I, O, E extends Throwable> {
+import edu.harvard.seas.pl.formulog.eval.Evaluation;
+import edu.harvard.seas.pl.formulog.eval.EvaluationException;
+import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
+import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
+import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 
-	O visit(Assignment assignment, I input) throws E;
+public class SemiNaiveMagicSetTest extends CommonMagicSetTest {
 
-	O visit(Check check, I input) throws E;
-
-	O visit(Destructor destructor, I input) throws E;
-
-	O visit(SimplePredicate predicate, I input) throws E;
+	@Override
+	protected Evaluation setup(WellTypedProgram prog) throws InvalidProgramException, EvaluationException {
+		return SemiNaiveEvaluation.setup(prog);
+	}
 
 }

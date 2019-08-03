@@ -29,12 +29,12 @@ import edu.harvard.seas.pl.formulog.unification.Substitution;
 public interface Constructor extends Functor<ConstructorSymbol>, SmtLibTerm {
 
 	@Override
-	default <I, O> O visit(TermVisitor<I, O> v, I in) {
+	default <I, O> O accept(TermVisitor<I, O> v, I in) {
 		return v.visit(this, in);
 	}
 
 	@Override
-	default <I, O, E extends Throwable> O visit(TermVisitorExn<I, O, E> v, I in) throws E {
+	default <I, O, E extends Throwable> O accept(TermVisitorExn<I, O, E> v, I in) throws E {
 		return v.visit(this, in);
 	}
 

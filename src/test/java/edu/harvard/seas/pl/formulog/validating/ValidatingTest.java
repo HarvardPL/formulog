@@ -99,5 +99,10 @@ public abstract class ValidatingTest {
 	public void test219() {
 		test("test219_ok.flg");
 	}
+	
+	@Test
+	public void test248() {
+		test("test248_bd.flg");
+	}
 
 }

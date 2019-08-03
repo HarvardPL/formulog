@@ -1,8 +1,5 @@
 package edu.harvard.seas.pl.formulog.validating.ast;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-
 /*-
  * #%L
  * FormuLog
@@ -23,14 +20,15 @@ import java.util.HashSet;
  * #L%
  */
 
-import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import edu.harvard.seas.pl.formulog.ast.AbstractRule;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralExnVisitor;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
-import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
@@ -38,10 +36,7 @@ import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 import edu.harvard.seas.pl.formulog.validating.ValidRule;
 
-public class SimpleRule implements Rule<SimplePredicate, SimpleConjunct> {
-
-	private final SimplePredicate head;
-	private final List<SimpleConjunct> body;
+public class SimpleRule extends AbstractRule<SimplePredicate, SimpleLiteral> {
 
 	public static SimpleRule make(ValidRule rule) throws InvalidProgramException {
 		Simplifier simplifier = new Simplifier();
@@ -62,94 +57,22 @@ public class SimpleRule implements Rule<SimplePredicate, SimpleConjunct> {
 		return new SimpleRule(newHead, simplifier.getConjuncts());
 	}
 
-	private SimpleRule(SimplePredicate head, List<SimpleConjunct> body) {
-		this.head = head;
-		this.body = body;
-	}
-
-	@Override
-	public SimplePredicate getHead() {
-		return head;
-	}
-
-	@Override
-	public int getBodySize() {
-		return body.size();
-	}
-
-	@Override
-	public SimpleConjunct getBody(int idx) {
-		return body.get(idx);
-	}
-
-	@Override
-	public Iterator<SimpleConjunct> iterator() {
-		return body.iterator();
-	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((body == null) ? 0 : body.hashCode());
-		result = prime * result + ((head == null) ? 0 : head.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		SimpleRule other = (SimpleRule) obj;
-		if (body == null) {
-			if (other.body != null)
-				return false;
-		} else if (!body.equals(other.body))
-			return false;
-		if (head == null) {
-			if (other.head != null)
-				return false;
-		} else if (!head.equals(other.head))
-			return false;
-		return true;
-	}
-
-	@Override
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append(head);
-		sb.append(" :-");
-		if (body.size() == 1) {
-			sb.append(" ");
-		} else {
-			sb.append("\n\t");
-		}
-		for (Iterator<SimpleConjunct> it = body.iterator(); it.hasNext();) {
-			sb.append(it.next());
-			if (it.hasNext()) {
-				sb.append(",\n\t");
-			}
-		}
-		sb.append(".");
-		return sb.toString();
+	private SimpleRule(SimplePredicate head, List<SimpleLiteral> body) {
+		super(head, body);
 	}
 
 	private static class Simplifier {
 
-		private final List<SimpleConjunct> acc = new ArrayList<>();
+		private final List<SimpleLiteral> acc = new ArrayList<>();
 		private final Set<Var> boundVars = new HashSet<>();
 
 		public void add(ComplexLiteral atom) throws InvalidProgramException {
 			List<ComplexLiteral> todo = new ArrayList<>();
-			SimpleConjunct c = atom
-					.accept(new ComplexLiteralExnVisitor<Void, SimpleConjunct, InvalidProgramException>() {
+			SimpleLiteral c = atom
+					.accept(new ComplexLiteralExnVisitor<Void, SimpleLiteral, InvalidProgramException>() {
 
 						@Override
-						public SimpleConjunct visit(UnificationPredicate unificationPredicate, Void input)
+						public SimpleLiteral visit(UnificationPredicate unificationPredicate, Void input)
 								throws InvalidProgramException {
 							Term lhs = unificationPredicate.getLhs();
 							Term rhs = unificationPredicate.getRhs();
@@ -212,7 +135,7 @@ public class SimpleRule implements Rule<SimplePredicate, SimpleConjunct> {
 						}
 
 						@Override
-						public SimpleConjunct visit(UserPredicate userPredicate, Void input) {
+						public SimpleLiteral visit(UserPredicate userPredicate, Void input) {
 							Term[] args = userPredicate.getArgs();
 							Term[] newArgs = new Term[args.length];
 							Set<Var> seen = new HashSet<>();
@@ -228,7 +151,7 @@ public class SimpleRule implements Rule<SimplePredicate, SimpleConjunct> {
 									todo.add(UnificationPredicate.make(y, arg, false));
 								}
 							}
-							SimpleConjunct c = SimplePredicate.make(userPredicate.getSymbol(), newArgs, boundVars,
+							SimpleLiteral c = SimplePredicate.make(userPredicate.getSymbol(), newArgs, boundVars,
 									userPredicate.isNegated());
 							return c;
 						}
@@ -243,7 +166,7 @@ public class SimpleRule implements Rule<SimplePredicate, SimpleConjunct> {
 			}
 		}
 
-		public List<SimpleConjunct> getConjuncts() {
+		public List<SimpleLiteral> getConjuncts() {
 			return acc;
 		}
 

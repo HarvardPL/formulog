@@ -21,21 +21,16 @@ package edu.harvard.seas.pl.formulog.ast;
  */
 
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
-public class BasicRule implements Rule<UserPredicate, ComplexLiteral> {
-
-	private final UserPredicate head;
-	private final List<ComplexLiteral> body;
+public class BasicRule extends AbstractRule<UserPredicate, ComplexLiteral> {
 
 	private BasicRule(UserPredicate head, List<ComplexLiteral> body) {
+		super(head, body);
 		if (!head.getSymbol().isIdbSymbol()) {
 			throw new IllegalArgumentException(
 					"Cannot create rule with non-IDB predicate for head: " + head.getSymbol());
 		}
-		this.head = head;
-		this.body = body;
 	}
 
 	public static BasicRule make(UserPredicate head, List<ComplexLiteral> body) {
@@ -47,77 +42,6 @@ public class BasicRule implements Rule<UserPredicate, ComplexLiteral> {
 
 	public static BasicRule make(UserPredicate head) {
 		return make(head, Collections.singletonList(ComplexLiterals.trueAtom()));
-	}
-
-	@Override
-	public UserPredicate getHead() {
-		return head;
-	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((body == null) ? 0 : body.hashCode());
-		result = prime * result + ((head == null) ? 0 : head.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		BasicRule other = (BasicRule) obj;
-		if (body == null) {
-			if (other.body != null)
-				return false;
-		} else if (!body.equals(other.body))
-			return false;
-		if (head == null) {
-			if (other.head != null)
-				return false;
-		} else if (!head.equals(other.head))
-			return false;
-		return true;
-	}
-
-	@Override
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append(head);
-		sb.append(" :-");
-		if (body.size() == 1) {
-			sb.append(" ");
-		} else {
-			sb.append("\n\t");
-		}
-		for (Iterator<ComplexLiteral> it = body.iterator(); it.hasNext();) {
-			sb.append(it.next());
-			if (it.hasNext()) {
-				sb.append(",\n\t");
-			}
-		}
-		sb.append(".");
-		return sb.toString();
-	}
-
-	@Override
-	public int getBodySize() {
-		return body.size();
-	}
-
-	@Override
-	public ComplexLiteral getBody(int idx) {
-		return body.get(idx);
-	}
-
-	@Override
-	public Iterator<ComplexLiteral> iterator() {
-		return body.iterator();
 	}
 
 }

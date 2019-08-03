@@ -22,14 +22,14 @@ import java.util.Set;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.ast.Conjunct;
+import edu.harvard.seas.pl.formulog.ast.Literal;
 import edu.harvard.seas.pl.formulog.ast.Var;
 
-public interface SimpleConjunct extends Conjunct {
+public interface SimpleLiteral extends Literal {
 
-	<I, O> O accept(SimpleConjunctVisitor<I, O> visitor, I input);
+	<I, O> O accept(SimpleLiteralVisitor<I, O> visitor, I input);
 	
-	<I, O, E extends Throwable> O accept(SimpleConjunctExnVisitor<I, O, E> visitor, I input) throws E;
+	<I, O, E extends Throwable> O accept(SimpleLiteralExnVisitor<I, O, E> visitor, I input) throws E;
 
 	Set<Var> varSet();
 	

@@ -50,6 +50,7 @@ import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
+import edu.harvard.seas.pl.formulog.symbols.AbstractWrappedRelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbolFactory.PredicateFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
@@ -162,7 +163,7 @@ public class MagicSetTransformer {
 			public String toString() {
 				Symbol sym = oldSym;
 				if (oldSym instanceof AdornedSymbol) {
-					sym = ((AdornedSymbol) oldSym).getSymbol();
+					sym = ((AdornedSymbol) oldSym).getBaseSymbol();
 				}
 				return "query:" + sym;
 			}
@@ -315,13 +316,13 @@ public class MagicSetTransformer {
 			public C visit(UserPredicate userPredicate, Void input) {
 				RelationSymbol sym = userPredicate.getSymbol();
 				if (sym instanceof PositiveSymbol) {
-					sym = ((PositiveSymbol) sym).getUnderlyingSymbol();
+					sym = ((PositiveSymbol) sym).getBaseSymbol();
 					if (sym instanceof AdornedSymbol) {
-						sym = ((AdornedSymbol) sym).getSymbol();
+						sym = ((AdornedSymbol) sym).getBaseSymbol();
 					}
 					sym = new PositiveSymbol(sym);
 				} else if (sym instanceof AdornedSymbol) {
-					sym = ((AdornedSymbol) sym).getSymbol();
+					sym = ((AdornedSymbol) sym).getBaseSymbol();
 				}
 				return (C) UserPredicate.make(sym, userPredicate.getArgs(), userPredicate.isNegated());
 			}
@@ -342,7 +343,7 @@ public class MagicSetTransformer {
 			RelationSymbol adSym = worklist.pop();
 			RelationSymbol origSym = adSym;
 			if (adSym instanceof AdornedSymbol) {
-				origSym = ((AdornedSymbol) adSym).getSymbol();
+				origSym = ((AdornedSymbol) adSym).getBaseSymbol();
 			}
 			for (BasicRule r : origProg.getRules(origSym)) {
 				UserPredicate head = r.getHead();
@@ -391,7 +392,7 @@ public class MagicSetTransformer {
 
 	private boolean exploreTopDown(RelationSymbol sym) {
 		if (sym instanceof AdornedSymbol) {
-			sym = ((AdornedSymbol) sym).getSymbol();
+			sym = ((AdornedSymbol) sym).getBaseSymbol();
 		}
 		if (!sym.isIdbSymbol()) {
 			return false;
@@ -561,61 +562,32 @@ public class MagicSetTransformer {
 
 	}
 
-	public static class InputSymbol implements RelationSymbol {
+	public static class InputSymbol extends AbstractWrappedRelationSymbol<AdornedSymbol> {
 
-		private final AdornedSymbol underlyingSymbol;
-
-		public InputSymbol(AdornedSymbol underlyingSymbol) {
-			this.underlyingSymbol = underlyingSymbol;
+		private final int arity;
+		
+		public InputSymbol(AdornedSymbol baseSymbol) {
+			super(baseSymbol);
+			int nbound = 0;
+			for (boolean b : getBaseSymbol().getAdornment()) {
+				nbound += b ? 1 : 0;
+			}
+			arity = nbound;
 		}
 
 		@Override
 		public int getArity() {
-			int nbound = 0;
-			for (boolean b : underlyingSymbol.getAdornment()) {
-				nbound += b ? 1 : 0;
-			}
-			return nbound;
-		}
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + ((underlyingSymbol == null) ? 0 : underlyingSymbol.hashCode());
-			return result;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			InputSymbol other = (InputSymbol) obj;
-			if (underlyingSymbol == null) {
-				if (other.underlyingSymbol != null)
-					return false;
-			} else if (!underlyingSymbol.equals(other.underlyingSymbol))
-				return false;
-			return true;
+			return arity;
 		}
 
 		@Override
 		public String toString() {
-			return "input_" + underlyingSymbol;
+			return "input_" + getBaseSymbol();
 		}
 
 		@Override
 		public FunctorType getCompileTimeType() {
 			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean isIdbSymbol() {
-			return true;
 		}
 
 		@Override
@@ -709,61 +681,20 @@ public class MagicSetTransformer {
 		return l;
 	}
 
-	private static class PositiveSymbol implements RelationSymbol {
+	private static class PositiveSymbol extends AbstractWrappedRelationSymbol<RelationSymbol> {
 
-		private final RelationSymbol underlyingSymbol;
-
-		public PositiveSymbol(RelationSymbol underlyingSymbol) {
-			this.underlyingSymbol = underlyingSymbol;
-		}
-
-		public RelationSymbol getUnderlyingSymbol() {
-			return underlyingSymbol;
-		}
-
-		@Override
-		public int getArity() {
-			return underlyingSymbol.getArity();
-		}
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + ((underlyingSymbol == null) ? 0 : underlyingSymbol.hashCode());
-			return result;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			PositiveSymbol other = (PositiveSymbol) obj;
-			if (underlyingSymbol == null) {
-				if (other.underlyingSymbol != null)
-					return false;
-			} else if (!underlyingSymbol.equals(other.underlyingSymbol))
-				return false;
-			return true;
+		public PositiveSymbol(RelationSymbol baseSymbol) {
+			super(baseSymbol);
 		}
 
 		@Override
 		public String toString() {
-			return "p_" + underlyingSymbol;
+			return "p_" + getBaseSymbol();
 		}
 
 		@Override
 		public FunctorType getCompileTimeType() {
 			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean isIdbSymbol() {
-			return true;
 		}
 
 		@Override
@@ -789,7 +720,7 @@ public class MagicSetTransformer {
 		}
 
 		public void findHiddenPredicates(Term t) {
-			t.visit(predicatesInTermExtractor, seenPredicates);
+			t.accept(predicatesInTermExtractor, seenPredicates);
 		}
 
 		public Set<RelationSymbol> getSeenPredicates() {
@@ -806,7 +737,7 @@ public class MagicSetTransformer {
 			@Override
 			public Void visit(Constructor c, Set<RelationSymbol> in) {
 				for (Term t : c.getArgs()) {
-					t.visit(this, in);
+					t.accept(this, in);
 				}
 				return null;
 			}
@@ -828,9 +759,9 @@ public class MagicSetTransformer {
 
 			@Override
 			public Void visit(MatchExpr matchExpr, Set<RelationSymbol> in) {
-				matchExpr.getMatchee().visit(predicatesInTermExtractor, in);
+				matchExpr.getMatchee().accept(predicatesInTermExtractor, in);
 				for (MatchClause cl : matchExpr) {
-					cl.getRhs().visit(predicatesInTermExtractor, in);
+					cl.getRhs().accept(predicatesInTermExtractor, in);
 				}
 				return null;
 			}
@@ -843,11 +774,11 @@ public class MagicSetTransformer {
 				} else if (visitedFunctions.add(sym)) {
 					FunctionDef def = origProg.getDef(sym);
 					if (def instanceof CustomFunctionDef) {
-						((CustomFunctionDef) def).getBody().visit(predicatesInTermExtractor, in);
+						((CustomFunctionDef) def).getBody().accept(predicatesInTermExtractor, in);
 					}
 				}
 				for (Term t : funcCall.getArgs()) {
-					t.visit(predicatesInTermExtractor, in);
+					t.accept(predicatesInTermExtractor, in);
 				}
 				return null;
 			}

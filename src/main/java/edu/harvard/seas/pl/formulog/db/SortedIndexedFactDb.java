@@ -34,7 +34,6 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
-import edu.harvard.seas.pl.formulog.validating.ast.SimplePredicate;
 
 public class SortedIndexedFactDb implements IndexedFactDb {
 
@@ -98,6 +97,29 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 		}
 		return true;
 	}
+	
+	@Override
+	public void clear() {
+		for (Set<Term[]> s : all.values()) {
+			s.clear();
+		}
+		for (IndexedFactSet index : indices) {
+			index.clear();
+		}
+	}
+	
+	@Override
+	public String toString() {
+		String s = "{\n";
+		for (RelationSymbol sym : all.keySet()) {
+			s += "\t" + sym + " = {\n";
+			for (Term[] args : all.get(sym)) {
+				s += "\t\t" + Arrays.toString(args) + "\n";
+			}
+			s += "\t}\n";
+		}
+		return s + "}";
+	}
 
 	public static class SortedIndexedFactDbBuilder implements IndexedFactDbBuilder<SortedIndexedFactDb> {
 
@@ -111,9 +133,9 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 		}
 		
 		@Override
-		public synchronized int makeIndex(SimplePredicate atom) {
-			boolean[] pat = atom.getBindingPattern();
-			Map<BooleanArrayWrapper, Integer> m = pats.get(atom.getSymbol());
+		public synchronized int makeIndex(RelationSymbol sym, boolean[] pat) {
+			assert sym.getArity() == pat.length;
+			Map<BooleanArrayWrapper, Integer> m = pats.get(sym);
 			BooleanArrayWrapper key = new BooleanArrayWrapper(pat);
 			Integer idx = m.get(key);
 			if (idx == null) {
@@ -171,6 +193,10 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			}
 			Comparator<Term[]> cmp = new ArrayComparator<>(order, Terms.comparator);
 			return new IndexedFactSet(pat, new ConcurrentSkipListSet<>(cmp));
+		}
+
+		public void clear() {
+			s.clear();
 		}
 
 		private IndexedFactSet(boolean[] pat, NavigableSet<Term[]> s) {

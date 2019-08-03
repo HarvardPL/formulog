@@ -31,17 +31,21 @@ import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
+import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDb;
+import edu.harvard.seas.pl.formulog.db.IndexedFactDbBuilder;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb.SortedIndexedFactDbBuilder;
+import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 import edu.harvard.seas.pl.formulog.unification.OverwriteSubstitution;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
+import edu.harvard.seas.pl.formulog.validating.FunctionDefValidation;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 import edu.harvard.seas.pl.formulog.validating.Stratifier;
 import edu.harvard.seas.pl.formulog.validating.Stratum;
@@ -49,45 +53,62 @@ import edu.harvard.seas.pl.formulog.validating.ValidRule;
 import edu.harvard.seas.pl.formulog.validating.ast.Assignment;
 import edu.harvard.seas.pl.formulog.validating.ast.Check;
 import edu.harvard.seas.pl.formulog.validating.ast.Destructor;
-import edu.harvard.seas.pl.formulog.validating.ast.SimpleConjunctExnVisitor;
+import edu.harvard.seas.pl.formulog.validating.ast.SimpleLiteral;
+import edu.harvard.seas.pl.formulog.validating.ast.SimpleLiteralExnVisitor;
+import edu.harvard.seas.pl.formulog.validating.ast.SimpleLiteralVisitor;
 import edu.harvard.seas.pl.formulog.validating.ast.SimplePredicate;
 import edu.harvard.seas.pl.formulog.validating.ast.SimpleRule;
 
-public class NaiveEvaluation implements Evaluation {
+public class SemiNaiveEvaluation implements Evaluation {
 
 	private final IndexedFactDb db;
-	private final Map<RelationSymbol, Iterable<IndexedRule>> rules;
+	private IndexedFactDb deltaDb;
+	private IndexedFactDb nextDeltaDb;
+	private final Map<RelationSymbol, Iterable<IndexedRule>> firstRoundRules = new HashMap<>();
+	private final Map<RelationSymbol, Iterable<IndexedRule>> laterRoundRules = new HashMap<>();
 	private final List<Stratum> strata;
 	private final UserPredicate query;
 
-	public static NaiveEvaluation setup(WellTypedProgram prog) throws InvalidProgramException {
+	public static SemiNaiveEvaluation setup(WellTypedProgram prog) throws InvalidProgramException {
+		FunctionDefValidation.validate(prog);
 		MagicSetTransformer mst = new MagicSetTransformer(prog);
 		BasicProgram magicProg = mst.transform(true, true);
-		
+
+		Set<RelationSymbol> allRelations = new HashSet<>(magicProg.getFactSymbols());
+		allRelations.addAll(magicProg.getRuleSymbols());
+		SortedIndexedFactDbBuilder dbb = new SortedIndexedFactDbBuilder(allRelations);
+		SortedIndexedFactDbBuilder deltaDbb = new SortedIndexedFactDbBuilder(magicProg.getRuleSymbols());
+		IndexedFactDbWrapper wrappedDb = new IndexedFactDbWrapper();
+		PredicateFunctionSetter predFuncs = new PredicateFunctionSetter(
+				magicProg.getFunctionCallFactory().getDefManager(), magicProg.getSymbolManager(), wrappedDb);
+		Map<RelationSymbol, Iterable<IndexedRule>> rules = new HashMap<>();
 		List<Stratum> strata = new Stratifier(magicProg).stratify();
 		for (Stratum stratum : strata) {
 			if (stratum.hasRecursiveNegationOrAggregation()) {
 				throw new InvalidProgramException("Cannot handle recursive negation or aggregation");
 			}
-		}
-		
-		Set<RelationSymbol> allRelations = new HashSet<>(magicProg.getFactSymbols());
-		allRelations.addAll(magicProg.getRuleSymbols());
-		SortedIndexedFactDbBuilder dbb = new SortedIndexedFactDbBuilder(allRelations);
-		IndexedFactDbWrapper wrappedDb = new IndexedFactDbWrapper();
-		PredicateFunctionSetter predFuncs = new PredicateFunctionSetter(
-				magicProg.getFunctionCallFactory().getDefManager(), magicProg.getSymbolManager(), wrappedDb);
-		Map<RelationSymbol, Iterable<IndexedRule>> rules = new HashMap<>();
-		for (RelationSymbol sym : magicProg.getRuleSymbols()) {
-			List<IndexedRule> rs = new ArrayList<>();
-			for (BasicRule br : magicProg.getRules(sym)) {
-				ValidRule vr = ValidRule.make(br, (p, vs) -> 0);
-				predFuncs.preprocess(vr);
-				SimpleRule sr = SimpleRule.make(vr);
-				IndexedRule ir = IndexedRule.make(sr, dbb::makeIndex);
-				rs.add(ir);
+			Set<RelationSymbol> stratumSymbols = stratum.getPredicateSyms();
+			for (RelationSymbol sym : stratumSymbols) {
+				List<IndexedRule> rs = new ArrayList<>();
+				for (BasicRule br : magicProg.getRules(sym)) {
+					for (SemiNaiveRule snr : SemiNaiveRule.make(br, stratumSymbols)) {
+						ValidRule vr = ValidRule.make(snr, SemiNaiveEvaluation::score);
+						predFuncs.preprocess(vr);
+						SimpleRule sr = SimpleRule.make(vr);
+						IndexedRule ir = IndexedRule.make(sr, p -> {
+							RelationSymbol psym = p.getSymbol();
+							if (psym instanceof DeltaSymbol) {
+								psym = ((DeltaSymbol) psym).getBaseSymbol();
+								return deltaDbb.makeIndex(psym, p.getBindingPattern());
+							} else {
+								return dbb.makeIndex(psym, p.getBindingPattern());
+							}
+						});
+						rs.add(ir);
+					}
+				}
+				rules.put(sym, rs);
 			}
-			rules.put(sym, rs);
 		}
 		IndexedFactDb db = dbb.build();
 		wrappedDb.set(db);
@@ -102,15 +123,67 @@ public class NaiveEvaluation implements Evaluation {
 				}
 			}
 		}
-		return new NaiveEvaluation(db, rules, magicProg.getQuery(), strata);
+		return new SemiNaiveEvaluation(db, deltaDbb, rules, magicProg.getQuery(), strata);
 	}
 
-	private NaiveEvaluation(IndexedFactDb db, Map<RelationSymbol, Iterable<IndexedRule>> rules, UserPredicate query,
-			List<Stratum> strata) {
+	public static int score(ComplexLiteral l, Set<Var> boundVars) {
+		return 0;
+	}
+
+	private SemiNaiveEvaluation(IndexedFactDb db, IndexedFactDbBuilder<?> deltaDbb,
+			Map<RelationSymbol, Iterable<IndexedRule>> rules, UserPredicate query, List<Stratum> strata) {
 		this.db = db;
-		this.rules = rules;
 		this.query = query;
 		this.strata = strata;
+		deltaDb = deltaDbb.build();
+		nextDeltaDb = deltaDbb.build();
+		splitRules(rules);
+	}
+
+	private void splitRules(Map<RelationSymbol, Iterable<IndexedRule>> rules) {
+		for (RelationSymbol sym : rules.keySet()) {
+			Set<IndexedRule> firstRounders = new HashSet<>();
+			Set<IndexedRule> laterRounders = new HashSet<>();
+			for (IndexedRule rule : rules.get(sym)) {
+				if (hasDelta(rule)) {
+					laterRounders.add(rule);
+				} else {
+					firstRounders.add(rule);
+				}
+			}
+			firstRoundRules.put(sym, firstRounders);
+			laterRoundRules.put(sym, laterRounders);
+		}
+	}
+
+	private boolean hasDelta(IndexedRule rule) {
+		boolean hasDelta = false;
+		for (SimpleLiteral l : rule) {
+			hasDelta |= l.accept(new SimpleLiteralVisitor<Void, Boolean>() {
+
+				@Override
+				public Boolean visit(Assignment assignment, Void input) {
+					return false;
+				}
+
+				@Override
+				public Boolean visit(Check check, Void input) {
+					return false;
+				}
+
+				@Override
+				public Boolean visit(Destructor destructor, Void input) {
+					return false;
+				}
+
+				@Override
+				public Boolean visit(SimplePredicate predicate, Void input) {
+					return predicate.getSymbol() instanceof DeltaSymbol;
+				}
+
+			}, null);
+		}
+		return hasDelta;
 	}
 
 	@Override
@@ -121,24 +194,49 @@ public class NaiveEvaluation implements Evaluation {
 	}
 
 	private void evaluateStratum(Stratum stratum) throws EvaluationException {
-		boolean changed = true;
-		while (changed) {
-			changed = false;
-			for (RelationSymbol sym : stratum.getPredicateSyms()) {
-				for (IndexedRule r : rules.get(sym)) {
-					changed |= evaluateRule(r, 0, new OverwriteSubstitution());
-				}
-
+		Set<RelationSymbol> syms = stratum.getPredicateSyms();
+		boolean changed = false;
+		for (RelationSymbol sym : syms) {
+			for (IndexedRule r : firstRoundRules.get(sym)) {
+				changed |= evaluateRule(r, 0, new OverwriteSubstitution());
 			}
 		}
+		updateDbs();
+		while (changed) {
+			changed = false;
+			for (RelationSymbol sym : syms) {
+				for (IndexedRule r : laterRoundRules.get(sym)) {
+					changed |= evaluateRule(r, 0, new OverwriteSubstitution());
+				}
+			}
+			updateDbs();
+		}
+	}
+
+	private void updateDbs() {
+		for (RelationSymbol sym : nextDeltaDb.getSymbols()) {
+			for (Term[] args : nextDeltaDb.getAll(sym)) {
+				db.add(sym, args);
+			}
+		}
+		IndexedFactDb tmp = deltaDb;
+		deltaDb = nextDeltaDb;
+		nextDeltaDb = tmp;
+		nextDeltaDb.clear();
 	}
 
 	private boolean evaluateRule(IndexedRule r, int pos, OverwriteSubstitution s) throws EvaluationException {
 		if (pos >= r.getBodySize()) {
 			SimplePredicate hd = r.getHead().normalize(s);
-			return db.add(hd.getSymbol(), Terms.normalize(hd.getArgs(), s));
+			RelationSymbol sym = hd.getSymbol();
+			Term[] args = Terms.normalize(hd.getArgs(), s);
+			if (!db.hasFact(sym, args)) {
+				nextDeltaDb.add(sym, args);
+				return true;
+			}
+			return false;
 		}
-		return r.getBody(pos).accept(new SimpleConjunctExnVisitor<Void, Boolean, EvaluationException>() {
+		return r.getBody(pos).accept(new SimpleLiteralExnVisitor<Void, Boolean, EvaluationException>() {
 
 			@Override
 			public Boolean visit(Assignment assignment, Void input) throws EvaluationException {
@@ -169,7 +267,12 @@ public class NaiveEvaluation implements Evaluation {
 						key[i] = args[i];
 					}
 				}
-				Set<Term[]> answers = db.get(key, idx);
+				Set<Term[]> answers;
+				if (predicate.getSymbol() instanceof DeltaSymbol) {
+					answers = deltaDb.get(key, idx);
+				} else {
+					answers = db.get(key, idx);
+				}
 				if (predicate.isNegated()) {
 					return answers.isEmpty() && evaluateRule(r, pos + 1, s);
 				} else {
@@ -295,6 +398,11 @@ public class NaiveEvaluation implements Evaluation {
 		@Override
 		public boolean hasFact(RelationSymbol sym, Term[] args) {
 			return db.hasFact(sym, args);
+		}
+
+		@Override
+		public void clear() {
+			db.clear();
 		}
 
 	}

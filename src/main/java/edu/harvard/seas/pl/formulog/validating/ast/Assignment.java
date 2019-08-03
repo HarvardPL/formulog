@@ -28,7 +28,7 @@ import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 
-public class Assignment implements SimpleConjunct {
+public class Assignment implements SimpleLiteral {
 
 	private final Var var;
 	private final Term rhs;
@@ -47,12 +47,12 @@ public class Assignment implements SimpleConjunct {
 	}
 	
 	@Override
-	public <I, O> O accept(SimpleConjunctVisitor<I, O> visitor, I input) {
+	public <I, O> O accept(SimpleLiteralVisitor<I, O> visitor, I input) {
 		return visitor.visit(this, input);
 	}
 
 	@Override
-	public <I, O, E extends Throwable> O accept(SimpleConjunctExnVisitor<I, O, E> visitor, I input) throws E {
+	public <I, O, E extends Throwable> O accept(SimpleLiteralExnVisitor<I, O, E> visitor, I input) throws E {
 		return visitor.visit(this, input);
 	}
 

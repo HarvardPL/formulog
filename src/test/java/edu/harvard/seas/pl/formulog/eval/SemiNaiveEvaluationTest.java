@@ -23,11 +23,11 @@ package edu.harvard.seas.pl.formulog.eval;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 
-public class NaiveEvaluationTest extends CommonEvaluationTest {
+public class SemiNaiveEvaluationTest extends CommonEvaluationTest {
 
 	@Override
 	protected Evaluation setup(WellTypedProgram prog) throws InvalidProgramException, EvaluationException {
-		return NaiveEvaluation.setup(prog);
+		return SemiNaiveEvaluation.setup(prog);
 	}
 
 }
