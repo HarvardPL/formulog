@@ -28,7 +28,15 @@ import edu.harvard.seas.pl.formulog.ast.Var;
 
 public class OverwriteSubstitution implements Substitution {
 
-	private final Map<Var, Term> m = new HashMap<>();
+	private final Map<Var, Term> m;
+
+	public OverwriteSubstitution() {
+		this(new HashMap<>());
+	}
+	
+	private OverwriteSubstitution(Map<Var, Term> m) {
+		this.m = m;
+	}
 	
 	@Override
 	public void put(Var v, Term t) {
@@ -49,6 +57,10 @@ public class OverwriteSubstitution implements Substitution {
 	@Override
 	public Iterable<Var> iterateKeys() {
 		return m.keySet();
+	}
+
+	public OverwriteSubstitution copy() {
+		return new OverwriteSubstitution(new HashMap<>(m));
 	}
 
 }

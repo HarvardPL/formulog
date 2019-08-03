@@ -26,11 +26,13 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class CountingFJPImpl<T> implements CountingFJP<T> {
+import edu.harvard.seas.pl.formulog.eval.EvaluationException;
+
+public class CountingFJPImpl implements CountingFJP {
 
 	private final ForkJoinPool exec;
 	private final AtomicInteger taskCount = new AtomicInteger();
-	private volatile T failureCause;
+	private volatile EvaluationException failureCause;
 
 	public CountingFJPImpl(int parallelism, ForkJoinWorkerThreadFactory threadFactory) {
 		this.exec = new ForkJoinPool(parallelism, threadFactory, new Thread.UncaughtExceptionHandler() {
@@ -43,7 +45,7 @@ public class CountingFJPImpl<T> implements CountingFJP<T> {
 		}, false);
 	}
 
-	public void externallyAddTask(AbstractFJPTask<T> w) {
+	public void externallyAddTask(AbstractFJPTask w) {
 		taskCount.incrementAndGet();
 		try {
 			exec.execute(w);
@@ -52,7 +54,7 @@ public class CountingFJPImpl<T> implements CountingFJP<T> {
 		}
 	}
 
-	public void recursivelyAddTask(AbstractFJPTask<T> w) {
+	public void recursivelyAddTask(AbstractFJPTask w) {
 		taskCount.incrementAndGet();
 		w.fork();
 	}
@@ -88,7 +90,7 @@ public class CountingFJPImpl<T> implements CountingFJP<T> {
 		}
 	}
 	
-	public final void fail(T cause) {
+	public final void fail(EvaluationException cause) {
 		failureCause = cause;
 		exec.shutdownNow();
 		synchronized (taskCount) {
@@ -100,7 +102,7 @@ public class CountingFJPImpl<T> implements CountingFJP<T> {
 		return failureCause != null;
 	}
 	
-	public final T getFailureCause() {
+	public final EvaluationException getFailureCause() {
 		return failureCause;
 	}
 

@@ -3,6 +3,8 @@ package edu.harvard.seas.pl.formulog.util;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
+import edu.harvard.seas.pl.formulog.eval.EvaluationException;
+
 /*-
  * #%L
  * FormuLog
@@ -23,26 +25,26 @@ import java.util.Deque;
  * #L%
  */
 
-public class MockCountingFJP<T> implements CountingFJP<T> {
+public class MockCountingFJP implements CountingFJP {
 
-	private volatile T failureCause;
+	private volatile EvaluationException failureCause;
 	private volatile boolean shutdown;
 	
-	private final Deque<AbstractFJPTask<T>> workItems = new ArrayDeque<>();
+	private final Deque<AbstractFJPTask> workItems = new ArrayDeque<>();
 
-	public synchronized void externallyAddTask(AbstractFJPTask<T> w) {
+	public synchronized void externallyAddTask(AbstractFJPTask w) {
 		assert !shutdown;
 		workItems.addLast(w);
 	}
 
-	public synchronized void recursivelyAddTask(AbstractFJPTask<T> w) {
+	public synchronized void recursivelyAddTask(AbstractFJPTask w) {
 		assert !shutdown;
 		workItems.addLast(w);
 	}
 
 	public synchronized final void blockUntilFinished() {
 		while (!workItems.isEmpty()) {
-			AbstractFJPTask<T> task = workItems.removeLast();
+			AbstractFJPTask task = workItems.removeLast();
 			task.compute();
 		}
 	}
@@ -52,7 +54,7 @@ public class MockCountingFJP<T> implements CountingFJP<T> {
 		shutdown = true;
 	}
 	
-	public synchronized final void fail(T cause) {
+	public synchronized final void fail(EvaluationException cause) {
 		failureCause = cause;
 		shutdown = true;
 	}
@@ -61,7 +63,7 @@ public class MockCountingFJP<T> implements CountingFJP<T> {
 		return failureCause != null;
 	}
 	
-	public synchronized final T getFailureCause() {
+	public synchronized final EvaluationException getFailureCause() {
 		return failureCause;
 	}
 

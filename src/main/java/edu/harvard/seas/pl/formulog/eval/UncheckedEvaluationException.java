@@ -1,6 +1,4 @@
-package edu.harvard.seas.pl.formulog.util;
-
-import edu.harvard.seas.pl.formulog.eval.EvaluationException;
+package edu.harvard.seas.pl.formulog.eval;
 
 /*-
  * #%L
@@ -22,22 +20,28 @@ import edu.harvard.seas.pl.formulog.eval.EvaluationException;
  * #L%
  */
 
-public interface CountingFJP {
+public class UncheckedEvaluationException extends RuntimeException {
 
-	void externallyAddTask(AbstractFJPTask w);
+	private static final long serialVersionUID = 1L;
 
-	void recursivelyAddTask(AbstractFJPTask w);
-	
-	void reportTaskCompletion();
+	public UncheckedEvaluationException() {
+		
+	}
 
-	void blockUntilFinished();
+	public UncheckedEvaluationException(String message) {
+		super(message);
+	}
 
-	void shutdown();
-	
-	void fail(EvaluationException cause);
-	
-	boolean hasFailed();
-	
-	EvaluationException getFailureCause();
-	
+	public UncheckedEvaluationException(Throwable cause) {
+		super(cause);
+	}
+
+	public UncheckedEvaluationException(String message, Throwable cause) {
+		super(message, cause);
+	}
+
+	public UncheckedEvaluationException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+		super(message, cause, enableSuppression, writableStackTrace);
+	}
+
 }
