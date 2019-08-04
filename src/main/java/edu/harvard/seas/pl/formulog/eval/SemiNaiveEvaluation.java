@@ -45,11 +45,14 @@ import edu.harvard.seas.pl.formulog.db.IndexedFactDbBuilder;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb.SortedIndexedFactDbBuilder;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
+import edu.harvard.seas.pl.formulog.smt.Z3ThreadFactory;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 import edu.harvard.seas.pl.formulog.unification.OverwriteSubstitution;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.util.AbstractFJPTask;
+import edu.harvard.seas.pl.formulog.util.CountingFJP;
+import edu.harvard.seas.pl.formulog.util.CountingFJPImpl;
 import edu.harvard.seas.pl.formulog.validating.FunctionDefValidation;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 import edu.harvard.seas.pl.formulog.validating.Stratifier;
@@ -59,7 +62,6 @@ import edu.harvard.seas.pl.formulog.validating.ast.Assignment;
 import edu.harvard.seas.pl.formulog.validating.ast.Check;
 import edu.harvard.seas.pl.formulog.validating.ast.Destructor;
 import edu.harvard.seas.pl.formulog.validating.ast.SimpleLiteral;
-import edu.harvard.seas.pl.formulog.validating.ast.SimpleLiteralExnVisitor;
 import edu.harvard.seas.pl.formulog.validating.ast.SimpleLiteralVisitor;
 import edu.harvard.seas.pl.formulog.validating.ast.SimplePredicate;
 import edu.harvard.seas.pl.formulog.validating.ast.SimpleRule;
@@ -74,8 +76,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 	private final List<Stratum> strata;
 	private final UserPredicate query;
 	private volatile boolean changed;
+	private final CountingFJP exec;
 
-	public static SemiNaiveEvaluation setup(WellTypedProgram prog) throws InvalidProgramException {
+	public static SemiNaiveEvaluation setup(WellTypedProgram prog, int parallelism) throws InvalidProgramException {
 		FunctionDefValidation.validate(prog);
 		MagicSetTransformer mst = new MagicSetTransformer(prog);
 		BasicProgram magicProg = mst.transform(true, true);
@@ -129,7 +132,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 				}
 			}
 		}
-		return new SemiNaiveEvaluation(db, deltaDbb, rules, magicProg.getQuery(), strata);
+		CountingFJP exec = new CountingFJPImpl(parallelism, new Z3ThreadFactory(magicProg.getSymbolManager()));
+		return new SemiNaiveEvaluation(db, deltaDbb, rules, magicProg.getQuery(), strata, exec);
 	}
 
 	public static int score(ComplexLiteral l, Set<Var> boundVars) {
@@ -137,10 +141,11 @@ public class SemiNaiveEvaluation implements Evaluation {
 	}
 
 	private SemiNaiveEvaluation(IndexedFactDb db, IndexedFactDbBuilder<?> deltaDbb,
-			Map<RelationSymbol, Iterable<IndexedRule>> rules, UserPredicate query, List<Stratum> strata) {
+			Map<RelationSymbol, Iterable<IndexedRule>> rules, UserPredicate query, List<Stratum> strata, CountingFJP exec) {
 		this.db = db;
 		this.query = query;
 		this.strata = strata;
+		this.exec = exec;
 		deltaDb = deltaDbb.build();
 		nextDeltaDb = deltaDbb.build();
 		splitRules(rules);
@@ -193,7 +198,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 	}
 
 	@Override
-	public synchronized void run(int parallelism) throws EvaluationException {
+	public synchronized void run() throws EvaluationException {
 		for (Stratum stratum : strata) {
 			evaluateStratum(stratum);
 		}
@@ -201,24 +206,25 @@ public class SemiNaiveEvaluation implements Evaluation {
 
 	private void evaluateStratum(Stratum stratum) throws EvaluationException {
 		Set<RelationSymbol> syms = stratum.getPredicateSyms();
-		boolean changed = false;
 		for (RelationSymbol sym : syms) {
 			for (IndexedRule r : firstRoundRules.get(sym)) {
-				changed |= evaluateRule(r, 0, new OverwriteSubstitution());
+				exec.externallyAddTask(new RulePrefixEvaluator(r));;
 			}
 		}
+		exec.blockUntilFinished();
 		updateDbs();
 		while (changed) {
 			changed = false;
 			for (RelationSymbol sym : syms) {
 				for (IndexedRule r : laterRoundRules.get(sym)) {
-					changed |= evaluateRule(r, 0, new OverwriteSubstitution());
+				exec.externallyAddTask(new RulePrefixEvaluator(r));;
 				}
 			}
+			exec.blockUntilFinished();
 			updateDbs();
 		}
 	}
-
+	
 	private void updateDbs() {
 		for (RelationSymbol sym : nextDeltaDb.getSymbols()) {
 			for (Term[] args : nextDeltaDb.getAll(sym)) {
@@ -231,73 +237,6 @@ public class SemiNaiveEvaluation implements Evaluation {
 		nextDeltaDb.clear();
 	}
 
-	private boolean evaluateRule(IndexedRule r, int pos, OverwriteSubstitution s) throws EvaluationException {
-		if (pos >= r.getBodySize()) {
-			SimplePredicate hd = r.getHead().normalize(s);
-			RelationSymbol sym = hd.getSymbol();
-			Term[] args = Terms.normalize(hd.getArgs(), s);
-			if (!db.hasFact(sym, args)) {
-				nextDeltaDb.add(sym, args);
-				return true;
-			}
-			return false;
-		}
-		return r.getBody(pos).accept(new SimpleLiteralExnVisitor<Void, Boolean, EvaluationException>() {
-
-			@Override
-			public Boolean visit(Assignment assignment, Void input) throws EvaluationException {
-				assignment.assign(s);
-				return evaluateRule(r, pos + 1, s);
-			}
-
-			@Override
-			public Boolean visit(Check check, Void input) throws EvaluationException {
-				return check.check(s) && evaluateRule(r, pos + 1, s);
-			}
-
-			@Override
-			public Boolean visit(Destructor destructor, Void input) throws EvaluationException {
-				return destructor.destruct(s) && evaluateRule(r, pos + 1, s);
-			}
-
-			@Override
-			public Boolean visit(SimplePredicate predicate, Void input) throws EvaluationException {
-				int idx = r.getDBIndex(pos);
-				Term[] args = predicate.getArgs();
-				Term[] key = new Term[args.length];
-				boolean[] pat = predicate.getBindingPattern();
-				for (int i = 0; i < args.length; ++i) {
-					if (pat[i]) {
-						key[i] = args[i].normalize(s);
-					} else {
-						key[i] = args[i];
-					}
-				}
-				Set<Term[]> answers;
-				if (predicate.getSymbol() instanceof DeltaSymbol) {
-					answers = deltaDb.get(key, idx);
-				} else {
-					answers = db.get(key, idx);
-				}
-				if (predicate.isNegated()) {
-					return answers.isEmpty() && evaluateRule(r, pos + 1, s);
-				} else {
-					boolean changed = false;
-					for (Term[] ans : answers) {
-						for (int i = 0; i < pat.length; ++i) {
-							if (!pat[i]) {
-								s.put((Var) key[i], ans[i]);
-							}
-						}
-						changed |= evaluateRule(r, pos + 1, s);
-					}
-					return changed;
-				}
-			}
-
-		}, null);
-	}
-
 	private void reportFact(SimplePredicate atom) {
 		RelationSymbol sym = atom.getSymbol();
 		Term[] args = atom.getArgs();
@@ -308,8 +247,6 @@ public class SemiNaiveEvaluation implements Evaluation {
 	}
 
 	private static final int minTaskSize = 1;
-
-	// XXX Need to sort rules
 
 	private Set<Term[]> lookup(IndexedRule r, int pos, OverwriteSubstitution s) throws EvaluationException {
 		SimplePredicate predicate = (SimplePredicate) r.getBody(pos);
@@ -340,8 +277,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		private final Spliterator<Term[]> split;
 
 		protected RuleSuffixEvaluator(IndexedRule rule, int pos, OverwriteSubstitution s, Spliterator<Term[]> split) {
-			// XXX
-			super(null);
+			super(exec);
 			this.rule = rule;
 			this.startPos = pos;
 			this.s = s;
@@ -355,7 +291,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 				if (split2 == null) {
 					break;
 				}
-				new RuleSuffixEvaluator(rule, startPos, s.copy(), split2).fork();
+				exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, startPos, s.copy(), split2));
 			}
 			try {
 				split.forEachRemaining(this::evaluate);
@@ -380,20 +316,64 @@ public class SemiNaiveEvaluation implements Evaluation {
 					}
 					pos--;
 					movingRight = false;
-				} else {
-					if (movingRight) {
-						SimpleLiteral l = rule.getBody(pos);
-						// XXX
-					} else {
-						Iterator<Term[]> it = stack.removeLast();
-						if (it.hasNext()) {
-							ans = it.next();
-							updateBinding((SimplePredicate) rule.getBody(pos), ans);
-							movingRight = true;
+				} else if (movingRight) {
+					SimpleLiteral l = rule.getBody(pos);
+					try {
+						switch (l.getTag()) {
+						case ASSIGNMENT:
+							((Assignment) l).assign(s);
+							stack.addFirst(Collections.emptyIterator());
 							pos++;
-						} else {
-							pos--;
+							break;
+						case CHECK:
+							if (((Check) l).check(s)) {
+								stack.addFirst(Collections.emptyIterator());
+								pos++;
+							} else {
+								pos--;
+								movingRight = false;
+							}
+							break;
+						case DESTRUCTOR:
+							if (((Destructor) l).destruct(s)) {
+								stack.addFirst(Collections.emptyIterator());
+								pos++;
+							} else {
+								pos--;
+								movingRight = false;
+							}
+							break;
+						case PREDICATE:
+							Set<Term[]> answers = lookup(rule, pos, s);
+							if (((SimplePredicate) l).isNegated()) {
+								if (answers.isEmpty()) {
+									stack.addFirst(Collections.emptyIterator());
+									pos++;
+								} else {
+									pos--;
+									movingRight = false;
+								}
+							} else {
+								stack.addFirst(answers.iterator());
+								// Do this just so that we hit the right case on the next iteration.
+								movingRight = false;
+							}
+							break;
 						}
+					} catch (EvaluationException e) {
+						throw new UncheckedEvaluationException(
+								"Exception raised while evaluating the literal: " + l + "\n\n" + e.getMessage());
+					}
+				} else {
+					Iterator<Term[]> it = stack.getFirst();
+					if (it.hasNext()) {
+						ans = it.next();
+						updateBinding((SimplePredicate) rule.getBody(pos), ans);
+						movingRight = true;
+						pos++;
+					} else {
+						stack.removeFirst();
+						pos--;
 					}
 				}
 			}
@@ -411,13 +391,13 @@ public class SemiNaiveEvaluation implements Evaluation {
 
 	}
 
+	@SuppressWarnings("serial")
 	private class RulePrefixEvaluator extends AbstractFJPTask {
 
 		private final IndexedRule rule;
 
 		protected RulePrefixEvaluator(IndexedRule rule) {
-			// XXX
-			super(null);
+			super(exec);
 			this.rule = rule;
 		}
 
@@ -427,21 +407,24 @@ public class SemiNaiveEvaluation implements Evaluation {
 				int len = rule.getBodySize();
 				int pos = 0;
 				OverwriteSubstitution s = new OverwriteSubstitution();
-				for (; pos < len; ++pos) {
+				loop: for (; pos < len; ++pos) {
 					SimpleLiteral l = rule.getBody(pos);
 					try {
-						if (l instanceof Assignment) {
+						switch (l.getTag()) {
+						case ASSIGNMENT:
 							((Assignment) l).assign(s);
-						} else if (l instanceof Check) {
+							break;
+						case CHECK:
 							if (!((Check) l).check(s)) {
 								return;
 							}
-						} else if (l instanceof Destructor) {
+							break;
+						case DESTRUCTOR:
 							if (!((Destructor) l).destruct(s)) {
 								return;
 							}
-						} else {
-							assert l instanceof SimplePredicate;
+							break;
+						case PREDICATE:
 							SimplePredicate p = (SimplePredicate) l;
 							if (p.isNegated()) {
 								if (!lookup(rule, pos, s).isEmpty()) {
@@ -449,8 +432,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 								}
 							} else {
 								// Stop on the first positive user predicate.
-								break;
+								break loop;
 							}
+							break;
 						}
 					} catch (EvaluationException e) {
 						throw new EvaluationException(
@@ -466,7 +450,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 								+ rule.getHead() + e.getLocalizedMessage());
 					}
 				}
-				new RuleSuffixEvaluator(rule, pos, s, lookup(rule, pos, s).spliterator()).fork();
+				exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s, lookup(rule, pos, s).spliterator()));
 			} catch (EvaluationException e) {
 				throw new EvaluationException(
 						"Exception raised while evaluating this rule:\n" + rule + "\n\n" + e.getMessage());

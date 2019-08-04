@@ -95,7 +95,8 @@ public final class Main {
 	private Evaluation setup(WellTypedProgram prog) {
 		System.out.println("Rewriting and validating...");
 		try {
-			return SemiNaiveEvaluation.setup(prog);
+			int parallelism = cl.hasOption("j") ? Integer.valueOf(cl.getOptionValue("j")) : 1;
+			return SemiNaiveEvaluation.setup(prog, parallelism);
 		} catch (InvalidProgramException e) {
 			handleException("Error while rewriting/validation!", e);
 			throw new AssertionError("impossible");
@@ -105,8 +106,7 @@ public final class Main {
 	private void evaluate(Evaluation eval) {
 		System.out.println("Evaluating...");
 		try {
-			int parallelism = cl.hasOption("j") ? Integer.valueOf(cl.getOptionValue("j")) : 1;
-			eval.run(parallelism);
+			eval.run();
 		} catch (EvaluationException e) {
 			handleException("Error while evaluating the program!", e);
 		}

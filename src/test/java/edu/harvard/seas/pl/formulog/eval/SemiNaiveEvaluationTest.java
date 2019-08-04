@@ -27,7 +27,7 @@ public class SemiNaiveEvaluationTest extends CommonEvaluationTest {
 
 	@Override
 	protected Evaluation setup(WellTypedProgram prog) throws InvalidProgramException, EvaluationException {
-		return SemiNaiveEvaluation.setup(prog);
+		return SemiNaiveEvaluation.setup(prog, 2);
 	}
 
 }

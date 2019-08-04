@@ -33,4 +33,6 @@ public interface SimpleLiteral extends Literal {
 
 	Set<Var> varSet();
 	
+	SimpleLiteralTag getTag();
+	
 }

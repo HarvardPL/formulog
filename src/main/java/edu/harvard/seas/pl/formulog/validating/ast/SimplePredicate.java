@@ -151,4 +151,9 @@ public class SimplePredicate implements SimpleLiteral {
 		return vars;
 	}
 
+	@Override
+	public SimpleLiteralTag getTag() {
+		return SimpleLiteralTag.PREDICATE;
+	}
+
 }

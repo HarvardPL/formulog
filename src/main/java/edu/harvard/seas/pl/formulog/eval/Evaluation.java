@@ -24,11 +24,7 @@ import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 
 public interface Evaluation {
 
-	default void run() throws EvaluationException {
-		run(1);
-	}
-	
-	void run(int parallelism) throws EvaluationException;
+	void run() throws EvaluationException;
 	
 	EvaluationResult getResult();
 

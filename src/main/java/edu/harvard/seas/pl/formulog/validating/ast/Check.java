@@ -77,4 +77,9 @@ public class Check implements SimpleLiteral {
 		return vars;
 	}
 
+	@Override
+	public SimpleLiteralTag getTag() {
+		return SimpleLiteralTag.CHECK;
+	}
+
 }

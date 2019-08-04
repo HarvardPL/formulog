@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.magic;
+package edu.harvard.seas.pl.formulog.validating.ast;
 
 /*-
  * #%L
@@ -20,17 +20,6 @@ package edu.harvard.seas.pl.formulog.magic;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.eval.Evaluation;
-import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
-import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
-import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
-
-public class SemiNaiveMagicSetTest extends CommonMagicSetTest {
-
-	@Override
-	protected Evaluation setup(WellTypedProgram prog) throws InvalidProgramException, EvaluationException {
-		return SemiNaiveEvaluation.setup(prog, 2);
-	}
-
+public enum SimpleLiteralTag {
+	ASSIGNMENT, CHECK, DESTRUCTOR, PREDICATE;
 }
