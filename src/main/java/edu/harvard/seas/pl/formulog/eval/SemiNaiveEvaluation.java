@@ -36,8 +36,10 @@ import java.util.Spliterator;
 import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
+import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralVisitor;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
+import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDb;
@@ -136,12 +138,48 @@ public class SemiNaiveEvaluation implements Evaluation {
 		return new SemiNaiveEvaluation(db, deltaDbb, rules, magicProg.getQuery(), strata, exec);
 	}
 
-	public static int score(ComplexLiteral l, Set<Var> boundVars) {
+	private static int score(ComplexLiteral l, Set<Var> boundVars) {
 		return 0;
 	}
 
+	@SuppressWarnings("unused")
+	private static int score2(ComplexLiteral l, Set<Var> boundVars) {
+		// This seems to be worse than just doing nothing.
+		return l.accept(new ComplexLiteralVisitor<Void, Integer>() {
+
+			@Override
+			public Integer visit(UnificationPredicate unificationPredicate, Void input) {
+				return Integer.MAX_VALUE;
+			}
+
+			@Override
+			public Integer visit(UserPredicate pred, Void input) {
+				if (pred.isNegated()) {
+					return Integer.MAX_VALUE;
+				}
+				if (pred.getSymbol() instanceof DeltaSymbol) {
+					return 100;
+				}
+				Term[] args = pred.getArgs();
+				if (args.length == 0) {
+					return 150;
+				}
+				int bound = 0;
+				for (int i = 0; i < args.length; ++i) {
+					if (boundVars.containsAll(args[i].varSet())) {
+						bound++;
+					}
+				}
+				double percentBound = ((double) bound) / args.length * 100;
+				return (int) percentBound;
+			}
+
+		}, null);
+	}
+
 	private SemiNaiveEvaluation(IndexedFactDb db, IndexedFactDbBuilder<?> deltaDbb,
-			Map<RelationSymbol, Iterable<IndexedRule>> rules, UserPredicate query, List<Stratum> strata, CountingFJP exec) {
+			Map<RelationSymbol, Iterable<IndexedRule>> rules, UserPredicate query, List<Stratum> strata,
+			CountingFJP exec) {
 		this.db = db;
 		this.query = query;
 		this.strata = strata;
@@ -208,7 +246,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 		Set<RelationSymbol> syms = stratum.getPredicateSyms();
 		for (RelationSymbol sym : syms) {
 			for (IndexedRule r : firstRoundRules.get(sym)) {
-				exec.externallyAddTask(new RulePrefixEvaluator(r));;
+				exec.externallyAddTask(new RulePrefixEvaluator(r));
+				;
 			}
 		}
 		exec.blockUntilFinished();
@@ -217,14 +256,15 @@ public class SemiNaiveEvaluation implements Evaluation {
 			changed = false;
 			for (RelationSymbol sym : syms) {
 				for (IndexedRule r : laterRoundRules.get(sym)) {
-				exec.externallyAddTask(new RulePrefixEvaluator(r));;
+					exec.externallyAddTask(new RulePrefixEvaluator(r));
+					;
 				}
 			}
 			exec.blockUntilFinished();
 			updateDbs();
 		}
 	}
-	
+
 	private void updateDbs() {
 		for (RelationSymbol sym : nextDeltaDb.getSymbols()) {
 			for (Term[] args : nextDeltaDb.getAll(sym)) {
@@ -246,7 +286,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 	}
 
-	private static final int minTaskSize = 1;
+	private static final int minTaskSize = 20;
 
 	private Set<Term[]> lookup(IndexedRule r, int pos, OverwriteSubstitution s) throws EvaluationException {
 		SimplePredicate predicate = (SimplePredicate) r.getBody(pos);
@@ -354,8 +394,15 @@ public class SemiNaiveEvaluation implements Evaluation {
 									movingRight = false;
 								}
 							} else {
-								stack.addFirst(answers.iterator());
-								// Do this just so that we hit the right case on the next iteration.
+								Spliterator<Term[]> split = answers.spliterator();
+								// XXX This might be too expensive here.
+								if (split.estimateSize() > minTaskSize) {
+									exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s.copy(), split));
+									pos--;
+								} else {
+									stack.addFirst(answers.iterator());
+									// No need to do anything else: we'll hit the right case on the next iteration.
+								}
 								movingRight = false;
 							}
 							break;

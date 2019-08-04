@@ -1,27 +1,8 @@
 package edu.harvard.seas.pl.formulog.validating;
 
-/*-
- * #%L
- * FormuLog
- * %%
- * Copyright (C) 2018 - 2019 President and Fellows of Harvard College
- * %%
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * #L%
- */
-
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -63,25 +44,30 @@ public class ValidRule extends AbstractRule<UserPredicate, ComplexLiteral> {
 
 	public static void order(List<ComplexLiteral> atoms, BiFunction<ComplexLiteral, Set<Var>, Integer> score,
 			Set<Var> boundVars) throws InvalidProgramException {
-		for (int i = 0; i < atoms.size(); ++i) {
-			int bestScore = Integer.MIN_VALUE;
-			int bestPos = -1;
-			for (int j = i; j < atoms.size(); ++j) {
-				ComplexLiteral atom = atoms.get(j);
-				if (Unification.canBindVars(atom, boundVars)) {
-					int localScore = score.apply(atoms.get(j), boundVars);
+		List<ComplexLiteral> newList = new ArrayList<>();
+		// Using a linked hash set ensures the sort is stable.
+		Set<ComplexLiteral> unplaced = new LinkedHashSet<>(atoms);
+		while (!unplaced.isEmpty()) {
+			ComplexLiteral bestLit = null;
+			int bestScore = -1;
+			for (ComplexLiteral l : unplaced) {
+				if (Unification.canBindVars(l, boundVars)) {
+					int localScore = score.apply(l, boundVars);
 					if (localScore > bestScore) {
 						bestScore = localScore;
-						bestPos = j;
+						bestLit = l;
 					}
 				}
 			}
-			if (bestPos == -1) {
+			if (bestLit == null) {
 				throw new InvalidProgramException("Literals do not admit an evaluable reordering");
 			}
-			Collections.swap(atoms, i, bestPos);
-			boundVars.addAll(atoms.get(i).varSet());
+			newList.add(bestLit);
+			boundVars.addAll(bestLit.varSet());
+			unplaced.remove(bestLit);
 		}
+		atoms.clear();
+		atoms.addAll(newList);
 	}
 
 	private ValidRule(UserPredicate head, List<ComplexLiteral> body) {
