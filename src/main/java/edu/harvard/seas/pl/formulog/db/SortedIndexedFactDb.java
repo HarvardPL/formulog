@@ -25,15 +25,18 @@ import java.util.Arrays;
 
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.stream.Collectors;
 
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
+import edu.harvard.seas.pl.formulog.symbols.SymbolComparator;
 
 public class SortedIndexedFactDb implements IndexedFactDb {
 
@@ -41,7 +44,8 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 	private final IndexedFactSet[] indices;
 	private final Map<RelationSymbol, Iterable<Integer>> relevantIndices;
 
-	private SortedIndexedFactDb(Map<RelationSymbol, Set<Term[]>> all, IndexedFactSet[] indices, Map<RelationSymbol, Iterable<Integer>> relevantIndices) {
+	private SortedIndexedFactDb(Map<RelationSymbol, Set<Term[]>> all, IndexedFactSet[] indices,
+			Map<RelationSymbol, Iterable<Integer>> relevantIndices) {
 		this.all = all;
 		this.indices = indices;
 		this.relevantIndices = relevantIndices;
@@ -61,7 +65,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 	public Set<Term[]> get(Term[] key, int index) {
 		return indices[index].lookup(key);
 	}
-	
+
 	@Override
 	public boolean add(RelationSymbol sym, Term[] args) {
 		assert allNormal(args);
@@ -73,7 +77,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 		}
 		return true;
 	}
-	
+
 	private boolean allNormal(Term[] args) {
 		for (Term arg : args) {
 			if (!arg.isGround() || arg.containsFunctionCall()) {
@@ -82,13 +86,13 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 		}
 		return true;
 	}
-	
+
 	@Override
 	public boolean hasFact(RelationSymbol sym, Term[] args) {
 		assert allGround(args);
 		return all.get(sym).contains(args);
 	}
-	
+
 	private boolean allGround(Term[] args) {
 		for (Term arg : args) {
 			if (!arg.isGround()) {
@@ -97,7 +101,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 		}
 		return true;
 	}
-	
+
 	@Override
 	public void clear() {
 		for (Set<Term[]> s : all.values()) {
@@ -107,7 +111,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			index.clear();
 		}
 	}
-	
+
 	@Override
 	public String toString() {
 		String s = "{\n";
@@ -124,14 +128,16 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 	public static class SortedIndexedFactDbBuilder implements IndexedFactDbBuilder<SortedIndexedFactDb> {
 
 		private int cnt = 0;
-		private final Map<RelationSymbol, Map<BooleanArrayWrapper, Integer>> pats = new HashMap<>();
+		private final Map<RelationSymbol, Map<BooleanArrayWrapper, Integer>> pats = new LinkedHashMap<>();
 
 		public SortedIndexedFactDbBuilder(Set<RelationSymbol> allSyms) {
-			for (RelationSymbol sym : allSyms) {
+			List<RelationSymbol> sortedSyms = allSyms.stream().sorted(SymbolComparator.INSTANCE)
+					.collect(Collectors.toList());
+			for (RelationSymbol sym : sortedSyms) {
 				pats.put(sym, new HashMap<>());
 			}
 		}
-		
+
 		@Override
 		public synchronized int makeIndex(RelationSymbol sym, boolean[] pat) {
 			assert sym.getArity() == pat.length;
@@ -147,7 +153,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 
 		@Override
 		public SortedIndexedFactDb build() {
-			Map<RelationSymbol, Set<Term[]>> all = new HashMap<>();
+			Map<RelationSymbol, Set<Term[]>> all = new LinkedHashMap<>();
 			IndexedFactSet[] indices = new IndexedFactSet[cnt];
 			Map<RelationSymbol, Iterable<Integer>> relevantIndices = new HashMap<>();
 			for (Map.Entry<RelationSymbol, Map<BooleanArrayWrapper, Integer>> e : pats.entrySet()) {
