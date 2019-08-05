@@ -22,7 +22,7 @@ package edu.harvard.seas.pl.formulog.symbols;
 
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 
-public abstract class AbstractWrappedRelationSymbol<R extends RelationSymbol> implements RelationSymbol {
+public abstract class AbstractWrappedRelationSymbol<R extends RelationSymbol> implements WrappedRelationSymbol<R> {
 
 	private final R baseSymbol;
 	
@@ -30,6 +30,7 @@ public abstract class AbstractWrappedRelationSymbol<R extends RelationSymbol> im
 		this.baseSymbol = baseSymbol;
 	}
 
+	@Override
 	public R getBaseSymbol() {
 		return baseSymbol;
 	}

@@ -1,0 +1,8 @@
+@topdown
+output foo(i32)
+
+foo(0).
+foo(42).
+
+output ok
+ok :- foo(42), foo(_).

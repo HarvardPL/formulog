@@ -52,6 +52,8 @@ public final class Main {
 
 	private final CommandLine cl;
 	private final boolean debugMst;
+	
+	private static final boolean exnStackTrace = System.getProperty("exnStackTrace") != null;
 
 	private Main(CommandLine cl, boolean debugMst) {
 		this.cl = cl;
@@ -183,7 +185,9 @@ public final class Main {
 	private static void handleException(String msg, Exception e) {
 		System.out.println(msg);
 		System.out.println(e.getMessage());
-		e.printStackTrace(System.out);
+		if (exnStackTrace) {
+			e.printStackTrace(System.out);
+		}
 		System.exit(1);
 	}
 

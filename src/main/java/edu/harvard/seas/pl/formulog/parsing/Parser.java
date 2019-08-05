@@ -198,7 +198,7 @@ public class Parser {
 			parser.prog().accept(stmtProcessor);
 			return stmtProcessor.getProgram();
 		} catch (Exception e) {
-			throw new ParseException(e);
+			throw new ParseException(e.getMessage());
 		}
 	}
 
@@ -1257,6 +1257,10 @@ public class Parser {
 			private ComplexLiteral extractAtom(PredicateContext ctx, boolean negated) {
 				Term[] args = termContextsToTerms(ctx.termArgs().term());
 				Symbol sym = symbolManager.lookupSymbol(ctx.ID().getText());
+				if (sym.getArity() != args.length) {
+					throw new RuntimeException("Symbol " + sym + " has arity " + sym.getArity() + " but args "
+							+ Arrays.toString(args) + " have length " + args.length);
+				}
 				if (sym instanceof FunctionSymbol) {
 					Term f = functionCallFactory.make((FunctionSymbol) sym, args);
 					return ComplexLiterals.unifyWithBool(f, !negated);
