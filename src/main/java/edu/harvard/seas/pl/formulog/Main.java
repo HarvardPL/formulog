@@ -74,7 +74,7 @@ public final class Main {
 				inputDir = cl.getOptionValue("I");
 			}
 			FileReader reader = new FileReader(cl.getArgs()[0]);
-			return (new Parser()).parse(reader, Paths.get(inputDir));
+			return new Parser().parse(reader, Paths.get(inputDir));
 		} catch (ParseException | FileNotFoundException e) {
 			handleException("Error while parsing!", e);
 			throw new AssertionError("impossible");
@@ -83,9 +83,8 @@ public final class Main {
 
 	private WellTypedProgram typeCheck(Program<UserPredicate, BasicRule> prog) {
 		System.out.println("Type checking...");
-		TypeChecker typeChecker = new TypeChecker(prog);
 		try {
-			return typeChecker.typeCheck();
+			return new TypeChecker(prog).typeCheck();
 		} catch (TypeException e) {
 			handleException("Error while typechecking the program!", e);
 			throw new AssertionError("impossible");

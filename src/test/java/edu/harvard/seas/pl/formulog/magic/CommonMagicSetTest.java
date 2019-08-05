@@ -225,5 +225,11 @@ public abstract class CommonMagicSetTest extends AbstractEvaluationTest {
 	public void test179() {
 		test("test179_ok.flg");
 	}
+	
+	@Test
+	public void test249() {
+		test("test249_ok.flg");
+	}
+	
 
 }

@@ -49,7 +49,6 @@ import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
-import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.symbols.AbstractWrappedRelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbolFactory.PredicateFunctionSymbol;
@@ -58,8 +57,6 @@ import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolComparator;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
-import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
-import edu.harvard.seas.pl.formulog.unification.Unification;
 import edu.harvard.seas.pl.formulog.util.DedupWorkList;
 import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
@@ -146,17 +143,17 @@ public class MagicSetTransformer {
 
 			@Override
 			public boolean isIdbSymbol() {
-				return oldSym.isIdbSymbol();
+				return true;
 			}
 
 			@Override
 			public boolean isBottomUp() {
-				return oldSym.isBottomUp();
+				return true;
 			}
 
 			@Override
 			public boolean isTopDown() {
-				return oldSym.isTopDown();
+				return false;
 			}
 			
 			@Override
@@ -191,16 +188,6 @@ public class MagicSetTransformer {
 	private BasicProgram makeEdbProgram(UserPredicate query) {
 		BasicRule queryRule = makeQueryRule(query);
 		RelationSymbol oldQuerySym = query.getSymbol();
-		Set<Term[]> facts = new HashSet<>();
-		for (Term[] fact : origProg.getFacts(oldQuerySym)) {
-			try {
-				if (Unification.unify(query.getArgs(), fact, new SimpleSubstitution())) {
-					facts.add(fact);
-				}
-			} catch (EvaluationException e) {
-				throw new AssertionError("impossible");
-			}
-		}
 		return new BasicProgram() {
 
 			@Override
@@ -215,7 +202,7 @@ public class MagicSetTransformer {
 
 			@Override
 			public Set<RelationSymbol> getRuleSymbols() {
-				return Collections.emptySet();
+				return Collections.singleton(getQuery().getSymbol());
 			}
 
 			@Override
@@ -226,7 +213,7 @@ public class MagicSetTransformer {
 			@Override
 			public Set<Term[]> getFacts(RelationSymbol sym) {
 				if (oldQuerySym.equals(sym)) {
-					return facts;
+					return origProg.getFacts(oldQuerySym);
 				}
 				return Collections.emptySet();
 			}

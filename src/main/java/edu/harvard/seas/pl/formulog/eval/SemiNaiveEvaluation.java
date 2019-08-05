@@ -286,7 +286,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 	}
 
-	private static final int minTaskSize = 20;
+	private static final int minTaskSize = 10;
 
 	private Set<Term[]> lookup(IndexedRule r, int pos, OverwriteSubstitution s) throws EvaluationException {
 		SimplePredicate predicate = (SimplePredicate) r.getBody(pos);
@@ -326,7 +326,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 
 		@Override
 		public void doTask() throws EvaluationException {
-			while (split.estimateSize() > minTaskSize) {
+			while (split.estimateSize() > minTaskSize * 2) {
 				Spliterator<Term[]> split2 = split.trySplit();
 				if (split2 == null) {
 					break;
@@ -394,15 +394,19 @@ public class SemiNaiveEvaluation implements Evaluation {
 									movingRight = false;
 								}
 							} else {
+								/*
 								Spliterator<Term[]> split = answers.spliterator();
 								// XXX This might be too expensive here.
-								if (split.estimateSize() > minTaskSize) {
+								if (split.estimateSize() > minTaskSize * 2) {
 									exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s.copy(), split));
 									pos--;
 								} else {
+								*/
 									stack.addFirst(answers.iterator());
 									// No need to do anything else: we'll hit the right case on the next iteration.
+								/*	
 								}
+								*/
 								movingRight = false;
 							}
 							break;
