@@ -20,23 +20,10 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-public interface ConstructorSymbol extends TypedSymbol {
+import java.util.List;
 
-	ConstructorSymbolType getConstructorSymbolType();
+public interface RecordSymbol extends ConstructorSymbol {
 
-	default boolean isSolverConstructorSymbol() {
-		switch (getConstructorSymbolType()) {
-		case SOLVER_CONSTRUCTOR_GETTER:
-		case SOLVER_CONSTRUCTOR_TESTER:
-		case SOLVER_EXPR:
-		case SOLVER_UNINTERPRETED_FUNCTION:
-		case SOLVER_VARIABLE:
-			return true;
-		case INDEX_CONSTRUCTOR:
-		case VANILLA_CONSTRUCTOR:
-			return false;
-		}
-		throw new AssertionError("impossible");
-	}
-	
+	List<FunctionSymbol> getLabels();
+
 }

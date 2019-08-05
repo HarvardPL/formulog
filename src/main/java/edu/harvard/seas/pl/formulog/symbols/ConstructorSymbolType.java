@@ -26,8 +26,6 @@ public enum ConstructorSymbolType {
 
 	SOLVER_VARIABLE,
 
-	TUPLE,
-
 	VANILLA_CONSTRUCTOR,
 
 	SOLVER_EXPR,

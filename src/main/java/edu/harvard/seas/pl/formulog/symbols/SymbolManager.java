@@ -79,6 +79,14 @@ public class SymbolManager {
 		return sym;
 	}
 
+	public RecordSymbol createRecordSymbol(String name, int arity, FunctorType type, List<FunctionSymbol> labels) {
+		assertInitialized();
+		checkNotUsed(name);
+		RecordSymbol sym = new RecordSymbolImpl(name, arity, type, labels);
+		registerSymbol(sym, type);
+		return sym;
+	}
+
 	public FunctionSymbol createFunctionSymbol(String name, int arity, FunctorType type) {
 		assertInitialized();
 		checkNotUsed(name);
@@ -240,6 +248,27 @@ public class SymbolManager {
 		@Override
 		public ConstructorSymbolType getConstructorSymbolType() {
 			return cst;
+		}
+
+	}
+
+	private class RecordSymbolImpl extends AbstractTypedSymbol implements RecordSymbol {
+
+		private final List<FunctionSymbol> labels;
+
+		public RecordSymbolImpl(String name, int arity, FunctorType type, List<FunctionSymbol> labels) {
+			super(name, arity, type);
+			this.labels = labels;
+		}
+
+		@Override
+		public ConstructorSymbolType getConstructorSymbolType() {
+			return ConstructorSymbolType.VANILLA_CONSTRUCTOR;
+		}
+
+		@Override
+		public List<FunctionSymbol> getLabels() {
+			return labels;
 		}
 
 	}

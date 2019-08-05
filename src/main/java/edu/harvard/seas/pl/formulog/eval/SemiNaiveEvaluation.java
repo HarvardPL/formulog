@@ -55,6 +55,7 @@ import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.util.AbstractFJPTask;
 import edu.harvard.seas.pl.formulog.util.CountingFJP;
 import edu.harvard.seas.pl.formulog.util.CountingFJPImpl;
+import edu.harvard.seas.pl.formulog.util.MockCountingFJP;
 import edu.harvard.seas.pl.formulog.validating.FunctionDefValidation;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 import edu.harvard.seas.pl.formulog.validating.Stratifier;
@@ -80,6 +81,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 	private volatile boolean changed;
 	private final CountingFJP exec;
 
+	private static final boolean sequential = System.getProperty("sequential") != null;
+	
 	public static SemiNaiveEvaluation setup(WellTypedProgram prog, int parallelism) throws InvalidProgramException {
 		FunctionDefValidation.validate(prog);
 		MagicSetTransformer mst = new MagicSetTransformer(prog);
@@ -134,7 +137,12 @@ public class SemiNaiveEvaluation implements Evaluation {
 				}
 			}
 		}
-		CountingFJP exec = new CountingFJPImpl(parallelism, new Z3ThreadFactory(magicProg.getSymbolManager()));
+		CountingFJP exec;
+		if (sequential) {
+			exec = new MockCountingFJP();
+		} else {
+			exec = new CountingFJPImpl(parallelism, new Z3ThreadFactory(magicProg.getSymbolManager()));
+		}
 		return new SemiNaiveEvaluation(db, deltaDbb, rules, magicProg.getQuery(), strata, exec);
 	}
 

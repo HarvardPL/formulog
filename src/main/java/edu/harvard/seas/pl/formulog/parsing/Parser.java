@@ -146,6 +146,7 @@ import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.IndexedConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.IndexedTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.MutableRelationSymbol;
+import edu.harvard.seas.pl.formulog.symbols.RecordSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
@@ -476,8 +477,7 @@ public class Parser {
 				throw new RuntimeException("Unbound type variable in definition of " + sym);
 			}
 			FunctorType ctype = new FunctorType(entryTypes, type);
-			ConstructorSymbol csym = symbolManager.createConstructorSymbol("_rec_" + sym, entryTypes.size(),
-					ConstructorSymbolType.VANILLA_CONSTRUCTOR, ctype);
+			RecordSymbol csym = symbolManager.createRecordSymbol("_rec_" + sym, entryTypes.size(), ctype, labels);
 			ConstructorScheme ctor = new ConstructorScheme(csym, entryTypes, getterSyms);
 			AlgebraicDataType.setConstructors(sym, typeVars, Collections.singleton(ctor));
 			constructorLabels.put(csym, labels.toArray(new FunctionSymbol[0]));

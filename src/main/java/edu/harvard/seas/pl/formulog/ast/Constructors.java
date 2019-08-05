@@ -37,7 +37,10 @@ import edu.harvard.seas.pl.formulog.smt.SmtLibShim;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbolType;
+import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.IndexedConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.RecordSymbol;
+import edu.harvard.seas.pl.formulog.symbols.TupleSymbolFactory.TupleSymbol;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
@@ -60,6 +63,12 @@ public final class Constructors {
 		if (sym instanceof IndexedConstructorSymbol) {
 			return lookupOrCreateIndexedConstructor((IndexedConstructorSymbol) sym, args);
 		}
+		if (sym instanceof TupleSymbol) {
+			return memo.lookupOrCreate(sym, args, () -> new Tuple((TupleSymbol) sym, args));
+		}
+		if (sym instanceof RecordSymbol) {
+			return memo.lookupOrCreate(sym, args, () -> new Record((RecordSymbol) sym, args));
+		}
 		switch (sym.getConstructorSymbolType()) {
 		case SOLVER_UNINTERPRETED_FUNCTION:
 			return memo.lookupOrCreate(sym, args, () -> new SolverUninterpretedFunction(sym, args));
@@ -67,8 +76,6 @@ public final class Constructors {
 			return memo.lookupOrCreate(sym, args, () -> new SolverVariable(sym, args));
 		case SOLVER_CONSTRUCTOR_TESTER:
 			return memo.lookupOrCreate(sym, args, () -> makeConstructorTester(sym, args));
-		case TUPLE:
-			return memo.lookupOrCreate(sym, args, () -> new Tuple(sym, args));
 		case SOLVER_CONSTRUCTOR_GETTER:
 			return memo.lookupOrCreate(sym, args, () -> makeConstructorGetter(sym, args));
 		case INDEX_CONSTRUCTOR:
@@ -869,7 +876,7 @@ public final class Constructors {
 
 	public static class Tuple extends AbstractConstructor {
 
-		private Tuple(ConstructorSymbol sym, Term[] args) {
+		private Tuple(TupleSymbol sym, Term[] args) {
 			super(sym, args);
 		}
 
@@ -891,6 +898,34 @@ public final class Constructors {
 			return sb.toString();
 		}
 
+	}
+	
+	public static class Record extends AbstractConstructor {
+		
+		private Record(RecordSymbol sym, Term[] args) {
+			super(sym, args);
+		}
+
+		@Override
+		public void toSmtLib(SmtLibShim shim) {
+			Constructors.toSmtLib(this, shim);
+		}
+		
+		@Override
+		public String toString() {
+			StringBuilder sb = new StringBuilder("{ ");
+			int i = 0;
+			for (FunctionSymbol label : ((RecordSymbol) sym).getLabels()) {
+				sb.append(label);
+				sb.append("=");
+				sb.append(args[i]);
+				sb.append("; ");
+				++i;
+			}
+			sb.append("}");
+			return sb.toString();
+		}
+		
 	}
 
 	public static class SolverVariable extends AbstractConstructor {
