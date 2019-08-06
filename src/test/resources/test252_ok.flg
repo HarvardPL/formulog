@@ -1,0 +1,9 @@
+@bottomup
+output foo(i32)
+foo(42).
+
+fun bar(X: i32) : bool = foo(X)
+
+output ok
+ok :- bar(42).
+:- ok.

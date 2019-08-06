@@ -42,6 +42,7 @@ import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
+import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
@@ -84,7 +85,8 @@ public class MagicSetTransformer {
 		}
 		if (debug) {
 			System.err.println("Rewritten rules...");
-			List<RelationSymbol> syms = prog.getRuleSymbols().stream().sorted(SymbolComparator.INSTANCE).collect(Collectors.toList());
+			List<RelationSymbol> syms = prog.getRuleSymbols().stream().sorted(SymbolComparator.INSTANCE)
+					.collect(Collectors.toList());
 			for (RelationSymbol sym : syms) {
 				for (BasicRule r : prog.getRules(sym)) {
 					System.err.println(r);
@@ -126,7 +128,7 @@ public class MagicSetTransformer {
 	private BasicRule makeSeedRule(UserPredicate adornedQuery) {
 		return BasicRule.make(createInputAtom(adornedQuery));
 	}
-	
+
 	private BasicRule makeQueryRule(UserPredicate query) {
 		RelationSymbol oldSym = query.getSymbol();
 		RelationSymbol querySym = new RelationSymbol() {
@@ -155,7 +157,7 @@ public class MagicSetTransformer {
 			public boolean isTopDown() {
 				return false;
 			}
-			
+
 			@Override
 			public String toString() {
 				Symbol sym = oldSym;
@@ -164,7 +166,7 @@ public class MagicSetTransformer {
 				}
 				return "query:" + sym;
 			}
-			
+
 		};
 		Term[] args = query.getArgs();
 		Term[] newArgs = new Term[args.length];
@@ -326,6 +328,7 @@ public class MagicSetTransformer {
 		for (RelationSymbol seed : seeds) {
 			worklist.push(seed);
 		}
+		HiddenPredicateFinder hpf = new HiddenPredicateFinder(origProg);
 		while (!worklist.isEmpty()) {
 			RelationSymbol adSym = worklist.pop();
 			RelationSymbol origSym = adSym;
@@ -333,35 +336,42 @@ public class MagicSetTransformer {
 				origSym = ((AdornedSymbol) adSym).getBaseSymbol();
 			}
 			for (BasicRule r : origProg.getRules(origSym)) {
-				UserPredicate head = r.getHead();
-				if (head.getSymbol().equals(origSym)) {
-					UserPredicate adHead = UserPredicate.make(adSym, head.getArgs(), head.isNegated());
-					BasicRule adRule = Adornments.adornRule(adHead, Util.iterableToList(r), topDownIsDefault);
-					for (ComplexLiteral a : adRule) {
-						a.accept(new ComplexLiteralVisitor<Void, Void>() {
-
-							@Override
-							public Void visit(UnificationPredicate unificationPredicate, Void input) {
-								// Do nothing
-								return null;
-							}
-
-							@Override
-							public Void visit(UserPredicate userPredicate, Void input) {
-								RelationSymbol sym = userPredicate.getSymbol();
-								if (sym.isIdbSymbol()) {
-									worklist.push(sym);
-								}
-								return null;
-							}
-
-						}, null);
+				for (RelationSymbol sym : hpf.visit(r)) {
+					if (exploreTopDown(sym)) {
+						throw new InvalidProgramException("Cannot refer to top-down IDB predicate " + sym
+								+ " in a function; consider annotating " + sym + " with @bottomup");
 					}
-					if (debug) {
-						System.err.println(adRule);
+					if (sym.isIdbSymbol()) {
+						worklist.push(sym);
 					}
-					adRules.add(adRule);
 				}
+				UserPredicate head = r.getHead();
+				UserPredicate adHead = UserPredicate.make(adSym, head.getArgs(), head.isNegated());
+				BasicRule adRule = Adornments.adornRule(adHead, Util.iterableToList(r), topDownIsDefault);
+				for (ComplexLiteral a : adRule) {
+					a.accept(new ComplexLiteralVisitor<Void, Void>() {
+
+						@Override
+						public Void visit(UnificationPredicate unificationPredicate, Void input) {
+							// Do nothing
+							return null;
+						}
+
+						@Override
+						public Void visit(UserPredicate userPredicate, Void input) {
+							RelationSymbol sym = userPredicate.getSymbol();
+							if (sym.isIdbSymbol()) {
+								worklist.push(sym);
+							}
+							return null;
+						}
+
+					}, null);
+				}
+				if (debug) {
+					System.err.println(adRule);
+				}
+				adRules.add(adRule);
 			}
 		}
 		return adRules;
@@ -415,11 +425,13 @@ public class MagicSetTransformer {
 				public List<ComplexLiteral> visit(UserPredicate userPredicate, List<ComplexLiteral> l) {
 					RelationSymbol sym = userPredicate.getSymbol();
 					if (exploreTopDown(sym)) {
-						Set<Var> supVars = a.varSet().stream().filter(curLiveVars::contains).collect(Collectors.toSet());
+						Set<Var> supVars = a.varSet().stream().filter(curLiveVars::contains)
+								.collect(Collectors.toSet());
 						supVars.addAll(nextLiveVars);
 						UserPredicate supAtom = createSupAtom(supVars, number, supCount[0], head.getSymbol());
 						magicRules.add(BasicRule.make(supAtom, l));
-						magicRules.add(BasicRule.make(createInputAtom(userPredicate), Collections.singletonList(supAtom)));
+						magicRules.add(
+								BasicRule.make(createInputAtom(userPredicate), Collections.singletonList(supAtom)));
 						l = new ArrayList<>();
 						l.add(supAtom);
 						l.add(a);
@@ -429,7 +441,7 @@ public class MagicSetTransformer {
 					}
 					return l;
 				}
-				
+
 			}, l);
 			curLiveVars.clear();
 			curLiveVars.addAll(nextLiveVars);
@@ -552,7 +564,7 @@ public class MagicSetTransformer {
 	public static class InputSymbol extends AbstractWrappedRelationSymbol<AdornedSymbol> {
 
 		private final int arity;
-		
+
 		public InputSymbol(AdornedSymbol baseSymbol) {
 			super(baseSymbol);
 			int nbound = 0;
@@ -706,29 +718,61 @@ public class MagicSetTransformer {
 			this.origProg = origProg;
 		}
 
-		public void findHiddenPredicates(Term t) {
-			t.accept(predicatesInTermExtractor, null);
-		}
-		
-		public void findHiddenPredicates(UserFunctionDef def) {
-			if (visitedFunctions.add(def.getSymbol())) {
-				findHiddenPredicates(def.getBody());
-			}
+		private void findHiddenPredicates(Term t, Set<RelationSymbol> s) {
+			t.accept(predicatesInTermExtractor, s);
 		}
 
-		public Set<RelationSymbol> getSeenPredicates() {
+		public Set<RelationSymbol> allSeenPredicates() {
 			return seenPredicates;
 		}
 
-		private TermVisitor<Void, Void> predicatesInTermExtractor = new TermVisitor<Void, Void>() {
+		public Set<RelationSymbol> visit(UserFunctionDef def) {
+			Set<RelationSymbol> s = new HashSet<>();
+			if (visitedFunctions.add(def.getSymbol())) {
+				findHiddenPredicates(def.getBody(), s);
+			}
+			return s;
+		}
+
+		private void visit(ComplexLiteral l, Set<RelationSymbol> s) {
+			l.accept(new ComplexLiteralVisitor<Void, Void>() {
+
+				@Override
+				public Void visit(UnificationPredicate unificationPredicate, Void input) {
+					findHiddenPredicates(unificationPredicate.getLhs(), s);
+					findHiddenPredicates(unificationPredicate.getRhs(), s);
+					return null;
+				}
+
+				@Override
+				public Void visit(UserPredicate userPredicate, Void input) {
+					for (Term t : userPredicate.getArgs()) {
+						findHiddenPredicates(t, s);
+					}
+					return null;
+				}
+
+			}, null);
+		}
+
+		public Set<RelationSymbol> visit(Rule<? extends ComplexLiteral, ? extends ComplexLiteral> rule) {
+			Set<RelationSymbol> s = new HashSet<>();
+			visit(rule.getHead(), s);
+			for (ComplexLiteral l : rule) {
+				visit(l, s);
+			}
+			return s;
+		}
+
+		private TermVisitor<Set<RelationSymbol>, Void> predicatesInTermExtractor = new TermVisitor<Set<RelationSymbol>, Void>() {
 
 			@Override
-			public Void visit(Var t, Void in) {
+			public Void visit(Var t, Set<RelationSymbol> in) {
 				return null;
 			}
 
 			@Override
-			public Void visit(Constructor c, Void in) {
+			public Void visit(Constructor c, Set<RelationSymbol> in) {
 				for (Term t : c.getArgs()) {
 					t.accept(this, in);
 				}
@@ -736,22 +780,22 @@ public class MagicSetTransformer {
 			}
 
 			@Override
-			public Void visit(Primitive<?> p, Void in) {
+			public Void visit(Primitive<?> p, Set<RelationSymbol> in) {
 				return null;
 			}
 
 			@Override
-			public Void visit(Expr e, Void in) {
+			public Void visit(Expr e, Set<RelationSymbol> in) {
 				e.visit(predicatesInExprExtractor, in);
 				return null;
 			}
 
 		};
 
-		private ExprVisitor<Void, Void> predicatesInExprExtractor = new ExprVisitor<Void, Void>() {
+		private ExprVisitor<Set<RelationSymbol>, Void> predicatesInExprExtractor = new ExprVisitor<Set<RelationSymbol>, Void>() {
 
 			@Override
-			public Void visit(MatchExpr matchExpr, Void in) {
+			public Void visit(MatchExpr matchExpr, Set<RelationSymbol> in) {
 				matchExpr.getMatchee().accept(predicatesInTermExtractor, in);
 				for (MatchClause cl : matchExpr) {
 					cl.getRhs().accept(predicatesInTermExtractor, in);
@@ -760,10 +804,12 @@ public class MagicSetTransformer {
 			}
 
 			@Override
-			public Void visit(FunctionCall funcCall, Void in) {
+			public Void visit(FunctionCall funcCall, Set<RelationSymbol> in) {
 				FunctionSymbol sym = funcCall.getSymbol();
 				if (sym instanceof PredicateFunctionSymbol) {
-					seenPredicates.add(((PredicateFunctionSymbol) sym).getPredicateSymbol());
+					RelationSymbol psym = ((PredicateFunctionSymbol) sym).getPredicateSymbol();
+					seenPredicates.add(psym);
+					in.add(psym);
 				} else if (visitedFunctions.add(sym)) {
 					FunctionDef def = origProg.getDef(sym);
 					if (def instanceof UserFunctionDef) {
@@ -791,42 +837,26 @@ public class MagicSetTransformer {
 			for (BasicRule r : rs) {
 				UserPredicate head = r.getHead();
 				Util.lookupOrCreate(rules, head.getSymbol(), () -> new HashSet<>()).add(r);
-				for (ComplexLiteral a : r) {
-					a.accept(new ComplexLiteralVisitor<Void, Void>() {
-
-						@Override
-						public Void visit(UnificationPredicate unificationPredicate, Void input) {
-							hpf.findHiddenPredicates(unificationPredicate.getLhs());
-							hpf.findHiddenPredicates(unificationPredicate.getRhs());
-							return null;
+				for (ComplexLiteral l : r) {
+					if (l instanceof UserPredicate) {
+						RelationSymbol sym = ((UserPredicate) l).getSymbol();
+						if (sym.isEdbSymbol()) {
+							facts.putIfAbsent(sym, origProg.getFacts(sym));
 						}
-
-						@Override
-						public Void visit(UserPredicate userPredicate, Void input) {
-							RelationSymbol sym = userPredicate.getSymbol();
-							if (sym.isEdbSymbol()) {
-								facts.putIfAbsent(sym, origProg.getFacts(sym));
-							}
-							for (Term t : userPredicate.getArgs()) {
-								hpf.findHiddenPredicates(t);
-							}
-							return null;
-						}
-
-					}, null);
+					}
 				}
+				hpf.visit(r);
 			}
 			for (FunctionSymbol sym : origProg.getFunctionSymbols()) {
 				FunctionDef def = origProg.getDef(sym);
 				if (def instanceof UserFunctionDef) {
-					hpf.findHiddenPredicates((UserFunctionDef) def);
+					hpf.visit((UserFunctionDef) def);
 				}
 			}
-			for (RelationSymbol psym : hpf.getSeenPredicates()) {
+			for (RelationSymbol psym : hpf.allSeenPredicates()) {
 				if (exploreTopDown(psym)) {
 					throw new InvalidProgramException("Cannot refer to top-down IDB predicate " + psym
 							+ " in a function; consider annotating " + psym + " with @bottomup");
-
 				}
 				if (psym.isEdbSymbol()) {
 					facts.putIfAbsent(psym, origProg.getFacts(psym));
