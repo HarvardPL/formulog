@@ -47,7 +47,7 @@ import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
+import edu.harvard.seas.pl.formulog.ast.functions.UserFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.symbols.AbstractWrappedRelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
@@ -707,22 +707,28 @@ public class MagicSetTransformer {
 		}
 
 		public void findHiddenPredicates(Term t) {
-			t.accept(predicatesInTermExtractor, seenPredicates);
+			t.accept(predicatesInTermExtractor, null);
+		}
+		
+		public void findHiddenPredicates(UserFunctionDef def) {
+			if (visitedFunctions.add(def.getSymbol())) {
+				findHiddenPredicates(def.getBody());
+			}
 		}
 
 		public Set<RelationSymbol> getSeenPredicates() {
 			return seenPredicates;
 		}
 
-		private TermVisitor<Set<RelationSymbol>, Void> predicatesInTermExtractor = new TermVisitor<Set<RelationSymbol>, Void>() {
+		private TermVisitor<Void, Void> predicatesInTermExtractor = new TermVisitor<Void, Void>() {
 
 			@Override
-			public Void visit(Var t, Set<RelationSymbol> in) {
+			public Void visit(Var t, Void in) {
 				return null;
 			}
 
 			@Override
-			public Void visit(Constructor c, Set<RelationSymbol> in) {
+			public Void visit(Constructor c, Void in) {
 				for (Term t : c.getArgs()) {
 					t.accept(this, in);
 				}
@@ -730,22 +736,22 @@ public class MagicSetTransformer {
 			}
 
 			@Override
-			public Void visit(Primitive<?> p, Set<RelationSymbol> in) {
+			public Void visit(Primitive<?> p, Void in) {
 				return null;
 			}
 
 			@Override
-			public Void visit(Expr e, Set<RelationSymbol> in) {
+			public Void visit(Expr e, Void in) {
 				e.visit(predicatesInExprExtractor, in);
 				return null;
 			}
 
 		};
 
-		private ExprVisitor<Set<RelationSymbol>, Void> predicatesInExprExtractor = new ExprVisitor<Set<RelationSymbol>, Void>() {
+		private ExprVisitor<Void, Void> predicatesInExprExtractor = new ExprVisitor<Void, Void>() {
 
 			@Override
-			public Void visit(MatchExpr matchExpr, Set<RelationSymbol> in) {
+			public Void visit(MatchExpr matchExpr, Void in) {
 				matchExpr.getMatchee().accept(predicatesInTermExtractor, in);
 				for (MatchClause cl : matchExpr) {
 					cl.getRhs().accept(predicatesInTermExtractor, in);
@@ -754,14 +760,14 @@ public class MagicSetTransformer {
 			}
 
 			@Override
-			public Void visit(FunctionCall funcCall, Set<RelationSymbol> in) {
+			public Void visit(FunctionCall funcCall, Void in) {
 				FunctionSymbol sym = funcCall.getSymbol();
 				if (sym instanceof PredicateFunctionSymbol) {
-					in.add(((PredicateFunctionSymbol) sym).getPredicateSymbol());
+					seenPredicates.add(((PredicateFunctionSymbol) sym).getPredicateSymbol());
 				} else if (visitedFunctions.add(sym)) {
 					FunctionDef def = origProg.getDef(sym);
-					if (def instanceof CustomFunctionDef) {
-						((CustomFunctionDef) def).getBody().accept(predicatesInTermExtractor, in);
+					if (def instanceof UserFunctionDef) {
+						((UserFunctionDef) def).getBody().accept(predicatesInTermExtractor, in);
 					}
 				}
 				for (Term t : funcCall.getArgs()) {
@@ -809,15 +815,21 @@ public class MagicSetTransformer {
 
 					}, null);
 				}
-				for (RelationSymbol psym : hpf.getSeenPredicates()) {
-					if (exploreTopDown(psym)) {
-						throw new InvalidProgramException("Cannot refer to top-down IDB predicate " + psym
-								+ " in a function; consider annotating " + psym + " with @bottomup");
+			}
+			for (FunctionSymbol sym : origProg.getFunctionSymbols()) {
+				FunctionDef def = origProg.getDef(sym);
+				if (def instanceof UserFunctionDef) {
+					hpf.findHiddenPredicates((UserFunctionDef) def);
+				}
+			}
+			for (RelationSymbol psym : hpf.getSeenPredicates()) {
+				if (exploreTopDown(psym)) {
+					throw new InvalidProgramException("Cannot refer to top-down IDB predicate " + psym
+							+ " in a function; consider annotating " + psym + " with @bottomup");
 
-					}
-					if (psym.isEdbSymbol()) {
-						facts.putIfAbsent(psym, origProg.getFacts(psym));
-					}
+				}
+				if (psym.isEdbSymbol()) {
+					facts.putIfAbsent(psym, origProg.getFacts(psym));
 				}
 			}
 			// Do not keep unnecessary facts around if there is a query.

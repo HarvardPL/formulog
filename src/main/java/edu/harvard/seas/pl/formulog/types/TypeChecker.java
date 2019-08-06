@@ -53,7 +53,7 @@ import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
+import edu.harvard.seas.pl.formulog.ast.functions.UserFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDefManager;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
@@ -252,9 +252,9 @@ public class TypeChecker {
 		Map<FunctionSymbol, FunctionDef> m = new HashMap<>();
 		for (FunctionSymbol sym : prog.getFunctionSymbols()) {
 			FunctionDef def = prog.getDef(sym);
-			if (def instanceof CustomFunctionDef) {
+			if (def instanceof UserFunctionDef) {
 				TypeCheckerContext ctx = new TypeCheckerContext();
-				def = ctx.typeCheckFunction((CustomFunctionDef) def);
+				def = ctx.typeCheckFunction((UserFunctionDef) def);
 			}
 			m.put(sym, def);
 		}
@@ -322,14 +322,14 @@ public class TypeChecker {
 			return m;
 		}
 
-		public CustomFunctionDef typeCheckFunction(CustomFunctionDef functionDef) throws TypeException {
+		public UserFunctionDef typeCheckFunction(UserFunctionDef functionDef) throws TypeException {
 			Map<Var, Type> subst = new HashMap<>();
 			genConstraints(functionDef, subst);
 			if (!checkConstraints()) {
 				throw new TypeException("Type error in function: " + functionDef.getSymbol() + "\n" + error);
 			}
 			Substitution m = makeIndexSubstitution(subst);
-			return CustomFunctionDef.get(functionDef.getSymbol(), functionDef.getParams(),
+			return UserFunctionDef.get(functionDef.getSymbol(), functionDef.getParams(),
 					functionDef.getBody().applySubstitution(m));
 		}
 
@@ -389,7 +389,7 @@ public class TypeChecker {
 			}, null);
 		}
 
-		private void genConstraints(CustomFunctionDef def, Map<Var, Type> subst) {
+		private void genConstraints(UserFunctionDef def, Map<Var, Type> subst) {
 			FunctionSymbol sym = def.getSymbol();
 			FunctorType scheme = sym.getCompileTimeType().freshen();
 			Map<TypeVar, OpaqueType> opaqueTypes = new HashMap<>();

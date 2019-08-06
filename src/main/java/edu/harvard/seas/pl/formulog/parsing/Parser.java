@@ -64,7 +64,7 @@ import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
+import edu.harvard.seas.pl.formulog.ast.functions.UserFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.DummyFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDefManager;
@@ -296,7 +296,7 @@ public class Parser {
 				FunctionSymbol sym = p.fst();
 				List<Var> args = p.snd();
 				Term body = bodies.next();
-				functionDefManager.register(CustomFunctionDef.get(sym, args.toArray(new Var[0]), body));
+				functionDefManager.register(UserFunctionDef.get(sym, args.toArray(new Var[0]), body));
 			}
 			return null;
 		}

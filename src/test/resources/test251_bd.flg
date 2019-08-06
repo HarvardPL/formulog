@@ -1,0 +1,5 @@
+@topdown
+output foo(i32)
+foo(X).
+
+fun bar(X: i32) : bool = foo(X)

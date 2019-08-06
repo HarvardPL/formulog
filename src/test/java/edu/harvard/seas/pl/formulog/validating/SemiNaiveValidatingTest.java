@@ -25,7 +25,7 @@ import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 
-public class NaiveValidatingTest extends ValidatingTest {
+public class SemiNaiveValidatingTest extends ValidatingTest {
 
 	@Override
 	protected Evaluation setup(WellTypedProgram prog) throws InvalidProgramException, EvaluationException {

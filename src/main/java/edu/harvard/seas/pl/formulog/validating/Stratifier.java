@@ -50,7 +50,7 @@ import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
+import edu.harvard.seas.pl.formulog.ast.functions.UserFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbolFactory.PredicateFunctionSymbol;
@@ -243,8 +243,8 @@ public class Stratifier {
 				return;
 			}
 			FunctionDef def1 = prog.getDef(s);
-			if (def1 instanceof CustomFunctionDef) {
-				CustomFunctionDef def = (CustomFunctionDef) def1;
+			if (def1 instanceof UserFunctionDef) {
+				UserFunctionDef def = (UserFunctionDef) def1;
 				processTerm(def.getBody());
 			}
 		}

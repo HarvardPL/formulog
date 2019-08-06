@@ -28,13 +28,13 @@ import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 
-public class CustomFunctionDef implements FunctionDef {
+public class UserFunctionDef implements FunctionDef {
 
 	private final FunctionSymbol sym;
 	private final Var[] params;
 	private volatile Term body;
 
-	private CustomFunctionDef(FunctionSymbol sym, Var[] params, Term body) {
+	private UserFunctionDef(FunctionSymbol sym, Var[] params, Term body) {
 		this.sym = sym;
 		this.params = params;
 		this.body = body;
@@ -71,8 +71,8 @@ public class CustomFunctionDef implements FunctionDef {
 		}
 	}
 
-	public static CustomFunctionDef get(FunctionSymbol sym, Var[] params, Term body) {
-		return new CustomFunctionDef(sym, params, body);
+	public static UserFunctionDef get(FunctionSymbol sym, Var[] params, Term body) {
+		return new UserFunctionDef(sym, params, body);
 	}
 
 }

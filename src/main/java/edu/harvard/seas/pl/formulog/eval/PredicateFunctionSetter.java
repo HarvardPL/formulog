@@ -37,7 +37,7 @@ import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
+import edu.harvard.seas.pl.formulog.ast.functions.UserFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.DummyFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDefManager;
@@ -132,8 +132,8 @@ public class PredicateFunctionSetter {
 			if (sym instanceof PredicateFunctionSymbol) {
 				DummyFunctionDef dummy = (DummyFunctionDef) def;
 				setPredicateFunction(dummy);
-			} else if (def instanceof CustomFunctionDef) {
-				((CustomFunctionDef) def).getBody().accept(tv, in);
+			} else if (def instanceof UserFunctionDef) {
+				((UserFunctionDef) def).getBody().accept(tv, in);
 			}
 			return null;
 		}

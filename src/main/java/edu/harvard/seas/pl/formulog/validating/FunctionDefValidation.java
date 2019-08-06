@@ -26,7 +26,7 @@ import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.ast.functions.CustomFunctionDef;
+import edu.harvard.seas.pl.formulog.ast.functions.UserFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 
@@ -39,9 +39,9 @@ public class FunctionDefValidation {
 	public static void validate(Program<?, ?> prog) throws InvalidProgramException {
 		for (FunctionSymbol sym : prog.getFunctionSymbols()) {
 			FunctionDef def = prog.getDef(sym);
-			if (def instanceof CustomFunctionDef) {
+			if (def instanceof UserFunctionDef) {
 				try {
-					validate((CustomFunctionDef) def);
+					validate((UserFunctionDef) def);
 				} catch (InvalidProgramException e) {
 					throw new InvalidProgramException("Invalid function definition: " + sym + "\n" + e.getMessage());
 				}
@@ -49,7 +49,7 @@ public class FunctionDefValidation {
 		}
 	}
 	
-	public static void validate(CustomFunctionDef def) throws InvalidProgramException {
+	public static void validate(UserFunctionDef def) throws InvalidProgramException {
 		Set<Var> params = checkParams(def.getParams());
 		Set<Var> vars = def.getBody().varSet();
 		vars.removeAll(params);
