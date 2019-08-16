@@ -458,6 +458,7 @@ public class SmtLibParser {
 			t.ordinaryChars('0', '9');
 			t.ordinaryChar('"');
 			t.ordinaryChar('\'');
+			t.ordinaryChar('/');
 			t.wordChars('0', '9');
 			t.wordChars('_', '_');
 		}

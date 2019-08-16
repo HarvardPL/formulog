@@ -1,5 +1,8 @@
 package edu.harvard.seas.pl.formulog.util;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+
 /*-
  * #%L
  * FormuLog
@@ -30,6 +33,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 
 public final class Util {
 	
@@ -65,6 +70,15 @@ public final class Util {
 	
 	public static <A,B> List<B> map(List<A> xs, Function<A, B> f) {
 		return xs.stream().map(f).collect(Collectors.toList());
+	}
+	
+	public static void printSortedFacts(Iterable<UserPredicate> facts, PrintStream out) {
+		Util.iterableToList(facts).stream().map(a -> {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			PrintStream ps = new PrintStream(baos);
+			ps.print(a);
+			return baos.toString();
+		}).sorted().forEach(s -> out.println(s));
 	}
 	
 }

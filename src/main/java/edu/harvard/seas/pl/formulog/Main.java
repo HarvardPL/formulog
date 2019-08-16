@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog;
  * #L%
  */
 
-import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.PrintStream;
@@ -124,14 +123,14 @@ public final class Main {
 				out.println("\n*** All generated facts ***");
 			}
 			for (RelationSymbol sym : res.getSymbols()) {
-				printSortedFacts(res.getAll(sym), out);
+				Util.printSortedFacts(res.getAll(sym), out);
 			}
 		}
 		if (queryRes != null) {
 			if (debugMst) {
 				System.err.println("\n*** Query results ***");
 			}
-			printSortedFacts(queryRes, System.out);
+			Util.printSortedFacts(queryRes, System.out);
 		}
 	}
 
@@ -171,15 +170,6 @@ public final class Main {
 	public static void main(String[] args) throws FileNotFoundException {
 		CommandLine cl = parseArgs(args);
 		(new Main(cl, System.getProperty("debugMst") != null)).go();
-	}
-
-	private static void printSortedFacts(Iterable<UserPredicate> facts, PrintStream out) {
-		Util.iterableToList(facts).stream().map(a -> {
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			PrintStream ps = new PrintStream(baos);
-			ps.print(a);
-			return baos.toString();
-		}).sorted().forEach(s -> out.println(s));
 	}
 
 	private static void handleException(String msg, Exception e) {

@@ -255,7 +255,6 @@ public class SemiNaiveEvaluation implements Evaluation {
 		for (RelationSymbol sym : syms) {
 			for (IndexedRule r : firstRoundRules.get(sym)) {
 				exec.externallyAddTask(new RulePrefixEvaluator(r));
-				;
 			}
 		}
 		exec.blockUntilFinished();
@@ -265,7 +264,6 @@ public class SemiNaiveEvaluation implements Evaluation {
 			for (RelationSymbol sym : syms) {
 				for (IndexedRule r : laterRoundRules.get(sym)) {
 					exec.externallyAddTask(new RulePrefixEvaluator(r));
-					;
 				}
 			}
 			exec.blockUntilFinished();
