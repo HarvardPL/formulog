@@ -30,7 +30,6 @@ import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitorExn;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
-import edu.harvard.seas.pl.formulog.unification.Unification;
 
 public class MatchExpr extends AbstractTerm implements Expr, Iterable<MatchClause> {
 
@@ -72,7 +71,7 @@ public class MatchExpr extends AbstractTerm implements Expr, Iterable<MatchClaus
 	public Term normalize(Substitution s) throws EvaluationException {
 		Term e = matchee.normalize(s);
 		for (MatchClause m : match) {
-			if (Unification.unify(e, m.getLhs(), s)) {
+			if (m.tryMatch(e, s)) {
 				return m.getRhs().normalize(s);
 			}
 		}

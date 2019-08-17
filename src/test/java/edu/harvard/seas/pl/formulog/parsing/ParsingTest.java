@@ -134,4 +134,9 @@ public class ParsingTest {
 		test("test076_ok.flg");
 	}
 	
+	@Test
+	public void test255() {
+		test("test255_bd.flg");
+	}
+	
 }

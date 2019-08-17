@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitorExn;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
@@ -45,13 +46,14 @@ public final class FunctionCallFactory {
 
 	private static final AtomicInteger cnt = new AtomicInteger();
 	private static final boolean debug = System.getProperty("callTrace") != null;
+	private static final boolean memoize = System.getProperty("memoize") != null;
 
 	private final Map<Symbol, Map<List<Term>, Term>> callMemo = new ConcurrentHashMap<>();
 
 	public FunctionCallFactory(FunctionDefManager defManager) {
 		this.defManager = defManager;
 	}
-	
+
 	public FunctionCall make(FunctionSymbol sym, Term[] args) {
 		if (sym.getArity() != args.length) {
 			throw new IllegalArgumentException("Symbol " + sym + " has arity " + sym.getArity() + " but args "
@@ -59,7 +61,7 @@ public final class FunctionCallFactory {
 		}
 		return memo.lookupOrCreate(sym, args, () -> new FunctionCall(sym, args));
 	}
-	
+
 	public FunctionDefManager getDefManager() {
 		return defManager;
 	}
@@ -123,14 +125,16 @@ public final class FunctionCallFactory {
 		public Term normalize(Substitution s) throws EvaluationException {
 			// FIXME This way of implementing memoization seems expensive
 			Integer id = null;
-			Long start = null;
+			long start = 0;
+			if (Configuration.recordFuncDiagnostics) {
+				start = System.currentTimeMillis();
+			}
 			Term[] newArgs = new Term[args.length];
 			for (int i = 0; i < args.length; ++i) {
 				newArgs[i] = args[i].normalize(s);
 			}
 			if (debug) {
 				id = cnt.getAndIncrement();
-				start = System.currentTimeMillis();
 				String msg = "BEGIN CALL #" + id + "\n";
 				msg += "Function: " + sym + "\n";
 				msg += "Arguments: " + Arrays.toString(newArgs) + "\n";
@@ -139,23 +143,30 @@ public final class FunctionCallFactory {
 			}
 			FunctionDef def = defManager.lookup(getSymbol());
 			assert def != null;
-			Map<List<Term>, Term> m = Util.lookupOrCreate(callMemo, sym, () -> new ConcurrentHashMap<>());
-			List<Term> key = Arrays.asList(newArgs);
-			Term r = m.get(key);
-			if (r == null) {
-				r = def.evaluate(newArgs);
-				Term other = m.putIfAbsent(key, r);
-				if (other != null) {
-					r = other;
+			Term r;
+			if (memoize) {
+				Map<List<Term>, Term> m = Util.lookupOrCreate(callMemo, sym, () -> new ConcurrentHashMap<>());
+				List<Term> key = Arrays.asList(newArgs);
+				r = m.get(key);
+				if (r == null) {
+					r = def.evaluate(newArgs);
+					Term other = m.putIfAbsent(key, r);
+					if (other != null) {
+						r = other;
+					}
 				}
+			} else {
+				r = def.evaluate(newArgs);
+			}
+			if (Configuration.recordFuncDiagnostics) {
+				long time = System.currentTimeMillis() - start;
+				Configuration.recordFuncTime(sym, time);
 			}
 			if (debug) {
-				long end = System.currentTimeMillis();
 				String msg = "END CALL #" + id + "\n";
 				msg += "Function: " + sym + "\n";
 				msg += "Arguments: " + Arrays.toString(newArgs) + "\n";
 				msg += "Result: " + r + "\n";
-				msg += "Time: " + (end - start) / 1000.0 + " (s)\n";
 				msg += "***\n";
 				System.err.println(msg);
 			}

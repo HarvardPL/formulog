@@ -1,0 +1,5 @@
+fun foo(X: 'a list) : 'a list =
+  match X with
+  | X :: X :: _ => [X, X]
+  | _ => []
+  end

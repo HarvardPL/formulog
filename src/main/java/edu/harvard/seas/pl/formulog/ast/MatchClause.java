@@ -1,7 +1,14 @@
 package edu.harvard.seas.pl.formulog.ast;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.Set;
+
+import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
+import edu.harvard.seas.pl.formulog.util.Pair;
 
 /*-
  * #%L
@@ -29,18 +36,83 @@ public class MatchClause {
 	private final Term rhs;
 	
 	public static MatchClause make(Term lhs, Term rhs) {
+		if (!checkForRepeatVariables(lhs)) {
+			throw new IllegalArgumentException("Cannot repeat variables in patterns: " + lhs);
+		}
 		Substitution s = new SimpleSubstitution();
 		for (Var x : lhs.varSet()) {
 			s.put(x, Var.getFresh(false));
 		}
 		return new MatchClause(lhs.applySubstitution(s), rhs.applySubstitution(s));
 	}
+
+	private static boolean checkForRepeatVariables(Term pat) {
+		return pat.accept(varsDistinct, new HashSet<>());
+	}
+	
+	private static TermVisitor<Set<Var>, Boolean> varsDistinct = new TermVisitor<Set<Var>, Boolean>() {
+
+		@Override
+		public Boolean visit(Var t, Set<Var> in) {
+			return in.add(t);
+		}
+
+		@Override
+		public Boolean visit(Constructor c, Set<Var> in) {
+			boolean ok = true;
+			for (Term t : c.getArgs()) {
+				ok &= t.accept(this, in);
+			}
+			return ok;
+		}
+
+		@Override
+		public Boolean visit(Primitive<?> p, Set<Var> in) {
+			return null;
+		}
+
+		@Override
+		public Boolean visit(Expr e, Set<Var> in) {
+			throw new AssertionError("Shouldn't be expressions in patterns");
+		}
+		
+	};
 	
 	private MatchClause(Term lhs, Term rhs) {
 		this.lhs = lhs;
 		this.rhs = rhs;
 	}
 
+	public boolean tryMatch(Term t, Substitution s) {
+		Deque<Pair<Term, Term>> stack = new ArrayDeque<>();
+		stack.add(new Pair<>(lhs, t));
+		while (!stack.isEmpty()) {
+			Pair<Term, Term> p = stack.remove();
+			Term pat = p.fst();
+			Term scrutinee = p.snd();
+			if (pat.equals(scrutinee)) {
+				continue;
+			}
+			if (pat instanceof Var) {
+				s.put((Var) pat, scrutinee);
+			} else if (pat instanceof Primitive) {
+				return false;
+			} else {
+				Constructor cpat = (Constructor) pat;
+				Constructor cscrutinee = (Constructor) scrutinee;
+				if (!cpat.getSymbol().equals(cscrutinee.getSymbol())) {
+					return false;
+				}
+				Term[] args1 = cpat.getArgs();
+				Term[] args2 = cscrutinee.getArgs();
+				for (int i = 0; i < args1.length; ++i) {
+					stack.add(new Pair<>(args1[i], args2[i]));
+				}
+			}
+		}
+		return true;
+	}
+	
 	public Term getLhs() {
 		return lhs;
 	}

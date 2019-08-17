@@ -51,7 +51,7 @@ public final class Main {
 
 	private final CommandLine cl;
 	private final boolean debugMst;
-	
+
 	private static final boolean exnStackTrace = System.getProperty("exnStackTrace") != null;
 
 	private Main(CommandLine cl, boolean debugMst) {
