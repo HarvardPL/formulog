@@ -73,6 +73,9 @@ public class Stratifier {
 					depends.processAtom(bd);
 				}
 				UserPredicate hd = r.getHead();
+				for (Term t : hd.getArgs()) {
+					depends.processTerm(t);
+				}
 				RelationSymbol hdSym = hd.getSymbol();
 				g.addVertex(hdSym);
 				for (RelationSymbol bdSym : depends) {
@@ -178,7 +181,7 @@ public class Stratifier {
 			allDependencies.add(sym);
 		}
 
-		private void processTerm(Term t) {
+		public void processTerm(Term t) {
 			t.accept(new TermVisitor<Void, Void>() {
 
 				@Override

@@ -1,0 +1,36 @@
+(*
+  Test to make sure that dependencies in the heads of rules are being picked up.
+*)
+
+output bar
+
+bar.
+
+output baz
+
+baz.
+
+output woo
+
+woo.
+
+output foo1(bool)
+output foo2(bool)
+output foo3(bool)
+output foo4(bool)
+output foo5(bool)
+
+foo1(bar && baz && woo).
+foo2(bar && baz && woo).
+foo3(bar && baz && woo).
+foo4(bar && baz && woo).
+foo5(bar && baz && woo).
+
+output ok
+ok :-
+  foo1(true),
+  foo2(true),
+  foo3(true),
+  foo4(true),
+  foo5(true),
+  true.
