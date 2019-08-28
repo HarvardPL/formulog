@@ -1,0 +1,12 @@
+(*
+  This is a weird test... basically trying to make sure that the parser rejects
+  the string below. If the parser does so, it apparently skips that line, and so
+  `foo` is empty.
+*)
+
+input foo(string)
+
+foo("\\"").
+
+output ok
+ok :- !foo(_).

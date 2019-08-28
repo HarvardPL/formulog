@@ -52,7 +52,10 @@ varTypeList
 
 aggType
 :
-	type ('<' func = ID ',' unit = term '>')?
+	type
+	(
+		'<' func = ID ',' unit = term '>'
+	)?
 ;
 
 aggTypeList
@@ -649,16 +652,16 @@ ID
 ;
 
 fragment
-ESCAPED_QUOTE
+ESCAPE
 :
-	'\\"'
+	'\\' .
 ;
 
 QSTRING
 :
 	'"'
 	(
-		ESCAPED_QUOTE
-		| ~( '\n' | '\r' | '"' )
+		ESCAPE
+		| ~( '\n' | '\r' | '"' | '\\' )
 	)* '"'
 ;
