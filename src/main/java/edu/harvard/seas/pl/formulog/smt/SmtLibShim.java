@@ -27,6 +27,7 @@ import java.io.Reader;
 import java.io.Writer;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -78,6 +79,8 @@ import edu.harvard.seas.pl.formulog.util.Util;
 
 public class SmtLibShim {
 
+	private static final boolean noModel = System.getProperty("noModel") != null;
+	
 	public static enum Status {
 		SATISFIABLE, UNSATISFIABLE, UNKNOWN
 	}
@@ -143,6 +146,9 @@ public class SmtLibShim {
 	}
 
 	public Map<SolverVariable, Term> getModel() throws EvaluationException {
+		if (noModel) {
+			return Collections.emptyMap();
+		}
 		println("(get-model)");
 		out.flush();
 		try {

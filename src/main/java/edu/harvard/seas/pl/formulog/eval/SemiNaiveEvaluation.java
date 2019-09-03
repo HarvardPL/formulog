@@ -32,7 +32,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Spliterator;
+import java.util.function.BiFunction;
 
+import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
@@ -82,7 +84,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 	private final CountingFJP exec;
 
 	private static final boolean sequential = System.getProperty("sequential") != null;
-	
+
 	public static SemiNaiveEvaluation setup(WellTypedProgram prog, int parallelism) throws InvalidProgramException {
 		FunctionDefValidation.validate(prog);
 		MagicSetTransformer mst = new MagicSetTransformer(prog);
@@ -106,7 +108,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 				List<IndexedRule> rs = new ArrayList<>();
 				for (BasicRule br : magicProg.getRules(sym)) {
 					for (SemiNaiveRule snr : SemiNaiveRule.make(br, stratumSymbols)) {
-						ValidRule vr = ValidRule.make(snr, SemiNaiveEvaluation::score);
+						BiFunction<ComplexLiteral, Set<Var>, Integer> score = chooseScoringFunction();
+						ValidRule vr = ValidRule.make(snr, score);
 						predFuncs.preprocess(vr);
 						SimpleRule sr = SimpleRule.make(vr);
 						IndexedRule ir = IndexedRule.make(sr, p -> {
@@ -146,11 +149,21 @@ public class SemiNaiveEvaluation implements Evaluation {
 		return new SemiNaiveEvaluation(db, deltaDbb, rules, magicProg.getQuery(), strata, exec);
 	}
 
+	private static BiFunction<ComplexLiteral, Set<Var>, Integer> chooseScoringFunction() {
+		switch (Configuration.optimizationSetting) {
+		case 0:
+			return SemiNaiveEvaluation::score;
+		case 1:
+			return SemiNaiveEvaluation::score2;
+		default:
+			throw new IllegalArgumentException("Unrecognized optimization setting: " + Configuration.optimizationSetting);
+		}
+	}
+
 	private static int score(ComplexLiteral l, Set<Var> boundVars) {
 		return 0;
 	}
 
-	@SuppressWarnings("unused")
 	private static int score2(ComplexLiteral l, Set<Var> boundVars) {
 		// This seems to be worse than just doing nothing.
 		return l.accept(new ComplexLiteralVisitor<Void, Integer>() {
@@ -332,6 +345,10 @@ public class SemiNaiveEvaluation implements Evaluation {
 
 		@Override
 		public void doTask() throws EvaluationException {
+			long start = 0;
+			if (Configuration.recordRuleDiagnostics) {
+				start = System.currentTimeMillis();
+			}
 			while (split.estimateSize() > minTaskSize * 2) {
 				Spliterator<Term[]> split2 = split.trySplit();
 				if (split2 == null) {
@@ -343,6 +360,10 @@ public class SemiNaiveEvaluation implements Evaluation {
 				split.forEachRemaining(this::evaluate);
 			} catch (UncheckedEvaluationException e) {
 				throw new EvaluationException(e.getMessage());
+			}
+			if (Configuration.recordRuleDiagnostics) {
+				long end = System.currentTimeMillis();
+				Configuration.recordRuleTime(rule, end - start);
 			}
 		}
 
@@ -401,18 +422,16 @@ public class SemiNaiveEvaluation implements Evaluation {
 								}
 							} else {
 								/*
-								Spliterator<Term[]> split = answers.spliterator();
-								// XXX This might be too expensive here.
-								if (split.estimateSize() > minTaskSize * 2) {
-									exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s.copy(), split));
-									pos--;
-								} else {
-								*/
-									stack.addFirst(answers.iterator());
-									// No need to do anything else: we'll hit the right case on the next iteration.
-								/*	
-								}
-								*/
+								 * Spliterator<Term[]> split = answers.spliterator(); // XXX This might be too
+								 * expensive here. if (split.estimateSize() > minTaskSize * 2) {
+								 * exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s.copy(), split));
+								 * pos--; } else {
+								 */
+								stack.addFirst(answers.iterator());
+								// No need to do anything else: we'll hit the right case on the next iteration.
+								/*
+								 * }
+								 */
 								movingRight = false;
 							}
 							break;
@@ -460,6 +479,10 @@ public class SemiNaiveEvaluation implements Evaluation {
 
 		@Override
 		public void doTask() throws EvaluationException {
+			long start = 0;
+			if (Configuration.recordRuleDiagnostics) {
+				start = System.currentTimeMillis();
+			}
 			try {
 				int len = rule.getBodySize();
 				int pos = 0;
@@ -511,6 +534,10 @@ public class SemiNaiveEvaluation implements Evaluation {
 			} catch (EvaluationException e) {
 				throw new EvaluationException(
 						"Exception raised while evaluating this rule:\n" + rule + "\n\n" + e.getMessage());
+			}
+			if (Configuration.recordRuleDiagnostics) {
+				long end = System.currentTimeMillis();
+				Configuration.recordRuleTime(rule, end - start);
 			}
 		}
 

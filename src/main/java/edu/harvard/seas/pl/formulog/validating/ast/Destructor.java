@@ -85,14 +85,14 @@ public class Destructor implements SimpleLiteral {
 
 	@Override
 	public String toString() {
-		String s = symbol + "(";
+		String s = x + " -> " + symbol + "(";
 		for (int i = 0; i < bindings.length; ++i) {
 			s += bindings[i];
 			if (i < bindings.length - 1) {
 				s += ", ";
 			}
 		}
-		s += ") <- " + x;
+		s += ")";
 		return s;
 	}
 
