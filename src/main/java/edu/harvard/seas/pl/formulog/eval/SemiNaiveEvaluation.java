@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Spliterator;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.function.BiFunction;
 
 import edu.harvard.seas.pl.formulog.Configuration;
@@ -156,7 +157,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 		case 1:
 			return SemiNaiveEvaluation::score2;
 		default:
-			throw new IllegalArgumentException("Unrecognized optimization setting: " + Configuration.optimizationSetting);
+			throw new IllegalArgumentException(
+					"Unrecognized optimization setting: " + Configuration.optimizationSetting);
 		}
 	}
 
@@ -305,7 +307,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 	}
 
-	private static final int minTaskSize = 10;
+	private static final int minTaskSize = Configuration.minTaskSize;
+	private static final boolean recordRuleDiagnostics = Configuration.recordRuleDiagnostics;
 
 	private Set<Term[]> lookup(IndexedRule r, int pos, OverwriteSubstitution s) throws EvaluationException {
 		SimplePredicate predicate = (SimplePredicate) r.getBody(pos);
@@ -346,7 +349,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		@Override
 		public void doTask() throws EvaluationException {
 			long start = 0;
-			if (Configuration.recordRuleDiagnostics) {
+			if (recordRuleDiagnostics) {
 				start = System.currentTimeMillis();
 			}
 			while (split.estimateSize() > minTaskSize * 2) {
@@ -361,7 +364,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 			} catch (UncheckedEvaluationException e) {
 				throw new EvaluationException(e.getMessage());
 			}
-			if (Configuration.recordRuleDiagnostics) {
+			if (recordRuleDiagnostics) {
 				long end = System.currentTimeMillis();
 				Configuration.recordRuleTime(rule, end - start);
 			}
@@ -369,6 +372,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 
 		private void evaluate(Term[] ans) throws UncheckedEvaluationException {
 			SimplePredicate p = (SimplePredicate) rule.getBody(startPos);
+			(new ConcurrentSkipListSet<>()).spliterator();
 			updateBinding(p, ans);
 			int pos = startPos + 1;
 			Deque<Iterator<Term[]>> stack = new ArrayDeque<>();
@@ -421,17 +425,14 @@ public class SemiNaiveEvaluation implements Evaluation {
 									movingRight = false;
 								}
 							} else {
-								/*
-								 * Spliterator<Term[]> split = answers.spliterator(); // XXX This might be too
-								 * expensive here. if (split.estimateSize() > minTaskSize * 2) {
-								 * exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s.copy(), split));
-								 * pos--; } else {
-								 */
-								stack.addFirst(answers.iterator());
-								// No need to do anything else: we'll hit the right case on the next iteration.
-								/*
-								 * }
-								 */
+								Spliterator<Term[]> split = answers.spliterator();
+								if (split.estimateSize() > minTaskSize * 2) {
+									exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s.copy(), split));
+									pos--;
+								} else {
+									stack.addFirst(answers.iterator());
+									// No need to do anything else: we'll hit the right case on the next iteration.
+								}
 								movingRight = false;
 							}
 							break;
@@ -480,7 +481,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		@Override
 		public void doTask() throws EvaluationException {
 			long start = 0;
-			if (Configuration.recordRuleDiagnostics) {
+			if (recordRuleDiagnostics) {
 				start = System.currentTimeMillis();
 			}
 			try {
@@ -535,7 +536,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 				throw new EvaluationException(
 						"Exception raised while evaluating this rule:\n" + rule + "\n\n" + e.getMessage());
 			}
-			if (Configuration.recordRuleDiagnostics) {
+			if (recordRuleDiagnostics) {
 				long end = System.currentTimeMillis();
 				Configuration.recordRuleTime(rule, end - start);
 			}

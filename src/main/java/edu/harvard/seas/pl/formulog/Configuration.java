@@ -47,7 +47,11 @@ public final class Configuration {
 	public static final boolean recordRuleDiagnostics = propIsSet("timeRules");
 	private static final Map<Rule<?, ?>, AtomicLong> ruleTimes = new ConcurrentHashMap<>();
 
+	public static final boolean noResults = propIsSet("noResults");
+
 	public static final int optimizationSetting;
+
+	public static final int minTaskSize;
 
 	static {
 		if (recordFuncDiagnostics) {
@@ -70,9 +74,8 @@ public final class Configuration {
 
 			});
 		}
-		String o = System.getProperty("optimize");
-		optimizationSetting = o == null ? 0 : Integer.parseInt(o);
-
+		optimizationSetting = getIntProp("optimize", 0);
+		minTaskSize = getIntProp("minTaskSize", 1024);
 	}
 
 	public static void recordFuncTime(FunctionSymbol func, long time) {
@@ -128,7 +131,25 @@ public final class Configuration {
 
 	private static boolean propIsSet(String prop) {
 		String val = System.getProperty(prop);
+		if (val == null) {
+			return false;
+		}
+		if (!val.equals("")) {
+			throw new IllegalArgumentException("Property " + prop + " does not take an argument");
+		}
 		return val != null;
+	}
+
+	private static int getIntProp(String prop, int def) {
+		String val = System.getProperty(prop);
+		if (val == null) {
+			return def;
+		}
+		try {
+			return Integer.parseInt(val);
+		} catch (NumberFormatException e) {
+			throw new IllegalArgumentException("Property " + prop + " expects an integer argument");
+		}
 	}
 
 }

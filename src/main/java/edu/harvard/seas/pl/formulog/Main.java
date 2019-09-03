@@ -64,7 +64,9 @@ public final class Main {
 		WellTypedProgram typedProg = typeCheck(prog);
 		Evaluation eval = setup(typedProg);
 		evaluate(eval);
-		printResults(eval);
+		if (!Configuration.noResults) {
+			printResults(eval);
+		}
 	}
 
 	private Program<UserPredicate, BasicRule> parse() {
