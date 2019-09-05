@@ -49,12 +49,21 @@ public final class Configuration {
 
 	public static final boolean noResults = propIsSet("noResults");
 
-	public static final int optimizationSetting;
+	public static final int optimizationSetting = getIntProp("optimize", 0);
 
-	public static final int minTaskSize;
+	public static final int minTaskSize = getIntProp("minTaskSize", 1024);
+	
+	public static boolean splitMidTask() {
+		return propIsSet("splitMidTask");
+	}
+	
+	public static final int memoizeThreshold() {
+		return getIntProp("memoizeThreshold", 500);
+	}
 
 	static {
 		if (recordFuncDiagnostics) {
+			System.err.println("[CONFIG] timeFuncs=true");
 			Runtime.getRuntime().addShutdownHook(new Thread() {
 
 				@Override
@@ -65,6 +74,7 @@ public final class Configuration {
 			});
 		}
 		if (recordRuleDiagnostics) {
+			System.err.println("[CONFIG] timeRules=true");
 			Runtime.getRuntime().addShutdownHook(new Thread() {
 
 				@Override
@@ -74,8 +84,13 @@ public final class Configuration {
 
 			});
 		}
-		optimizationSetting = getIntProp("optimize", 0);
-		minTaskSize = getIntProp("minTaskSize", 1024);
+		if (noResults) {
+			System.err.println("[CONFIG] noResults=true");
+		}
+		System.err.println("[CONFIG] optimize=" + optimizationSetting);
+		System.err.println("[CONFIG] minTaskSize=" + minTaskSize);
+		System.err.println("[CONFIG] splitMidTask=" + splitMidTask());
+		System.err.println("[CONFIG] memoizeThreshold=" + memoizeThreshold());
 	}
 
 	public static void recordFuncTime(FunctionSymbol func, long time) {
@@ -87,7 +102,7 @@ public final class Configuration {
 		return Collections.unmodifiableMap(funcTimes);
 	}
 
-	public static void printFuncDiagnostics(PrintStream out) {
+	public static synchronized void printFuncDiagnostics(PrintStream out) {
 		Map<FunctionSymbol, AtomicLong> times = Configuration.getFuncDiagnostics();
 		List<Map.Entry<FunctionSymbol, AtomicLong>> sorted = times.entrySet().stream().sorted(sortTimes)
 				.collect(Collectors.toList());
@@ -117,7 +132,7 @@ public final class Configuration {
 		return Collections.unmodifiableMap(ruleTimes);
 	}
 
-	public static void printRuleDiagnostics(PrintStream out) {
+	public static synchronized void printRuleDiagnostics(PrintStream out) {
 		Map<Rule<?, ?>, AtomicLong> times = Configuration.getRuleDiagnostics();
 		List<Map.Entry<Rule<?, ?>, AtomicLong>> sorted = times.entrySet().stream().sorted(sortTimes)
 				.collect(Collectors.toList());
@@ -134,8 +149,8 @@ public final class Configuration {
 		if (val == null) {
 			return false;
 		}
-		if (!val.equals("")) {
-			throw new IllegalArgumentException("Property " + prop + " does not take an argument");
+		if (!(val.equals("true") || val.equals(""))) {
+			throw new IllegalArgumentException("Property " + prop + " does not take an argument: " + val);
 		}
 		return val != null;
 	}

@@ -309,6 +309,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 
 	private static final int minTaskSize = Configuration.minTaskSize;
 	private static final boolean recordRuleDiagnostics = Configuration.recordRuleDiagnostics;
+	private static final boolean splitMidTask = Configuration.splitMidTask();
 
 	private Set<Term[]> lookup(IndexedRule r, int pos, OverwriteSubstitution s) throws EvaluationException {
 		SimplePredicate predicate = (SimplePredicate) r.getBody(pos);
@@ -425,8 +426,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 									movingRight = false;
 								}
 							} else {
-								Spliterator<Term[]> split = answers.spliterator();
-								if (split.estimateSize() > minTaskSize * 2) {
+								Spliterator<Term[]> split;
+								if (splitMidTask && (split = answers.spliterator()).estimateSize() > minTaskSize * 2) {
 									exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s.copy(), split));
 									pos--;
 								} else {

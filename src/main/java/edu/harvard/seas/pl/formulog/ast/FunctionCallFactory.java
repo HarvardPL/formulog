@@ -29,7 +29,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitorExn;
-import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDefManager;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
@@ -46,7 +45,7 @@ public final class FunctionCallFactory {
 
 	private static final AtomicInteger cnt = new AtomicInteger();
 	private static final boolean debug = System.getProperty("callTrace") != null;
-	private static final boolean memoize = System.getProperty("memoize") != null;
+	private static final int memoizeThreshold = Configuration.memoizeThreshold();
 
 	private final Map<Symbol, Map<List<Term>, Term>> callMemo = new ConcurrentHashMap<>();
 
@@ -123,11 +122,10 @@ public final class FunctionCallFactory {
 
 		@Override
 		public Term normalize(Substitution s) throws EvaluationException {
-			// FIXME This way of implementing memoization seems expensive
 			Integer id = null;
 			long start = 0;
 			if (Configuration.recordFuncDiagnostics) {
-				start = System.currentTimeMillis();
+				start = System.nanoTime();
 			}
 			Term[] newArgs = new Term[args.length];
 			for (int i = 0; i < args.length; ++i) {
@@ -141,26 +139,11 @@ public final class FunctionCallFactory {
 				msg += "***\n";
 				System.err.println(msg);
 			}
-			FunctionDef def = defManager.lookup(getSymbol());
-			assert def != null;
 			Term r;
-			if (memoize) {
-				Map<List<Term>, Term> m = Util.lookupOrCreate(callMemo, sym, () -> new ConcurrentHashMap<>());
-				List<Term> key = Arrays.asList(newArgs);
-				r = m.get(key);
-				if (r == null) {
-					r = def.evaluate(newArgs);
-					Term other = m.putIfAbsent(key, r);
-					if (other != null) {
-						r = other;
-					}
-				}
+			if (memoizeThreshold > -1) {
+				r = computeWithMemoization(newArgs, start);
 			} else {
-				r = def.evaluate(newArgs);
-			}
-			if (Configuration.recordFuncDiagnostics) {
-				long time = System.currentTimeMillis() - start;
-				Configuration.recordFuncTime(sym, time);
+				r = computeWithoutMemoization(newArgs, start);
 			}
 			if (debug) {
 				String msg = "END CALL #" + id + "\n";
@@ -169,6 +152,32 @@ public final class FunctionCallFactory {
 				msg += "Result: " + r + "\n";
 				msg += "***\n";
 				System.err.println(msg);
+			}
+			return r;
+		}
+		
+		private Term computeWithMemoization(Term[] newArgs, long start) throws EvaluationException {
+				Map<List<Term>, Term> m = Util.lookupOrCreate(callMemo, sym, () -> new ConcurrentHashMap<>());
+				List<Term> key = Arrays.asList(newArgs);
+				Term r = m.get(key);
+				if (r == null) {
+					r = defManager.lookup(sym).evaluate(newArgs);
+					long time = (System.nanoTime() - start) / (long) 1e6;
+					if (Configuration.recordFuncDiagnostics) {
+						Configuration.recordFuncTime(sym, time);
+					}
+					if (time >= memoizeThreshold) {
+						m.put(key, r);
+					}
+				}
+				return r;
+		}
+		
+		private Term computeWithoutMemoization(Term[] newArgs, long start) throws EvaluationException {
+			Term r = defManager.lookup(sym).evaluate(newArgs);
+			if (Configuration.recordFuncDiagnostics) {
+				long time = (System.nanoTime() - start) / (long) 1e6;
+				Configuration.recordFuncTime(sym, time);
 			}
 			return r;
 		}
