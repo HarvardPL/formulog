@@ -123,10 +123,6 @@ public final class FunctionCallFactory {
 		@Override
 		public Term normalize(Substitution s) throws EvaluationException {
 			Integer id = null;
-			long start = 0;
-			if (Configuration.recordFuncDiagnostics) {
-				start = System.nanoTime();
-			}
 			Term[] newArgs = new Term[args.length];
 			for (int i = 0; i < args.length; ++i) {
 				newArgs[i] = args[i].normalize(s);
@@ -141,9 +137,9 @@ public final class FunctionCallFactory {
 			}
 			Term r;
 			if (memoizeThreshold > -1) {
-				r = computeWithMemoization(newArgs, start);
+				r = computeWithMemoization(newArgs);
 			} else {
-				r = computeWithoutMemoization(newArgs, start);
+				r = computeWithoutMemoization(newArgs);
 			}
 			if (debug) {
 				String msg = "END CALL #" + id + "\n";
@@ -155,25 +151,30 @@ public final class FunctionCallFactory {
 			}
 			return r;
 		}
-		
-		private Term computeWithMemoization(Term[] newArgs, long start) throws EvaluationException {
-				Map<List<Term>, Term> m = Util.lookupOrCreate(callMemo, sym, () -> new ConcurrentHashMap<>());
-				List<Term> key = Arrays.asList(newArgs);
-				Term r = m.get(key);
-				if (r == null) {
-					r = defManager.lookup(sym).evaluate(newArgs);
-					long time = (System.nanoTime() - start) / (long) 1e6;
-					if (Configuration.recordFuncDiagnostics) {
-						Configuration.recordFuncTime(sym, time);
-					}
-					if (time >= memoizeThreshold) {
-						m.put(key, r);
-					}
+
+		private Term computeWithMemoization(Term[] newArgs) throws EvaluationException {
+			Map<List<Term>, Term> m = Util.lookupOrCreate(callMemo, sym, () -> new ConcurrentHashMap<>());
+			List<Term> key = Arrays.asList(newArgs);
+			Term r = m.get(key);
+			if (r == null) {
+				long start = System.nanoTime();
+				r = defManager.lookup(sym).evaluate(newArgs);
+				long time = (System.nanoTime() - start) / (long) 1e6;
+				if (Configuration.recordFuncDiagnostics) {
+					Configuration.recordFuncTime(sym, time);
 				}
-				return r;
+				if (time >= memoizeThreshold) {
+					m.put(key, r);
+				}
+			}
+			return r;
 		}
-		
-		private Term computeWithoutMemoization(Term[] newArgs, long start) throws EvaluationException {
+
+		private Term computeWithoutMemoization(Term[] newArgs) throws EvaluationException {
+			long start = 0;
+			if (Configuration.recordFuncDiagnostics) {
+				start = System.nanoTime();
+			}
 			Term r = defManager.lookup(sym).evaluate(newArgs);
 			if (Configuration.recordFuncDiagnostics) {
 				long time = (System.nanoTime() - start) / (long) 1e6;
