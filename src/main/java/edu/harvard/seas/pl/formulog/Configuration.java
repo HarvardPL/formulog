@@ -61,6 +61,10 @@ public final class Configuration {
 		return getIntProp("memoizeThreshold", 500);
 	}
 
+	public static boolean noModel() {
+		return propIsSet("noModel");
+	}
+
 	static {
 		if (recordFuncDiagnostics) {
 			System.err.println("[CONFIG] timeFuncs=true");
@@ -91,6 +95,7 @@ public final class Configuration {
 		System.err.println("[CONFIG] minTaskSize=" + minTaskSize);
 		System.err.println("[CONFIG] splitMidTask=" + splitMidTask());
 		System.err.println("[CONFIG] memoizeThreshold=" + memoizeThreshold());
+		System.err.println("[CONFIG] noModel=" + noModel());
 	}
 
 	public static void recordFuncTime(FunctionSymbol func, long time) {

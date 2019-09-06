@@ -86,7 +86,6 @@ public class Z3Process {
 		BufferedReader reader = new BufferedReader(new InputStreamReader(z3.getInputStream()));
 		PrintWriter writer;
 		if (debug) {
-			
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			writer = new PrintWriter(baos);
 			SmtLibShim shim = new SmtLibShim(reader, writer, symbolManager);

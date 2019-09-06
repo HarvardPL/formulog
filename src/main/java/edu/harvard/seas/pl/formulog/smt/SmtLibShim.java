@@ -45,6 +45,7 @@ import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.traverse.TopologicalOrderIterator;
 
+import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverUninterpretedFunction;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
@@ -79,7 +80,7 @@ import edu.harvard.seas.pl.formulog.util.Util;
 
 public class SmtLibShim {
 
-	private static final boolean noModel = System.getProperty("noModel") != null;
+	private static final boolean noModel = Configuration.noModel();
 	
 	public static enum Status {
 		SATISFIABLE, UNSATISFIABLE, UNKNOWN

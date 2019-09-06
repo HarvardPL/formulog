@@ -159,7 +159,7 @@ public final class FunctionCallFactory {
 			if (r == null) {
 				long start = System.nanoTime();
 				r = defManager.lookup(sym).evaluate(newArgs);
-				long time = (System.nanoTime() - start) / (long) 1e6;
+				long time = (System.nanoTime() - start) / 1000000;
 				if (Configuration.recordFuncDiagnostics) {
 					Configuration.recordFuncTime(sym, time);
 				}
@@ -177,7 +177,7 @@ public final class FunctionCallFactory {
 			}
 			Term r = defManager.lookup(sym).evaluate(newArgs);
 			if (Configuration.recordFuncDiagnostics) {
-				long time = (System.nanoTime() - start) / (long) 1e6;
+				long time = (System.nanoTime() - start) / 1000000;
 				Configuration.recordFuncTime(sym, time);
 			}
 			return r;
