@@ -28,35 +28,30 @@ import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 public class MockCountingFJP implements CountingFJP {
 
 	private volatile EvaluationException failureCause;
-	private volatile boolean shutdown;
 	
 	private final Deque<AbstractFJPTask> workItems = new ArrayDeque<>();
 
 	public synchronized void externallyAddTask(AbstractFJPTask w) {
-		assert !shutdown;
 		workItems.addLast(w);
 	}
 
 	public synchronized void recursivelyAddTask(AbstractFJPTask w) {
-		assert !shutdown;
 		workItems.addLast(w);
 	}
 
 	public synchronized final void blockUntilFinished() {
-		while (!workItems.isEmpty()) {
+		while (!workItems.isEmpty() && !hasFailed()) {
 			AbstractFJPTask task = workItems.removeLast();
 			task.compute();
 		}
 	}
 
 	public synchronized final void shutdown() {
-		assert !shutdown;
-		shutdown = true;
+		
 	}
 	
 	public synchronized final void fail(EvaluationException cause) {
 		failureCause = cause;
-		shutdown = true;
 	}
 	
 	public synchronized final boolean hasFailed() {
@@ -69,7 +64,7 @@ public class MockCountingFJP implements CountingFJP {
 
 	@Override
 	public synchronized void reportTaskCompletion() {
-		assert !shutdown;
+		
 	}
 
 }

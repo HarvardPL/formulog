@@ -273,6 +273,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 			}
 		}
 		exec.blockUntilFinished();
+		if (exec.hasFailed()) {
+			throw exec.getFailureCause();
+		}
 		updateDbs();
 		while (changed) {
 			changed = false;
@@ -282,6 +285,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 				}
 			}
 			exec.blockUntilFinished();
+			if (exec.hasFailed()) {
+				throw exec.getFailureCause();
+			}
 			updateDbs();
 		}
 	}
