@@ -30,6 +30,7 @@ import java.util.concurrent.Future;
 
 import org.pcollections.HashTreePMap;
 
+import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
@@ -1303,7 +1304,16 @@ public final class BuiltInFunctionDefFactory {
 			}
 		}
 		try {
-			return m.get();
+			long start = 0;
+			if (Configuration.timeSmt) {
+				start = System.currentTimeMillis();
+			}
+			Optional<Model> model = m.get();
+			if (Configuration.timeSmt) {
+				long end = System.currentTimeMillis();
+				Configuration.recordSmtWaitTime(end - start);
+			}
+			return model;
 		} catch (InterruptedException | ExecutionException e) {
 			throw new EvaluationException(e);
 		}

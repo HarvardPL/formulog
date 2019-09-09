@@ -277,7 +277,15 @@ public class SemiNaiveEvaluation implements Evaluation {
 			throw exec.getFailureCause();
 		}
 		updateDbs();
+		int round = 1;
 		while (changed) {
+			if (round % 100 == 0) {
+				System.err.println("STRATUM " + stratum.getRank() + " ROUND " + round);
+				for (RelationSymbol sym : db.getSymbols()) {
+					Set<?> s = db.getAll(sym);
+					System.err.println(sym + ": " + s.size());
+				}
+			}
 			changed = false;
 			for (RelationSymbol sym : syms) {
 				for (IndexedRule r : laterRoundRules.get(sym)) {
@@ -289,15 +297,16 @@ public class SemiNaiveEvaluation implements Evaluation {
 				throw exec.getFailureCause();
 			}
 			updateDbs();
+			round++;
 		}
 	}
 
 	private void updateDbs() {
 		for (RelationSymbol sym : nextDeltaDb.getSymbols()) {
-			for (Term[] args : nextDeltaDb.getAll(sym)) {
-				db.add(sym, args);
-			}
+			Set<Term[]> answers = nextDeltaDb.getAll(sym);
+			exec.externallyAddTask(new DbFactSplitter(sym, answers.spliterator()));
 		}
+		exec.blockUntilFinished();
 		IndexedFactDb tmp = deltaDb;
 		deltaDb = nextDeltaDb;
 		nextDeltaDb = tmp;
@@ -312,10 +321,6 @@ public class SemiNaiveEvaluation implements Evaluation {
 			changed = true;
 		}
 	}
-
-	private static final int minTaskSize = Configuration.minTaskSize;
-	private static final boolean recordRuleDiagnostics = Configuration.recordRuleDiagnostics;
-	private static final boolean splitMidTask = Configuration.splitMidTask();
 
 	private Set<Term[]> lookup(IndexedRule r, int pos, OverwriteSubstitution s) throws EvaluationException {
 		SimplePredicate predicate = (SimplePredicate) r.getBody(pos);
@@ -336,6 +341,56 @@ public class SemiNaiveEvaluation implements Evaluation {
 			return db.get(key, idx);
 		}
 	}
+
+	@SuppressWarnings("serial")
+	private class DbFactSplitter extends AbstractFJPTask {
+
+		private final RelationSymbol sym;
+		private final Spliterator<Term[]> split;
+
+		public DbFactSplitter(RelationSymbol sym, Spliterator<Term[]> split) {
+			super(exec);
+			this.sym = sym;
+			this.split = split;
+		}
+
+		@Override
+		public void doTask() throws EvaluationException {
+			// XXX
+			while (split.estimateSize() > minTaskSize * 8) {
+				Spliterator<Term[]> split2 = split.trySplit();
+				if (split2 == null) {
+					break;
+				}
+				exec.recursivelyAddTask(new DbFactPutter(sym, split2));
+			}
+			exec.recursivelyAddTask(new DbFactPutter(sym, split));
+		}
+
+	}
+
+	@SuppressWarnings("serial")
+	private class DbFactPutter extends AbstractFJPTask {
+
+		private final RelationSymbol sym;
+		private final Spliterator<Term[]> split;
+
+		public DbFactPutter(RelationSymbol sym, Spliterator<Term[]> split) {
+			super(exec);
+			this.sym = sym;
+			this.split = split;
+		}
+
+		@Override
+		public void doTask() throws EvaluationException {
+			split.forEachRemaining(args -> db.add(sym, args));
+		}
+
+	}
+
+	private static final int minTaskSize = Configuration.minTaskSize;
+	private static final boolean recordRuleDiagnostics = Configuration.recordRuleDiagnostics;
+	private static final boolean splitMidTask = Configuration.splitMidTask();
 
 	@SuppressWarnings("serial")
 	private class RuleSuffixEvaluator extends AbstractFJPTask {

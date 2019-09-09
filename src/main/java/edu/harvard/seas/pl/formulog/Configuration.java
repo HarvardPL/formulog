@@ -47,16 +47,23 @@ public final class Configuration {
 	public static final boolean recordRuleDiagnostics = propIsSet("timeRules");
 	private static final Map<Rule<?, ?>, AtomicLong> ruleTimes = new ConcurrentHashMap<>();
 
+	public static final boolean timeSmt = propIsSet("timeSmt");
+	private static final AtomicLong smtEvalTime = new AtomicLong();
+	private static final AtomicLong smtDeclTime = new AtomicLong();
+	private static final AtomicLong smtInferTime = new AtomicLong();
+	private static final AtomicLong smtSerialTime = new AtomicLong();
+	private static final AtomicLong smtWaitTime = new AtomicLong();
+
 	public static final boolean noResults = propIsSet("noResults");
 
 	public static final int optimizationSetting = getIntProp("optimize", 0);
 
 	public static final int minTaskSize = getIntProp("minTaskSize", 1024);
-	
+
 	public static boolean splitMidTask() {
 		return propIsSet("splitMidTask");
 	}
-	
+
 	public static final int memoizeThreshold() {
 		return getIntProp("memoizeThreshold", 500);
 	}
@@ -67,7 +74,6 @@ public final class Configuration {
 
 	static {
 		if (recordFuncDiagnostics) {
-			System.err.println("[CONFIG] timeFuncs=true");
 			Runtime.getRuntime().addShutdownHook(new Thread() {
 
 				@Override
@@ -78,7 +84,6 @@ public final class Configuration {
 			});
 		}
 		if (recordRuleDiagnostics) {
-			System.err.println("[CONFIG] timeRules=true");
 			Runtime.getRuntime().addShutdownHook(new Thread() {
 
 				@Override
@@ -88,14 +93,53 @@ public final class Configuration {
 
 			});
 		}
-		if (noResults) {
-			System.err.println("[CONFIG] noResults=true");
+		if (timeSmt) {
+			Runtime.getRuntime().addShutdownHook(new Thread() {
+
+				@Override
+				public void run() {
+					printSmtDiagnostics(System.err);
+				}
+
+			});
 		}
+		System.err.println("[CONFIG] noResults=" + noResults);
+		System.err.println("[CONFIG] timeRules=" + recordRuleDiagnostics);
+		System.err.println("[CONFIG] timeFuncs=" + recordFuncDiagnostics);
+		System.err.println("[CONFIG] timeSmt=" + timeSmt);
 		System.err.println("[CONFIG] optimize=" + optimizationSetting);
 		System.err.println("[CONFIG] minTaskSize=" + minTaskSize);
 		System.err.println("[CONFIG] splitMidTask=" + splitMidTask());
 		System.err.println("[CONFIG] memoizeThreshold=" + memoizeThreshold());
 		System.err.println("[CONFIG] noModel=" + noModel());
+	}
+
+	public static void recordSmtDeclTime(long time) {
+		smtDeclTime.addAndGet(time);
+	}
+	
+	public static void recordSmtInferTime(long time) {
+		smtInferTime.addAndGet(time);
+	}
+	
+	public static void recordSmtSerialTime(long time) {
+		smtSerialTime.addAndGet(time);
+	}
+	
+	public static void recordSmtEvalTime(long time) {
+		smtEvalTime.addAndGet(time);
+	}
+	
+	public static void recordSmtWaitTime(long time) {
+		smtWaitTime.addAndGet(time);
+	}
+	
+	public static synchronized void printSmtDiagnostics(PrintStream out) {
+		System.err.println("[SMT DECL TIME] " + smtDeclTime.get() + "ms");
+		System.err.println("[SMT INFER TIME] " + smtInferTime.get() + "ms");
+		System.err.println("[SMT SERIAL TIME] " + smtSerialTime.get() + "ms");
+		System.err.println("[SMT EVAL TIME] " + smtEvalTime.get() + "ms");
+		System.err.println("[SMT WAIT TIME] " + smtWaitTime.get() + "ms");
 	}
 
 	public static void recordFuncTime(FunctionSymbol func, long time) {

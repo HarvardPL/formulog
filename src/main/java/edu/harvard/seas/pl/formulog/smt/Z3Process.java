@@ -28,6 +28,7 @@ import java.io.PrintWriter;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
@@ -57,7 +58,7 @@ public class Z3Process {
 			throw new AssertionError("Command checking for presence of z3 executable failed: " + cmd);
 		}
 	}
-	
+
 	private static final boolean debug = System.getProperty("debugSmt") != null;
 	private static final AtomicInteger cnt = new AtomicInteger();
 	private final SymbolManager symbolManager;
@@ -66,7 +67,7 @@ public class Z3Process {
 	public Z3Process(SymbolManager symbolManager) {
 		this.symbolManager = symbolManager;
 	}
-	
+
 	public synchronized void start() {
 		assert z3 == null;
 		try {
@@ -75,7 +76,7 @@ public class Z3Process {
 			throw new RuntimeException("Could not run Z3:\n" + e);
 		}
 	}
-	
+
 	public synchronized void destroy() {
 		assert z3 != null;
 		z3.destroy();
@@ -110,13 +111,17 @@ public class Z3Process {
 		}
 		SmtLibShim shim = makeAssertion(t, id);
 		long start = 0;
-		if (debug) {
-			start = System.currentTimeMillis(); 
+		if (debug || Configuration.timeSmt) {
+			start = System.currentTimeMillis();
 		}
 		Status status = shim.checkSat(timeout);
 		if (debug) {
 			double time = (System.currentTimeMillis() - start) / 1000.0;
 			System.err.println("\nRES Z3 JOB #" + id + ": " + status + " (" + time + "s)");
+		}
+		if (Configuration.timeSmt) {
+			long time = System.currentTimeMillis() - start;
+			Configuration.recordSmtEvalTime(time);
 		}
 		Map<SolverVariable, Term> m = null;
 		if (status.equals(Status.SATISFIABLE)) {
@@ -124,5 +129,5 @@ public class Z3Process {
 		}
 		return new Pair<>(status, m);
 	}
-	
+
 }

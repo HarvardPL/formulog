@@ -80,8 +80,9 @@ import edu.harvard.seas.pl.formulog.util.Util;
 
 public class SmtLibShim {
 
+	private static final boolean recordTime = Configuration.timeSmt;
 	private static final boolean noModel = Configuration.noModel();
-	
+
 	public static enum Status {
 		SATISFIABLE, UNSATISFIABLE, UNKNOWN
 	}
@@ -103,12 +104,31 @@ public class SmtLibShim {
 	}
 
 	public void makeAssertion(SmtLibTerm assertion) {
+		long start = 0;
+		long end = 0;
+		if (recordTime) {
+			start = System.currentTimeMillis();
+		}
 		declareSorts(assertion);
 		declareSymbolsAndFuns(assertion);
-		typeAnnotations = (new MiniTypeInferer()).inferTypes(assertion).iterator();
+		if (recordTime) {
+			end = System.currentTimeMillis();
+			Configuration.recordSmtDeclTime(end - start);
+			start = end;
+		}
+		typeAnnotations = new MiniTypeInferer().inferTypes(assertion).iterator();
+		if (recordTime) {
+			end = System.currentTimeMillis();
+			Configuration.recordSmtInferTime(end - start);
+			start = end;
+		}
 		print("(assert ");
 		assertion.toSmtLib(this);
 		print(")");
+		if (recordTime) {
+			end = System.currentTimeMillis();
+			Configuration.recordSmtSerialTime(end - start);
+		}
 		assert !typeAnnotations.hasNext();
 		out.flush();
 	}
