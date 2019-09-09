@@ -37,6 +37,7 @@ import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolComparator;
+import edu.harvard.seas.pl.formulog.validating.ast.BindingType;
 
 public class SortedIndexedFactDb implements IndexedFactDb {
 
@@ -128,7 +129,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 	public static class SortedIndexedFactDbBuilder implements IndexedFactDbBuilder<SortedIndexedFactDb> {
 
 		private int cnt = 0;
-		private final Map<RelationSymbol, Map<BooleanArrayWrapper, Integer>> pats = new LinkedHashMap<>();
+		private final Map<RelationSymbol, Map<BindingTypeArrayWrapper, Integer>> pats = new LinkedHashMap<>();
 
 		public SortedIndexedFactDbBuilder(Set<RelationSymbol> allSyms) {
 			List<RelationSymbol> sortedSyms = allSyms.stream().sorted(SymbolComparator.INSTANCE)
@@ -139,10 +140,10 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 		}
 
 		@Override
-		public synchronized int makeIndex(RelationSymbol sym, boolean[] pat) {
+		public synchronized int makeIndex(RelationSymbol sym, BindingType[] pat) {
 			assert sym.getArity() == pat.length;
-			Map<BooleanArrayWrapper, Integer> m = pats.get(sym);
-			BooleanArrayWrapper key = new BooleanArrayWrapper(pat);
+			Map<BindingTypeArrayWrapper, Integer> m = pats.get(sym);
+			BindingTypeArrayWrapper key = new BindingTypeArrayWrapper(pat);
 			Integer idx = m.get(key);
 			if (idx == null) {
 				idx = cnt++;
@@ -156,7 +157,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			Map<RelationSymbol, Set<Term[]>> all = new LinkedHashMap<>();
 			IndexedFactSet[] indices = new IndexedFactSet[cnt];
 			Map<RelationSymbol, Iterable<Integer>> relevantIndices = new HashMap<>();
-			for (Map.Entry<RelationSymbol, Map<BooleanArrayWrapper, Integer>> e : pats.entrySet()) {
+			for (Map.Entry<RelationSymbol, Map<BindingTypeArrayWrapper, Integer>> e : pats.entrySet()) {
 				RelationSymbol sym = e.getKey();
 				int[] order = new int[sym.getArity()];
 				for (int i = 0; i < order.length; ++i) {
@@ -165,7 +166,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 				Comparator<Term[]> cmp = new ArrayComparator<>(order, Terms.comparator);
 				all.put(sym, new ConcurrentSkipListSet<>(cmp));
 				List<Integer> idxs = new ArrayList<>();
-				for (Map.Entry<BooleanArrayWrapper, Integer> e2 : e.getValue().entrySet()) {
+				for (Map.Entry<BindingTypeArrayWrapper, Integer> e2 : e.getValue().entrySet()) {
 					int idx = e2.getValue();
 					indices[idx] = IndexedFactSet.make(e2.getKey().getArr());
 					idxs.add(idx);
@@ -179,25 +180,26 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 
 	private static class IndexedFactSet {
 
-		private final boolean[] pat;
+		private final BindingType[] pat;
 		private final NavigableSet<Term[]> s;
 
-		public static IndexedFactSet make(boolean[] pat) {
-			int[] order = new int[pat.length];
-			int pos = 0;
+		public static IndexedFactSet make(BindingType[] pat) {
+			List<Integer> order = new ArrayList<>();
 			for (int i = 0; i < pat.length; ++i) {
-				if (pat[i]) {
-					order[pos] = i;
-					pos++;
+				if (pat[i].isBound()) {
+					order.add(i);
 				}
 			}
 			for (int i = 0; i < pat.length; ++i) {
-				if (!pat[i]) {
-					order[pos] = i;
-					pos++;
+				if (pat[i].isFree()) {
+					order.add(i);
 				}
 			}
-			Comparator<Term[]> cmp = new ArrayComparator<>(order, Terms.comparator);
+			int[] a = new int[order.size()];
+			for (int i = 0; i < a.length; ++i) {
+				a[i] = order.get(i);
+			}
+			Comparator<Term[]> cmp = new ArrayComparator<>(a, Terms.comparator);
 			return new IndexedFactSet(pat, new ConcurrentSkipListSet<>(cmp));
 		}
 
@@ -205,7 +207,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			s.clear();
 		}
 
-		private IndexedFactSet(boolean[] pat, NavigableSet<Term[]> s) {
+		private IndexedFactSet(BindingType[] pat, NavigableSet<Term[]> s) {
 			this.pat = pat;
 			this.s = s;
 		}
@@ -218,7 +220,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			Term[] lower = new Term[arr.length];
 			Term[] upper = new Term[arr.length];
 			for (int i = 0; i < arr.length; ++i) {
-				if (pat[i]) {
+				if (pat[i].isBound()) {
 					lower[i] = arr[i];
 					upper[i] = arr[i];
 				} else {
@@ -227,6 +229,17 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 				}
 			}
 			return s.subSet(lower, true, upper, true);
+		}
+	
+		@Override
+		public String toString() {
+			String str = "[\n\t";
+			str += Arrays.toString(pat);
+			for (Term[] tup : s) {
+				str += "\n\t";
+				str += Arrays.toString(tup);
+			}
+			return str + "\n]";
 		}
 
 	}
@@ -255,14 +268,14 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 
 	}
 
-	public static class BooleanArrayWrapper {
-		private final boolean[] arr;
+	public static class BindingTypeArrayWrapper {
+		private final BindingType[] arr;
 
-		public BooleanArrayWrapper(boolean[] arr) {
+		public BindingTypeArrayWrapper(BindingType[] arr) {
 			this.arr = arr;
 		}
 
-		public boolean[] getArr() {
+		public BindingType[] getArr() {
 			return arr;
 		}
 
@@ -282,7 +295,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 				return false;
 			if (getClass() != obj.getClass())
 				return false;
-			BooleanArrayWrapper other = (BooleanArrayWrapper) obj;
+			BindingTypeArrayWrapper other = (BindingTypeArrayWrapper) obj;
 			if (!Arrays.equals(arr, other.arr))
 				return false;
 			return true;

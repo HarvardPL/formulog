@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.db;
+package edu.harvard.seas.pl.formulog.validating.ast;
 
 /*-
  * #%L
@@ -20,13 +20,16 @@ package edu.harvard.seas.pl.formulog.db;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
-import edu.harvard.seas.pl.formulog.validating.ast.BindingType;
-
-public interface IndexedFactDbBuilder<T extends IndexedFactDb> {
-
-	int makeIndex(RelationSymbol sym, BindingType[] pat);
+public enum BindingType {
 	
-	T build();
+	BOUND, FREE, IGNORED;
+	
+	public boolean isBound() {
+		return this.equals(BOUND);
+	}
+	
+	public boolean isFree() {
+		return this.equals(FREE);
+	}
 	
 }

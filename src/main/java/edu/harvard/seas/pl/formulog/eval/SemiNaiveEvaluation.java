@@ -49,6 +49,7 @@ import edu.harvard.seas.pl.formulog.db.IndexedFactDb;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDbBuilder;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb.SortedIndexedFactDbBuilder;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
+import edu.harvard.seas.pl.formulog.eval.optimizations.SingleUseVarOptimizer;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
 import edu.harvard.seas.pl.formulog.smt.Z3ThreadFactory;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
@@ -65,6 +66,7 @@ import edu.harvard.seas.pl.formulog.validating.Stratifier;
 import edu.harvard.seas.pl.formulog.validating.Stratum;
 import edu.harvard.seas.pl.formulog.validating.ValidRule;
 import edu.harvard.seas.pl.formulog.validating.ast.Assignment;
+import edu.harvard.seas.pl.formulog.validating.ast.BindingType;
 import edu.harvard.seas.pl.formulog.validating.ast.Check;
 import edu.harvard.seas.pl.formulog.validating.ast.Destructor;
 import edu.harvard.seas.pl.formulog.validating.ast.SimpleLiteral;
@@ -113,6 +115,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 						ValidRule vr = ValidRule.make(snr, score);
 						predFuncs.preprocess(vr);
 						SimpleRule sr = SimpleRule.make(vr);
+						sr = new SingleUseVarOptimizer().optimize(sr);
 						IndexedRule ir = IndexedRule.make(sr, p -> {
 							RelationSymbol psym = p.getSymbol();
 							if (psym instanceof DeltaSymbol) {
@@ -327,9 +330,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 		int idx = r.getDBIndex(pos);
 		Term[] args = predicate.getArgs();
 		Term[] key = new Term[args.length];
-		boolean[] pat = predicate.getBindingPattern();
+		BindingType[] pat = predicate.getBindingPattern();
 		for (int i = 0; i < args.length; ++i) {
-			if (pat[i]) {
+			if (pat[i].isBound()) {
 				key[i] = args[i].normalize(s);
 			} else {
 				key[i] = args[i];
@@ -520,9 +523,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 
 		private void updateBinding(SimplePredicate p, Term[] ans) {
 			Term[] args = p.getArgs();
-			boolean[] pat = p.getBindingPattern();
+			BindingType[] pat = p.getBindingPattern();
 			for (int i = 0; i < pat.length; ++i) {
-				if (!pat[i]) {
+				if (pat[i].isFree()) {
 					s.put((Var) args[i], ans[i]);
 				}
 			}

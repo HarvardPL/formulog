@@ -57,6 +57,12 @@ public class SimpleRule extends AbstractRule<SimplePredicate, SimpleLiteral> {
 		return new SimpleRule(newHead, simplifier.getConjuncts());
 	}
 
+	// XXX This isn't great because it doesn't check to make sure the invariants of
+	// a SimpleRule are actually maintained.
+	public static SimpleRule make(SimplePredicate head, List<SimpleLiteral> body) {
+		return new SimpleRule(head, body);
+	}
+
 	private SimpleRule(SimplePredicate head, List<SimpleLiteral> body) {
 		super(head, body);
 	}
@@ -68,95 +74,93 @@ public class SimpleRule extends AbstractRule<SimplePredicate, SimpleLiteral> {
 
 		public void add(ComplexLiteral atom) throws InvalidProgramException {
 			List<ComplexLiteral> todo = new ArrayList<>();
-			SimpleLiteral c = atom
-					.accept(new ComplexLiteralExnVisitor<Void, SimpleLiteral, InvalidProgramException>() {
+			SimpleLiteral c = atom.accept(new ComplexLiteralExnVisitor<Void, SimpleLiteral, InvalidProgramException>() {
 
-						@Override
-						public SimpleLiteral visit(UnificationPredicate unificationPredicate, Void input)
-								throws InvalidProgramException {
-							Term lhs = unificationPredicate.getLhs();
-							Term rhs = unificationPredicate.getRhs();
-							boolean leftBound = boundVars.containsAll(lhs.varSet());
-							boolean rightBound = boundVars.containsAll(rhs.varSet());
-							if (unificationPredicate.isNegated() && !(leftBound && rightBound)) {
-								throw new InvalidProgramException();
-							}
-							if (leftBound && rightBound) {
-								return Check.make(lhs, rhs, unificationPredicate.isNegated());
-							} else if (rightBound) {
-								if (lhs instanceof Var) {
-									return Assignment.make((Var) lhs, rhs);
-								}
-								if (!(lhs instanceof Constructor)) {
-									throw new InvalidProgramException();
-								}
-								return makeDestructor(rhs, (Constructor) lhs, todo);
-							} else if (leftBound) {
-								if (rhs instanceof Var) {
-									return Assignment.make((Var) rhs, lhs);
-								}
-								if (!(rhs instanceof Constructor)) {
-									throw new InvalidProgramException();
-								}
-								return makeDestructor(lhs, (Constructor) rhs, todo);
-							} else {
-								if (!(lhs instanceof Constructor) || !(rhs instanceof Constructor)) {
-									throw new InvalidProgramException();
-								}
-								Constructor c1 = (Constructor) lhs;
-								Constructor c2 = (Constructor) rhs;
-								if (!c1.getSymbol().equals(c2.getSymbol())) {
-									throw new InvalidProgramException("Unsatisfiable unification conjunct");
-								}
-								List<ComplexLiteral> cs = new ArrayList<>();
-								Term[] args1 = c1.getArgs();
-								Term[] args2 = c2.getArgs();
-								for (int i = 0; i < args1.length; ++i) {
-									cs.add(UnificationPredicate.make(args1[i], args2[i], false));
-								}
-								ValidRule.order(cs, (p, xs) -> 1, new HashSet<>(boundVars));
-								for (ComplexLiteral c : cs) {
-									todo.add(c);
-								}
-								return null;
-							}
+				@Override
+				public SimpleLiteral visit(UnificationPredicate unificationPredicate, Void input)
+						throws InvalidProgramException {
+					Term lhs = unificationPredicate.getLhs();
+					Term rhs = unificationPredicate.getRhs();
+					boolean leftBound = boundVars.containsAll(lhs.varSet());
+					boolean rightBound = boundVars.containsAll(rhs.varSet());
+					if (unificationPredicate.isNegated() && !(leftBound && rightBound)) {
+						throw new InvalidProgramException();
+					}
+					if (leftBound && rightBound) {
+						return Check.make(lhs, rhs, unificationPredicate.isNegated());
+					} else if (rightBound) {
+						if (lhs instanceof Var) {
+							return Assignment.make((Var) lhs, rhs);
 						}
-
-						private Destructor makeDestructor(Term boundTerm, Constructor unboundCtor,
-								List<ComplexLiteral> todo) {
-							Term[] args = unboundCtor.getArgs();
-							Var[] vars = new Var[args.length];
-							for (int i = 0; i < args.length; ++i) {
-								Var y = Var.getFresh(false);
-								vars[i] = y;
-								todo.add(UnificationPredicate.make(y, args[i], false));
-							}
-							return Destructor.make(boundTerm, unboundCtor.getSymbol(), vars);
+						if (!(lhs instanceof Constructor)) {
+							throw new InvalidProgramException();
 						}
-
-						@Override
-						public SimpleLiteral visit(UserPredicate userPredicate, Void input) {
-							Term[] args = userPredicate.getArgs();
-							Term[] newArgs = new Term[args.length];
-							Set<Var> seen = new HashSet<>();
-							for (int i = 0; i < args.length; ++i) {
-								Term arg = args[i];
-								if (boundVars.containsAll(arg.varSet())) {
-									newArgs[i] = arg;
-								} else if (arg instanceof Var && seen.add((Var) arg)) {
-									newArgs[i] = arg;
-								} else {
-									Var y = Var.getFresh(false);
-									newArgs[i] = y;
-									todo.add(UnificationPredicate.make(y, arg, false));
-								}
-							}
-							SimpleLiteral c = SimplePredicate.make(userPredicate.getSymbol(), newArgs, boundVars,
-									userPredicate.isNegated());
-							return c;
+						return makeDestructor(rhs, (Constructor) lhs, todo);
+					} else if (leftBound) {
+						if (rhs instanceof Var) {
+							return Assignment.make((Var) rhs, lhs);
 						}
+						if (!(rhs instanceof Constructor)) {
+							throw new InvalidProgramException();
+						}
+						return makeDestructor(lhs, (Constructor) rhs, todo);
+					} else {
+						if (!(lhs instanceof Constructor) || !(rhs instanceof Constructor)) {
+							throw new InvalidProgramException();
+						}
+						Constructor c1 = (Constructor) lhs;
+						Constructor c2 = (Constructor) rhs;
+						if (!c1.getSymbol().equals(c2.getSymbol())) {
+							throw new InvalidProgramException("Unsatisfiable unification conjunct");
+						}
+						List<ComplexLiteral> cs = new ArrayList<>();
+						Term[] args1 = c1.getArgs();
+						Term[] args2 = c2.getArgs();
+						for (int i = 0; i < args1.length; ++i) {
+							cs.add(UnificationPredicate.make(args1[i], args2[i], false));
+						}
+						ValidRule.order(cs, (p, xs) -> 1, new HashSet<>(boundVars));
+						for (ComplexLiteral c : cs) {
+							todo.add(c);
+						}
+						return null;
+					}
+				}
 
-					}, null);
+				private Destructor makeDestructor(Term boundTerm, Constructor unboundCtor, List<ComplexLiteral> todo) {
+					Term[] args = unboundCtor.getArgs();
+					Var[] vars = new Var[args.length];
+					for (int i = 0; i < args.length; ++i) {
+						Var y = Var.getFresh(false);
+						vars[i] = y;
+						todo.add(UnificationPredicate.make(y, args[i], false));
+					}
+					return Destructor.make(boundTerm, unboundCtor.getSymbol(), vars);
+				}
+
+				@Override
+				public SimpleLiteral visit(UserPredicate userPredicate, Void input) {
+					Term[] args = userPredicate.getArgs();
+					Term[] newArgs = new Term[args.length];
+					Set<Var> seen = new HashSet<>();
+					for (int i = 0; i < args.length; ++i) {
+						Term arg = args[i];
+						if (boundVars.containsAll(arg.varSet())) {
+							newArgs[i] = arg;
+						} else if (arg instanceof Var && seen.add((Var) arg)) {
+							newArgs[i] = arg;
+						} else {
+							Var y = Var.getFresh(false);
+							newArgs[i] = y;
+							todo.add(UnificationPredicate.make(y, arg, false));
+						}
+					}
+					SimpleLiteral c = SimplePredicate.make(userPredicate.getSymbol(), newArgs, boundVars,
+							userPredicate.isNegated());
+					return c;
+				}
+
+			}, null);
 			if (c != null) {
 				acc.add(c);
 				boundVars.addAll(c.varSet());
