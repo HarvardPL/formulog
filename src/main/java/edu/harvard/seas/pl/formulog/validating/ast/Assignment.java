@@ -74,4 +74,9 @@ public class Assignment implements SimpleLiteral {
 		return SimpleLiteralTag.ASSIGNMENT;
 	}
 
+	@Override
+	public Term[] getArgs() {
+		return new Term[] { var, rhs };
+	}
+
 }

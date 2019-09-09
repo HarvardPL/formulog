@@ -1,5 +1,6 @@
 package edu.harvard.seas.pl.formulog.ast;
 
+import java.util.Map;
 import java.util.Set;
 
 /*-
@@ -65,6 +66,11 @@ public interface Primitive<T> extends Term {
 	
 	@Override
 	public default void varSet(Set<Var> acc) {
+		// do nothing
+	}
+	
+	@Override
+	public default void updateVarCounts(Map<Var, Integer> counts) {
 		// do nothing
 	}
 	

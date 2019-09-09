@@ -1,0 +1,9 @@
+@topdown
+output mem(i32, i32 list)
+
+mem(X, X :: _).
+mem(X, _ :: Xs) :- mem(X, Xs).
+
+output ok.
+
+ok :- mem(X, [1, 2, 3]), X = 3.

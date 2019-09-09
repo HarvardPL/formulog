@@ -176,7 +176,7 @@ public class MagicSetTransformer {
 		for (int i = 0; i < args.length; ++i) {
 			Term t = args[i];
 			if (!(t instanceof Var) || !seen.add((Var) t)) {
-				Var x = Var.getFresh(false);
+				Var x = Var.getFresh();
 				body.add(UnificationPredicate.make(x, t, false));
 				t = x;
 			}

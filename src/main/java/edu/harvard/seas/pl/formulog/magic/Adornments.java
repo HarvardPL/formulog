@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
@@ -77,12 +78,13 @@ public final class Adornments {
 				boundVars.addAll(headArgs[i].varSet());
 			}
 		}
+		Map<Var, Integer> varCounts = BasicRule.make(head, body).countVariables();
 		List<ComplexLiteral> newBody = new ArrayList<>(body);
 		for (int i = 0; i < newBody.size(); i++) {
 			boolean ok = false;
 			for (int j = i; j < newBody.size(); j++) {
 				ComplexLiteral a = newBody.get(j);
-				if (Unification.canBindVars(a, boundVars)) {
+				if (Unification.canBindVars(a, boundVars, varCounts)) {
 					Collections.swap(newBody, i, j);
 					int pos = i;
 					a.accept(new ComplexLiteralVisitor<Void, Void>() {

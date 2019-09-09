@@ -49,7 +49,6 @@ import edu.harvard.seas.pl.formulog.db.IndexedFactDb;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDbBuilder;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb.SortedIndexedFactDbBuilder;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
-import edu.harvard.seas.pl.formulog.eval.optimizations.SingleUseVarOptimizer;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
 import edu.harvard.seas.pl.formulog.smt.Z3ThreadFactory;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
@@ -115,7 +114,6 @@ public class SemiNaiveEvaluation implements Evaluation {
 						ValidRule vr = ValidRule.make(snr, score);
 						predFuncs.preprocess(vr);
 						SimpleRule sr = SimpleRule.make(vr);
-						sr = new SingleUseVarOptimizer().optimize(sr);
 						IndexedRule ir = IndexedRule.make(sr, p -> {
 							RelationSymbol psym = p.getSymbol();
 							if (psym instanceof DeltaSymbol) {

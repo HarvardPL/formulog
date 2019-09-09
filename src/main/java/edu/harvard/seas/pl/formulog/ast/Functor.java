@@ -1,5 +1,6 @@
 package edu.harvard.seas.pl.formulog.ast;
 
+import java.util.Map;
 import java.util.Set;
 
 /*-
@@ -38,6 +39,13 @@ public interface Functor<S extends Symbol> extends Term {
 			for (Term arg : getArgs()) {
 				arg.varSet(acc);
 			}
+		}
+	}
+	
+	@Override
+	default void updateVarCounts(Map<Var, Integer> counts) {
+		for (Term arg : getArgs()) {
+			arg.updateVarCounts(counts);
 		}
 	}
 

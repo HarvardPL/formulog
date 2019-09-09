@@ -24,6 +24,7 @@ import java.util.Deque;
  */
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -48,12 +49,13 @@ public final class Unification {
 		throw new AssertionError();
 	}
 
-	public static boolean canBindVars(ComplexLiteral atom, Set<Var> boundVars) throws InvalidProgramException {
+	public static boolean canBindVars(ComplexLiteral atom, Set<Var> boundVars, Map<Var, Integer> varCounts)
+			throws InvalidProgramException {
 		return atom.accept(new ComplexLiteralExnVisitor<Void, Boolean, InvalidProgramException>() {
 
 			@Override
 			public Boolean visit(UserPredicate normalAtom, Void in) throws InvalidProgramException {
-				return handleNormalAtom(normalAtom, boundVars);
+				return handleNormalAtom(normalAtom, boundVars, varCounts);
 			}
 
 			@Override
@@ -64,10 +66,11 @@ public final class Unification {
 		}, null);
 	}
 
-	private static boolean handleNormalAtom(UserPredicate atom, Set<Var> boundVars) {
+	private static boolean handleNormalAtom(UserPredicate atom, Set<Var> boundVars, Map<Var, Integer> varCounts) {
 		if (atom.isNegated()) {
 			// Allow anonymous variables in negated atoms.
-			Set<Var> vars = atom.varSet().stream().filter(v -> !v.isAnonymous()).collect(Collectors.toSet());
+			Set<Var> vars = atom.varSet().stream().filter(v -> !Integer.valueOf(1).equals(varCounts.get(v)))
+					.collect(Collectors.toSet());
 			return boundVars.containsAll(vars);
 		}
 		Set<Var> nonFuncVars = new HashSet<>();
@@ -84,7 +87,8 @@ public final class Unification {
 		return true;
 	}
 
-	private static boolean handleUnifyAtom(UnificationPredicate atom, Set<Var> boundVars) throws InvalidProgramException {
+	private static boolean handleUnifyAtom(UnificationPredicate atom, Set<Var> boundVars)
+			throws InvalidProgramException {
 		Term t1 = atom.getLhs();
 		Term t2 = atom.getRhs();
 		if (atom.isNegated()) {
@@ -129,28 +133,30 @@ public final class Unification {
 		return changed;
 	}
 
-//	public static boolean unify(Atom a1, Atom a2, Substitution s) throws EvaluationException {
-//		if (!a1.getSymbol().equals(a2.getSymbol())) {
-//			return false;
-//		}
-//		Term[] args1 = a1.getArgs();
-//		Term[] args2 = a2.getArgs();
-//		for (int i = 0; i < args1.length; ++i) {
-//			if (!unify(args1[i], args2[i], s)) {
-//				return false;
-//			}
-//		}
-//		return true;
-//	}
-//
-//	public static void unsafeUnifyWithFact(NormalAtom atom, NormalAtom fact, Substitution s) {
-//		Term[] args1 = atom.getArgs();
-//		Term[] args2 = fact.getArgs();
-//		for (int i = 0; i < args1.length; ++i) {
-//			assert args2[i].isGround();
-//			unsafeUnify(args1[i], args2[i], s);
-//		}
-//	}
+	// public static boolean unify(Atom a1, Atom a2, Substitution s) throws
+	// EvaluationException {
+	// if (!a1.getSymbol().equals(a2.getSymbol())) {
+	// return false;
+	// }
+	// Term[] args1 = a1.getArgs();
+	// Term[] args2 = a2.getArgs();
+	// for (int i = 0; i < args1.length; ++i) {
+	// if (!unify(args1[i], args2[i], s)) {
+	// return false;
+	// }
+	// }
+	// return true;
+	// }
+	//
+	// public static void unsafeUnifyWithFact(NormalAtom atom, NormalAtom fact,
+	// Substitution s) {
+	// Term[] args1 = atom.getArgs();
+	// Term[] args2 = fact.getArgs();
+	// for (int i = 0; i < args1.length; ++i) {
+	// assert args2[i].isGround();
+	// unsafeUnify(args1[i], args2[i], s);
+	// }
+	// }
 
 	private static void unsafeUnify(Term t1, Term t2, Substitution s) {
 		t1.accept(new TermVisitor<Term, Void>() {
@@ -183,7 +189,7 @@ public final class Unification {
 
 		}, t2);
 	}
-	
+
 	public static boolean unify(Term[] ts1, Term[] ts2, Substitution s) throws EvaluationException {
 		assert ts1.length == ts2.length;
 		for (int i = 0; i < ts1.length; ++i) {

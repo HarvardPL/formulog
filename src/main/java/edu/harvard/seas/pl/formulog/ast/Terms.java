@@ -23,6 +23,7 @@ import java.util.Comparator;
  */
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -275,6 +276,11 @@ public final class Terms {
 		public int getId() {
 			return Integer.MIN_VALUE;
 		}
+
+		@Override
+		public void updateVarCounts(Map<Var, Integer> counts) {
+			throw new UnsupportedOperationException();
+		}
 		
 	};
 	
@@ -319,6 +325,11 @@ public final class Terms {
 		@Override
 		public int getId() {
 			return Integer.MAX_VALUE;
+		}
+
+		@Override
+		public void updateVarCounts(Map<Var, Integer> counts) {
+			throw new UnsupportedOperationException();
 		}
 		
 	};

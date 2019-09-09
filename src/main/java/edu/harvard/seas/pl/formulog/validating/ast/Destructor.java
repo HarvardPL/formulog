@@ -26,17 +26,17 @@ import java.util.HashSet;
 import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.Constructor;
+import edu.harvard.seas.pl.formulog.ast.Constructors;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 
 public class Destructor implements SimpleLiteral {
 
 	private final Term x;
-	private final Symbol symbol;
+	private final ConstructorSymbol symbol;
 	private final Var[] bindings;
 
 	public static Destructor make(Term x, ConstructorSymbol symbol, Var[] bindings) {
@@ -55,7 +55,7 @@ public class Destructor implements SimpleLiteral {
 		return true;
 	}
 
-	private Destructor(Term x, Symbol symbol, Var[] vars) {
+	private Destructor(Term x, ConstructorSymbol symbol, Var[] vars) {
 		this.x = x;
 		this.symbol = symbol;
 		this.bindings = vars;
@@ -107,6 +107,15 @@ public class Destructor implements SimpleLiteral {
 	@Override
 	public SimpleLiteralTag getTag() {
 		return SimpleLiteralTag.DESTRUCTOR;
+	}
+
+	@Override
+	public Term[] getArgs() {
+		Term[] args = new Term[bindings.length];
+		for (int i = 0; i < args.length; ++i) {
+			args[i] = bindings[i];
+		}
+		return new Term[] { x, Constructors.make(symbol, args) };
 	}
 	
 }

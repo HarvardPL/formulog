@@ -21,8 +21,10 @@ package edu.harvard.seas.pl.formulog.ast;
  */
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
@@ -30,6 +32,7 @@ import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitorExn;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
+import edu.harvard.seas.pl.formulog.util.Util;
 
 public class MatchExpr extends AbstractTerm implements Expr, Iterable<MatchClause> {
 
@@ -163,6 +166,23 @@ public class MatchExpr extends AbstractTerm implements Expr, Iterable<MatchClaus
 	@Override
 	public Iterator<MatchClause> iterator() {
 		return match.iterator();
+	}
+
+	@Override
+	public void updateVarCounts(Map<Var, Integer> counts) {
+		matchee.updateVarCounts(counts);
+		for (MatchClause match : this) {
+			Map<Var, Integer> counts2 = new HashMap<>(counts);
+			match.getRhs().updateVarCounts(counts2);
+			Set<Var> boundVars = match.getLhs().varSet();
+			for (Map.Entry<Var, Integer> e : counts2.entrySet()) {
+				Var x = e.getKey();
+				if (!boundVars.contains(x)) {
+					int n = Util.lookupOrCreate(counts, x, () -> 0);
+					counts.put(x, n + e.getValue());
+				}
+			}
+		}
 	}
 
 }

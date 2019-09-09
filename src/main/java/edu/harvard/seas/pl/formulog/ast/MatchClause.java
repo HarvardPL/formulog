@@ -41,7 +41,7 @@ public class MatchClause {
 		}
 		Substitution s = new SimpleSubstitution();
 		for (Var x : lhs.varSet()) {
-			s.put(x, Var.getFresh(false));
+			s.put(x, Var.getFresh());
 		}
 		return new MatchClause(lhs.applySubstitution(s), rhs.applySubstitution(s));
 	}

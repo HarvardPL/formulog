@@ -662,7 +662,7 @@ public class Parser {
 			public Term visitVarTerm(VarTermContext ctx) {
 				String var = ctx.VAR().getText();
 				if (var.equals("_")) {
-					return Var.getFresh(true);
+					return Var.getFresh();
 				}
 				return Var.get(ctx.VAR().getText());
 			}
@@ -699,7 +699,7 @@ public class Parser {
 					Integer idx = it.next();
 					Term t;
 					if (idx == null) {
-						t = Var.getFresh(false);
+						t = Var.getFresh();
 					} else {
 						ConstructorSymbol csym = symbolManager.lookupIndexConstructorSymbol(idx);
 						t = Constructors.make(csym, Terms.singletonArray(I32.make(idx)));

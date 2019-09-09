@@ -22,4 +22,6 @@ package edu.harvard.seas.pl.formulog.ast;
 
 public interface Literal {
 	
+	Term[] getArgs();
+	
 }

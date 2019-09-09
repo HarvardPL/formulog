@@ -1,6 +1,7 @@
 package edu.harvard.seas.pl.formulog.ast;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /*-
@@ -49,6 +50,8 @@ public interface Term {
 		varSet(vars);
 		return vars;
 	}
+	
+	void updateVarCounts(Map<Var, Integer> counts);
 	
 	int getId();
 	

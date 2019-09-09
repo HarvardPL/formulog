@@ -38,25 +38,19 @@ public class Var extends AbstractTerm implements Term {
 	static final AtomicInteger cnt = new AtomicInteger();
 	
 	private final String name;
-	private final boolean isAnonymous;
 	
-	protected Var(String name, boolean isAnonymous) {
+	protected Var(String name) {
 		this.name = name;
-		this.isAnonymous = isAnonymous;
 	}
 	
 	public static Var get(String name) {
-		return Util.lookupOrCreate(memo, name, () -> new Var(name, false));
+		return Util.lookupOrCreate(memo, name, () -> new Var(name));
 	}
 	
-	public static Var getFresh(boolean isAnonymous) {
-		return new Var("_%" + cnt.getAndIncrement(), isAnonymous);
+	public static Var getFresh() {
+		return new Var("$" + cnt.getAndIncrement());
 	}
 	
-	public boolean isAnonymous() {
-		return isAnonymous;
-	}
-
 	@Override
 	public String toString() {
 		return name;
@@ -99,6 +93,12 @@ public class Var extends AbstractTerm implements Term {
 	@Override
 	public void varSet(Set<Var> acc) {
 		acc.add(this);
+	}
+
+	@Override
+	public void updateVarCounts(Map<Var, Integer> counts) {
+		int n = Util.lookupOrCreate(counts, this, () -> 0);
+		counts.put(this, n + 1);
 	}
 	
 }

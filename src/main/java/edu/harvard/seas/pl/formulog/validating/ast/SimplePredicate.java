@@ -38,19 +38,19 @@ public class SimplePredicate implements SimpleLiteral {
 	private final BindingType[] bindingPattern;
 	private final boolean negated;
 
-	public static SimplePredicate make(RelationSymbol symbol, Term[] args, Set<Var> boundVars, boolean negated) {
+	public static SimplePredicate make(RelationSymbol symbol, Term[] args, BindingType[] bindingPattern, boolean negated) {
 		assert symbol.getArity() == args.length : "Symbol does not match argument arity";
-		BindingType[] pattern = new BindingType[symbol.getArity()];
-		for (int i = 0; i < args.length; ++i) {
-			if (args[i] instanceof Var && ((Var) args[i]).isAnonymous()) {
-				pattern[i] = BindingType.IGNORED;
-			} else if (boundVars.containsAll(args[i].varSet())) {
-				pattern[i] = BindingType.BOUND;
-			} else {
-				pattern[i] = BindingType.FREE;
-			}
-		}
-		return new SimplePredicate(symbol, args, pattern, negated);
+//		BindingType[] pattern = new BindingType[symbol.getArity()];
+//		for (int i = 0; i < args.length; ++i) {
+//			if (args[i] instanceof Var && ((Var) args[i]).isAnonymous()) {
+//				pattern[i] = BindingType.IGNORED;
+//			} else if (boundVars.containsAll(args[i].varSet())) {
+//				pattern[i] = BindingType.BOUND;
+//			} else {
+//				pattern[i] = BindingType.FREE;
+//			}
+//		}
+		return new SimplePredicate(symbol, args, bindingPattern, negated);
 	}
 
 	private SimplePredicate(RelationSymbol symbol, Term[] args, BindingType[] bindingPattern, boolean negated) {

@@ -82,4 +82,9 @@ public class Check implements SimpleLiteral {
 		return SimpleLiteralTag.CHECK;
 	}
 
+	@Override
+	public Term[] getArgs() {
+		return new Term[] { lhs, rhs };
+	}
+
 }

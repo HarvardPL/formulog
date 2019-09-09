@@ -1,5 +1,9 @@
 package edu.harvard.seas.pl.formulog.ast;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 /*-
  * #%L
  * FormuLog
@@ -20,12 +24,25 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-public interface Rule <H extends Literal, B extends Literal> extends Iterable<B> {
+public interface Rule<H extends Literal, B extends Literal> extends Iterable<B> {
 
-	public H getHead();
-	
-	public int getBodySize();
-	
-	public B getBody(int idx);
-	
+	H getHead();
+
+	int getBodySize();
+
+	B getBody(int idx);
+
+	default Map<Var, Integer> countVariables() {
+		Map<Var, Integer> m = new HashMap<>();
+		for (Term arg : getHead().getArgs()) {
+			arg.updateVarCounts(m);
+		}
+		for (Literal l : this) {
+			for (Term arg : l.getArgs()) {
+				arg.updateVarCounts(m);
+			}
+		}
+		return Collections.unmodifiableMap(m);
+	}
+
 }

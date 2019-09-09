@@ -23,6 +23,7 @@ package edu.harvard.seas.pl.formulog.validating.ast;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.AbstractRule;
@@ -39,7 +40,8 @@ import edu.harvard.seas.pl.formulog.validating.ValidRule;
 public class SimpleRule extends AbstractRule<SimplePredicate, SimpleLiteral> {
 
 	public static SimpleRule make(ValidRule rule) throws InvalidProgramException {
-		Simplifier simplifier = new Simplifier();
+		Map<Var, Integer> varCounts = rule.countVariables();
+		Simplifier simplifier = new Simplifier(varCounts);
 		for (ComplexLiteral atom : rule) {
 			try {
 				simplifier.add(atom);
@@ -53,7 +55,9 @@ public class SimpleRule extends AbstractRule<SimplePredicate, SimpleLiteral> {
 		if (!boundVars.containsAll(head.varSet())) {
 			throw new InvalidProgramException("Unbound variables in head of rule:\n" + rule);
 		}
-		SimplePredicate newHead = SimplePredicate.make(head.getSymbol(), head.getArgs(), boundVars, head.isNegated());
+		Term[] headArgs = head.getArgs();
+		BindingType[] pat = computeBindingPattern(headArgs, boundVars, varCounts);
+		SimplePredicate newHead = SimplePredicate.make(head.getSymbol(), head.getArgs(), pat, head.isNegated());
 		return new SimpleRule(newHead, simplifier.getConjuncts());
 	}
 
@@ -67,10 +71,30 @@ public class SimpleRule extends AbstractRule<SimplePredicate, SimpleLiteral> {
 		super(head, body);
 	}
 
+	private static BindingType[] computeBindingPattern(Term[] args, Set<Var> boundVars, Map<Var, Integer> counts) {
+		BindingType[] pat = new BindingType[args.length];
+		for (int i = 0; i < pat.length; ++i) {
+			Term arg = args[i];
+			if (arg instanceof Var && Integer.valueOf(1).equals(counts.get(arg))) {
+				pat[i] = BindingType.IGNORED;
+			} else if (boundVars.containsAll(arg.varSet())) {
+				pat[i] = BindingType.BOUND;
+			} else {
+				pat[i] = BindingType.FREE;
+			}
+		}
+		return pat;
+	}
+
 	private static class Simplifier {
 
 		private final List<SimpleLiteral> acc = new ArrayList<>();
 		private final Set<Var> boundVars = new HashSet<>();
+		private final Map<Var, Integer> varCounts;
+
+		public Simplifier(Map<Var, Integer> varCounts) {
+			this.varCounts = varCounts;
+		}
 
 		public void add(ComplexLiteral atom) throws InvalidProgramException {
 			List<ComplexLiteral> todo = new ArrayList<>();
@@ -119,7 +143,7 @@ public class SimpleRule extends AbstractRule<SimplePredicate, SimpleLiteral> {
 						for (int i = 0; i < args1.length; ++i) {
 							cs.add(UnificationPredicate.make(args1[i], args2[i], false));
 						}
-						ValidRule.order(cs, (p, xs) -> 1, new HashSet<>(boundVars));
+						ValidRule.order(cs, (p, xs) -> 1, new HashSet<>(boundVars), varCounts);
 						for (ComplexLiteral c : cs) {
 							todo.add(c);
 						}
@@ -131,7 +155,7 @@ public class SimpleRule extends AbstractRule<SimplePredicate, SimpleLiteral> {
 					Term[] args = unboundCtor.getArgs();
 					Var[] vars = new Var[args.length];
 					for (int i = 0; i < args.length; ++i) {
-						Var y = Var.getFresh(false);
+						Var y = Var.getFresh();
 						vars[i] = y;
 						todo.add(UnificationPredicate.make(y, args[i], false));
 					}
@@ -150,12 +174,13 @@ public class SimpleRule extends AbstractRule<SimplePredicate, SimpleLiteral> {
 						} else if (arg instanceof Var && seen.add((Var) arg)) {
 							newArgs[i] = arg;
 						} else {
-							Var y = Var.getFresh(false);
+							Var y = Var.getFresh();
 							newArgs[i] = y;
 							todo.add(UnificationPredicate.make(y, arg, false));
 						}
 					}
-					SimpleLiteral c = SimplePredicate.make(userPredicate.getSymbol(), newArgs, boundVars,
+					BindingType[] pat = computeBindingPattern(newArgs, boundVars, varCounts);
+					SimpleLiteral c = SimplePredicate.make(userPredicate.getSymbol(), newArgs, pat,
 							userPredicate.isNegated());
 					return c;
 				}

@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 
@@ -42,7 +43,7 @@ public class ValidRule extends AbstractRule<UserPredicate, ComplexLiteral> {
 		try {
 			List<ComplexLiteral> body = Util.iterableToList(rule);
 			Set<Var> vars = new HashSet<>();
-			order(body, score, vars);
+			order(body, score, vars, rule.countVariables());
 			UserPredicate head = rule.getHead();
 			if (!head.getSymbol().isIdbSymbol()) {
 				throw new InvalidProgramException("Cannot create a rule for non-IDB symbol " + head.getSymbol());
@@ -63,7 +64,7 @@ public class ValidRule extends AbstractRule<UserPredicate, ComplexLiteral> {
 	}
 
 	public static void order(List<ComplexLiteral> atoms, BiFunction<ComplexLiteral, Set<Var>, Integer> score,
-			Set<Var> boundVars) throws InvalidProgramException {
+			Set<Var> boundVars, Map<Var, Integer> varCounts) throws InvalidProgramException {
 		List<ComplexLiteral> newList = new ArrayList<>();
 		// Using a linked hash set ensures the sort is stable.
 		Set<ComplexLiteral> unplaced = new LinkedHashSet<>(atoms);
@@ -71,7 +72,7 @@ public class ValidRule extends AbstractRule<UserPredicate, ComplexLiteral> {
 			ComplexLiteral bestLit = null;
 			int bestScore = -1;
 			for (ComplexLiteral l : unplaced) {
-				if (Unification.canBindVars(l, boundVars)) {
+				if (Unification.canBindVars(l, boundVars, varCounts)) {
 					int localScore = score.apply(l, boundVars);
 					if (localScore > bestScore) {
 						bestScore = localScore;

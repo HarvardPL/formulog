@@ -62,5 +62,10 @@ public class OverwriteSubstitution implements Substitution {
 	public OverwriteSubstitution copy() {
 		return new OverwriteSubstitution(new HashMap<>(m));
 	}
+	
+	@Override
+	public String toString() {
+		return m.toString();
+	}
 
 }
