@@ -786,7 +786,7 @@ public class MagicSetTransformer {
 
 			@Override
 			public Void visit(Expr e, Set<RelationSymbol> in) {
-				e.visit(predicatesInExprExtractor, in);
+				e.accept(predicatesInExprExtractor, in);
 				return null;
 			}
 

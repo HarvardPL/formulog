@@ -66,7 +66,7 @@ public class MatchExpr extends AbstractTerm implements Expr, Iterable<MatchClaus
 	}
 
 	@Override
-	public <I, O, E extends Throwable> O visit(ExprVisitorExn<I, O, E> visitor, I in) throws E {
+	public <I, O, E extends Throwable> O accept(ExprVisitorExn<I, O, E> visitor, I in) throws E {
 		return visitor.visit(this, in);
 	}
 
@@ -82,7 +82,7 @@ public class MatchExpr extends AbstractTerm implements Expr, Iterable<MatchClaus
 	}
 
 	@Override
-	public <I, O> O visit(ExprVisitor<I, O> visitor, I in) {
+	public <I, O> O accept(ExprVisitor<I, O> visitor, I in) {
 		return visitor.visit(this, in);
 	}
 

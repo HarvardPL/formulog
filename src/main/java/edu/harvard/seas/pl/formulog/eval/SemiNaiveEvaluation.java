@@ -23,6 +23,7 @@ import java.util.ArrayDeque;
  */
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -31,8 +32,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Spliterator;
-import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.SortedSet;
 import java.util.function.BiFunction;
 
 import edu.harvard.seas.pl.formulog.Configuration;
@@ -47,6 +47,7 @@ import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDb;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDbBuilder;
+import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb.SortedIndexedFactDbBuilder;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
@@ -75,15 +76,16 @@ import edu.harvard.seas.pl.formulog.validating.ast.SimpleRule;
 
 public class SemiNaiveEvaluation implements Evaluation {
 
-	private final IndexedFactDb db;
-	private IndexedFactDb deltaDb;
-	private IndexedFactDb nextDeltaDb;
+	private final SortedIndexedFactDb db;
+	private SortedIndexedFactDb deltaDb;
+	private SortedIndexedFactDb nextDeltaDb;
 	private final Map<RelationSymbol, Iterable<IndexedRule>> firstRoundRules = new HashMap<>();
 	private final Map<RelationSymbol, Iterable<IndexedRule>> laterRoundRules = new HashMap<>();
 	private final List<Stratum> strata;
 	private final UserPredicate query;
 	private volatile boolean changed;
 	private final CountingFJP exec;
+	private final Map<IndexedRule, boolean[]> splitPositions = new HashMap<>();
 
 	private static final boolean sequential = System.getProperty("sequential") != null;
 
@@ -129,7 +131,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 				rules.put(sym, rs);
 			}
 		}
-		IndexedFactDb db = dbb.build();
+		SortedIndexedFactDb db = dbb.build();
 		wrappedDb.set(db);
 
 		for (RelationSymbol sym : magicProg.getFactSymbols()) {
@@ -142,6 +144,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 				}
 			}
 		}
+		db.awaitQuiescence();
 		CountingFJP exec;
 		if (sequential) {
 			exec = new MockCountingFJP();
@@ -201,7 +204,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}, null);
 	}
 
-	private SemiNaiveEvaluation(IndexedFactDb db, IndexedFactDbBuilder<?> deltaDbb,
+	private SemiNaiveEvaluation(SortedIndexedFactDb db, IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb,
 			Map<RelationSymbol, Iterable<IndexedRule>> rules, UserPredicate query, List<Stratum> strata,
 			CountingFJP exec) {
 		this.db = db;
@@ -210,10 +213,11 @@ public class SemiNaiveEvaluation implements Evaluation {
 		this.exec = exec;
 		deltaDb = deltaDbb.build();
 		nextDeltaDb = deltaDbb.build();
-		splitRules(rules);
+		processRules(rules);
 	}
 
-	private void splitRules(Map<RelationSymbol, Iterable<IndexedRule>> rules) {
+	private void processRules(Map<RelationSymbol, Iterable<IndexedRule>> rules) {
+		SmtCallFinder scf = new SmtCallFinder();
 		for (RelationSymbol sym : rules.keySet()) {
 			Set<IndexedRule> firstRounders = new HashSet<>();
 			Set<IndexedRule> laterRounders = new HashSet<>();
@@ -223,10 +227,28 @@ public class SemiNaiveEvaluation implements Evaluation {
 				} else {
 					firstRounders.add(rule);
 				}
+				boolean[] positions = findSplitPositions(rule, scf);
+				splitPositions.put(rule, positions);
 			}
 			firstRoundRules.put(sym, firstRounders);
 			laterRoundRules.put(sym, laterRounders);
 		}
+	}
+
+	private static boolean[] findSplitPositions(IndexedRule rule, SmtCallFinder scf) {
+		int len = rule.getBodySize();
+		boolean[] splitPositions = new boolean[len];
+		boolean smtCallComing = scf.containsSmtCall(rule.getHead());
+		for (int i = len - 1; i >= 0; --i) {
+			SimpleLiteral l = rule.getBody(i);
+			if (smtCallComing && l instanceof SimplePredicate && !((SimplePredicate) l).isNegated()) {
+				splitPositions[i] = true;
+				smtCallComing = scf.containsSmtCall(l);
+			} else {
+				smtCallComing = smtCallComing || scf.containsSmtCall(l);
+			}
+		}
+		return splitPositions;
 	}
 
 	private boolean hasDelta(IndexedRule rule) {
@@ -264,6 +286,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 		for (Stratum stratum : strata) {
 			evaluateStratum(stratum);
 		}
+		db.shutdown();
+		deltaDb.shutdown();
+		nextDeltaDb.shutdown();
 	}
 
 	private void evaluateStratum(Stratum stratum) throws EvaluationException {
@@ -278,15 +303,17 @@ public class SemiNaiveEvaluation implements Evaluation {
 			throw exec.getFailureCause();
 		}
 		updateDbs();
-		int round = 1;
+		// int round = 1;
 		while (changed) {
-			if (round % 100 == 0) {
-				System.err.println("STRATUM " + stratum.getRank() + " ROUND " + round);
-				for (RelationSymbol sym : db.getSymbols()) {
-					Set<?> s = db.getAll(sym);
-					System.err.println(sym + ": " + s.size());
-				}
-			}
+			// if (round % 100 == 0) {
+			// System.err.println("STRATUM " + stratum.getRank() + " ROUND " + round);
+			// for (RelationSymbol sym : db.getSymbols()) {
+			// Set<?> s = db.getAll(sym);
+			// System.err.println(sym + ": " + s.size());
+			// }
+			// } else {
+			// System.err.println("ROUND " + round);
+			// }
 			changed = false;
 			for (RelationSymbol sym : syms) {
 				for (IndexedRule r : laterRoundRules.get(sym)) {
@@ -298,17 +325,20 @@ public class SemiNaiveEvaluation implements Evaluation {
 				throw exec.getFailureCause();
 			}
 			updateDbs();
-			round++;
+			// round++;
 		}
 	}
 
 	private void updateDbs() {
+		nextDeltaDb.awaitQuiescence();
 		for (RelationSymbol sym : nextDeltaDb.getSymbols()) {
-			Set<Term[]> answers = nextDeltaDb.getAll(sym);
-			exec.externallyAddTask(new DbFactSplitter(sym, answers.spliterator()));
+			SortedSet<Term[]> answers = nextDeltaDb.getAll(sym);
+			// exec.externallyAddTask(new DbFactSplitter(sym, answers.spliterator()));
+			exec.externallyAddTask(new DbFactPutter(sym, answers));
 		}
 		exec.blockUntilFinished();
-		IndexedFactDb tmp = deltaDb;
+		db.awaitQuiescence();
+		SortedIndexedFactDb tmp = deltaDb;
 		deltaDb = nextDeltaDb;
 		nextDeltaDb = tmp;
 		nextDeltaDb.clear();
@@ -323,7 +353,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 	}
 
-	private Set<Term[]> lookup(IndexedRule r, int pos, OverwriteSubstitution s) throws EvaluationException {
+	private SortedSet<Term[]> lookup(IndexedRule r, int pos, OverwriteSubstitution s) throws EvaluationException {
 		SimplePredicate predicate = (SimplePredicate) r.getBody(pos);
 		int idx = r.getDBIndex(pos);
 		Term[] args = predicate.getArgs();
@@ -343,55 +373,53 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 	}
 
-	@SuppressWarnings("serial")
-	private class DbFactSplitter extends AbstractFJPTask {
-
-		private final RelationSymbol sym;
-		private final Spliterator<Term[]> split;
-
-		public DbFactSplitter(RelationSymbol sym, Spliterator<Term[]> split) {
-			super(exec);
-			this.sym = sym;
-			this.split = split;
-		}
-
-		@Override
-		public void doTask() throws EvaluationException {
-			// XXX
-			while (split.estimateSize() > minTaskSize * 8) {
-				Spliterator<Term[]> split2 = split.trySplit();
-				if (split2 == null) {
-					break;
-				}
-				exec.recursivelyAddTask(new DbFactPutter(sym, split2));
-			}
-			exec.recursivelyAddTask(new DbFactPutter(sym, split));
-		}
-
-	}
+	// @SuppressWarnings("serial")
+	// private class DbFactSplitter extends AbstractFJPTask {
+	//
+	// private final RelationSymbol sym;
+	// private final Spliterator<Term[]> split;
+	//
+	// public DbFactSplitter(RelationSymbol sym, Spliterator<Term[]> split) {
+	// super(exec);
+	// this.sym = sym;
+	// this.split = split;
+	// }
+	//
+	// @Override
+	// public void doTask() throws EvaluationException {
+	// while (split.estimateSize() > minTaskSize * 2) {
+	// Spliterator<Term[]> split2 = split.trySplit();
+	// if (split2 == null) {
+	// break;
+	// }
+	// exec.recursivelyAddTask(new DbFactPutter(sym, split2));
+	// }
+	// exec.recursivelyAddTask(new DbFactPutter(sym, split));
+	// }
+	//
+	// }
 
 	@SuppressWarnings("serial")
 	private class DbFactPutter extends AbstractFJPTask {
 
 		private final RelationSymbol sym;
-		private final Spliterator<Term[]> split;
+		private final Set<Term[]> tups;
 
-		public DbFactPutter(RelationSymbol sym, Spliterator<Term[]> split) {
+		public DbFactPutter(RelationSymbol sym, Set<Term[]> tups) {
 			super(exec);
 			this.sym = sym;
-			this.split = split;
+			this.tups = tups;
 		}
 
 		@Override
 		public void doTask() throws EvaluationException {
-			split.forEachRemaining(args -> db.add(sym, args));
+			db.addAll(sym, tups);
 		}
 
 	}
 
 	private static final int minTaskSize = Configuration.minTaskSize;
 	private static final boolean recordRuleDiagnostics = Configuration.recordRuleDiagnostics;
-	private static final boolean splitMidTask = Configuration.splitMidTask();
 
 	@SuppressWarnings("serial")
 	private class RuleSuffixEvaluator extends AbstractFJPTask {
@@ -399,31 +427,67 @@ public class SemiNaiveEvaluation implements Evaluation {
 		private final IndexedRule rule;
 		private final int startPos;
 		private final OverwriteSubstitution s;
-		private final Spliterator<Term[]> split;
+		private final SortedSet<Term[]> tups;
+		private final boolean[] splitPositions;
 
-		protected RuleSuffixEvaluator(IndexedRule rule, int pos, OverwriteSubstitution s, Spliterator<Term[]> split) {
+		protected RuleSuffixEvaluator(IndexedRule rule, int pos, OverwriteSubstitution s, SortedSet<Term[]> tups) {
 			super(exec);
 			this.rule = rule;
 			this.startPos = pos;
 			this.s = s;
-			this.split = split;
+			this.tups = tups;
+			this.splitPositions = SemiNaiveEvaluation.this.splitPositions.get(rule);
 		}
 
+		private int[] tupToIds(Term[] tup) {
+			int[] ids = new int[tup.length];
+			for (int i = 0; i < ids.length; ++i) {
+				ids[i] = tup[i].getId();
+			}
+			return ids;
+		}
+		
 		@Override
 		public void doTask() throws EvaluationException {
 			long start = 0;
 			if (recordRuleDiagnostics) {
 				start = System.currentTimeMillis();
 			}
-			while (split.estimateSize() > minTaskSize * 2) {
-				Spliterator<Term[]> split2 = split.trySplit();
-				if (split2 == null) {
+			boolean shouldSplit = splitPositions[startPos];
+			SortedSet<Term[]> tups = this.tups;
+			int targetSize = shouldSplit ? 1 : minTaskSize;
+			while (tups.size() >= targetSize * 2) {
+				Term[] first = tups.first();
+				Term[] last = tups.last();
+				Term[] mid = new Term[first.length];
+				for (int i = 0; i < mid.length; ++i) {
+					int a = first[i].getId();
+					int b = last[i].getId();
+					int lower = Math.min(a, b);
+					int upper = Math.max(a, b);
+					int n = lower + (upper - lower) / 2;
+					mid[i] = Terms.makeDummyTerm(n);
+				}
+				SortedSet<Term[]> tups2 = tups.tailSet(mid);
+				tups = tups.headSet(mid);
+				if (tups2.isEmpty()) {
 					break;
 				}
-				exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, startPos, s.copy(), split2));
+				if (tups.isEmpty()) {
+					tups = tups2;
+					break;
+				}
+				exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, startPos, s.copy(), tups2));
 			}
 			try {
-				split.forEachRemaining(this::evaluate);
+				for (Term[] tup : tups) {
+					evaluate(tup);
+				}
+				if (shouldSplit && tups.size() > 1) {
+					System.err.println("FOOOOOOOOOOOOOOOOOO");
+					System.err.println("remaining " + tups.size());
+					System.err.println(startPos);
+				}
 			} catch (UncheckedEvaluationException e) {
 				throw new EvaluationException(e.getMessage());
 			}
@@ -435,7 +499,6 @@ public class SemiNaiveEvaluation implements Evaluation {
 
 		private void evaluate(Term[] ans) throws UncheckedEvaluationException {
 			SimplePredicate p = (SimplePredicate) rule.getBody(startPos);
-			(new ConcurrentSkipListSet<>()).spliterator();
 			updateBinding(p, ans);
 			int pos = startPos + 1;
 			Deque<Iterator<Term[]>> stack = new ArrayDeque<>();
@@ -478,7 +541,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 							}
 							break;
 						case PREDICATE:
-							Set<Term[]> answers = lookup(rule, pos, s);
+							SortedSet<Term[]> answers = lookup(rule, pos, s);
 							if (((SimplePredicate) l).isNegated()) {
 								if (answers.isEmpty()) {
 									stack.addFirst(Collections.emptyIterator());
@@ -488,9 +551,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 									movingRight = false;
 								}
 							} else {
-								Spliterator<Term[]> split;
-								if (splitMidTask && (split = answers.spliterator()).estimateSize() > minTaskSize * 2) {
-									exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s.copy(), split));
+								int targetSize = splitPositions[pos] ? 1 : minTaskSize;
+								if (answers.size() >= targetSize * 2) {
+									exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s.copy(), answers));
 									pos--;
 								} else {
 									stack.addFirst(answers.iterator());
@@ -508,6 +571,10 @@ public class SemiNaiveEvaluation implements Evaluation {
 					Iterator<Term[]> it = stack.getFirst();
 					if (it.hasNext()) {
 						ans = it.next();
+						if (splitPositions[pos] && it.hasNext()) {
+							System.err.println("NOOOOOOOOOOOOOOOOOOOOOOO");
+							throw new AssertionError();
+						}
 						updateBinding((SimplePredicate) rule.getBody(pos), ans);
 						movingRight = true;
 						pos++;
@@ -594,7 +661,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 								+ rule.getHead() + e.getLocalizedMessage());
 					}
 				}
-				exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s, lookup(rule, pos, s).spliterator()));
+				exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s, lookup(rule, pos, s)));
 			} catch (EvaluationException e) {
 				throw new EvaluationException(
 						"Exception raised while evaluating this rule:\n" + rule + "\n\n" + e.getMessage());
@@ -718,6 +785,11 @@ public class SemiNaiveEvaluation implements Evaluation {
 		@Override
 		public void clear() {
 			db.clear();
+		}
+
+		@Override
+		public boolean addAll(RelationSymbol sym, Set<Term[]> tups) {
+			return db.addAll(sym, tups);
 		}
 
 	}

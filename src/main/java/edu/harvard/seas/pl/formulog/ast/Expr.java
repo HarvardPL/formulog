@@ -27,9 +27,9 @@ import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitorExn;
 
 public interface Expr extends Term {
 
-	<I, O> O visit(ExprVisitor<I, O> visitor, I in);
+	<I, O> O accept(ExprVisitor<I, O> visitor, I in);
 
-	<I, O, E extends Throwable> O visit(ExprVisitorExn<I, O, E> visitor, I in) throws E;
+	<I, O, E extends Throwable> O accept(ExprVisitorExn<I, O, E> visitor, I in) throws E;
 
 	@Override
 	default <I, O> O accept(TermVisitor<I, O> visitor, I in) {

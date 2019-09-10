@@ -212,7 +212,7 @@ public class Stratifier {
 		}
 
 		private void processExpr(Expr expr) {
-			expr.visit(new ExprVisitor<Void, Void>() {
+			expr.accept(new ExprVisitor<Void, Void>() {
 
 				@Override
 				public Void visit(MatchExpr matchExpr, Void in) {

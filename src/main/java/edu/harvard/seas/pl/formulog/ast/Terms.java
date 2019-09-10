@@ -235,8 +235,18 @@ public final class Terms {
 
 	}
 	
-	public static final Term minTerm = new Term() {
-
+	public static final Term minTerm = new DummyTerm(Integer.MIN_VALUE);
+	
+	public static final Term maxTerm = new DummyTerm(Integer.MAX_VALUE);
+	
+	private static class DummyTerm implements Term {
+		
+		private final int id;
+		
+		public DummyTerm(int id) {
+			this.id = id;
+		}
+		
 		@Override
 		public <I, O> O accept(TermVisitor<I, O> v, I in) {
 			throw new UnsupportedOperationException();
@@ -274,7 +284,7 @@ public final class Terms {
 
 		@Override
 		public int getId() {
-			return Integer.MIN_VALUE;
+			return id;
 		}
 
 		@Override
@@ -282,59 +292,14 @@ public final class Terms {
 			throw new UnsupportedOperationException();
 		}
 		
-	};
+	}
 	
+	public static Term makeDummyTerm(int id) {
+		return new DummyTerm(id);
+	}
 	
-	public static final Term maxTerm = new Term() {
-
-		@Override
-		public <I, O> O accept(TermVisitor<I, O> v, I in) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public <I, O, E extends Throwable> O accept(TermVisitorExn<I, O, E> v, I in) throws E {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean isGround() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean containsFunctionCall() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Term applySubstitution(Substitution s) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Term normalize(Substitution s) throws EvaluationException {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void varSet(Set<Var> acc) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public int getId() {
-			return Integer.MAX_VALUE;
-		}
-
-		@Override
-		public void updateVarCounts(Map<Var, Integer> counts) {
-			throw new UnsupportedOperationException();
-		}
-		
-	};
-	
-	private static final AtomicInteger idCnt = new AtomicInteger(Integer.MIN_VALUE);
+//	private static final AtomicInteger idCnt = new AtomicInteger(Integer.MIN_VALUE);
+	private static final AtomicInteger idCnt = new AtomicInteger(0);
 	
 	public static int nextId() {
 		return idCnt.incrementAndGet();

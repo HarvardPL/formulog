@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.db;
+package edu.harvard.seas.pl.formulog.eval;
 
 /*-
  * #%L
@@ -20,25 +20,25 @@ package edu.harvard.seas.pl.formulog.db;
  * #L%
  */
 
-import java.util.Set;
+import java.util.Spliterator;
+import java.util.TreeSet;
 
-import edu.harvard.seas.pl.formulog.ast.Term;
-import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
+public class Test {
 
-public interface IndexedFactDb {
-
-	Set<RelationSymbol> getSymbols();
-	
-	Set<Term[]> getAll(RelationSymbol sym);
-	
-	Set<Term[]> get(Term[] key, int index);
-	
-	boolean add(RelationSymbol sym, Term[] args);
-	
-	boolean addAll(RelationSymbol sym, Set<Term[]> tups);
-	
-	boolean hasFact(RelationSymbol sym, Term[] args);
-
-	void clear();
+	public static void main(String[] args) {
+		TreeSet<Integer> s = new TreeSet<>();
+		for (int i = 0; i < 256; ++i) {
+			s.add(i);
+		}
+		Spliterator<Integer> split = s.spliterator();
+		while (true) {
+			System.out.println("Estimated size " + split.estimateSize());
+			Spliterator<Integer> split2 = split.trySplit();
+			if (split2 == null) {
+				break;
+			}
+		}
+		split.forEachRemaining(i -> System.out.println(i));
+	}
 
 }

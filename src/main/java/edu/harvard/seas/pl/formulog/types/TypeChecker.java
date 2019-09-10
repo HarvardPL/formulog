@@ -411,7 +411,7 @@ public class TypeChecker {
 		}
 
 		private void genConstraintsForExpr(Expr e, Type exprType, Map<Var, Type> varTypes, boolean allowSubtype) {
-			e.visit(new ExprVisitor<Void, Void>() {
+			e.accept(new ExprVisitor<Void, Void>() {
 
 				@Override
 				public Void visit(MatchExpr matchExpr, Void in) {

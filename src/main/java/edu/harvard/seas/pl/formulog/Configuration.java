@@ -60,10 +60,6 @@ public final class Configuration {
 
 	public static final int minTaskSize = getIntProp("minTaskSize", 1024);
 
-	public static boolean splitMidTask() {
-		return propIsSet("splitMidTask");
-	}
-
 	public static final int memoizeThreshold() {
 		return getIntProp("memoizeThreshold", 500);
 	}
@@ -109,7 +105,6 @@ public final class Configuration {
 		System.err.println("[CONFIG] timeSmt=" + timeSmt);
 		System.err.println("[CONFIG] optimize=" + optimizationSetting);
 		System.err.println("[CONFIG] minTaskSize=" + minTaskSize);
-		System.err.println("[CONFIG] splitMidTask=" + splitMidTask());
 		System.err.println("[CONFIG] memoizeThreshold=" + memoizeThreshold());
 		System.err.println("[CONFIG] noModel=" + noModel());
 	}

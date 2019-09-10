@@ -2,6 +2,7 @@ package edu.harvard.seas.pl.formulog.db;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 
 /*-
  * #%L
@@ -30,7 +31,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import edu.harvard.seas.pl.formulog.ast.Term;
@@ -41,15 +47,21 @@ import edu.harvard.seas.pl.formulog.validating.ast.BindingType;
 
 public class SortedIndexedFactDb implements IndexedFactDb {
 
-	private final Map<RelationSymbol, Set<Term[]>> all;
+	private final Map<RelationSymbol, SortedSet<Term[]>> all;
 	private final IndexedFactSet[] indices;
 	private final Map<RelationSymbol, Iterable<Integer>> relevantIndices;
+	private final ExecutorService[] threads;
+	private final AtomicInteger tasksOutstanding = new AtomicInteger();
 
-	private SortedIndexedFactDb(Map<RelationSymbol, Set<Term[]>> all, IndexedFactSet[] indices,
+	private SortedIndexedFactDb(Map<RelationSymbol, SortedSet<Term[]>> all, IndexedFactSet[] indices,
 			Map<RelationSymbol, Iterable<Integer>> relevantIndices) {
 		this.all = all;
 		this.indices = indices;
 		this.relevantIndices = relevantIndices;
+		threads = new ExecutorService[indices.length];
+		for (int i = 0; i < threads.length; ++i) {
+			threads[i] = Executors.newSingleThreadExecutor();
+		}
 	}
 
 	@Override
@@ -58,12 +70,12 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 	}
 
 	@Override
-	public Set<Term[]> getAll(RelationSymbol sym) {
+	public SortedSet<Term[]> getAll(RelationSymbol sym) {
 		return all.get(sym);
 	}
 
 	@Override
-	public Set<Term[]> get(Term[] key, int index) {
+	public SortedSet<Term[]> get(Term[] key, int index) {
 		return indices[index].lookup(key);
 	}
 
@@ -74,9 +86,36 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			return false;
 		}
 		for (Integer idx : relevantIndices.get(sym)) {
-			indices[idx].add(args);
+			tasksOutstanding.incrementAndGet();
+			threads[idx].execute(() -> {
+				indices[idx].add(args);
+				if (tasksOutstanding.decrementAndGet() == 0) {
+					synchronized (tasksOutstanding) {
+						tasksOutstanding.notify();
+					}
+				}
+			});
 		}
 		return true;
+	}
+
+	@Override
+	public boolean addAll(RelationSymbol sym, Set<Term[]> tups) {
+		boolean somethingNew = all.get(sym).addAll(tups);
+		if (somethingNew) {
+			for (Integer idx : relevantIndices.get(sym)) {
+				tasksOutstanding.incrementAndGet();
+				threads[idx].execute(() -> {
+					indices[idx].addAll(tups);
+					if (tasksOutstanding.decrementAndGet() == 0) {
+						synchronized (tasksOutstanding) {
+							tasksOutstanding.notify();
+						}
+					}
+				});
+			}
+		}
+		return somethingNew;
 	}
 
 	private boolean allNormal(Term[] args) {
@@ -86,6 +125,24 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			}
 		}
 		return true;
+	}
+
+	public void awaitQuiescence() {
+		synchronized (tasksOutstanding) {
+			while (tasksOutstanding.get() > 0) {
+				try {
+					tasksOutstanding.wait();
+				} catch (InterruptedException e) {
+					// do nothing
+				}
+			}
+		}
+	}
+
+	public void shutdown() {
+		for (ExecutorService exec : threads) {
+			exec.shutdown();
+		}
 	}
 
 	@Override
@@ -154,7 +211,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 
 		@Override
 		public SortedIndexedFactDb build() {
-			Map<RelationSymbol, Set<Term[]>> all = new LinkedHashMap<>();
+			Map<RelationSymbol, SortedSet<Term[]>> all = new LinkedHashMap<>();
 			IndexedFactSet[] indices = new IndexedFactSet[cnt];
 			Map<RelationSymbol, Iterable<Integer>> relevantIndices = new HashMap<>();
 			for (Map.Entry<RelationSymbol, Map<BindingTypeArrayWrapper, Integer>> e : pats.entrySet()) {
@@ -200,7 +257,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 				a[i] = order.get(i);
 			}
 			Comparator<Term[]> cmp = new ArrayComparator<>(a, Terms.comparator);
-			return new IndexedFactSet(pat, new ConcurrentSkipListSet<>(cmp));
+			return new IndexedFactSet(pat, Collections.synchronizedNavigableSet(new TreeSet<>(cmp)));
 		}
 
 		public void clear() {
@@ -215,8 +272,12 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 		public void add(Term[] arr) {
 			s.add(arr);
 		}
+		
+		public void addAll(Set<Term[]> tups) {
+			s.addAll(tups);
+		}
 
-		public Set<Term[]> lookup(Term[] arr) {
+		public SortedSet<Term[]> lookup(Term[] arr) {
 			Term[] lower = new Term[arr.length];
 			Term[] upper = new Term[arr.length];
 			for (int i = 0; i < arr.length; ++i) {
@@ -230,7 +291,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			}
 			return s.subSet(lower, true, upper, true);
 		}
-	
+
 		@Override
 		public String toString() {
 			String str = "[\n\t";

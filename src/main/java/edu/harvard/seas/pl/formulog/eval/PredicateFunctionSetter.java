@@ -101,7 +101,7 @@ public class PredicateFunctionSetter {
 
 		@Override
 		public Void visit(Expr e, Void in) {
-			e.visit(ev, in);
+			e.accept(ev, in);
 			return null;
 		}
 		
