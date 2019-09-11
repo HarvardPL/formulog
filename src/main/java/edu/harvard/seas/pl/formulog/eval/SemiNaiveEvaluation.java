@@ -284,6 +284,16 @@ public class SemiNaiveEvaluation implements Evaluation {
 
 	@Override
 	public synchronized void run() throws EvaluationException {
+		if (Configuration.printRelSizes) {
+			Runtime.getRuntime().addShutdownHook(new Thread() {
+
+				@Override
+				public void run() {
+					Configuration.printRelSizes(System.err, db);
+				}
+
+			});
+		}
 		for (Stratum stratum : strata) {
 			evaluateStratum(stratum);
 		}

@@ -32,7 +32,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import edu.harvard.seas.pl.formulog.ast.Rule;
+import edu.harvard.seas.pl.formulog.db.IndexedFactDb;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
+import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.util.Util;
 
 public final class Configuration {
@@ -54,6 +56,7 @@ public final class Configuration {
 	private static final AtomicLong smtSerialTime = new AtomicLong();
 	private static final AtomicLong smtWaitTime = new AtomicLong();
 
+	public static final boolean printRelSizes = propIsSet("printRelSizes");
 	public static final boolean noResults = propIsSet("noResults");
 
 	public static final int optimizationSetting = getIntProp("optimize", 0);
@@ -187,6 +190,12 @@ public final class Configuration {
 		for (int i = 0; i < end; ++i) {
 			Map.Entry<Rule<?, ?>, AtomicLong> e = it.next();
 			out.println("[RULE DIAGNOSTICS] " + e.getValue().get() + "ms:\n" + e.getKey());
+		}
+	}
+	
+	public static synchronized void printRelSizes(PrintStream out, IndexedFactDb db) {
+		for (RelationSymbol sym : db.getSymbols()) {
+			out.println("[REL SIZE] " + sym + ": " + db.getAll(sym).size());
 		}
 	}
 
