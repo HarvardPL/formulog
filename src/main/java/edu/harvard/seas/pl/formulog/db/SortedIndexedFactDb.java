@@ -26,6 +26,7 @@ import java.util.Collections;
 
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +44,7 @@ import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolComparator;
+import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.validating.ast.BindingType;
 
 public class SortedIndexedFactDb implements IndexedFactDb {
@@ -51,7 +53,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 	private final IndexedFactSet[] indices;
 	private final Map<RelationSymbol, Iterable<Integer>> relevantIndices;
 	private final ExecutorService[] threads;
-	private final AtomicInteger tasksOutstanding = new AtomicInteger();
+	private final AtomicInteger[] taskCounters;
 
 	private SortedIndexedFactDb(Map<RelationSymbol, SortedSet<Term[]>> all, IndexedFactSet[] indices,
 			Map<RelationSymbol, Iterable<Integer>> relevantIndices) {
@@ -59,8 +61,10 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 		this.indices = indices;
 		this.relevantIndices = relevantIndices;
 		threads = new ExecutorService[indices.length];
-		for (int i = 0; i < threads.length; ++i) {
+		taskCounters = new AtomicInteger[indices.length];
+		for (int i = 0; i < indices.length; ++i) {
 			threads[i] = Executors.newSingleThreadExecutor();
+			taskCounters[i] = new AtomicInteger();
 		}
 	}
 
@@ -75,7 +79,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 	}
 
 	@Override
-	public SortedSet<Term[]> get(Term[] key, int index) {
+	public View get(Term[] key, int index) {
 		return indices[index].lookup(key);
 	}
 
@@ -86,12 +90,13 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			return false;
 		}
 		for (Integer idx : relevantIndices.get(sym)) {
-			tasksOutstanding.incrementAndGet();
+			AtomicInteger counter = taskCounters[idx];
+			counter.incrementAndGet();
 			threads[idx].execute(() -> {
 				indices[idx].add(args);
-				if (tasksOutstanding.decrementAndGet() == 0) {
-					synchronized (tasksOutstanding) {
-						tasksOutstanding.notify();
+				if (counter.decrementAndGet() == 0) {
+					synchronized (counter) {
+						counter.notify();
 					}
 				}
 			});
@@ -104,12 +109,13 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 		boolean somethingNew = all.get(sym).addAll(tups);
 		if (somethingNew) {
 			for (Integer idx : relevantIndices.get(sym)) {
-				tasksOutstanding.incrementAndGet();
+				AtomicInteger counter = taskCounters[idx];
+				counter.incrementAndGet();
 				threads[idx].execute(() -> {
 					indices[idx].addAll(tups);
-					if (tasksOutstanding.decrementAndGet() == 0) {
-						synchronized (tasksOutstanding) {
-							tasksOutstanding.notify();
+					if (counter.decrementAndGet() == 0) {
+						synchronized (counter) {
+							counter.notify();
 						}
 					}
 				});
@@ -127,15 +133,20 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 		return true;
 	}
 
-	public void awaitQuiescence() {
-		synchronized (tasksOutstanding) {
-			while (tasksOutstanding.get() > 0) {
-				try {
-					tasksOutstanding.wait();
-				} catch (InterruptedException e) {
-					// do nothing
+	public void synchronize() {
+		for (AtomicInteger counter : taskCounters) {
+			synchronized (counter) {
+				while (counter.get() > 0) {
+					try {
+						counter.wait();
+					} catch (InterruptedException e) {
+						// do nothing
+					}
 				}
 			}
+		}
+		for (IndexedFactSet idx : indices) {
+			idx.synchronize();
 		}
 	}
 
@@ -257,7 +268,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 				a[i] = order.get(i);
 			}
 			Comparator<Term[]> cmp = new ArrayComparator<>(a, Terms.comparator);
-			return new IndexedFactSet(pat, Collections.synchronizedNavigableSet(new TreeSet<>(cmp)));
+			return new IndexedFactSet(pat, new TreeSet<>(cmp));
 		}
 
 		public void clear() {
@@ -269,15 +280,19 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			this.s = s;
 		}
 
-		public void add(Term[] arr) {
+		public synchronized void add(Term[] arr) {
 			s.add(arr);
 		}
-		
-		public void addAll(Set<Term[]> tups) {
+
+		public synchronized void addAll(Set<Term[]> tups) {
 			s.addAll(tups);
 		}
 
-		public SortedSet<Term[]> lookup(Term[] arr) {
+		public synchronized void synchronize() {
+
+		}
+
+		public View lookup(Term[] arr) {
 			Term[] lower = new Term[arr.length];
 			Term[] upper = new Term[arr.length];
 			for (int i = 0; i < arr.length; ++i) {
@@ -289,7 +304,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 					upper[i] = Terms.maxTerm;
 				}
 			}
-			return s.subSet(lower, true, upper, true);
+			return makeView(s.subSet(lower, true, upper, true));
 		}
 
 		@Override
@@ -301,6 +316,102 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 				str += Arrays.toString(tup);
 			}
 			return str + "\n]";
+		}
+
+		private View makeView(NavigableSet<Term[]> set) {
+			if (set.isEmpty()) {
+				return emptyView;
+			}
+			Term[][] arr = new Term[set.size()][];
+			int i = 0;
+			for (Term[] tup : set) {
+				arr[i] = tup;
+				i++;
+			}
+			return new ArrayView(arr, 0, arr.length);
+		}
+
+		private static final View emptyView = new View() {
+
+			@Override
+			public Iterator<Term[]> iterator() {
+				return Collections.emptyIterator();
+			}
+
+			@Override
+			public int size() {
+				return 0;
+			}
+
+			@Override
+			public boolean isEmpty() {
+				return true;
+			}
+
+			@Override
+			public Pair<View, View> split() {
+				return null;
+			}
+
+		};
+
+		private class ArrayView implements View {
+
+			private final Term[][] arr;
+			private final int lower;
+			private final int upper;
+
+			public ArrayView(Term[][] arr, int lower, int upper) {
+				assert lower < upper;
+				this.arr = arr;
+				this.lower = lower;
+				this.upper = upper;
+			}
+
+			@Override
+			public Iterator<Term[]> iterator() {
+				return new ArrayViewIterator();
+			}
+
+			@Override
+			public int size() {
+				return upper - lower;
+			}
+
+			@Override
+			public boolean isEmpty() {
+				return false;
+			}
+
+			@Override
+			public Pair<View, View> split() {
+				if (size() < 2) {
+					return null;
+				}
+				int mid = (upper - lower) / 2 + lower;
+				View v1 = new ArrayView(arr, lower, mid);
+				View v2 = new ArrayView(arr, mid, upper);
+				return new Pair<>(v1, v2);
+			}
+
+			private class ArrayViewIterator implements Iterator<Term[]> {
+
+				private int pos = lower;
+
+				@Override
+				public boolean hasNext() {
+					return pos < upper;
+				}
+
+				@Override
+				public Term[] next() {
+					Term[] tup = arr[pos];
+					pos++;
+					return tup;
+				}
+
+			}
+
 		}
 
 	}

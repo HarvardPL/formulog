@@ -23,7 +23,6 @@ import java.util.ArrayDeque;
  */
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -49,6 +48,7 @@ import edu.harvard.seas.pl.formulog.db.IndexedFactDb;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDbBuilder;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb.SortedIndexedFactDbBuilder;
+import edu.harvard.seas.pl.formulog.db.View;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
 import edu.harvard.seas.pl.formulog.smt.Z3ThreadFactory;
@@ -60,6 +60,7 @@ import edu.harvard.seas.pl.formulog.util.AbstractFJPTask;
 import edu.harvard.seas.pl.formulog.util.CountingFJP;
 import edu.harvard.seas.pl.formulog.util.CountingFJPImpl;
 import edu.harvard.seas.pl.formulog.util.MockCountingFJP;
+import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.validating.FunctionDefValidation;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 import edu.harvard.seas.pl.formulog.validating.Stratifier;
@@ -144,7 +145,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 				}
 			}
 		}
-		db.awaitQuiescence();
+		db.synchronize();
 		CountingFJP exec;
 		if (sequential) {
 			exec = new MockCountingFJP();
@@ -330,14 +331,14 @@ public class SemiNaiveEvaluation implements Evaluation {
 	}
 
 	private void updateDbs() {
-		nextDeltaDb.awaitQuiescence();
+		nextDeltaDb.synchronize();
 		for (RelationSymbol sym : nextDeltaDb.getSymbols()) {
 			SortedSet<Term[]> answers = nextDeltaDb.getAll(sym);
 			// exec.externallyAddTask(new DbFactSplitter(sym, answers.spliterator()));
 			exec.externallyAddTask(new DbFactPutter(sym, answers));
 		}
 		exec.blockUntilFinished();
-		db.awaitQuiescence();
+		db.synchronize();
 		SortedIndexedFactDb tmp = deltaDb;
 		deltaDb = nextDeltaDb;
 		nextDeltaDb = tmp;
@@ -353,7 +354,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 	}
 
-	private SortedSet<Term[]> lookup(IndexedRule r, int pos, OverwriteSubstitution s) throws EvaluationException {
+	private View lookup(IndexedRule r, int pos, OverwriteSubstitution s) throws EvaluationException {
 		SimplePredicate predicate = (SimplePredicate) r.getBody(pos);
 		int idx = r.getDBIndex(pos);
 		Term[] args = predicate.getArgs();
@@ -418,7 +419,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 
 	}
 
-	private static final int minTaskSize = Configuration.minTaskSize;
+	private static final int taskSize = Configuration.taskSize;
+	private static final int smtTaskSize = Configuration.smtTaskSize;
 	private static final boolean recordRuleDiagnostics = Configuration.recordRuleDiagnostics;
 
 	@SuppressWarnings("serial")
@@ -427,10 +429,10 @@ public class SemiNaiveEvaluation implements Evaluation {
 		private final IndexedRule rule;
 		private final int startPos;
 		private final OverwriteSubstitution s;
-		private final SortedSet<Term[]> tups;
+		private final View tups;
 		private final boolean[] splitPositions;
 
-		protected RuleSuffixEvaluator(IndexedRule rule, int pos, OverwriteSubstitution s, SortedSet<Term[]> tups) {
+		protected RuleSuffixEvaluator(IndexedRule rule, int pos, OverwriteSubstitution s, View tups) {
 			super(exec);
 			this.rule = rule;
 			this.startPos = pos;
@@ -439,14 +441,6 @@ public class SemiNaiveEvaluation implements Evaluation {
 			this.splitPositions = SemiNaiveEvaluation.this.splitPositions.get(rule);
 		}
 
-		private int[] tupToIds(Term[] tup) {
-			int[] ids = new int[tup.length];
-			for (int i = 0; i < ids.length; ++i) {
-				ids[i] = tup[i].getId();
-			}
-			return ids;
-		}
-		
 		@Override
 		public void doTask() throws EvaluationException {
 			long start = 0;
@@ -454,39 +448,16 @@ public class SemiNaiveEvaluation implements Evaluation {
 				start = System.currentTimeMillis();
 			}
 			boolean shouldSplit = splitPositions[startPos];
-			SortedSet<Term[]> tups = this.tups;
-			int targetSize = shouldSplit ? 1 : minTaskSize;
+			View tups = this.tups;
+			int targetSize = shouldSplit ? smtTaskSize : taskSize;
 			while (tups.size() >= targetSize * 2) {
-				Term[] first = tups.first();
-				Term[] last = tups.last();
-				Term[] mid = new Term[first.length];
-				for (int i = 0; i < mid.length; ++i) {
-					int a = first[i].getId();
-					int b = last[i].getId();
-					int lower = Math.min(a, b);
-					int upper = Math.max(a, b);
-					int n = lower + (upper - lower) / 2;
-					mid[i] = Terms.makeDummyTerm(n);
-				}
-				SortedSet<Term[]> tups2 = tups.tailSet(mid);
-				tups = tups.headSet(mid);
-				if (tups2.isEmpty()) {
-					break;
-				}
-				if (tups.isEmpty()) {
-					tups = tups2;
-					break;
-				}
-				exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, startPos, s.copy(), tups2));
+				Pair<View, View> p = tups.split();
+				tups = p.fst();
+				exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, startPos, s.copy(), p.snd()));
 			}
 			try {
 				for (Term[] tup : tups) {
 					evaluate(tup);
-				}
-				if (shouldSplit && tups.size() > 1) {
-					System.err.println("FOOOOOOOOOOOOOOOOOO");
-					System.err.println("remaining " + tups.size());
-					System.err.println(startPos);
 				}
 			} catch (UncheckedEvaluationException e) {
 				throw new EvaluationException(e.getMessage());
@@ -541,7 +512,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 							}
 							break;
 						case PREDICATE:
-							SortedSet<Term[]> answers = lookup(rule, pos, s);
+							View answers = lookup(rule, pos, s);
 							if (((SimplePredicate) l).isNegated()) {
 								if (answers.isEmpty()) {
 									stack.addFirst(Collections.emptyIterator());
@@ -551,7 +522,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 									movingRight = false;
 								}
 							} else {
-								int targetSize = splitPositions[pos] ? 1 : minTaskSize;
+								int targetSize = splitPositions[pos] ? smtTaskSize : taskSize;
 								if (answers.size() >= targetSize * 2) {
 									exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s.copy(), answers));
 									pos--;
@@ -571,10 +542,6 @@ public class SemiNaiveEvaluation implements Evaluation {
 					Iterator<Term[]> it = stack.getFirst();
 					if (it.hasNext()) {
 						ans = it.next();
-						if (splitPositions[pos] && it.hasNext()) {
-							System.err.println("NOOOOOOOOOOOOOOOOOOOOOOO");
-							throw new AssertionError();
-						}
 						updateBinding((SimplePredicate) rule.getBody(pos), ans);
 						movingRight = true;
 						pos++;
@@ -768,7 +735,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 
 		@Override
-		public Set<Term[]> get(Term[] key, int index) {
+		public View get(Term[] key, int index) {
 			return db.get(key, index);
 		}
 

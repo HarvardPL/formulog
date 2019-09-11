@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.eval;
+package edu.harvard.seas.pl.formulog.db;
 
 /*-
  * #%L
@@ -20,25 +20,15 @@ package edu.harvard.seas.pl.formulog.eval;
  * #L%
  */
 
-import java.util.Spliterator;
-import java.util.TreeSet;
+import edu.harvard.seas.pl.formulog.ast.Term;
+import edu.harvard.seas.pl.formulog.util.Pair;
 
-public class Test {
+public interface View extends Iterable<Term[]> {
 
-	public static void main(String[] args) {
-		TreeSet<Integer> s = new TreeSet<>();
-		for (int i = 0; i < 256; ++i) {
-			s.add(i);
-		}
-		Spliterator<Integer> split = s.spliterator();
-		while (true) {
-			System.out.println("Estimated size " + split.estimateSize());
-			Spliterator<Integer> split2 = split.trySplit();
-			if (split2 == null) {
-				break;
-			}
-		}
-		split.forEachRemaining(i -> System.out.println(i));
-	}
-
+	int size();
+	
+	boolean isEmpty();
+	
+	Pair<View, View> split();
+	
 }

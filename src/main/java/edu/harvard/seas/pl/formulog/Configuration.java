@@ -58,7 +58,8 @@ public final class Configuration {
 
 	public static final int optimizationSetting = getIntProp("optimize", 0);
 
-	public static final int minTaskSize = getIntProp("minTaskSize", 1024);
+	public static final int taskSize = getIntProp("taskSize", 128);
+	public static final int smtTaskSize = getIntProp("smtTaskSize", 8);
 
 	public static final int memoizeThreshold() {
 		return getIntProp("memoizeThreshold", 500);
@@ -104,7 +105,8 @@ public final class Configuration {
 		System.err.println("[CONFIG] timeFuncs=" + recordFuncDiagnostics);
 		System.err.println("[CONFIG] timeSmt=" + timeSmt);
 		System.err.println("[CONFIG] optimize=" + optimizationSetting);
-		System.err.println("[CONFIG] minTaskSize=" + minTaskSize);
+		System.err.println("[CONFIG] taskSize=" + taskSize);
+		System.err.println("[CONFIG] smtTaskSize=" + smtTaskSize);
 		System.err.println("[CONFIG] memoizeThreshold=" + memoizeThreshold());
 		System.err.println("[CONFIG] noModel=" + noModel());
 	}
