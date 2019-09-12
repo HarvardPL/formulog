@@ -842,6 +842,8 @@ public class MagicSetTransformer {
 						RelationSymbol sym = ((UserPredicate) l).getSymbol();
 						if (sym.isEdbSymbol()) {
 							facts.putIfAbsent(sym, origProg.getFacts(sym));
+						} else {
+							rules.putIfAbsent(sym, new HashSet<>());
 						}
 					}
 				}

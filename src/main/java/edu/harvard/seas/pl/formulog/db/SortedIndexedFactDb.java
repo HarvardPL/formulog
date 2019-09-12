@@ -212,6 +212,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			assert sym.getArity() == pat.length;
 			Map<BindingTypeArrayWrapper, Integer> m = pats.get(sym);
 			BindingTypeArrayWrapper key = new BindingTypeArrayWrapper(pat);
+			assert m != null : "Symbol not registered with DB: " + sym;
 			Integer idx = m.get(key);
 			if (idx == null) {
 				idx = cnt++;
