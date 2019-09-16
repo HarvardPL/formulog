@@ -30,6 +30,7 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
+import org.apache.commons.lang3.time.StopWatch;
 
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Program;
@@ -51,6 +52,7 @@ public final class Main {
 
 	private final CommandLine cl;
 	private final boolean debugMst;
+	private final StopWatch clock = new StopWatch();
 
 	private static final boolean exnStackTrace = System.getProperty("exnStackTrace") != null;
 
@@ -70,14 +72,18 @@ public final class Main {
 	}
 
 	private Program<UserPredicate, BasicRule> parse() {
-		System.out.println("Parsing...");
+		System.out.print("Parsing... ");
+		clock.start();
 		try {
 			String inputDir = "";
 			if (cl.hasOption("I")) {
 				inputDir = cl.getOptionValue("I");
 			}
 			FileReader reader = new FileReader(cl.getArgs()[0]);
-			return new Parser().parse(reader, Paths.get(inputDir));
+			Program<UserPredicate, BasicRule> prog =new Parser().parse(reader, Paths.get(inputDir));
+			clock.stop();
+			System.out.println(clock.getTime() / 1000.0 + "s");
+			return prog;
 		} catch (ParseException | FileNotFoundException e) {
 			handleException("Error while parsing!", e);
 			throw new AssertionError("impossible");
@@ -85,9 +91,14 @@ public final class Main {
 	}
 
 	private WellTypedProgram typeCheck(Program<UserPredicate, BasicRule> prog) {
-		System.out.println("Type checking...");
+		System.out.print("Type checking... ");
+		clock.reset();
+		clock.start();
 		try {
-			return new TypeChecker(prog).typeCheck();
+			WellTypedProgram prog2 = new TypeChecker(prog).typeCheck();
+			clock.stop();
+			System.out.println(clock.getTime() / 1000.0 + "s");
+			return prog2;
 		} catch (TypeException e) {
 			handleException("Error while typechecking the program!", e);
 			throw new AssertionError("impossible");
@@ -95,10 +106,15 @@ public final class Main {
 	}
 
 	private Evaluation setup(WellTypedProgram prog) {
-		System.out.println("Rewriting and validating...");
+		System.out.print("Rewriting and validating... ");
+		clock.reset();
+		clock.start();
 		try {
 			int parallelism = cl.hasOption("j") ? Integer.valueOf(cl.getOptionValue("j")) : 1;
-			return SemiNaiveEvaluation.setup(prog, parallelism);
+			clock.stop();
+			Evaluation eval = SemiNaiveEvaluation.setup(prog, parallelism);
+			System.out.println(clock.getTime() / 1000.0 + "s");
+			return eval;
 		} catch (InvalidProgramException e) {
 			handleException("Error while rewriting/validation!", e);
 			throw new AssertionError("impossible");
@@ -106,9 +122,13 @@ public final class Main {
 	}
 
 	private void evaluate(Evaluation eval) {
-		System.out.println("Evaluating...");
+		System.out.print("Evaluating... ");
+		clock.reset();
+		clock.start();
 		try {
 			eval.run();
+			clock.stop();
+			System.out.println(clock.getTime() / 1000.0 + "s");
 		} catch (EvaluationException e) {
 			handleException("Error while evaluating the program!", e);
 		}

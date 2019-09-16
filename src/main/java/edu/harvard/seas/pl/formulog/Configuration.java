@@ -103,15 +103,26 @@ public final class Configuration {
 
 			});
 		}
-		System.err.println("[CONFIG] noResults=" + noResults);
-		System.err.println("[CONFIG] timeRules=" + recordRuleDiagnostics);
-		System.err.println("[CONFIG] timeFuncs=" + recordFuncDiagnostics);
-		System.err.println("[CONFIG] timeSmt=" + timeSmt);
-		System.err.println("[CONFIG] optimize=" + optimizationSetting);
-		System.err.println("[CONFIG] taskSize=" + taskSize);
-		System.err.println("[CONFIG] smtTaskSize=" + smtTaskSize);
-		System.err.println("[CONFIG] memoizeThreshold=" + memoizeThreshold());
-		System.err.println("[CONFIG] noModel=" + noModel());
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			
+				@Override
+				public void run() {
+					printConfiguration(System.err);
+				}
+			
+		});
+	}
+	
+	public static synchronized void printConfiguration(PrintStream out) {
+		out.println("[CONFIG] noResults=" + noResults);
+		out.println("[CONFIG] timeRules=" + recordRuleDiagnostics);
+		out.println("[CONFIG] timeFuncs=" + recordFuncDiagnostics);
+		out.println("[CONFIG] timeSmt=" + timeSmt);
+		out.println("[CONFIG] optimize=" + optimizationSetting);
+		out.println("[CONFIG] taskSize=" + taskSize);
+		out.println("[CONFIG] smtTaskSize=" + smtTaskSize);
+		out.println("[CONFIG] memoizeThreshold=" + memoizeThreshold());
+		out.println("[CONFIG] noModel=" + noModel());
 	}
 
 	public static void recordSmtDeclTime(long time) {
@@ -135,11 +146,11 @@ public final class Configuration {
 	}
 	
 	public static synchronized void printSmtDiagnostics(PrintStream out) {
-		System.err.println("[SMT DECL TIME] " + smtDeclTime.get() + "ms");
-		System.err.println("[SMT INFER TIME] " + smtInferTime.get() + "ms");
-		System.err.println("[SMT SERIAL TIME] " + smtSerialTime.get() + "ms");
-		System.err.println("[SMT EVAL TIME] " + smtEvalTime.get() + "ms");
-		System.err.println("[SMT WAIT TIME] " + smtWaitTime.get() + "ms");
+		out.println("[SMT DECL TIME] " + smtDeclTime.get() + "ms");
+		out.println("[SMT INFER TIME] " + smtInferTime.get() + "ms");
+		out.println("[SMT SERIAL TIME] " + smtSerialTime.get() + "ms");
+		out.println("[SMT EVAL TIME] " + smtEvalTime.get() + "ms");
+		out.println("[SMT WAIT TIME] " + smtWaitTime.get() + "ms");
 	}
 
 	public static void recordFuncTime(FunctionSymbol func, long time) {
