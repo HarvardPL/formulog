@@ -1,0 +1,12 @@
+input foo(fp64)
+foo(1e-1).
+foo(1.0e-2).
+foo(1e1).
+foo(1.0e2).
+
+output ok.
+ok :-
+  foo(0.01),
+  foo(0.1),
+  foo(10d),
+  foo(100D).

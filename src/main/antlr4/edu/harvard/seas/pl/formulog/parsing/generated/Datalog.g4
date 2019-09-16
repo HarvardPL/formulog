@@ -494,11 +494,25 @@ FP
 	)?
 ;
 
+fragment
+FPE
+:
+	(
+		FP
+		| INT
+	)
+	(
+		'e'
+		| 'E'
+	) INT
+;
+
 FP32
 :
 	(
 		FP
 		| INT
+		| FPE
 	)
 	(
 		'F'
@@ -508,7 +522,10 @@ FP32
 
 FP64
 :
-	FP
+	(
+		FP
+		| FPE
+	)
 	(
 		'D'
 		| 'd'
