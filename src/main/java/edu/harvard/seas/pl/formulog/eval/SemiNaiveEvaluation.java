@@ -61,6 +61,7 @@ import edu.harvard.seas.pl.formulog.util.CountingFJP;
 import edu.harvard.seas.pl.formulog.util.CountingFJPImpl;
 import edu.harvard.seas.pl.formulog.util.MockCountingFJP;
 import edu.harvard.seas.pl.formulog.util.Pair;
+import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.FunctionDefValidation;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 import edu.harvard.seas.pl.formulog.validating.Stratifier;
@@ -80,8 +81,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 	private final SortedIndexedFactDb db;
 	private SortedIndexedFactDb deltaDb;
 	private SortedIndexedFactDb nextDeltaDb;
-	private final Map<RelationSymbol, Iterable<IndexedRule>> firstRoundRules = new HashMap<>();
-	private final Map<RelationSymbol, Iterable<IndexedRule>> laterRoundRules = new HashMap<>();
+	private final Map<RelationSymbol, Set<IndexedRule>> firstRoundRules = new HashMap<>();
+	private final Map<RelationSymbol, Map<RelationSymbol, Set<IndexedRule>>> laterRoundRules = new HashMap<>();
 	private final List<Stratum> strata;
 	private final UserPredicate query;
 	private volatile boolean changed;
@@ -221,10 +222,11 @@ public class SemiNaiveEvaluation implements Evaluation {
 		SmtCallFinder scf = new SmtCallFinder();
 		for (RelationSymbol sym : rules.keySet()) {
 			Set<IndexedRule> firstRounders = new HashSet<>();
-			Set<IndexedRule> laterRounders = new HashSet<>();
+			Map<RelationSymbol, Set<IndexedRule>> laterRounders = new HashMap<>();
 			for (IndexedRule rule : rules.get(sym)) {
-				if (hasDelta(rule)) {
-					laterRounders.add(rule);
+				RelationSymbol delta = hasDelta(rule);
+				if (delta != null) {
+					Util.lookupOrCreate(laterRounders, delta, () -> new HashSet<>()).add(rule);
 				} else {
 					firstRounders.add(rule);
 				}
@@ -252,34 +254,40 @@ public class SemiNaiveEvaluation implements Evaluation {
 		return splitPositions;
 	}
 
-	private boolean hasDelta(IndexedRule rule) {
-		boolean hasDelta = false;
+	private RelationSymbol hasDelta(IndexedRule rule) {
 		for (SimpleLiteral l : rule) {
-			hasDelta |= l.accept(new SimpleLiteralVisitor<Void, Boolean>() {
+			RelationSymbol delta = l.accept(new SimpleLiteralVisitor<Void, RelationSymbol>() {
 
 				@Override
-				public Boolean visit(Assignment assignment, Void input) {
-					return false;
+				public RelationSymbol visit(Assignment assignment, Void input) {
+					return null;
 				}
 
 				@Override
-				public Boolean visit(Check check, Void input) {
-					return false;
+				public RelationSymbol visit(Check check, Void input) {
+					return null;
 				}
 
 				@Override
-				public Boolean visit(Destructor destructor, Void input) {
-					return false;
+				public RelationSymbol visit(Destructor destructor, Void input) {
+					return null;
 				}
 
 				@Override
-				public Boolean visit(SimplePredicate predicate, Void input) {
-					return predicate.getSymbol() instanceof DeltaSymbol;
+				public RelationSymbol visit(SimplePredicate predicate, Void input) {
+					if (predicate.getSymbol() instanceof DeltaSymbol) {
+						return ((DeltaSymbol) predicate.getSymbol()).getBaseSymbol();
+					} else {
+						return null;
+					}
 				}
-
+				
 			}, null);
+			if (delta != null) {
+				return delta;
+			}
 		}
-		return hasDelta;
+		return null;
 	}
 
 	@Override
@@ -327,8 +335,13 @@ public class SemiNaiveEvaluation implements Evaluation {
 			// }
 			changed = false;
 			for (RelationSymbol sym : syms) {
-				for (IndexedRule r : laterRoundRules.get(sym)) {
-					exec.externallyAddTask(new RulePrefixEvaluator(r));
+				Map<RelationSymbol, Set<IndexedRule>> byDelta = laterRoundRules.get(sym);
+				for (RelationSymbol delta : byDelta.keySet()) {
+					if (!deltaDb.isEmpty(delta)) {
+						for (IndexedRule r : byDelta.get(delta)) {
+							exec.externallyAddTask(new RulePrefixEvaluator(r));
+						}
+					}
 				}
 			}
 			exec.blockUntilFinished();
@@ -767,6 +780,11 @@ public class SemiNaiveEvaluation implements Evaluation {
 		@Override
 		public boolean addAll(RelationSymbol sym, Set<Term[]> tups) {
 			return db.addAll(sym, tups);
+		}
+
+		@Override
+		public boolean isEmpty(RelationSymbol sym) {
+			return db.isEmpty(sym);
 		}
 
 	}

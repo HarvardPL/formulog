@@ -31,6 +31,8 @@ public interface IndexedFactDb {
 	
 	Set<Term[]> getAll(RelationSymbol sym);
 	
+	boolean isEmpty(RelationSymbol sym);
+	
 	View get(Term[] key, int index);
 	
 	boolean add(RelationSymbol sym, Term[] args);

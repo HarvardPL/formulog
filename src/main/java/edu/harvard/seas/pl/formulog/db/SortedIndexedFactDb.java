@@ -77,6 +77,11 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 	public SortedSet<Term[]> getAll(RelationSymbol sym) {
 		return all.get(sym);
 	}
+	
+	@Override
+	public boolean isEmpty(RelationSymbol sym) {
+		return all.get(sym).isEmpty();
+	}
 
 	@Override
 	public View get(Term[] key, int index) {
