@@ -86,7 +86,9 @@ public class Var extends AbstractTerm implements Term {
 
 	@Override
 	public Term normalize(Substitution s) throws EvaluationException {
-		assert s.containsKey(this);
+		if (!s.containsKey(this)) {
+			throw new EvaluationException("No binding for " + this);
+		}
 		return s.get(this);
 	}
 

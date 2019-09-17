@@ -141,7 +141,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 					db.add(sym, Terms.normalize(args, new SimpleSubstitution()));
 				} catch (EvaluationException e) {
 					UserPredicate p = UserPredicate.make(sym, args, false);
-					throw new InvalidProgramException("Cannot normalize fact " + p + "\n" + e.getMessage());
+					throw new InvalidProgramException("Cannot normalize fact " + p + ":\n" + e.getMessage());
 				}
 			}
 		}
