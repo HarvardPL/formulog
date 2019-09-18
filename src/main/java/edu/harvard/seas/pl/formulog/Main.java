@@ -111,8 +111,8 @@ public final class Main {
 		clock.start();
 		try {
 			int parallelism = cl.hasOption("j") ? Integer.valueOf(cl.getOptionValue("j")) : 1;
-			clock.stop();
 			Evaluation eval = SemiNaiveEvaluation.setup(prog, parallelism);
+			clock.stop();
 			System.out.println(clock.getTime() / 1000.0 + "s");
 			return eval;
 		} catch (InvalidProgramException e) {
