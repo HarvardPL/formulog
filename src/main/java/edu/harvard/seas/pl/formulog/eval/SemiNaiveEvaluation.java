@@ -159,8 +159,10 @@ public class SemiNaiveEvaluation implements Evaluation {
 	private static BiFunction<ComplexLiteral, Set<Var>, Integer> chooseScoringFunction() {
 		switch (Configuration.optimizationSetting) {
 		case 0:
-			return SemiNaiveEvaluation::score;
+			return SemiNaiveEvaluation::score0;
 		case 1:
+			return SemiNaiveEvaluation::score1;
+		case 2:
 			return SemiNaiveEvaluation::score2;
 		default:
 			throw new IllegalArgumentException(
@@ -168,11 +170,11 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 	}
 
-	private static int score(ComplexLiteral l, Set<Var> boundVars) {
+	private static int score0(ComplexLiteral l, Set<Var> boundVars) {
 		return 0;
 	}
 
-	private static int score2(ComplexLiteral l, Set<Var> boundVars) {
+	private static int score1(ComplexLiteral l, Set<Var> boundVars) {
 		// This seems to be worse than just doing nothing.
 		return l.accept(new ComplexLiteralVisitor<Void, Integer>() {
 
@@ -189,6 +191,33 @@ public class SemiNaiveEvaluation implements Evaluation {
 				if (pred.getSymbol() instanceof DeltaSymbol) {
 					return 100;
 				}
+				Term[] args = pred.getArgs();
+				if (args.length == 0) {
+					return 150;
+				}
+				int bound = 0;
+				for (int i = 0; i < args.length; ++i) {
+					if (boundVars.containsAll(args[i].varSet())) {
+						bound++;
+					}
+				}
+				double percentBound = ((double) bound) / args.length * 100;
+				return (int) percentBound;
+			}
+
+		}, null);
+	}
+	
+	private static int score2(ComplexLiteral l, Set<Var> boundVars) {
+		return l.accept(new ComplexLiteralVisitor<Void, Integer>() {
+
+			@Override
+			public Integer visit(UnificationPredicate unificationPredicate, Void input) {
+				return Integer.MAX_VALUE;
+			}
+
+			@Override
+			public Integer visit(UserPredicate pred, Void input) {
 				Term[] args = pred.getArgs();
 				if (args.length == 0) {
 					return 150;
