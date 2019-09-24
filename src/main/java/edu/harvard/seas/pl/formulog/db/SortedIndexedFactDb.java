@@ -505,22 +505,19 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 				Term[] upper = s.last();
 				int size = s.size();
 				Pair<SortedSet<Term[]>, SortedSet<Term[]>> bestSplit = null;
-				double bestRatio = 2.0;
+				double bestDelta = 2.0;
 				for (int i = 0; i < numGuesses; ++i) {
 					Term[] guess = guessMiddle(lower, upper);
 					SortedSet<Term[]> s1 = s.headSet(guess);
-					double ratio = Math.abs(0.5 - s1.size() / (double) size);
-					if (ratio < bestRatio) {
+					double delta = Math.abs(0.5 - s1.size() / (double) size);
+					if (delta < bestDelta) {
 						SortedSet<Term[]> s2 = s.tailSet(guess);
 						bestSplit = new Pair<>(s1, s2);
-						bestRatio = ratio;
-						if (bestRatio < 0.1) {
+						bestDelta = delta;
+						if (bestDelta < 0.1) {
 							break;
 						}
 					}
-				}
-				if (bestRatio >= 0.1) {
-					System.err.println("[BAD SPLIT] " + bestRatio);
 				}
 				SortedSet<Term[]> s1 = bestSplit.fst();
 				SortedSet<Term[]> s2 = bestSplit.snd();
