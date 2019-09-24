@@ -298,11 +298,14 @@ public final class Terms {
 		return new DummyTerm(id);
 	}
 	
-//	private static final AtomicInteger idCnt = new AtomicInteger(Integer.MIN_VALUE);
 	private static final AtomicInteger idCnt = new AtomicInteger(0);
 	
 	public static int nextId() {
 		return idCnt.incrementAndGet();
+	}
+	
+	public static int currentId() {
+		return idCnt.get();
 	}
 	
 	public static final Comparator<Term> comparator = new Comparator<Term>() {

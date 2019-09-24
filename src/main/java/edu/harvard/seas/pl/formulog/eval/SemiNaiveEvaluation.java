@@ -553,6 +553,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 			int targetSize = shouldSplit ? smtTaskSize : taskSize;
 			while (tups.countDistinct() >= targetSize * 2) {
 				Pair<View, View> p = tups.split();
+				if (p == null) {
+					break;
+				}
 				tups = p.fst();
 				exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, startPos, s.copy(), p.snd()));
 			}

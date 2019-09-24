@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableSet;
+import java.util.Random;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -42,6 +43,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
@@ -249,6 +251,11 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 		private final NavigableSet<Term[]> s;
 		private final ExecutorService exec = Executors.newSingleThreadExecutor();
 		private final AtomicInteger numTasks = new AtomicInteger();
+		private final List<Integer> order;
+		private final Random rand = new Random();
+
+		private static final int numGuesses = Configuration.numGuesses;
+		private static final int maxArraySize = Configuration.maxArraySize;
 
 		public static IndexedFactSet make(BindingType[] pat) {
 			List<Integer> order = new ArrayList<>();
@@ -267,7 +274,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 				a[i] = order.get(i);
 			}
 			Comparator<Term[]> cmp = new ArrayComparator<>(a, Terms.comparator);
-			return new IndexedFactSet(pat, new TreeSet<>(cmp));
+			return new IndexedFactSet(pat, order, new TreeSet<>(cmp));
 		}
 
 		public SortedSet<Term[]> getAll() {
@@ -291,8 +298,9 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			return s.isEmpty();
 		}
 
-		private IndexedFactSet(BindingType[] pat, NavigableSet<Term[]> s) {
+		private IndexedFactSet(BindingType[] pat, List<Integer> order, NavigableSet<Term[]> s) {
 			this.pat = pat;
+			this.order = order;
 			this.s = s;
 		}
 
@@ -368,17 +376,21 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			return str + "\n]";
 		}
 
-		private View makeView(NavigableSet<Term[]> set) {
+		private View makeView(SortedSet<Term[]> set) {
 			if (set.isEmpty()) {
 				return emptyView;
 			}
-			Term[][] arr = new Term[set.size()][];
-			int i = 0;
-			for (Term[] tup : set) {
-				arr[i] = tup;
-				i++;
+			if (set.size() > maxArraySize) {
+				return new SetView(set);
+			} else {
+				Term[][] arr = new Term[set.size()][];
+				int i = 0;
+				for (Term[] tup : set) {
+					arr[i] = tup;
+					i++;
+				}
+				return new ArrayView(arr, 0, arr.length);
 			}
-			return new ArrayView(arr, 0, arr.length);
 		}
 
 		private static final View emptyView = new View() {
@@ -416,9 +428,6 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 				this.arr = arr;
 				this.lower = lower;
 				this.upper = upper;
-				if (this.arr.length > 1024) {
-					System.err.println("LARGE ARRAY VIEW: " + this.arr.length);
-				}
 			}
 
 			@Override
@@ -463,6 +472,86 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 					return tup;
 				}
 
+			}
+
+		}
+
+		private class SetView implements View {
+
+			private final SortedSet<Term[]> s;
+
+			public SetView(SortedSet<Term[]> s) {
+				this.s = s;
+			}
+
+			@Override
+			public Iterator<Term[]> iterator() {
+				return s.iterator();
+			}
+
+			@Override
+			public int countDistinct() {
+				return s.size();
+			}
+
+			@Override
+			public boolean isEmpty() {
+				return s.isEmpty();
+			}
+
+			@Override
+			public Pair<View, View> split() {
+				Term[] lower = s.first();
+				Term[] upper = s.last();
+				int size = s.size();
+				Pair<SortedSet<Term[]>, SortedSet<Term[]>> bestSplit = null;
+				double bestRatio = 2.0;
+				for (int i = 0; i < numGuesses; ++i) {
+					Term[] guess = guessMiddle(lower, upper);
+					SortedSet<Term[]> s1 = s.headSet(guess);
+					double ratio = Math.abs(0.5 - s1.size() / (double) size);
+					if (ratio < bestRatio) {
+						SortedSet<Term[]> s2 = s.tailSet(guess);
+						bestSplit = new Pair<>(s1, s2);
+						bestRatio = ratio;
+						if (bestRatio < 0.1) {
+							break;
+						}
+					}
+				}
+				if (bestRatio >= 0.1) {
+					System.err.println("[BAD SPLIT] " + bestRatio);
+				}
+				SortedSet<Term[]> s1 = bestSplit.fst();
+				SortedSet<Term[]> s2 = bestSplit.snd();
+				if (s1.isEmpty() || s2.isEmpty()) {
+					return null;
+				}
+				View v1 = makeView(s1);
+				View v2 = makeView(s2);
+				return new Pair<>(v1, v2);
+			}
+
+			private Term[] guessMiddle(Term[] lower, Term[] upper) {
+				Term[] guess = new Term[pat.length];
+				boolean moreThanLo = false;
+				boolean lessThanHi = false;
+				int bound = Terms.currentId() + 1;
+				for (int pos : order) {
+					int lo = lower[pos].getId();
+					int hi = upper[pos].getId();
+					int loBound = moreThanLo ? 0 : lo;
+					int hiBound = lessThanHi ? bound : hi + 1;
+					int id = loBound + rand.nextInt(hiBound - loBound);
+					if (id > lo) {
+						moreThanLo = true;
+					}
+					if (id < hi) {
+						lessThanHi = true;
+					}
+					guess[pos] = Terms.makeDummyTerm(id);
+				}
+				return guess;
 			}
 
 		}
