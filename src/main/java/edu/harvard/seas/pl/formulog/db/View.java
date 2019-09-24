@@ -25,7 +25,7 @@ import edu.harvard.seas.pl.formulog.util.Pair;
 
 public interface View extends Iterable<Term[]> {
 
-	int size();
+	int countDistinct();
 	
 	boolean isEmpty();
 	

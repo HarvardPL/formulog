@@ -57,6 +57,7 @@ public final class Configuration {
 	private static final AtomicLong smtWaitTime = new AtomicLong();
 
 	public static final boolean printRelSizes = propIsSet("printRelSizes");
+	public static final boolean debugRounds = propIsSet("debugRounds");
 	public static final boolean noResults = propIsSet("noResults");
 
 	public static final int optimizationSetting = getIntProp("optimize", 0);
@@ -104,15 +105,15 @@ public final class Configuration {
 			});
 		}
 		Runtime.getRuntime().addShutdownHook(new Thread() {
-			
-				@Override
-				public void run() {
-					printConfiguration(System.err);
-				}
-			
+
+			@Override
+			public void run() {
+				printConfiguration(System.err);
+			}
+
 		});
 	}
-	
+
 	public static synchronized void printConfiguration(PrintStream out) {
 		out.println("[CONFIG] noResults=" + noResults);
 		out.println("[CONFIG] timeRules=" + recordRuleDiagnostics);
@@ -128,23 +129,23 @@ public final class Configuration {
 	public static void recordSmtDeclTime(long time) {
 		smtDeclTime.addAndGet(time);
 	}
-	
+
 	public static void recordSmtInferTime(long time) {
 		smtInferTime.addAndGet(time);
 	}
-	
+
 	public static void recordSmtSerialTime(long time) {
 		smtSerialTime.addAndGet(time);
 	}
-	
+
 	public static void recordSmtEvalTime(long time) {
 		smtEvalTime.addAndGet(time);
 	}
-	
+
 	public static void recordSmtWaitTime(long time) {
 		smtWaitTime.addAndGet(time);
 	}
-	
+
 	public static synchronized void printSmtDiagnostics(PrintStream out) {
 		out.println("[SMT DECL TIME] " + smtDeclTime.get() + "ms");
 		out.println("[SMT INFER TIME] " + smtInferTime.get() + "ms");
@@ -203,10 +204,14 @@ public final class Configuration {
 			out.println("[RULE DIAGNOSTICS] " + e.getValue().get() + "ms:\n" + e.getKey());
 		}
 	}
-	
-	public static synchronized void printRelSizes(PrintStream out, IndexedFactDb db) {
+
+	public static synchronized void printRelSizes(PrintStream out, String header, IndexedFactDb db,
+			boolean printEmpty) {
 		for (RelationSymbol sym : db.getSymbols()) {
-			out.println("[REL SIZE] " + sym + ": " + db.getAll(sym).size());
+			if (printEmpty || !db.isEmpty(sym)) {
+				out.println("[" + header + "] " + sym + ": " + db.countDistinct(sym) + " / " + db.numIndices(sym)
+						+ " / " + db.countDuplicates(sym));
+			}
 		}
 	}
 

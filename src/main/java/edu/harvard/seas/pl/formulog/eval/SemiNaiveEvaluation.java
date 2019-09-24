@@ -1,5 +1,6 @@
 package edu.harvard.seas.pl.formulog.eval;
 
+import java.time.LocalDateTime;
 import java.util.ArrayDeque;
 
 /*-
@@ -23,6 +24,7 @@ import java.util.ArrayDeque;
  */
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -31,8 +33,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.function.BiFunction;
+
+import org.apache.commons.lang3.time.StopWatch;
 
 import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.BasicProgram;
@@ -90,6 +93,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 	private final Map<IndexedRule, boolean[]> splitPositions = new HashMap<>();
 
 	private static final boolean sequential = System.getProperty("sequential") != null;
+	private static final boolean debugRounds = Configuration.debugRounds;
 
 	public static SemiNaiveEvaluation setup(WellTypedProgram prog, int parallelism) throws InvalidProgramException {
 		FunctionDefValidation.validate(prog);
@@ -107,7 +111,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		List<Stratum> strata = new Stratifier(magicProg).stratify();
 		for (Stratum stratum : strata) {
 			if (stratum.hasRecursiveNegationOrAggregation()) {
-				throw new InvalidProgramException("Cannot handle recursive negation or aggregation");
+				throw new InvalidProgramException("Cannot handle recursive negation or aggregation: " + stratum);
 			}
 			Set<RelationSymbol> stratumSymbols = stratum.getPredicateSyms();
 			for (RelationSymbol sym : stratumSymbols) {
@@ -207,7 +211,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 
 		}, null);
 	}
-	
+
 	private static int score2(ComplexLiteral l, Set<Var> boundVars) {
 		return l.accept(new ComplexLiteralVisitor<Void, Integer>() {
 
@@ -261,6 +265,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 				}
 				boolean[] positions = findSplitPositions(rule, scf);
 				splitPositions.put(rule, positions);
+				System.err.println("[INDEXED RULE] " + rule);
 			}
 			firstRoundRules.put(sym, firstRounders);
 			laterRoundRules.put(sym, laterRounders);
@@ -310,7 +315,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 						return null;
 					}
 				}
-				
+
 			}, null);
 			if (delta != null) {
 				return delta;
@@ -326,7 +331,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 
 				@Override
 				public void run() {
-					Configuration.printRelSizes(System.err, db);
+					Configuration.printRelSizes(System.err, "REL SIZE", db, true);
 				}
 
 			});
@@ -339,7 +344,53 @@ public class SemiNaiveEvaluation implements Evaluation {
 		nextDeltaDb.shutdown();
 	}
 
+	private StopWatch recordRoundStart(Stratum stratum, int round) {
+		if (!debugRounds) {
+			return null;
+		}
+		System.err.println("#####");
+		System.err.println("[START] Stratum " + stratum.getRank() + ", round " + round);
+		LocalDateTime now = LocalDateTime.now();
+		System.err.println("Start: " + now);
+		StopWatch watch = new StopWatch();
+		watch.start();
+		return watch;
+	}
+
+	private void recordRoundEnd(Stratum stratum, int round, StopWatch watch) {
+		if (watch == null) {
+			return;
+		}
+		watch.stop();
+		System.err.println("[END] Stratum " + stratum.getRank() + ", round " + round);
+		System.err.println("Time: " + watch.getTime() + "ms");
+	}
+	
+	private StopWatch recordDbUpdateStart() {
+		if (!debugRounds) {
+			return null;
+		}
+		System.err.println("[START] Updating DBs");
+		LocalDateTime now = LocalDateTime.now();
+		System.err.println("Start: " + now);
+		StopWatch watch = new StopWatch();
+		watch.start();
+		return watch;
+	}
+	
+	private void recordDbUpdateEnd(StopWatch watch) {
+		if (watch == null) {
+			return;
+		}
+		watch.stop();
+		Configuration.printRelSizes(System.err, "DELTA SIZE", deltaDb, false);
+		System.err.println("[END] Updating DBs");
+		System.err.println("Time: " + watch.getTime() + "ms");
+	}
+
 	private void evaluateStratum(Stratum stratum) throws EvaluationException {
+		int round = 0;
+		StopWatch watch = recordRoundStart(stratum, round);
 		Set<RelationSymbol> syms = stratum.getPredicateSyms();
 		for (RelationSymbol sym : syms) {
 			for (IndexedRule r : firstRoundRules.get(sym)) {
@@ -350,18 +401,13 @@ public class SemiNaiveEvaluation implements Evaluation {
 		if (exec.hasFailed()) {
 			throw exec.getFailureCause();
 		}
+		recordRoundEnd(stratum, round, watch);
+		watch = recordDbUpdateStart();
 		updateDbs();
-		// int round = 1;
+		recordDbUpdateEnd(watch);
 		while (changed) {
-			// if (round % 100 == 0) {
-			// System.err.println("STRATUM " + stratum.getRank() + " ROUND " + round);
-			// for (RelationSymbol sym : db.getSymbols()) {
-			// Set<?> s = db.getAll(sym);
-			// System.err.println(sym + ": " + s.size());
-			// }
-			// } else {
-			// System.err.println("ROUND " + round);
-			// }
+			round++;
+			watch = recordRoundStart(stratum, round);
 			changed = false;
 			for (RelationSymbol sym : syms) {
 				Map<RelationSymbol, Set<IndexedRule>> byDelta = laterRoundRules.get(sym);
@@ -377,15 +423,17 @@ public class SemiNaiveEvaluation implements Evaluation {
 			if (exec.hasFailed()) {
 				throw exec.getFailureCause();
 			}
+			recordRoundEnd(stratum, round, watch);
+			watch = recordDbUpdateStart();
 			updateDbs();
-			// round++;
+			recordDbUpdateEnd(watch);
 		}
 	}
 
 	private void updateDbs() {
 		nextDeltaDb.synchronize();
 		for (RelationSymbol sym : nextDeltaDb.getSymbols()) {
-			SortedSet<Term[]> answers = nextDeltaDb.getAll(sym);
+			Collection<Term[]> answers = nextDeltaDb.getAll(sym);
 			// exec.externallyAddTask(new DbFactSplitter(sym, answers.spliterator()));
 			exec.externallyAddTask(new DbFactPutter(sym, answers));
 		}
@@ -419,10 +467,11 @@ public class SemiNaiveEvaluation implements Evaluation {
 				key[i] = args[i];
 			}
 		}
-		if (predicate.getSymbol() instanceof DeltaSymbol) {
-			return deltaDb.get(key, idx);
+		RelationSymbol sym = predicate.getSymbol();
+		if (sym instanceof DeltaSymbol) {
+			return deltaDb.get(((DeltaSymbol) sym).getBaseSymbol(), key, idx);
 		} else {
-			return db.get(key, idx);
+			return db.get(sym, key, idx);
 		}
 	}
 
@@ -456,9 +505,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 	private class DbFactPutter extends AbstractFJPTask {
 
 		private final RelationSymbol sym;
-		private final Set<Term[]> tups;
+		private final Collection<Term[]> tups;
 
-		public DbFactPutter(RelationSymbol sym, Set<Term[]> tups) {
+		public DbFactPutter(RelationSymbol sym, Collection<Term[]> tups) {
 			super(exec);
 			this.sym = sym;
 			this.tups = tups;
@@ -502,7 +551,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 			boolean shouldSplit = splitPositions[startPos];
 			View tups = this.tups;
 			int targetSize = shouldSplit ? smtTaskSize : taskSize;
-			while (tups.size() >= targetSize * 2) {
+			while (tups.countDistinct() >= targetSize * 2) {
 				Pair<View, View> p = tups.split();
 				tups = p.fst();
 				exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, startPos, s.copy(), p.snd()));
@@ -575,7 +624,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 								}
 							} else {
 								int targetSize = splitPositions[pos] ? smtTaskSize : taskSize;
-								if (answers.size() >= targetSize * 2) {
+								if (answers.countDistinct() >= targetSize * 2) {
 									exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s.copy(), answers));
 									pos--;
 								} else {
@@ -782,18 +831,18 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 
 		@Override
-		public Set<Term[]> getAll(RelationSymbol sym) {
+		public Iterable<Term[]> getAll(RelationSymbol sym) {
 			return db.getAll(sym);
 		}
 
 		@Override
-		public View get(Term[] key, int index) {
-			return db.get(key, index);
+		public View get(RelationSymbol sym, Term[] key, int index) {
+			return db.get(sym, key, index);
 		}
 
 		@Override
-		public boolean add(RelationSymbol sym, Term[] args) {
-			return db.add(sym, args);
+		public void add(RelationSymbol sym, Term[] args) {
+			db.add(sym, args);
 		}
 
 		@Override
@@ -807,13 +856,28 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 
 		@Override
-		public boolean addAll(RelationSymbol sym, Set<Term[]> tups) {
-			return db.addAll(sym, tups);
+		public void addAll(RelationSymbol sym, Collection<Term[]> tups) {
+			db.addAll(sym, tups);
 		}
 
 		@Override
 		public boolean isEmpty(RelationSymbol sym) {
 			return db.isEmpty(sym);
+		}
+
+		@Override
+		public int countDistinct(RelationSymbol sym) {
+			return db.countDistinct(sym);
+		}
+
+		@Override
+		public int numIndices(RelationSymbol sym) {
+			return db.numIndices(sym);
+		}
+
+		@Override
+		public int countDuplicates(RelationSymbol sym) {
+			return db.countDuplicates(sym);
 		}
 
 	}
