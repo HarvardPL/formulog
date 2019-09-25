@@ -397,6 +397,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 	private void updateDbs() {
 		StopWatch watch = recordDbUpdateStart();
 		for (RelationSymbol sym : nextDeltaDb.getSymbols()) {
+			if (nextDeltaDb.isEmpty(sym)) {
+				continue;
+			}
 			Iterable<Term[]> answers = nextDeltaDb.getAll(sym);
 			for (Iterable<Term[]> tups : Util.splitIterable(answers, taskSize)) {
 				exec.externallyAddTask(new AbstractFJPTask(exec) {
@@ -536,9 +539,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 							}
 							break;
 						case PREDICATE:
-							Iterator<Iterable<Term[]>> answers = lookup(rule, pos, s).iterator();
+							Iterator<Iterable<Term[]>> tups = lookup(rule, pos, s).iterator();
 							if (((SimplePredicate) l).isNegated()) {
-								if (!answers.hasNext()) {
+								if (!tups.hasNext()) {
 									stack.addFirst(Collections.emptyIterator());
 									pos++;
 								} else {
@@ -546,11 +549,11 @@ public class SemiNaiveEvaluation implements Evaluation {
 									movingRight = false;
 								}
 							} else {
-								if (answers.hasNext()) {
-									stack.addFirst(answers.next().iterator());
-									while (answers.hasNext()) {
+								if (tups.hasNext()) {
+									stack.addFirst(tups.next().iterator());
+									while (tups.hasNext()) {
 										exec.recursivelyAddTask(
-												new RuleSuffixEvaluator(rule, pos, s.copy(), answers.next()));
+												new RuleSuffixEvaluator(rule, pos, s.copy(), tups.next()));
 									}
 									// No need to do anything else: we'll hit the right case on the next iteration.
 								} else {
@@ -655,7 +658,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 					}
 				}
 				for (Iterable<Term[]> tups : lookup(rule, pos, s)) {
-					exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s, tups));
+					exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s.copy(), tups));
 				}
 			} catch (EvaluationException e) {
 				throw new EvaluationException(

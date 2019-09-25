@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableSet;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -169,6 +168,19 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 		return s + "}";
 	}
 
+	public String toSimplifiedString() {
+		String s = "{\n";
+		for (RelationSymbol sym : masterIndex.keySet()) {
+			IndexedFactSet idx = masterIndex.get(sym);
+			if (!idx.isEmpty()) {
+				s += "\t" + sym + " = {\n";
+				s += idx.toString() + "\n";
+				s += "\t}\n";
+			}
+		}
+		return s + "}";
+	}
+
 	public static class SortedIndexedFactDbBuilder implements IndexedFactDbBuilder<SortedIndexedFactDb> {
 
 		private final Map<RelationSymbol, Integer> counts = new HashMap<>();
@@ -271,7 +283,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			return new IndexedFactSet(pat, new ConcurrentSkipListSet<>(cmp));
 		}
 
-		public SortedSet<Term[]> getAll() {
+		public Iterable<Term[]> getAll() {
 			return s;
 		}
 

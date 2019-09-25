@@ -39,11 +39,11 @@ import java.util.stream.Collectors;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 
 public final class Util {
-	
+
 	private Util() {
 		throw new AssertionError();
 	}
-	
+
 	public static <K, V> V lookupOrCreate(Map<K, V> m, K k, Supplier<V> cnstr) {
 		V v = m.get(k);
 		if (v == null) {
@@ -55,25 +55,25 @@ public final class Util {
 		}
 		return v;
 	}
-	
+
 	public static <T> Iterable<T> i2i(Iterator<T> it) {
 		return () -> it;
 	}
-	
+
 	public static <K> Set<K> concurrentSet() {
 		return Collections.newSetFromMap(new ConcurrentHashMap<>());
 	}
-	
+
 	public static <T> List<T> iterableToList(Iterable<T> it) {
 		List<T> l = new ArrayList<>();
 		it.forEach(l::add);
 		return l;
 	}
-	
-	public static <A,B> List<B> map(List<A> xs, Function<A, B> f) {
+
+	public static <A, B> List<B> map(List<A> xs, Function<A, B> f) {
 		return xs.stream().map(f).collect(Collectors.toList());
 	}
-	
+
 	public static void printSortedFacts(Iterable<UserPredicate> facts, PrintStream out) {
 		Util.iterableToList(facts).stream().map(a -> {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -82,24 +82,25 @@ public final class Util {
 			return baos.toString();
 		}).sorted().forEach(s -> out.println(s));
 	}
-	
-	public static <K,V> Map<K,V> fillMapWithFutures(Map<K,Future<V>> futures, Map<K,V> m) throws InterruptedException, ExecutionException {
+
+	public static <K, V> Map<K, V> fillMapWithFutures(Map<K, Future<V>> futures, Map<K, V> m)
+			throws InterruptedException, ExecutionException {
 		for (Map.Entry<K, Future<V>> e : futures.entrySet()) {
 			m.put(e.getKey(), e.getValue().get());
 		}
 		return m;
 	}
-	
-	private static class IterableOfIterables<T> implements Iterable<Iterable<T>> {
+
+	public static class IterableOfIterables<T> implements Iterable<Iterable<T>> {
 
 		private final Iterable<T> iterable;
 		private final int size;
-		
+
 		public IterableOfIterables(Iterable<T> iterable, int size) {
 			this.iterable = iterable;
 			this.size = size;
 		}
-		
+
 		@Override
 		public Iterator<Iterable<T>> iterator() {
 			Iterator<T> it = iterable.iterator();
@@ -119,14 +120,45 @@ public final class Util {
 					}
 					return l;
 				}
-				
+
 			};
 		}
-		
+
+		@Override
+		public String toString() {
+			String s = "{";
+			for (Iterator<Iterable<T>> it = iterator(); it.hasNext();) {
+				s += it.next();
+				if (it.hasNext()) {
+					s += ",";
+				}
+			}
+			return s + "}";
+		}
+
+		public String toString(Function<T, String> printer) {
+			String s = "{";
+			for (Iterator<Iterable<T>> it = iterator(); it.hasNext();) {
+				s += " {";
+				for (Iterator<T> it2 = it.next().iterator(); it2.hasNext();) {
+					s += printer.apply(it2.next());
+					if (it2.hasNext()) {
+						s += ", ";
+					}
+				}
+				s += "} ";
+				if (it.hasNext()) {
+					s += ", ";
+				}
+			}
+			return s + "}";
+
+		}
+
 	}
-	
+
 	public static <T> Iterable<Iterable<T>> splitIterable(Iterable<T> iterable, int segmentSize) {
 		return new IterableOfIterables<>(iterable, segmentSize);
 	}
-	
+
 }
