@@ -400,9 +400,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 				throw exec.getFailureCause();
 			}
 			recordRoundEnd(stratum, round, watch);
-			watch = recordDbUpdateStart();
 			updateDbs();
-			recordDbUpdateEnd(watch);
 		}
 	}
 
