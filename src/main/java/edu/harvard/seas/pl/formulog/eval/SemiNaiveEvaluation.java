@@ -366,28 +366,6 @@ public class SemiNaiveEvaluation implements Evaluation {
 		System.err.println("Time: " + watch.getTime() + "ms");
 	}
 	
-	private StopWatch recordDbUpdateStart() {
-		if (!debugRounds) {
-			return null;
-		}
-		System.err.println("[START] Updating DBs");
-		LocalDateTime now = LocalDateTime.now();
-		System.err.println("Start: " + now);
-		StopWatch watch = new StopWatch();
-		watch.start();
-		return watch;
-	}
-	
-	private void recordDbUpdateEnd(StopWatch watch) {
-		if (watch == null) {
-			return;
-		}
-		watch.stop();
-		Configuration.printRelSizes(System.err, "DELTA SIZE", deltaDb, false);
-		System.err.println("[END] Updating DBs");
-		System.err.println("Time: " + watch.getTime() + "ms");
-	}
-
 	private void evaluateStratum(Stratum stratum) throws EvaluationException {
 		int round = 0;
 		StopWatch watch = recordRoundStart(stratum, round);
@@ -402,9 +380,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 			throw exec.getFailureCause();
 		}
 		recordRoundEnd(stratum, round, watch);
-		watch = recordDbUpdateStart();
 		updateDbs();
-		recordDbUpdateEnd(watch);
 		while (changed) {
 			round++;
 			watch = recordRoundStart(stratum, round);
@@ -430,19 +406,65 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 	}
 
+	private StopWatch recordDbUpdateStart() {
+		if (!debugRounds) {
+			return null;
+		}
+		System.err.println("[START] Updating DBs");
+		LocalDateTime now = LocalDateTime.now();
+		System.err.println("Start: " + now);
+		StopWatch watch = new StopWatch();
+		watch.start();
+		return watch;
+	}
+	
+	private void recordDbUpdateEnd(StopWatch watch) {
+		if (watch == null) {
+			return;
+		}
+		watch.stop();
+		Configuration.printRelSizes(System.err, "DELTA SIZE", deltaDb, false);
+		System.err.println("[END] Updating DBs");
+		System.err.println("Time: " + watch.getTime() + "ms");
+	}
+	
+	private void splitStopWatch(StopWatch watch) {
+		if (watch == null) {
+			return;
+		}
+		watch.split();
+	}
+	
+	private void recordTimeSinceSplit(StopWatch watch, String header) {
+		if (watch == null) {
+			return;
+		}
+		long start = watch.getSplitTime();
+		long now = watch.getTime();
+		System.err.println("[" + header + "] " + (now - start) + "ms");
+	}
+	
 	private void updateDbs() {
+		StopWatch watch = recordDbUpdateStart();
+		splitStopWatch(watch);
 		nextDeltaDb.synchronize();
+		recordTimeSinceSplit(watch, "NEXT DELTA DB SYNCH");
+		splitStopWatch(watch);
 		for (RelationSymbol sym : nextDeltaDb.getSymbols()) {
 			Collection<Term[]> answers = nextDeltaDb.getAll(sym);
 			// exec.externallyAddTask(new DbFactSplitter(sym, answers.spliterator()));
 			exec.externallyAddTask(new DbFactPutter(sym, answers));
 		}
 		exec.blockUntilFinished();
+		recordTimeSinceSplit(watch, "UPDATING DB");
+		splitStopWatch(watch);
 		db.synchronize();
+		recordTimeSinceSplit(watch, "DB SYNCH");
 		SortedIndexedFactDb tmp = deltaDb;
 		deltaDb = nextDeltaDb;
 		nextDeltaDb = tmp;
 		nextDeltaDb.clear();
+		recordDbUpdateEnd(watch);
 	}
 
 	private void reportFact(SimplePredicate atom) {
