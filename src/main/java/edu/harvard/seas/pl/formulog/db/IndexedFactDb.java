@@ -1,7 +1,5 @@
 package edu.harvard.seas.pl.formulog.db;
 
-import java.util.Collection;
-
 /*-
  * #%L
  * FormuLog
@@ -41,11 +39,11 @@ public interface IndexedFactDb {
 	
 	int countDuplicates(RelationSymbol sym);
 	
-	View get(RelationSymbol sym, Term[] key, int index);
+	Iterable<Iterable<Term[]>> get(RelationSymbol sym, Term[] key, int index, int taskSize);
 	
 	void add(RelationSymbol sym, Term[] args);
 	
-	void addAll(RelationSymbol sym, Collection<Term[]> tups);
+	void addAll(RelationSymbol sym, Iterable<Term[]> tups);
 	
 	boolean hasFact(RelationSymbol sym, Term[] args);
 

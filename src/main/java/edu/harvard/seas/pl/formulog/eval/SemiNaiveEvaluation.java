@@ -51,7 +51,6 @@ import edu.harvard.seas.pl.formulog.db.IndexedFactDb;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDbBuilder;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb.SortedIndexedFactDbBuilder;
-import edu.harvard.seas.pl.formulog.db.View;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
 import edu.harvard.seas.pl.formulog.smt.Z3ThreadFactory;
@@ -63,7 +62,6 @@ import edu.harvard.seas.pl.formulog.util.AbstractFJPTask;
 import edu.harvard.seas.pl.formulog.util.CountingFJP;
 import edu.harvard.seas.pl.formulog.util.CountingFJPImpl;
 import edu.harvard.seas.pl.formulog.util.MockCountingFJP;
-import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.FunctionDefValidation;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
@@ -150,7 +148,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 				}
 			}
 		}
-		db.synchronize();
+		// db.synchronize();
 		CountingFJP exec;
 		if (sequential) {
 			exec = new MockCountingFJP();
@@ -339,9 +337,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 		for (Stratum stratum : strata) {
 			evaluateStratum(stratum);
 		}
-		db.shutdown();
-		deltaDb.shutdown();
-		nextDeltaDb.shutdown();
+		// db.shutdown();
+		// deltaDb.shutdown();
+		// nextDeltaDb.shutdown();
 	}
 
 	private StopWatch recordRoundStart(Stratum stratum, int round) {
@@ -365,7 +363,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		System.err.println("[END] Stratum " + stratum.getRank() + ", round " + round);
 		System.err.println("Time: " + watch.getTime() + "ms");
 	}
-	
+
 	private void evaluateStratum(Stratum stratum) throws EvaluationException {
 		int round = 0;
 		StopWatch watch = recordRoundStart(stratum, round);
@@ -415,7 +413,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		watch.start();
 		return watch;
 	}
-	
+
 	private void recordDbUpdateEnd(StopWatch watch) {
 		if (watch == null) {
 			return;
@@ -425,39 +423,39 @@ public class SemiNaiveEvaluation implements Evaluation {
 		System.err.println("[END] Updating DBs");
 		System.err.println("Time: " + watch.getTime() + "ms");
 	}
-	
-	private void splitStopWatch(StopWatch watch) {
-		if (watch == null) {
-			return;
-		}
-		watch.split();
-	}
-	
-	private void recordTimeSinceSplit(StopWatch watch, String header) {
-		if (watch == null) {
-			return;
-		}
-		long start = watch.getSplitTime();
-		long now = watch.getTime();
-		System.err.println("[" + header + "] " + (now - start) + "ms");
-	}
-	
+
+	// private void splitStopWatch(StopWatch watch) {
+	// if (watch == null) {
+	// return;
+	// }
+	// watch.split();
+	// }
+	//
+	// private void recordTimeSinceSplit(StopWatch watch, String header) {
+	// if (watch == null) {
+	// return;
+	// }
+	// long start = watch.getSplitTime();
+	// long now = watch.getTime();
+	// System.err.println("[" + header + "] " + (now - start) + "ms");
+	// }
+
 	private void updateDbs() {
 		StopWatch watch = recordDbUpdateStart();
-		splitStopWatch(watch);
-		nextDeltaDb.synchronize();
-		recordTimeSinceSplit(watch, "NEXT DELTA DB SYNCH");
-		splitStopWatch(watch);
+		// splitStopWatch(watch);
+		// nextDeltaDb.synchronize();
+		// recordTimeSinceSplit(watch, "NEXT DELTA DB SYNCH");
+		// splitStopWatch(watch);
 		for (RelationSymbol sym : nextDeltaDb.getSymbols()) {
 			Collection<Term[]> answers = nextDeltaDb.getAll(sym);
 			// exec.externallyAddTask(new DbFactSplitter(sym, answers.spliterator()));
 			exec.externallyAddTask(new DbFactPutter(sym, answers));
 		}
 		exec.blockUntilFinished();
-		recordTimeSinceSplit(watch, "UPDATING DB");
-		splitStopWatch(watch);
-		db.synchronize();
-		recordTimeSinceSplit(watch, "DB SYNCH");
+		// recordTimeSinceSplit(watch, "UPDATING DB");
+		// splitStopWatch(watch);
+		// db.synchronize();
+		// recordTimeSinceSplit(watch, "DB SYNCH");
 		SortedIndexedFactDb tmp = deltaDb;
 		deltaDb = nextDeltaDb;
 		nextDeltaDb = tmp;
@@ -474,7 +472,11 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 	}
 
-	private View lookup(IndexedRule r, int pos, OverwriteSubstitution s) throws EvaluationException {
+	private static final int taskSize = Configuration.taskSize;
+	private static final int smtTaskSize = Configuration.smtTaskSize;
+
+	private Iterable<Iterable<Term[]>> lookup(IndexedRule r, int pos, OverwriteSubstitution s)
+			throws EvaluationException {
 		SimplePredicate predicate = (SimplePredicate) r.getBody(pos);
 		int idx = r.getDBIndex(pos);
 		Term[] args = predicate.getArgs();
@@ -487,11 +489,13 @@ public class SemiNaiveEvaluation implements Evaluation {
 				key[i] = args[i];
 			}
 		}
+		boolean shouldSplit = splitPositions.get(r)[pos];
+		int targetSize = shouldSplit ? smtTaskSize : taskSize;
 		RelationSymbol sym = predicate.getSymbol();
 		if (sym instanceof DeltaSymbol) {
-			return deltaDb.get(((DeltaSymbol) sym).getBaseSymbol(), key, idx);
+			return deltaDb.get(((DeltaSymbol) sym).getBaseSymbol(), key, idx, targetSize);
 		} else {
-			return db.get(sym, key, idx);
+			return db.get(sym, key, idx, targetSize);
 		}
 	}
 
@@ -540,8 +544,6 @@ public class SemiNaiveEvaluation implements Evaluation {
 
 	}
 
-	private static final int taskSize = Configuration.taskSize;
-	private static final int smtTaskSize = Configuration.smtTaskSize;
 	private static final boolean recordRuleDiagnostics = Configuration.recordRuleDiagnostics;
 
 	@SuppressWarnings("serial")
@@ -550,16 +552,14 @@ public class SemiNaiveEvaluation implements Evaluation {
 		private final IndexedRule rule;
 		private final int startPos;
 		private final OverwriteSubstitution s;
-		private final View tups;
-		private final boolean[] splitPositions;
+		private final Iterable<Term[]> tups;
 
-		protected RuleSuffixEvaluator(IndexedRule rule, int pos, OverwriteSubstitution s, View tups) {
+		protected RuleSuffixEvaluator(IndexedRule rule, int pos, OverwriteSubstitution s, Iterable<Term[]> tups) {
 			super(exec);
 			this.rule = rule;
 			this.startPos = pos;
 			this.s = s;
 			this.tups = tups;
-			this.splitPositions = SemiNaiveEvaluation.this.splitPositions.get(rule);
 		}
 
 		@Override
@@ -567,17 +567,6 @@ public class SemiNaiveEvaluation implements Evaluation {
 			long start = 0;
 			if (recordRuleDiagnostics) {
 				start = System.currentTimeMillis();
-			}
-			boolean shouldSplit = splitPositions[startPos];
-			View tups = this.tups;
-			int targetSize = shouldSplit ? smtTaskSize : taskSize;
-			while (tups.countDistinct() >= targetSize * 2) {
-				Pair<View, View> p = tups.split();
-				if (p == null) {
-					break;
-				}
-				tups = p.fst();
-				exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, startPos, s.copy(), p.snd()));
 			}
 			try {
 				for (Term[] tup : tups) {
@@ -636,9 +625,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 							}
 							break;
 						case PREDICATE:
-							View answers = lookup(rule, pos, s);
+							Iterator<Iterable<Term[]>> answers = lookup(rule, pos, s).iterator();
 							if (((SimplePredicate) l).isNegated()) {
-								if (answers.isEmpty()) {
+								if (!answers.hasNext()) {
 									stack.addFirst(Collections.emptyIterator());
 									pos++;
 								} else {
@@ -646,13 +635,15 @@ public class SemiNaiveEvaluation implements Evaluation {
 									movingRight = false;
 								}
 							} else {
-								int targetSize = splitPositions[pos] ? smtTaskSize : taskSize;
-								if (answers.countDistinct() >= targetSize * 2) {
-									exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s.copy(), answers));
-									pos--;
-								} else {
-									stack.addFirst(answers.iterator());
+								if (answers.hasNext()) {
+									stack.addFirst(answers.next().iterator());
+									while (answers.hasNext()) {
+										exec.recursivelyAddTask(
+												new RuleSuffixEvaluator(rule, pos, s.copy(), answers.next()));
+									}
 									// No need to do anything else: we'll hit the right case on the next iteration.
+								} else {
+									pos--;
 								}
 								movingRight = false;
 							}
@@ -729,7 +720,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 						case PREDICATE:
 							SimplePredicate p = (SimplePredicate) l;
 							if (p.isNegated()) {
-								if (!lookup(rule, pos, s).isEmpty()) {
+								if (lookup(rule, pos, s).iterator().hasNext()) {
 									return;
 								}
 							} else {
@@ -752,7 +743,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 								+ rule.getHead() + e.getLocalizedMessage());
 					}
 				}
-				exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s, lookup(rule, pos, s)));
+				for (Iterable<Term[]> tups : lookup(rule, pos, s)) {
+					exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s, tups));
+				}
 			} catch (EvaluationException e) {
 				throw new EvaluationException(
 						"Exception raised while evaluating this rule:\n" + rule + "\n\n" + e.getMessage());
@@ -859,8 +852,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 
 		@Override
-		public View get(RelationSymbol sym, Term[] key, int index) {
-			return db.get(sym, key, index);
+		public Iterable<Iterable<Term[]>> get(RelationSymbol sym, Term[] key, int index, int taskSize) {
+			return db.get(sym, key, index, taskSize);
 		}
 
 		@Override
@@ -879,7 +872,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 
 		@Override
-		public void addAll(RelationSymbol sym, Collection<Term[]> tups) {
+		public void addAll(RelationSymbol sym, Iterable<Term[]> tups) {
 			db.addAll(sym, tups);
 		}
 

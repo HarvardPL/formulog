@@ -65,9 +65,6 @@ public final class Configuration {
 	public static final int taskSize = getIntProp("taskSize", 128);
 	public static final int smtTaskSize = getIntProp("smtTaskSize", 8);
 	
-	public static final int numGuesses = getIntProp("numGuesses", 3);
-	public static final int maxArraySize = getIntProp("maxArraySize", 1024);
-	
 	public static final int parallelism = getIntProp("parallelism", 4);
 
 	public static final int memoizeThreshold() {
