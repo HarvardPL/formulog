@@ -37,6 +37,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -57,6 +62,7 @@ import edu.harvard.seas.pl.formulog.ast.I32;
 import edu.harvard.seas.pl.formulog.ast.I64;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
+import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.ast.StringTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
@@ -1305,8 +1311,9 @@ public class Parser {
 
 		};
 
-		private void readEdbFromFile(RelationSymbol sym) throws ParseException {
-			Set<Term[]> facts = initialFacts.get(sym);
+		private Set<Term[]> readEdbFromFile(RelationSymbol sym) throws ParseException {
+			Set<Term[]> facts = new HashSet<>();
+			facts.addAll(initialFacts.get(sym));
 			Path path = inputDir.resolve(sym.toString() + ".csv");
 			try {
 				Stream<String> lines;
@@ -1318,6 +1325,7 @@ public class Parser {
 			} catch (Exception e) {
 				throw new ParseException("Exception when extracting facts from " + path + ":\n" + e);
 			}
+			return facts;
 		}
 
 		private void readLineFromCsv(RelationSymbol sym, Reader r, Set<Term[]> facts) throws ParseException {
@@ -1330,8 +1338,29 @@ public class Parser {
 		}
 
 		public BasicProgram getProgram() throws ParseException {
-			for (RelationSymbol sym : externalEdbs) {
-				readEdbFromFile(sym);
+			if (!externalEdbs.isEmpty()) {
+				ExecutorService exec = Executors.newFixedThreadPool(Configuration.parallelism);
+				Map<RelationSymbol, Future<Set<Term[]>>> futures = new HashMap<>();
+				for (RelationSymbol sym : externalEdbs) {
+					Future<Set<Term[]>> fut = exec.submit(new Callable<Set<Term[]>>() {
+
+						@Override
+						public Set<Term[]> call() throws Exception {
+							return readEdbFromFile(sym);
+						}
+
+					});
+					futures.put(sym, fut);
+				}
+				exec.shutdown();
+				for (Map.Entry<RelationSymbol, Future<Set<Term[]>>> e : futures.entrySet()) {
+					try {
+						initialFacts.put(e.getKey(), e.getValue().get());
+					} catch (InterruptedException | ExecutionException e1) {
+						throw new ParseException(
+								"Exception when extracting facts for relation " + e.getKey() + ":\n" + e1);
+					}
+				}
 			}
 			return new BasicProgram() {
 

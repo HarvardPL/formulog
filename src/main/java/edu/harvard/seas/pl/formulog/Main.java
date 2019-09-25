@@ -110,8 +110,7 @@ public final class Main {
 		clock.reset();
 		clock.start();
 		try {
-			int parallelism = cl.hasOption("j") ? Integer.valueOf(cl.getOptionValue("j")) : 1;
-			Evaluation eval = SemiNaiveEvaluation.setup(prog, parallelism);
+			Evaluation eval = SemiNaiveEvaluation.setup(prog, Configuration.parallelism);
 			clock.stop();
 			System.out.println(clock.getTime() / 1000.0 + "s");
 			return eval;
@@ -164,7 +163,6 @@ public final class Main {
 
 	private static CommandLine parseArgs(String[] args) {
 		Options opts = new Options();
-		opts.addOption("j", true, "Number of threads to use (defaults to 1).");
 		opts.addOption("s", "semiInflationary", false, "Use semi-inflationary evaluation.");
 		opts.addOption("v", "verbose", false, "Print a lot of stuff.");
 		opts.addOption("I", true, "Directory for (tab and/or space-delimited) CSVs with input facts.");
