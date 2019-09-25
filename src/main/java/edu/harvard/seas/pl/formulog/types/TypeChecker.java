@@ -22,16 +22,20 @@ package edu.harvard.seas.pl.formulog.types;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
+import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralVisitor;
@@ -53,9 +57,9 @@ import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.ast.functions.UserFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDefManager;
+import edu.harvard.seas.pl.formulog.ast.functions.UserFunctionDef;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
@@ -83,15 +87,16 @@ public class TypeChecker {
 	}
 
 	public WellTypedProgram typeCheck() throws TypeException {
-//		typeCheckRelations();
-		Map<RelationSymbol, Set<Term[]>> newFacts = typeCheckFacts();
-		Map<FunctionSymbol, FunctionDef> newFuncs = typeCheckFunctions();
+		ExecutorService exec = Executors.newFixedThreadPool(Configuration.parallelism);
+		Map<RelationSymbol, Set<Term[]>> newFacts = typeCheckFacts(exec);
+		Map<FunctionSymbol, FunctionDef> newFuncs = typeCheckFunctions(exec);
 		FunctionDefManager dm = prog.getFunctionCallFactory().getDefManager();
 		for (FunctionDef func : newFuncs.values()) {
 			dm.reregister(func);
 		}
-		Map<RelationSymbol, Set<BasicRule>> newRules = typeCheckRules();
+		Map<RelationSymbol, Set<BasicRule>> newRules = typeCheckRules(exec);
 		UserPredicate newQuery = typeCheckQuery();
+		exec.shutdown();
 		return new WellTypedProgram() {
 
 			@Override
@@ -159,56 +164,61 @@ public class TypeChecker {
 		};
 	}
 
-//	private void typeCheckRelations() throws TypeException {
-//		typeCheckRelations(prog.getFactSymbols());
-//		typeCheckRelations(prog.getRuleSymbols());
-//	}
-//
-//	private void typeCheckRelations(Set<RelationSymbol> syms) throws TypeException {
-//		for (RelationSymbol sym : syms) {
-//			typeCheckRelation(sym);
-//		}
-//	}
+	// private void typeCheckRelations() throws TypeException {
+	// typeCheckRelations(prog.getFactSymbols());
+	// typeCheckRelations(prog.getRuleSymbols());
+	// }
+	//
+	// private void typeCheckRelations(Set<RelationSymbol> syms) throws
+	// TypeException {
+	// for (RelationSymbol sym : syms) {
+	// typeCheckRelation(sym);
+	// }
+	// }
 
-//	private void typeCheckRelation(RelationSymbol sym) throws TypeException {
-//		if (sym.isAggregated()) {
-//			FunctorType ft = sym.getCompileTimeType();
-//			List<Type> argTypes = ft.getArgTypes();
-//			Type aggType = argTypes.get(argTypes.size() - 1);
-//			Term init = typeCheckAggregateUnit(sym, aggType);
-//			typeCheckAggregateFunction(sym, aggType);
-//			sym.setAggregate(sym.getAggFuncSym(), init);
-//		}
-//	}
-//
-//	private Term typeCheckAggregateUnit(RelationSymbol relSym, Type aggType) throws TypeException {
-//		Term unit = relSym.getAggFuncUnit();
-//		try {
-//			TypeCheckerContext ctx = new TypeCheckerContext();
-//			return ctx.typeCheckTerm(unit, aggType);
-//		} catch (TypeException e) {
-//			throw new TypeException(
-//					"Error with aggregate unit term " + unit + " for relation " + relSym + "\n" + e.getMessage());
-//		}
-//	}
-//
-//	private void typeCheckAggregateFunction(RelationSymbol relSym, Type aggType) throws TypeException {
-//		FunctionSymbol funcSym = relSym.getAggFuncSym();
-//		try {
-//			if (funcSym.getArity() != 2) {
-//				throw new TypeException("Function " + funcSym + " is not binary");
-//			}
-//			FunctorType funcType = (FunctorType) funcSym.getCompileTimeType();
-//			List<Type> actualTypes = new ArrayList<>(funcType.getArgTypes());
-//			actualTypes.add(funcType.getRetType());
-//			List<Type> requiredTypes = Arrays.asList(aggType, aggType, aggType);
-//			TypeCheckerContext ctx = new TypeCheckerContext();
-//			ctx.checkUnifiability(actualTypes, requiredTypes);
-//		} catch (TypeException e) {
-//			throw new TypeException(
-//					"Error with aggregate function " + funcSym + " for relation " + relSym + "\n" + e.getMessage());
-//		}
-//	}
+	// private void typeCheckRelation(RelationSymbol sym) throws TypeException {
+	// if (sym.isAggregated()) {
+	// FunctorType ft = sym.getCompileTimeType();
+	// List<Type> argTypes = ft.getArgTypes();
+	// Type aggType = argTypes.get(argTypes.size() - 1);
+	// Term init = typeCheckAggregateUnit(sym, aggType);
+	// typeCheckAggregateFunction(sym, aggType);
+	// sym.setAggregate(sym.getAggFuncSym(), init);
+	// }
+	// }
+	//
+	// private Term typeCheckAggregateUnit(RelationSymbol relSym, Type aggType)
+	// throws TypeException {
+	// Term unit = relSym.getAggFuncUnit();
+	// try {
+	// TypeCheckerContext ctx = new TypeCheckerContext();
+	// return ctx.typeCheckTerm(unit, aggType);
+	// } catch (TypeException e) {
+	// throw new TypeException(
+	// "Error with aggregate unit term " + unit + " for relation " + relSym + "\n" +
+	// e.getMessage());
+	// }
+	// }
+	//
+	// private void typeCheckAggregateFunction(RelationSymbol relSym, Type aggType)
+	// throws TypeException {
+	// FunctionSymbol funcSym = relSym.getAggFuncSym();
+	// try {
+	// if (funcSym.getArity() != 2) {
+	// throw new TypeException("Function " + funcSym + " is not binary");
+	// }
+	// FunctorType funcType = (FunctorType) funcSym.getCompileTimeType();
+	// List<Type> actualTypes = new ArrayList<>(funcType.getArgTypes());
+	// actualTypes.add(funcType.getRetType());
+	// List<Type> requiredTypes = Arrays.asList(aggType, aggType, aggType);
+	// TypeCheckerContext ctx = new TypeCheckerContext();
+	// ctx.checkUnifiability(actualTypes, requiredTypes);
+	// } catch (TypeException e) {
+	// throw new TypeException(
+	// "Error with aggregate function " + funcSym + " for relation " + relSym + "\n"
+	// + e.getMessage());
+	// }
+	// }
 
 	private UserPredicate typeCheckQuery() throws TypeException {
 		if (prog.hasQuery()) {
@@ -218,45 +228,83 @@ public class TypeChecker {
 		return null;
 	}
 
-	private Map<RelationSymbol, Set<Term[]>> typeCheckFacts() throws TypeException {
-		// Can use same type checker context for all, since there should be neither
-		// program variables (in a fact) or type variables (in a relation type).
-		// Addendum: there can be program variables (in type index positions),
-		// but they should be unique.
-		Map<RelationSymbol, Set<Term[]>> m = new HashMap<>();
-		TypeCheckerContext ctx = new TypeCheckerContext();
+	private static <K, V> Map<K, V> mapFromFutures(Map<K, Future<V>> futures) throws TypeException {
+		try {
+			return Util.fillMapWithFutures(futures, new HashMap<>());
+		} catch (InterruptedException | ExecutionException e) {
+			throw new TypeException(e);
+		}
+	}
+
+	private Map<RelationSymbol, Set<Term[]>> typeCheckFacts(ExecutorService exec) throws TypeException {
+		Map<RelationSymbol, Future<Set<Term[]>>> futures = new HashMap<>();
 		for (RelationSymbol sym : prog.getFactSymbols()) {
-			Set<Term[]> s = new HashSet<>();
-			for (Term[] args : prog.getFacts(sym)) {
-				s.add(ctx.typeCheckFact(sym, args));
-			}
-			m.put(sym, s);
+			Future<Set<Term[]>> fut = exec.submit(new Callable<Set<Term[]>>() {
+
+				@Override
+				public Set<Term[]> call() throws Exception {
+					// Can use same type checker context for all, since there should be neither
+					// program variables (in a fact) or type variables (in a relation type).
+					// Addendum: there can be program variables (in type index positions),
+					// but they should be unique.
+					TypeCheckerContext ctx = new TypeCheckerContext();
+					Set<Term[]> s = new HashSet<>();
+					for (Term[] args : prog.getFacts(sym)) {
+						s.add(ctx.typeCheckFact(sym, args));
+					}
+					return s;
+				}
+
+			});
+			futures.put(sym, fut);
 		}
-		return m;
+		return mapFromFutures(futures);
 	}
 
-	private Map<RelationSymbol, Set<BasicRule>> typeCheckRules() throws TypeException {
-		Map<RelationSymbol, Set<BasicRule>> m = new HashMap<>();
+	private Map<RelationSymbol, Set<BasicRule>> typeCheckRules(ExecutorService exec) throws TypeException {
+		Map<RelationSymbol, Future<Set<BasicRule>>> futures = new HashMap<>();
 		for (RelationSymbol sym : prog.getRuleSymbols()) {
-			Set<BasicRule> s = new HashSet<>();
-			for (BasicRule r : prog.getRules(sym)) {
-				TypeCheckerContext ctx = new TypeCheckerContext();
-				s.add(ctx.typeCheckRule(r));
-			}
-			m.put(sym, s);
+			Future<Set<BasicRule>> fut = exec.submit(new Callable<Set<BasicRule>>() {
+
+				@Override
+				public Set<BasicRule> call() throws Exception {
+					Set<BasicRule> s = new HashSet<>();
+					for (BasicRule r : prog.getRules(sym)) {
+						TypeCheckerContext ctx = new TypeCheckerContext();
+						s.add(ctx.typeCheckRule(r));
+					}
+					return s;
+				}
+
+			});
+			futures.put(sym, fut);
 		}
-		return m;
+		return mapFromFutures(futures);
 	}
 
-	private Map<FunctionSymbol, FunctionDef> typeCheckFunctions() throws TypeException {
-		Map<FunctionSymbol, FunctionDef> m = new HashMap<>();
+	private Map<FunctionSymbol, FunctionDef> typeCheckFunctions(ExecutorService exec) throws TypeException {
+		Map<FunctionSymbol, Future<FunctionDef>> futures = new HashMap<>();
+		List<FunctionDef> nonUserFunctions = new ArrayList<>();
 		for (FunctionSymbol sym : prog.getFunctionSymbols()) {
 			FunctionDef def = prog.getDef(sym);
 			if (def instanceof UserFunctionDef) {
-				TypeCheckerContext ctx = new TypeCheckerContext();
-				def = ctx.typeCheckFunction((UserFunctionDef) def);
+				Future<FunctionDef> fut = exec.submit(new Callable<FunctionDef>() {
+
+					@Override
+					public FunctionDef call() throws Exception {
+						TypeCheckerContext ctx = new TypeCheckerContext();
+						return ctx.typeCheckFunction((UserFunctionDef) def);
+					}
+					
+				});
+				futures.put(sym, fut);
+			} else {
+				nonUserFunctions.add(def);
 			}
-			m.put(sym, def);
+		}
+		Map<FunctionSymbol, FunctionDef> m = mapFromFutures(futures);
+		for (FunctionDef def : nonUserFunctions) {
+			m.put(def.getSymbol(), def);
 		}
 		return m;
 	}
@@ -333,25 +381,25 @@ public class TypeChecker {
 					functionDef.getBody().applySubstitution(m));
 		}
 
-		public Term typeCheckTerm(Term t, Type type) throws TypeException {
-			Map<Var, Type> subst = new HashMap<>();
-			genConstraints(t, type, subst, false);
-			if (!checkConstraints()) {
-				throw new TypeException(error);
-			}
-			Substitution m = makeIndexSubstitution(subst);
-			return t.applySubstitution(m);
-		}
-
-		public void checkUnifiability(List<Type> xs, List<Type> ys) throws TypeException {
-			assert xs.size() == ys.size();
-			for (Iterator<Type> it1 = xs.iterator(), it2 = ys.iterator(); it1.hasNext();) {
-				addConstraint(it1.next(), it2.next(), false);
-			}
-			if (!checkConstraints()) {
-				throw new TypeException(error);
-			}
-		}
+//		public Term typeCheckTerm(Term t, Type type) throws TypeException {
+//			Map<Var, Type> subst = new HashMap<>();
+//			genConstraints(t, type, subst, false);
+//			if (!checkConstraints()) {
+//				throw new TypeException(error);
+//			}
+//			Substitution m = makeIndexSubstitution(subst);
+//			return t.applySubstitution(m);
+//		}
+//
+//		public void checkUnifiability(List<Type> xs, List<Type> ys) throws TypeException {
+//			assert xs.size() == ys.size();
+//			for (Iterator<Type> it1 = xs.iterator(), it2 = ys.iterator(); it1.hasNext();) {
+//				addConstraint(it1.next(), it2.next(), false);
+//			}
+//			if (!checkConstraints()) {
+//				throw new TypeException(error);
+//			}
+//		}
 
 		private void processAtoms(Iterable<ComplexLiteral> atoms, Map<Var, Type> subst) {
 			for (ComplexLiteral a : atoms) {

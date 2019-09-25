@@ -1353,13 +1353,10 @@ public class Parser {
 					futures.put(sym, fut);
 				}
 				exec.shutdown();
-				for (Map.Entry<RelationSymbol, Future<Set<Term[]>>> e : futures.entrySet()) {
-					try {
-						initialFacts.put(e.getKey(), e.getValue().get());
-					} catch (InterruptedException | ExecutionException e1) {
-						throw new ParseException(
-								"Exception when extracting facts for relation " + e.getKey() + ":\n" + e1);
-					}
+				try {
+					Util.fillMapWithFutures(futures, initialFacts);
+				} catch (InterruptedException | ExecutionException e) {
+					throw new ParseException(e);
 				}
 			}
 			return new BasicProgram() {

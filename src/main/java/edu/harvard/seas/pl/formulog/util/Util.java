@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -79,6 +81,13 @@ public final class Util {
 			ps.print(a);
 			return baos.toString();
 		}).sorted().forEach(s -> out.println(s));
+	}
+	
+	public static <K,V> Map<K,V> fillMapWithFutures(Map<K,Future<V>> futures, Map<K,V> m) throws InterruptedException, ExecutionException {
+		for (Map.Entry<K, Future<V>> e : futures.entrySet()) {
+			m.put(e.getKey(), e.getValue().get());
+		}
+		return m;
 	}
 	
 }
