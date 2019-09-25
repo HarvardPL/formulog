@@ -2,7 +2,6 @@ package edu.harvard.seas.pl.formulog.db;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 
 /*-
@@ -27,7 +26,6 @@ import java.util.Collections;
 
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,7 +61,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 	}
 
 	@Override
-	public Collection<Term[]> getAll(RelationSymbol sym) {
+	public Iterable<Term[]> getAll(RelationSymbol sym) {
 		return masterIndex.get(sym).getAll();
 	}
 
@@ -92,8 +90,8 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 	}
 
 	@Override
-	public Iterable<Iterable<Term[]>> get(RelationSymbol sym, Term[] key, int index, int taskSize) {
-		return indices.get(sym).get(index).lookup(key, taskSize);
+	public Iterable<Term[]> get(RelationSymbol sym, Term[] key, int index) {
+		return indices.get(sym).get(index).lookup(key);
 	}
 
 	@Override
@@ -227,7 +225,13 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 				}
 				indices.put(sym, idxs);
 			}
-			return new SortedIndexedFactDb(indices, masterIndex);
+			List<RelationSymbol> sortedSyms = masterIndex.keySet().stream().sorted(SymbolComparator.INSTANCE)
+					.collect(Collectors.toList());
+			HashMap<RelationSymbol, IndexedFactSet> sorted = new LinkedHashMap<>();
+			for (RelationSymbol sym : sortedSyms) {
+				sorted.put(sym, masterIndex.get(sym));
+			}
+			return new SortedIndexedFactDb(indices, sorted);
 		}
 
 		private static final Comparator<Map.Entry<BindingTypeArrayWrapper, Integer>> cmp = new Comparator<Map.Entry<BindingTypeArrayWrapper, Integer>>() {
@@ -320,7 +324,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			return cnt.get();
 		}
 
-		public Iterable<Iterable<Term[]>> lookup(Term[] tup, int taskSize) {
+		public Iterable<Term[]> lookup(Term[] tup) {
 			Term[] lower = new Term[tup.length];
 			Term[] upper = new Term[tup.length];
 			for (int i = 0; i < tup.length; ++i) {
@@ -332,14 +336,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 					upper[i] = Terms.maxTerm;
 				}
 			}
-			return new Iterable<Iterable<Term[]>>() {
-
-				@Override
-				public Iterator<Iterable<Term[]>> iterator() {
-					return new LookupIterator(lower, upper, taskSize);
-				}
-
-			};
+			return s.subSet(lower, true, upper, true);
 		}
 
 		public boolean contains(Term[] tup) {
@@ -357,210 +354,6 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			return str + "\n]";
 		}
 
-		private class LookupIterator implements Iterator<Iterable<Term[]>> {
-
-			private final Iterator<Term[]> it;
-			private final int size;
-
-			public LookupIterator(Term[] lower, Term[] upper, int size) {
-				it = s.subSet(lower, true, upper, true).iterator();
-				this.size = size;
-			}
-
-			@Override
-			public boolean hasNext() {
-				return it.hasNext();
-			}
-
-			@Override
-			public Iterable<Term[]> next() {
-				assert hasNext();
-				List<Term[]> tups = new ArrayList<>(size);
-				for (int i = 0; i < size && it.hasNext(); ++i) {
-					tups.add(it.next());
-				}
-				return tups;
-			}
-
-		}
-
-		// private View makeView(SortedSet<Term[]> set) {
-		// if (set.isEmpty()) {
-		// return emptyView;
-		// }
-		// if (set.size() > maxArraySize) {
-		// return new SetView(set);
-		// } else {
-		// Term[][] arr = new Term[set.size()][];
-		// int i = 0;
-		// for (Term[] tup : set) {
-		// arr[i] = tup;
-		// i++;
-		// }
-		// return new ArrayView(arr, 0, arr.length);
-		// }
-		// }
-		//
-		// private static final View emptyView = new View() {
-		//
-		// @Override
-		// public Iterator<Term[]> iterator() {
-		// return Collections.emptyIterator();
-		// }
-		//
-		// @Override
-		// public int countDistinct() {
-		// return 0;
-		// }
-		//
-		// @Override
-		// public boolean isEmpty() {
-		// return true;
-		// }
-		//
-		// @Override
-		// public Pair<View, View> split() {
-		// return null;
-		// }
-		//
-		// };
-		//
-		// private class ArrayView implements View {
-		//
-		// private final Term[][] arr;
-		// private final int lower;
-		// private final int upper;
-		//
-		// public ArrayView(Term[][] arr, int lower, int upper) {
-		// assert lower < upper;
-		// this.arr = arr;
-		// this.lower = lower;
-		// this.upper = upper;
-		// }
-		//
-		// @Override
-		// public Iterator<Term[]> iterator() {
-		// return new ArrayViewIterator();
-		// }
-		//
-		// @Override
-		// public int countDistinct() {
-		// return upper - lower;
-		// }
-		//
-		// @Override
-		// public boolean isEmpty() {
-		// return false;
-		// }
-		//
-		// @Override
-		// public Pair<View, View> split() {
-		// if (countDistinct() < 2) {
-		// return null;
-		// }
-		// int mid = (upper - lower) / 2 + lower;
-		// View v1 = new ArrayView(arr, lower, mid);
-		// View v2 = new ArrayView(arr, mid, upper);
-		// return new Pair<>(v1, v2);
-		// }
-		//
-		// private class ArrayViewIterator implements Iterator<Term[]> {
-		//
-		// private int pos = lower;
-		//
-		// @Override
-		// public boolean hasNext() {
-		// return pos < upper;
-		// }
-		//
-		// @Override
-		// public Term[] next() {
-		// Term[] tup = arr[pos];
-		// pos++;
-		// return tup;
-		// }
-		//
-		// }
-		//
-		// }
-		//
-		// private class SetView implements View {
-		//
-		// private final SortedSet<Term[]> s;
-		//
-		// public SetView(SortedSet<Term[]> s) {
-		// this.s = s;
-		// }
-		//
-		// @Override
-		// public Iterator<Term[]> iterator() {
-		// return s.iterator();
-		// }
-		//
-		// @Override
-		// public int countDistinct() {
-		// return s.size();
-		// }
-		//
-		// @Override
-		// public boolean isEmpty() {
-		// return s.isEmpty();
-		// }
-		//
-		// @Override
-		// public Pair<View, View> split() {
-		// Term[] lower = s.first();
-		// Term[] upper = s.last();
-		// int size = s.size();
-		// Pair<SortedSet<Term[]>, SortedSet<Term[]>> bestSplit = null;
-		// double bestDelta = 2.0;
-		// for (int i = 0; i < numGuesses; ++i) {
-		// Term[] guess = guessMiddle(lower, upper);
-		// SortedSet<Term[]> s1 = s.headSet(guess);
-		// double delta = Math.abs(0.5 - s1.size() / (double) size);
-		// if (delta < bestDelta) {
-		// SortedSet<Term[]> s2 = s.tailSet(guess);
-		// bestSplit = new Pair<>(s1, s2);
-		// bestDelta = delta;
-		// if (bestDelta < 0.1) {
-		// break;
-		// }
-		// }
-		// }
-		// SortedSet<Term[]> s1 = bestSplit.fst();
-		// SortedSet<Term[]> s2 = bestSplit.snd();
-		// if (s1.isEmpty() || s2.isEmpty()) {
-		// return null;
-		// }
-		// View v1 = makeView(s1);
-		// View v2 = makeView(s2);
-		// return new Pair<>(v1, v2);
-		// }
-		//
-		// private Term[] guessMiddle(Term[] lower, Term[] upper) {
-		// Term[] guess = new Term[pat.length];
-		// boolean moreThanLo = false;
-		// boolean lessThanHi = false;
-		// int bound = Terms.currentId() + 1;
-		// for (int pos : order) {
-		// int lo = lower[pos].getId();
-		// int hi = upper[pos].getId();
-		// int loBound = moreThanLo ? 0 : lo;
-		// int hiBound = lessThanHi ? bound : hi + 1;
-		// int id = loBound + rand.nextInt(hiBound - loBound);
-		// if (id > lo) {
-		// moreThanLo = true;
-		// }
-		// if (id < hi) {
-		// lessThanHi = true;
-		// }
-		// guess[pos] = Terms.makeDummyTerm(id);
-		// }
-		// return guess;
-		// }
-		//
-		// }
-		//
 	}
 
 	private static class ArrayComparator<T> implements Comparator<T[]> {

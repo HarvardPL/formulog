@@ -24,7 +24,6 @@ import java.util.ArrayDeque;
  */
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -93,6 +92,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 	private static final boolean sequential = System.getProperty("sequential") != null;
 	private static final boolean debugRounds = Configuration.debugRounds;
 
+	@SuppressWarnings("serial")
 	public static SemiNaiveEvaluation setup(WellTypedProgram prog, int parallelism) throws InvalidProgramException {
 		FunctionDefValidation.validate(prog);
 		MagicSetTransformer mst = new MagicSetTransformer(prog);
@@ -138,23 +138,39 @@ public class SemiNaiveEvaluation implements Evaluation {
 		SortedIndexedFactDb db = dbb.build();
 		wrappedDb.set(db);
 
-		for (RelationSymbol sym : magicProg.getFactSymbols()) {
-			for (Term[] args : magicProg.getFacts(sym)) {
-				try {
-					db.add(sym, Terms.normalize(args, new SimpleSubstitution()));
-				} catch (EvaluationException e) {
-					UserPredicate p = UserPredicate.make(sym, args, false);
-					throw new InvalidProgramException("Cannot normalize fact " + p + ":\n" + e.getMessage());
-				}
-			}
-		}
-		// db.synchronize();
 		CountingFJP exec;
 		if (sequential) {
 			exec = new MockCountingFJP();
 		} else {
 			exec = new CountingFJPImpl(parallelism, new Z3ThreadFactory(magicProg.getSymbolManager()));
 		}
+
+		for (RelationSymbol sym : magicProg.getFactSymbols()) {
+			for (Iterable<Term[]> tups : Util.splitIterable(magicProg.getFacts(sym), taskSize)) {
+				exec.externallyAddTask(new AbstractFJPTask(exec) {
+
+					@Override
+					public void doTask() throws EvaluationException {
+						for (Term[] tup : tups) {
+							try {
+								db.add(sym, Terms.normalize(tup, new SimpleSubstitution()));
+							} catch (EvaluationException e) {
+								UserPredicate p = UserPredicate.make(sym, tup, false);
+								throw new EvaluationException("Cannot normalize fact " + p + ":\n" + e.getMessage());
+							}
+
+						}
+					}
+
+				});
+			}
+		}
+		exec.blockUntilFinished();
+		if (exec.hasFailed()) {
+			exec.shutdown();
+			throw new InvalidProgramException(exec.getFailureCause());
+		}
+		// db.synchronize();
 		return new SemiNaiveEvaluation(db, deltaDbb, rules, magicProg.getQuery(), strata, exec);
 	}
 
@@ -337,31 +353,6 @@ public class SemiNaiveEvaluation implements Evaluation {
 		for (Stratum stratum : strata) {
 			evaluateStratum(stratum);
 		}
-		// db.shutdown();
-		// deltaDb.shutdown();
-		// nextDeltaDb.shutdown();
-	}
-
-	private StopWatch recordRoundStart(Stratum stratum, int round) {
-		if (!debugRounds) {
-			return null;
-		}
-		System.err.println("#####");
-		System.err.println("[START] Stratum " + stratum.getRank() + ", round " + round);
-		LocalDateTime now = LocalDateTime.now();
-		System.err.println("Start: " + now);
-		StopWatch watch = new StopWatch();
-		watch.start();
-		return watch;
-	}
-
-	private void recordRoundEnd(Stratum stratum, int round, StopWatch watch) {
-		if (watch == null) {
-			return;
-		}
-		watch.stop();
-		System.err.println("[END] Stratum " + stratum.getRank() + ", round " + round);
-		System.err.println("Time: " + watch.getTime() + "ms");
 	}
 
 	private void evaluateStratum(Stratum stratum) throws EvaluationException {
@@ -402,60 +393,23 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 	}
 
-	private StopWatch recordDbUpdateStart() {
-		if (!debugRounds) {
-			return null;
-		}
-		System.err.println("[START] Updating DBs");
-		LocalDateTime now = LocalDateTime.now();
-		System.err.println("Start: " + now);
-		StopWatch watch = new StopWatch();
-		watch.start();
-		return watch;
-	}
-
-	private void recordDbUpdateEnd(StopWatch watch) {
-		if (watch == null) {
-			return;
-		}
-		watch.stop();
-		Configuration.printRelSizes(System.err, "DELTA SIZE", deltaDb, false);
-		System.err.println("[END] Updating DBs");
-		System.err.println("Time: " + watch.getTime() + "ms");
-	}
-
-	// private void splitStopWatch(StopWatch watch) {
-	// if (watch == null) {
-	// return;
-	// }
-	// watch.split();
-	// }
-	//
-	// private void recordTimeSinceSplit(StopWatch watch, String header) {
-	// if (watch == null) {
-	// return;
-	// }
-	// long start = watch.getSplitTime();
-	// long now = watch.getTime();
-	// System.err.println("[" + header + "] " + (now - start) + "ms");
-	// }
-
+	@SuppressWarnings("serial")
 	private void updateDbs() {
 		StopWatch watch = recordDbUpdateStart();
-		// splitStopWatch(watch);
-		// nextDeltaDb.synchronize();
-		// recordTimeSinceSplit(watch, "NEXT DELTA DB SYNCH");
-		// splitStopWatch(watch);
 		for (RelationSymbol sym : nextDeltaDb.getSymbols()) {
-			Collection<Term[]> answers = nextDeltaDb.getAll(sym);
-			// exec.externallyAddTask(new DbFactSplitter(sym, answers.spliterator()));
-			exec.externallyAddTask(new DbFactPutter(sym, answers));
+			Iterable<Term[]> answers = nextDeltaDb.getAll(sym);
+			for (Iterable<Term[]> tups : Util.splitIterable(answers, taskSize)) {
+				exec.externallyAddTask(new AbstractFJPTask(exec) {
+			
+					@Override
+					public void doTask() {
+						db.addAll(sym, tups);
+					}
+					
+				});
+			}
 		}
 		exec.blockUntilFinished();
-		// recordTimeSinceSplit(watch, "UPDATING DB");
-		// splitStopWatch(watch);
-		// db.synchronize();
-		// recordTimeSinceSplit(watch, "DB SYNCH");
 		SortedIndexedFactDb tmp = deltaDb;
 		deltaDb = nextDeltaDb;
 		nextDeltaDb = tmp;
@@ -489,59 +443,16 @@ public class SemiNaiveEvaluation implements Evaluation {
 				key[i] = args[i];
 			}
 		}
+		RelationSymbol sym = predicate.getSymbol();
+		Iterable<Term[]> ans;
+		if (sym instanceof DeltaSymbol) {
+			ans = deltaDb.get(((DeltaSymbol) sym).getBaseSymbol(), key, idx);
+		} else {
+			ans = db.get(sym, key, idx);
+		}
 		boolean shouldSplit = splitPositions.get(r)[pos];
 		int targetSize = shouldSplit ? smtTaskSize : taskSize;
-		RelationSymbol sym = predicate.getSymbol();
-		if (sym instanceof DeltaSymbol) {
-			return deltaDb.get(((DeltaSymbol) sym).getBaseSymbol(), key, idx, targetSize);
-		} else {
-			return db.get(sym, key, idx, targetSize);
-		}
-	}
-
-	// @SuppressWarnings("serial")
-	// private class DbFactSplitter extends AbstractFJPTask {
-	//
-	// private final RelationSymbol sym;
-	// private final Spliterator<Term[]> split;
-	//
-	// public DbFactSplitter(RelationSymbol sym, Spliterator<Term[]> split) {
-	// super(exec);
-	// this.sym = sym;
-	// this.split = split;
-	// }
-	//
-	// @Override
-	// public void doTask() throws EvaluationException {
-	// while (split.estimateSize() > minTaskSize * 2) {
-	// Spliterator<Term[]> split2 = split.trySplit();
-	// if (split2 == null) {
-	// break;
-	// }
-	// exec.recursivelyAddTask(new DbFactPutter(sym, split2));
-	// }
-	// exec.recursivelyAddTask(new DbFactPutter(sym, split));
-	// }
-	//
-	// }
-
-	@SuppressWarnings("serial")
-	private class DbFactPutter extends AbstractFJPTask {
-
-		private final RelationSymbol sym;
-		private final Collection<Term[]> tups;
-
-		public DbFactPutter(RelationSymbol sym, Collection<Term[]> tups) {
-			super(exec);
-			this.sym = sym;
-			this.tups = tups;
-		}
-
-		@Override
-		public void doTask() throws EvaluationException {
-			db.addAll(sym, tups);
-		}
-
+		return Util.splitIterable(ans, targetSize);
 	}
 
 	private static final boolean recordRuleDiagnostics = Configuration.recordRuleDiagnostics;
@@ -852,8 +763,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 
 		@Override
-		public Iterable<Iterable<Term[]>> get(RelationSymbol sym, Term[] key, int index, int taskSize) {
-			return db.get(sym, key, index, taskSize);
+		public Iterable<Term[]> get(RelationSymbol sym, Term[] key, int index) {
+			return db.get(sym, key, index);
 		}
 
 		@Override
@@ -896,6 +807,52 @@ public class SemiNaiveEvaluation implements Evaluation {
 			return db.countDuplicates(sym);
 		}
 
+	}
+	
+
+	private StopWatch recordRoundStart(Stratum stratum, int round) {
+		if (!debugRounds) {
+			return null;
+		}
+		System.err.println("#####");
+		System.err.println("[START] Stratum " + stratum.getRank() + ", round " + round);
+		LocalDateTime now = LocalDateTime.now();
+		System.err.println("Start: " + now);
+		StopWatch watch = new StopWatch();
+		watch.start();
+		return watch;
+	}
+
+	private void recordRoundEnd(Stratum stratum, int round, StopWatch watch) {
+		if (watch == null) {
+			return;
+		}
+		watch.stop();
+		System.err.println("[END] Stratum " + stratum.getRank() + ", round " + round);
+		System.err.println("Time: " + watch.getTime() + "ms");
+	}
+	
+
+	private StopWatch recordDbUpdateStart() {
+		if (!debugRounds) {
+			return null;
+		}
+		System.err.println("[START] Updating DBs");
+		LocalDateTime now = LocalDateTime.now();
+		System.err.println("Start: " + now);
+		StopWatch watch = new StopWatch();
+		watch.start();
+		return watch;
+	}
+
+	private void recordDbUpdateEnd(StopWatch watch) {
+		if (watch == null) {
+			return;
+		}
+		watch.stop();
+		Configuration.printRelSizes(System.err, "DELTA SIZE", deltaDb, false);
+		System.err.println("[END] Updating DBs");
+		System.err.println("Time: " + watch.getTime() + "ms");
 	}
 
 }

@@ -39,7 +39,7 @@ public interface IndexedFactDb {
 	
 	int countDuplicates(RelationSymbol sym);
 	
-	Iterable<Iterable<Term[]>> get(RelationSymbol sym, Term[] key, int index, int taskSize);
+	Iterable<Term[]> get(RelationSymbol sym, Term[] key, int index);
 	
 	void add(RelationSymbol sym, Term[] args);
 	

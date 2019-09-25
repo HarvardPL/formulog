@@ -90,4 +90,43 @@ public final class Util {
 		return m;
 	}
 	
+	private static class IterableOfIterables<T> implements Iterable<Iterable<T>> {
+
+		private final Iterable<T> iterable;
+		private final int size;
+		
+		public IterableOfIterables(Iterable<T> iterable, int size) {
+			this.iterable = iterable;
+			this.size = size;
+		}
+		
+		@Override
+		public Iterator<Iterable<T>> iterator() {
+			Iterator<T> it = iterable.iterator();
+			return new Iterator<Iterable<T>>() {
+
+				@Override
+				public boolean hasNext() {
+					return it.hasNext();
+				}
+
+				@Override
+				public Iterable<T> next() {
+					assert hasNext();
+					List<T> l = new ArrayList<>(size);
+					for (int i = 0; i < size && it.hasNext(); ++i) {
+						l.add(it.next());
+					}
+					return l;
+				}
+				
+			};
+		}
+		
+	}
+	
+	public static <T> Iterable<Iterable<T>> splitIterable(Iterable<T> iterable, int segmentSize) {
+		return new IterableOfIterables<>(iterable, segmentSize);
+	}
+	
 }
