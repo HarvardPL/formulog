@@ -118,7 +118,7 @@ public class MagicSetTransformer {
 			}
 			((ProgramImpl) magicProg).rules.put(newQuery.getSymbol(), Collections.singleton(queryRule));
 			if (useDemandTransformation) {
-				magicProg = stripAdornments(magicProg);
+				magicProg = applyDemandTransformation(magicProg, restoreStratification);
 			}
 			newProg = magicProg;
 		}
@@ -267,9 +267,18 @@ public class MagicSetTransformer {
 			magicProg = stratify(magicProg, adRules);
 		}
 		if (useDemandTransformation) {
-			magicProg = stripAdornments(magicProg);
+			magicProg = applyDemandTransformation(magicProg, restoreStratification);
 		}
 		return magicProg;
+	}
+
+	private BasicProgram applyDemandTransformation(BasicProgram prog, boolean mustBeStratified)
+			throws InvalidProgramException {
+		BasicProgram prog2 = stripAdornments(prog);
+		if (isStratified(prog2)) {
+			return prog2;
+		}
+		return prog;
 	}
 
 	private BasicProgram stripAdornments(BasicProgram prog) throws InvalidProgramException {
