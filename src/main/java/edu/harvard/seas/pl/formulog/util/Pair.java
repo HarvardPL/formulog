@@ -1,5 +1,9 @@
 package edu.harvard.seas.pl.formulog.util;
 
+import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.stream.Collectors;
+
 /*-
  * #%L
  * FormuLog
@@ -24,16 +28,16 @@ public class Pair<U, V> {
 
 	private final U fst;
 	private final V snd;
-	
+
 	public Pair(U fst, V snd) {
 		this.fst = fst;
 		this.snd = snd;
 	}
-	
+
 	public U fst() {
 		return fst;
 	}
-	
+
 	public V snd() {
 		return snd;
 	}
@@ -69,10 +73,14 @@ public class Pair<U, V> {
 			return false;
 		return true;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "<" + fst + ", " + snd + ">";
 	}
-	
+
+	public static <F, S, R> Set<R> map(Set<Pair<F, S>> s, BiFunction<F, S, R> f) {
+		return s.stream().map(p -> f.apply(p.fst(), p.snd())).collect(Collectors.toSet());
+	}
+
 }

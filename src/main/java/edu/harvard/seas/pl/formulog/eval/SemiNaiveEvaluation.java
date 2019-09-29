@@ -96,7 +96,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 	public static SemiNaiveEvaluation setup(WellTypedProgram prog, int parallelism) throws InvalidProgramException {
 		FunctionDefValidation.validate(prog);
 		MagicSetTransformer mst = new MagicSetTransformer(prog);
-		BasicProgram magicProg = mst.transform(true, true);
+		BasicProgram magicProg = mst.transform(Configuration.useDemandTransformation, true);
 
 		Set<RelationSymbol> allRelations = new HashSet<>(magicProg.getFactSymbols());
 		allRelations.addAll(magicProg.getRuleSymbols());
@@ -279,7 +279,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 				}
 				boolean[] positions = findSplitPositions(rule, scf);
 				splitPositions.put(rule, positions);
-				System.err.println("[INDEXED RULE] " + rule);
+//				System.err.println("[INDEXED RULE] " + rule);
 			}
 			firstRoundRules.put(sym, firstRounders);
 			laterRoundRules.put(sym, laterRounders);

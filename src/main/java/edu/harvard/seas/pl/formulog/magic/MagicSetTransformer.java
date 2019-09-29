@@ -21,6 +21,7 @@ package edu.harvard.seas.pl.formulog.magic;
  */
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -59,6 +60,7 @@ import edu.harvard.seas.pl.formulog.symbols.SymbolComparator;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.util.DedupWorkList;
+import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 import edu.harvard.seas.pl.formulog.validating.Stratifier;
@@ -107,14 +109,14 @@ public class MagicSetTransformer {
 			newProg = makeEdbProgram(query);
 		} else {
 			UserPredicate adornedQuery = Adornments.adorn(query, Collections.emptySet(), topDownIsDefault);
-			Set<BasicRule> adRules = adorn(Collections.singleton(adornedQuery.getSymbol()));
+			Set<Pair<BasicRule, Integer>> adRules = adorn(Collections.singleton(adornedQuery.getSymbol()));
 			Set<BasicRule> magicRules = makeMagicRules(adRules);
 			magicRules.add(makeSeedRule(adornedQuery));
 			BasicRule queryRule = makeQueryRule(adornedQuery);
 			UserPredicate newQuery = queryRule.getHead();
 			BasicProgram magicProg = new ProgramImpl(magicRules, newQuery);
 			if (restoreStratification && !isStratified(magicProg)) {
-				magicProg = stratify(magicProg, adRules);
+				magicProg = stratify(magicProg, Pair.map(adRules, (rule, num) -> rule));
 			}
 			((ProgramImpl) magicProg).rules.put(newQuery.getSymbol(), Collections.singleton(queryRule));
 			if (useDemandTransformation) {
@@ -260,11 +262,11 @@ public class MagicSetTransformer {
 				bottomUpSymbols.add(sym);
 			}
 		}
-		Set<BasicRule> adRules = adorn(bottomUpSymbols);
+		Set<Pair<BasicRule, Integer>> adRules = adorn(bottomUpSymbols);
 		Set<BasicRule> magicRules = makeMagicRules(adRules);
 		BasicProgram magicProg = new ProgramImpl(magicRules, null);
 		if (restoreStratification && !isStratified(magicProg)) {
-			magicProg = stratify(magicProg, adRules);
+			magicProg = stratify(magicProg, Pair.map(adRules, (rule, num) -> rule));
 		}
 		if (useDemandTransformation) {
 			magicProg = applyDemandTransformation(magicProg, restoreStratification);
@@ -328,16 +330,17 @@ public class MagicSetTransformer {
 		}, null);
 	}
 
-	private Set<BasicRule> adorn(Set<RelationSymbol> seeds) throws InvalidProgramException {
+	private Set<Pair<BasicRule, Integer>> adorn(Set<RelationSymbol> seeds) throws InvalidProgramException {
 		if (debug) {
 			System.err.println("Adorning rules...");
 		}
-		Set<BasicRule> adRules = new HashSet<>();
+		Set<Pair<BasicRule, Integer>> adRules = new HashSet<>();
 		DedupWorkList<RelationSymbol> worklist = new DedupWorkList<>();
 		for (RelationSymbol seed : seeds) {
 			worklist.push(seed);
 		}
 		HiddenPredicateFinder hpf = new HiddenPredicateFinder(origProg);
+		int ruleNum = 0;
 		while (!worklist.isEmpty()) {
 			RelationSymbol adSym = worklist.pop();
 			RelationSymbol origSym = adSym;
@@ -378,20 +381,19 @@ public class MagicSetTransformer {
 					}, null);
 				}
 				if (debug) {
-					System.err.println(adRule);
+					System.err.println("--" + ruleNum + "--\n" + adRule);
 				}
-				adRules.add(adRule);
+				adRules.add(new Pair<>(adRule, ruleNum));
+				ruleNum++;
 			}
 		}
 		return adRules;
 	}
 
-	private Set<BasicRule> makeMagicRules(Set<BasicRule> adornedRules) {
+	private Set<BasicRule> makeMagicRules(Set<Pair<BasicRule, Integer>> adornedRules) {
 		Set<BasicRule> magicRules = new HashSet<>();
-		int ruleNum = 0;
-		for (BasicRule adornedRule : adornedRules) {
-			magicRules.addAll(makeMagicRules(adornedRule, ruleNum));
-			ruleNum++;
+		for (Pair<BasicRule, Integer> p : adornedRules) {
+			magicRules.addAll(makeMagicRules(p.fst(), p.snd()));
 		}
 		return magicRules;
 	}
@@ -407,7 +409,7 @@ public class MagicSetTransformer {
 	}
 
 	private Set<BasicRule> makeMagicRules(BasicRule r, int number) {
-		int supCount[] = { 0 };
+		int[] supCount = { 0 };
 		Set<BasicRule> magicRules = new HashSet<>();
 		List<Set<Var>> liveVarsByAtom = liveVarsByAtom(r);
 		List<ComplexLiteral> l = new ArrayList<>();
@@ -624,7 +626,7 @@ public class MagicSetTransformer {
 		}
 	}
 
-	private Set<BasicRule> adjustAdornedRules(Set<BasicRule> adRules) {
+	private Set<BasicRule> adjustAdornedRules(Collection<BasicRule> adRules) {
 		Set<BasicRule> newRules = new HashSet<>();
 		for (BasicRule r : adRules) {
 			UserPredicate head = r.getHead();

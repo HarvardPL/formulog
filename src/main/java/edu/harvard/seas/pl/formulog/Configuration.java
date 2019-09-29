@@ -64,8 +64,10 @@ public final class Configuration {
 
 	public static final int taskSize = getIntProp("taskSize", 128);
 	public static final int smtTaskSize = getIntProp("smtTaskSize", 8);
-	
+
 	public static final int parallelism = getIntProp("parallelism", 4);
+	
+	public static final boolean useDemandTransformation = propIsSet("useDemandTransformation", true);
 
 	public static final int memoizeThreshold() {
 		return getIntProp("memoizeThreshold", 500);
@@ -117,15 +119,15 @@ public final class Configuration {
 	}
 
 	public static synchronized void printConfiguration(PrintStream out) {
-		out.println("[CONFIG] noResults=" + noResults);
-		out.println("[CONFIG] timeRules=" + recordRuleDiagnostics);
-		out.println("[CONFIG] timeFuncs=" + recordFuncDiagnostics);
-		out.println("[CONFIG] timeSmt=" + timeSmt);
-		out.println("[CONFIG] optimize=" + optimizationSetting);
-		out.println("[CONFIG] taskSize=" + taskSize);
-		out.println("[CONFIG] smtTaskSize=" + smtTaskSize);
-		out.println("[CONFIG] memoizeThreshold=" + memoizeThreshold());
-		out.println("[CONFIG] noModel=" + noModel());
+		// out.println("[CONFIG] noResults=" + noResults);
+		// out.println("[CONFIG] timeRules=" + recordRuleDiagnostics);
+		// out.println("[CONFIG] timeFuncs=" + recordFuncDiagnostics);
+		// out.println("[CONFIG] timeSmt=" + timeSmt);
+		// out.println("[CONFIG] optimize=" + optimizationSetting);
+		// out.println("[CONFIG] taskSize=" + taskSize);
+		// out.println("[CONFIG] smtTaskSize=" + smtTaskSize);
+		// out.println("[CONFIG] memoizeThreshold=" + memoizeThreshold());
+		// out.println("[CONFIG] noModel=" + noModel());
 	}
 
 	public static void recordSmtDeclTime(long time) {
@@ -217,15 +219,22 @@ public final class Configuration {
 		}
 	}
 
-	private static boolean propIsSet(String prop) {
+	private static boolean propIsSet(String prop, boolean defaultValue) {
 		String val = System.getProperty(prop);
 		if (val == null) {
+			return defaultValue;
+		}
+		if (val.equals("true") || val.equals("")) {
+			return true;
+		}
+		if (val.equals("false")) {
 			return false;
 		}
-		if (!(val.equals("true") || val.equals(""))) {
-			throw new IllegalArgumentException("Property " + prop + " does not take an argument: " + val);
-		}
-		return val != null;
+		throw new IllegalArgumentException("Unexpected argument for property " + prop + ": " + val);
+	}
+	
+	private static boolean propIsSet(String prop) {
+		return propIsSet(prop, false);
 	}
 
 	private static int getIntProp(String prop, int def) {

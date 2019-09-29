@@ -62,22 +62,25 @@ greeting("Hello, World").
 
 ### Options
 
-Use the option `-v` for verbose mode and `-j N` to run the evaluator with a
-thread pool of size `N` (defaults to 1).
+Use the option `-v` for verbose mode.
 
 You can also set the following system properties (using the `-D` flag, as in
-`-DdebugSmt`):
+`-DdebugSmt` or `DuseDemandTransformation=false`):
 
 * `callTrace` - print debugging information related to FormuLog-level function
-  calls
-* `debugSmt` - print debugging information related to SMT calls
+  calls (defaults to false)
+* `debugSmt` - print debugging information related to SMT calls (defaults to
+  false)
 * `debugMst` - print debugging information related to the magic set
-  transformation
-* `factTrace` - print new facts as they are derived
+  transformation (defaults to false)
+* `useDemandTransformation` - apply the demand transformation as a
+  post-processing step after the magic set transformation (defaults to true)
 * `softExceptions` - ignore exceptions during evaluation (i.e., treat them as
-  unification failures, and not as something that should stop evaluation)
+  unification failures, and not as something that should stop evaluation;
+  defaults to false)
 * `sequential` - run interpreter without a thread pool (helpful for debugging
-  runtime)
+  runtime; defaults to false)
+* `parallelism=N` - run interpreter with `N` threads (defaults to 4)
 
 For example, to run the test program above with SMT debug information, use
 
