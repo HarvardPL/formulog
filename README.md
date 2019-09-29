@@ -62,10 +62,8 @@ greeting("Hello, World").
 
 ### Options
 
-Use the option `-v` for verbose mode.
-
-You can also set the following system properties (using the `-D` flag, as in
-`-DdebugSmt` or `DuseDemandTransformation=false`):
+You can set the following system properties (using the `-D` flag, as in
+`-DdebugSmt` or `-DuseDemandTransformation=false`):
 
 * `callTrace` - print debugging information related to FormuLog-level function
   calls (defaults to false)
@@ -82,10 +80,11 @@ You can also set the following system properties (using the `-D` flag, as in
   runtime; defaults to false)
 * `parallelism=N` - run interpreter with `N` threads (defaults to 4)
 
-For example, to run the test program above with SMT debug information, use
+For example, to run the test program above with SMT debug information and 3
+threads, use
 
 ```
-java -DdebugSmt -jar formulog.jar greeting.flg
+java -DdebugSmt -Dparallelism=3 -jar formulog.jar greeting.flg
 ```
 
 ### Disclaimer

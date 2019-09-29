@@ -164,7 +164,6 @@ public final class Main {
 	private static CommandLine parseArgs(String[] args) {
 		Options opts = new Options();
 		opts.addOption("s", "semiInflationary", false, "Use semi-inflationary evaluation.");
-		opts.addOption("v", "verbose", false, "Print a lot of stuff.");
 		opts.addOption("I", true, "Directory for (tab and/or space-delimited) CSVs with input facts.");
 		CommandLineParser clp = new DefaultParser();
 		CommandLine cl = null;
@@ -177,12 +176,6 @@ public final class Main {
 		if (cl.getArgs().length != 1) {
 			System.out.println("You need to supply one (and only one) FormuLog file.");
 			printUsageAndDie(opts);
-		}
-		if (cl.hasOption("v")) {
-			System.setProperty("debugMst", "true");
-			System.setProperty("debugSmt", "true");
-			System.setProperty("factTrace", "true");
-			System.setProperty("callTrace", "true");
 		}
 		return cl;
 	}
