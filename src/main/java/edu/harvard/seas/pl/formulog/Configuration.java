@@ -21,6 +21,7 @@ package edu.harvard.seas.pl.formulog;
  */
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -68,6 +69,8 @@ public final class Configuration {
 	public static final int parallelism = getIntProp("parallelism", 4);
 	
 	public static final boolean useDemandTransformation = propIsSet("useDemandTransformation", true);
+	
+	public static final List<String> trackedRelations = getListProp("trackedRelations");
 
 	public static final int memoizeThreshold() {
 		return getIntProp("memoizeThreshold", 500);
@@ -247,6 +250,25 @@ public final class Configuration {
 		} catch (NumberFormatException e) {
 			throw new IllegalArgumentException("Property " + prop + " expects an integer argument");
 		}
+	}
+	
+	private static List<String> getListProp(String prop) {
+		String val = System.getProperty(prop);
+		if (val == null || val.equals("")) {
+			return Collections.emptyList();
+		}
+		List<String> l = new ArrayList<>();
+		int split;
+		while ((split = val.indexOf(',')) != -1) {
+			String sub = val.substring(0, split);
+			l.add(sub);
+			if (split == val.length()) {
+				throw new IllegalArgumentException("Cannot terminate property " + prop + " with a comma");
+			}
+			val = val.substring(split + 1);
+		}
+		l.add(val);
+		return Collections.unmodifiableList(l);
 	}
 
 }

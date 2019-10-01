@@ -53,6 +53,7 @@ public final class Main {
 	private final CommandLine cl;
 	private final boolean debugMst;
 	private final StopWatch clock = new StopWatch();
+	private volatile boolean interrupted = true;
 
 	private static final boolean exnStackTrace = System.getProperty("exnStackTrace") != null;
 
@@ -65,10 +66,22 @@ public final class Main {
 		Program<UserPredicate, BasicRule> prog = parse();
 		WellTypedProgram typedProg = typeCheck(prog);
 		Evaluation eval = setup(typedProg);
+		Runtime.getRuntime().addShutdownHook(
+			new Thread() {
+			
+				@Override
+				public void run() {
+					if (interrupted) {
+						printResults(eval);
+					}
+				}
+				
+			}
+			
+		);
 		evaluate(eval);
-		if (!Configuration.noResults) {
-			printResults(eval);
-		}
+		interrupted = false;
+		printResults(eval);
 	}
 
 	private Program<UserPredicate, BasicRule> parse() {
@@ -80,12 +93,12 @@ public final class Main {
 				inputDir = cl.getOptionValue("I");
 			}
 			FileReader reader = new FileReader(cl.getArgs()[0]);
-			Program<UserPredicate, BasicRule> prog =new Parser().parse(reader, Paths.get(inputDir));
+			Program<UserPredicate, BasicRule> prog = new Parser().parse(reader, Paths.get(inputDir));
 			clock.stop();
 			System.out.println(clock.getTime() / 1000.0 + "s");
 			return prog;
 		} catch (ParseException | FileNotFoundException e) {
-			handleException("Error while parsing!", e);
+			handleException("Error while parsing!", e, true);
 			throw new AssertionError("impossible");
 		}
 	}
@@ -100,7 +113,7 @@ public final class Main {
 			System.out.println(clock.getTime() / 1000.0 + "s");
 			return prog2;
 		} catch (TypeException e) {
-			handleException("Error while typechecking the program!", e);
+			handleException("Error while typechecking the program!", e, true);
 			throw new AssertionError("impossible");
 		}
 	}
@@ -115,7 +128,7 @@ public final class Main {
 			System.out.println(clock.getTime() / 1000.0 + "s");
 			return eval;
 		} catch (InvalidProgramException e) {
-			handleException("Error while rewriting/validation!", e);
+			handleException("Error while rewriting/validation!", e, true);
 			throw new AssertionError("impossible");
 		}
 	}
@@ -129,11 +142,14 @@ public final class Main {
 			clock.stop();
 			System.out.println(clock.getTime() / 1000.0 + "s");
 		} catch (EvaluationException e) {
-			handleException("Error while evaluating the program!", e);
+			handleException("Error while evaluating the program!", e, false);
 		}
 	}
 
 	private void printResults(Evaluation eval) {
+		if (Configuration.noResults) {
+			return;
+		}
 		System.out.println("Results:");
 		EvaluationResult res = eval.getResult();
 		Iterable<UserPredicate> queryRes = res.getQueryAnswer();
@@ -185,13 +201,15 @@ public final class Main {
 		(new Main(cl, System.getProperty("debugMst") != null)).go();
 	}
 
-	private static void handleException(String msg, Exception e) {
+	private static void handleException(String msg, Exception e, boolean die) {
 		System.out.println(msg);
 		System.out.println(e.getMessage());
 		if (exnStackTrace) {
 			e.printStackTrace(System.out);
 		}
-		System.exit(1);
+		if (die) {
+			System.exit(1);
+		}
 	}
 
 }

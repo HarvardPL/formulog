@@ -844,13 +844,16 @@ public class MagicSetTransformer {
 		private final UserPredicate query;
 
 		public ProgramImpl(Set<BasicRule> rs, UserPredicate query) throws InvalidProgramException {
+			SymbolManager sm = origProg.getSymbolManager();
 			HiddenPredicateFinder hpf = new HiddenPredicateFinder(origProg);
 			for (BasicRule r : rs) {
-				UserPredicate head = r.getHead();
-				Util.lookupOrCreate(rules, head.getSymbol(), () -> new HashSet<>()).add(r);
+				RelationSymbol headSym = r.getHead().getSymbol();
+				Util.lookupOrCreate(rules, headSym, () -> new HashSet<>()).add(r);
+				sm.registerSymbol(headSym);
 				for (ComplexLiteral l : r) {
 					if (l instanceof UserPredicate) {
 						RelationSymbol sym = ((UserPredicate) l).getSymbol();
+						sm.registerSymbol(sym);
 						if (sym.isEdbSymbol()) {
 							facts.putIfAbsent(sym, origProg.getFacts(sym));
 						} else {

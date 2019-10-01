@@ -54,6 +54,8 @@ import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
 import edu.harvard.seas.pl.formulog.smt.Z3ThreadFactory;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
+import edu.harvard.seas.pl.formulog.symbols.Symbol;
+import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 import edu.harvard.seas.pl.formulog.unification.OverwriteSubstitution;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
@@ -88,6 +90,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 	private volatile boolean changed;
 	private final CountingFJP exec;
 	private final Map<IndexedRule, boolean[]> splitPositions = new HashMap<>();
+	private final Set<RelationSymbol> trackedRelations;
 
 	private static final boolean sequential = System.getProperty("sequential") != null;
 	private static final boolean debugRounds = Configuration.debugRounds;
@@ -171,7 +174,26 @@ public class SemiNaiveEvaluation implements Evaluation {
 			throw new InvalidProgramException(exec.getFailureCause());
 		}
 		// db.synchronize();
-		return new SemiNaiveEvaluation(db, deltaDbb, rules, magicProg.getQuery(), strata, exec);
+		return new SemiNaiveEvaluation(db, deltaDbb, rules, magicProg.getQuery(), strata, exec,
+				getTrackedRelations(magicProg.getSymbolManager()));
+	}
+
+	private static Set<RelationSymbol> getTrackedRelations(SymbolManager sm) {
+		Set<RelationSymbol> s = new HashSet<>();
+		for (String name : Configuration.trackedRelations) {
+			if (sm.hasSymbol(name)) {
+				Symbol sym = sm.lookupSymbol(name);
+				if (sym instanceof RelationSymbol) {
+					s.add((RelationSymbol) sm.lookupSymbol(name));
+				} else {
+					System.err.println("[WARNING] Cannot track non-relation " + sym);
+				}
+
+			} else {
+				System.err.println("[WARNING] Cannot track unrecognized relation " + name);
+			}
+		}
+		return s;
 	}
 
 	private static BiFunction<ComplexLiteral, Set<Var>, Integer> chooseScoringFunction() {
@@ -255,11 +277,12 @@ public class SemiNaiveEvaluation implements Evaluation {
 
 	private SemiNaiveEvaluation(SortedIndexedFactDb db, IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb,
 			Map<RelationSymbol, Iterable<IndexedRule>> rules, UserPredicate query, List<Stratum> strata,
-			CountingFJP exec) {
+			CountingFJP exec, Set<RelationSymbol> trackedRelations) {
 		this.db = db;
 		this.query = query;
 		this.strata = strata;
 		this.exec = exec;
+		this.trackedRelations = trackedRelations;
 		deltaDb = deltaDbb.build();
 		nextDeltaDb = deltaDbb.build();
 		processRules(rules);
@@ -279,7 +302,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 				}
 				boolean[] positions = findSplitPositions(rule, scf);
 				splitPositions.put(rule, positions);
-//				System.err.println("[INDEXED RULE] " + rule);
+				// System.err.println("[INDEXED RULE] " + rule);
 			}
 			firstRoundRules.put(sym, firstRounders);
 			laterRoundRules.put(sym, laterRounders);
@@ -403,12 +426,12 @@ public class SemiNaiveEvaluation implements Evaluation {
 			Iterable<Term[]> answers = nextDeltaDb.getAll(sym);
 			for (Iterable<Term[]> tups : Util.splitIterable(answers, taskSize)) {
 				exec.externallyAddTask(new AbstractFJPTask(exec) {
-			
+
 					@Override
 					public void doTask() {
 						db.addAll(sym, tups);
 					}
-					
+
 				});
 			}
 		}
@@ -426,6 +449,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 		if (!db.hasFact(sym, args)) {
 			nextDeltaDb.add(sym, args);
 			changed = true;
+			if (trackedRelations.contains(sym)) {
+				System.err.println("[TRACKED] " + UserPredicate.make(sym, args, false));
+			}
 		}
 	}
 
@@ -466,14 +492,15 @@ public class SemiNaiveEvaluation implements Evaluation {
 		private final IndexedRule rule;
 		private final int startPos;
 		private final OverwriteSubstitution s;
-		private final Iterable<Term[]> tups;
+		private final Iterator<Iterable<Term[]>> it;
 
-		protected RuleSuffixEvaluator(IndexedRule rule, int pos, OverwriteSubstitution s, Iterable<Term[]> tups) {
+		protected RuleSuffixEvaluator(IndexedRule rule, int pos, OverwriteSubstitution s,
+				Iterator<Iterable<Term[]>> it) {
 			super(exec);
 			this.rule = rule;
 			this.startPos = pos;
 			this.s = s;
-			this.tups = tups;
+			this.it = it;
 		}
 
 		@Override
@@ -481,6 +508,10 @@ public class SemiNaiveEvaluation implements Evaluation {
 			long start = 0;
 			if (recordRuleDiagnostics) {
 				start = System.currentTimeMillis();
+			}
+			Iterable<Term[]> tups = it.next();
+			if (it.hasNext()) {
+				exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, startPos, s.copy(), it));
 			}
 			try {
 				for (Term[] tup : tups) {
@@ -551,9 +582,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 							} else {
 								if (tups.hasNext()) {
 									stack.addFirst(tups.next().iterator());
-									while (tups.hasNext()) {
-										exec.recursivelyAddTask(
-												new RuleSuffixEvaluator(rule, pos, s.copy(), tups.next()));
+									if (tups.hasNext()) {
+										exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s.copy(), tups));
 									}
 									// No need to do anything else: we'll hit the right case on the next iteration.
 								} else {
@@ -657,8 +687,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 								+ rule.getHead() + e.getLocalizedMessage());
 					}
 				}
-				for (Iterable<Term[]> tups : lookup(rule, pos, s)) {
-					exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s.copy(), tups));
+				Iterator<Iterable<Term[]>> tups = lookup(rule, pos, s).iterator();
+				if (tups.hasNext()) {
+					exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s, tups));
 				}
 			} catch (EvaluationException e) {
 				throw new EvaluationException(
@@ -811,7 +842,6 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 
 	}
-	
 
 	private StopWatch recordRoundStart(Stratum stratum, int round) {
 		if (!debugRounds) {
@@ -834,7 +864,6 @@ public class SemiNaiveEvaluation implements Evaluation {
 		System.err.println("[END] Stratum " + stratum.getRank() + ", round " + round);
 		System.err.println("Time: " + watch.getTime() + "ms");
 	}
-	
 
 	private StopWatch recordDbUpdateStart() {
 		if (!debugRounds) {
