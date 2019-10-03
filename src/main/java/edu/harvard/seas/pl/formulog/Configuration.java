@@ -58,6 +58,7 @@ public final class Configuration {
 	private static final AtomicLong smtWaitTime = new AtomicLong();
 
 	public static final boolean printRelSizes = propIsSet("printRelSizes");
+	public static final boolean printFinalRules = propIsSet("printFinalRules");
 	public static final boolean debugRounds = propIsSet("debugRounds");
 	public static final boolean noResults = propIsSet("noResults");
 

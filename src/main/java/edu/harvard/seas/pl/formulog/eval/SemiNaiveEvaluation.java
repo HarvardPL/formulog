@@ -133,6 +133,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 							}
 						});
 						rs.add(ir);
+						if (Configuration.printFinalRules) {
+							System.err.println("[FINAL RULE]:\n" + ir);
+						}
 					}
 				}
 				rules.put(sym, rs);
