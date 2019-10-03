@@ -207,6 +207,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 			return SemiNaiveEvaluation::score1;
 		case 2:
 			return SemiNaiveEvaluation::score2;
+		case 3:
+			return SemiNaiveEvaluation::score3;
 		default:
 			throw new IllegalArgumentException(
 					"Unrecognized optimization setting: " + Configuration.optimizationSetting);
@@ -264,6 +266,39 @@ public class SemiNaiveEvaluation implements Evaluation {
 				Term[] args = pred.getArgs();
 				if (args.length == 0) {
 					return 150;
+				}
+				int bound = 0;
+				for (int i = 0; i < args.length; ++i) {
+					if (boundVars.containsAll(args[i].varSet())) {
+						bound++;
+					}
+				}
+				double percentBound = ((double) bound) / args.length * 100;
+				return (int) percentBound;
+			}
+
+		}, null);
+	}
+
+	private static int score3(ComplexLiteral l, Set<Var> boundVars) {
+		return l.accept(new ComplexLiteralVisitor<Void, Integer>() {
+
+			@Override
+			public Integer visit(UnificationPredicate unificationPredicate, Void input) {
+				return Integer.MAX_VALUE;
+			}
+
+			@Override
+			public Integer visit(UserPredicate pred, Void input) {
+				if (pred.isNegated()) {
+					return Integer.MAX_VALUE;
+				}
+				if (pred.getSymbol() instanceof DeltaSymbol) {
+					return 125;
+				}
+				Term[] args = pred.getArgs();
+				if (args.length == 0) {
+					return Integer.MAX_VALUE;
 				}
 				int bound = 0;
 				for (int i = 0; i < args.length; ++i) {
@@ -419,24 +454,14 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 	}
 
-	@SuppressWarnings("serial")
 	private void updateDbs() {
 		StopWatch watch = recordDbUpdateStart();
 		for (RelationSymbol sym : nextDeltaDb.getSymbols()) {
 			if (nextDeltaDb.isEmpty(sym)) {
 				continue;
 			}
-			Iterable<Term[]> answers = nextDeltaDb.getAll(sym);
-			for (Iterable<Term[]> tups : Util.splitIterable(answers, taskSize)) {
-				exec.externallyAddTask(new AbstractFJPTask(exec) {
-
-					@Override
-					public void doTask() {
-						db.addAll(sym, tups);
-					}
-
-				});
-			}
+			Iterable<Iterable<Term[]>> answers = Util.splitIterable(nextDeltaDb.getAll(sym), taskSize);
+			exec.externallyAddTask(new UpdateDbTask(sym, answers.iterator()));
 		}
 		exec.blockUntilFinished();
 		SortedIndexedFactDb tmp = deltaDb;
@@ -444,6 +469,29 @@ public class SemiNaiveEvaluation implements Evaluation {
 		nextDeltaDb = tmp;
 		nextDeltaDb.clear();
 		recordDbUpdateEnd(watch);
+	}
+	
+	@SuppressWarnings("serial")
+	private class UpdateDbTask extends AbstractFJPTask {
+
+		private final RelationSymbol sym;
+		private final Iterator<Iterable<Term[]>> it;
+		
+		protected UpdateDbTask(RelationSymbol sym, Iterator<Iterable<Term[]>> it) {
+			super(exec);
+			this.sym = sym;
+			this.it = it;
+		}
+
+		@Override
+		public void doTask() throws EvaluationException {
+			Iterable<Term[]> tups = it.next();
+			if (it.hasNext()) {
+				exec.recursivelyAddTask(new UpdateDbTask(sym, it));
+			}
+			db.addAll(sym, tups);
+		}
+		
 	}
 
 	private void reportFact(SimplePredicate atom) {

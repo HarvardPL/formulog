@@ -42,7 +42,7 @@ public abstract class AbstractFJPTask extends RecursiveAction {
 			exec.fail(e);
 		}
 	}
-
+	
 	public abstract void doTask() throws EvaluationException;
 
 }

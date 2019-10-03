@@ -298,6 +298,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 
 		public void clear() {
 			s.clear();
+			cnt.set(0);
 		}
 
 		public boolean isEmpty() {
