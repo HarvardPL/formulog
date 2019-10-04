@@ -75,74 +75,73 @@ import edu.harvard.seas.pl.formulog.ast.functions.DummyFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDefManager;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogBaseVisitor;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogLexer;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.AdtDefContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.AggTypeContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.AggTypeListContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.AnnotationContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.AtomListContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.BinopFormulaContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.BinopTermContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.ClauseStmtContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.ConsTermContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.ConstSymFormulaContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.ConstructorTypeContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.DisunificationContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.DoubleTermContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.FactStmtContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.FloatTermContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.FormulaTermContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.FunDeclContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.FunDefLHSContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.I32TermContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.I64TermContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.IfExprContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.IndexContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.IndexedFunctorContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.IteTermContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.LetExprContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.LetFormulaContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.ListTermContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.MatchClauseContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.MatchExprContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.NegatedAtomContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.NonEmptyTermListContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.NormalAtomContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.NotFormulaContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.OutermostCtorContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.ParensTermContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.PredicateContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.QuantifiedFormulaContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.QueryStmtContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.RecordDefContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.RecordEntryContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.RecordEntryDefContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.RecordTermContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.RecordUpdateTermContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.ReifyTermContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.RelDeclContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.SpecialFPTermContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.StringTermContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.TermAtomContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.TermContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.TermSymFormulaContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.TupleTermContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.TupleTypeContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.TypeAliasContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.TypeDeclContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.TypeDefLHSContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.TypeDefRHSContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.TypeRefContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.TypeVarContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.UnificationContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.UninterpFunDeclContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.UninterpSortDeclContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.UnopTermContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.UnquoteTermContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogParser.VarTermContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.DatalogVisitor;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogBaseVisitor;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogLexer;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.AdtDefContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.AggTypeContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.AggTypeListContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.AnnotationContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.AtomListContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.BinopFormulaContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.BinopTermContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ClauseStmtContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ConsTermContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ConstSymFormulaContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ConstructorTypeContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.DisunificationContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.DoubleTermContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.FactStmtContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.FloatTermContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.FormulaTermContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.FunDeclContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.FunDefLHSContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.I32TermContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.I64TermContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.IfExprContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.IndexContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.IndexedFunctorContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.IteTermContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.LetExprContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.LetFormulaContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ListTermContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.MatchClauseContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.MatchExprContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.NegatedAtomContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.NonEmptyTermListContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.NormalAtomContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.NotFormulaContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.OutermostCtorContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ParensTermContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.PredicateContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.QuantifiedFormulaContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.QueryStmtContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.RecordDefContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.RecordEntryContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.RecordEntryDefContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.RecordTermContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.RecordUpdateTermContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ReifyTermContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.RelDeclContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.SpecialFPTermContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.StringTermContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TermAtomContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TermContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TermSymFormulaContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TupleTermContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TupleTypeContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TypeAliasContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TypeDeclContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TypeDefLHSContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TypeDefRHSContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TypeRefContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TypeVarContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.UnificationContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.UninterpFunDeclContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.UninterpSortDeclContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.UnopTermContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.VarTermContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogVisitor;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;
@@ -182,12 +181,12 @@ public class Parser {
 		symbolManager.initialize();
 	}
 
-	private DatalogParser getParser(Reader r) throws ParseException {
+	private FormulogParser getParser(Reader r) throws ParseException {
 		try {
 			CharStream chars = CharStreams.fromReader(r);
-			DatalogLexer lexer = new DatalogLexer(chars);
+			FormulogLexer lexer = new FormulogLexer(chars);
 			CommonTokenStream tokens = new CommonTokenStream(lexer);
-			return new DatalogParser(tokens);
+			return new FormulogParser(tokens);
 		} catch (IOException e) {
 			throw new ParseException(e.getMessage());
 		}
@@ -199,7 +198,7 @@ public class Parser {
 
 	public BasicProgram parse(Reader r, Path inputDir) throws ParseException {
 		try {
-			DatalogParser parser = getParser(r);
+			FormulogParser parser = getParser(r);
 			StmtProcessor stmtProcessor = new StmtProcessor(inputDir);
 			parser.prog().accept(stmtProcessor);
 			return stmtProcessor.getProgram();
@@ -212,7 +211,7 @@ public class Parser {
 		return map(ctx.INT(), d -> Integer.parseInt(d.getText()));
 	}
 
-	private final DatalogVisitor<Type> typeExtractor = new DatalogBaseVisitor<Type>() {
+	private final FormulogVisitor<Type> typeExtractor = new FormulogBaseVisitor<Type>() {
 
 		@Override
 		public Type visitTupleType(TupleTypeContext ctx) {
@@ -278,7 +277,7 @@ public class Parser {
 
 	};
 
-	private final class StmtProcessor extends DatalogBaseVisitor<Void> {
+	private final class StmtProcessor extends FormulogBaseVisitor<Void> {
 
 		private final Map<RelationSymbol, Set<Term[]>> initialFacts = new HashMap<>();
 		private final Map<RelationSymbol, Set<BasicRule>> rules = new HashMap<>();
@@ -355,7 +354,7 @@ public class Parser {
 			if (!Types.getTypeVars(types).isEmpty()) {
 				throw new RuntimeException("Cannot use type variables in the signature of a relation: " + name);
 			}
-			boolean isIdb = ctx.relType.getType() == DatalogLexer.OUTPUT;
+			boolean isIdb = ctx.relType.getType() == FormulogLexer.OUTPUT;
 			MutableRelationSymbol sym = symbolManager.createRelationSymbol(name, types.size(), isIdb,
 					new FunctorType(types, BuiltInTypes.bool));
 			setAggregate(sym, ctx.aggTypeList());
@@ -627,7 +626,7 @@ public class Parser {
 			return ctx.accept(termExtractor);
 		}
 
-		private final DatalogVisitor<Term> termExtractor = new DatalogBaseVisitor<Term>() {
+		private final FormulogVisitor<Term> termExtractor = new FormulogBaseVisitor<Term>() {
 
 			public Term extract(TermContext ctx) {
 				return ctx.accept(this);
@@ -737,8 +736,9 @@ public class Parser {
 					return functionCallFactory.make(newSym, args);
 				} else if (sym instanceof FunctionSymbol) {
 					Term t = functionCallFactory.make((FunctionSymbol) sym, args);
-					assertNotInFormula("Cannot invoke a function from within a formula; unquote the call " + t
-							+ " by prefacing it with ,");
+					if (sym.getArity() > 0) {
+						assertNotInFormula("Cannot invoke a non-nullary function from within a formula: " + t);
+					}
 					return t;
 				} else if (sym instanceof ConstructorSymbol) {
 					ConstructorSymbol csym = (ConstructorSymbol) sym;
@@ -802,17 +802,17 @@ public class Parser {
 			@Override
 			public Term visitSpecialFPTerm(SpecialFPTermContext ctx) {
 				switch (ctx.val.getType()) {
-				case DatalogParser.FP32_NAN:
+				case FormulogParser.FP32_NAN:
 					return FP32.make(Float.NaN);
-				case DatalogParser.FP32_NEG_INFINITY:
+				case FormulogParser.FP32_NEG_INFINITY:
 					return FP32.make(Float.NEGATIVE_INFINITY);
-				case DatalogParser.FP32_POS_INFINITY:
+				case FormulogParser.FP32_POS_INFINITY:
 					return FP32.make(Float.POSITIVE_INFINITY);
-				case DatalogParser.FP64_NAN:
+				case FormulogParser.FP64_NAN:
 					return FP64.make(Double.NaN);
-				case DatalogParser.FP64_NEG_INFINITY:
+				case FormulogParser.FP64_NEG_INFINITY:
 					return FP64.make(Double.NEGATIVE_INFINITY);
-				case DatalogParser.FP64_POS_INFINITY:
+				case FormulogParser.FP64_POS_INFINITY:
 					return FP64.make(Double.POSITIVE_INFINITY);
 				}
 				throw new AssertionError();
@@ -888,14 +888,13 @@ public class Parser {
 				if (t == null) {
 					throw new AssertionError("Unrecognized unop: " + ctx.getText());
 				}
-				assertNotInFormula("Cannot invoke a unop from within a formula; unquote the operation " + ctx.getText()
-						+ " by prefacing it with ,");
+				assertNotInFormula("Cannot invoke a unop from within a formula: " + ctx.getText());
 				return t;
 			}
 
 			private Term makeNonFunctionUnop(int tokenType, Term t) {
 				switch (tokenType) {
-				case DatalogParser.BANG:
+				case FormulogParser.BANG:
 					return makeBoolMatch(t, Constructors.falseTerm(), Constructors.trueTerm());
 				default:
 					return null;
@@ -910,7 +909,7 @@ public class Parser {
 
 			private FunctionSymbol tokenToUnopSym(int tokenType) {
 				switch (tokenType) {
-				case DatalogParser.MINUS:
+				case FormulogParser.MINUS:
 					return BuiltInFunctionSymbol.I32_NEG;
 				default:
 					return null;
@@ -919,31 +918,31 @@ public class Parser {
 
 			private FunctionSymbol tokenToBinopSym(int tokenType) {
 				switch (tokenType) {
-				case DatalogParser.MUL:
+				case FormulogParser.MUL:
 					return BuiltInFunctionSymbol.I32_MUL;
-				case DatalogParser.DIV:
+				case FormulogParser.DIV:
 					return BuiltInFunctionSymbol.I32_DIV;
-				case DatalogParser.REM:
+				case FormulogParser.REM:
 					return BuiltInFunctionSymbol.I32_REM;
-				case DatalogParser.PLUS:
+				case FormulogParser.PLUS:
 					return BuiltInFunctionSymbol.I32_ADD;
-				case DatalogParser.MINUS:
+				case FormulogParser.MINUS:
 					return BuiltInFunctionSymbol.I32_SUB;
-				case DatalogParser.AMP:
+				case FormulogParser.AMP:
 					return BuiltInFunctionSymbol.I32_AND;
-				case DatalogParser.CARET:
+				case FormulogParser.CARET:
 					return BuiltInFunctionSymbol.I32_XOR;
-				case DatalogParser.EQ:
+				case FormulogParser.EQ:
 					return BuiltInFunctionSymbol.BEQ;
-				case DatalogParser.NEQ:
+				case FormulogParser.NEQ:
 					return BuiltInFunctionSymbol.BNEQ;
-				case DatalogParser.LT:
+				case FormulogParser.LT:
 					return BuiltInFunctionSymbol.I32_LT;
-				case DatalogParser.LTE:
+				case FormulogParser.LTE:
 					return BuiltInFunctionSymbol.I32_LE;
-				case DatalogParser.GT:
+				case FormulogParser.GT:
 					return BuiltInFunctionSymbol.I32_GT;
-				case DatalogParser.GTE:
+				case FormulogParser.GTE:
 					return BuiltInFunctionSymbol.I32_GE;
 				default:
 					return null;
@@ -952,9 +951,9 @@ public class Parser {
 
 			private Term makeNonFunctionBinop(int tokenType, Term lhs, Term rhs) {
 				switch (tokenType) {
-				case DatalogParser.AMPAMP:
+				case FormulogParser.AMPAMP:
 					return makeBoolMatch(lhs, rhs, Constructors.falseTerm());
-				case DatalogParser.BARBAR:
+				case FormulogParser.BARBAR:
 					return makeBoolMatch(lhs, Constructors.trueTerm(), rhs);
 				default:
 					return null;
@@ -974,8 +973,7 @@ public class Parser {
 				if (t == null) {
 					throw new AssertionError("Unrecognized binop: " + ctx.getText());
 				}
-				assertNotInFormula("Cannot invoke a binop from within a formula; unquote the operation " + ctx.getText()
-						+ " by prefacing it with ,");
+				assertNotInFormula("Cannot invoke a binop from within a formula: " + ctx.getText());
 				return t;
 			}
 
@@ -1004,15 +1002,6 @@ public class Parser {
 			}
 
 			@Override
-			public Term visitUnquoteTerm(UnquoteTermContext ctx) {
-				assertInFormula("Can only unquote a term from within a formula. " + ctx.getText());
-				toggleInFormula();
-				Term t = makeExitFormula(extract(ctx.term()));
-				toggleInFormula();
-				return t;
-			}
-
-			@Override
 			public Term visitFormulaTerm(FormulaTermContext ctx) {
 				assertNotInFormula("Cannot nest a formula within a formula: " + ctx.getText());
 				toggleInFormula();
@@ -1035,17 +1024,17 @@ public class Parser {
 				Term[] args = termContextsToTerms(ctx.term());
 				ConstructorSymbol sym;
 				switch (ctx.op.getType()) {
-				case DatalogParser.FORMULA_EQ:
-				case DatalogParser.IFF:
+				case FormulogParser.FORMULA_EQ:
+				case FormulogParser.IFF:
 					sym = BuiltInConstructorSymbol.FORMULA_EQ;
 					break;
-				case DatalogParser.IMP:
+				case FormulogParser.IMP:
 					sym = BuiltInConstructorSymbol.FORMULA_IMP;
 					break;
-				case DatalogParser.AND:
+				case FormulogParser.AND:
 					sym = BuiltInConstructorSymbol.FORMULA_AND;
 					break;
-				case DatalogParser.OR:
+				case FormulogParser.OR:
 					sym = BuiltInConstructorSymbol.FORMULA_OR;
 					break;
 				default:
@@ -1077,10 +1066,10 @@ public class Parser {
 				}
 				ConstructorSymbol sym;
 				switch (ctx.quantifier.getType()) {
-				case DatalogParser.FORALL:
+				case FormulogParser.FORALL:
 					sym = BuiltInConstructorSymbol.FORMULA_FORALL;
 					break;
-				case DatalogParser.EXISTS:
+				case FormulogParser.EXISTS:
 					sym = BuiltInConstructorSymbol.FORMULA_EXISTS;
 					break;
 				default:
@@ -1258,7 +1247,7 @@ public class Parser {
 			return map(ctxs, this::extract).toArray(Terms.emptyArray());
 		}
 
-		private final DatalogVisitor<ComplexLiteral> atomExtractor = new DatalogBaseVisitor<ComplexLiteral>() {
+		private final FormulogVisitor<ComplexLiteral> atomExtractor = new FormulogBaseVisitor<ComplexLiteral>() {
 
 			private ComplexLiteral extractAtom(PredicateContext ctx, boolean negated) {
 				Term[] args = termContextsToTerms(ctx.termArgs().term());
@@ -1329,7 +1318,7 @@ public class Parser {
 		}
 
 		private void readLineFromCsv(RelationSymbol sym, Reader r, Set<Term[]> facts) throws ParseException {
-			DatalogParser parser = getParser(r);
+			FormulogParser parser = getParser(r);
 			Term[] args = new Term[sym.getArity()];
 			for (int i = 0; i < args.length; i++) {
 				args[i] = extract(parser.term());

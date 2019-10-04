@@ -9,6 +9,6 @@ fun exp2 : bool smt = `foo(42) #= 1F`.
 
 something_true :- is_sat(exp1), is_sat(exp2).
 
-something_false :- is_sat(`,exp1 /\ ,exp2`).
+something_false :- is_sat(`exp1 /\ exp2`).
 
 ok :- something_true, !something_false.

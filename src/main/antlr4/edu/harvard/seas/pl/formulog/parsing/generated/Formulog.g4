@@ -1,4 +1,4 @@
-grammar Datalog;
+grammar Formulog;
 
 prog
 :
@@ -279,7 +279,6 @@ term
 	| '{' recordEntries '}' # recordTerm
 	| '{' term 'with' recordEntries '}' # recordUpdateTerm
 	| '`' term '`' # formulaTerm
-	| ',' term # unquoteTerm
 	| id =
 	(
 		XID

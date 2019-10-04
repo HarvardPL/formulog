@@ -2,7 +2,7 @@ fun msg : string = "Hello, \"world\"!\nGoodbye!".
 
 output ok.
 ok :-
-  some(M) = get_model(`#x[bool] /\ (#y[string] #= ,msg) /\ ~#z[bool]`, none),
+  some(M) = get_model(`#x[bool] /\ (#y[string] #= msg) /\ ~#z[bool]`, none),
   query_model(#x[bool], M) = some(true),
   query_model(#y[string], M) = some(msg),
   query_model(#z[bool], M) = some(false).
