@@ -9,7 +9,6 @@ endif
 
 syn match number "\v<[0-9]+(\.[0-9]*)*[lLfFdD]?>"
 syn match number "\v<[0-9]*\.[0-9]+[lLfFdD]?>"
-syn match keywords "`"
 syn match keywords ":-"
 syn match keywords "\~"
 syn match keywords "#="
@@ -25,7 +24,6 @@ syn match keywords "!"
 syn match keywords "="
 syn match keywords "<"
 syn match keywords ">"
-syn match keywords ","
 syn match keywords "\."
 syn match keywords "{"
 syn match keywords "}"
@@ -40,6 +38,7 @@ syn match keywords "#let"
 syn match keywords "#if"
 syn match annotation "@\v<[a-zA-Z0-9_]+>"
 syn region string start=/\v"/ skip=/\v\\./ end=/\v"/
+syn region formula start="`" end="`" contains=number,string,keywords,comment,variable
 let b:current_syntax = "flg"
 
 hi def link number          Constant
@@ -50,3 +49,4 @@ hi def link typeKeywords    Type
 hi def link variable        Identifier 
 hi def link todo            Todo 
 hi def link annotation      Special
+hi def link formula         Special
