@@ -159,6 +159,14 @@ public final class Constructors {
 			return makeSolverOp.apply("bvsle");
 		case BV_SLT:
 			return makeSolverOp.apply("bvslt");
+		case BV_UGE:
+			return makeSolverOp.apply("bvuge");
+		case BV_UGT:
+			return makeSolverOp.apply("bvugt");
+		case BV_ULE:
+			return makeSolverOp.apply("bvule");
+		case BV_ULT:
+			return makeSolverOp.apply("bvult");
 		case BV_SREM:
 			return makeSolverOp.apply("bvsrem");
 		case BV_SUB:

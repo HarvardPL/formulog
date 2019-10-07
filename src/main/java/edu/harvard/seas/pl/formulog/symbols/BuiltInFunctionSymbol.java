@@ -71,6 +71,10 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 
 	I32_XOR("i32_xor", i32, i32, i32),
 
+	I32_SCMP("i32_scmp", i32, i32, cmp),
+	
+	I32_UCMP("i32_ucmp", i32, i32, cmp),
+
 	// i64 operations
 
 	I64_ADD("i64_add", i64, i64, i64),
@@ -98,6 +102,10 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 	I64_OR("i64_or", i64, i64, i64),
 
 	I64_XOR("i64_xor", i64, i64, i64),
+	
+	I64_SCMP("i64_scmp", i64, i64, cmp),
+	
+	I64_UCMP("i64_ucmp", i64, i64, cmp),
 
 	// fp32 operations
 
@@ -154,8 +162,6 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 	STRING_OF_I32("string_of_i32", i32, string),
 
 	STRCMP("strcmp", string, string, cmp),
-
-	I32CMP("i32cmp", i32, i32, cmp),
 
 	STRCAT("strcat", string, string, string),
 

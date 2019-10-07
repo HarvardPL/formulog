@@ -153,6 +153,14 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 
 	BV_SGE("bv_sge", 2, SOLVER_EXPR),
 	
+	BV_ULT("bv_ult", 2, SOLVER_EXPR),
+
+	BV_ULE("bv_ule", 2, SOLVER_EXPR),
+
+	BV_UGT("bv_ugt", 2, SOLVER_EXPR),
+
+	BV_UGE("bv_uge", 2, SOLVER_EXPR),
+	
 	// Arrays
 
 	ARRAY_SELECT("array_select", 2, SOLVER_EXPR),
@@ -301,6 +309,10 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 		case BV_SGT:
 		case BV_SLE:
 		case BV_SLT:
+		case BV_UGE:
+		case BV_UGT:
+		case BV_ULE:
+		case BV_ULT:
 			return makeType(bv(a), bv(a), smt(bool));
 		case FP_ADD:
 		case FP_DIV:

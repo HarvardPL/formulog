@@ -7,6 +7,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.function.BiFunction;
 
 /*-
  * #%L
@@ -170,8 +171,14 @@ public final class BuiltInFunctionDefFactory {
 			return StringOfI32.INSTANCE;
 		case STRCMP:
 			return Strcmp.INSTANCE;
-		case I32CMP:
-			return I32cmp.INSTANCE;
+		case I32_SCMP:
+			return I32Scmp.INSTANCE;
+		case I32_UCMP:
+			return I32Ucmp.INSTANCE;
+		case I64_SCMP:
+			return I64Scmp.INSTANCE;
+		case I64_UCMP:
+			return I64Ucmp.INSTANCE;
 		case STRCAT:
 			return Strcat.INSTANCE;
 		case IS_SAT:
@@ -1175,37 +1182,79 @@ public final class BuiltInFunctionDefFactory {
 		public Term evaluate(Term[] args) throws EvaluationException {
 			String s1 = ((StringTerm) args[0]).getVal();
 			String s2 = ((StringTerm) args[1]).getVal();
-			int cmp = s1.compareTo(s2);
-			if (cmp < 0) {
-				return Constructors.makeZeroAry(BuiltInConstructorSymbol.CMP_LT);
-			} else if (cmp > 0) {
-				return Constructors.makeZeroAry(BuiltInConstructorSymbol.CMP_GT);
-			}
-			return Constructors.makeZeroAry(BuiltInConstructorSymbol.CMP_EQ);
+			return makeCmp(s1, s2, (x, y) -> x.compareTo(y));
 		}
 
 	}
-
-	private enum I32cmp implements FunctionDef {
+	
+	private enum I32Scmp implements FunctionDef {
 
 		INSTANCE;
 
 		@Override
 		public FunctionSymbol getSymbol() {
-			return BuiltInFunctionSymbol.I32CMP;
+			return BuiltInFunctionSymbol.I32_SCMP;
 		}
 
 		@Override
 		public Term evaluate(Term[] args) throws EvaluationException {
 			int x = ((I32) args[0]).getVal();
 			int y = ((I32) args[1]).getVal();
-			int cmp = Integer.compare(x, y);
-			if (cmp < 0) {
-				return Constructors.makeZeroAry(BuiltInConstructorSymbol.CMP_LT);
-			} else if (cmp > 0) {
-				return Constructors.makeZeroAry(BuiltInConstructorSymbol.CMP_GT);
-			}
-			return Constructors.makeZeroAry(BuiltInConstructorSymbol.CMP_EQ);
+			return makeCmp(x, y, Integer::compare);
+		}
+
+	}
+	
+	private enum I32Ucmp implements FunctionDef {
+
+		INSTANCE;
+
+		@Override
+		public FunctionSymbol getSymbol() {
+			return BuiltInFunctionSymbol.I32_UCMP;
+		}
+
+		@Override
+		public Term evaluate(Term[] args) throws EvaluationException {
+			int x = ((I32) args[0]).getVal();
+			int y = ((I32) args[1]).getVal();
+			return makeCmp(x, y, Integer::compareUnsigned);
+		}
+
+	}
+	
+	private enum I64Scmp implements FunctionDef {
+
+		INSTANCE;
+
+		@Override
+		public FunctionSymbol getSymbol() {
+			return BuiltInFunctionSymbol.I64_SCMP;
+		}
+
+		@Override
+		public Term evaluate(Term[] args) throws EvaluationException {
+			long x = ((I64) args[0]).getVal();
+			long y = ((I64) args[1]).getVal();
+			return makeCmp(x, y, Long::compare);
+		}
+
+	}
+	
+	private enum I64Ucmp implements FunctionDef {
+
+		INSTANCE;
+
+		@Override
+		public FunctionSymbol getSymbol() {
+			return BuiltInFunctionSymbol.I64_UCMP;
+		}
+
+		@Override
+		public Term evaluate(Term[] args) throws EvaluationException {
+			long x = ((I64) args[0]).getVal();
+			long y = ((I64) args[1]).getVal();
+			return makeCmp(x, y, Long::compareUnsigned);
 		}
 
 	}
@@ -1578,4 +1627,14 @@ public final class BuiltInFunctionDefFactory {
 	// return t;
 	// }
 
+	private static <T> Term makeCmp(T x, T y, BiFunction<T, T, Integer> cmp) {
+		int z = cmp.apply(x, y);
+		if (z < 0) {
+			return Constructors.makeZeroAry(BuiltInConstructorSymbol.CMP_LT);
+		} else if (z > 0) {
+			return Constructors.makeZeroAry(BuiltInConstructorSymbol.CMP_GT);
+		}
+		return Constructors.makeZeroAry(BuiltInConstructorSymbol.CMP_EQ);
+	}
+	
 }
