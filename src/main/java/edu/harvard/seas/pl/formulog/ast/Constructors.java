@@ -151,6 +151,8 @@ public final class Constructors {
 			return makeSolverOp.apply("bvor");
 		case BV_SDIV:
 			return makeSolverOp.apply("bvsdiv");
+		case BV_UDIV:
+			return makeSolverOp.apply("bvudiv");
 		case BV_SGE:
 			return makeSolverOp.apply("bvsge");
 		case BV_SGT:
@@ -169,6 +171,8 @@ public final class Constructors {
 			return makeSolverOp.apply("bvult");
 		case BV_SREM:
 			return makeSolverOp.apply("bvsrem");
+		case BV_UREM:
+			return makeSolverOp.apply("bvurem");
 		case BV_SUB:
 			return makeSolverOp.apply("bvsub");
 		case BV_XOR:

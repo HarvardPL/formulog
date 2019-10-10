@@ -29,7 +29,7 @@ syn match keywords "{"
 syn match keywords "}"
 syn match keywords "<\["
 syn match keywords "]>"
-syn keyword keywords type fun constructor input output match let if then else end fun in with uninterpreted and sort
+syn keyword keywords type input output match let if then else end fun in with uninterpreted and sort
 syn keyword todo contained TODO XXX FIXME
 syn region comment start="(\*" end="\*)" fold contains=todo,comment
 syn keyword typeKeywords i32 i64 fp32 fp64 list bool option cmp string smt bv fp sym int array
@@ -38,7 +38,7 @@ syn match keywords "#let"
 syn match keywords "#if"
 syn match annotation "@\v<[a-zA-Z0-9_]+>"
 syn region string start=/\v"/ skip=/\v\\./ end=/\v"/
-syn region formula start="`" end="`" contains=number,string,keywords,comment,variable
+syn region formula start="`" end="`" contains=number,string,keywords,comment,variable,typeKeywords
 let b:current_syntax = "flg"
 
 hi def link number          Constant

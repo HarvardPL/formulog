@@ -138,6 +138,10 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 	BV_SDIV("bv_sdiv", 2, SOLVER_EXPR),
 
 	BV_SREM("bv_srem", 2, SOLVER_EXPR),
+	
+	BV_UDIV("bv_udiv", 2, SOLVER_EXPR),
+
+	BV_UREM("bv_urem", 2, SOLVER_EXPR),
 
 	BV_AND("bv_and", 2, SOLVER_EXPR),
 
@@ -300,6 +304,8 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 		case BV_OR:
 		case BV_SDIV:
 		case BV_SREM:
+		case BV_UDIV:
+		case BV_UREM:
 		case BV_SUB:
 		case BV_XOR:
 			return makeType(bv(a), bv(a), smt(bv(a)));

@@ -470,13 +470,13 @@ public class SemiNaiveEvaluation implements Evaluation {
 		nextDeltaDb.clear();
 		recordDbUpdateEnd(watch);
 	}
-	
+
 	@SuppressWarnings("serial")
 	private class UpdateDbTask extends AbstractFJPTask {
 
 		private final RelationSymbol sym;
 		private final Iterator<Iterable<Term[]>> it;
-		
+
 		protected UpdateDbTask(RelationSymbol sym, Iterator<Iterable<Term[]>> it) {
 			super(exec);
 			this.sym = sym;
@@ -491,7 +491,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 			}
 			db.addAll(sym, tups);
 		}
-		
+
 	}
 
 	private void reportFact(SimplePredicate atom) {
@@ -569,7 +569,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 					evaluate(tup);
 				}
 			} catch (UncheckedEvaluationException e) {
-				throw new EvaluationException(e.getMessage());
+				throw new EvaluationException(
+						"Exception raised while evaluating the rule: " + rule + "\n\n" + e.getMessage());
 			}
 			if (recordRuleDiagnostics) {
 				long end = System.currentTimeMillis();
@@ -744,7 +745,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 				}
 			} catch (EvaluationException e) {
 				throw new EvaluationException(
-						"Exception raised while evaluating this rule:\n" + rule + "\n\n" + e.getMessage());
+						"Exception raised while evaluating the rule:\n" + rule + "\n\n" + e.getMessage());
 			}
 			if (recordRuleDiagnostics) {
 				long end = System.currentTimeMillis();
