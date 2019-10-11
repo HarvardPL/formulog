@@ -219,7 +219,7 @@ termArgs
 
 term
 :
-	'<[' ID ']>' # reifyTerm
+	HOLE # holeTerm
 	| functor # functorTerm
 	| list # listTerm
 	| tuple # tupleTerm
@@ -641,6 +641,11 @@ FORALL
 EXISTS
 :
 	'exists'
+;
+
+HOLE
+:
+	'??'
 ;
 
 WS

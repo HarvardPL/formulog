@@ -41,7 +41,9 @@ public class MatchClause {
 		}
 		Substitution s = new SimpleSubstitution();
 		for (Var x : lhs.varSet()) {
-			s.put(x, Var.getFresh());
+			if (!x.equals(Var.make("_"))) {
+				s.put(x, Var.fresh(x.toString()));
+			}
 		}
 		return new MatchClause(lhs.applySubstitution(s), rhs.applySubstitution(s));
 	}

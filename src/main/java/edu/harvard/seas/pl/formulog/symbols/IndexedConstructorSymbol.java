@@ -120,11 +120,5 @@ public enum IndexedConstructorSymbol implements ConstructorSymbol, IndexedSymbol
 	public String toString() {
 		return name;
 	}
-
-	public static void registerAll(SymbolManager symbolManager) {
-		for (ConstructorSymbol sym : IndexedConstructorSymbol.values()) {
-			symbolManager.registerSymbol(sym, sym.getCompileTimeType());
-		}
-	}
 	
 }

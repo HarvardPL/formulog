@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.AbstractRule;
+import edu.harvard.seas.pl.formulog.ast.BindingType;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralExnVisitor;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
@@ -155,7 +156,7 @@ public class SimpleRule extends AbstractRule<SimplePredicate, SimpleLiteral> {
 					Term[] args = unboundCtor.getArgs();
 					Var[] vars = new Var[args.length];
 					for (int i = 0; i < args.length; ++i) {
-						Var y = Var.getFresh();
+						Var y = Var.fresh();
 						vars[i] = y;
 						todo.add(UnificationPredicate.make(y, args[i], false));
 					}
@@ -174,7 +175,7 @@ public class SimpleRule extends AbstractRule<SimplePredicate, SimpleLiteral> {
 						} else if (arg instanceof Var && seen.add((Var) arg)) {
 							newArgs[i] = arg;
 						} else {
-							Var y = Var.getFresh();
+							Var y = Var.fresh();
 							newArgs[i] = y;
 							todo.add(UnificationPredicate.make(y, arg, false));
 						}

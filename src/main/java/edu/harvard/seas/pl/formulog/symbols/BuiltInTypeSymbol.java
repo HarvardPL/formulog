@@ -70,11 +70,5 @@ public enum BuiltInTypeSymbol implements TypeSymbol {
 	public TypeSymbolType getTypeSymbolType() {
 		return TypeSymbolType.NORMAL_TYPE;
 	}
-	
-	public static void registerAll(SymbolManager symbolManager) {
-		for (BuiltInTypeSymbol sym : BuiltInTypeSymbol.values()) {
-			symbolManager.registerSymbol(sym);
-		}
-	}
 
 }

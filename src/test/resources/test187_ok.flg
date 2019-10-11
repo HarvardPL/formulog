@@ -5,8 +5,8 @@ type 'a linked_list = {
 
 output ok.
 ok :-
-	X = { val = 21 ; next = some({ val = 33 ; next = none }) ; },
-	Y = { X with next = some({ val = 42 ; next = none }) ; val = 0 },	
+	_X = { val = 21 ; next = some({ val = 33 ; next = none }) ; },
+	Y = { _X with next = some({ val = 42 ; next = none }) ; val = 0 },	
 	some(Z) = next(Y),
 	42 = val(Z),
 	0 = val(Y).

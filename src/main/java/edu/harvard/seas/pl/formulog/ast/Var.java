@@ -43,12 +43,16 @@ public class Var extends AbstractTerm implements Term {
 		this.name = name;
 	}
 	
-	public static Var get(String name) {
+	public static Var make(String name) {
 		return Util.lookupOrCreate(memo, name, () -> new Var(name));
 	}
 	
-	public static Var getFresh() {
+	public static Var fresh() {
 		return new Var("$" + cnt.getAndIncrement());
+	}
+	
+	public static Var fresh(String prefix) {
+		return new Var(prefix + "$" + cnt.getAndIncrement());
 	}
 	
 	@Override
@@ -101,6 +105,10 @@ public class Var extends AbstractTerm implements Term {
 	public void updateVarCounts(Map<Var, Integer> counts) {
 		int n = Util.lookupOrCreate(counts, this, () -> 0);
 		counts.put(this, n + 1);
+	}
+	
+	public static Var makeHole() {
+		return make("??");
 	}
 	
 }

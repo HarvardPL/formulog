@@ -23,6 +23,7 @@ package edu.harvard.seas.pl.formulog.eval;
 import java.util.HashSet;
 import java.util.Set;
 
+import edu.harvard.seas.pl.formulog.ast.BindingType;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
@@ -42,43 +43,52 @@ import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDefManager;
 import edu.harvard.seas.pl.formulog.ast.functions.UserFunctionDef;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDb;
+import edu.harvard.seas.pl.formulog.db.IndexedFactDbBuilder;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
-import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbolFactory.PredicateFunctionSymbol;
+import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
+import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
+import edu.harvard.seas.pl.formulog.types.FunctorType;
 
 public class PredicateFunctionSetter {
 
 	private final FunctionDefManager defs;
 	private final SymbolManager symbols;
-	private final IndexedFactDb db;
+	private final IndexedFactDbBuilder<?> dbb;
+	private IndexedFactDb db;
 	Set<FunctionSymbol> visitedFunctions = new HashSet<>();
-	
-	public PredicateFunctionSetter(FunctionDefManager funcs, SymbolManager symbols, IndexedFactDb db) {
+
+	public PredicateFunctionSetter(FunctionDefManager funcs, SymbolManager symbols, IndexedFactDbBuilder<?> dbb) {
 		this.defs = funcs;
 		this.symbols = symbols;
-		this.db = db;
+		this.dbb = dbb;
 	}
 	
+	public void setDb(IndexedFactDb db) {
+		assert this.db == null;
+		this.db = db;
+	}
+
 	public void preprocess(Rule<UserPredicate, ComplexLiteral> r) {
 		preprocess(r.getHead());
 		for (ComplexLiteral l : r) {
 			preprocess(l);
 		}
 	}
-	
+
 	public void preprocess(ComplexLiteral l) {
 		for (Term arg : l.getArgs()) {
 			preprocess(arg);
 		}
 	}
-	
+
 	public void preprocess(Term t) {
 		t.accept(tv, null);
 	}
-	
+
 	private final TermVisitor<Void, Void> tv = new TermVisitor<Void, Void>() {
 
 		@Override
@@ -104,9 +114,9 @@ public class PredicateFunctionSetter {
 			e.accept(ev, in);
 			return null;
 		}
-		
+
 	};
-	
+
 	private final ExprVisitor<Void, Void> ev = new ExprVisitor<Void, Void>() {
 
 		@Override
@@ -137,72 +147,121 @@ public class PredicateFunctionSetter {
 			}
 			return null;
 		}
-		
+
 	};
-	
+
 	private void setPredicateFunction(DummyFunctionDef def) {
 		if (def.getDef() != null) {
 			return;
 		}
 		PredicateFunctionSymbol sym = (PredicateFunctionSymbol) def.getSymbol();
-		if (sym.isReification()) {
-			makeReifyPredicate(sym, def);
-		} else {
-			makeQueryPredicate(sym, def);
+		BindingType[] bindings = sym.getBindings();
+		assert bindings != null;
+		BindingType[] bindings2 = new BindingType[bindings.length];
+		for (int i = 0; i < bindings.length; ++i) {
+			bindings2[i] = bindings[i];
+			if (bindings2[i].isIgnored()) {
+				bindings2[i] = BindingType.FREE;
+			}
 		}
+		int idx = dbb.makeIndex(sym.getPredicateSymbol(), bindings2);
+		FunctorType type = sym.getCompileTimeType();
+		Term[] paddedArgs = padArgs(sym);
+		FunctionDef innerDef;
+		if (type.getRetType().equals(BuiltInTypes.bool)) {
+			innerDef = makePredicate(sym, paddedArgs, idx);
+		} else {
+			innerDef = makeAggregate(sym, paddedArgs, idx);
+		}
+		def.setDef(innerDef);
 	}
 
-	private void makeQueryPredicate(PredicateFunctionSymbol sym, DummyFunctionDef def) {
-		RelationSymbol predSym = sym.getPredicateSymbol();
-		def.setDef(new FunctionDef() {
+	private FunctionDef makePredicate(PredicateFunctionSymbol funcSym, Term[] paddedArgs, int idx) {
+		RelationSymbol predSym = funcSym.getPredicateSymbol();
+		return new FunctionDef() {
 
 			@Override
 			public FunctionSymbol getSymbol() {
-				return def.getSymbol();
+				return funcSym;
 			}
 
 			@Override
 			public Term evaluate(Term[] args) throws EvaluationException {
-				if (db.hasFact(predSym, args)) {
+				args = fillInPaddedArgs(funcSym, paddedArgs, args);
+				if (db.get(predSym, args, idx).iterator().hasNext()) {
 					return Constructors.trueTerm();
 				} else {
 					return Constructors.falseTerm();
 				}
 			}
 
-		});
+		};
 	}
 
-	private void makeReifyPredicate(PredicateFunctionSymbol sym, DummyFunctionDef def) {
-		RelationSymbol predSym = sym.getPredicateSymbol();
-		int arity = predSym.getArity();
+	private FunctionDef makeAggregate(PredicateFunctionSymbol funcSym, Term[] paddedArgs, int idx) {
+		RelationSymbol predSym = funcSym.getPredicateSymbol();
+		int arity = 0;
+		BindingType[] bindings = funcSym.getBindings();
+		for (BindingType b : bindings) {
+			if (b.isFree()) {
+				arity++;
+			}
+		}
+		final int arity2 = arity;
 		ConstructorSymbol tupSym = (arity > 1) ? symbols.lookupTupleSymbol(arity) : null;
-		def.setDef(new FunctionDef() {
+		return new FunctionDef() {
 
 			@Override
 			public FunctionSymbol getSymbol() {
-				return def.getSymbol();
+				return funcSym;
 			}
 
 			@Override
 			public Term evaluate(Term[] args) throws EvaluationException {
-				Term t = Constructors.makeZeroAry(BuiltInConstructorSymbol.NIL);
-				for (Term[] fact : db.getAll(predSym)) {
-					Term tuple = makeTuple(fact);
-					t = Constructors.make(BuiltInConstructorSymbol.CONS, new Term[] { tuple, t });
+				args = fillInPaddedArgs(funcSym, paddedArgs, args);
+				Term tail = Constructors.makeZeroAry(BuiltInConstructorSymbol.NIL);
+				for (Term[] fact : db.get(predSym, args, idx)) {
+					Term[] proj = new Term[arity2];
+					int j = 0;
+					for (int i = 0; i < bindings.length; ++i) {
+						if (bindings[i].isFree()) {
+							proj[j] = fact[i];
+							++j;
+						}
+					}
+					Term elt = tupSym == null ? proj[0] : Constructors.make(tupSym, proj);
+					tail = Constructors.make(BuiltInConstructorSymbol.CONS, new Term[] { elt, tail });
 				}
-				return t;
+				return tail;
 			}
 
-			private Term makeTuple(Term[] args) {
-				if (tupSym == null) {
-					return args[0];
-				} else {
-					return Constructors.make(tupSym, args);
-				}
+		};
+	}
+	
+	private Term[] padArgs(PredicateFunctionSymbol funcSym) {
+		RelationSymbol predSym = funcSym.getPredicateSymbol();
+		Term[] padded = new Term[predSym.getArity()];
+		for (int i = 0; i < padded.length; ++i) {
+			padded[i] = Var.fresh();
+		}
+		return padded;
+	}
+	
+	private Term[] fillInPaddedArgs(PredicateFunctionSymbol funcSym, Term[] paddedArgs, Term[] actualArgs) {
+		RelationSymbol predSym = funcSym.getPredicateSymbol();
+		Term[] newArgs = new Term[predSym.getArity()];
+		int i = 0;
+		int j = 0;
+		for (BindingType b : funcSym.getBindings()) {
+			if (b.isBound()) {
+				newArgs[i] = actualArgs[j];
+				j++;
+			} else {
+				newArgs[i] = paddedArgs[i];
 			}
-
-		});
+			i++;
+		}
+		return newArgs;
 	}
 	
 }

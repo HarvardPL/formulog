@@ -1,4 +1,4 @@
 input p.
 output fail(i32).
 
-fail(X) :- p.
+fail(_X) :- p.

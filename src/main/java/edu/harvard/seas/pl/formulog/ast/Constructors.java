@@ -40,7 +40,7 @@ import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbolType;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.IndexedConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RecordSymbol;
-import edu.harvard.seas.pl.formulog.symbols.TupleSymbolFactory.TupleSymbol;
+import edu.harvard.seas.pl.formulog.symbols.TupleSymbol;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
@@ -57,6 +57,7 @@ public final class Constructors {
 	private static final Memoizer<Term> memo = new Memoizer<>();
 
 	public static Term make(ConstructorSymbol sym, Term[] args) {
+		assert sym.getArity() == args.length;
 		if (sym instanceof BuiltInConstructorSymbol) {
 			return lookupOrCreateBuiltInConstructor((BuiltInConstructorSymbol) sym, args);
 		}

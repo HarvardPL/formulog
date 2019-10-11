@@ -60,12 +60,6 @@ public enum IndexedTypeSymbol implements TypeSymbol, IndexedSymbol {
 		return name;
 	}
 
-	public static void registerAll(SymbolManager symbolManager) {
-		for (TypeSymbol sym : IndexedTypeSymbol.values()) {
-			symbolManager.registerSymbol(sym);
-		}
-	}
-
 	@Override
 	public TypeSymbolType getTypeSymbolType() {
 		return TypeSymbolType.NORMAL_TYPE;

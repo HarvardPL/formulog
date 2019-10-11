@@ -23,8 +23,8 @@ package edu.harvard.seas.pl.formulog.symbols;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 
+import edu.harvard.seas.pl.formulog.ast.BindingType;
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types;
@@ -32,11 +32,9 @@ import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
+// TODO probably should make this thread-safe...
 public class SymbolManager {
 	private final Map<String, Symbol> memo = new HashMap<>();
-	private final Map<Symbol, FunctorType> typeOf = new HashMap<>();
-	private TupleSymbolFactory tupleSymbolFactory;
-	private PredicateFunctionSymbolFactory functionSymbolForPredicateFactory;
 
 	private boolean initialized = false;
 
@@ -44,15 +42,13 @@ public class SymbolManager {
 		if (initialized) {
 			throw new IllegalStateException("Cannot initialize symbol manager multiple times.");
 		}
-		tupleSymbolFactory = new TupleSymbolFactory(this);
-		functionSymbolForPredicateFactory = new PredicateFunctionSymbolFactory(this);
-		BuiltInTypeSymbol.registerAll(this);
-		BuiltInConstructorSymbol.registerAll(this);
-		BuiltInFunctionSymbol.registerAll(this);
-		BuiltInConstructorTesterSymbol.registerAll(this);
-		BuiltInConstructorGetterSymbol.registerAll(this);
-		IndexedTypeSymbol.registerAll(this);
-		IndexedConstructorSymbol.registerAll(this);
+		registerAll(BuiltInTypeSymbol.values());
+		registerAll(BuiltInConstructorSymbol.values());
+		registerAll(BuiltInFunctionSymbol.values());
+		registerAll(BuiltInConstructorTesterSymbol.values());
+		registerAll(BuiltInConstructorGetterSymbol.values());
+		registerAll(IndexedTypeSymbol.values());
+		registerAll(IndexedConstructorSymbol.values());
 		initialized = true;
 	}
 
@@ -75,7 +71,7 @@ public class SymbolManager {
 		assertInitialized();
 		checkNotUsed(name);
 		ConstructorSymbol sym = new ConstructorSymbolImpl(name, arity, st, type);
-		registerSymbol(sym, type);
+		registerSymbol(sym);
 		return sym;
 	}
 
@@ -83,7 +79,7 @@ public class SymbolManager {
 		assertInitialized();
 		checkNotUsed(name);
 		RecordSymbol sym = new RecordSymbolImpl(name, arity, type, labels);
-		registerSymbol(sym, type);
+		registerSymbol(sym);
 		return sym;
 	}
 
@@ -91,7 +87,7 @@ public class SymbolManager {
 		assertInitialized();
 		checkNotUsed(name);
 		FunctionSymbol sym = new FunctionSymbolImpl(name, arity, type);
-		registerSymbol(sym, type);
+		registerSymbol(sym);
 		return sym;
 	}
 
@@ -99,7 +95,7 @@ public class SymbolManager {
 		assertInitialized();
 		checkNotUsed(name);
 		MutableRelationSymbol sym = new RelationSymbolImpl(name, arity, isIdb, type);
-		registerSymbol(sym, type);
+		registerSymbol(sym);
 		return sym;
 	}
 
@@ -130,25 +126,33 @@ public class SymbolManager {
 			List<Integer> indices) {
 		assertInitialized();
 		assert !indices.isEmpty();
-		return IndexedSymbols.lookupConstructorSymbol(name, indices);
+		return IndexedSymbols.lookupConstructorSymbol(name, this, indices);
 	}
 
 	public Pair<IndexedTypeSymbol, List<Integer>> lookupIndexedTypeSymbol(String name, List<Integer> indices) {
 		assertInitialized();
 		assert !indices.isEmpty();
-		return IndexedSymbols.lookupTypeSymbol(name, indices);
+		return IndexedSymbols.lookupTypeSymbol(name, this, indices);
 	}
 
 	public ConstructorSymbol lookupTupleSymbol(int arity) {
-		return tupleSymbolFactory.lookup(arity);
+		ConstructorSymbol sym = TupleSymbol.lookup(arity, this);
+		return sym;
 	}
 
 	public TypeSymbol lookupTupleTypeSymbol(int arity) {
-		return tupleSymbolFactory.lookupType(arity).getSymbol();
+		TypeSymbol sym = TupleSymbol.lookupType(arity, this).getSymbol();
+		return sym;
 	}
 
-	public FunctionSymbol createFunctionSymbolForPredicate(RelationSymbol sym, boolean isReification) {
-		return functionSymbolForPredicateFactory.create(sym, isReification);
+	public PredicateFunctionSymbol createPredicateFunctionSymbol(RelationSymbol sym, BindingType[] bindings) {
+		PredicateFunctionSymbol funcSym = PredicateFunctionSymbol.create(sym, bindings, this);
+		return funcSym;
+	}
+	
+	public PredicateFunctionSymbol createPredicateFunctionSymbolPlaceholder(RelationSymbol sym) {
+		PredicateFunctionSymbol funcSym = PredicateFunctionSymbol.createPlaceholder(sym, this);
+		return funcSym;
 	}
 
 	public ConstructorSymbol lookupSolverSymbol(Type type) {
@@ -158,18 +162,18 @@ public class SymbolManager {
 		if (sym == null) {
 			sym = createConstructorSymbol(name, 1, ConstructorSymbolType.SOLVER_VARIABLE,
 					new FunctorType(BuiltInTypes.a, BuiltInTypes.sym(type)));
-			memo.put(name, sym);
+			registerSymbol(sym);
 		}
 		return sym;
 	}
 
-	public ConstructorSymbol lookupIndexConstructorSymbol(int index) {
+	public synchronized ConstructorSymbol lookupIndexConstructorSymbol(int index) {
 		String name = "index$" + index;
 		ConstructorSymbol sym = (ConstructorSymbol) memo.get(name);
 		if (sym == null) {
 			sym = createConstructorSymbol(name, 1, ConstructorSymbolType.INDEX_CONSTRUCTOR,
 					new FunctorType(BuiltInTypes.i32, TypeIndex.make(index)));
-			memo.put(name, sym);
+			registerSymbol(sym);
 		}
 		return sym;
 	}
@@ -317,14 +321,6 @@ public class SymbolManager {
 
 	}
 
-	public void registerSymbol(TypedSymbol sym, FunctorType type) {
-		registerSymbol(sym);
-		FunctorType type2 = typeOf.putIfAbsent(sym, type);
-		if (type2 != null && !type2.equals(type)) {
-			throw new IllegalArgumentException("Cannot register multiple types for the same symbol " + sym + ".");
-		}
-	}
-
 	public void registerSymbol(Symbol sym) {
 		Symbol sym2 = memo.putIfAbsent(sym.toString(), sym);
 		if (sym2 != null && !sym2.equals(sym)) {
@@ -333,12 +329,10 @@ public class SymbolManager {
 		}
 	}
 
-	public FunctorType getType(TypedSymbol sym) {
-		FunctorType type = typeOf.get(sym);
-		if (type == null) {
-			throw new NoSuchElementException("No type associated with symbol " + sym);
+	private void registerAll(Symbol[] symbols) {
+		for (Symbol sym : symbols) {
+			registerSymbol(sym);
 		}
-		return type;
 	}
 
 }

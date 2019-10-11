@@ -6,4 +6,4 @@ type blah =
   | a(i32, i32, i32, i32, i32)
   | b(i32, i32, i32).
 
-ok :- a(f(X3), f(X2), f(X1), f(X0), 0) = a(X4, X3, X2, X1, X0).
+ok :- a(f(X3), f(X2), f(X1), f(X0), 0) = a(_X4, X3, X2, X1, X0).

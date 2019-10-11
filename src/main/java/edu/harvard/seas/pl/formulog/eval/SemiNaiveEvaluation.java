@@ -39,6 +39,7 @@ import org.apache.commons.lang3.time.StopWatch;
 import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
+import edu.harvard.seas.pl.formulog.ast.BindingType;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralVisitor;
 import edu.harvard.seas.pl.formulog.ast.Term;
@@ -46,7 +47,6 @@ import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.db.IndexedFactDb;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDbBuilder;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb.SortedIndexedFactDbBuilder;
@@ -70,7 +70,6 @@ import edu.harvard.seas.pl.formulog.validating.Stratifier;
 import edu.harvard.seas.pl.formulog.validating.Stratum;
 import edu.harvard.seas.pl.formulog.validating.ValidRule;
 import edu.harvard.seas.pl.formulog.validating.ast.Assignment;
-import edu.harvard.seas.pl.formulog.validating.ast.BindingType;
 import edu.harvard.seas.pl.formulog.validating.ast.Check;
 import edu.harvard.seas.pl.formulog.validating.ast.Destructor;
 import edu.harvard.seas.pl.formulog.validating.ast.SimpleLiteral;
@@ -105,9 +104,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 		allRelations.addAll(magicProg.getRuleSymbols());
 		SortedIndexedFactDbBuilder dbb = new SortedIndexedFactDbBuilder(allRelations);
 		SortedIndexedFactDbBuilder deltaDbb = new SortedIndexedFactDbBuilder(magicProg.getRuleSymbols());
-		IndexedFactDbWrapper wrappedDb = new IndexedFactDbWrapper();
 		PredicateFunctionSetter predFuncs = new PredicateFunctionSetter(
-				magicProg.getFunctionCallFactory().getDefManager(), magicProg.getSymbolManager(), wrappedDb);
+				magicProg.getFunctionCallFactory().getDefManager(), magicProg.getSymbolManager(), dbb);
 		Map<RelationSymbol, Iterable<IndexedRule>> rules = new HashMap<>();
 		List<Stratum> strata = new Stratifier(magicProg).stratify();
 		for (Stratum stratum : strata) {
@@ -142,7 +140,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 			}
 		}
 		SortedIndexedFactDb db = dbb.build();
-		wrappedDb.set(db);
+		predFuncs.setDb(db);
 
 		CountingFJP exec;
 		if (sequential) {
@@ -828,71 +826,6 @@ public class SemiNaiveEvaluation implements Evaluation {
 	@Override
 	public UserPredicate getQuery() {
 		return query;
-	}
-
-	private static class IndexedFactDbWrapper implements IndexedFactDb {
-
-		private IndexedFactDb db;
-
-		public void set(IndexedFactDb db) {
-			this.db = db;
-		}
-
-		@Override
-		public Set<RelationSymbol> getSymbols() {
-			return db.getSymbols();
-		}
-
-		@Override
-		public Iterable<Term[]> getAll(RelationSymbol sym) {
-			return db.getAll(sym);
-		}
-
-		@Override
-		public Iterable<Term[]> get(RelationSymbol sym, Term[] key, int index) {
-			return db.get(sym, key, index);
-		}
-
-		@Override
-		public void add(RelationSymbol sym, Term[] args) {
-			db.add(sym, args);
-		}
-
-		@Override
-		public boolean hasFact(RelationSymbol sym, Term[] args) {
-			return db.hasFact(sym, args);
-		}
-
-		@Override
-		public void clear() {
-			db.clear();
-		}
-
-		@Override
-		public void addAll(RelationSymbol sym, Iterable<Term[]> tups) {
-			db.addAll(sym, tups);
-		}
-
-		@Override
-		public boolean isEmpty(RelationSymbol sym) {
-			return db.isEmpty(sym);
-		}
-
-		@Override
-		public int countDistinct(RelationSymbol sym) {
-			return db.countDistinct(sym);
-		}
-
-		@Override
-		public int numIndices(RelationSymbol sym) {
-			return db.numIndices(sym);
-		}
-
-		@Override
-		public int countDuplicates(RelationSymbol sym) {
-			return db.countDuplicates(sym);
-		}
-
 	}
 
 	private StopWatch recordRoundStart(Stratum stratum, int round) {

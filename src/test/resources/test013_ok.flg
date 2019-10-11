@@ -5,4 +5,4 @@ output join(i32, (string * string)).
 join(Id, (Str1, Str2)) :- rel1(Id, Str1), rel2(Id, Str2).
 
 (* an equivalent (more verbose) formulation: *)
-join(Id, Pair) :- rel1(Id1, Str1), rel2(Id2, Str2), Id1 = Id2, Pair = (Str1, Str2).
+join(Id1, Pair) :- rel1(Id1, Str1), rel2(Id2, Str2), Id1 = Id2, Pair = (Str1, Str2).

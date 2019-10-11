@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.validating.ast;
+package edu.harvard.seas.pl.formulog.ast;
 
 /*-
  * #%L
@@ -30,6 +30,10 @@ public enum BindingType {
 	
 	public boolean isFree() {
 		return this.equals(FREE);
+	}
+
+	public boolean isIgnored() {
+		return this.equals(IGNORED);
 	}
 	
 }

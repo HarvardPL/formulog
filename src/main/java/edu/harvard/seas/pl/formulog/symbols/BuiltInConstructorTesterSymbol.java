@@ -81,11 +81,5 @@ public enum BuiltInConstructorTesterSymbol implements ConstructorSymbol {
 	public String toString() {
 		return name;
 	}
-	
-	public static void registerAll(SymbolManager symbolManager) {
-		for (ConstructorSymbol sym : BuiltInConstructorTesterSymbol.values()) {
-			symbolManager.registerSymbol(sym, sym.getCompileTimeType());
-		}
-	}
 
 }

@@ -1,7 +1,7 @@
 input nums(i32, i32, i32)
 nums(1, 2, 3).
 nums(4, 3, 1).
-nums(3, 2, 3).
+nums(1, 3, 6).
 
 input num(i32)
 num(6).
@@ -25,9 +25,19 @@ fun mulAndSum(Xs: (i32 * i32 * i32) list) : i32 =
   | (X1, X2, X3) :: Xs => X1 * X2 * X3 + mulAndSum(Xs)
   end
 
+output agg1(i32)
+
+agg1(X) :- X = sum(nums(_1, ??, _2)).
+
+output agg2(i32)
+
+agg2(X) :- X = sum(nums(_1, 3, ??)).
+
 output ok
 ok :-
-  sum(<[num]>) = 36,
-  mulAndSum(<[nums]>) = 36,
-  !<[empty]>,
-  <[full]>.
+  sum(num(??)) = 36,
+  mulAndSum(nums(??, ??, ??)) = 36,
+  agg1(8),
+  agg2(7),
+  !empty,
+  full.

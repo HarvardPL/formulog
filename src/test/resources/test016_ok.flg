@@ -4,7 +4,7 @@ type ('a, 'b) union =
 type color = (i32, (i32*i32*i32)) union.
 type id = (string, i32) union.
 
-fun str2i32(S:string) : i32 = 42.
+fun str2i32(_S:string) : i32 = 42.
 
 input colors(color).
 input ids(id).

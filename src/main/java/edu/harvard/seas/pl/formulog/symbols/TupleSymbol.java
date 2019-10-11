@@ -32,41 +32,35 @@ import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.types.Types.TypeVar;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType.ConstructorScheme;
 
-public class TupleSymbolFactory {
-
-	private final SymbolManager symbolManager;
-
-	public TupleSymbolFactory(SymbolManager symbolManager) {
-		this.symbolManager = symbolManager;
-	}
+public class TupleSymbol implements ConstructorSymbol {
 
 	private static final Map<Integer, ConstructorSymbol> constructorMemo = new ConcurrentHashMap<>();
 	private static final Map<Integer, AlgebraicDataType> typeMemo = new ConcurrentHashMap<>();
 
-	public ConstructorSymbol lookup(int arity) {
+	public static ConstructorSymbol lookup(int arity, SymbolManager sm) {
 		ConstructorSymbol sym = constructorMemo.get(arity);
 		if (sym == null) {
-			instantiate(arity);
+			instantiate(arity, sm);
 			return constructorMemo.get(arity);
 		}
 		return sym;
 	}
 
-	public AlgebraicDataType lookupType(int arity) {
+	public static AlgebraicDataType lookupType(int arity, SymbolManager sm) {
 		AlgebraicDataType type = typeMemo.get(arity);
 		if (type == null) {
-			instantiate(arity);
+			instantiate(arity, sm);
 			return typeMemo.get(arity);
 		}
 		return type;
 	}
 
-	private synchronized void instantiate(int arity) {
+	private static synchronized void instantiate(int arity, SymbolManager sm) {
 		ConstructorSymbol tupSym = constructorMemo.get(arity);
 		if (tupSym != null) {
 			return;
 		}
-		TypeSymbol typeSym = symbolManager.createTypeSymbol("_tuple_type" + arity, arity, TypeSymbolType.NORMAL_TYPE);
+		TypeSymbol typeSym = sm.createTypeSymbol("%tuple_type" + arity, arity, TypeSymbolType.NORMAL_TYPE);
 		List<Type> typeArgs = new ArrayList<>();
 		List<TypeVar> typeVars = new ArrayList<>();
 		for (int i = 0; i < arity; ++i) {
@@ -80,49 +74,43 @@ public class TupleSymbolFactory {
 		for (Type ty : typeArgs) {
 			String getter = "#_tuple" + arity + "_" + (i + 1);
 			FunctorType ft = new FunctorType(type, ty);
-			getters.add(symbolManager.createConstructorSymbol(getter, arity,
-					ConstructorSymbolType.SOLVER_CONSTRUCTOR_GETTER, ft));
+			getters.add(sm.createConstructorSymbol(getter, arity, ConstructorSymbolType.SOLVER_CONSTRUCTOR_GETTER, ft));
 			++i;
 		}
 		FunctorType ctorTy = new FunctorType(typeArgs, type);
 		tupSym = new TupleSymbol(arity, ctorTy);
-		symbolManager.registerSymbol(tupSym, ctorTy);
 		ConstructorScheme cs = new ConstructorScheme(tupSym, typeArgs, getters);
 		AlgebraicDataType.setConstructors(typeSym, typeVars, Collections.singleton(cs));
 		constructorMemo.put(arity, tupSym);
 		typeMemo.put(arity, type);
 	}
-	
-	public static class TupleSymbol implements ConstructorSymbol {
 
-		private final int arity;
-		private final FunctorType type;
-	
-		private TupleSymbol(int arity, FunctorType type) {
-			this.arity = arity;
-			this.type = type;
-		}
-		
-		@Override
-		public FunctorType getCompileTimeType() {
-			return type;
-		}
+	private final int arity;
+	private final FunctorType type;
 
-		@Override
-		public int getArity() {
-			return arity;
-		}
+	private TupleSymbol(int arity, FunctorType type) {
+		this.arity = arity;
+		this.type = type;
+	}
 
-		@Override
-		public ConstructorSymbolType getConstructorSymbolType() {
-			return ConstructorSymbolType.VANILLA_CONSTRUCTOR;
-		}
+	@Override
+	public FunctorType getCompileTimeType() {
+		return type;
+	}
 
-		@Override
-		public String toString() {
-			return "_tuple" + arity;
-		}
-		
+	@Override
+	public int getArity() {
+		return arity;
+	}
+
+	@Override
+	public ConstructorSymbolType getConstructorSymbolType() {
+		return ConstructorSymbolType.VANILLA_CONSTRUCTOR;
+	}
+
+	@Override
+	public String toString() {
+		return "%tuple" + arity;
 	}
 
 }

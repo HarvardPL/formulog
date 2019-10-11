@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.db;
 
+import edu.harvard.seas.pl.formulog.ast.BindingType;
+
 /*-
  * #%L
  * FormuLog
@@ -21,7 +23,6 @@ package edu.harvard.seas.pl.formulog.db;
  */
 
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
-import edu.harvard.seas.pl.formulog.validating.ast.BindingType;
 
 public interface IndexedFactDbBuilder<T extends IndexedFactDb> {
 

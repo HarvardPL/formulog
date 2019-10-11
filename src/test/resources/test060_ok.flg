@@ -2,4 +2,4 @@ fun bar : 'a list = [].
 
 output foo.
 foo :-
-  X = 1 :: 2 :: bar.
+  _X = 1 :: 2 :: bar.

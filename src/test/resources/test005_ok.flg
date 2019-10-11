@@ -12,6 +12,6 @@ fun lookup(Key:'k, Map:('k, 'v) assoc_list) : 'v my_option =
 	| my_nil => my_none
 	(* this doesn't actually do what you think, since key is rebound in the
 	   pattern *)
-	| my_cons((Key, Val), _) => my_some(Val)
+	| my_cons((_Key, Val), _) => my_some(Val)
 	| my_cons(_, Rest) => lookup(Key, Rest)
 	end.

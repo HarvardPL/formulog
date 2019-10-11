@@ -244,12 +244,6 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 	public String toString() {
 		return name;
 	}
-	
-	public static void registerAll(SymbolManager symbolManager) {
-		for (BuiltInFunctionSymbol sym : BuiltInFunctionSymbol.values()) {
-			symbolManager.registerSymbol(sym, sym.getCompileTimeType());
-		}
-	}
 
 	@Override
 	public FunctorType getCompileTimeType() {

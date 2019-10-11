@@ -66,12 +66,6 @@ public enum BuiltInConstructorGetterSymbol implements ConstructorSymbol {
 	public String toString() {
 		return name;
 	}
-	
-	public static void registerAll(SymbolManager symbolManager) {
-		for (ConstructorSymbol sym : BuiltInConstructorGetterSymbol.values()) {
-			symbolManager.registerSymbol(sym, sym.getCompileTimeType());
-		}
-	}
 
 	@Override
 	public ConstructorSymbolType getConstructorSymbolType() {

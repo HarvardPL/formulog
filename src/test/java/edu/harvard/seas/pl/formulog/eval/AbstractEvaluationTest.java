@@ -31,6 +31,7 @@ import java.net.URL;
 import java.nio.file.Paths;
 
 import edu.harvard.seas.pl.formulog.ast.BasicProgram;
+import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.parsing.Parser;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
@@ -60,7 +61,13 @@ public abstract class AbstractEvaluationTest {
 			}
 			boolean ok = res.getAll(sym).iterator().hasNext();
 			if (!ok && !isBad) {
-				fail("Test failed for a good program");
+				String msg = "Test failed for a good program\nResults:\n";
+				for (RelationSymbol sym2 : res.getSymbols()) {
+					for (UserPredicate fact : res.getAll(sym2)) {
+						msg += fact + "\n";
+					}
+				}
+				fail(msg);
 			}
 			if (ok && isBad) {
 				fail("Test succeeded for a bad program");

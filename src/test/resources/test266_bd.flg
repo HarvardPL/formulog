@@ -1,0 +1,5 @@
+output foo(i32 list)
+
+output ok.
+
+ok :- _X = foo([??]).

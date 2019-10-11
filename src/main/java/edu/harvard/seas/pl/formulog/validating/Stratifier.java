@@ -53,7 +53,7 @@ import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.UserFunctionDef;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
-import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbolFactory.PredicateFunctionSymbol;
+import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 
 public class Stratifier {
@@ -237,7 +237,7 @@ public class Stratifier {
 		}
 
 		private void processFunctionSymbol(FunctionSymbol s) {
-			assert prog.getFunctionSymbols().contains(s);
+			assert prog.getFunctionSymbols().contains(s) : s;
 			if (!visitedFunctions.add(s)) {
 				return;
 			}

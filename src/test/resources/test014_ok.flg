@@ -1,7 +1,7 @@
 fun f(X:i32) : i32 = X.
 fun g(X:'a) : 'a = X.
-fun h(X:string) : i32 = 42.
-fun h_inv(X:i32) : string = "hello".
+fun h(_X:string) : i32 = 42.
+fun h_inv(_X:i32) : string = "hello".
 
 input q(i32).
 output p(i32).

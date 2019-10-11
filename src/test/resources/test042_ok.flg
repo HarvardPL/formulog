@@ -10,7 +10,7 @@ fun handle_concrete_conversion(V:prim, Type:java_prim_type) : prim =
   | java_prim_type_int =>
     let Vv = 
       match V with
-      | prim_byte(X) => `42`
+      | prim_byte(_X) => `42`
       | prim_byte(X)
       | prim_short(X) => X
       end in

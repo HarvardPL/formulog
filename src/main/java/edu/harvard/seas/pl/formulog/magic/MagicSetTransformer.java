@@ -53,7 +53,7 @@ import edu.harvard.seas.pl.formulog.ast.functions.UserFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.symbols.AbstractWrappedRelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
-import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbolFactory.PredicateFunctionSymbol;
+import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolComparator;
@@ -178,7 +178,7 @@ public class MagicSetTransformer {
 		for (int i = 0; i < args.length; ++i) {
 			Term t = args[i];
 			if (!(t instanceof Var) || !seen.add((Var) t)) {
-				Var x = Var.getFresh();
+				Var x = Var.fresh();
 				body.add(UnificationPredicate.make(x, t, false));
 				t = x;
 			}
@@ -817,11 +817,12 @@ public class MagicSetTransformer {
 			@Override
 			public Void visit(FunctionCall funcCall, Set<RelationSymbol> in) {
 				FunctionSymbol sym = funcCall.getSymbol();
-				if (sym instanceof PredicateFunctionSymbol) {
-					RelationSymbol psym = ((PredicateFunctionSymbol) sym).getPredicateSymbol();
-					seenPredicates.add(psym);
-					in.add(psym);
-				} else if (visitedFunctions.add(sym)) {
+				if (visitedFunctions.add(sym)) {
+					if (sym instanceof PredicateFunctionSymbol) {
+						RelationSymbol psym = ((PredicateFunctionSymbol) sym).getPredicateSymbol();
+						seenPredicates.add(psym);
+						in.add(psym);
+					}
 					FunctionDef def = origProg.getDef(sym);
 					if (def instanceof UserFunctionDef) {
 						((UserFunctionDef) def).getBody().accept(predicatesInTermExtractor, in);
@@ -876,6 +877,9 @@ public class MagicSetTransformer {
 				}
 				if (psym.isEdbSymbol()) {
 					facts.putIfAbsent(psym, origProg.getFacts(psym));
+				}
+				if (psym.isIdbSymbol()) {
+					rules.putIfAbsent(psym, new HashSet<>());
 				}
 			}
 			// Do not keep unnecessary facts around if there is a query.

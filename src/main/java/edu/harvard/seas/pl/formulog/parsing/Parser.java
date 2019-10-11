@@ -50,6 +50,8 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
+import edu.harvard.seas.pl.formulog.Configuration;
+import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiterals;
@@ -62,18 +64,15 @@ import edu.harvard.seas.pl.formulog.ast.I32;
 import edu.harvard.seas.pl.formulog.ast.I64;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
-import edu.harvard.seas.pl.formulog.Configuration;
-import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.ast.StringTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.ast.functions.UserFunctionDef;
-import edu.harvard.seas.pl.formulog.ast.functions.DummyFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDefManager;
+import edu.harvard.seas.pl.formulog.ast.functions.UserFunctionDef;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogBaseVisitor;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogLexer;
@@ -96,6 +95,7 @@ import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.FloatTermCo
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.FormulaTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.FunDeclContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.FunDefLHSContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.HoleTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.I32TermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.I64TermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.IfExprContext;
@@ -121,7 +121,6 @@ import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.RecordEntry
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.RecordEntryDefContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.RecordTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.RecordUpdateTermContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ReifyTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.RelDeclContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.SpecialFPTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.StringTermContext;
@@ -286,6 +285,7 @@ public class Parser {
 		private final Map<FunctionSymbol, Pair<AlgebraicDataType, Integer>> recordLabels = new HashMap<>();
 		private final Map<ConstructorSymbol, FunctionSymbol[]> constructorLabels = new HashMap<>();
 		private final Set<RelationSymbol> externalEdbs = new HashSet<>();
+		private final VariableCheckPass varChecker = new VariableCheckPass(symbolManager);
 		private final Path inputDir;
 		private UserPredicate query;
 
@@ -301,7 +301,13 @@ public class Parser {
 				FunctionSymbol sym = p.fst();
 				List<Var> args = p.snd();
 				Term body = bodies.next();
-				functionDefManager.register(UserFunctionDef.get(sym, args.toArray(new Var[0]), body));
+				try {
+					Term newBody = varChecker.checkFunction(args, body);
+					functionDefManager.register(UserFunctionDef.get(sym, args.toArray(new Var[0]), newBody));
+				} catch (ParseException e) {
+					throw new RuntimeException(
+							"Error in definition for function " + sym + ": " + e.getMessage() + "\n" + body);
+				}
 			}
 			return null;
 		}
@@ -312,7 +318,7 @@ public class Parser {
 			Type retType = ctx.retType.accept(typeExtractor);
 			FunctionSymbol sym = symbolManager.createFunctionSymbol(name, argTypes.size(),
 					new FunctorType(argTypes, retType));
-			List<Var> args = map(ctx.args.VAR(), x -> Var.get(x.getText()));
+			List<Var> args = map(ctx.args.VAR(), x -> Var.make(x.getText()));
 			if (args.size() != new HashSet<>(args).size()) {
 				throw new RuntimeException(
 						"Cannot use the same variable multiple times in a function declaration: " + name);
@@ -542,7 +548,11 @@ public class Parser {
 			if (!(head instanceof UserPredicate)) {
 				throw new RuntimeException("Cannot create rule with non-user predicate in head: " + head);
 			}
-			return BasicRule.make((UserPredicate) head, newBody);
+			try {
+				return varChecker.checkRule((BasicRule.make((UserPredicate) head, newBody)));
+			} catch (ParseException e) {
+				throw new RuntimeException(e);
+			}
 		}
 
 		private List<BasicRule> makeRules(List<ComplexLiteral> head, List<ComplexLiteral> body) {
@@ -600,7 +610,12 @@ public class Parser {
 				BasicRule rule = makeRule(fact, Collections.emptyList());
 				rules.get(sym).add(rule);
 			} else {
-				initialFacts.get(sym).add(fact.getArgs());
+				try {
+					Term[] args = varChecker.checkFact(fact.getArgs());
+					initialFacts.get(sym).add(args);
+				} catch (ParseException e) {
+					throw new RuntimeException(e);
+				}
 			}
 			return null;
 		}
@@ -651,25 +666,14 @@ public class Parser {
 			}
 
 			@Override
-			public Term visitReifyTerm(ReifyTermContext ctx) {
-				Symbol predSym = symbolManager.lookupSymbol(ctx.ID().getText());
-				if (!(predSym instanceof RelationSymbol)) {
-					throw new RuntimeException("Cannot reify something that is not a relation: " + ctx.getText());
-				}
-				FunctionSymbol funcSym = symbolManager.createFunctionSymbolForPredicate((RelationSymbol) predSym, true);
-				if (!functionDefManager.hasDefinition(funcSym)) {
-					functionDefManager.register(new DummyFunctionDef(funcSym));
-				}
-				return functionCallFactory.make(funcSym, Terms.emptyArray());
+			public Term visitHoleTerm(HoleTermContext ctx) {
+				return Var.makeHole();
 			}
 
 			@Override
 			public Term visitVarTerm(VarTermContext ctx) {
-				String var = ctx.VAR().getText();
-				if (var.equals("_")) {
-					return Var.getFresh();
-				}
-				return Var.get(ctx.VAR().getText());
+				String name = ctx.VAR().getText();
+				return Var.make(name);
 			}
 
 			@Override
@@ -686,17 +690,18 @@ public class Parser {
 
 			@Override
 			public Term visitIndexedFunctor(IndexedFunctorContext ctx) {
-				Term[] args = termContextsToTerms(ctx.termArgs().term());
 				String name = ctx.id.getText();
 				List<Integer> indices = getIndices(ctx.index());
+				Symbol sym;
 				if (indices.isEmpty()) {
-					Symbol sym = symbolManager.lookupSymbol(name);
-					return makeFunctor(sym, args);
+					sym = symbolManager.lookupSymbol(name);
+				} else {
+					Pair<IndexedConstructorSymbol, List<Integer>> p = symbolManager.lookupIndexedConstructorSymbol(name,
+							indices);
+					sym = p.fst();
+					indices = p.snd();
 				}
-				Pair<IndexedConstructorSymbol, List<Integer>> p = symbolManager.lookupIndexedConstructorSymbol(name,
-						indices);
-				IndexedConstructorSymbol sym = p.fst();
-				indices = p.snd();
+				Term[] args = termContextsToTerms(ctx.termArgs().term());
 				Term[] expandedArgs = new Term[args.length + indices.size()];
 				System.arraycopy(args, 0, expandedArgs, 0, args.length);
 				Iterator<Integer> it = indices.iterator();
@@ -704,7 +709,7 @@ public class Parser {
 					Integer idx = it.next();
 					Term t;
 					if (idx == null) {
-						t = Var.getFresh();
+						t = Var.fresh();
 					} else {
 						ConstructorSymbol csym = symbolManager.lookupIndexConstructorSymbol(idx);
 						t = Constructors.make(csym, Terms.singletonArray(I32.make(idx)));
@@ -715,24 +720,24 @@ public class Parser {
 				// For a couple constructors, we want to make sure that their arguments are
 				// forced to be non-formula types. For example, the constructor bv_const needs
 				// to take something of type i32, not i32 expr.
-				switch (sym) {
-				case BV_BIG_CONST:
-				case BV_CONST:
-				case FP_BIG_CONST:
-				case FP_CONST:
-					t = makeExitFormula(t);
-				default:
-					break;
+				if (sym instanceof IndexedConstructorSymbol) {
+					switch ((IndexedConstructorSymbol) sym) {
+					case BV_BIG_CONST:
+					case BV_CONST:
+					case FP_BIG_CONST:
+					case FP_CONST:
+						t = makeExitFormula(t);
+					default:
+						break;
+					}
 				}
 				return t;
 			}
 
 			private Term makeFunctor(Symbol sym, Term[] args) {
 				if (sym instanceof RelationSymbol) {
-					FunctionSymbol newSym = symbolManager.createFunctionSymbolForPredicate((RelationSymbol) sym, false);
-					if (!functionDefManager.hasDefinition(newSym)) {
-						functionDefManager.register(new DummyFunctionDef(newSym));
-					}
+					FunctionSymbol newSym = symbolManager
+							.createPredicateFunctionSymbolPlaceholder((RelationSymbol) sym);
 					return functionCallFactory.make(newSym, args);
 				} else if (sym instanceof FunctionSymbol) {
 					Term t = functionCallFactory.make((FunctionSymbol) sym, args);
@@ -1323,6 +1328,7 @@ public class Parser {
 			for (int i = 0; i < args.length; i++) {
 				args[i] = extract(parser.term());
 			}
+			args = varChecker.checkFact(args);
 			facts.add(args);
 		}
 

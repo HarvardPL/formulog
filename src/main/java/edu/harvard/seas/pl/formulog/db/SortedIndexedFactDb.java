@@ -37,11 +37,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import edu.harvard.seas.pl.formulog.ast.BindingType;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolComparator;
-import edu.harvard.seas.pl.formulog.validating.ast.BindingType;
 
 public class SortedIndexedFactDb implements IndexedFactDb {
 
@@ -389,41 +389,6 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 				}
 			}
 			return 0;
-		}
-
-	}
-
-	public static class BindingTypeArrayWrapper {
-		private final BindingType[] arr;
-
-		public BindingTypeArrayWrapper(BindingType[] arr) {
-			this.arr = arr;
-		}
-
-		public BindingType[] getArr() {
-			return arr;
-		}
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + Arrays.hashCode(arr);
-			return result;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			BindingTypeArrayWrapper other = (BindingTypeArrayWrapper) obj;
-			if (!Arrays.equals(arr, other.arr))
-				return false;
-			return true;
 		}
 
 	}

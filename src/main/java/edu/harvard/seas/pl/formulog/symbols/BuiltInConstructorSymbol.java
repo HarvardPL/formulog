@@ -245,12 +245,6 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 		return name;
 	}
 
-	public static void registerAll(SymbolManager symbolManager) {
-		for (BuiltInConstructorSymbol sym : BuiltInConstructorSymbol.values()) {
-			symbolManager.registerSymbol(sym, sym.getCompileTimeType());
-		}
-	}
-
 	private FunctorType makeType(Type...types) {
 		assert types.length == arity + 1;
 		return new FunctorType(types);
