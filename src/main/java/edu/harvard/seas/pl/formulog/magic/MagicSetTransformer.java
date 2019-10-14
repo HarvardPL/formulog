@@ -472,6 +472,7 @@ public class MagicSetTransformer {
 		Set<Var> acc = r.getHead().varSet();
 		liveVars.add(acc);
 		for (int i = r.getBodySize() - 1; i > 0; i--) {
+			acc = new HashSet<>(acc);
 			acc.addAll(r.getBody(i).varSet());
 			liveVars.add(acc);
 		}

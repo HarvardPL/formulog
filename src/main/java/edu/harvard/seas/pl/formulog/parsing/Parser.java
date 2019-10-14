@@ -629,7 +629,12 @@ public class Parser {
 			if (query != null) {
 				throw new RuntimeException("Cannot have multiple queries in the same program: " + query + " and " + a);
 			}
-			query = (UserPredicate) a;
+			UserPredicate q = (UserPredicate) a;
+			try {
+				query = UserPredicate.make(q.getSymbol(), varChecker.checkFact(q.getArgs()), q.isNegated());
+			} catch (ParseException e) {
+				throw new RuntimeException("Problem with query " + query + ": " + e.getMessage());
+			}
 			return null;
 		}
 
