@@ -41,7 +41,7 @@ public class MatchClause {
 		}
 		Substitution s = new SimpleSubstitution();
 		for (Var x : lhs.varSet()) {
-			if (!x.equals(Var.make("_"))) {
+			if (!x.isUnderscore()) {
 				s.put(x, Var.fresh(x.toString()));
 			}
 		}
@@ -55,8 +55,11 @@ public class MatchClause {
 	private static TermVisitor<Set<Var>, Boolean> varsDistinct = new TermVisitor<Set<Var>, Boolean>() {
 
 		@Override
-		public Boolean visit(Var t, Set<Var> in) {
-			return in.add(t);
+		public Boolean visit(Var x, Set<Var> in) {
+			if (x.isUnderscore()) {
+				return true;
+			}
+			return in.add(x);
 		}
 
 		@Override

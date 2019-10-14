@@ -1,0 +1,3 @@
+output ok.
+
+ok :- match (true, false) with (_, _) => true end.

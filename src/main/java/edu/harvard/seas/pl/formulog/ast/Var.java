@@ -55,6 +55,10 @@ public class Var extends AbstractTerm implements Term {
 		return new Var(prefix + "$" + cnt.getAndIncrement());
 	}
 	
+	public boolean isUnderscore() {
+		return name.equals("_");
+	}
+	
 	@Override
 	public String toString() {
 		return name;

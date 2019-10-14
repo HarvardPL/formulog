@@ -256,7 +256,7 @@ public class VariableCheckPass {
 	}
 
 	private static boolean looksLikeTrueAnonymousVar(Var x) {
-		return x.equals(Var.make("_")) || x.toString().startsWith("$");
+		return x.isUnderscore() || x.toString().startsWith("$");
 	}
 
 	private static boolean looksLikeQuasiAnonymousVar(Var x) {
