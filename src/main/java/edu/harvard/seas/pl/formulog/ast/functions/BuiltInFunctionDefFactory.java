@@ -223,9 +223,6 @@ public final class BuiltInFunctionDefFactory {
 			return PrimitiveConversions.i64ToFp64;
 		case i64ToI32:
 			return PrimitiveConversions.i64ToI32;
-		case ENTER_FORMULA:
-		case EXIT_FORMULA:
-			return new Id(sym);
 		case PRINT:
 			return Print.INSTANCE;
 		}
@@ -1526,27 +1523,6 @@ public final class BuiltInFunctionDefFactory {
 		} else {
 			return falseTerm;
 		}
-	}
-
-	private static class Id implements FunctionDef {
-
-		private final FunctionSymbol sym;
-
-		public Id(FunctionSymbol sym) {
-			assert sym.getArity() == 1;
-			this.sym = sym;
-		}
-
-		@Override
-		public FunctionSymbol getSymbol() {
-			return sym;
-		}
-
-		@Override
-		public Term evaluate(Term[] args) throws EvaluationException {
-			return args[0];
-		}
-
 	}
 
 	private enum Print implements FunctionDef {

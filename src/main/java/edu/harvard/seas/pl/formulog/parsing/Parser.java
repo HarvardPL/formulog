@@ -1018,11 +1018,11 @@ public class Parser {
 			}
 
 			private Term makeExitFormula(Term t) {
-				return functionCallFactory.make(BuiltInFunctionSymbol.EXIT_FORMULA, Terms.singletonArray(t));
+				return Constructors.make(BuiltInConstructorSymbol.EXIT_FORMULA, Terms.singletonArray(t));
 			}
 
 			private Term makeEnterFormula(Term t) {
-				return functionCallFactory.make(BuiltInFunctionSymbol.ENTER_FORMULA, Terms.singletonArray(t));
+				return Constructors.make(BuiltInConstructorSymbol.ENTER_FORMULA, Terms.singletonArray(t));
 			}
 
 			@Override
@@ -1030,7 +1030,7 @@ public class Parser {
 				assertNotInFormula("Cannot nest a formula within a formula: " + ctx.getText());
 				toggleInFormula();
 				Term t = extract(ctx.term());
-				t = functionCallFactory.make(BuiltInFunctionSymbol.ENTER_FORMULA, Terms.singletonArray(t));
+				t = Constructors.make(BuiltInConstructorSymbol.ENTER_FORMULA, Terms.singletonArray(t));
 				toggleInFormula();
 				return t;
 			}

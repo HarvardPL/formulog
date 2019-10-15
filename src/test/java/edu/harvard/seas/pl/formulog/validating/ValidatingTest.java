@@ -82,7 +82,7 @@ public abstract class ValidatingTest {
 
 	@Test
 	public void test133() {
-		test("test133_bd.flg");
+		test("test133_ok.flg");
 	}
 
 	@Test

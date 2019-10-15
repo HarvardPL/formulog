@@ -1,0 +1,8 @@
+input phi(bool smt)
+
+phi(`false #= true`).
+phi(`"hello" #= "hello"`).
+
+output ok
+
+ok :- phi(`X #= _Y`), is_valid(`~X`).

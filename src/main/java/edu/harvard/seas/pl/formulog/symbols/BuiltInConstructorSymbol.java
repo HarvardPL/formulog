@@ -223,6 +223,12 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 	
 	INT_GT("int_gt", 2, SOLVER_EXPR),
 	
+	// Stuff for type checking formulas
+	
+	ENTER_FORMULA("enter_formula%", 1, VANILLA_CONSTRUCTOR),
+	
+	EXIT_FORMULA("exit_formula%", 1, VANILLA_CONSTRUCTOR),	
+	
 	;
 
 	private final String name;
@@ -374,6 +380,10 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 		case INT_SUB:
 		case INT_DIV:
 			return makeType(int_, int_, smt(int_));
+		case ENTER_FORMULA:
+			return makeType(smt(a), smt(a));
+		case EXIT_FORMULA:
+			return makeType(a, a);
 		}
 		throw new AssertionError("impossible");
 	}

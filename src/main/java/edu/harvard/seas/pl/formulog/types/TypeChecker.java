@@ -64,7 +64,6 @@ import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDefManager;
 import edu.harvard.seas.pl.formulog.ast.functions.UserFunctionDef;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
-import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
@@ -347,6 +346,9 @@ public class TypeChecker {
 				for (int i = 0; i < args.length; ++i) {
 					newArgs[i] = args[i].accept(this, subst);
 				}
+				if (sym.equals(BuiltInConstructorSymbol.ENTER_FORMULA) || sym.equals(BuiltInConstructorSymbol.EXIT_FORMULA)) {
+					return newArgs[0];
+				}
 				return Constructors.make(sym, newArgs);
 			}
 
@@ -623,8 +625,16 @@ public class TypeChecker {
 		}
 
 		private void genConstraintsForConstructor(Constructor t, Type ttype, Map<Var, Type> subst,
-				boolean allowSubtype) {
+				boolean inFormula) {
+			boolean wasInFormula = inFormula;
 			ConstructorSymbol cnstrSym = t.getSymbol();
+			if (cnstrSym.equals(BuiltInConstructorSymbol.ENTER_FORMULA)) {
+				assert !wasInFormula;
+				inFormula = true;
+			}
+			if (cnstrSym.equals(BuiltInConstructorSymbol.EXIT_FORMULA)) {
+				inFormula = false;
+			}
 			FunctorType cnstrType = cnstrSym.getCompileTimeType().freshen();
 			Term[] args = t.getArgs();
 			List<Type> argTypes = cnstrType.getArgTypes();
@@ -633,28 +643,29 @@ public class TypeChecker {
 			}
 			for (int i = 0; i < args.length; ++i) {
 				Type argType = argTypes.get(i);
-				genConstraints(args[i], argType, subst, allowSubtype);
+				genConstraints(args[i], argType, subst, inFormula);
 			}
-			addConstraint(cnstrType.getRetType(), ttype, allowSubtype);
+			addConstraint(cnstrType.getRetType(), ttype, wasInFormula);
 		}
 
 		private void genConstraintsForFunctionCall(FunctionCall function, Type ttype, Map<Var, Type> subst,
 				boolean inFormula) {
-			boolean wasInFormula = inFormula;
-			if (function.getSymbol().equals(BuiltInFunctionSymbol.ENTER_FORMULA)) {
-				assert !wasInFormula;
-				inFormula = true;
-			}
-			if (function.getSymbol().equals(BuiltInFunctionSymbol.EXIT_FORMULA)) {
-				inFormula = false;
-			}
+//			boolean wasInFormula = inFormula;
+//			if (function.getSymbol().equals(BuiltInFunctionSymbol.ENTER_FORMULA)) {
+//				assert !wasInFormula;
+//				inFormula = true;
+//			}
+//			if (function.getSymbol().equals(BuiltInFunctionSymbol.EXIT_FORMULA)) {
+//				inFormula = false;
+//			}
 			FunctorType funType = (FunctorType) function.getSymbol().getCompileTimeType().freshen();
 			Term[] args = function.getArgs();
 			List<Type> argTypes = funType.getArgTypes();
 			for (int i = 0; i < args.length; ++i) {
 				genConstraints(args[i], argTypes.get(i), subst, inFormula);
 			}
-			addConstraint(funType.getRetType(), ttype, wasInFormula);
+//			addConstraint(funType.getRetType(), ttype, wasInFormula);
+			addConstraint(funType.getRetType(), ttype, inFormula);
 		}
 
 		private boolean checkConstraints() {

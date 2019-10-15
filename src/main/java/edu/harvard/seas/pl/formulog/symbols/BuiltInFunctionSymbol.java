@@ -211,12 +211,6 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 
 	fp64ToFp32("fp64_to_fp32", fp64, fp32),
 	
-	// Stuff for formulas
-	
-	ENTER_FORMULA("enter_formula%", smt(a), smt(a)),
-	
-	EXIT_FORMULA("exit_formula%", a, a),
-	
 	// Debugging
 	
 	PRINT("print", a, bool)

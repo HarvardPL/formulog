@@ -261,6 +261,10 @@ public final class Constructors {
 			return makeSolverOp.apply("str.substr");
 		case STR_SUFFIXOF:
 			return makeSolverOp.apply("str.suffixof");
+		case ENTER_FORMULA:
+			return memo.lookupOrCreate(sym, args, () -> new VanillaConstructor(sym, args));
+		case EXIT_FORMULA:
+			return memo.lookupOrCreate(sym, args, () -> new VanillaConstructor(sym, args));
 		}
 		throw new AssertionError("impossible");
 	}
