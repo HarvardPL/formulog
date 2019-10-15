@@ -40,6 +40,7 @@ import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbolType;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.IndexedConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RecordSymbol;
+import edu.harvard.seas.pl.formulog.symbols.SmtEqSymbol;
 import edu.harvard.seas.pl.formulog.symbols.TupleSymbol;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
@@ -69,6 +70,9 @@ public final class Constructors {
 		}
 		if (sym instanceof RecordSymbol) {
 			return memo.lookupOrCreate(sym, args, () -> new Record((RecordSymbol) sym, args));
+		}
+		if (sym instanceof SmtEqSymbol) {
+			return memo.lookupOrCreate(sym, args, () -> new SolverOperation(sym, args, "="));
 		}
 		switch (sym.getConstructorSymbolType()) {
 		case SOLVER_UNINTERPRETED_FUNCTION:

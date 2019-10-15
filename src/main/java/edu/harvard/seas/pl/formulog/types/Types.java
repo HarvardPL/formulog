@@ -521,5 +521,36 @@ public final class Types {
 			getTypeVars(t, acc);
 		}
 	}
+	
+	public static boolean containsTypeVarOrOpaqueType(Type t) {
+		return t.visit(new TypeVisitor<Void, Boolean>() {
+
+			@Override
+			public Boolean visit(TypeVar typeVar, Void in) {
+				return true;
+			}
+
+			@Override
+			public Boolean visit(AlgebraicDataType algebraicType, Void in) {
+				for (Type ty : algebraicType.getTypeArgs()) {
+					if (ty.visit(this, in)) {
+						return true;
+					}
+				}
+				return false;
+			}
+
+			@Override
+			public Boolean visit(OpaqueType opaqueType, Void in) {
+				return true;
+			}
+
+			@Override
+			public Boolean visit(TypeIndex typeIndex, Void in) {
+				return false;
+			}
+			
+		}, null);
+	}
 
 }

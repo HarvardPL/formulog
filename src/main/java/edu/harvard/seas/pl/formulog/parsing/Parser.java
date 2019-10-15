@@ -122,6 +122,7 @@ import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.RecordEntry
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.RecordTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.RecordUpdateTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.RelDeclContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.SmtEqTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.SpecialFPTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.StringTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TermAtomContext;
@@ -765,6 +766,19 @@ public class Parser {
 			}
 
 			@Override
+			public Term visitSmtEqTerm(SmtEqTermContext ctx) {
+				Type type = ctx.type().accept(typeExtractor);
+				if (isSolverUnfriendlyType(type)) {
+					throw new RuntimeException(
+							"Cannot create an smt_eq with a type that contains a type variable, an smt type, or a sym type: "
+									+ ctx.getText());
+				}
+				ConstructorSymbol sym = symbolManager.lookupSmtEqSymbol(type);
+				Term[] args = termContextsToTerms(ctx.termArgs().term());
+				return Constructors.make(sym, args);
+			}
+
+			@Override
 			public Term visitTupleTerm(TupleTermContext ctx) {
 				Term[] args = termContextsToTerms(ctx.tuple().term());
 				return Constructors.make(symbolManager.lookupTupleSymbol(args.length), args);
@@ -1134,39 +1148,48 @@ public class Parser {
 			}
 
 			private Term extractSolverSymbol(Term id, Type type) {
-				type.visit(new TypeVisitor<Void, Void>() {
+				if (isSolverUnfriendlyType(type)) {
+					throw new RuntimeException(
+							"Cannot create solver variable with a type that contains a type variable, an smt type, or a sym type: "
+									+ type);
+				}
+				ConstructorSymbol sym = symbolManager.lookupSolverSymbol(type);
+				return makeExitFormula(Constructors.make(sym, Terms.singletonArray(id)));
+			}
+
+			private boolean isSolverUnfriendlyType(Type type) {
+				return type.visit(new TypeVisitor<Void, Boolean>() {
 
 					@Override
-					public Void visit(TypeVar typeVar, Void in) {
-						throw new RuntimeException("Cannot create a symbol for parametric type: " + type);
+					public Boolean visit(TypeVar typeVar, Void in) {
+						return true;
 					}
 
 					@Override
-					public Void visit(AlgebraicDataType algebraicType, Void in) {
+					public Boolean visit(AlgebraicDataType algebraicType, Void in) {
 						Symbol sym = algebraicType.getSymbol();
 						if (sym.equals(BuiltInTypeSymbol.SMT_TYPE) || sym.equals(BuiltInTypeSymbol.SYM_TYPE)) {
-							throw new RuntimeException(
-									"Cannot create a symbol with a type that includes expr or sym: " + type);
+							return true;
 						}
-						for (Type t : algebraicType.getTypeArgs()) {
-							t.visit(this, in);
+						for (Type ty : algebraicType.getTypeArgs()) {
+							if (ty.visit(this, in)) {
+								return true;
+							}
 						}
-						return null;
+						return false;
 					}
 
 					@Override
-					public Void visit(OpaqueType opaqueType, Void in) {
+					public Boolean visit(OpaqueType opaqueType, Void in) {
 						throw new AssertionError();
 					}
 
 					@Override
-					public Void visit(TypeIndex typeIndex, Void in) {
-						return null;
+					public Boolean visit(TypeIndex typeIndex, Void in) {
+						return false;
 					}
 
 				}, null);
-				ConstructorSymbol sym = symbolManager.lookupSolverSymbol(type);
-				return makeExitFormula(Constructors.make(sym, Terms.singletonArray(id)));
 			}
 
 			public Term visitOutermostCtor(OutermostCtorContext ctx) {

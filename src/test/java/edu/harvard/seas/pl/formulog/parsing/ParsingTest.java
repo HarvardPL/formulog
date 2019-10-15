@@ -149,4 +149,19 @@ public class ParsingTest {
 		test("test266_bd.flg");
 	}
 	
+	@Test
+	public void test270() {
+		test("test270_bd.flg");
+	}
+	
+	@Test
+	public void test271() {
+		test("test271_bd.flg");
+	}
+	
+	@Test
+	public void test272() {
+		test("test272_bd.flg");
+	}
+	
 }

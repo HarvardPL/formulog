@@ -180,4 +180,14 @@ public class TypeCheckingTest {
 		test("test188_bd.flg");
 	}
 	
+	@Test
+	public void test268() {
+		test("test268_bd.flg");
+	}
+	
+	@Test
+	public void test269() {
+		test("test269_bd.flg");
+	}
+	
 }

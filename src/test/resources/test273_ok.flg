@@ -1,0 +1,3 @@
+output ok
+
+ok :- is_sat(`(4 #= 42) #= ("hello" #= "goodbye")`). 

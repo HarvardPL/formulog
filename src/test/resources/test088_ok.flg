@@ -1,2 +1,2 @@
 output ok.
-ok :- is_valid(`[] #= []`).
+ok :- is_valid(`smt_eq[bool list]([], [])`).

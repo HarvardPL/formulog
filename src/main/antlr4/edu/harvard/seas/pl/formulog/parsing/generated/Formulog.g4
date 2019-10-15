@@ -220,6 +220,7 @@ termArgs
 term
 :
 	HOLE # holeTerm
+	| 'smt_eq' '[' type ']' termArgs # smtEqTerm
 	| functor # functorTerm
 	| list # listTerm
 	| tuple # tupleTerm

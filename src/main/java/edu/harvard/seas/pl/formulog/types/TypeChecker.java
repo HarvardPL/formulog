@@ -38,11 +38,13 @@ import java.util.concurrent.Future;
 import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
+import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralExnVisitor;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralVisitor;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
 import edu.harvard.seas.pl.formulog.ast.Expr;
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
+import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitorExn;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.I32;
@@ -54,12 +56,14 @@ import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
+import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitorExn;
 import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDefManager;
 import edu.harvard.seas.pl.formulog.ast.functions.UserFunctionDef;
+import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
@@ -295,7 +299,7 @@ public class TypeChecker {
 						TypeCheckerContext ctx = new TypeCheckerContext();
 						return ctx.typeCheckFunction((UserFunctionDef) def);
 					}
-					
+
 				});
 				futures.put(sym, fut);
 			} else {
@@ -314,7 +318,75 @@ public class TypeChecker {
 		private final Deque<Pair<Type, Type>> constraints = new ArrayDeque<>();
 		private final Deque<Pair<Type, Type>> formulaConstraints = new ArrayDeque<>();
 		private final Map<TypeVar, Type> typeVars = new HashMap<>();
+		private final Deque<Pair<Constructor, Type>> smtEqsToResolve = new ArrayDeque<>();
 		private String error;
+
+		private final TermVisitorExn<Substitution, Term, TypeException> termRewriter = new TermVisitorExn<Substitution, Term, TypeException>() {
+
+			@Override
+			public Term visit(Var x, Substitution subst) throws TypeException {
+				if (subst.containsKey(x)) {
+					return subst.get(x);
+				}
+				return x;
+			}
+
+			@Override
+			public Term visit(Constructor c, Substitution subst) throws TypeException {
+				ConstructorSymbol sym = c.getSymbol();
+				if (sym.equals(BuiltInConstructorSymbol.FORMULA_EQ)) {
+					Pair<Constructor, Type> p = smtEqsToResolve.removeFirst();
+					Type eltType = simplify(lookupType(p.snd()));
+					if (Types.containsTypeVarOrOpaqueType(eltType)) {
+						throw new TypeException("Cannot determine element type in solver equality: " + p.fst());
+					}
+					sym = prog.getSymbolManager().lookupSmtEqSymbol(eltType);
+				}
+				Term[] args = c.getArgs();
+				Term[] newArgs = new Term[args.length];
+				for (int i = 0; i < args.length; ++i) {
+					newArgs[i] = args[i].accept(this, subst);
+				}
+				return Constructors.make(sym, newArgs);
+			}
+
+			@Override
+			public Term visit(Primitive<?> p, Substitution subst) throws TypeException {
+				return p;
+			}
+
+			@Override
+			public Term visit(Expr e, Substitution subst) throws TypeException {
+				return e.accept(exprRewriter, subst);
+			}
+
+		};
+
+		private final ExprVisitorExn<Substitution, Expr, TypeException> exprRewriter = new ExprVisitorExn<Substitution, Expr, TypeException>() {
+
+			@Override
+			public Expr visit(MatchExpr matchExpr, Substitution subst) throws TypeException {
+				Term scrutinee = matchExpr.getMatchee().accept(termRewriter, subst);
+				List<MatchClause> clauses = new ArrayList<>();
+				for (MatchClause cl : matchExpr) {
+					Term lhs = cl.getLhs().accept(termRewriter, subst);
+					Term rhs = cl.getRhs().accept(termRewriter, subst);
+					clauses.add(MatchClause.make(lhs, rhs));
+				}
+				return MatchExpr.make(scrutinee, clauses);
+			}
+
+			@Override
+			public Expr visit(FunctionCall funcCall, Substitution subst) throws TypeException {
+				Term[] args = funcCall.getArgs();
+				Term[] newArgs = new Term[args.length];
+				for (int i = 0; i < args.length; ++i) {
+					newArgs[i] = args[i].accept(termRewriter, subst);
+				}
+				return funcCall.copyWithNewArgs(newArgs);
+			}
+
+		};
 
 		public Term[] typeCheckFact(RelationSymbol sym, Term[] args) throws TypeException {
 			Map<Var, Type> subst = new HashMap<>();
@@ -323,7 +395,24 @@ public class TypeChecker {
 				throw new TypeException("Type error in fact: " + UserPredicate.make(sym, args, false) + "\n" + error);
 			}
 			Substitution m = makeIndexSubstitution(subst);
-			return Terms.map(args, t -> t.applySubstitution(m));
+			return Terms.mapExn(args, t -> t.accept(termRewriter, m));
+		}
+
+		private ComplexLiteral rewriteLiteral(ComplexLiteral l, Substitution m) throws TypeException {
+			Term[] args = Terms.mapExn(l.getArgs(), t -> t.accept(termRewriter, m));
+			return l.accept(new ComplexLiteralExnVisitor<Void, ComplexLiteral, TypeException>() {
+
+				@Override
+				public ComplexLiteral visit(UnificationPredicate pred, Void input) throws TypeException {
+					return UnificationPredicate.make(args[0], args[1], pred.isNegated());
+				}
+
+				@Override
+				public ComplexLiteral visit(UserPredicate pred, Void input) throws TypeException {
+					return UserPredicate.make(pred.getSymbol(), args, pred.isNegated());
+				}
+
+			}, null);
 		}
 
 		public UserPredicate typeCheckQuery(UserPredicate q) throws TypeException {
@@ -333,7 +422,7 @@ public class TypeChecker {
 				throw new TypeException("Type error in query: " + q + "\n" + error);
 			}
 			Substitution m = makeIndexSubstitution(subst);
-			return q.applySubstitution(m);
+			return (UserPredicate) rewriteLiteral(q, m);
 		}
 
 		public BasicRule typeCheckRule(Rule<UserPredicate, ComplexLiteral> r) throws TypeException {
@@ -347,10 +436,10 @@ public class TypeChecker {
 				throw new TypeException(msg);
 			}
 			Substitution m = makeIndexSubstitution(subst);
-			UserPredicate newHead = r.getHead().applySubstitution(m);
+			UserPredicate newHead = (UserPredicate) rewriteLiteral(r.getHead(), m);
 			List<ComplexLiteral> newBody = new ArrayList<>();
 			for (ComplexLiteral a : r) {
-				newBody.add(a.applySubstitution(m));
+				newBody.add(rewriteLiteral(a, m));
 			}
 			return BasicRule.make(newHead, newBody);
 		}
@@ -378,28 +467,30 @@ public class TypeChecker {
 			}
 			Substitution m = makeIndexSubstitution(subst);
 			return UserFunctionDef.get(functionDef.getSymbol(), functionDef.getParams(),
-					functionDef.getBody().applySubstitution(m));
+					functionDef.getBody().accept(termRewriter, m));
 		}
 
-//		public Term typeCheckTerm(Term t, Type type) throws TypeException {
-//			Map<Var, Type> subst = new HashMap<>();
-//			genConstraints(t, type, subst, false);
-//			if (!checkConstraints()) {
-//				throw new TypeException(error);
-//			}
-//			Substitution m = makeIndexSubstitution(subst);
-//			return t.applySubstitution(m);
-//		}
-//
-//		public void checkUnifiability(List<Type> xs, List<Type> ys) throws TypeException {
-//			assert xs.size() == ys.size();
-//			for (Iterator<Type> it1 = xs.iterator(), it2 = ys.iterator(); it1.hasNext();) {
-//				addConstraint(it1.next(), it2.next(), false);
-//			}
-//			if (!checkConstraints()) {
-//				throw new TypeException(error);
-//			}
-//		}
+		// public Term typeCheckTerm(Term t, Type type) throws TypeException {
+		// Map<Var, Type> subst = new HashMap<>();
+		// genConstraints(t, type, subst, false);
+		// if (!checkConstraints()) {
+		// throw new TypeException(error);
+		// }
+		// Substitution m = makeIndexSubstitution(subst);
+		// return t.applySubstitution(m);
+		// }
+		//
+		// public void checkUnifiability(List<Type> xs, List<Type> ys) throws
+		// TypeException {
+		// assert xs.size() == ys.size();
+		// for (Iterator<Type> it1 = xs.iterator(), it2 = ys.iterator(); it1.hasNext();)
+		// {
+		// addConstraint(it1.next(), it2.next(), false);
+		// }
+		// if (!checkConstraints()) {
+		// throw new TypeException(error);
+		// }
+		// }
 
 		private void processAtoms(Iterable<ComplexLiteral> atoms, Map<Var, Type> subst) {
 			for (ComplexLiteral a : atoms) {
@@ -537,6 +628,9 @@ public class TypeChecker {
 			FunctorType cnstrType = cnstrSym.getCompileTimeType().freshen();
 			Term[] args = t.getArgs();
 			List<Type> argTypes = cnstrType.getArgTypes();
+			if (cnstrSym.equals(BuiltInConstructorSymbol.FORMULA_EQ)) {
+				smtEqsToResolve.add(new Pair<>(t, argTypes.get(0)));
+			}
 			for (int i = 0; i < args.length; ++i) {
 				Type argType = argTypes.get(i);
 				genConstraints(args[i], argType, subst, allowSubtype);

@@ -177,6 +177,12 @@ public class SymbolManager {
 		}
 		return sym;
 	}
+	
+	public SmtEqSymbol lookupSmtEqSymbol(Type eltType) {
+		SmtEqSymbol sym = SmtEqSymbol.make(eltType);
+		registerSymbol(sym);
+		return sym;
+	}
 
 	private abstract class AbstractSymbol implements Symbol {
 
