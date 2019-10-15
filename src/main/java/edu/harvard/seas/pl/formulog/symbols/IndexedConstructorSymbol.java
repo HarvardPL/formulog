@@ -42,11 +42,11 @@ public enum IndexedConstructorSymbol implements ConstructorSymbol, IndexedSymbol
 
 	BV_BIG_CONST("bv_big_const", 1, 1, 0),
 
-	BV_TO_BV_SIGNED("bv_to_bv_signed", 1, 1, 1),
+	BV_TO_BV_SIGNED("bv_to_bv_signed", 1, 2, 0),
 
-	BV_TO_BV_UNSIGNED("bv_to_bv_unsigned", 1, 1, 1),
+	BV_TO_BV_UNSIGNED("bv_to_bv_unsigned", 1, 2, 0),
 
-	FP_TO_BV("fp_to_bv", 1, 1, 2),
+	FP_TO_BV("fp_to_bv", 1, 3, 0),
 	
 	// Floating point constructors
 
@@ -54,9 +54,9 @@ public enum IndexedConstructorSymbol implements ConstructorSymbol, IndexedSymbol
 
 	FP_BIG_CONST("fp_big_const", 1, 2, 0),
 
-	FP_TO_FP("fp_to_fp", 1, 2, 2),
+	FP_TO_FP("fp_to_fp", 1, 4, 0),
 	
-	BV_TO_FP("bv_to_fp", 1, 2, 1),
+	BV_TO_FP("bv_to_fp", 1, 3, 0),
 	
 	;
 	

@@ -1,4 +1,4 @@
-fun foo : i32 smt = `bv_to_bv_unsigned[32](0L)`
+fun foo : i32 smt = `bv_to_bv_unsigned[64,32](0L)`
 
 output ok
 ok :- foo = X, is_valid(`X #= 0`).

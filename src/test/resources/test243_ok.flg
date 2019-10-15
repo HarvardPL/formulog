@@ -1,2 +1,2 @@
 output ok
-ok :- Y = let X = `bv_to_bv_unsigned[32](0L)` in X, is_valid(`Y #= 0`).
+ok :- Y = let X = `bv_to_bv_unsigned[64,32](0L)` in X, is_valid(`Y #= 0`).

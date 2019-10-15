@@ -83,18 +83,24 @@ public final class IndexedSymbols {
 	}
 
 	private static List<Integer> expandFpAlias(int width) {
+		List<Integer> is;
 		switch (width) {
 		case 16:
-			return Arrays.asList(5, 11);
+			is = Arrays.asList(5, 11);
+			break;
 		case 32:
-			return Arrays.asList(8, 24);
+			is = Arrays.asList(8, 24);
+			break;
 		case 64:
-			return Arrays.asList(11, 53);
+			is = Arrays.asList(11, 53);
+			break;
 		case 128:
-			return Arrays.asList(15, 113);
+			is = Arrays.asList(15, 113);
+			break;
 		default:
 			throw new IllegalArgumentException("Illegal FP width alias: " + width);
 		}
+		return new ArrayList<>(is);
 	}
 
 	public static List<Integer> padIndices(IndexedSymbol sym, List<Integer> indices) {
@@ -124,14 +130,33 @@ public final class IndexedSymbols {
 			case BV_CONST:
 			case BV_TO_BV_SIGNED:
 			case BV_TO_BV_UNSIGNED:
+				break;
 			case FP_TO_BV:
+				if (indices.size() == 2) {
+					List<Integer> is = expandFpAlias(indices.get(0));
+					is.add(indices.get(1));
+					return is;
+				}
 				break;
 			case BV_TO_FP:
+				if (indices.size() == 2) {
+					List<Integer> is = new ArrayList<>();
+					is.add(indices.get(0));
+					is.addAll(expandFpAlias(indices.get(1)));
+					return is;
+				}
+				break;
 			case FP_BIG_CONST:
 			case FP_CONST:
-			case FP_TO_FP:
 				if (indices.size() == 1) {
 					return expandFpAlias(indices.get(0));
+				}
+				break;
+			case FP_TO_FP:
+				if (indices.size() == 2) {
+					List<Integer> is = expandFpAlias(indices.get(0));
+					is.addAll(expandFpAlias(indices.get(1)));
+					return is;
 				}
 				break;
 			}

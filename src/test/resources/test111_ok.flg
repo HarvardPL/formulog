@@ -1,5 +1,5 @@
 output ok.
 ok :-
-  some(M) = get_model(`(#x[bv[16]] #= bv_big_const[16](42L)) /\ (#y[i32] #= bv_to_bv_signed[32](#x[bv[16]]))`, none),
+  some(M) = get_model(`(#x[bv[16]] #= bv_big_const[16](42L)) /\ (#y[i32] #= bv_to_bv_signed[16,32](#x[bv[16]]))`, none),
   query_model(#x[bv[16]], M) = none,
   query_model(#y[bv[32]], M) = some(42).
