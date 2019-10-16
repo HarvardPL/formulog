@@ -25,9 +25,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import edu.harvard.seas.pl.formulog.smt.SmtManager;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
-import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 
 public class FunctionDefManager {
 
@@ -63,8 +63,8 @@ public class FunctionDefManager {
 		return Collections.unmodifiableSet(memo.keySet());
 	}
 	
-	public void loadBuiltInFunctions(SymbolManager sm) {
-		BuiltInFunctionDefFactory builtIns = new BuiltInFunctionDefFactory(sm);
+	public void loadBuiltInFunctions(SmtManager smt) {
+		BuiltInFunctionDefFactory builtIns = new BuiltInFunctionDefFactory(smt);
 		for (BuiltInFunctionSymbol sym : BuiltInFunctionSymbol.values()) {
 			memo.put(sym, builtIns.get(sym));
 		}

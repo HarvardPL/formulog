@@ -46,23 +46,20 @@ import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.smt.SmtLibShim.Status;
-import edu.harvard.seas.pl.formulog.smt.Z3Process;
-import edu.harvard.seas.pl.formulog.smt.Z3Thread;
+import edu.harvard.seas.pl.formulog.smt.SmtManager;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
-import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
 
 // TODO Break this up into different classes; pass them into BuiltInFunctionSymbol
 public final class BuiltInFunctionDefFactory {
 
-	private final Z3Process z3;
+	private final SmtManager smt;
 
-	public BuiltInFunctionDefFactory(SymbolManager symbolManager) {
-		z3 = new Z3Process(symbolManager);
-		z3.start();
+	public BuiltInFunctionDefFactory(SmtManager smt) {
+		this.smt = smt;
 	}
 
 	public FunctionDef get(BuiltInFunctionSymbol sym) {
@@ -1328,12 +1325,7 @@ public final class BuiltInFunctionDefFactory {
 			if (m2 != null) {
 				m = m2;
 			} else {
-				Thread thread = Thread.currentThread();
-				Z3Process localZ3 = z3;
-				if (thread instanceof Z3Thread) {
-					localZ3 = ((Z3Thread) thread).getZ3Process();
-				}
-				Pair<Status, Map<SolverVariable, Term>> p = localZ3.check(formula, timeout);
+				Pair<Status, Map<SolverVariable, Term>> p = smt.check(formula, timeout);
 				switch (p.fst()) {
 				case SATISFIABLE:
 					future.complete(Optional.of(Model.make(p.snd())));

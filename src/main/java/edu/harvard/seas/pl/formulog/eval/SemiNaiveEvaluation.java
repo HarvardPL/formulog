@@ -52,6 +52,7 @@ import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb.SortedIndexedFactDbBuilder;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
+import edu.harvard.seas.pl.formulog.smt.SmtManager;
 import edu.harvard.seas.pl.formulog.smt.Z3ThreadFactory;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
@@ -141,8 +142,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 		SortedIndexedFactDb db = dbb.build();
 		predFuncs.setDb(db);
-		
-		prog.getFunctionCallFactory().getDefManager().loadBuiltInFunctions(prog.getSymbolManager());
+	
+		SmtManager smt = new SmtManager(prog.getSymbolManager());
+		prog.getFunctionCallFactory().getDefManager().loadBuiltInFunctions(smt);
 
 		CountingFJP exec;
 		if (sequential) {
