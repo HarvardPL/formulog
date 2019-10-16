@@ -97,11 +97,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 	@SuppressWarnings("serial")
 	public static SemiNaiveEvaluation setup(WellTypedProgram prog, int parallelism) throws InvalidProgramException {
 		FunctionDefValidation.validate(prog);
-		SmtManager smt = new SmtManager(prog);
-		prog.getFunctionCallFactory().getDefManager().loadBuiltInFunctions(smt);
 		MagicSetTransformer mst = new MagicSetTransformer(prog);
 		BasicProgram magicProg = mst.transform(Configuration.useDemandTransformation, true);
-
 		Set<RelationSymbol> allRelations = new HashSet<>(magicProg.getFactSymbols());
 		allRelations.addAll(magicProg.getRuleSymbols());
 		SortedIndexedFactDbBuilder dbb = new SortedIndexedFactDbBuilder(allRelations);
@@ -144,6 +141,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 		SortedIndexedFactDb db = dbb.build();
 		predFuncs.setDb(db);
+		
+		SmtManager smt = new SmtManager(prog);
+		prog.getFunctionCallFactory().getDefManager().loadBuiltInFunctions(smt);
 
 		CountingFJP exec;
 		if (sequential) {

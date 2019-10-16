@@ -33,6 +33,12 @@ public class FunctionDefManager {
 
 	private final Map<FunctionSymbol, FunctionDef> memo = new HashMap<>();
 
+	public FunctionDefManager() {
+		for (BuiltInFunctionSymbol sym : BuiltInFunctionSymbol.values()) {
+			memo.put(sym, new DummyFunctionDef(sym));
+		}
+	}
+	
 	public void register(FunctionDef def) {
 		if (memo.put(def.getSymbol(), def) != null) {
 			throw new IllegalArgumentException(
@@ -62,13 +68,12 @@ public class FunctionDefManager {
 	public Set<FunctionSymbol> getFunctionSymbols() {
 		return Collections.unmodifiableSet(memo.keySet());
 	}
-	
+
 	public void loadBuiltInFunctions(SmtManager smt) {
 		BuiltInFunctionDefFactory builtIns = new BuiltInFunctionDefFactory(smt);
 		for (BuiltInFunctionSymbol sym : BuiltInFunctionSymbol.values()) {
 			memo.put(sym, builtIns.get(sym));
 		}
-		
 	}
 
 }

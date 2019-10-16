@@ -287,6 +287,7 @@ public class Parser {
 		private final Map<ConstructorSymbol, FunctionSymbol[]> constructorLabels = new HashMap<>();
 		private final Set<RelationSymbol> externalEdbs = new HashSet<>();
 		private final VariableCheckPass varChecker = new VariableCheckPass(symbolManager);
+		private final Set<ConstructorSymbol> uninterpFuncSymbols = new HashSet<>();
 		private final Path inputDir;
 		private UserPredicate query;
 
@@ -526,6 +527,7 @@ public class Parser {
 			if (!Types.getTypeVars(typeArgs).isEmpty() || !Types.getTypeVars(type).isEmpty()) {
 				throw new RuntimeException("Unbound type variable in definition of " + csym);
 			}
+			uninterpFuncSymbols.add(csym);
 			return null;
 		}
 
@@ -1360,6 +1362,25 @@ public class Parser {
 			facts.add(args);
 		}
 
+		// XXX It would probably be better just to force everything to go
+		// through a type manager and have that keep track of all of the types.
+		private Set<TypeSymbol> findTypes() {
+			TypeFinder tf = new TypeFinder();
+			for (FunctionSymbol sym : functionDefManager.getFunctionSymbols()) {
+				tf.exploreFunction(functionDefManager.lookup(sym));
+			}
+			for (RelationSymbol sym : initialFacts.keySet()) {
+				tf.exploreFunctorType(sym.getCompileTimeType());
+			}
+			for (RelationSymbol sym : rules.keySet()) {
+				tf.exploreFunctorType(sym.getCompileTimeType());
+				for (BasicRule r : rules.get(sym)) {
+					tf.exploreRule(r);
+				}
+			}
+			return tf.getTypes();
+		}
+		
 		public BasicProgram getProgram() throws ParseException {
 			if (!externalEdbs.isEmpty()) {
 				ExecutorService exec = Executors.newFixedThreadPool(Configuration.parallelism);
@@ -1382,6 +1403,7 @@ public class Parser {
 					throw new ParseException(e);
 				}
 			}
+			Set<TypeSymbol> typeSymbols = Collections.unmodifiableSet(findTypes());
 			return new BasicProgram() {
 
 				@Override
@@ -1444,6 +1466,16 @@ public class Parser {
 				@Override
 				public FunctionCallFactory getFunctionCallFactory() {
 					return functionCallFactory;
+				}
+
+				@Override
+				public Set<ConstructorSymbol> getUninterpretedFunctionSymbols() {
+					return Collections.unmodifiableSet(uninterpFuncSymbols);
+				}
+
+				@Override
+				public Set<TypeSymbol> getTypeSymbols() {
+					return typeSymbols;
 				}
 
 			};

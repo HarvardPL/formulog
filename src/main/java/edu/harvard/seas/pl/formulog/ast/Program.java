@@ -23,8 +23,10 @@ package edu.harvard.seas.pl.formulog.ast;
 import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
+import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
+import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 
 public interface Program<Q extends Literal, R extends Rule<Q, ?>> {
@@ -48,5 +50,9 @@ public interface Program<Q extends Literal, R extends Rule<Q, ?>> {
 	Q getQuery();
 	
 	FunctionCallFactory getFunctionCallFactory();
+	
+	Set<ConstructorSymbol> getUninterpretedFunctionSymbols();
+	
+	Set<TypeSymbol> getTypeSymbols();
 
 }

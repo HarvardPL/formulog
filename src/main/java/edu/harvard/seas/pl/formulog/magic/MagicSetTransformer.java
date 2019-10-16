@@ -52,12 +52,14 @@ import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.UserFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.symbols.AbstractWrappedRelationSymbol;
+import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolComparator;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
+import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.util.DedupWorkList;
 import edu.harvard.seas.pl.formulog.util.Pair;
@@ -248,6 +250,16 @@ public class MagicSetTransformer {
 			@Override
 			public FunctionCallFactory getFunctionCallFactory() {
 				return origProg.getFunctionCallFactory();
+			}
+
+			@Override
+			public Set<ConstructorSymbol> getUninterpretedFunctionSymbols() {
+				return origProg.getUninterpretedFunctionSymbols();
+			}
+
+			@Override
+			public Set<TypeSymbol> getTypeSymbols() {
+				return origProg.getTypeSymbols();
 			}
 
 		};
@@ -942,6 +954,16 @@ public class MagicSetTransformer {
 		@Override
 		public FunctionCallFactory getFunctionCallFactory() {
 			return origProg.getFunctionCallFactory();
+		}
+
+		@Override
+		public Set<ConstructorSymbol> getUninterpretedFunctionSymbols() {
+			return origProg.getUninterpretedFunctionSymbols();
+		}
+
+		@Override
+		public Set<TypeSymbol> getTypeSymbols() {
+			return origProg.getTypeSymbols();
 		}
 
 	}

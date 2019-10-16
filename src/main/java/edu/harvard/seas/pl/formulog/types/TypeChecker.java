@@ -164,6 +164,16 @@ public class TypeChecker {
 				return prog.getFunctionCallFactory();
 			}
 
+			@Override
+			public Set<ConstructorSymbol> getUninterpretedFunctionSymbols() {
+				return prog.getUninterpretedFunctionSymbols();
+			}
+
+			@Override
+			public Set<TypeSymbol> getTypeSymbols() {
+				return prog.getTypeSymbols();
+			}
+
 		};
 	}
 
