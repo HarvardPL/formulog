@@ -21,7 +21,6 @@ package edu.harvard.seas.pl.formulog.util;
  */
 
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ForkJoinPool.ForkJoinWorkerThreadFactory;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -34,15 +33,16 @@ public class CountingFJPImpl implements CountingFJP {
 	private final AtomicInteger taskCount = new AtomicInteger();
 	private volatile EvaluationException failureCause;
 
-	public CountingFJPImpl(int parallelism, ForkJoinWorkerThreadFactory threadFactory) {
-		this.exec = new ForkJoinPool(parallelism, threadFactory, new Thread.UncaughtExceptionHandler() {
-			
-			@Override
-			public void uncaughtException(Thread t, Throwable e) {
-				System.err.println(e);
-			}
-			
-		}, false);
+	public CountingFJPImpl(int parallelism) {
+		this.exec = new ForkJoinPool(parallelism, ForkJoinPool.defaultForkJoinWorkerThreadFactory,
+				new Thread.UncaughtExceptionHandler() {
+
+					@Override
+					public void uncaughtException(Thread t, Throwable e) {
+						System.err.println(e);
+					}
+
+				}, false);
 	}
 
 	public void externallyAddTask(AbstractFJPTask w) {
@@ -50,7 +50,7 @@ public class CountingFJPImpl implements CountingFJP {
 		try {
 			exec.execute(w);
 		} catch (RejectedExecutionException e) {
-			
+
 		}
 	}
 
@@ -89,7 +89,7 @@ public class CountingFJPImpl implements CountingFJP {
 			}
 		}
 	}
-	
+
 	public final void fail(EvaluationException cause) {
 		failureCause = cause;
 		exec.shutdownNow();
@@ -97,11 +97,11 @@ public class CountingFJPImpl implements CountingFJP {
 			taskCount.notify();
 		}
 	}
-	
+
 	public final boolean hasFailed() {
 		return failureCause != null;
 	}
-	
+
 	public final EvaluationException getFailureCause() {
 		return failureCause;
 	}

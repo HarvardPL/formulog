@@ -76,7 +76,7 @@ public class Z3Process {
 			throw new RuntimeException("Could not run Z3:\n" + e);
 		}
 	}
-
+	
 	public synchronized void destroy() {
 		assert z3 != null;
 		z3.destroy();
@@ -104,7 +104,7 @@ public class Z3Process {
 		return shim;
 	}
 
-	public Pair<Status, Map<SolverVariable, Term>> check(SmtLibTerm t, Integer timeout) throws EvaluationException {
+	public synchronized Pair<Status, Map<SolverVariable, Term>> check(SmtLibTerm t, Integer timeout) throws EvaluationException {
 		int id = 0;
 		if (debug) {
 			id = cnt.getAndIncrement();

@@ -53,7 +53,6 @@ import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb.SortedIndexedFactDbBu
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
 import edu.harvard.seas.pl.formulog.smt.SmtManager;
-import edu.harvard.seas.pl.formulog.smt.Z3ThreadFactory;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
@@ -98,6 +97,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 	@SuppressWarnings("serial")
 	public static SemiNaiveEvaluation setup(WellTypedProgram prog, int parallelism) throws InvalidProgramException {
 		FunctionDefValidation.validate(prog);
+		SmtManager smt = new SmtManager(prog);
+		prog.getFunctionCallFactory().getDefManager().loadBuiltInFunctions(smt);
 		MagicSetTransformer mst = new MagicSetTransformer(prog);
 		BasicProgram magicProg = mst.transform(Configuration.useDemandTransformation, true);
 
@@ -107,6 +108,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		SortedIndexedFactDbBuilder deltaDbb = new SortedIndexedFactDbBuilder(magicProg.getRuleSymbols());
 		PredicateFunctionSetter predFuncs = new PredicateFunctionSetter(
 				magicProg.getFunctionCallFactory().getDefManager(), magicProg.getSymbolManager(), dbb);
+		
 		Map<RelationSymbol, Iterable<IndexedRule>> rules = new HashMap<>();
 		List<Stratum> strata = new Stratifier(magicProg).stratify();
 		for (Stratum stratum : strata) {
@@ -142,15 +144,12 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 		SortedIndexedFactDb db = dbb.build();
 		predFuncs.setDb(db);
-	
-		SmtManager smt = new SmtManager(prog.getSymbolManager());
-		prog.getFunctionCallFactory().getDefManager().loadBuiltInFunctions(smt);
 
 		CountingFJP exec;
 		if (sequential) {
 			exec = new MockCountingFJP();
 		} else {
-			exec = new CountingFJPImpl(parallelism, new Z3ThreadFactory(magicProg.getSymbolManager()));
+			exec = new CountingFJPImpl(parallelism);
 		}
 
 		for (RelationSymbol sym : magicProg.getFactSymbols()) {

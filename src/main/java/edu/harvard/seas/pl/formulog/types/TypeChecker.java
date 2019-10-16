@@ -853,7 +853,7 @@ public class TypeChecker {
 		}, null);
 	}
 
-	// Simplify type: make it a non-expr, non-sym type.
+	// Simplify type: make it a non-smt, non-sym type.
 	public static Type simplify(Type t) {
 		return t.visit(new TypeVisitor<Void, Type>() {
 
