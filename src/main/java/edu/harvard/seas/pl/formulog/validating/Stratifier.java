@@ -52,6 +52,7 @@ import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.UserFunctionDef;
+import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
@@ -236,16 +237,15 @@ public class Stratifier {
 			}, null);
 		}
 
-		private void processFunctionSymbol(FunctionSymbol s) {
-			assert prog.getFunctionSymbols().contains(s) : s;
-			if (!visitedFunctions.add(s)) {
+		private void processFunctionSymbol(FunctionSymbol sym) {
+			if (!visitedFunctions.add(sym) || sym instanceof BuiltInFunctionSymbol) {
 				return;
 			}
-			if (s instanceof PredicateFunctionSymbol) {
-				addNegOrAggFun(((PredicateFunctionSymbol) s).getPredicateSymbol());
+			if (sym instanceof PredicateFunctionSymbol) {
+				addNegOrAggFun(((PredicateFunctionSymbol) sym).getPredicateSymbol());
 				return;
 			}
-			FunctionDef def1 = prog.getDef(s);
+			FunctionDef def1 = prog.getDef(sym);
 			if (def1 instanceof UserFunctionDef) {
 				UserFunctionDef def = (UserFunctionDef) def1;
 				processTerm(def.getBody());

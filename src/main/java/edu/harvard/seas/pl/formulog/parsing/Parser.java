@@ -281,7 +281,7 @@ public class Parser {
 
 		private final Map<RelationSymbol, Set<Term[]>> initialFacts = new HashMap<>();
 		private final Map<RelationSymbol, Set<BasicRule>> rules = new HashMap<>();
-		private final FunctionDefManager functionDefManager = new FunctionDefManager(symbolManager);
+		private final FunctionDefManager functionDefManager = new FunctionDefManager();
 		private final FunctionCallFactory functionCallFactory = new FunctionCallFactory(functionDefManager);
 		private final Map<FunctionSymbol, Pair<AlgebraicDataType, Integer>> recordLabels = new HashMap<>();
 		private final Map<ConstructorSymbol, FunctionSymbol[]> constructorLabels = new HashMap<>();

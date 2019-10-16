@@ -32,14 +32,6 @@ import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 public class FunctionDefManager {
 
 	private final Map<FunctionSymbol, FunctionDef> memo = new HashMap<>();
-	private final BuiltInFunctionDefFactory builtIns;
-
-	public FunctionDefManager(SymbolManager symbolManager) {
-		builtIns = new BuiltInFunctionDefFactory(symbolManager);
-		for (BuiltInFunctionSymbol sym : BuiltInFunctionSymbol.values()) {
-			memo.put(sym, builtIns.get(sym));
-		}
-	}
 
 	public void register(FunctionDef def) {
 		if (memo.put(def.getSymbol(), def) != null) {
@@ -69,6 +61,14 @@ public class FunctionDefManager {
 
 	public Set<FunctionSymbol> getFunctionSymbols() {
 		return Collections.unmodifiableSet(memo.keySet());
+	}
+	
+	public void loadBuiltInFunctions(SymbolManager sm) {
+		BuiltInFunctionDefFactory builtIns = new BuiltInFunctionDefFactory(sm);
+		for (BuiltInFunctionSymbol sym : BuiltInFunctionSymbol.values()) {
+			memo.put(sym, builtIns.get(sym));
+		}
+		
 	}
 
 }

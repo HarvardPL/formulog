@@ -85,7 +85,7 @@ public final class Main {
 	}
 
 	private Program<UserPredicate, BasicRule> parse() {
-		System.out.print("Parsing... ");
+		System.out.println("Parsing...");
 		clock.start();
 		try {
 			String inputDir = "";
@@ -95,7 +95,7 @@ public final class Main {
 			FileReader reader = new FileReader(cl.getArgs()[0]);
 			Program<UserPredicate, BasicRule> prog = new Parser().parse(reader, Paths.get(inputDir));
 			clock.stop();
-			System.out.println(clock.getTime() / 1000.0 + "s");
+			System.out.println("Finished parsing (" + clock.getTime() / 1000.0 + "s)");
 			return prog;
 		} catch (ParseException | FileNotFoundException e) {
 			handleException("Error while parsing!", e, true);
@@ -104,13 +104,13 @@ public final class Main {
 	}
 
 	private WellTypedProgram typeCheck(Program<UserPredicate, BasicRule> prog) {
-		System.out.print("Type checking... ");
+		System.out.println("Type checking...");
 		clock.reset();
 		clock.start();
 		try {
 			WellTypedProgram prog2 = new TypeChecker(prog).typeCheck();
 			clock.stop();
-			System.out.println(clock.getTime() / 1000.0 + "s");
+			System.out.println("Finished type checking (" + clock.getTime() / 1000.0 + "s)");
 			return prog2;
 		} catch (TypeException e) {
 			handleException("Error while typechecking the program!", e, true);
@@ -119,13 +119,13 @@ public final class Main {
 	}
 
 	private Evaluation setup(WellTypedProgram prog) {
-		System.out.print("Rewriting and validating... ");
+		System.out.println("Rewriting and validating...");
 		clock.reset();
 		clock.start();
 		try {
 			Evaluation eval = SemiNaiveEvaluation.setup(prog, Configuration.parallelism);
 			clock.stop();
-			System.out.println(clock.getTime() / 1000.0 + "s");
+			System.out.println("Finished rewriting and validating (" + clock.getTime() / 1000.0 + "s)");
 			return eval;
 		} catch (InvalidProgramException e) {
 			handleException("Error while rewriting/validation!", e, true);
@@ -134,13 +134,13 @@ public final class Main {
 	}
 
 	private void evaluate(Evaluation eval) {
-		System.out.print("Evaluating... ");
+		System.out.println("Evaluating...");
 		clock.reset();
 		clock.start();
 		try {
 			eval.run();
 			clock.stop();
-			System.out.println(clock.getTime() / 1000.0 + "s");
+			System.out.println("Finished evaluating (" + clock.getTime() / 1000.0 + "s)");
 		} catch (EvaluationException e) {
 			handleException("Error while evaluating the program!", e, false);
 		}

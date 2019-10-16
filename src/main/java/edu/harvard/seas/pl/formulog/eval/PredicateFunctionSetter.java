@@ -45,6 +45,7 @@ import edu.harvard.seas.pl.formulog.ast.functions.UserFunctionDef;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDb;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDbBuilder;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbol;
@@ -135,7 +136,7 @@ public class PredicateFunctionSetter {
 				arg.accept(tv, in);
 			}
 			FunctionSymbol sym = funcCall.getSymbol();
-			if (!visitedFunctions.add(sym)) {
+			if (!visitedFunctions.add(sym) || sym instanceof BuiltInFunctionSymbol) {
 				return null;
 			}
 			FunctionDef def = defs.lookup(sym);

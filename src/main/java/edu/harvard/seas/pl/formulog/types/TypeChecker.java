@@ -650,21 +650,12 @@ public class TypeChecker {
 
 		private void genConstraintsForFunctionCall(FunctionCall function, Type ttype, Map<Var, Type> subst,
 				boolean inFormula) {
-//			boolean wasInFormula = inFormula;
-//			if (function.getSymbol().equals(BuiltInFunctionSymbol.ENTER_FORMULA)) {
-//				assert !wasInFormula;
-//				inFormula = true;
-//			}
-//			if (function.getSymbol().equals(BuiltInFunctionSymbol.EXIT_FORMULA)) {
-//				inFormula = false;
-//			}
 			FunctorType funType = (FunctorType) function.getSymbol().getCompileTimeType().freshen();
 			Term[] args = function.getArgs();
 			List<Type> argTypes = funType.getArgTypes();
 			for (int i = 0; i < args.length; ++i) {
 				genConstraints(args[i], argTypes.get(i), subst, inFormula);
 			}
-//			addConstraint(funType.getRetType(), ttype, wasInFormula);
 			addConstraint(funType.getRetType(), ttype, inFormula);
 		}
 

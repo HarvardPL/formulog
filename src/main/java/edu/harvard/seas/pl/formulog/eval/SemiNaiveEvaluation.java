@@ -141,6 +141,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 		SortedIndexedFactDb db = dbb.build();
 		predFuncs.setDb(db);
+		
+		prog.getFunctionCallFactory().getDefManager().loadBuiltInFunctions(prog.getSymbolManager());
 
 		CountingFJP exec;
 		if (sequential) {
@@ -162,7 +164,6 @@ public class SemiNaiveEvaluation implements Evaluation {
 								UserPredicate p = UserPredicate.make(sym, tup, false);
 								throw new EvaluationException("Cannot normalize fact " + p + ":\n" + e.getMessage());
 							}
-
 						}
 					}
 
