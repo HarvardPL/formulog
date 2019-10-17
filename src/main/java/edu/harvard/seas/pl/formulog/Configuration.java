@@ -50,6 +50,8 @@ public final class Configuration {
 	public static final boolean recordRuleDiagnostics = propIsSet("timeRules");
 	private static final Map<Rule<?, ?>, AtomicLong> ruleTimes = new ConcurrentHashMap<>();
 
+	public static final boolean debugSmt = propIsSet("debugSmt");
+	
 	public static final boolean timeSmt = propIsSet("timeSmt");
 	private static final AtomicLong smtEvalTime = new AtomicLong();
 	private static final AtomicLong smtDeclTime = new AtomicLong();

@@ -30,11 +30,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
+import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.smt.SmtLibShim.Status;
-import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
 public class Z3Process {
@@ -59,19 +59,27 @@ public class Z3Process {
 		}
 	}
 
-	private static final boolean debug = System.getProperty("debugSmt") != null;
 	private static final AtomicInteger cnt = new AtomicInteger();
-	private final SymbolManager symbolManager;
+	private SmtLibShim debugShim;
+	private SmtLibShim shim;
 	private Process z3;
 
-	public Z3Process(SymbolManager symbolManager) {
-		this.symbolManager = symbolManager;
-	}
-
-	public synchronized void start() {
+	public synchronized void start(Program<?, ?> prog) {
 		assert z3 == null;
 		try {
 			z3 = Runtime.getRuntime().exec("z3 -in -smt2");
+			BufferedReader reader = new BufferedReader(new InputStreamReader(z3.getInputStream()));
+			PrintWriter writer = new PrintWriter(z3.getOutputStream());
+			shim = new SmtLibShim(reader, writer, prog.getSymbolManager());
+			shim.makeDeclarations(prog);
+			if (Configuration.debugSmt) {
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				debugShim = new SmtLibShim(reader, new PrintWriter(baos), prog.getSymbolManager());
+				String msg = "\nBEGIN Z3 DECLARATIONS (Z3Process " + this + "):\n";
+				msg += baos.toString();
+				msg += "\nEND Z3 DECLARATIONS (Z3Process " + this + ")";
+				System.err.println(msg);
+			}
 		} catch (IOException e) {
 			throw new RuntimeException("Could not run Z3:\n" + e);
 		}
@@ -83,33 +91,29 @@ public class Z3Process {
 		z3 = null;
 	}
 
-	private SmtLibShim makeAssertion(SmtLibTerm formula, Integer id) {
-		BufferedReader reader = new BufferedReader(new InputStreamReader(z3.getInputStream()));
-		PrintWriter writer;
-		if (debug) {
+	private void makeAssertion(SmtLibTerm formula, Integer id) {
+		if (debugShim != null) {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			writer = new PrintWriter(baos);
-			SmtLibShim shim = new SmtLibShim(reader, writer, symbolManager);
-			shim.reset();
-			shim.makeAssertion(formula);
-			String msg = "\nBEGIN Z3 JOB #" + id + " (THREAD " + Thread.currentThread().getName() + "):\n";
+			debugShim.redirectOutput(new PrintWriter(baos));
+			debugShim.push();
+			debugShim.makeAssertion(formula);
+			debugShim.pop();
+			String msg = "\nBEGIN Z3 JOB #" + id + " (Z3Process " + this + "):\n";
 			msg += baos.toString();
 			msg += "\nEND Z3 JOB #" + id;
 			System.err.println(msg);
 		}
-		writer = new PrintWriter(z3.getOutputStream());
-		SmtLibShim shim = new SmtLibShim(reader, writer, symbolManager);
-		shim.reset();
 		shim.makeAssertion(formula);
-		return shim;
 	}
 
 	public synchronized Pair<Status, Map<SolverVariable, Term>> check(SmtLibTerm t, Integer timeout) throws EvaluationException {
+		boolean debug = debugShim != null;
 		int id = 0;
 		if (debug) {
 			id = cnt.getAndIncrement();
 		}
-		SmtLibShim shim = makeAssertion(t, id);
+		shim.push();
+		makeAssertion(t, id);
 		long start = 0;
 		if (debug || Configuration.timeSmt) {
 			start = System.currentTimeMillis();
@@ -127,6 +131,7 @@ public class Z3Process {
 		if (status.equals(Status.SATISFIABLE)) {
 			m = shim.getModel();
 		}
+		shim.pop();
 		return new Pair<>(status, m);
 	}
 

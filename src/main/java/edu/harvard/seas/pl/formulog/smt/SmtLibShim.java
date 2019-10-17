@@ -51,6 +51,7 @@ import edu.harvard.seas.pl.formulog.ast.Constructors.SolverUninterpretedFunction
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.Expr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
+import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
@@ -88,19 +89,25 @@ public class SmtLibShim {
 	}
 
 	private final BufferedReader in;
-	private final PrintWriter out;
-	private final Set<Symbol> declaredSorts = new HashSet<>();
+	private PrintWriter out;
+	// private final Set<Symbol> declaredSorts = new HashSet<>();
 	private final Map<SolverVariable, String> declaredSymbols = new HashMap<>();
+	private final Deque<Set<SolverVariable>> symbolsByStackPos = new ArrayDeque<>();
 	private final Map<String, SolverVariable> symbolLookup = new HashMap<>();
-	private final Set<Symbol> declaredUninterpFuns = new HashSet<>();
+	// private final Set<Symbol> declaredUninterpFuns = new HashSet<>();
 	private final SymbolManager symbolManager;
-	private volatile Iterator<Type> typeAnnotations;
+	private Iterator<Type> typeAnnotations;
 	private int cnt;
 
 	public SmtLibShim(Reader in, Writer out, SymbolManager symbolManager) {
-		this.in = new BufferedReader(in);
+		this.in = in != null ? new BufferedReader(in) : null;
 		this.out = new PrintWriter(out);
 		this.symbolManager = symbolManager;
+		symbolsByStackPos.add(new HashSet<>());
+	}
+
+	public void redirectOutput(Writer out) {
+		this.out = new PrintWriter(out);
 	}
 
 	public void makeAssertion(SmtLibTerm assertion) {
@@ -109,8 +116,9 @@ public class SmtLibShim {
 		if (recordTime) {
 			start = System.currentTimeMillis();
 		}
-		declareSorts(assertion);
-		declareSymbolsAndFuns(assertion);
+		// declareSorts(assertion);
+		// declareSymbolsAndFuns(assertion);
+		declareSymbols(assertion);
 		if (recordTime) {
 			end = System.currentTimeMillis();
 			Configuration.recordSmtDeclTime(end - start);
@@ -124,7 +132,7 @@ public class SmtLibShim {
 		}
 		print("(assert ");
 		assertion.toSmtLib(this);
-		print(")");
+		println(")");
 		if (recordTime) {
 			end = System.currentTimeMillis();
 			Configuration.recordSmtSerialTime(end - start);
@@ -134,12 +142,28 @@ public class SmtLibShim {
 	}
 
 	public void reset() {
-		declaredSorts.clear();
+		// declaredSorts.clear();
 		declaredSymbols.clear();
 		symbolLookup.clear();
-		declaredUninterpFuns.clear();
+		symbolsByStackPos.clear();
+		// declaredUninterpFuns.clear();
 		println("(reset)");
 		out.flush();
+	}
+
+	public void push() {
+		println("(push)");
+		out.flush();
+		symbolsByStackPos.addLast(new HashSet<>());
+	}
+
+	public void pop() {
+		println("(pop)");
+		out.flush();
+		for (SolverVariable x : symbolsByStackPos.removeLast()) {
+			String s = declaredSymbols.remove(x);
+			symbolLookup.remove(s);
+		}
 	}
 
 	public Status checkSat(int timeout) throws EvaluationException {
@@ -159,7 +183,7 @@ public class SmtLibShim {
 			} else if (result.equals("unknown")) {
 				return Status.UNKNOWN;
 			} else {
-				throw new EvaluationException("Problem with evaluating Z3!");
+				throw new EvaluationException("Problem with evaluating Z3! Unexpected result: " + result);
 			}
 		} catch (IOException e) {
 			throw new EvaluationException("Problem with evaluating Z3: " + e.getMessage());
@@ -223,7 +247,7 @@ public class SmtLibShim {
 		return "x" + cnt++;
 	}
 
-	private void declareSymbolsAndFuns(SmtLibTerm t) {
+	private void declareSymbols(SmtLibTerm t) {
 		t.accept(new TermVisitor<Void, Void>() {
 
 			@Override
@@ -239,6 +263,7 @@ public class SmtLibShim {
 						String s = freshSymbol();
 						declaredSymbols.put(var, s);
 						symbolLookup.put(s, var);
+						symbolsByStackPos.getLast().add(var);
 						print("(declare-const " + s + " ");
 						FunctorType ft = (FunctorType) var.getSymbol().getCompileTimeType();
 						print(stringifyType(ft.getRetType()));
@@ -248,20 +273,6 @@ public class SmtLibShim {
 				}
 				for (Term arg : c.getArgs()) {
 					arg.accept(this, in);
-				}
-				if (c instanceof SolverUninterpretedFunction) {
-					ConstructorSymbol sym = c.getSymbol();
-					if (declaredUninterpFuns.add(sym)) {
-						print("(declare-fun " + stringifySymbol(sym) + " (");
-						FunctorType ft = sym.getCompileTimeType();
-						for (Iterator<Type> it = ft.getArgTypes().iterator(); it.hasNext();) {
-							print(stringifyType(it.next()));
-							if (it.hasNext()) {
-								print(" ");
-							}
-						}
-						println(") " + stringifyType(ft.getRetType()) + ")");
-					}
 				}
 				return null;
 			}
@@ -279,29 +290,143 @@ public class SmtLibShim {
 		}, null);
 	}
 
-	private void declareSorts(SmtLibTerm t) {
-		SortDependencyFinder depends = new SortDependencyFinder(t);
-		StrongConnectivityAlgorithm<TypeSymbol, DefaultEdge> k = new KosarajuStrongConnectivityInspector<>(
-				depends.compute());
-		TopologicalOrderIterator<Graph<TypeSymbol, DefaultEdge>, DefaultEdge> topo = new TopologicalOrderIterator<>(
-				k.getCondensation());
-		while (topo.hasNext()) {
-			Graph<TypeSymbol, DefaultEdge> scc = topo.next();
-			declareSorts(scc.vertexSet());
+	// private void declareSymbolsAndFuns(SmtLibTerm t) {
+	// t.accept(new TermVisitor<Void, Void>() {
+	//
+	// @Override
+	// public Void visit(Var t, Void in) {
+	// throw new AssertionError("impossible");
+	// }
+	//
+	// @Override
+	// public Void visit(Constructor c, Void in) {
+	// if (c instanceof SolverVariable) {
+	// SolverVariable var = (SolverVariable) c;
+	// if (!declaredSymbols.containsKey(var)) {
+	// String s = freshSymbol();
+	// declaredSymbols.put(var, s);
+	// symbolLookup.put(s, var);
+	// print("(declare-const " + s + " ");
+	// FunctorType ft = (FunctorType) var.getSymbol().getCompileTimeType();
+	// print(stringifyType(ft.getRetType()));
+	// println(")");
+	// }
+	// return null;
+	// }
+	// for (Term arg : c.getArgs()) {
+	// arg.accept(this, in);
+	// }
+	// if (c instanceof SolverUninterpretedFunction) {
+	// ConstructorSymbol sym = c.getSymbol();
+	// if (declaredUninterpFuns.add(sym)) {
+	// print("(declare-fun " + stringifySymbol(sym) + " (");
+	// FunctorType ft = sym.getCompileTimeType();
+	// for (Iterator<Type> it = ft.getArgTypes().iterator(); it.hasNext();) {
+	// print(stringifyType(it.next()));
+	// if (it.hasNext()) {
+	// print(" ");
+	// }
+	// }
+	// println(") " + stringifyType(ft.getRetType()) + ")");
+	// }
+	// }
+	// return null;
+	// }
+	//
+	// @Override
+	// public Void visit(Primitive<?> p, Void in) {
+	// return null;
+	// }
+	//
+	// @Override
+	// public Void visit(Expr expr, Void in) {
+	// throw new AssertionError("impossible");
+	// }
+	//
+	// }, null);
+	// }
+
+	public void makeDeclarations(Program<?, ?> prog) {
+		declareSorts(prog.getTypeSymbols());
+		declareUninterpretedFunctions(prog.getUninterpretedFunctionSymbols());
+	}
+
+	private void declareUninterpretedFunctions(Set<ConstructorSymbol> funcs) {
+		for (ConstructorSymbol func : funcs) {
+			print("(declare-fun " + stringifySymbol(func) + " (");
+			FunctorType ft = func.getCompileTimeType();
+			for (Iterator<Type> it = ft.getArgTypes().iterator(); it.hasNext();) {
+				print(stringifyType(it.next()));
+				if (it.hasNext()) {
+					print(" ");
+				}
+			}
+			println(") " + stringifyType(ft.getRetType()) + ")");
+
 		}
 	}
 
 	private void declareSorts(Set<TypeSymbol> sorts) {
-		assert !sorts.isEmpty();
-		TypeSymbol sym = sorts.iterator().next();
-		if (sym.isUninterpretedSort()) {
-			assert sorts.size() == 1;
-			declareUninterpretedSort(sym);
-		} else {
-			assert sym.isNormalType();
-			declareAdtSorts(sorts);
+		Set<TypeSymbol> adtSorts = new HashSet<>();
+		for (TypeSymbol sort : sorts) {
+			if (sort.isUninterpretedSort()) {
+				declareUninterpretedSort(sort);
+			} else if (sort.isNormalType()) {
+				if (sort instanceof BuiltInTypeSymbol) {
+					switch ((BuiltInTypeSymbol) sort) {
+					case ARRAY_TYPE:
+					case BOOL_TYPE:
+					case FORMULA_VAR_LIST_TYPE:
+					case HETEROGENEOUS_LIST_TYPE:
+					case INT_TYPE:
+					case MODEL_TYPE:
+					case SMT_TYPE:
+					case STRING_TYPE:
+					case SYM_TYPE:
+						continue;
+					case CMP_TYPE:
+					case LIST_TYPE:
+					case OPTION_TYPE:
+					}
+				}
+				if (sort instanceof IndexedTypeSymbol) {
+					switch ((IndexedTypeSymbol) sort) {
+					case BV:
+					case FP:
+						continue;
+					}
+				}
+				adtSorts.add(sort);
+			}
 		}
+		declareAdtSorts(adtSorts);
 	}
+
+	// private void declareSorts(SmtLibTerm t) {
+	// SortDependencyFinder depends = new SortDependencyFinder(t);
+	// StrongConnectivityAlgorithm<TypeSymbol, DefaultEdge> k = new
+	// KosarajuStrongConnectivityInspector<>(
+	// depends.compute());
+	// TopologicalOrderIterator<Graph<TypeSymbol, DefaultEdge>, DefaultEdge> topo =
+	// new TopologicalOrderIterator<>(
+	// k.getCondensation());
+	// while (topo.hasNext()) {
+	// Graph<TypeSymbol, DefaultEdge> scc = topo.next();
+	// declareSorts(scc.vertexSet());
+	// }
+	// }
+	//
+	// private void declareSorts(Set<TypeSymbol> sorts) {
+	// assert !sorts.isEmpty();
+	// TypeSymbol sym = sorts.iterator().next();
+	// if (sym.isUninterpretedSort()) {
+	// assert sorts.size() == 1;
+	// declareUninterpretedSort(sym);
+	// } else {
+	// assert sym.isNormalType();
+	// declareAdtSorts(sorts);
+	// }
+	// }
 
 	private void declareUninterpretedSort(TypeSymbol sort) {
 		assert sort.isUninterpretedSort();
@@ -425,155 +550,157 @@ public class SmtLibShim {
 		}, null);
 	}
 
-	private class SortDependencyFinder {
-
-		private final SmtLibTerm t;
-
-		public SortDependencyFinder(SmtLibTerm t) {
-			this.t = t;
-		}
-
-		public Graph<TypeSymbol, DefaultEdge> compute() {
-			DedupWorkList<TypeSymbol> w = extractTypesFromTerm();
-			return createGraph(w);
-		}
-
-		private DedupWorkList<TypeSymbol> extractTypesFromTerm() {
-			DedupWorkList<TypeSymbol> w = new DedupWorkList<>();
-			t.accept(new TermVisitor<Void, Void>() {
-
-				@Override
-				public Void visit(Var t, Void in) {
-					throw new AssertionError("impossible");
-				}
-
-				@Override
-				public Void visit(Constructor c, Void in) {
-					FunctorType ft = (FunctorType) c.getSymbol().getCompileTimeType();
-					Type type = ft.getRetType();
-					for (TypeSymbol sym : extractTypeSymbols(type)) {
-						push(sym, w);
-					}
-					if (!(c instanceof SolverVariable)) {
-						for (Term tt : c.getArgs()) {
-							tt.accept(this, in);
-						}
-					}
-					return null;
-				}
-
-				@Override
-				public Void visit(Primitive<?> p, Void in) {
-					return null;
-				}
-
-				@Override
-				public Void visit(Expr expr, Void in) {
-					throw new AssertionError("impossible");
-				}
-
-			}, null);
-			return w;
-		}
-
-		private void push(TypeSymbol sym, DedupWorkList<TypeSymbol> w) {
-			if (isDeclarableTypeSymbol(sym)) {
-				w.push(sym);
-			}
-		}
-
-		private Graph<TypeSymbol, DefaultEdge> createGraph(DedupWorkList<TypeSymbol> w) {
-			Graph<TypeSymbol, DefaultEdge> g = new DefaultDirectedGraph<>(DefaultEdge.class);
-			while (!w.isEmpty()) {
-				TypeSymbol sym = w.pop();
-				assert isDeclarableTypeSymbol(sym);
-				g.addVertex(sym);
-				AlgebraicDataType type = AlgebraicDataType.make(sym);
-				if (sym.isUninterpretedSort()) {
-					continue;
-				}
-				for (ConstructorScheme c : type.getConstructors()) {
-					for (Type typeArg : c.getTypeArgs()) {
-						for (TypeSymbol other : extractTypeSymbols(typeArg)) {
-							push(other, w);
-							if (isDeclarableTypeSymbol(other)) {
-								g.addVertex(other);
-								g.addEdge(other, sym);
-							}
-						}
-					}
-				}
-			}
-			return g;
-		}
-
-		private Set<TypeSymbol> extractTypeSymbols(Type type) {
-			Set<TypeSymbol> syms = new HashSet<>();
-			type.visit(new TypeVisitor<Void, Void>() {
-
-				@Override
-				public Void visit(TypeVar typeVar, Void in) {
-					return null;
-				}
-
-				@Override
-				public Void visit(AlgebraicDataType algebraicType, Void in) {
-					syms.add(algebraicType.getSymbol());
-					for (Type typeArg : algebraicType.getTypeArgs()) {
-						typeArg.visit(this, in);
-					}
-					return null;
-				}
-
-				@Override
-				public Void visit(OpaqueType opaqueType, Void in) {
-					throw new AssertionError("impossible");
-				}
-
-				@Override
-				public Void visit(TypeIndex typeIndex, Void in) {
-					return null;
-				}
-
-			}, null);
-			return syms;
-		}
-
-		private boolean isDeclarableTypeSymbol(TypeSymbol sym) {
-			if (sym instanceof IndexedTypeSymbol) {
-				switch ((IndexedTypeSymbol) sym) {
-				case BV:
-				case FP:
-					return false;
-				default:
-					throw new AssertionError();
-				}
-			}
-			if (sym instanceof BuiltInTypeSymbol) {
-				switch ((BuiltInTypeSymbol) sym) {
-				case SMT_TYPE:
-				case SYM_TYPE:
-				case BOOL_TYPE:
-				case STRING_TYPE:
-				case ARRAY_TYPE:
-				case FORMULA_VAR_LIST_TYPE:
-				case HETEROGENEOUS_LIST_TYPE:
-				case INT_TYPE:
-					return false;
-				case CMP_TYPE:
-				case LIST_TYPE:
-				case OPTION_TYPE:
-					return true;
-				case MODEL_TYPE:
-					throw new AssertionError("models shouldn't appear in formulae");
-				default:
-					throw new AssertionError("impossible");
-				}
-			}
-			return true;
-		}
-
-	}
+	// private class SortDependencyFinder {
+	//
+	// private final SmtLibTerm t;
+	//
+	// public SortDependencyFinder(SmtLibTerm t) {
+	// this.t = t;
+	// }
+	//
+	// public Graph<TypeSymbol, DefaultEdge> compute() {
+	// DedupWorkList<TypeSymbol> w = extractTypesFromTerm();
+	// return createGraph(w);
+	// }
+	//
+	// private DedupWorkList<TypeSymbol> extractTypesFromTerm() {
+	// DedupWorkList<TypeSymbol> w = new DedupWorkList<>();
+	// t.accept(new TermVisitor<Void, Void>() {
+	//
+	// @Override
+	// public Void visit(Var t, Void in) {
+	// throw new AssertionError("impossible");
+	// }
+	//
+	// @Override
+	// public Void visit(Constructor c, Void in) {
+	// FunctorType ft = (FunctorType) c.getSymbol().getCompileTimeType();
+	// Type type = ft.getRetType();
+	// for (TypeSymbol sym : extractTypeSymbols(type)) {
+	// push(sym, w);
+	// }
+	// if (!(c instanceof SolverVariable)) {
+	// for (Term tt : c.getArgs()) {
+	// tt.accept(this, in);
+	// }
+	// }
+	// return null;
+	// }
+	//
+	// @Override
+	// public Void visit(Primitive<?> p, Void in) {
+	// return null;
+	// }
+	//
+	// @Override
+	// public Void visit(Expr expr, Void in) {
+	// throw new AssertionError("impossible");
+	// }
+	//
+	// }, null);
+	// return w;
+	// }
+	//
+	// private void push(TypeSymbol sym, DedupWorkList<TypeSymbol> w) {
+	// if (isDeclarableTypeSymbol(sym)) {
+	// w.push(sym);
+	// }
+	// }
+	//
+	// private Graph<TypeSymbol, DefaultEdge> createGraph(DedupWorkList<TypeSymbol>
+	// w) {
+	// Graph<TypeSymbol, DefaultEdge> g = new
+	// DefaultDirectedGraph<>(DefaultEdge.class);
+	// while (!w.isEmpty()) {
+	// TypeSymbol sym = w.pop();
+	// assert isDeclarableTypeSymbol(sym);
+	// g.addVertex(sym);
+	// AlgebraicDataType type = AlgebraicDataType.make(sym);
+	// if (sym.isUninterpretedSort()) {
+	// continue;
+	// }
+	// for (ConstructorScheme c : type.getConstructors()) {
+	// for (Type typeArg : c.getTypeArgs()) {
+	// for (TypeSymbol other : extractTypeSymbols(typeArg)) {
+	// push(other, w);
+	// if (isDeclarableTypeSymbol(other)) {
+	// g.addVertex(other);
+	// g.addEdge(other, sym);
+	// }
+	// }
+	// }
+	// }
+	// }
+	// return g;
+	// }
+	//
+	// private Set<TypeSymbol> extractTypeSymbols(Type type) {
+	// Set<TypeSymbol> syms = new HashSet<>();
+	// type.visit(new TypeVisitor<Void, Void>() {
+	//
+	// @Override
+	// public Void visit(TypeVar typeVar, Void in) {
+	// return null;
+	// }
+	//
+	// @Override
+	// public Void visit(AlgebraicDataType algebraicType, Void in) {
+	// syms.add(algebraicType.getSymbol());
+	// for (Type typeArg : algebraicType.getTypeArgs()) {
+	// typeArg.visit(this, in);
+	// }
+	// return null;
+	// }
+	//
+	// @Override
+	// public Void visit(OpaqueType opaqueType, Void in) {
+	// throw new AssertionError("impossible");
+	// }
+	//
+	// @Override
+	// public Void visit(TypeIndex typeIndex, Void in) {
+	// return null;
+	// }
+	//
+	// }, null);
+	// return syms;
+	// }
+	//
+	// private boolean isDeclarableTypeSymbol(TypeSymbol sym) {
+	// if (sym instanceof IndexedTypeSymbol) {
+	// switch ((IndexedTypeSymbol) sym) {
+	// case BV:
+	// case FP:
+	// return false;
+	// default:
+	// throw new AssertionError();
+	// }
+	// }
+	// if (sym instanceof BuiltInTypeSymbol) {
+	// switch ((BuiltInTypeSymbol) sym) {
+	// case SMT_TYPE:
+	// case SYM_TYPE:
+	// case BOOL_TYPE:
+	// case STRING_TYPE:
+	// case ARRAY_TYPE:
+	// case FORMULA_VAR_LIST_TYPE:
+	// case HETEROGENEOUS_LIST_TYPE:
+	// case INT_TYPE:
+	// return false;
+	// case CMP_TYPE:
+	// case LIST_TYPE:
+	// case OPTION_TYPE:
+	// return true;
+	// case MODEL_TYPE:
+	// throw new AssertionError("models shouldn't appear in formulae");
+	// default:
+	// throw new AssertionError("impossible");
+	// }
+	// }
+	// return true;
+	// }
+	//
+	// }
 
 	private class MiniTypeInferer {
 

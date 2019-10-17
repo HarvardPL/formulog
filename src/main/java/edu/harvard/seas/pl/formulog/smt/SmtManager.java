@@ -42,8 +42,8 @@ public class SmtManager {
 		int size = Configuration.smtParallelism;
 		processes = new ArrayBlockingQueue<>(size);
 		for (int i = 0; i < size; ++i) {
-			Z3Process proc = new Z3Process(prog.getSymbolManager());
-			proc.start();
+			Z3Process proc = new Z3Process();
+			proc.start(prog);
 			processes.add(proc);
 		}
 	}

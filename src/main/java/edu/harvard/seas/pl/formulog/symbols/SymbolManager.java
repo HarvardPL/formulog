@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.symbols;
 
+import java.util.Collections;
+
 /*-
  * #%L
  * FormuLog
@@ -21,8 +23,10 @@ package edu.harvard.seas.pl.formulog.symbols;
  */
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.BindingType;
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
@@ -34,7 +38,9 @@ import edu.harvard.seas.pl.formulog.util.Pair;
 
 // TODO probably should make this thread-safe...
 public class SymbolManager {
+	
 	private final Map<String, Symbol> memo = new HashMap<>();
+	private final Set<TypeSymbol> typeSymbols = new HashSet<>();
 
 	private boolean initialized = false;
 
@@ -328,6 +334,9 @@ public class SymbolManager {
 	}
 
 	public void registerSymbol(Symbol sym) {
+		if (sym instanceof TypeSymbol) {
+			typeSymbols.add((TypeSymbol) sym);
+		}
 		Symbol sym2 = memo.putIfAbsent(sym.toString(), sym);
 		if (sym2 != null && !sym2.equals(sym)) {
 			throw new IllegalArgumentException(
@@ -339,6 +348,10 @@ public class SymbolManager {
 		for (Symbol sym : symbols) {
 			registerSymbol(sym);
 		}
+	}
+	
+	public Set<TypeSymbol> getTypeSymbols() {
+		return Collections.unmodifiableSet(typeSymbols);
 	}
 
 }

@@ -1362,24 +1362,22 @@ public class Parser {
 			facts.add(args);
 		}
 
-		// XXX It would probably be better just to force everything to go
-		// through a type manager and have that keep track of all of the types.
-		private Set<TypeSymbol> findTypes() {
-			TypeFinder tf = new TypeFinder();
-			for (FunctionSymbol sym : functionDefManager.getFunctionSymbols()) {
-				tf.exploreFunction(functionDefManager.lookup(sym));
-			}
-			for (RelationSymbol sym : initialFacts.keySet()) {
-				tf.exploreFunctorType(sym.getCompileTimeType());
-			}
-			for (RelationSymbol sym : rules.keySet()) {
-				tf.exploreFunctorType(sym.getCompileTimeType());
-				for (BasicRule r : rules.get(sym)) {
-					tf.exploreRule(r);
-				}
-			}
-			return tf.getTypes();
-		}
+//		private Set<TypeSymbol> findTypes() {
+//			TypeFinder tf = new TypeFinder();
+//			for (FunctionSymbol sym : functionDefManager.getFunctionSymbols()) {
+//				tf.exploreFunction(functionDefManager.lookup(sym));
+//			}
+//			for (RelationSymbol sym : initialFacts.keySet()) {
+//				tf.exploreFunctorType(sym.getCompileTimeType());
+//			}
+//			for (RelationSymbol sym : rules.keySet()) {
+//				tf.exploreFunctorType(sym.getCompileTimeType());
+//				for (BasicRule r : rules.get(sym)) {
+//					tf.exploreRule(r);
+//				}
+//			}
+//			return tf.getTypes();
+//		}
 		
 		public BasicProgram getProgram() throws ParseException {
 			if (!externalEdbs.isEmpty()) {
@@ -1403,7 +1401,6 @@ public class Parser {
 					throw new ParseException(e);
 				}
 			}
-			Set<TypeSymbol> typeSymbols = Collections.unmodifiableSet(findTypes());
 			return new BasicProgram() {
 
 				@Override
@@ -1475,7 +1472,7 @@ public class Parser {
 
 				@Override
 				public Set<TypeSymbol> getTypeSymbols() {
-					return typeSymbols;
+					return symbolManager.getTypeSymbols();
 				}
 
 			};

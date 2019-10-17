@@ -272,24 +272,24 @@ public final class Constructors {
 	private static Term makeAnd(Term[] args) {
 		ConstructorSymbol sym = BuiltInConstructorSymbol.FORMULA_AND;
 		return memo.lookupOrCreate(sym, args, () -> {
-			Term x = args[0];
-			Term y = args[1];
-			if (x instanceof Constructor) {
-				Constructor c = (Constructor) x;
-				if (c.equals(trueTerm)) {
-					return y;
-				} else if (c.equals(falseTerm)) {
-					return falseTerm;
-				}
-			}
-			if (y instanceof Constructor) {
-				Constructor c = (Constructor) y;
-				if (c.equals(trueTerm)) {
-					return x;
-				} else if (c.equals(falseTerm)) {
-					return falseTerm;
-				}
-			}
+//			Term x = args[0];
+//			Term y = args[1];
+//			if (x instanceof Constructor) {
+//				Constructor c = (Constructor) x;
+//				if (c.equals(trueTerm)) {
+//					return y;
+//				} else if (c.equals(falseTerm)) {
+//					return falseTerm;
+//				}
+//			}
+//			if (y instanceof Constructor) {
+//				Constructor c = (Constructor) y;
+//				if (c.equals(trueTerm)) {
+//					return x;
+//				} else if (c.equals(falseTerm)) {
+//					return falseTerm;
+//				}
+//			}
 			return new SolverOperation(sym, args, "and");
 		});
 	}
@@ -297,24 +297,24 @@ public final class Constructors {
 	private static Term makeOr(Term[] args) {
 		ConstructorSymbol sym = BuiltInConstructorSymbol.FORMULA_OR;
 		return memo.lookupOrCreate(sym, args, () -> {
-			Term x = args[0];
-			Term y = args[1];
-			if (x instanceof Constructor) {
-				Constructor c = (Constructor) x;
-				if (c.equals(trueTerm)) {
-					return trueTerm;
-				} else if (c.equals(falseTerm)) {
-					return y;
-				}
-			}
-			if (y instanceof Constructor) {
-				Constructor c = (Constructor) y;
-				if (c.equals(trueTerm)) {
-					return trueTerm;
-				} else if (c.equals(falseTerm)) {
-					return x;
-				}
-			}
+//			Term x = args[0];
+//			Term y = args[1];
+//			if (x instanceof Constructor) {
+//				Constructor c = (Constructor) x;
+//				if (c.equals(trueTerm)) {
+//					return trueTerm;
+//				} else if (c.equals(falseTerm)) {
+//					return y;
+//				}
+//			}
+//			if (y instanceof Constructor) {
+//				Constructor c = (Constructor) y;
+//				if (c.equals(trueTerm)) {
+//					return trueTerm;
+//				} else if (c.equals(falseTerm)) {
+//					return x;
+//				}
+//			}
 			return new SolverOperation(sym, args, "or");
 		});
 	}

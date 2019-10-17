@@ -73,6 +73,9 @@ public class SmtLibParser {
 			}
 		}
 		t.consume(")");
+		t.ignoreWhitespace(false);
+		// Remove EOL
+		t.next();
 		return m;
 	}
 

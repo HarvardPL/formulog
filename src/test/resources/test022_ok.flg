@@ -7,7 +7,7 @@ output ok.
 base_ok :-
 	is_sat(`true`),
 	!is_sat(`false`).
-	
+
 neg_ok :-
 	!is_sat(`~true`),
 	is_sat(`~false`),
