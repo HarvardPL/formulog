@@ -349,6 +349,7 @@ public class SmtLibShim {
 	public void makeDeclarations(Program<?, ?> prog) {
 		declareSorts(prog.getTypeSymbols());
 		declareUninterpretedFunctions(prog.getUninterpretedFunctionSymbols());
+		out.flush();
 	}
 
 	private void declareUninterpretedFunctions(Set<ConstructorSymbol> funcs) {

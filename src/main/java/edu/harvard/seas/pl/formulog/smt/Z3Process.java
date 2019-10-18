@@ -73,18 +73,23 @@ public class Z3Process {
 			shim = new SmtLibShim(reader, writer, prog.getSymbolManager());
 			shim.makeDeclarations(prog);
 			if (Configuration.debugSmt) {
-				ByteArrayOutputStream baos = new ByteArrayOutputStream();
-				debugShim = new SmtLibShim(reader, new PrintWriter(baos), prog.getSymbolManager());
-				String msg = "\nBEGIN Z3 DECLARATIONS (Z3Process " + this + "):\n";
-				msg += baos.toString();
-				msg += "\nEND Z3 DECLARATIONS (Z3Process " + this + ")";
-				System.err.println(msg);
+				setupDebugShim(prog);
 			}
 		} catch (IOException e) {
 			throw new RuntimeException("Could not run Z3:\n" + e);
 		}
 	}
-	
+
+	private void setupDebugShim(Program<?, ?> prog) {
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		debugShim = new SmtLibShim(null, new PrintWriter(baos), prog.getSymbolManager());
+		debugShim.makeDeclarations(prog);
+		String msg = "\nBEGIN Z3 DECLARATIONS (Z3Process " + hashCode() + "):\n";
+		msg += baos.toString();
+		msg += "END Z3 DECLARATIONS (Z3Process " + hashCode() + ")";
+		System.err.println(msg);
+	}
+
 	public synchronized void destroy() {
 		assert z3 != null;
 		z3.destroy();
@@ -98,15 +103,16 @@ public class Z3Process {
 			debugShim.push();
 			debugShim.makeAssertion(formula);
 			debugShim.pop();
-			String msg = "\nBEGIN Z3 JOB #" + id + " (Z3Process " + this + "):\n";
+			String msg = "\nBEGIN Z3 JOB #" + id + " (Z3Process " + hashCode() + "):\n";
 			msg += baos.toString();
-			msg += "\nEND Z3 JOB #" + id;
+			msg += "END Z3 JOB #" + id;
 			System.err.println(msg);
 		}
 		shim.makeAssertion(formula);
 	}
 
-	public synchronized Pair<Status, Map<SolverVariable, Term>> check(SmtLibTerm t, Integer timeout) throws EvaluationException {
+	public synchronized Pair<Status, Map<SolverVariable, Term>> check(SmtLibTerm t, Integer timeout)
+			throws EvaluationException {
 		boolean debug = debugShim != null;
 		int id = 0;
 		if (debug) {
