@@ -1,4 +1,4 @@
-uninterpreted fun foo(bool) : bool smt.
+uninterpreted fun foo(bool smt) : bool smt.
 
 output ok.
 ok :-

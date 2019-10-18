@@ -1,6 +1,6 @@
 uninterpreted sort typ.
 
-uninterpreted fun subtyp(typ, typ) : bool smt.
+uninterpreted fun subtyp(typ smt, typ smt) : bool smt.
 
 output ok.
 ok :-

@@ -271,6 +271,7 @@ public class Parser {
 					}
 					sym = (TypeSymbol) sym2;
 				}
+				// Update this to make sure you don't create types with nested smts or syms
 				return typeManager.lookup(sym, params);
 			}
 		}
@@ -519,16 +520,25 @@ public class Parser {
 			Type type = ctx.type().accept(typeExtractor);
 			ConstructorSymbol csym = symbolManager.createConstructorSymbol(ctc.ID().getText(), typeArgs.size(),
 					ConstructorSymbolType.SOLVER_UNINTERPRETED_FUNCTION, new FunctorType(typeArgs, type));
-			if (!(type instanceof AlgebraicDataType)
-					|| !((AlgebraicDataType) type).getSymbol().equals(BuiltInTypeSymbol.SMT_TYPE)) {
-				throw new RuntimeException("Uninterpreted function must have an "
-						+ BuiltInTypeSymbol.SMT_TYPE.toString() + " type: " + csym);
-			}
-			if (!Types.getTypeVars(typeArgs).isEmpty() || !Types.getTypeVars(type).isEmpty()) {
-				throw new RuntimeException("Unbound type variable in definition of " + csym);
+			Set<Type> allTypes = new HashSet<>(typeArgs);
+			allTypes.add(type);
+			for (Type ty : allTypes) {
+				if (!hasSmtType(ty)) {
+					throw new RuntimeException("Uninterpreted function must have an "
+							+ BuiltInTypeSymbol.SMT_TYPE.toString() + " type: " + csym);
+				}
+				if (!Types.getTypeVars(ty).isEmpty()) {
+					throw new RuntimeException("Uninterpreted functions cannot have type variables: " + csym);
+				}
 			}
 			uninterpFuncSymbols.add(csym);
 			return null;
+		}
+
+		private boolean hasSmtType(Type type) {
+			return (type instanceof AlgebraicDataType)
+					&& ((AlgebraicDataType) type).getSymbol().equals(BuiltInTypeSymbol.SMT_TYPE);
+
 		}
 
 		@Override
@@ -657,12 +667,6 @@ public class Parser {
 
 			private boolean inFormula;
 
-			private void assertInFormula(String msg) {
-				if (!inFormula) {
-					throw new RuntimeException(msg);
-				}
-			}
-
 			private void assertNotInFormula(String msg) {
 				if (inFormula) {
 					throw new RuntimeException(msg);
@@ -756,10 +760,6 @@ public class Parser {
 				} else if (sym instanceof ConstructorSymbol) {
 					ConstructorSymbol csym = (ConstructorSymbol) sym;
 					Term t = Constructors.make(csym, args);
-					if (csym.isSolverConstructorSymbol()) {
-						assertInFormula(
-								"Can only use an uninterpreted function or solver expression within a formula: " + t);
-					}
 					return t;
 				} else {
 					throw new RuntimeException(
@@ -1039,14 +1039,12 @@ public class Parser {
 
 			@Override
 			public Term visitNotFormula(NotFormulaContext ctx) {
-				assertInFormula("~ can only be used from within a formula: " + ctx.getText());
 				Term t = extract(ctx.term());
 				return Constructors.make(BuiltInConstructorSymbol.FORMULA_NOT, Terms.singletonArray(t));
 			}
 
 			@Override
 			public Term visitBinopFormula(BinopFormulaContext ctx) {
-				assertInFormula("Formula binop can only be used from within a formula: " + ctx.getText());
 				Term[] args = termContextsToTerms(ctx.term());
 				ConstructorSymbol sym;
 				switch (ctx.op.getType()) {
@@ -1071,7 +1069,6 @@ public class Parser {
 
 			@Override
 			public Term visitLetFormula(LetFormulaContext ctx) {
-				assertInFormula("Can only use a let formula within a formula: " + ctx.getText());
 				Term[] args = termContextsToTerms(ctx.term());
 				args[1] = makeEnterFormula(args[1]);
 				args[2] = makeEnterFormula(args[2]);
@@ -1080,7 +1077,6 @@ public class Parser {
 
 			@Override
 			public Term visitQuantifiedFormula(QuantifiedFormulaContext ctx) {
-				assertInFormula("Can only use a quantified formula within a formula: " + ctx.getText());
 				Term[] args = new Term[3];
 				args[0] = parseFormulaVarList(ctx.variables);
 				args[1] = makeEnterFormula(extract(ctx.boundTerm));
@@ -1362,23 +1358,23 @@ public class Parser {
 			facts.add(args);
 		}
 
-//		private Set<TypeSymbol> findTypes() {
-//			TypeFinder tf = new TypeFinder();
-//			for (FunctionSymbol sym : functionDefManager.getFunctionSymbols()) {
-//				tf.exploreFunction(functionDefManager.lookup(sym));
-//			}
-//			for (RelationSymbol sym : initialFacts.keySet()) {
-//				tf.exploreFunctorType(sym.getCompileTimeType());
-//			}
-//			for (RelationSymbol sym : rules.keySet()) {
-//				tf.exploreFunctorType(sym.getCompileTimeType());
-//				for (BasicRule r : rules.get(sym)) {
-//					tf.exploreRule(r);
-//				}
-//			}
-//			return tf.getTypes();
-//		}
-		
+		// private Set<TypeSymbol> findTypes() {
+		// TypeFinder tf = new TypeFinder();
+		// for (FunctionSymbol sym : functionDefManager.getFunctionSymbols()) {
+		// tf.exploreFunction(functionDefManager.lookup(sym));
+		// }
+		// for (RelationSymbol sym : initialFacts.keySet()) {
+		// tf.exploreFunctorType(sym.getCompileTimeType());
+		// }
+		// for (RelationSymbol sym : rules.keySet()) {
+		// tf.exploreFunctorType(sym.getCompileTimeType());
+		// for (BasicRule r : rules.get(sym)) {
+		// tf.exploreRule(r);
+		// }
+		// }
+		// return tf.getTypes();
+		// }
+
 		public BasicProgram getProgram() throws ParseException {
 			if (!externalEdbs.isEmpty()) {
 				ExecutorService exec = Executors.newFixedThreadPool(Configuration.parallelism);

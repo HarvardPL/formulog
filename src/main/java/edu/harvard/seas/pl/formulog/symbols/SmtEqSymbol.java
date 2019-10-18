@@ -29,22 +29,23 @@ import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.util.Util;
 
 public class SmtEqSymbol implements ConstructorSymbol {
-	
+
 	private static final Map<Type, SmtEqSymbol> memo = new HashMap<>();
-	
+
 	static synchronized SmtEqSymbol make(Type eltType) {
 		return Util.lookupOrCreate(memo, eltType, () -> new SmtEqSymbol(eltType));
 	}
-	
+
 	private final Type eltType;
-	
+
 	private SmtEqSymbol(Type eltType) {
 		this.eltType = eltType;
 	}
-	
+
 	@Override
 	public FunctorType getCompileTimeType() {
-		return new FunctorType(eltType, eltType, BuiltInTypes.smt(BuiltInTypes.bool));
+		return new FunctorType(BuiltInTypes.smt(eltType), BuiltInTypes.smt(eltType),
+				BuiltInTypes.smt(BuiltInTypes.bool));
 	}
 
 	@Override
@@ -56,7 +57,7 @@ public class SmtEqSymbol implements ConstructorSymbol {
 	public ConstructorSymbolType getConstructorSymbolType() {
 		return ConstructorSymbolType.SOLVER_EXPR;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "smt_eq<" + eltType + ">";

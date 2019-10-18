@@ -1,5 +1,5 @@
-uninterpreted fun foo1(bool) : bool smt.
-uninterpreted fun foo2(bool) : bool smt.
+uninterpreted fun foo1(bool smt) : bool smt.
+uninterpreted fun foo2(bool smt) : bool smt.
 
 output ok.
 ok :-
