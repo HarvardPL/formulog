@@ -308,9 +308,9 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 		case BV_UREM:
 		case BV_SUB:
 		case BV_XOR:
-			return makeType(bv(a), bv(a), smt(bv(a)));
+			return makeType(smt(bv(a)), smt(bv(a)), smt(bv(a)));
 		case BV_NEG:
-			return makeType(bv(a), smt(bv(a)));
+			return makeType(smt(bv(a)), smt(bv(a)));
 		case BV_SGE:
 		case BV_SGT:
 		case BV_SLE:
@@ -319,52 +319,52 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 		case BV_UGT:
 		case BV_ULE:
 		case BV_ULT:
-			return makeType(bv(a), bv(a), smt(bool));
+			return makeType(smt(bv(a)), smt(bv(a)), smt(bool));
 		case FP_ADD:
 		case FP_DIV:
 		case FP_REM:
 		case FP_SUB:
 		case FP_MUL:
-			return makeType(fp(a, b), fp(a, b), smt(fp(a, b)));
+			return makeType(smt(fp(a, b)), smt(fp(a, b)), smt(fp(a, b)));
 		case FP_EQ:
 		case FP_GE:
 		case FP_GT:
 		case FP_LE:
 		case FP_LT:
-			return makeType(fp(a, b), fp(a, b), smt(bool));
+			return makeType(smt(fp(a, b)), smt(fp(a, b)), smt(bool));
 		case FP_IS_NAN:
-			return makeType(fp(a, b), smt(bool));
+			return makeType(smt(fp(a, b)), smt(bool));
 		case FP_NEG:
-			return makeType(fp(a, b), smt(fp(a, b)));
+			return makeType(smt(fp(a, b)), smt(fp(a, b)));
 		case ARRAY_SELECT:
-			return makeType(array(a, b), a, smt(b));
+			return makeType(smt(array(a, b)), smt(a), smt(b));
 		case ARRAY_STORE:
-			return makeType(array(a, b), a, b, smt(array(a, b)));
+			return makeType(smt(array(a, b)), smt(a), smt(b), smt(array(a, b)));
 		case ARRAY_DEFAULT:
-			return makeType(array(a, b), smt(b));
+			return makeType(smt(array(a, b)), smt(b));
 		case ARRAY_CONST:
-			return makeType(b, smt(array(a, b)));
+			return makeType(smt(b), smt(array(a, b)));
 		case STR_AT:
-			return makeType(string, int_, smt(string));
+			return makeType(smt(string), smt(int_), smt(string));
 		case STR_CONCAT:
-			return makeType(string, string, smt(string));
+			return makeType(smt(string), smt(string), smt(string));
 		case STR_CONTAINS:
-			return makeType(string, string, smt(bool));
+			return makeType(smt(string), smt(string), smt(bool));
 		case STR_INDEXOF:
-			return makeType(string, string, int_, smt(int_));
+			return makeType(smt(string), smt(string), smt(int_), smt(int_));
 		case STR_LEN:
-			return makeType(string, smt(int_));
+			return makeType(smt(string), smt(int_));
 		case STR_PREFIXOF:
-			return makeType(string, string, smt(bool));
+			return makeType(smt(string), smt(string), smt(bool));
 		case STR_REPLACE:
-			return makeType(string, string, string, smt(string));
+			return makeType(smt(string), smt(string), smt(string), smt(string));
 		case STR_SUBSTR:
-			return makeType(string, int_, int_, smt(string));
+			return makeType(smt(string), smt(int_), smt(int_), smt(string));
 		case STR_SUFFIXOF:
-			return makeType(string, string, smt(bool));
+			return makeType(smt(string), smt(string), smt(bool));
 		case INT_ABS:
 		case INT_NEG:
-			return makeType(int_, smt(int_));
+			return makeType(smt(int_), smt(int_));
 		case INT_BIG_CONST:
 			return makeType(bv(64), smt(int_));
 		case INT_CONST:
@@ -373,13 +373,13 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 		case INT_GT:
 		case INT_LE:
 		case INT_LT:
-			return makeType(int_, int_, smt(bool));
+			return makeType(smt(int_), smt(int_), smt(bool));
 		case INT_ADD:
 		case INT_MUL:
 		case INT_MOD:
 		case INT_SUB:
 		case INT_DIV:
-			return makeType(int_, int_, smt(int_));
+			return makeType(smt(int_), smt(int_), smt(int_));
 		case ENTER_FORMULA:
 			return makeType(smt(a), smt(a));
 		case EXIT_FORMULA:
