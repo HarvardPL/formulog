@@ -68,6 +68,7 @@ public final class Configuration {
 
 	public static final int taskSize = getIntProp("taskSize", 128);
 	public static final int smtTaskSize = getIntProp("smtTaskSize", 8);
+	public static final int smtCacheSize = getIntProp("smtCacheSize", 100);
 
 	public static final int parallelism = getIntProp("parallelism", 4);
 	public static final int smtParallelism = getIntProp("smtParallelism", 1);

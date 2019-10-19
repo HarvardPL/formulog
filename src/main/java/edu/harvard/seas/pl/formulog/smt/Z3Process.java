@@ -86,6 +86,7 @@ public class Z3Process {
 			PrintWriter writer = new PrintWriter(z3.getOutputStream());
 			shim = new SmtLibShim(reader, writer, prog.getSymbolManager());
 			shim.makeDeclarations(prog);
+			shim.push();
 			if (Configuration.debugSmt) {
 				setupDebugShim(prog);
 			}
@@ -110,22 +111,16 @@ public class Z3Process {
 		z3 = null;
 	}
 
-//	private Pair<List<SolverVariable>, List<SolverVariable>> makeAssertion(List<SmtLibTerm> formula, Integer id) {
-//		if (debugShim != null) {
-//			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//			debugShim.redirectOutput(new PrintWriter(baos));
-//			// debugShim.push();
-//			makeAssertion(formula, debugShim);
-//			// debugShim.pop();
-//			String msg = "\nBEGIN Z3 JOB #" + id + " (Z3Process " + hashCode() + "):\n";
-//			msg += baos.toString();
-//			msg += "END Z3 JOB #" + id;
-//			System.err.println(msg);
-//		}
-//		return makeAssertion(formula, shim);
-//	}
-//
+	private void clearCache() {
+		indicatorVars.clear();
+		shim.pop();
+		shim.push();
+	}
+	
 	private Pair<List<SolverVariable>, List<SolverVariable>> makeAssertion(List<SmtLibTerm> formula, Integer id) {
+		if (indicatorVars.size() > Configuration.smtCacheSize) {
+			clearCache();
+		}
 		ByteArrayOutputStream baos = null;
 		if (debugShim != null) {
 			baos = new ByteArrayOutputStream();
