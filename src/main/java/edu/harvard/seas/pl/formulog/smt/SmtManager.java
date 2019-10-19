@@ -1,7 +1,6 @@
 package edu.harvard.seas.pl.formulog.smt;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /*-
@@ -30,15 +29,13 @@ import java.util.concurrent.ArrayBlockingQueue;
 import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
+import edu.harvard.seas.pl.formulog.ast.Constructors;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
-import edu.harvard.seas.pl.formulog.ast.Expr;
-import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
-import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
+import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
-import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.smt.SmtLibShim.Status;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
@@ -66,17 +63,13 @@ public class SmtManager {
 		} catch (InterruptedException e) {
 			throw new EvaluationException(e);
 		}
-		Pair<Status, Map<SolverVariable, Term>> res = proc.check(breakIntoConjuncts(assertion), timeout);
+		List<SmtLibTerm> conjuncts = new ArrayList<>();
+		breakIntoConjuncts(assertion, conjuncts);
+		Pair<Status, Map<SolverVariable, Term>> res = proc.check(conjuncts, timeout);
 		processes.add(proc);
 		return res;
 	}
 
-	private List<SmtLibTerm> breakIntoConjuncts(SmtLibTerm assertion) {
-		List<SmtLibTerm> l = new ArrayList<>();
-		breakIntoConjuncts(assertion, l);
-		return l;
-	}
-	
 	private void breakIntoConjuncts(SmtLibTerm assertion, List<SmtLibTerm> acc) {
 		Constructor c = (Constructor) assertion;
 		ConstructorSymbol sym = c.getSymbol();
@@ -84,9 +77,30 @@ public class SmtManager {
 		if (sym.equals(BuiltInConstructorSymbol.FORMULA_AND)) {
 			breakIntoConjuncts((SmtLibTerm) args[0], acc);
 			breakIntoConjuncts((SmtLibTerm) args[1], acc);
-		} else {
-			acc.add(assertion);
+			return;
 		}
+		if (sym.equals(BuiltInConstructorSymbol.FORMULA_NOT)) {
+			c = (Constructor) args[0];
+			sym = c.getSymbol();
+			args = c.getArgs();
+			if (sym.equals(BuiltInConstructorSymbol.FORMULA_IMP)) {
+				// Turn ~(A => B) into A /\ ~B
+				breakIntoConjuncts((SmtLibTerm) args[0], acc);
+				breakIntoConjuncts(negate(args[1]), acc);
+				return;
+			}
+			if (sym.equals(BuiltInConstructorSymbol.FORMULA_OR)) {
+				// Turn ~(A \/ B) to ~A /\ ~B
+				breakIntoConjuncts(negate(args[0]), acc);
+				breakIntoConjuncts(negate(args[1]), acc);
+				return;
+			}
+		}
+		acc.add(assertion);
 	}
 	
+	private SmtLibTerm negate(Term t) {
+		return (SmtLibTerm) Constructors.make(BuiltInConstructorSymbol.FORMULA_NOT, Terms.singletonArray(t));
+	}
+
 }
