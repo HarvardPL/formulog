@@ -259,12 +259,12 @@ public final class Terms {
 
 		@Override
 		public boolean isGround() {
-			throw new UnsupportedOperationException();
+			return true;
 		}
 
 		@Override
 		public boolean containsFunctionCall() {
-			throw new UnsupportedOperationException();
+			return false;
 		}
 
 		@Override

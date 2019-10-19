@@ -167,11 +167,25 @@ public class SmtLibShim {
 	}
 
 	public Status checkSat(int timeout) throws EvaluationException {
+		return checkSatAssuming(Collections.emptyList(), Collections.emptyList(), timeout);
+	}
+	
+	public Status checkSatAssuming(List<SolverVariable> onVars, List<SolverVariable> offVars, int timeout) throws EvaluationException {
 		if (timeout >= 0) {
 			println("(set-option :timeout " + timeout + ")");
 
 		}
-		println("(check-sat)");
+		print("(check-sat-assuming (");
+		for (SolverVariable x : onVars) {
+			print(x);
+			print(" ");
+		}
+		for (SolverVariable x : offVars) {
+			print("(not ");
+			print(x);
+			print(") ");
+		}
+		println("))");
 		out.flush();
 		String result;
 		try {
