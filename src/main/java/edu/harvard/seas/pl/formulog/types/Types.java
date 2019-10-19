@@ -48,7 +48,7 @@ public final class Types {
 
 	public static interface Type {
 
-		<I, O> O visit(TypeVisitor<I, O> visitor, I in);
+		<I, O> O accept(TypeVisitor<I, O> visitor, I in);
 
 		Type applySubst(Map<TypeVar, Type> subst);
 
@@ -94,7 +94,7 @@ public final class Types {
 		}
 
 		@Override
-		public <I, O> O visit(TypeVisitor<I, O> visitor, I in) {
+		public <I, O> O accept(TypeVisitor<I, O> visitor, I in) {
 			return visitor.visit(this, in);
 		}
 
@@ -259,7 +259,7 @@ public final class Types {
 		}
 
 		@Override
-		public <I, O> O visit(TypeVisitor<I, O> visitor, I in) {
+		public <I, O> O accept(TypeVisitor<I, O> visitor, I in) {
 			return visitor.visit(this, in);
 		}
 
@@ -395,7 +395,7 @@ public final class Types {
 		}
 
 		@Override
-		public <I, O> O visit(TypeVisitor<I, O> visitor, I in) {
+		public <I, O> O accept(TypeVisitor<I, O> visitor, I in) {
 			return visitor.visit(this, in);
 		}
 
@@ -429,7 +429,7 @@ public final class Types {
 		}
 
 		@Override
-		public <I, O> O visit(TypeVisitor<I, O> visitor, I in) {
+		public <I, O> O accept(TypeVisitor<I, O> visitor, I in) {
 			return visitor.visit(this, in);
 		}
 
@@ -489,7 +489,7 @@ public final class Types {
 	}
 
 	private static void getTypeVars(Type t, Set<TypeVar> acc) {
-		t.visit(new TypeVisitor<Void, Void>() {
+		t.accept(new TypeVisitor<Void, Void>() {
 
 			@Override
 			public Void visit(TypeVar typeVar, Void in) {
@@ -523,7 +523,7 @@ public final class Types {
 	}
 	
 	public static boolean containsTypeVarOrOpaqueType(Type t) {
-		return t.visit(new TypeVisitor<Void, Boolean>() {
+		return t.accept(new TypeVisitor<Void, Boolean>() {
 
 			@Override
 			public Boolean visit(TypeVar typeVar, Void in) {
@@ -533,7 +533,7 @@ public final class Types {
 			@Override
 			public Boolean visit(AlgebraicDataType algebraicType, Void in) {
 				for (Type ty : algebraicType.getTypeArgs()) {
-					if (ty.visit(this, in)) {
+					if (ty.accept(this, in)) {
 						return true;
 					}
 				}

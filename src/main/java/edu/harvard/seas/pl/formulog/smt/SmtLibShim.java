@@ -479,7 +479,7 @@ public class SmtLibShim {
 	}
 
 	private String stringifyType(Type type) {
-		return type.visit(new TypeVisitor<Void, String>() {
+		return type.accept(new TypeVisitor<Void, String>() {
 
 			@Override
 			public String visit(TypeVar typeVar, Void in) {
@@ -801,7 +801,7 @@ public class SmtLibShim {
 				} else if (t2.isVar()) {
 					handleVar((TypeVar) t2, t1);
 				} else {
-					t1.visit(unifier, t2);
+					t1.accept(unifier, t2);
 				}
 
 			}

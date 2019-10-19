@@ -25,6 +25,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -96,22 +97,26 @@ public class Z3Process {
 		z3 = null;
 	}
 
-	private void makeAssertion(SmtLibTerm formula, Integer id) {
+	private void makeAssertion(List<SmtLibTerm> formula, Integer id) {
 		if (debugShim != null) {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			debugShim.redirectOutput(new PrintWriter(baos));
 			debugShim.push();
-			debugShim.makeAssertion(formula);
+			for (SmtLibTerm conjunct : formula) {
+				debugShim.makeAssertion(conjunct);
+			}
 			debugShim.pop();
 			String msg = "\nBEGIN Z3 JOB #" + id + " (Z3Process " + hashCode() + "):\n";
 			msg += baos.toString();
 			msg += "END Z3 JOB #" + id;
 			System.err.println(msg);
 		}
-		shim.makeAssertion(formula);
+		for (SmtLibTerm conjunct : formula) {
+			shim.makeAssertion(conjunct);
+		}
 	}
 
-	public synchronized Pair<Status, Map<SolverVariable, Term>> check(SmtLibTerm t, Integer timeout)
+	public synchronized Pair<Status, Map<SolverVariable, Term>> check(List<SmtLibTerm> t, Integer timeout)
 			throws EvaluationException {
 		boolean debug = debugShim != null;
 		int id = 0;

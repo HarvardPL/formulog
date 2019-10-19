@@ -1156,7 +1156,7 @@ public class Parser {
 			}
 
 			private boolean isSolverUnfriendlyType(Type type) {
-				return type.visit(new TypeVisitor<Void, Boolean>() {
+				return type.accept(new TypeVisitor<Void, Boolean>() {
 
 					@Override
 					public Boolean visit(TypeVar typeVar, Void in) {
@@ -1170,7 +1170,7 @@ public class Parser {
 							return true;
 						}
 						for (Type ty : algebraicType.getTypeArgs()) {
-							if (ty.visit(this, in)) {
+							if (ty.accept(this, in)) {
 								return true;
 							}
 						}

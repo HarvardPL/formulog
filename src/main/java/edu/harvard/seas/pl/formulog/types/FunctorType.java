@@ -76,7 +76,7 @@ public class FunctorType implements Type {
 			private List<Type> processTypeList(List<Type> types) {
 				List<Type> newTypes = new ArrayList<>();
 				for (Type t : types) {
-					newTypes.add(t.visit(this, null));
+					newTypes.add(t.accept(this, null));
 				}
 				return newTypes;
 			}
@@ -94,9 +94,9 @@ public class FunctorType implements Type {
 		};
 		List<Type> newArgTypes = new ArrayList<>();
 		for (Type t : argTypes) {
-			newArgTypes.add(t.visit(visitor, null));
+			newArgTypes.add(t.accept(visitor, null));
 		}
-		Type newRetType = retType.visit(visitor, null);
+		Type newRetType = retType.accept(visitor, null);
 		return new FunctorType(newArgTypes, newRetType);
 	}
 
@@ -132,7 +132,7 @@ public class FunctorType implements Type {
 	}
 
 	@Override
-	public <I, O> O visit(TypeVisitor<I, O> visitor, I in) {
+	public <I, O> O accept(TypeVisitor<I, O> visitor, I in) {
 		throw new UnsupportedOperationException();
 	}
 

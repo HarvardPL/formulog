@@ -693,7 +693,7 @@ public class TypeChecker {
 		}
 
 		private boolean checkTypeInFormula(Type ty) {
-			return lookupType(ty).visit(new TypeVisitor<Void, Boolean>() {
+			return lookupType(ty).accept(new TypeVisitor<Void, Boolean>() {
 
 				@Override
 				public Boolean visit(TypeVar typeVar, Void in) {
@@ -707,7 +707,7 @@ public class TypeChecker {
 						return false;
 					}
 					for (Type arg : algebraicType.getTypeArgs()) {
-						if (!arg.visit(this, in)) {
+						if (!arg.accept(this, in)) {
 							return false;
 						}
 					}
@@ -774,7 +774,7 @@ public class TypeChecker {
 		}
 
 		private boolean unify(Type type1, Type type2) {
-			return type1.visit(new TypeVisitor<Type, Boolean>() {
+			return type1.accept(new TypeVisitor<Type, Boolean>() {
 
 				@Override
 				public Boolean visit(TypeVar typeVar, Type other) {
@@ -834,19 +834,19 @@ public class TypeChecker {
 	}
 
 	public static Type lookupType(Type t, Map<TypeVar, Type> subst) {
-		return t.visit(new TypeVisitor<Void, Type>() {
+		return t.accept(new TypeVisitor<Void, Type>() {
 
 			@Override
 			public Type visit(TypeVar typeVar, Void in) {
 				if (subst.containsKey(typeVar)) {
-					return subst.get(typeVar).visit(this, in);
+					return subst.get(typeVar).accept(this, in);
 				}
 				return typeVar;
 			}
 
 			@Override
 			public Type visit(AlgebraicDataType algebraicType, Void in) {
-				List<Type> args = Util.map(algebraicType.getTypeArgs(), t -> t.visit(this, in));
+				List<Type> args = Util.map(algebraicType.getTypeArgs(), t -> t.accept(this, in));
 				return AlgebraicDataType.make(algebraicType.getSymbol(), args);
 			}
 
@@ -865,7 +865,7 @@ public class TypeChecker {
 
 	// Simplify type: make it a non-smt, non-sym type.
 	public static Type simplify(Type t) {
-		return t.visit(new TypeVisitor<Void, Type>() {
+		return t.accept(new TypeVisitor<Void, Type>() {
 
 			@Override
 			public Type visit(TypeVar typeVar, Void in) {
@@ -877,9 +877,9 @@ public class TypeChecker {
 				TypeSymbol sym = algebraicType.getSymbol();
 				List<Type> args = algebraicType.getTypeArgs();
 				if (sym.equals(BuiltInTypeSymbol.SMT_TYPE) || sym.equals(BuiltInTypeSymbol.SYM_TYPE)) {
-					return args.get(0).visit(this, in);
+					return args.get(0).accept(this, in);
 				}
-				args = Util.map(args, t -> t.visit(this, in));
+				args = Util.map(args, t -> t.accept(this, in));
 				return AlgebraicDataType.make(sym, args);
 			}
 
