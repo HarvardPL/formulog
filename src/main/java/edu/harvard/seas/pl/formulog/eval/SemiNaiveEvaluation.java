@@ -200,6 +200,10 @@ public class SemiNaiveEvaluation implements Evaluation {
 			int size = (int) strategy.getMetadata();
 			return new PerThreadSmtManager(() -> new QueueSmtManager(prog, size));
 		}
+		case PER_THREAD_BEST_MATCH: {
+			int size = (int) strategy.getMetadata();
+			return new PerThreadSmtManager(() -> new BestMatchSmtManager(prog, size));
+		}
 		default:
 			throw new UnsupportedOperationException("Cannot support SMT strategy: " + strategy);
 		}

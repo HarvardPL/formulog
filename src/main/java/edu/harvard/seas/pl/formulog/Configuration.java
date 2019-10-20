@@ -302,6 +302,12 @@ public final class Configuration {
 			int size = Integer.parseInt(m.group(1));
 			return new SmtStrategy(SmtStrategy.Tag.PER_THREAD_QUEUE, size);
 		}
+		p = Pattern.compile("perThreadBestMatch-(\\d+)");
+		m = p.matcher(val);
+		if (m.matches()) {
+			int size = Integer.parseInt(m.group(1));
+			return new SmtStrategy(SmtStrategy.Tag.PER_THREAD_BEST_MATCH, size);
+		}
 		throw new IllegalArgumentException("Unrecognized SMT strategy: " + val);
 	}
 
