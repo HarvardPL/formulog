@@ -84,8 +84,7 @@ public class Z3Process {
 			z3 = Runtime.getRuntime().exec("z3 -in -smt2");
 			BufferedReader reader = new BufferedReader(new InputStreamReader(z3.getInputStream()));
 			PrintWriter writer = new PrintWriter(z3.getOutputStream());
-			shim = new SmtLibShim(reader, writer, prog.getSymbolManager());
-			shim.makeDeclarations(prog);
+			shim = new SmtLibShim(reader, writer, prog);
 			shim.push();
 			if (Configuration.debugSmt) {
 				setupDebugShim(prog);
@@ -97,8 +96,7 @@ public class Z3Process {
 
 	private void setupDebugShim(Program<?, ?> prog) {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		debugShim = new SmtLibShim(null, new PrintWriter(baos), prog.getSymbolManager());
-		debugShim.makeDeclarations(prog);
+		debugShim = new SmtLibShim(null, new PrintWriter(baos), prog);
 		String msg = "\nBEGIN Z3 DECLARATIONS (Z3Process " + hashCode() + "):\n";
 		msg += baos.toString();
 		msg += "END Z3 DECLARATIONS (Z3Process " + hashCode() + ")";
