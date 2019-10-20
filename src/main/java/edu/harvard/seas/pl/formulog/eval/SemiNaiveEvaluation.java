@@ -53,6 +53,7 @@ import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb.SortedIndexedFactDbBuilder;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
+import edu.harvard.seas.pl.formulog.smt.PerThreadSmtManager;
 import edu.harvard.seas.pl.formulog.smt.QueueSmtManager;
 import edu.harvard.seas.pl.formulog.smt.SmtManager;
 import edu.harvard.seas.pl.formulog.smt.SmtStrategy;
@@ -190,6 +191,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 			int size = (int) strategy.getMetadata();
 			return new QueueSmtManager(prog, size);
 		case PER_THREAD:
+			return new PerThreadSmtManager(prog);
 		default:
 			throw new UnsupportedOperationException("Cannot support SMT strategy: " + strategy);
 		}
