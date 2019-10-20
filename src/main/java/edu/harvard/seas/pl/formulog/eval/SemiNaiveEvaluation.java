@@ -42,6 +42,7 @@ import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.BindingType;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralVisitor;
+import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
@@ -52,7 +53,9 @@ import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb.SortedIndexedFactDbBuilder;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
+import edu.harvard.seas.pl.formulog.smt.QueueSmtManager;
 import edu.harvard.seas.pl.formulog.smt.SmtManager;
+import edu.harvard.seas.pl.formulog.smt.SmtStrategy;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
@@ -142,7 +145,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		SortedIndexedFactDb db = dbb.build();
 		predFuncs.setDb(db);
 		
-		SmtManager smt = new SmtManager(prog);
+		SmtManager smt = getSmtManager(magicProg);
 		prog.getFunctionCallFactory().getDefManager().loadBuiltInFunctions(smt);
 
 		CountingFJP exec;
@@ -176,9 +179,21 @@ public class SemiNaiveEvaluation implements Evaluation {
 			exec.shutdown();
 			throw new InvalidProgramException(exec.getFailureCause());
 		}
-		// db.synchronize();
 		return new SemiNaiveEvaluation(db, deltaDbb, rules, magicProg.getQuery(), strata, exec,
 				getTrackedRelations(magicProg.getSymbolManager()));
+	}
+	
+	private static SmtManager getSmtManager(Program<UserPredicate, BasicRule> prog) {
+		SmtStrategy strategy = Configuration.smtStrategy;
+		switch (strategy.getTag()) {
+		case QUEUE:
+			int size = (int) strategy.getMetadata();
+			return new QueueSmtManager(prog, size);
+		case PER_THREAD:
+		default:
+			throw new UnsupportedOperationException("Cannot support SMT strategy: " + strategy);
+		}
+		
 	}
 
 	private static Set<RelationSymbol> getTrackedRelations(SymbolManager sm) {

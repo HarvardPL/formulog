@@ -30,10 +30,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDb;
+import edu.harvard.seas.pl.formulog.smt.SmtStrategy;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.util.Util;
@@ -69,9 +72,9 @@ public final class Configuration {
 	public static final int taskSize = getIntProp("taskSize", 128);
 	public static final int smtTaskSize = getIntProp("smtTaskSize", 8);
 	public static final int smtCacheSize = getIntProp("smtCacheSize", 100);
+	public static final SmtStrategy smtStrategy = getSmtStrategy();
 
 	public static final int parallelism = getIntProp("parallelism", 4);
-	public static final int smtParallelism = getIntProp("smtParallelism", 1);
 	
 	public static final boolean useDemandTransformation = propIsSet("useDemandTransformation", true);
 	
@@ -274,6 +277,23 @@ public final class Configuration {
 		}
 		l.add(val);
 		return Collections.unmodifiableList(l);
+	}
+	
+	private static SmtStrategy getSmtStrategy() {
+		String val = System.getProperty("smtStrategy");
+		if (val == null) {
+			val = "queue-1";
+		}
+		if (val.equals("perThread")) {
+			return new SmtStrategy(SmtStrategy.Tag.PER_THREAD, null);
+		}
+		Pattern p = Pattern.compile("queue-(\\d+)");
+		Matcher m = p.matcher(val);
+		if (m.matches()) {
+			int size = Integer.parseInt(m.group(1));
+			return new SmtStrategy(SmtStrategy.Tag.QUEUE, size);
+		}
+		throw new IllegalArgumentException("Unrecognized SMT strategy: " + val);
 	}
 
 }
