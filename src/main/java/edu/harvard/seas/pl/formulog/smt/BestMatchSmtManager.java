@@ -24,8 +24,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
-import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
@@ -40,7 +40,7 @@ public class BestMatchSmtManager extends SmtManager {
 
 	private final Z3Process[] processes;
 	private final AtomicIntegerArray statuses;
-	private final Random random = new Random();
+	private final AtomicInteger cnt = new AtomicInteger();
 
 	public BestMatchSmtManager(Program<?, ?> prog, int size) {
 		processes = new Z3Process[size];
@@ -57,7 +57,7 @@ public class BestMatchSmtManager extends SmtManager {
 		List<SmtLibTerm> conjuncts = breakIntoConjuncts(assertion);
 		while (true) {
 			PriorityQueue<Pair<Integer, Integer>> q = new PriorityQueue<>(processes.length, cmp);
-			int start = random.nextInt(processes.length);
+			int start = cnt.getAndIncrement();
 			for (int i = 0; i < processes.length; ++i) {
 				int pos = (start + i) % processes.length;
 				int score = score(conjuncts, processes[pos]);
