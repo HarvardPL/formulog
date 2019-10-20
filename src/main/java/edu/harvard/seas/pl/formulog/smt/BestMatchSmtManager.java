@@ -40,7 +40,7 @@ public class BestMatchSmtManager extends SmtManager {
 
 	private final Z3Process[] processes;
 	private final AtomicIntegerArray statuses;
-	private final AtomicInteger cnt = new AtomicInteger();
+	private int cnt = 0;
 
 	public BestMatchSmtManager(Program<?, ?> prog, int size) {
 		processes = new Z3Process[size];
@@ -57,7 +57,8 @@ public class BestMatchSmtManager extends SmtManager {
 		List<SmtLibTerm> conjuncts = breakIntoConjuncts(assertion);
 		while (true) {
 			PriorityQueue<Pair<Integer, Integer>> q = new PriorityQueue<>(processes.length, cmp);
-			int start = cnt.getAndIncrement();
+			// This is intentionally non-synchronized.
+			int start = cnt++;
 			for (int i = 0; i < processes.length; ++i) {
 				int pos = (start + i) % processes.length;
 				int score = score(conjuncts, processes[pos]);
