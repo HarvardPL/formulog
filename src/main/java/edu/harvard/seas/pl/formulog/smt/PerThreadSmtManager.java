@@ -21,29 +21,25 @@ package edu.harvard.seas.pl.formulog.smt;
  */
 
 import java.util.Map;
+import java.util.function.Supplier;
 
-import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
-import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
-import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.smt.SmtLibShim.Status;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
 public class PerThreadSmtManager extends SmtManager {
 
-	private final ThreadLocal<Z3Process> process;
+	private final ThreadLocal<SmtManager> subManager;
 	
-	public PerThreadSmtManager(Program<UserPredicate, BasicRule> prog) {
-		process = new ThreadLocal<Z3Process>() {
+	public PerThreadSmtManager(Supplier<SmtManager> managerMaker) {
+		subManager = new ThreadLocal<SmtManager>() {
 		
 			@Override
-			protected Z3Process initialValue() {
-				Z3Process proc = new Z3Process();
-				proc.start(prog);
-				return proc;
+			protected SmtManager initialValue() {
+				return managerMaker.get();
 			}
 			
 		};
@@ -51,7 +47,7 @@ public class PerThreadSmtManager extends SmtManager {
 	
 	@Override
 	public Pair<Status, Map<SolverVariable, Term>> check(SmtLibTerm assertion, int timeout) throws EvaluationException {
-		return process.get().check(breakIntoConjuncts(assertion), timeout);
+		return subManager.get().check(assertion, timeout);
 	}
 
 }

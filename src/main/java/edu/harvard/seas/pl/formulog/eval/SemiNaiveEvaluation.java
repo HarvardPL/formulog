@@ -53,6 +53,7 @@ import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb.SortedIndexedFactDbBuilder;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
+import edu.harvard.seas.pl.formulog.smt.BestMatchSmtManager;
 import edu.harvard.seas.pl.formulog.smt.PerThreadSmtManager;
 import edu.harvard.seas.pl.formulog.smt.QueueSmtManager;
 import edu.harvard.seas.pl.formulog.smt.SmtManager;
@@ -109,7 +110,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		SortedIndexedFactDbBuilder deltaDbb = new SortedIndexedFactDbBuilder(magicProg.getRuleSymbols());
 		PredicateFunctionSetter predFuncs = new PredicateFunctionSetter(
 				magicProg.getFunctionCallFactory().getDefManager(), magicProg.getSymbolManager(), dbb);
-		
+
 		Map<RelationSymbol, Iterable<IndexedRule>> rules = new HashMap<>();
 		List<Stratum> strata = new Stratifier(magicProg).stratify();
 		for (Stratum stratum : strata) {
@@ -145,7 +146,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 		SortedIndexedFactDb db = dbb.build();
 		predFuncs.setDb(db);
-		
+
 		SmtManager smt = getSmtManager(magicProg);
 		prog.getFunctionCallFactory().getDefManager().loadBuiltInFunctions(smt);
 
@@ -183,19 +184,26 @@ public class SemiNaiveEvaluation implements Evaluation {
 		return new SemiNaiveEvaluation(db, deltaDbb, rules, magicProg.getQuery(), strata, exec,
 				getTrackedRelations(magicProg.getSymbolManager()));
 	}
-	
+
 	private static SmtManager getSmtManager(Program<UserPredicate, BasicRule> prog) {
 		SmtStrategy strategy = Configuration.smtStrategy;
 		switch (strategy.getTag()) {
-		case QUEUE:
+		case QUEUE: {
 			int size = (int) strategy.getMetadata();
 			return new QueueSmtManager(prog, size);
-		case PER_THREAD:
-			return new PerThreadSmtManager(prog);
+		}
+		case BEST_MATCH: {
+			int size = (int) strategy.getMetadata();
+			return new BestMatchSmtManager(prog, size);
+		}
+		case PER_THREAD_QUEUE: {
+			int size = (int) strategy.getMetadata();
+			return new PerThreadSmtManager(() -> new QueueSmtManager(prog, size));
+		}
 		default:
 			throw new UnsupportedOperationException("Cannot support SMT strategy: " + strategy);
 		}
-		
+
 	}
 
 	private static Set<RelationSymbol> getTrackedRelations(SymbolManager sm) {

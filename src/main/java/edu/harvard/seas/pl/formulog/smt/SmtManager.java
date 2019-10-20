@@ -39,10 +39,6 @@ import edu.harvard.seas.pl.formulog.util.Pair;
 
 public abstract class SmtManager {
 
-	// queue-N
-	// perThread-N (eventually)
-	// bestMatch-N
-	
 	public abstract Pair<Status, Map<SolverVariable, Term>> check(SmtLibTerm assertion, int timeout) throws EvaluationException;
 
 	protected List<SmtLibTerm> breakIntoConjuncts(SmtLibTerm assertion) {

@@ -26,11 +26,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.harvard.seas.pl.formulog.Configuration;
@@ -75,7 +75,7 @@ public class Z3Process {
 	private SmtLibShim debugShim;
 	private SmtLibShim shim;
 	private Process z3;
-	private final Map<SmtLibTerm, SolverVariable> indicatorVars = new HashMap<>();
+	private final Map<SmtLibTerm, SolverVariable> indicatorVars = new ConcurrentHashMap<>();
 	private int nextVarId;
 
 	public synchronized void start(Program<?, ?> prog) {
@@ -117,10 +117,11 @@ public class Z3Process {
 		shim.push();
 	}
 	
+	public Set<SmtLibTerm> getCache() {
+		return indicatorVars.keySet();
+	}
+	
 	private Pair<List<SolverVariable>, List<SolverVariable>> makeAssertion(List<SmtLibTerm> formula, Integer id) {
-		if (indicatorVars.size() > Configuration.smtCacheSize) {
-			clearCache();
-		}
 		ByteArrayOutputStream baos = null;
 		if (debugShim != null) {
 			baos = new ByteArrayOutputStream();
@@ -193,7 +194,6 @@ public class Z3Process {
 		if (debug) {
 			id = cnt.getAndIncrement();
 		}
-		// shim.push();
 		Pair<List<SolverVariable>, List<SolverVariable>> p = makeAssertion(t, id);
 		long start = 0;
 		if (debug || Configuration.timeSmt) {
@@ -212,7 +212,9 @@ public class Z3Process {
 		if (status.equals(Status.SATISFIABLE)) {
 			m = shim.getModel();
 		}
-		// shim.pop();
+		if (indicatorVars.size() > Configuration.smtCacheSize) {
+			clearCache();
+		}
 		return new Pair<>(status, m);
 	}
 

@@ -284,14 +284,23 @@ public final class Configuration {
 		if (val == null) {
 			val = "queue-1";
 		}
-		if (val.equals("perThread")) {
-			return new SmtStrategy(SmtStrategy.Tag.PER_THREAD, null);
-		}
 		Pattern p = Pattern.compile("queue-(\\d+)");
 		Matcher m = p.matcher(val);
 		if (m.matches()) {
 			int size = Integer.parseInt(m.group(1));
 			return new SmtStrategy(SmtStrategy.Tag.QUEUE, size);
+		}
+		p = Pattern.compile("bestMatch-(\\d+)");
+		m = p.matcher(val);
+		if (m.matches()) {
+			int size = Integer.parseInt(m.group(1));
+			return new SmtStrategy(SmtStrategy.Tag.BEST_MATCH, size);
+		}
+		p = Pattern.compile("perThreadQueue-(\\d+)");
+		m = p.matcher(val);
+		if (m.matches()) {
+			int size = Integer.parseInt(m.group(1));
+			return new SmtStrategy(SmtStrategy.Tag.PER_THREAD_QUEUE, size);
 		}
 		throw new IllegalArgumentException("Unrecognized SMT strategy: " + val);
 	}
