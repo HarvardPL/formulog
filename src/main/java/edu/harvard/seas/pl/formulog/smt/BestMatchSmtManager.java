@@ -25,9 +25,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
+import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
@@ -40,7 +40,7 @@ public class BestMatchSmtManager extends SmtManager {
 
 	private final Z3Process[] processes;
 	private final AtomicIntegerArray statuses;
-	private int cnt = 0;
+	private static final int cacheCap = Configuration.smtCacheSize;
 
 	public BestMatchSmtManager(Program<?, ?> prog, int size) {
 		processes = new Z3Process[size];
@@ -56,12 +56,9 @@ public class BestMatchSmtManager extends SmtManager {
 	public Pair<Status, Map<SolverVariable, Term>> check(SmtLibTerm assertion, int timeout) throws EvaluationException {
 		List<SmtLibTerm> conjuncts = breakIntoConjuncts(assertion);
 		while (true) {
-			PriorityQueue<Pair<Integer, Integer>> q = new PriorityQueue<>(processes.length, cmp);
-			// This is intentionally non-synchronized.
-			int start = cnt++;
+			PriorityQueue<Pair<Integer, Double>> q = new PriorityQueue<>(processes.length, cmp);
 			for (int i = 0; i < processes.length; ++i) {
-				int pos = (start + i) % processes.length;
-				int score = score(conjuncts, processes[pos]);
+				double score = score(conjuncts, processes[i]);
 				q.add(new Pair<>(i, score));
 			}
 			while (!q.isEmpty()) {
@@ -77,24 +74,30 @@ public class BestMatchSmtManager extends SmtManager {
 		}
 	}
 
-	private static final Comparator<Pair<Integer, Integer>> cmp = new Comparator<Pair<Integer, Integer>>() {
+	private static final Comparator<Pair<Integer, Double>> cmp = new Comparator<Pair<Integer, Double>>() {
 
 		@Override
-		public int compare(Pair<Integer, Integer> o1, Pair<Integer, Integer> o2) {
-			return -Integer.compare(o1.snd(), o2.snd());
+		public int compare(Pair<Integer, Double> o1, Pair<Integer, Double> o2) {
+			return Double.compare(o2.snd(), o1.snd());
 		}
 
 	};
 
-	private int score(List<SmtLibTerm> conjuncts, Z3Process proc) {
+	private double score(List<SmtLibTerm> conjuncts, Z3Process proc) {
 		Set<SmtLibTerm> cache = proc.getCache();
-		int score = 0;
+		int cacheSize = cache.size();
+		if (cacheSize == 0) {
+			return 0;
+		}
+		int hits = 0;
 		for (SmtLibTerm conjunct : conjuncts) {
 			if (cache.contains(conjunct)) {
-				score++;
+				hits++;
 			}
 		}
-		return score;
+		double score1 = 3 * hits / conjuncts.size();
+		double score2 = -((cacheSize - hits) / cacheCap);
+		return score1 + score2;
 	}
 
 }
