@@ -1335,15 +1335,18 @@ public class Parser {
 			Set<Term[]> facts = new HashSet<>();
 			facts.addAll(initialFacts.get(sym));
 			Path path = inputDir.resolve(sym.toString() + ".csv");
+			int line = 0;
 			try {
 				Stream<String> lines;
 				lines = Files.lines(path);
 				for (Iterator<String> it = lines.iterator(); it.hasNext();) {
+					line++;
 					readLineFromCsv(sym, new StringReader(it.next()), facts);
 				}
 				lines.close();
 			} catch (Exception e) {
-				throw new ParseException("Exception when extracting facts from " + path + ":\n" + e);
+				throw new ParseException(
+						"Exception when extracting facts from " + path + " (line " + line + "):\n" + e);
 			}
 			return facts;
 		}
