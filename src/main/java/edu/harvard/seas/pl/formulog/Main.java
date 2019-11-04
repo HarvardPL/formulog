@@ -23,13 +23,12 @@ package edu.harvard.seas.pl.formulog;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.PrintStream;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
 import org.apache.commons.lang3.time.StopWatch;
 
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
@@ -50,34 +49,32 @@ import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 
 public final class Main {
 
-	private final CommandLine cl;
-	private final boolean debugMst;
+	private final String file;
 	private final StopWatch clock = new StopWatch();
 	private volatile boolean interrupted = true;
 
 	private static final boolean exnStackTrace = System.getProperty("exnStackTrace") != null;
+	private static final boolean debugMst = Configuration.debugMst;
 
-	private Main(CommandLine cl, boolean debugMst) {
-		this.cl = cl;
-		this.debugMst = debugMst;
+	private Main(String file) {
+		this.file = file;
 	}
 
 	private void go() {
 		Program<UserPredicate, BasicRule> prog = parse();
 		WellTypedProgram typedProg = typeCheck(prog);
 		Evaluation eval = setup(typedProg);
-		Runtime.getRuntime().addShutdownHook(
-			new Thread() {
-			
-				@Override
-				public void run() {
-					if (interrupted) {
-						printResults(eval);
-					}
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+
+			@Override
+			public void run() {
+				if (interrupted) {
+					printResults(eval);
 				}
-				
 			}
-			
+
+		}
+
 		);
 		evaluate(eval);
 		interrupted = false;
@@ -88,12 +85,12 @@ public final class Main {
 		System.out.println("Parsing...");
 		clock.start();
 		try {
-			String inputDir = "";
-			if (cl.hasOption("I")) {
-				inputDir = cl.getOptionValue("I");
+			List<Path> factDirs = Configuration.factDirs.stream().map(Paths::get).collect(Collectors.toList());
+			if (factDirs.isEmpty()) {
+				factDirs = Collections.singletonList(Paths.get(""));
 			}
-			FileReader reader = new FileReader(cl.getArgs()[0]);
-			Program<UserPredicate, BasicRule> prog = new Parser().parse(reader, Paths.get(inputDir));
+			FileReader reader = new FileReader(file);
+			Program<UserPredicate, BasicRule> prog = new Parser().parse(reader, factDirs);
 			clock.stop();
 			System.out.println("Finished parsing (" + clock.getTime() / 1000.0 + "s)");
 			return prog;
@@ -171,34 +168,11 @@ public final class Main {
 		}
 	}
 
-	private static void printUsageAndDie(Options opts) {
-		HelpFormatter formatter = new HelpFormatter();
-		formatter.printHelp("formulog.jar input-file.flg", opts);
-		System.exit(1);
-	}
-
-	private static CommandLine parseArgs(String[] args) {
-		Options opts = new Options();
-		opts.addOption("s", "semiInflationary", false, "Use semi-inflationary evaluation.");
-		opts.addOption("I", true, "Directory for (tab and/or space-delimited) CSVs with input facts.");
-		CommandLineParser clp = new DefaultParser();
-		CommandLine cl = null;
-		try {
-			cl = clp.parse(opts, args);
-		} catch (org.apache.commons.cli.ParseException e) {
-			System.out.println(e.getMessage());
-			printUsageAndDie(opts);
-		}
-		if (cl.getArgs().length != 1) {
-			System.out.println("You need to supply one (and only one) FormuLog file.");
-			printUsageAndDie(opts);
-		}
-		return cl;
-	}
-
 	public static void main(String[] args) throws FileNotFoundException {
-		CommandLine cl = parseArgs(args);
-		(new Main(cl, System.getProperty("debugMst") != null)).go();
+		if (args.length != 1) {
+			throw new IllegalArgumentException("Excepted a single Formulog file as an argument.");
+		}
+		new Main(args[0]).go();
 	}
 
 	private static void handleException(String msg, Exception e, boolean die) {

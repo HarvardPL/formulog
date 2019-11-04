@@ -28,7 +28,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.URL;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
@@ -40,15 +44,19 @@ import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 
 public abstract class AbstractEvaluationTest {
 
-	protected void test(String file, String inputDir) {
+	protected void test(String file, List<String> inputDirs) {
 		boolean isBad = file.matches("test\\d\\d\\d_bd.flg");
 		try {
 			InputStream is = getClass().getClassLoader().getResourceAsStream(file);
 			if (is == null) {
 				throw new FileNotFoundException(file + " not found");
 			}
-			URL dir = getClass().getClassLoader().getResource(inputDir);
-			BasicProgram prog = (new Parser()).parse(new InputStreamReader(is), Paths.get(dir.toURI()));
+			List<Path> dirs = new ArrayList<>();
+			for (String inputDir : inputDirs) {
+				URL dir = getClass().getClassLoader().getResource(inputDir);
+				dirs.add(Paths.get(dir.toURI()));
+			}
+			BasicProgram prog = new Parser().parse(new InputStreamReader(is), dirs);
 			WellTypedProgram wellTypedProg = (new TypeChecker(prog)).typeCheck();
 			Evaluation eval = setup(wellTypedProg);
 			eval.run();
@@ -82,7 +90,7 @@ public abstract class AbstractEvaluationTest {
 	}
 
 	protected void test(String file) {
-		test(file, "");
+		test(file, Collections.singletonList(""));
 	}
 
 	protected abstract Evaluation setup(WellTypedProgram prog) throws InvalidProgramException, EvaluationException;

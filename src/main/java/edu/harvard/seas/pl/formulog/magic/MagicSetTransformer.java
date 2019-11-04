@@ -23,6 +23,7 @@ package edu.harvard.seas.pl.formulog.magic;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -30,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
@@ -73,7 +75,7 @@ public class MagicSetTransformer {
 	private final Program<UserPredicate, BasicRule> origProg;
 	private boolean topDownIsDefault;
 
-	private static final boolean debug = System.getProperty("debugMst") != null;
+	private static final boolean debug = Configuration.debugMst;
 
 	public MagicSetTransformer(Program<UserPredicate, BasicRule> prog) {
 		this.origProg = prog;
@@ -493,7 +495,16 @@ public class MagicSetTransformer {
 	}
 
 	private UserPredicate createSupAtom(Set<Var> curLiveVars, int ruleNum, int supCount, Symbol headSym) {
-		Term[] args = (new ArrayList<>(curLiveVars)).toArray(new Term[0]);
+		List<Term> l = new ArrayList<>(curLiveVars);
+		l.sort(new Comparator<Term>() {
+
+			@Override
+			public int compare(Term o1, Term o2) {
+				return o1.toString().compareTo(o2.toString());
+			}
+			
+		});
+		Term[] args = l.toArray(new Term[0]);
 		SupSymbol supSym = new SupSymbol(ruleNum, supCount, args.length);
 		return UserPredicate.make(supSym, args, false);
 	}

@@ -1,0 +1,6 @@
+@external
+input foo(i32) 
+
+output ok
+
+ok :- foo(0), foo(42).

@@ -79,6 +79,10 @@ public final class Configuration {
 	public static final boolean useDemandTransformation = propIsSet("useDemandTransformation", true);
 	
 	public static final List<String> trackedRelations = getListProp("trackedRelations");
+	
+	public static final List<String> factDirs = getListProp("factDirs");
+	
+	public static final boolean debugMst = propIsSet("debugMst");
 
 	public static final int memoizeThreshold() {
 		return getIntProp("memoizeThreshold", 500);

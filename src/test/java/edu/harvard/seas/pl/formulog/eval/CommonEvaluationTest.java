@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.eval;
 
+import java.util.Arrays;
+
 /*-
  * #%L
  * FormuLog
@@ -551,7 +553,7 @@ public abstract class CommonEvaluationTest extends AbstractEvaluationTest {
 
 	@Test
 	public void test191() {
-		test("test191_ok.flg", "test191_input");
+		test("test191_ok.flg", Arrays.asList("test191_input"));
 	}
 
 	@Test
@@ -682,6 +684,11 @@ public abstract class CommonEvaluationTest extends AbstractEvaluationTest {
 	@Test
 	public void test275() {
 		test("test275_ok.flg");
+	}
+	
+	@Test
+	public void test276() {
+		test("test276_ok.flg", Arrays.asList("test276_inputA", "test276_inputB"));
 	}
 	
 }

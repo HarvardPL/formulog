@@ -37,7 +37,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -193,10 +192,10 @@ public class Parser {
 	}
 
 	public BasicProgram parse(Reader r) throws ParseException {
-		return parse(r, Paths.get(""));
+		return parse(r, Collections.singletonList(Paths.get("")));
 	}
 
-	public BasicProgram parse(Reader r, Path inputDir) throws ParseException {
+	public BasicProgram parse(Reader r, List<Path> inputDir) throws ParseException {
 		try {
 			FormulogParser parser = getParser(r);
 			StmtProcessor stmtProcessor = new StmtProcessor(inputDir);
@@ -289,11 +288,11 @@ public class Parser {
 		private final Set<RelationSymbol> externalEdbs = new HashSet<>();
 		private final VariableCheckPass varChecker = new VariableCheckPass(symbolManager);
 		private final Set<ConstructorSymbol> uninterpFuncSymbols = new HashSet<>();
-		private final Path inputDir;
+		private final List<Path> inputDirs;
 		private UserPredicate query;
 
-		public StmtProcessor(Path inputDir) {
-			this.inputDir = inputDir;
+		public StmtProcessor(List<Path> inputDirs) {
+			this.inputDirs = inputDirs;
 		}
 
 		@Override
@@ -392,7 +391,7 @@ public class Parser {
 				}
 			}
 			if (sym.isEdbSymbol()) {
-				initialFacts.put(sym, new HashSet<>());
+				initialFacts.put(sym, Util.concurrentSet());
 			} else {
 				rules.put(sym, new HashSet<>());
 			}
@@ -1331,10 +1330,9 @@ public class Parser {
 
 		};
 
-		private Set<Term[]> readEdbFromFile(RelationSymbol sym) throws ParseException {
-			Set<Term[]> facts = new HashSet<>();
-			facts.addAll(initialFacts.get(sym));
+		private void readEdbFromFile(RelationSymbol sym, Path inputDir) throws ParseException {
 			Path path = inputDir.resolve(sym.toString() + ".csv");
+			Set<Term[]> facts = initialFacts.get(sym);
 			int line = 0;
 			try {
 				Stream<String> lines;
@@ -1348,7 +1346,6 @@ public class Parser {
 				throw new ParseException(
 						"Exception when extracting facts from " + path + " (line " + line + "):\n" + e);
 			}
-			return facts;
 		}
 
 		private void readLineFromCsv(RelationSymbol sym, Reader r, Set<Term[]> facts) throws ParseException {
@@ -1361,41 +1358,31 @@ public class Parser {
 			facts.add(args);
 		}
 
-		// private Set<TypeSymbol> findTypes() {
-		// TypeFinder tf = new TypeFinder();
-		// for (FunctionSymbol sym : functionDefManager.getFunctionSymbols()) {
-		// tf.exploreFunction(functionDefManager.lookup(sym));
-		// }
-		// for (RelationSymbol sym : initialFacts.keySet()) {
-		// tf.exploreFunctorType(sym.getCompileTimeType());
-		// }
-		// for (RelationSymbol sym : rules.keySet()) {
-		// tf.exploreFunctorType(sym.getCompileTimeType());
-		// for (BasicRule r : rules.get(sym)) {
-		// tf.exploreRule(r);
-		// }
-		// }
-		// return tf.getTypes();
-		// }
-
 		public BasicProgram getProgram() throws ParseException {
 			if (!externalEdbs.isEmpty()) {
 				ExecutorService exec = Executors.newFixedThreadPool(Configuration.parallelism);
-				Map<RelationSymbol, Future<Set<Term[]>>> futures = new HashMap<>();
-				for (RelationSymbol sym : externalEdbs) {
-					Future<Set<Term[]>> fut = exec.submit(new Callable<Set<Term[]>>() {
+				List<Future<?>> tasks = new ArrayList<>();
+				for (Path inputDir : inputDirs) {
+					for (RelationSymbol sym : externalEdbs) {
+						tasks.add(exec.submit(new Runnable() {
 
-						@Override
-						public Set<Term[]> call() throws Exception {
-							return readEdbFromFile(sym);
-						}
+							@Override
+							public void run() {
+								try {
+									readEdbFromFile(sym, inputDir);
+								} catch (ParseException e) {
+									throw new RuntimeException(e);
+								}
+							}
 
-					});
-					futures.put(sym, fut);
+						}));
+					}
 				}
 				exec.shutdown();
 				try {
-					Util.fillMapWithFutures(futures, initialFacts);
+					for (Future<?> task : tasks) {
+						task.get();
+					}
 				} catch (InterruptedException | ExecutionException e) {
 					throw new ParseException(e);
 				}
