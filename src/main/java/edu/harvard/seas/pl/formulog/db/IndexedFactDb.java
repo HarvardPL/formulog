@@ -41,9 +41,9 @@ public interface IndexedFactDb {
 	
 	Iterable<Term[]> get(RelationSymbol sym, Term[] key, int index);
 	
-	void add(RelationSymbol sym, Term[] args);
+	boolean add(RelationSymbol sym, Term[] args);
 	
-	void addAll(RelationSymbol sym, Iterable<Term[]> tups);
+	boolean addAll(RelationSymbol sym, Iterable<Term[]> tups);
 	
 	boolean hasFact(RelationSymbol sym, Term[] args);
 

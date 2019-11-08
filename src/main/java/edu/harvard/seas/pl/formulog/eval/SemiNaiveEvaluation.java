@@ -526,8 +526,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 	private void reportFact(SimplePredicate atom) {
 		RelationSymbol sym = atom.getSymbol();
 		Term[] args = atom.getArgs();
-		if (!db.hasFact(sym, args)) {
-			nextDeltaDb.add(sym, args);
+		if (!db.hasFact(sym, args) && nextDeltaDb.add(sym, args)) {
 			changed = true;
 			if (trackedRelations.contains(sym)) {
 				System.err.println("[TRACKED] " + UserPredicate.make(sym, args, false));

@@ -94,7 +94,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 	}
 
 	@Override
-	public void add(RelationSymbol sym, Term[] tup) {
+	public boolean add(RelationSymbol sym, Term[] tup) {
 		assert allNormal(tup);
 		IndexedFactSet master = masterIndex.get(sym);
 		if (master.add(tup)) {
@@ -103,11 +103,13 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 					idx.add(tup);
 				}
 			}
+			return true;
 		}
+		return false;
 	}
 
 	@Override
-	public void addAll(RelationSymbol sym, Iterable<Term[]> tups) {
+	public boolean addAll(RelationSymbol sym, Iterable<Term[]> tups) {
 		IndexedFactSet master = masterIndex.get(sym);
 		if (master.addAll(tups)) {
 			for (IndexedFactSet idx : indices.get(sym)) {
@@ -115,7 +117,9 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 					idx.addAll(tups);
 				}
 			}
+			return true;
 		}
+		return false;
 	}
 
 	private boolean allNormal(Term[] args) {
