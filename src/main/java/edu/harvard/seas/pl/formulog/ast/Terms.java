@@ -1,7 +1,5 @@
 package edu.harvard.seas.pl.formulog.ast;
 
-import java.util.Comparator;
-
 /*-
  * #%L
  * FormuLog
@@ -304,17 +302,13 @@ public final class Terms {
 		return idCnt.incrementAndGet();
 	}
 	
-	public static int currentId() {
-		return idCnt.get();
-	}
-	
-	public static final Comparator<Term> comparator = new Comparator<Term>() {
-
-		@Override
-		public int compare(Term o1, Term o2) {
-			return Integer.compare(o1.getId(), o2.getId());
-		}
-		
-	};
+//	public static final Comparator<Term> comparator = new Comparator<Term>() {
+//
+//		@Override
+//		public int compare(Term o1, Term o2) {
+//			return Integer.compare(o1.getId(), o2.getId());
+//		}
+//		
+//	};
 
 }

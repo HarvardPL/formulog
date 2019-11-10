@@ -283,7 +283,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			for (int i = 0; i < a.length; ++i) {
 				a[i] = order.get(i);
 			}
-			Comparator<Term[]> cmp = new ArrayComparator<>(a, Terms.comparator);
+			Comparator<Term[]> cmp = new TermArrayComparator(a);
 			return new IndexedFactSet(pat, new ConcurrentSkipListSet<>(cmp));
 		}
 
@@ -373,23 +373,24 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 
 	}
 
-	private static class ArrayComparator<T> implements Comparator<T[]> {
+	private static class TermArrayComparator implements Comparator<Term[]> {
 
 		private final int[] pat;
-		private final Comparator<T> cmp;
 
-		public ArrayComparator(int[] pat, Comparator<T> cmp) {
+		public TermArrayComparator(int[] pat) {
 			this.pat = pat;
-			this.cmp = cmp;
 		}
 
 		@Override
-		public int compare(T[] o1, T[] o2) {
+		public int compare(Term[] o1, Term[] o2) {
 			for (int i = 0; i < pat.length; i++) {
 				int j = pat[i];
-				int c = cmp.compare(o1[j], o2[j]);
-				if (c != 0) {
-					return c;
+				int x = o1[j].getId();
+				int y = o2[j].getId();
+				if (x < y) {
+					return -1;
+				} else if (x > y) {
+					return 1;
 				}
 			}
 			return 0;
