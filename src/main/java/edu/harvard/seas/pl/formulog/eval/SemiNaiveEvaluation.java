@@ -1,7 +1,6 @@
 package edu.harvard.seas.pl.formulog.eval;
 
 import java.time.LocalDateTime;
-import java.util.ArrayDeque;
 
 /*-
  * #%L
@@ -25,7 +24,6 @@ import java.util.ArrayDeque;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -84,20 +82,20 @@ import edu.harvard.seas.pl.formulog.validating.ast.SimpleRule;
 
 public class SemiNaiveEvaluation implements Evaluation {
 
-	private final SortedIndexedFactDb db;
-	private SortedIndexedFactDb deltaDb;
-	private SortedIndexedFactDb nextDeltaDb;
-	private final Map<RelationSymbol, Set<IndexedRule>> firstRoundRules = new HashMap<>();
-	private final Map<RelationSymbol, Map<RelationSymbol, Set<IndexedRule>>> laterRoundRules = new HashMap<>();
-	private final List<Stratum> strata;
-	private final UserPredicate query;
-	private volatile boolean changed;
-	private final CountingFJP exec;
-	private final Map<IndexedRule, boolean[]> splitPositions = new HashMap<>();
-	private final Set<RelationSymbol> trackedRelations;
+	final SortedIndexedFactDb db;
+	SortedIndexedFactDb deltaDb;
+	SortedIndexedFactDb nextDeltaDb;
+	final Map<RelationSymbol, Set<IndexedRule>> firstRoundRules = new HashMap<>();
+	final Map<RelationSymbol, Map<RelationSymbol, Set<IndexedRule>>> laterRoundRules = new HashMap<>();
+	final List<Stratum> strata;
+	final UserPredicate query;
+	volatile boolean changed;
+	final CountingFJP exec;
+	final Map<IndexedRule, boolean[]> splitPositions = new HashMap<>();
+	final Set<RelationSymbol> trackedRelations;
 
-	private static final boolean sequential = System.getProperty("sequential") != null;
-	private static final boolean debugRounds = Configuration.debugRounds;
+	static final boolean sequential = System.getProperty("sequential") != null;
+	static final boolean debugRounds = Configuration.debugRounds;
 
 	@SuppressWarnings("serial")
 	public static SemiNaiveEvaluation setup(WellTypedProgram prog, int parallelism) throws InvalidProgramException {
@@ -185,7 +183,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 				getTrackedRelations(magicProg.getSymbolManager()));
 	}
 
-	private static SmtManager getSmtManager(Program<UserPredicate, BasicRule> prog) {
+	static SmtManager getSmtManager(Program<UserPredicate, BasicRule> prog) {
 		SmtStrategy strategy = Configuration.smtStrategy;
 		switch (strategy.getTag()) {
 		case QUEUE: {
@@ -210,7 +208,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 
 	}
 
-	private static Set<RelationSymbol> getTrackedRelations(SymbolManager sm) {
+	static Set<RelationSymbol> getTrackedRelations(SymbolManager sm) {
 		Set<RelationSymbol> s = new HashSet<>();
 		for (String name : Configuration.trackedRelations) {
 			if (sm.hasSymbol(name)) {
@@ -228,7 +226,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		return s;
 	}
 
-	private static BiFunction<ComplexLiteral, Set<Var>, Integer> chooseScoringFunction() {
+	static BiFunction<ComplexLiteral, Set<Var>, Integer> chooseScoringFunction() {
 		switch (Configuration.optimizationSetting) {
 		case 0:
 			return SemiNaiveEvaluation::score0;
@@ -244,11 +242,11 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 	}
 
-	private static int score0(ComplexLiteral l, Set<Var> boundVars) {
+	static int score0(ComplexLiteral l, Set<Var> boundVars) {
 		return 0;
 	}
 
-	private static int score1(ComplexLiteral l, Set<Var> boundVars) {
+	static int score1(ComplexLiteral l, Set<Var> boundVars) {
 		// This seems to be worse than just doing nothing.
 		return l.accept(new ComplexLiteralVisitor<Void, Integer>() {
 
@@ -282,7 +280,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}, null);
 	}
 
-	private static int score2(ComplexLiteral l, Set<Var> boundVars) {
+	static int score2(ComplexLiteral l, Set<Var> boundVars) {
 		return l.accept(new ComplexLiteralVisitor<Void, Integer>() {
 
 			@Override
@@ -309,7 +307,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}, null);
 	}
 
-	private static int score3(ComplexLiteral l, Set<Var> boundVars) {
+	static int score3(ComplexLiteral l, Set<Var> boundVars) {
 		return l.accept(new ComplexLiteralVisitor<Void, Integer>() {
 
 			@Override
@@ -342,7 +340,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}, null);
 	}
 
-	private SemiNaiveEvaluation(SortedIndexedFactDb db, IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb,
+	SemiNaiveEvaluation(SortedIndexedFactDb db, IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb,
 			Map<RelationSymbol, Iterable<IndexedRule>> rules, UserPredicate query, List<Stratum> strata,
 			CountingFJP exec, Set<RelationSymbol> trackedRelations) {
 		this.db = db;
@@ -355,7 +353,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		processRules(rules);
 	}
 
-	private void processRules(Map<RelationSymbol, Iterable<IndexedRule>> rules) {
+	void processRules(Map<RelationSymbol, Iterable<IndexedRule>> rules) {
 		SmtCallFinder scf = new SmtCallFinder();
 		for (RelationSymbol sym : rules.keySet()) {
 			Set<IndexedRule> firstRounders = new HashSet<>();
@@ -376,7 +374,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 	}
 
-	private static boolean[] findSplitPositions(IndexedRule rule, SmtCallFinder scf) {
+	static boolean[] findSplitPositions(IndexedRule rule, SmtCallFinder scf) {
 		int len = rule.getBodySize();
 		boolean[] splitPositions = new boolean[len];
 		boolean smtCallComing = scf.containsSmtCall(rule.getHead());
@@ -392,7 +390,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		return splitPositions;
 	}
 
-	private RelationSymbol hasDelta(IndexedRule rule) {
+	RelationSymbol hasDelta(IndexedRule rule) {
 		for (SimpleLiteral l : rule) {
 			RelationSymbol delta = l.accept(new SimpleLiteralVisitor<Void, RelationSymbol>() {
 
@@ -445,7 +443,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 	}
 
-	private void evaluateStratum(Stratum stratum) throws EvaluationException {
+	void evaluateStratum(Stratum stratum) throws EvaluationException {
 		int round = 0;
 		StopWatch watch = recordRoundStart(stratum, round);
 		Set<RelationSymbol> syms = stratum.getPredicateSyms();
@@ -483,7 +481,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 	}
 
-	private void updateDbs() {
+	void updateDbs() {
 		StopWatch watch = recordDbUpdateStart();
 		for (RelationSymbol sym : nextDeltaDb.getSymbols()) {
 			if (nextDeltaDb.isEmpty(sym)) {
@@ -501,10 +499,10 @@ public class SemiNaiveEvaluation implements Evaluation {
 	}
 
 	@SuppressWarnings("serial")
-	private class UpdateDbTask extends AbstractFJPTask {
+	class UpdateDbTask extends AbstractFJPTask {
 
-		private final RelationSymbol sym;
-		private final Iterator<Iterable<Term[]>> it;
+		final RelationSymbol sym;
+		final Iterator<Iterable<Term[]>> it;
 
 		protected UpdateDbTask(RelationSymbol sym, Iterator<Iterable<Term[]>> it) {
 			super(exec);
@@ -523,7 +521,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 
 	}
 
-	private void reportFact(SimplePredicate atom) {
+	void reportFact(SimplePredicate atom) {
 		RelationSymbol sym = atom.getSymbol();
 		Term[] args = atom.getArgs();
 		if (!db.hasFact(sym, args) && nextDeltaDb.add(sym, args)) {
@@ -534,11 +532,10 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 	}
 
-	private static final int taskSize = Configuration.taskSize;
-	private static final int smtTaskSize = Configuration.smtTaskSize;
+	static final int taskSize = Configuration.taskSize;
+	static final int smtTaskSize = Configuration.smtTaskSize;
 
-	private Iterable<Iterable<Term[]>> lookup(IndexedRule r, int pos, OverwriteSubstitution s)
-			throws EvaluationException {
+	Iterable<Iterable<Term[]>> lookup(IndexedRule r, int pos, OverwriteSubstitution s) throws EvaluationException {
 		SimplePredicate predicate = (SimplePredicate) r.getBody(pos);
 		int idx = r.getDBIndex(pos);
 		Term[] args = predicate.getArgs();
@@ -563,20 +560,38 @@ public class SemiNaiveEvaluation implements Evaluation {
 		return Util.splitIterable(ans, targetSize);
 	}
 
-	private static final boolean recordRuleDiagnostics = Configuration.recordRuleDiagnostics;
+	static final boolean recordRuleDiagnostics = Configuration.recordRuleDiagnostics;
 
 	@SuppressWarnings("serial")
-	private class RuleSuffixEvaluator extends AbstractFJPTask {
+	class RuleSuffixEvaluator extends AbstractFJPTask {
 
-		private final IndexedRule rule;
-		private final int startPos;
-		private final OverwriteSubstitution s;
-		private final Iterator<Iterable<Term[]>> it;
+		final IndexedRule rule;
+		final SimplePredicate head;
+		final SimpleLiteral[] body;
+		final int startPos;
+		final OverwriteSubstitution s;
+		final Iterator<Iterable<Term[]>> it;
 
-		protected RuleSuffixEvaluator(IndexedRule rule, int pos, OverwriteSubstitution s,
-				Iterator<Iterable<Term[]>> it) {
+		protected RuleSuffixEvaluator(IndexedRule rule, SimplePredicate head, SimpleLiteral[] body, int pos,
+				OverwriteSubstitution s, Iterator<Iterable<Term[]>> it) {
 			super(exec);
 			this.rule = rule;
+			this.head = head;
+			this.body = body;
+			this.startPos = pos;
+			this.s = s;
+			this.it = it;
+		}
+		
+		protected RuleSuffixEvaluator(IndexedRule rule, int pos, OverwriteSubstitution s, Iterator<Iterable<Term[]>> it) {
+			super(exec);
+			this.rule = rule;
+			this.head = rule.getHead();
+			SimpleLiteral[] bd = new SimpleLiteral[rule.getBodySize()];
+			for (int i = 0; i < bd.length; ++i) {
+				bd[i] = rule.getBody(i);
+			}
+			this.body = bd;
 			this.startPos = pos;
 			this.s = s;
 			this.it = it;
@@ -590,7 +605,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 			}
 			Iterable<Term[]> tups = it.next();
 			if (it.hasNext()) {
-				exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, startPos, s.copy(), it));
+				exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, head, body, startPos, s.copy(), it));
 			}
 			try {
 				for (Term[] tup : tups) {
@@ -606,34 +621,33 @@ public class SemiNaiveEvaluation implements Evaluation {
 			}
 		}
 
-		private void evaluate(Term[] ans) throws UncheckedEvaluationException {
-			SimplePredicate p = (SimplePredicate) rule.getBody(startPos);
+		void evaluate(Term[] ans) throws UncheckedEvaluationException {
+			SimplePredicate p = (SimplePredicate) body[startPos];
 			updateBinding(p, ans);
 			int pos = startPos + 1;
-			Deque<Iterator<Term[]>> stack = new ArrayDeque<>();
+			@SuppressWarnings("unchecked")
+			Iterator<Term[]>[] stack = new Iterator[rule.getBodySize()];
 			boolean movingRight = true;
 			while (pos > startPos) {
-				if (pos == rule.getBodySize()) {
+				if (pos == body.length) {
 					try {
-						reportFact(rule.getHead().normalize(s));
+						reportFact(head.normalize(s));
 					} catch (EvaluationException e) {
 						throw new UncheckedEvaluationException("Exception raised while evaluating the literal: "
-								+ rule.getHead() + "\n\n" + e.getMessage());
+								+ head + "\n\n" + e.getMessage());
 					}
 					pos--;
 					movingRight = false;
 				} else if (movingRight) {
-					SimpleLiteral l = rule.getBody(pos);
+					SimpleLiteral l = body[pos];
 					try {
 						switch (l.getTag()) {
 						case ASSIGNMENT:
 							((Assignment) l).assign(s);
-							stack.addFirst(Collections.emptyIterator());
 							pos++;
 							break;
 						case CHECK:
 							if (((Check) l).check(s)) {
-								stack.addFirst(Collections.emptyIterator());
 								pos++;
 							} else {
 								pos--;
@@ -642,7 +656,6 @@ public class SemiNaiveEvaluation implements Evaluation {
 							break;
 						case DESTRUCTOR:
 							if (((Destructor) l).destruct(s)) {
-								stack.addFirst(Collections.emptyIterator());
 								pos++;
 							} else {
 								pos--;
@@ -653,7 +666,6 @@ public class SemiNaiveEvaluation implements Evaluation {
 							Iterator<Iterable<Term[]>> tups = lookup(rule, pos, s).iterator();
 							if (((SimplePredicate) l).isNegated()) {
 								if (!tups.hasNext()) {
-									stack.addFirst(Collections.emptyIterator());
 									pos++;
 								} else {
 									pos--;
@@ -661,9 +673,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 								}
 							} else {
 								if (tups.hasNext()) {
-									stack.addFirst(tups.next().iterator());
+									stack[pos] = tups.next().iterator();
 									if (tups.hasNext()) {
-										exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s.copy(), tups));
+										exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, head, body, pos, s.copy(), tups));
 									}
 									// No need to do anything else: we'll hit the right case on the next iteration.
 								} else {
@@ -678,21 +690,21 @@ public class SemiNaiveEvaluation implements Evaluation {
 								"Exception raised while evaluating the literal: " + l + "\n\n" + e.getMessage());
 					}
 				} else {
-					Iterator<Term[]> it = stack.getFirst();
-					if (it.hasNext()) {
+					Iterator<Term[]> it = stack[pos];
+					if (it != null && it.hasNext()) {
 						ans = it.next();
 						updateBinding((SimplePredicate) rule.getBody(pos), ans);
 						movingRight = true;
 						pos++;
 					} else {
-						stack.removeFirst();
+						stack[pos] = null;
 						pos--;
 					}
 				}
 			}
 		}
 
-		private void updateBinding(SimplePredicate p, Term[] ans) {
+		void updateBinding(SimplePredicate p, Term[] ans) {
 			Term[] args = p.getArgs();
 			BindingType[] pat = p.getBindingPattern();
 			for (int i = 0; i < pat.length; ++i) {
@@ -705,9 +717,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 	}
 
 	@SuppressWarnings("serial")
-	private class RulePrefixEvaluator extends AbstractFJPTask {
+	class RulePrefixEvaluator extends AbstractFJPTask {
 
-		private final IndexedRule rule;
+		final IndexedRule rule;
 
 		protected RulePrefixEvaluator(IndexedRule rule) {
 			super(exec);
@@ -826,10 +838,10 @@ public class SemiNaiveEvaluation implements Evaluation {
 		};
 	}
 
-	private static class FactIterator implements Iterator<UserPredicate> {
+	static class FactIterator implements Iterator<UserPredicate> {
 
-		private final RelationSymbol sym;
-		private final Iterator<Term[]> bindings;
+		final RelationSymbol sym;
+		final Iterator<Term[]> bindings;
 
 		public FactIterator(RelationSymbol sym, Iterator<Term[]> bindings) {
 			this.sym = sym;
@@ -858,7 +870,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		return query;
 	}
 
-	private StopWatch recordRoundStart(Stratum stratum, int round) {
+	StopWatch recordRoundStart(Stratum stratum, int round) {
 		if (!debugRounds) {
 			return null;
 		}
@@ -871,7 +883,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		return watch;
 	}
 
-	private void recordRoundEnd(Stratum stratum, int round, StopWatch watch) {
+	void recordRoundEnd(Stratum stratum, int round, StopWatch watch) {
 		if (watch == null) {
 			return;
 		}
@@ -880,7 +892,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		System.err.println("Time: " + watch.getTime() + "ms");
 	}
 
-	private StopWatch recordDbUpdateStart() {
+	StopWatch recordDbUpdateStart() {
 		if (!debugRounds) {
 			return null;
 		}
@@ -892,7 +904,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		return watch;
 	}
 
-	private void recordDbUpdateEnd(StopWatch watch) {
+	void recordDbUpdateEnd(StopWatch watch) {
 		if (watch == null) {
 			return;
 		}
