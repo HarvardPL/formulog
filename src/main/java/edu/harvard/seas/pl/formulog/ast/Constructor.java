@@ -43,7 +43,11 @@ public interface Constructor extends Functor<ConstructorSymbol>, SmtLibTerm {
 		if (isGround()) {
 			return this;
 		}
-		Term[] newArgs = Terms.map(getArgs(), t -> t.applySubstitution(s));
+		Term[] args = getArgs();
+		Term[] newArgs = new Term[args.length];
+		for (int i = 0; i < args.length; ++i) {
+			newArgs[i] = args[i].applySubstitution(s);
+		}
 		return copyWithNewArgs(newArgs);
 	}
 
@@ -55,7 +59,11 @@ public interface Constructor extends Functor<ConstructorSymbol>, SmtLibTerm {
 		if (isGround() && !containsFunctionCall()) {
 			return this;
 		}
-		Term[] newArgs = Terms.mapExn(getArgs(), t -> t.normalize(s));
+		Term[] args = getArgs();
+		Term[] newArgs = new Term[args.length];
+		for (int i = 0; i < args.length; ++i) {
+			newArgs[i] = args[i].normalize(s);
+		}
 		return copyWithNewArgs(newArgs);
 	}
 	

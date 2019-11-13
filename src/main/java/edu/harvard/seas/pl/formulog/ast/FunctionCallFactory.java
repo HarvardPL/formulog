@@ -106,7 +106,11 @@ public final class FunctionCallFactory {
 			if (isGround) {
 				return this;
 			}
-			Term[] newArgs = Terms.map(args, t -> t.applySubstitution(s));
+			Term[] args = getArgs();
+			Term[] newArgs = new Term[args.length];
+			for (int i = 0; i < args.length; ++i) {
+				newArgs[i] = args[i].applySubstitution(s);
+			}
 			return make(sym, newArgs);
 		}
 
