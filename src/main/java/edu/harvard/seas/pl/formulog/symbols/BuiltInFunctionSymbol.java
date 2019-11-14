@@ -158,12 +158,18 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 	BEQ("beq", a, a, bool),
 
 	BNEQ("bneq", a, a, bool),
+	
+	// String operations
 
 	STRING_OF_I32("string_of_i32", i32, string),
 
 	STRCMP("strcmp", string, string, cmp),
 
 	STRCAT("strcat", string, string, string),
+	
+	STRING_MATCHES("string_matches", string, string, bool),
+	
+	STRING_STARTS_WITH("string_starts_with", string, string, bool),
 
 	// Constraint solving
 

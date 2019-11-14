@@ -178,6 +178,10 @@ public final class BuiltInFunctionDefFactory {
 			return I64Ucmp.INSTANCE;
 		case STRCAT:
 			return Strcat.INSTANCE;
+		case STRING_MATCHES:
+			return stringMatches;
+		case STRING_STARTS_WITH:
+			return stringStartsWith;
 		case IS_SAT:
 			return isSat;
 		case IS_SAT_OPT:
@@ -1270,6 +1274,38 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 	}
+	
+	private static final FunctionDef stringMatches = new FunctionDef() {
+
+		@Override
+		public FunctionSymbol getSymbol() {
+			return BuiltInFunctionSymbol.STRING_MATCHES;
+		}
+
+		@Override
+		public Term evaluate(Term[] args) throws EvaluationException {
+			String str = ((StringTerm) args[0]).getVal();
+			String re = ((StringTerm) args[1]).getVal();
+			return boolToBoolTerm(str.matches(re));
+		}
+		
+	};
+	
+	private static final FunctionDef stringStartsWith = new FunctionDef() {
+
+		@Override
+		public FunctionSymbol getSymbol() {
+			return BuiltInFunctionSymbol.STRING_STARTS_WITH;
+		}
+
+		@Override
+		public Term evaluate(Term[] args) throws EvaluationException {
+			String str = ((StringTerm) args[0]).getVal();
+			String pre = ((StringTerm) args[1]).getVal();
+			return boolToBoolTerm(str.startsWith(pre));
+		}
+		
+	};
 
 	private enum Substitute implements FunctionDef {
 

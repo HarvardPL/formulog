@@ -691,4 +691,9 @@ public abstract class CommonEvaluationTest extends AbstractEvaluationTest {
 		test("test276_ok.flg", Arrays.asList("test276_inputA", "test276_inputB"));
 	}
 	
+	@Test
+	public void test277() {
+		test("test277_ok.flg");
+	}
+	
 }

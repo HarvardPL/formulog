@@ -1,0 +1,30 @@
+output test(i32) 
+
+test(1) :- string_matches("hello", "hello").
+test(2) :- string_matches("hello", ".*el.*").
+test(3) :- string_matches("hello", "he.*o").
+test(4) :- string_matches("hello", "^h.*o").
+test(5) :- string_matches("hello", "h.*o$").
+test(6) :- !string_matches("hello", "^e.*o").
+test(7) :- !string_matches("hello", "h.*l$").
+test(8) :- string_starts_with("hello", "").
+test(9) :- string_starts_with("hello", "he").
+test(10) :- string_starts_with("hello", "hello").
+test(11) :- !string_starts_with("hello", "hello!").
+test(12) :- !string_starts_with("hello", "el").
+
+output ok
+
+ok :-
+  test(1),
+  test(2),
+  test(3),
+  test(4),
+  test(5),
+  test(6),
+  test(7),
+  test(8),
+  test(9),
+  test(10),
+  test(11),
+  test(12).
