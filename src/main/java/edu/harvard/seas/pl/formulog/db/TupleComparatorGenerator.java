@@ -42,7 +42,6 @@ import org.apache.bcel.generic.PUSH;
 import org.apache.bcel.generic.Type;
 
 import edu.harvard.seas.pl.formulog.ast.Term;
-import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.util.IntArrayWrapper;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
