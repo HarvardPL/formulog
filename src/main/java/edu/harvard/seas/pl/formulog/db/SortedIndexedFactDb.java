@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.BindingType;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
@@ -267,6 +268,8 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 		private final NavigableSet<Term[]> s;
 		private final AtomicInteger cnt = new AtomicInteger();
 
+		private final static TupleComparatorGenerator gen = new TupleComparatorGenerator();
+
 		public static IndexedFactSet make(BindingType[] pat) {
 			List<Integer> order = new ArrayList<>();
 			for (int i = 0; i < pat.length; ++i) {
@@ -283,7 +286,16 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			for (int i = 0; i < a.length; ++i) {
 				a[i] = order.get(i);
 			}
-			Comparator<Term[]> cmp = new TermArrayComparator(a);
+			Comparator<Term[]> cmp;
+			if (Configuration.codegen) {
+				try {
+					cmp = gen.generate(a);
+				} catch (InstantiationException | IllegalAccessException e) {
+					throw new AssertionError(e);
+				}
+			} else {
+				cmp = new TermArrayComparator(a);
+			}
 			return new IndexedFactSet(pat, new ConcurrentSkipListSet<>(cmp));
 		}
 

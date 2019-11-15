@@ -85,12 +85,14 @@ public final class Configuration {
 	public static final boolean debugMst = propIsSet("debugMst");
 
 	public static final int memoizeThreshold() {
-		return getIntProp("memoizeThreshold", 500);
+		return getIntProp("memoizeThreshold", 0);
 	}
 
 	public static boolean noModel() {
 		return propIsSet("noModel");
 	}
+	
+	public static final boolean codegen = propIsSet("codegen", true);
 
 	static {
 		if (recordFuncDiagnostics) {

@@ -21,9 +21,12 @@ package edu.harvard.seas.pl.formulog.db;
  */
 
 import java.util.Comparator;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.bcel.Const;
+import org.apache.bcel.generic.ASTORE;
 import org.apache.bcel.generic.ArrayType;
 import org.apache.bcel.generic.BranchInstruction;
 import org.apache.bcel.generic.ClassGen;
@@ -39,17 +42,35 @@ import org.apache.bcel.generic.PUSH;
 import org.apache.bcel.generic.Type;
 
 import edu.harvard.seas.pl.formulog.ast.Term;
+import edu.harvard.seas.pl.formulog.ast.Terms;
+import edu.harvard.seas.pl.formulog.util.IntArrayWrapper;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
 public class TupleComparatorGenerator extends ClassLoader {
 
-	private static final AtomicInteger cnt = new AtomicInteger();
-	
+	private final AtomicInteger cnt = new AtomicInteger();
+
+	private static final Type objectType = new ObjectType("java.lang.Object");
 	private static final Type termType = new ObjectType("edu.harvard.seas.pl.formulog.ast.Term");
 	private static final Type termArrayType = new ArrayType(termType, 1);
+	
+	private Map<IntArrayWrapper, Comparator<Term[]>> memo = new ConcurrentHashMap<>();
 
-	@SuppressWarnings("unchecked")
 	public Comparator<Term[]> generate(int[] accessPat) throws InstantiationException, IllegalAccessException {
+		IntArrayWrapper key = new IntArrayWrapper(accessPat);
+		Comparator<Term[]> cmp = memo.get(key);
+		if (cmp == null) {
+			cmp = generate1(accessPat);
+			Comparator<Term[]> cmp2 = memo.putIfAbsent(key, cmp);
+			if (cmp2 != null) {
+				cmp = cmp2;
+			}
+		}
+		return cmp;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public Comparator<Term[]> generate1(int[] accessPat) throws InstantiationException, IllegalAccessException {
 		String className = "edu.harvard.seas.pl.formulog.db.CustomComparator" + cnt.getAndIncrement();
 		ClassGen classGen = new ClassGen(className, "java.lang.Object", "", Const.ACC_PUBLIC | Const.ACC_SUPER,
 				new String[] { "java.util.Comparator" });
@@ -63,11 +84,14 @@ public class TupleComparatorGenerator extends ClassLoader {
 	}
 
 	private void addCompareMethod(ClassGen cg, int[] accessPat) {
+		InstructionFactory f = new InstructionFactory(cg);
 		InstructionList il = new InstructionList();
+		il.append(genCast(f, 1));
+		il.append(genCast(f, 2));
 		InstructionHandle ih = null;
 		BranchInstruction br = null;
 		for (int i : accessPat) {
-			Pair<InstructionList, BranchInstruction> p = genComparison(cg, i);
+			Pair<InstructionList, BranchInstruction> p = genComparison(f, i);
 			ih = il.append(p.fst());
 			if (br != null) {
 				br.setTarget(ih);
@@ -79,15 +103,23 @@ public class TupleComparatorGenerator extends ClassLoader {
 			br.setTarget(ih);
 		}
 		il.append(InstructionConst.IRETURN);
-		MethodGen mg = new MethodGen(Const.ACC_PUBLIC, Type.INT, new Type[] { termArrayType, termArrayType },
+		MethodGen mg = new MethodGen(Const.ACC_PUBLIC, Type.INT, new Type[] { objectType, objectType },
 				new String[] { "xs", "ys" }, "compare", cg.getClassName(), il, cg.getConstantPool());
 		mg.setMaxStack();
 		mg.setMaxLocals();
 		cg.addMethod(mg.getMethod());
 	}
 
-	private Pair<InstructionList, BranchInstruction> genComparison(ClassGen cg, int idx) {
-		InstructionFactory f = new InstructionFactory(cg);
+	private InstructionList genCast(InstructionFactory f, int argn) {
+		assert argn == 1 || argn == 2;
+		InstructionList il = new InstructionList();
+		il.append(InstructionFactory.createLoad(objectType, argn));
+		il.append(f.createCast(objectType, termArrayType));
+		il.append(new ASTORE(argn));
+		return il;
+	}
+
+	private Pair<InstructionList, BranchInstruction> genComparison(InstructionFactory f, int idx) {
 		InstructionList il = new InstructionList();
 		il.append(genLoad(f, 1, idx));
 		il.append(genLoad(f, 2, idx));
@@ -121,34 +153,5 @@ public class TupleComparatorGenerator extends ClassLoader {
 		il.append(InstructionConst.IRETURN);
 		return new Pair<>(il, br);
 	}
-	
-	public static void main(String[] args) throws InstantiationException, IllegalAccessException {
-		TupleComparatorGenerator gen = new TupleComparatorGenerator();
-		gen.generate(new int[] { 0 });
-	}
-	
-	/*
-	     0: aload_1
-         1: iconst_0
-         2: aaload
-         3: invokeinterface #18,  1           // InterfaceMethod edu/harvard/seas/pl/formulog/ast/Term.getId:()I
-         8: istore_3
-         9: aload_2
-        10: iconst_0
-        11: aaload
-        12: invokeinterface #18,  1           // InterfaceMethod edu/harvard/seas/pl/formulog/ast/Term.getId:()I
-        17: istore        4
-        19: iload_3
-        20: iload         4
-        22: if_icmpge     27
-        25: iconst_m1
-        26: ireturn
-        27: iload_3
-        28: iload         4
-        30: if_icmple     35
-        33: iconst_1
-        34: ireturn
-
-	 */
 
 }
