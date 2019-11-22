@@ -1,6 +1,6 @@
 # Language basics
 
-Formulog is an extension of Datalog designed to support program analyses that use logical formulae, such as symbolic execution and refinement type checking.
+Formulog is an extension of Datalog designed to support program analyses that use logical formulas, such as symbolic execution and refinement type checking.
 
 A Formulog program consists of three main components:
 * type definitions;
@@ -29,7 +29,7 @@ Formulog also has support for tuple types, such as the type `(i32 * string list)
 type ('k, 'v) map = ('k * 'v) list
 ```
 
-Formulog currently has these algebraic types built-in (plus the types that represent logical formulae, to be presented later):
+Formulog currently has these algebraic types built-in (plus the types that represent logical formulas, to be presented later):
 ```
 type bool =
   | true
@@ -131,20 +131,22 @@ p :- foo(X), X = true.
 
 Formulog allows users to define ML-style functions, that can then be invoked from within Datalog-style rules. These functions can be polymorphic, but cannot be higher-order. The functions must have explicit type annotations. For example, here is a function for finding the nth element of a list:
 ```
-fun nth(?xs : 'a list, ?n : i32) : 'a option =
-  match ?xs with
+fun nth(Xs : 'a list, N : i32) : 'a option =
+  match Xs with
   | [] => none
-  | ?x :: ?xs =>
-    if ?n < 0 then none
-    else if ?n = 0 then some(?x)
-    else nth(?xs, ?n - 1)
+  | X :: Xs =>
+    if N < 0 then none
+    else if N = 0 then some(X)
+    else nth(Xs, N - 1)
   end
 ```
 No special syntax is required for defining recursive functions, although mutually recursive functions must be defined with `and`, as here:
 ```
-(* assumes X is non-negative *)
-fun is_even(X: i32) : bool = X = 0 || is_odd(X - 1)
-and is_odd(X: i32) : bool = X != 0 && is_even(X - 1)
+(* assume X is non-negative *)
+fun is_even(X: i32) : bool =
+  X = 0 || is_odd(X - 1)
+and is_odd(X: i32) : bool =
+  X != 0 && is_even(X - 1)
 ```
 We support some of the basic ML syntax constructions, like `match` and `let`. However, you will find Formulog's syntax to be less flexible than most ML implementations; for example, `some(X)` is okay but `some X` is not.
 

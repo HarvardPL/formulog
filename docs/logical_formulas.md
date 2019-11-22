@@ -40,8 +40,9 @@ ok3 :-
 
 For every non-formula type τ, there are two corresponding types that
 are used to represent τ-valued logical formulas. The first is `τ smt`, which
-represents a τ-valued formula, and `τ sym`, represents a τ-valued formula
-variable (it is sometimes helpful to distinguish between these two types).
+represents a τ-valued formula. The second is `τ sym`, which represents a
+τ-valued formula variable (it is sometimes helpful to distinguish between these
+two types).
 
 Outside of logical formulas, the types τ, `τ smt`, and `τ sym` are treated as
 being distinct. However, within a formula, they are treated as being all the
