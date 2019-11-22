@@ -1,4 +1,4 @@
-# FormuLog 
+# Formulog 
 Datalog with support for SMT queries.
 
 ## Setup
@@ -25,12 +25,12 @@ directory.
 If `mvn package` hangs during testing, it likely means that something is wrong
 with Z3. You can compile without testing by adding the `-DskipTests` flag.
 
-## Running FormuLog
+## Running Formulog
 
-The executable FormuLog JAR that you have either downloaded or built expects a
-single FormuLog file as an argument.
+The executable Formulog JAR that you have either downloaded or built expects a
+single Formulog file as an argument.
 
-For example, if you save this FormuLog program to `greeting.flg`
+For example, if you save this Formulog program to `greeting.flg`
 
 ```
 input entity(string)
@@ -51,7 +51,7 @@ and run the command
 java -jar formulog.jar greeting.flg 
 ```
 
-(assuming `formulog.jar` is the name of the FormuLog executable JAR), you
+(assuming `formulog.jar` is the name of the Formulog executable JAR), you
 should see the results:
 
 ```
@@ -90,15 +90,11 @@ threads, use
 java -DdebugSmt -Dparallelism=3 -jar formulog.jar greeting.flg
 ```
 
-### Disclaimer
+## Writing Formulog programs
 
-We have not yet focused on the performance or scalability of the FormuLog
-runtime. We hope to improve it soon (most likely by integrating the language
-features of FormuLog into an existing Datalog implementation). Stay tuned!
-
-## Writing FormuLog programs
-
-See the wiki on the GitHub repo for FormuLog documentation. 
+See the documentation in `docs/` (also available in the GitHub wiki). You can
+also skim through the `test*_ok.flg` files in `src/test/resources/` to see
+examples.
 
 There's a Vim syntax file in the `misc/` directory.
 
