@@ -93,6 +93,8 @@ public final class Configuration {
 	}
 	
 	public static final boolean codegen = propIsSet("codegen", true);
+	
+	public static final boolean inlineInRules = propIsSet("inlineInRules", true);
 
 	static {
 		if (recordFuncDiagnostics) {

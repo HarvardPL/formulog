@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.AbstractRule;
 import edu.harvard.seas.pl.formulog.ast.BindingType;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
@@ -123,7 +124,7 @@ public class SimpleRule extends AbstractRule<SimplePredicate, SimpleLiteral> {
 						return Check.make(lhs, rhs, unificationPredicate.isNegated());
 					} else if (rightBound) {
 						if (lhs instanceof Var) {
-							if (rhs instanceof Var) {
+							if (Configuration.inlineInRules || rhs instanceof Var) {
 								subst.put((Var) lhs, rhs);
 								return null;
 							}
@@ -135,7 +136,7 @@ public class SimpleRule extends AbstractRule<SimplePredicate, SimpleLiteral> {
 						return makeDestructor(rhs, (Constructor) lhs, todo);
 					} else if (leftBound) {
 						if (rhs instanceof Var) {
-							if (lhs instanceof Var) {
+							if (Configuration.inlineInRules || lhs instanceof Var) {
 								subst.put((Var) rhs, lhs);
 								return null;
 							}
