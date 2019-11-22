@@ -55,12 +55,12 @@ java -jar formulog.jar greeting.flg
 should see the results:
 
 ```
-entity("Alice").
-entity("Bob").
-entity("World").
-greeting("Hello, Alice").
-greeting("Hello, Bob").
-greeting("Hello, World").
+entity("Alice")
+entity("Bob")
+entity("World")
+greeting("Hello, Alice")
+greeting("Hello, Bob")
+greeting("Hello, World")
 ```
 
 ### Options
