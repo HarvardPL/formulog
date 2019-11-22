@@ -22,6 +22,9 @@ directory. This will create an executable JAR with a name like
 `formulog-X.Y.Z-SNAPSHOT-jar-with-dependencies.jar` in the `target/`
 directory.
 
+If `mvn package` hangs during testing, it likely means that something is wrong
+with Z3. You can compile without testing by adding the `-DskipTests` flag.
+
 ## Running FormuLog
 
 The executable FormuLog JAR that you have either downloaded or built expects a
@@ -30,12 +33,12 @@ single FormuLog file as an argument.
 For example, if you save this FormuLog program to `greeting.flg`
 
 ```
-input entity(string).
+input entity(string)
 entity("Alice").
 entity("Bob").
 entity("World").
 
-output greeting(string).
+output greeting(string)
 greeting(Y) :-
   entity(X),
   some(M) = get_model(`#y[string] #= str_concat("Hello, ", X)`, none),
@@ -65,8 +68,6 @@ greeting("Hello, World").
 You can set the following system properties (using the `-D` flag, as in
 `-DdebugSmt` or `-DuseDemandTransformation=false`):
 
-* `callTrace` - print debugging information related to FormuLog-level function
-  calls (defaults to false)
 * `debugSmt` - print debugging information related to SMT calls (defaults to
   false)
 * `debugMst` - print debugging information related to the magic set
@@ -79,6 +80,8 @@ You can set the following system properties (using the `-D` flag, as in
 * `sequential` - run interpreter without a thread pool (helpful for debugging
   runtime; defaults to false)
 * `parallelism=N` - run interpreter with `N` threads (defaults to 4)
+* `printRelSizes` - print final relation sizes (defaults to false)
+* `printFinalRules` - print the final, transformed rules (defaults to false)
 
 For example, to run the test program above with SMT debug information and 3
 threads, use
