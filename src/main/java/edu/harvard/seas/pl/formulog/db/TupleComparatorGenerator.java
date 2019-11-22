@@ -47,12 +47,11 @@ import edu.harvard.seas.pl.formulog.util.Pair;
 
 public class TupleComparatorGenerator extends ClassLoader {
 
-	private final AtomicInteger cnt = new AtomicInteger();
-
 	private static final Type objectType = new ObjectType("java.lang.Object");
 	private static final Type termType = new ObjectType("edu.harvard.seas.pl.formulog.ast.Term");
 	private static final Type termArrayType = new ArrayType(termType, 1);
 	
+	private final AtomicInteger cnt = new AtomicInteger();
 	private Map<IntArrayWrapper, Comparator<Term[]>> memo = new ConcurrentHashMap<>();
 
 	public Comparator<Term[]> generate(int[] accessPat) throws InstantiationException, IllegalAccessException {

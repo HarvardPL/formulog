@@ -35,6 +35,8 @@ import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
+import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
+import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 import edu.harvard.seas.pl.formulog.validating.ValidRule;
 
@@ -51,7 +53,7 @@ public class SimpleRule extends AbstractRule<SimplePredicate, SimpleLiteral> {
 						+ "\nCould not simplify this atom: " + atom + "\nReason:\n" + e.getMessage());
 			}
 		}
-		UserPredicate head = rule.getHead();
+		UserPredicate head = rule.getHead().applySubstitution(simplifier.getSubst());
 		Set<Var> boundVars = simplifier.getBoundVars();
 		if (!boundVars.containsAll(head.varSet())) {
 			throw new InvalidProgramException("Unbound variables in head of rule:\n" + rule);
@@ -92,13 +94,19 @@ public class SimpleRule extends AbstractRule<SimplePredicate, SimpleLiteral> {
 		private final List<SimpleLiteral> acc = new ArrayList<>();
 		private final Set<Var> boundVars = new HashSet<>();
 		private final Map<Var, Integer> varCounts;
+		private final Substitution subst = new SimpleSubstitution();
 
 		public Simplifier(Map<Var, Integer> varCounts) {
 			this.varCounts = varCounts;
 		}
+		
+		public Substitution getSubst() {
+			return subst;
+		}
 
 		public void add(ComplexLiteral atom) throws InvalidProgramException {
 			List<ComplexLiteral> todo = new ArrayList<>();
+			atom = atom.applySubstitution(subst);
 			SimpleLiteral c = atom.accept(new ComplexLiteralExnVisitor<Void, SimpleLiteral, InvalidProgramException>() {
 
 				@Override
@@ -115,6 +123,10 @@ public class SimpleRule extends AbstractRule<SimplePredicate, SimpleLiteral> {
 						return Check.make(lhs, rhs, unificationPredicate.isNegated());
 					} else if (rightBound) {
 						if (lhs instanceof Var) {
+							if (rhs instanceof Var) {
+								subst.put((Var) lhs, rhs);
+								return null;
+							}
 							return Assignment.make((Var) lhs, rhs);
 						}
 						if (!(lhs instanceof Constructor)) {
@@ -123,6 +135,10 @@ public class SimpleRule extends AbstractRule<SimplePredicate, SimpleLiteral> {
 						return makeDestructor(rhs, (Constructor) lhs, todo);
 					} else if (leftBound) {
 						if (rhs instanceof Var) {
+							if (lhs instanceof Var) {
+								subst.put((Var) rhs, lhs);
+								return null;
+							}
 							return Assignment.make((Var) rhs, lhs);
 						}
 						if (!(rhs instanceof Constructor)) {
