@@ -72,6 +72,7 @@ You can set the following system properties (using the `-D` flag, as in
   false)
 * `debugMst` - print debugging information related to the magic set
   transformation (defaults to false)
+* `debugRounds` - print statistics for each round of seminaive evaluation
 * `useDemandTransformation` - apply the demand transformation as a
   post-processing step after the magic set transformation (defaults to true)
 * `softExceptions` - ignore exceptions during evaluation (i.e., treat them as
@@ -82,6 +83,10 @@ You can set the following system properties (using the `-D` flag, as in
 * `parallelism=N` - run interpreter with `N` threads (defaults to 4)
 * `printRelSizes` - print final relation sizes (defaults to false)
 * `printFinalRules` - print the final, transformed rules (defaults to false)
+* `factDirs=dir_1,...,dir_n` - directories for CSV files of input facts
+  (defaults to the current directory)
+* `trackedRelations=rel_1,...,rel_n` - print facts from listed relations as
+  they are derived (defaults to the empty list)
 
 For example, to run the test program above with SMT debug information and 3
 threads, use
@@ -92,9 +97,11 @@ java -DdebugSmt -Dparallelism=3 -jar formulog.jar greeting.flg
 
 ## Writing Formulog programs
 
-See the documentation in `docs/` (also available in the GitHub wiki). You can
-also skim through the `test*_ok.flg` files in `src/test/resources/` to see
-examples.
+See the documentation in `docs/`. Some shortish example programs can be found
+in the `examples/` directory. To see an example of a larger development, check
+out our implementation of a [type checker for
+Dminor](https://github.com/HarvardPL/dminor-in-formulog), a language built
+around refinement types.
 
 There's a Vim syntax file in the `misc/` directory.
 
@@ -107,4 +114,5 @@ libraries and download their associated licenses with this command:
 mvn license:download-licenses
 ```
 
-The generated content can be found in the `target/generated-resources/` directory.
+The generated content can be found in the `target/generated-resources/`
+directory.
