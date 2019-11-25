@@ -53,7 +53,6 @@ import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
 
-// TODO Break this up into different classes; pass them into BuiltInFunctionSymbol
 public final class BuiltInFunctionDefFactory {
 
 	private final SmtManager smt;
@@ -1569,67 +1568,6 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 	}
-
-	// private enum PathInterpolant implements FunctionDef {
-	//
-	// INSTANCE;
-	//
-	// @Override
-	// public FunctionSymbol getSymbol() {
-	// return BuiltInFunctionSymbol.PATH_INTERPOLANT;
-	// }
-	//
-	// @Override
-	// public Term evaluate(Term[] args) throws
-	// EvaluationException {
-	// throw new AssertionError();
-	//// ConstraintSolver solver = new ConstraintSolver();
-	//// Term[] res =
-	// solver.getPathInterpolants(listTermToArray(args[0]));
-	//// if (res == null) {
-	//// return Constructor.getZeroAry(BuiltInConstructorSymbol.NONE);
-	//// }
-	//// return Constructor.get(BuiltInConstructorSymbol.SOME, new Term[] {
-	// arrayToListTerm(res) });
-	// }
-	//
-	// }
-
-	// private static Term[] listTermToArray(Term list) {
-	// return listTermToList(list).toArray(Terms.EMPTY_TERMS_ARR);
-	// }
-	//
-	// private static List<Term> listTermToList(Term t) {
-	// List<Term> l = listTermToList(t, new ArrayList<>());
-	// return l;
-	// }
-	//
-	// private static List<Term> listTermToList(Term t, List<Term> acc) {
-	// assert t instanceof Constructor;
-	// Constructor c = (Constructor) t;
-	// Symbol sym = c.getSymbol();
-	// assert sym instanceof BuiltInConstructorSymbol;
-	// switch ((BuiltInConstructorSymbol) sym) {
-	// case NIL:
-	// return acc;
-	// case CONS:
-	// Term hd = c.getArgs()[0];
-	// Term tl = c.getArgs()[1];
-	// acc.add(hd);
-	// return listTermToList(tl, acc);
-	// default:
-	// throw new AssertionError();
-	// }
-	// }
-	//
-	// private static Term arrayToListTerm(Term[] terms) {
-	// Term t = Constructor.getZeroAry(BuiltInConstructorSymbol.NIL);
-	// for (int i = terms.length - 1; i >= 0; --i) {
-	// t = Constructor.get(BuiltInConstructorSymbol.CONS, new Term[] { terms[i], t
-	// });
-	// }
-	// return t;
-	// }
 
 	private static <T> Term makeCmp(T x, T y, BiFunction<T, T, Integer> cmp) {
 		int z = cmp.apply(x, y);
