@@ -132,12 +132,25 @@ p :- foo(X), X = true.
 It is possible to specify that an input relation is enumerated externally in (tab-separated) CSV files by annotating an input relation declaration with `@external`, as in
 ```
 @external
-input foo(i32, i32)
+input foo(i32, i32, string list)
 
 @external
 input bar(string)
 ```
-The Formulog runtime will look in the current directory for files called `foo.csv` and `bar.csv`. You can specify alternate directories to look in using the `factDirs` command line option. Every fact directory must have a CSV file for _every_ external input relation, even if the file is empty.
+The Formulog runtime will look in the current directory for files called `foo.csv` and `bar.csv`. The former might look like:
+```
+42  0 ["x"]
+24  1 ["", " "]
+100 -1 []
+```
+The latter might look like:
+```
+"hello"
+"goodbye"
+"ciao"
+"aloha"
+```
+You can specify alternate directories to look in using the `factDirs` command line option. Every fact directory must have a CSV file for _every_ external input relation (the file can be empty).
 
 ## Functions
 
@@ -168,10 +181,10 @@ output bar(i32).
 ...
 fun foo(N:i32) : bool = bar(N + 1).
 ```
-Here, the function `foo(n)` returns `true` when the `bar` relation contains `n + 1`. The term `??` is a special wild card that can be used as an argument when "invoking" a predicate as function. For example, given the predicate `p` that relates a `bool` to an `i32`, we have:
+Here, the function `foo(n)` returns `true` when the `bar` relation contains `n + 1`. The term `??` is a special wild card term that can be used as an argument when "invoking" a predicate as function. For example, given the predicate `p` that relates a `bool` to an `i32`, we have:
 * `p(true, 42)` returns a boolean (whether `true` is related to `42`)
-* `p(true, ??)` returns a list of `i32`s (the ones that are related to `true`)
-* `p(??, 42)` returns a list of `bool`s (the ones that are related to `42`)
+* `p(true, ??)` returns a list of `i32` terms (the ones that are related to `true`)
+* `p(??, 42)` returns a list of `bool` terms (the ones that are related to `42`)
 * `p(??, ??)` returns a list of pairs constituting the relation 
 
 Finally, Formulog already has a bunch of basic functions built-in (mostly to do with manipulating primitives):
