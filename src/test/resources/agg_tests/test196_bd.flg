@@ -1,1 +1,0 @@
-output foo(i32, i32<doesnt_exist,0>)

@@ -1,6 +1,0 @@
-type unit = 
-  | just_me 
-
-fun fst(X: 'a, Y: 'b) : 'a = X
-
-output foo(unit<fst,just_me>)
