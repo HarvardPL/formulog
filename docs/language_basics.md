@@ -203,3 +203,7 @@ Finally, Formulog already has a bunch of basic functions built-in (mostly to do 
 * numeric primitive conversion operations, in the form `*_to_*` (e.g., `i32_to_fp64`).
 
 Additionally, standard arithmetic notation can be used for `i32` operations. For example, `38 + 12 / 3` is shorthand for `i32_add(38, i32_div(12, 3))`.
+
+## A note on variable usage
+
+To help catch bugs related to variable usage, Formulog requires that every variable that does not start with an underscore occurs more than once in its scope. Every variable that begins with an underscore is treated as "anonymous," in that every occurrence of that variable represents a distinct variable. For this reason, Formulog also does not allow any variable that begins with an underscore to occur more than once in a scope, except for the special (fully anonymous) variable `_`.

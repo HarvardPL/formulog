@@ -1,0 +1,419 @@
+(*-
+ * #%L
+ * Formulog
+ * %%
+ * Copyright (C) 2018 - 2019 President and Fellows of Harvard College
+ * %%
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * #L%
+ *)
+
+(*******************************************************************************
+  LIQUID_TYPES.FLG
+
+  This file has the implementation of a type checker for a simple language with
+  refinement types.
+*******************************************************************************)
+
+type tvar = string
+
+type var = string sym
+
+type label = string
+
+type op =
+  | op_not
+  | op_or
+  | op_and
+  | op_eqb
+
+type base =
+  | base_bool
+  
+type typ = 
+  | typ_tvar(tvar)
+  | typ_fun(var, typ, typ)
+  | typ_forall(tvar, typ)
+  | typ_ref(var, base, exp)
+
+and exp = 
+  | exp_var(var)
+  | exp_bool(bool)
+  | exp_op(op)
+  | exp_lam(var, typ, exp)
+  | exp_tlam(tvar, exp)
+  | exp_app(exp, exp)
+  | exp_tapp(exp, typ)
+
+fun append(L1 : 'a list, L2 : 'a list) : 'a list =
+  match L1 with
+  | [] => L2
+  | X :: L1rest => X :: append(L1rest, L2)
+  end
+
+fun remove(X : 'a, L : 'a list) : 'a list =
+  match L with
+  | [] => []
+  | Y :: Lrest  => if X = Y then remove(X, Lrest) else Y :: remove(X, Lrest)
+  end
+
+fun elem(X : 'a, L : 'a list) : bool =
+  match L with
+  | [] => false
+  | Y :: Lrest => X = Y || elem(X, Lrest)
+  end
+
+fun x : var = #x[string]
+fun y : var = #y[string]
+fun b : var = #b[string]
+fun b1 : var = #b1[string]
+fun b2 : var = #b2[string]
+fun v : var = #v[string]
+
+fun fresh_for(NAME : var, VARS : var list) : var =
+  if elem(NAME, VARS)
+  then (* okay, we have work to do *)
+       #{VARS}[string] 
+  else (* we're fine---the name is already fresh *)
+       NAME
+
+fun typ_freevars(T : typ) : var list =
+  match T with
+  | typ_tvar(_) => []
+  | typ_fun(X, T1, T2) => append(typ_freevars(T1), remove(X, typ_freevars(T2)))
+  | typ_forall(_, Tinner) => typ_freevars(Tinner)
+  | typ_ref(X, _B, Eref) => remove(X, exp_freevars(Eref))
+  end
+
+and exp_freevars(E : exp) : var list =
+  match E with
+  | exp_var(X) => [X]
+  | exp_bool(_) => []
+  | exp_lam(X, T, Elam) => append(typ_freevars(T), remove(X, exp_freevars(Elam)))
+  | exp_tlam(_, Etlam) => exp_freevars(Etlam)
+  | exp_app(E1, E2) => append(exp_freevars(E1), exp_freevars(E2))
+  | exp_tapp(Etapp, Ttapp) => append(exp_freevars(Etapp), typ_freevars(Ttapp))
+  end
+
+(* SUGAR *)
+fun typ_base(B : base) : typ = typ_ref(v, B, exp_bool(true)).
+fun typ_simple(Tdom : typ, Tcod : typ) : typ = typ_fun(v, Tdom, Tcod)
+
+fun exp_not(E : exp) : exp =
+  exp_app(exp_op(op_not), E).
+fun exp_or(E1 : exp, E2 : exp) : exp =
+  exp_app(exp_app(exp_op(op_or), E1), E2).
+fun exp_and(E1 : exp, E2 : exp) : exp =
+  exp_app(exp_app(exp_op(op_and), E1), E2).
+fun exp_eqb(T : typ, E1 : exp, E2 : exp) : exp =
+  exp_app(exp_app(exp_tapp(exp_op(op_eqb), T), E1), E2)
+
+fun typ_isref(T : typ) : bool =
+  match T with
+  | typ_ref(_, _, _) => true
+  | _ => false
+  end
+
+fun typ_op(O : op) : typ =
+  match O with
+  | op_not => typ_fun(b, typ_base(base_bool),
+                           typ_base(base_bool))
+  | op_or => typ_fun(b1, typ_base(base_bool),
+             typ_fun(b2, typ_base(base_bool),
+                           typ_base(base_bool)))
+  | op_and => typ_fun(b1, typ_base(base_bool),
+              typ_fun(b2, typ_base(base_bool),
+                            typ_base(base_bool)))
+  | op_eqb => typ_forall("A",
+              typ_fun(x, typ_base(base_bool),
+              typ_fun(y, typ_base(base_bool),
+                           typ_ref(v,base_bool,
+                                   exp_eqb(typ_tvar("A"), 
+                                           exp_var(v),
+                                           exp_app(exp_app(exp_op(op_eqb),
+                                                           exp_var(x)),
+                                                   exp_var(y)))))))
+  end                                        
+
+
+fun typ_subst(X : var, E : exp, T : typ) : typ =
+  match T with
+  | typ_tvar(_) => T
+  | typ_fun(Y, T1, T2) =>
+    let Yfresh = fresh_for(Y, X::append(exp_freevars(E), typ_freevars(T2))) in
+    let T2fresh = if Y = Yfresh then T2 else typ_subst(Y, exp_var(Yfresh), T2) in
+    typ_fun(Yfresh, 
+            typ_subst(X, E, T1),
+            typ_subst(X, E, T2fresh))
+  | typ_forall(A, Tinner) =>
+    typ_forall(A, typ_subst(X, E, Tinner))
+  | typ_ref(Y, B, Eref) =>
+    let Yfresh = fresh_for(Y, X::append(exp_freevars(E), exp_freevars(Eref))) in
+    let Ereffresh = if Y = Yfresh then Eref else exp_subst(Y, exp_var(Yfresh), Eref) in
+    typ_ref(Yfresh,
+            B,
+            exp_subst(X, E, Ereffresh))
+  end
+
+and exp_subst(X: var, E : exp, Etgt : exp) : exp =
+  match Etgt with
+  | exp_var(Y) => if X = Y then E else Etgt
+  | exp_bool(_) => Etgt
+  | exp_op(_) => Etgt
+  | exp_lam(Y, Tlam, Elam) =>
+    let Yfresh = fresh_for(Y, X::append(typ_freevars(Tlam), exp_freevars(Elam))) in
+    let Elamfresh = if Y = Yfresh then Elam else exp_subst(Y, exp_var(Yfresh), Elam) in
+    exp_lam(Yfresh,
+            typ_subst(X, E, Tlam),
+            Elamfresh)
+  | exp_tlam(A, Etlam) =>
+    exp_tlam(A, exp_subst(X, E, Etlam))
+  | exp_app(E1, E2) => 
+    exp_app(exp_subst(X, E, E1),
+            exp_subst(X, E, E2))
+  | exp_tapp(Etapp, T) => 
+    exp_tapp(exp_subst(X, E, Etapp), typ_subst(X, E, T))
+  end
+
+fun typ_tsubst(A : tvar, T : typ, Ttgt : typ) : typ =
+  match T with
+  | typ_tvar(B) => if A = B then T else Ttgt
+  | typ_fun(X, T1, T2) => 
+    typ_fun(X, typ_tsubst(A, T, T1), typ_tsubst(A, T, T2))
+  | typ_forall(B, Tinner) =>
+    let Tnew = if A = B then Tinner else typ_tsubst(A, T, Tinner) in
+    typ_forall(B, Tnew)
+  | typ_ref(X, B, Eref) =>
+    typ_ref(X, B, exp_tsubst(A, T, Eref))
+  end
+
+and exp_tsubst(A : tvar, T : typ, E : exp) : exp =
+  match E with
+  | exp_var(_) | exp_bool(_) => E
+  | exp_op(_) => E
+  | exp_lam(X, Tlam, Elam) =>
+    exp_lam(X, typ_tsubst(A, T, Tlam), exp_tsubst(A, T, Elam))
+  | exp_tlam(B, Etlam) =>
+    let Enew = if A = B then Etlam else exp_tsubst(A, T, Etlam) in
+    exp_tlam(B, Enew)
+  | exp_app(E1, E2) =>
+    exp_app(exp_tsubst(A, T, E1), exp_tsubst(A, T, E2))
+  | exp_tapp(Etapp, Ttapp) =>
+    exp_tapp(exp_tsubst(A, T, Etapp), typ_tsubst(A, T, Ttapp))
+  end
+
+type ctx  = 
+  | ctx_empty
+  | ctx_var(ctx, var, typ)
+  | ctx_tvar(ctx, tvar)
+  | ctx_exp(ctx, exp)
+
+fun lookup(X : var, G : ctx) : typ option =
+  match G with
+  | ctx_empty => none
+  | ctx_var(Grest, Y, T) => if X = Y then some(T) else lookup(X, Grest)
+  | ctx_tvar(Grest, _) => lookup(X, Grest)
+  | ctx_exp(Grest, _) => lookup(X, Grest)
+  end
+
+fun bound_tvar(A : tvar, G : ctx) : bool =
+  match G with
+  | ctx_empty => false
+  | ctx_var(Grest, _, _) => bound_tvar(A, Grest)
+  | ctx_tvar(Grest, B) => A = B || bound_tvar(A, Grest)
+  | ctx_exp(Grest, _) => bound_tvar(A, Grest)
+  end
+
+@topdown
+output encode_ctx(ctx, bool smt)
+@topdown
+output encode_exp(exp, bool smt)
+
+@topdown
+output sub(ctx, typ, typ)
+@topdown
+output wf_ctx(ctx)
+@topdown
+output wf_typ(ctx, typ)
+@topdown
+output wf_exp(ctx, exp, typ)
+@topdown
+output synth(ctx, exp, typ)
+@topdown
+output check(ctx, exp, typ)
+
+(*******************************************************************************)
+(* SMT ENCODING ****************************************************************)
+
+encode_ctx(ctx_empty, `true`).
+
+encode_ctx(ctx_tvar(Grest, _), Phi) :-
+  encode_ctx(Grest, Phi).
+
+encode_ctx(ctx_exp(Grest, E), `Phirest /\ PhiE`) :-
+  encode_ctx(Grest, Phirest),
+  encode_exp(E, PhiE).
+
+encode_ctx(ctx_var(Grest, X, typ_ref(Y, _B, E)), `Phirest /\ PhiE`) :-
+  encode_ctx(Grest, Phirest),
+  Eprime = exp_subst(Y, exp_var(X), E),
+  encode_exp(Eprime, PhiE).
+
+encode_ctx(ctx_var(Grest, _, T), Phirest) :-
+  encode_ctx(Grest, Phirest),
+  !typ_isref(T).
+
+encode_exp(exp_var(X), V) :-
+  V = `#{X}[bool]`. 
+  (* We would need a more sophisticated encoding if there were other types *)
+
+encode_exp(exp_bool(true), `true`).
+
+encode_exp(exp_bool(false), `false`).
+
+encode_exp(exp_app(exp_op(op_not), E), `~Phi`) :-
+  encode_exp(E, Phi).
+
+encode_exp(exp_app(exp_app(exp_op(op_and), E1), E2), `Phi1 /\ Phi2`) :-
+  encode_exp(E1, Phi1),
+  encode_exp(E2, Phi2).
+
+encode_exp(exp_app(exp_app(exp_op(op_or), E1), E2), `Phi1 \/ Phi2`) :-
+  encode_exp(E1, Phi1),
+  encode_exp(E2, Phi2).
+
+encode_exp(exp_app(exp_app(exp_tapp(exp_op(op_eqb), _T), E1), E2),
+           `Phi1 #= Phi2`) :-
+  encode_exp(E1, Phi1),
+  encode_exp(E2, Phi2).
+
+(*******************************************************************************)
+(* SUBTYPING *******************************************************************)
+
+sub(G, typ_ref(X, B, E1), typ_ref(Y, B, E2)) :-
+  wf_ctx(G),
+  exp_subst(Y, exp_var(X), E2) = E2prime,
+  encode_ctx(G, PhiG),
+  encode_exp(E1, Phi1),
+  encode_exp(E2prime, Phi2),
+  is_valid(`PhiG /\ Phi1 ==> Phi2`).
+
+sub(G, typ_tvar(A), typ_tvar(A)) :-
+  wf_ctx(G).
+
+sub(G, typ_fun(X, T11, T12), typ_fun(Y, T21, T22)) :-
+  sub(G, T21, T11),
+  typ_subst(Y, exp_var(X), T22) = T22prime,
+  sub(ctx_var(G, X, T21), T12, T22prime).
+
+sub(G, typ_forall(A, T1), typ_forall(B, T2)) :-
+  typ_tsubst(B, typ_tvar(A), T2) = T2prime,
+  sub(ctx_tvar(G, A), T1, T2prime). 
+
+(*******************************************************************************)
+(* WELL FORMEDNESS OF CONTEXTS *************************************************)
+
+wf_ctx(ctx_empty).
+wf_ctx(ctx_var(G, _X, T)) :-
+  wf_ctx(G),
+  wf_typ(G, T).
+wf_ctx(ctx_tvar(G, _)) :-
+  wf_ctx(G).
+
+(*******************************************************************************)
+(* WELL FORMEDNESS OF TYPES ****************************************************)
+
+wf_typ(G, typ_tvar(A)) :-
+  wf_ctx(G),
+  bound_tvar(A, G).
+
+wf_typ(G, typ_fun(X, T1, T2)) :-
+  wf_typ(G, T1),
+  wf_typ(ctx_var(G, X, T1), T2).
+
+wf_typ(G, typ_forall(A, T)) :-
+  wf_typ(ctx_tvar(G, A), T).
+
+wf_typ(G, typ_ref(_X, _B, exp_bool(true))) :-
+  wf_ctx(G).
+
+wf_typ(G, typ_ref(X, B, E)) :-
+  E != exp_bool(true),
+  wf_typ(G, typ_base(B)),
+  check(ctx_var(G,X,typ_base(B)), E, typ_base(base_bool)).
+
+(*******************************************************************************)
+(* WELL FORMEDNESS OF TERMS (i.e., TYPING) *************************************)
+
+check(G, E, T) :-
+  synth(G, E, Tprime),
+  sub(G, Tprime, T).
+
+synth(G, exp_var(X), T) :-
+  wf_ctx(G), 
+  lookup(X, G) = some(T),
+  !typ_isref(T).
+
+synth(G, exp_var(X), typ_ref(Vfresh, B, exp_eqb(T, exp_var(Vfresh), exp_var(V)))) :-
+  wf_ctx(G),
+  lookup(X, G) = some(T),
+  T = typ_ref(V, B, _E),
+  fresh_for(v, typ_freevars(T)) = Vfresh.
+
+synth(G, exp_bool(true), typ_ref(v, base_bool, exp_var(v))) :-
+  wf_ctx(G).
+
+synth(G, exp_bool(false), typ_ref(v, base_bool, exp_app(exp_op(op_not), exp_var(v)))) :-
+  wf_ctx(G).
+
+synth(G, exp_op(O), typ_op(O)) :-
+  wf_ctx(G).
+  
+synth(G, exp_lam(X, T1, E), T) :-
+  wf_typ(G, T1),
+  synth(ctx_var(G, X, T1), E, T2),
+  typ_fun(X, T1, T2) = T.
+
+synth(G, exp_app(E1, E2), T) :-
+  synth(G, E1, typ_fun(X, T1, T2)),
+  check(G, E2, T1),
+  typ_subst(X, E2, T2) = T.
+
+synth(G, exp_tapp(E, Targ), T) :-
+  synth(G, E, typ_forall(A, Tinner)),
+  typ_tsubst(A, Targ, Tinner) = T.
+
+(*
+:- check(ctx_empty, exp_bool(true), typ_ref(v, base_bool, exp_var(v))).
+*)
+
+(*
+:- check(ctx_empty, exp_bool(true), typ_base(base_bool)).
+*)
+
+(*
+:- wf_typ(ctx_empty, typ_base(base_bool)).
+*)
+
+(*
+:- check(ctx_var(ctx_empty, x, typ_base(base_bool)), 
+         exp_var(x),
+         typ_base(base_bool)).
+*)
+
+(*
+:- wf_typ(ctx_empty, typ_ref(x, base_bool, exp_var(x))).
+*)
+
+:- wf_typ(ctx_empty, typ_ref(x, base_bool, exp_app(exp_op(op_not), exp_var(x)))).
+
