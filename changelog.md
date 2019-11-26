@@ -1,10 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.2.0] - 2019-11-25
 ### Added
+- Support wild card term `??` when "invoking" predicates as functions.
 - Constant array constructor `array_const` (from Z3's theory of arrays).
-- The option `callTrace`.
 - Ability to do partial magic set rewriting with annotations `@bottomup` and
   `@topdown`.
 - Demand transformation simplification for magic set rewriting (following Tekle
@@ -12,10 +12,6 @@ All notable changes to this project will be documented in this file.
 - Support for record types. 
 - Support external input facts via annotation `@external`.
 - Support sequential runtime (for debugging) via `sequential` system property.
-- Reify relations as lists of tuples using `<[...]>` syntax.
-- Support aggregate columns in relations.
-- Support non-stratified negation and aggregation through semi-inflationary
-  Datalog interpreter. 
 - Support existential anonymous variables in negated atoms.
 
 ### Changed
