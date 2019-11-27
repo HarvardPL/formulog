@@ -968,7 +968,8 @@ public final class Constructors {
 		public String toString() {
 			Type ty = ((FunctorType) sym.getCompileTimeType()).getRetType();
 			ty = ((AlgebraicDataType) ty).getTypeArgs().get(0);
-			return "#x" + varIds.get(this) + "[" + ty + "]";
+			return "#{" + args[0] + "}[" + ty + "]";
+//			return "#x" + varIds.get(this) + "[" + ty + "]";
 		}
 
 		@Override

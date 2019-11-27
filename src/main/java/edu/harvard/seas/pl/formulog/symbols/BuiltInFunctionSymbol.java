@@ -188,8 +188,8 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 	SUBSTITUTE("substitute", sym(a), smt(a), smt(b), smt(b)),
 	
 	IS_FREE("is_free", sym(a), smt(b), bool),
-
-	// PATH_INTERPOLANT("path_interpolant", 1, list(boolExpr), list(boolExpr)),
+	
+	ID("", a, a),
 
 	// Primitive conversion
 

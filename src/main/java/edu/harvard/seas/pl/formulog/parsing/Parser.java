@@ -1026,6 +1026,10 @@ public class Parser {
 				return Constructors.make(BuiltInConstructorSymbol.ENTER_FORMULA, Terms.singletonArray(t));
 			}
 
+			private Term makeIdFunction(Term t) {
+				return functionCallFactory.make(BuiltInFunctionSymbol.ID, Terms.singletonArray(t));
+			}
+
 			@Override
 			public Term visitFormulaTerm(FormulaTermContext ctx) {
 				assertNotInFormula("Cannot nest a formula within a formula: " + ctx.getText());
@@ -1151,7 +1155,7 @@ public class Parser {
 									+ type);
 				}
 				ConstructorSymbol sym = symbolManager.lookupSolverSymbol(type);
-				return makeExitFormula(Constructors.make(sym, Terms.singletonArray(id)));
+				return makeIdFunction(makeExitFormula(Constructors.make(sym, Terms.singletonArray(id))));
 			}
 
 			private boolean isSolverUnfriendlyType(Type type) {

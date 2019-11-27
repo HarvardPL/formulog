@@ -94,6 +94,9 @@ There is also a shorthand syntax: a pound sign, followed by an identifier
 (beginning with a lowercase letter), followed by a type within square brackets,
 as in `#x[bool]`. This is the same thing as `#{"x"}[bool]`.
 
+Every variable occurring in the argument to a formula variable must be bound
+elsewhere.
+
 ### Built-in formula terms
 
 Formulog provides built-in terms that are used to construct formulas that

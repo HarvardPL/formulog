@@ -225,6 +225,8 @@ public final class BuiltInFunctionDefFactory {
 			return PrimitiveConversions.i64ToI32;
 		case PRINT:
 			return Print.INSTANCE;
+		case ID:
+			return id;
 		}
 		throw new AssertionError();
 	}
@@ -1578,5 +1580,19 @@ public final class BuiltInFunctionDefFactory {
 		}
 		return Constructors.makeZeroAry(BuiltInConstructorSymbol.CMP_EQ);
 	}
+	
+	private static final FunctionDef id = new FunctionDef() {
+
+		@Override
+		public FunctionSymbol getSymbol() {
+			return BuiltInFunctionSymbol.ID;
+		}
+
+		@Override
+		public Term evaluate(Term[] args) throws EvaluationException {
+			return args[0];
+		}
+		
+	};
 	
 }

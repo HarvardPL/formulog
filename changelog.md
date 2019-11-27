@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+### Fixed
+- Require variables in the "names" (i.e., the arguments) of solver variables
+  to be bound.
+
 ## [0.2.0] - 2019-11-25
 ### Added
 - Support wild card term `??` when "invoking" predicates as functions.

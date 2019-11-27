@@ -374,10 +374,10 @@ public class TypeChecker {
 
 		};
 
-		private final ExprVisitorExn<Substitution, Expr, TypeException> exprRewriter = new ExprVisitorExn<Substitution, Expr, TypeException>() {
+		private final ExprVisitorExn<Substitution, Term, TypeException> exprRewriter = new ExprVisitorExn<Substitution, Term, TypeException>() {
 
 			@Override
-			public Expr visit(MatchExpr matchExpr, Substitution subst) throws TypeException {
+			public Term visit(MatchExpr matchExpr, Substitution subst) throws TypeException {
 				Term scrutinee = matchExpr.getMatchee().accept(termRewriter, subst);
 				List<MatchClause> clauses = new ArrayList<>();
 				for (MatchClause cl : matchExpr) {
@@ -389,7 +389,7 @@ public class TypeChecker {
 			}
 
 			@Override
-			public Expr visit(FunctionCall funcCall, Substitution subst) throws TypeException {
+			public Term visit(FunctionCall funcCall, Substitution subst) throws TypeException {
 				Term[] args = funcCall.getArgs();
 				Term[] newArgs = new Term[args.length];
 				for (int i = 0; i < args.length; ++i) {
