@@ -37,10 +37,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -63,6 +65,8 @@ import edu.harvard.seas.pl.formulog.ast.I32;
 import edu.harvard.seas.pl.formulog.ast.I64;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
+import edu.harvard.seas.pl.formulog.ast.NestedFunctionDef;
+import edu.harvard.seas.pl.formulog.ast.NestedFunctionDefs;
 import edu.harvard.seas.pl.formulog.ast.StringTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
@@ -77,8 +81,6 @@ import edu.harvard.seas.pl.formulog.parsing.generated.FormulogBaseVisitor;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogLexer;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.AdtDefContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.AggTypeContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.AggTypeListContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.AnnotationContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.AtomListContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.BinopFormulaContext;
@@ -103,6 +105,7 @@ import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.IndexedFunc
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.IteTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.LetExprContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.LetFormulaContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.LetFunExprContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ListTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.MatchClauseContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.MatchExprContext;
@@ -290,6 +293,7 @@ public class Parser {
 		private final Set<ConstructorSymbol> uninterpFuncSymbols = new HashSet<>();
 		private final List<Path> inputDirs;
 		private UserPredicate query;
+		private final Map<String, AtomicInteger> nestedFunctionCounters = new ConcurrentHashMap<>();
 
 		public StmtProcessor(List<Path> inputDirs) {
 			this.inputDirs = inputDirs;
@@ -297,7 +301,7 @@ public class Parser {
 
 		@Override
 		public Void visitFunDecl(FunDeclContext ctx) {
-			List<Pair<FunctionSymbol, List<Var>>> ps = map(ctx.funDefLHS(), this::parseFunDefLHS);
+			List<Pair<FunctionSymbol, List<Var>>> ps = map(ctx.funDefLHS(), f -> parseFunDefLHS(f, false));
 			Iterator<Term> bodies = map(ctx.term(), e -> e.accept(termExtractor)).iterator();
 			for (Pair<FunctionSymbol, List<Var>> p : ps) {
 				FunctionSymbol sym = p.fst();
@@ -314,8 +318,12 @@ public class Parser {
 			return null;
 		}
 
-		private Pair<FunctionSymbol, List<Var>> parseFunDefLHS(FunDefLHSContext ctx) {
+		private Pair<FunctionSymbol, List<Var>> parseFunDefLHS(FunDefLHSContext ctx, boolean isNested) {
 			String name = ctx.ID().getText();
+			if (isNested) {
+				AtomicInteger cnt = Util.lookupOrCreate(nestedFunctionCounters, name, () -> new AtomicInteger());
+				name += "$" + cnt.getAndIncrement();
+			}
 			List<Type> argTypes = map(ctx.args.type(), t -> t.accept(typeExtractor));
 			Type retType = ctx.retType.accept(typeExtractor);
 			FunctionSymbol sym = symbolManager.createFunctionSymbol(name, argTypes.size(),
@@ -328,44 +336,16 @@ public class Parser {
 			return new Pair<>(sym, args);
 		}
 
-		List<Type> getRelationTypes(AggTypeListContext ctx) {
-			List<Type> types = new ArrayList<>();
-			for (Iterator<AggTypeContext> it = ctx.aggType().iterator(); it.hasNext();) {
-				AggTypeContext agctx = it.next();
-				types.add(agctx.type().accept(typeExtractor));
-			}
-			return types;
-		}
-
-		void setAggregate(RelationSymbol rel, AggTypeListContext ctx) {
-			// for (Iterator<AggTypeContext> it = ctx.aggType().iterator(); it.hasNext();) {
-			// AggTypeContext agctx = it.next();
-			// if (agctx.func != null) {
-			// if (it.hasNext()) {
-			// throw new RuntimeException(
-			// "Aggregates can only be set for the last column of a relation: " + rel);
-			// }
-			// Symbol funcSym = symbolManager.lookupSymbol(agctx.func.getText());
-			// if (!(funcSym instanceof FunctionSymbol)) {
-			// throw new RuntimeException("Non-function used in aggregate: " + funcSym);
-			// }
-			// Term unit = extract(agctx.unit);
-			// rel.setAggregate((FunctionSymbol) funcSym, unit);
-			// }
-			// }
-		}
-
 		@Override
 		public Void visitRelDecl(RelDeclContext ctx) {
 			String name = ctx.ID().getText();
-			List<Type> types = getRelationTypes(ctx.aggTypeList());
+			List<Type> types = map(ctx.typeList().type(), t -> t.accept(typeExtractor));
 			if (!Types.getTypeVars(types).isEmpty()) {
 				throw new RuntimeException("Cannot use type variables in the signature of a relation: " + name);
 			}
 			boolean isIdb = ctx.relType.getType() == FormulogLexer.OUTPUT;
 			MutableRelationSymbol sym = symbolManager.createRelationSymbol(name, types.size(), isIdb,
 					new FunctorType(types, BuiltInTypes.bool));
-			setAggregate(sym, ctx.aggTypeList());
 			for (AnnotationContext actx : ctx.annotation()) {
 				switch (actx.getText()) {
 				case "@bottomup":
@@ -574,45 +554,6 @@ public class Parser {
 			}
 			return rules;
 		}
-
-		// private Atom removeFuncCallsFromAtom(Atom a, List<Atom> acc) {
-		// Term[] args = a.getArgs();
-		// Term[] newArgs = new Term[args.length];
-		// for (int i = 0; i < args.length; ++i) {
-		// newArgs[i] = args[i].visit(new TermVisitor<Void, Term>() {
-		//
-		// @Override
-		// public Term visit(Var var, Void in) {
-		// return var;
-		// }
-		//
-		// @Override
-		// public Term visit(Constructor constr, Void in) {
-		// Term[] args = constr.getArgs();
-		// Term[] newArgs = new Term[args.length];
-		// for (int i = 0; i < args.length; ++i) {
-		// newArgs[i] = args[i].visit(this, null);
-		// }
-		// return constr.copyWithNewArgs(newArgs);
-		// }
-		//
-		// @Override
-		// public Term visit(Primitive<?> prim, Void in) {
-		// return prim;
-		// }
-		//
-		// @Override
-		// public Term visit(Expr expr, Void in) {
-		// Var x = Var.getFresh(false);
-		// acc.add(Atoms.getPositive(BuiltInPredicateSymbol.UNIFY, new Term[] { x, expr
-		// }));
-		// return x;
-		// }
-		//
-		// }, null);
-		// }
-		// return Atoms.get(a.getSymbol(), newArgs, a.isNegated());
-		// }
 
 		@Override
 		public Void visitFactStmt(FactStmtContext ctx) {
@@ -1262,6 +1203,28 @@ public class Parser {
 				Term body = ctx.body.accept(this);
 				MatchClause m = MatchClause.make(t, body);
 				return MatchExpr.make(assign, Collections.singletonList(m));
+			}
+
+			@Override
+			public Term visitLetFunExpr(LetFunExprContext ctx) {
+				Set<String> names = new HashSet<>();
+				for (FunDefLHSContext f : ctx.funDefLHS()) {
+					String name = f.ID().getText();
+					if (!names.add(name)) {
+						throw new RuntimeException(
+								"Cannot use the same name more than once in a mutually-recursive function definition "
+										+ name);
+					}
+				}
+				List<Pair<FunctionSymbol, List<Var>>> signatures = map(ctx.funDefLHS(), f -> parseFunDefLHS(f, true));
+				Iterator<Pair<FunctionSymbol, List<Var>>> sigIt = signatures.iterator();
+				List<Term> bodies = map(ctx.term(), this::extract);
+				Set<NestedFunctionDef> defs = new HashSet<>();
+				for (Term body : bodies) {
+					Pair<FunctionSymbol, List<Var>> p = sigIt.next();
+					defs.add(NestedFunctionDef.make(p.fst(), p.snd(), body));
+				}
+				return NestedFunctionDefs.make(defs);
 			}
 
 			@Override

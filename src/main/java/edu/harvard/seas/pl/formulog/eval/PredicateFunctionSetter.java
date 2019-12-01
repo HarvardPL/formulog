@@ -32,6 +32,7 @@ import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
+import edu.harvard.seas.pl.formulog.ast.NestedFunctionDefs;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
@@ -147,6 +148,11 @@ public class PredicateFunctionSetter {
 				((UserFunctionDef) def).getBody().accept(tv, in);
 			}
 			return null;
+		}
+
+		@Override
+		public Void visit(NestedFunctionDefs funcDef, Void in) {
+			throw new AssertionError("impossible");
 		}
 
 	};

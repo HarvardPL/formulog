@@ -50,6 +50,7 @@ import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.I32;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
+import edu.harvard.seas.pl.formulog.ast.NestedFunctionDefs;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Rule;
@@ -176,62 +177,6 @@ public class TypeChecker {
 
 		};
 	}
-
-	// private void typeCheckRelations() throws TypeException {
-	// typeCheckRelations(prog.getFactSymbols());
-	// typeCheckRelations(prog.getRuleSymbols());
-	// }
-	//
-	// private void typeCheckRelations(Set<RelationSymbol> syms) throws
-	// TypeException {
-	// for (RelationSymbol sym : syms) {
-	// typeCheckRelation(sym);
-	// }
-	// }
-
-	// private void typeCheckRelation(RelationSymbol sym) throws TypeException {
-	// if (sym.isAggregated()) {
-	// FunctorType ft = sym.getCompileTimeType();
-	// List<Type> argTypes = ft.getArgTypes();
-	// Type aggType = argTypes.get(argTypes.size() - 1);
-	// Term init = typeCheckAggregateUnit(sym, aggType);
-	// typeCheckAggregateFunction(sym, aggType);
-	// sym.setAggregate(sym.getAggFuncSym(), init);
-	// }
-	// }
-	//
-	// private Term typeCheckAggregateUnit(RelationSymbol relSym, Type aggType)
-	// throws TypeException {
-	// Term unit = relSym.getAggFuncUnit();
-	// try {
-	// TypeCheckerContext ctx = new TypeCheckerContext();
-	// return ctx.typeCheckTerm(unit, aggType);
-	// } catch (TypeException e) {
-	// throw new TypeException(
-	// "Error with aggregate unit term " + unit + " for relation " + relSym + "\n" +
-	// e.getMessage());
-	// }
-	// }
-	//
-	// private void typeCheckAggregateFunction(RelationSymbol relSym, Type aggType)
-	// throws TypeException {
-	// FunctionSymbol funcSym = relSym.getAggFuncSym();
-	// try {
-	// if (funcSym.getArity() != 2) {
-	// throw new TypeException("Function " + funcSym + " is not binary");
-	// }
-	// FunctorType funcType = (FunctorType) funcSym.getCompileTimeType();
-	// List<Type> actualTypes = new ArrayList<>(funcType.getArgTypes());
-	// actualTypes.add(funcType.getRetType());
-	// List<Type> requiredTypes = Arrays.asList(aggType, aggType, aggType);
-	// TypeCheckerContext ctx = new TypeCheckerContext();
-	// ctx.checkUnifiability(actualTypes, requiredTypes);
-	// } catch (TypeException e) {
-	// throw new TypeException(
-	// "Error with aggregate function " + funcSym + " for relation " + relSym + "\n"
-	// + e.getMessage());
-	// }
-	// }
 
 	private UserPredicate typeCheckQuery() throws TypeException {
 		if (prog.hasQuery()) {
@@ -396,6 +341,11 @@ public class TypeChecker {
 					newArgs[i] = args[i].accept(termRewriter, subst);
 				}
 				return funcCall.copyWithNewArgs(newArgs);
+			}
+
+			@Override
+			public Term visit(NestedFunctionDefs funcDefs, Substitution in) throws TypeException {
+					throw new AssertionError("not yet supported");
 			}
 
 		};
@@ -581,6 +531,11 @@ public class TypeChecker {
 				public Void visit(FunctionCall funcCall, Void in) {
 					genConstraintsForFunctionCall(funcCall, exprType, varTypes, allowSubtype);
 					return null;
+				}
+
+				@Override
+				public Void visit(NestedFunctionDefs funcDefs, Void in) {
+					throw new AssertionError("not yet supported");
 				}
 
 			}, null);

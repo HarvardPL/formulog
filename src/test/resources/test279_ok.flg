@@ -1,0 +1,6 @@
+fun foo(X: i32) : i32 =
+  let fun bar(Y: i32) : i32 = Y + X in
+  bar(3)
+
+output ok
+ok :- foo(2) = 5.

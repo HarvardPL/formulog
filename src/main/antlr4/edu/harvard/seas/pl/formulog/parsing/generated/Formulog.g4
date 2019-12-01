@@ -20,7 +20,7 @@ metadata
 	(
 		INPUT
 		| OUTPUT
-	) ID aggTypeList '.'? # relDecl
+	) ID typeList '.'? # relDecl
 	| 'type' typeDefLHS EQ type '.'? # typeAlias
 	| 'type' typeDefLHS EQ typeDefRHS
 	(
@@ -45,24 +45,6 @@ varTypeList
 	'(' VAR ':' type
 	(
 		',' VAR ':' type
-	)* ')'
-	| // can be empty
-
-;
-
-aggType
-:
-	type
-	(
-		'<' func = ID ',' unit = term '>'
-	)?
-;
-
-aggTypeList
-:
-	'(' aggType
-	(
-		',' aggType
 	)* ')'
 	| // can be empty
 
@@ -308,6 +290,7 @@ term
 		'|' matchClause
 	)* 'end' # matchExpr
 	| 'let' lhs = letBind '=' assign = term 'in' body = term # letExpr
+	| 'let' 'fun' funDefLHS '=' term ('and' funDefLHS '=' term)* # letFunExpr
 	| 'if' guard = term 'then' thenExpr = term 'else' elseExpr = term # ifExpr
 ;
 

@@ -33,6 +33,8 @@ public final class Exprs {
 		O visit(MatchExpr matchExpr, I in);
 		
 		O visit(FunctionCall funcCall, I in);
+		
+		O visit(NestedFunctionDefs funcDefs, I in);
 
 	}
 
@@ -41,6 +43,8 @@ public final class Exprs {
 		O visit(MatchExpr matchExpr, I in) throws E;
 		
 		O visit(FunctionCall funcCall, I in) throws E;
+		
+		O visit(NestedFunctionDefs funcDefs, I in) throws E;
 
 	}
 	
