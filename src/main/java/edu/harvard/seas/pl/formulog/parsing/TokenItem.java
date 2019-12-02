@@ -50,17 +50,33 @@ public class TokenItem {
 	public static TokenItem mkComma(int line, int column) {
 		return new TokenItem(Token.COMMA, null, line, column);
 	}
+
+	public static TokenItem mkDouble(double val, int line, int column) {
+		return new TokenItem(Token.DOUBLE, val, line, column);
+	}
 	
 	public static TokenItem mkEol(int line, int column) {
 		return new TokenItem(Token.EOL, null, line, column);
+	}
+	
+	public static TokenItem mkFloat(float val, int line, int column) {
+		return new TokenItem(Token.FLOAT, val, line, column);
 	}
 	
 	public static TokenItem mkFun(int line, int column) {
 		return new TokenItem(Token.FUN, null, line, column);
 	}
 	
+	public static TokenItem mkLong(long val, int line, int column) {
+		return new TokenItem(Token.LONG, val, line, column);
+	}
+	
 	public static TokenItem mkInput(int line, int column) {
 		return new TokenItem(Token.INPUT, null, line, column);
+	}
+	
+	public static TokenItem mkInt(int val, int line, int column) {
+		return new TokenItem(Token.INT, val, line, column);
 	}
 	
 	public static TokenItem mkOutput(int line, int column) {

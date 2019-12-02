@@ -49,15 +49,15 @@ public class Tokenizer {
 		this.eolIsSignificant = eolIsSignificant;
 	}
 
-	public boolean hasToken() throws IOException, UnrecognizedTokenException {
+	public boolean hasToken() throws IOException, TokenizerException {
 		return load();
 	}
 
-	public boolean canPeek() throws IOException, UnrecognizedTokenException {
+	public boolean canPeek() throws IOException, TokenizerException {
 		return loadLookAhead();
 	}
 
-	public TokenItem current() throws IOException, UnrecognizedTokenException {
+	public TokenItem current() throws IOException, TokenizerException {
 		if (!load()) {
 			throw new NoSuchElementException("Tokenizer is exhausted.");
 		}
@@ -65,7 +65,7 @@ public class Tokenizer {
 		return curTokenItem;
 	}
 
-	public TokenItem peek() throws IOException, UnrecognizedTokenException {
+	public TokenItem peek() throws IOException, TokenizerException {
 		if (!loadLookAhead()) {
 			throw new NoSuchElementException("Tokenizer is exhausted.");
 		}
@@ -74,20 +74,20 @@ public class Tokenizer {
 		return peekTokenItem;
 	}
 
-	public void step() throws IOException, UnrecognizedTokenException {
+	public void step() throws IOException, TokenizerException {
 		loadLookAhead();
 		curTokenItem = peekTokenItem;
 		peekTokenItem = null;
 	}
 
-	private boolean load() throws IOException, UnrecognizedTokenException {
+	private boolean load() throws IOException, TokenizerException {
 		if (curTokenItem == null) {
 			curTokenItem = loadToken();
 		}
 		return curTokenItem != null;
 	}
 
-	private boolean loadLookAhead() throws IOException, UnrecognizedTokenException {
+	private boolean loadLookAhead() throws IOException, TokenizerException {
 		if (!load()) {
 			throw new NoSuchElementException("Tokenizer is exhausted.");
 		}
@@ -97,7 +97,7 @@ public class Tokenizer {
 		return peekTokenItem != null;
 	}
 
-	private TokenItem loadToken() throws IOException, UnrecognizedTokenException {
+	private TokenItem loadToken() throws IOException, TokenizerException {
 		char ch;
 		boolean skipNextLineFeed = false;
 		while (loadBuffer() && (Character.isWhitespace((ch = buf[pos])))) {
@@ -138,7 +138,7 @@ public class Tokenizer {
 		if (Character.isLetter(ch)) return alphabetic();
 		if (Character.isDigit(ch)) return number();
 		
-		throw new UnrecognizedTokenException(
+		throw new TokenizerException(
 				"Unrecognized character: " + ch + " (line " + line + ", column " + column + ")");
 	}
 
@@ -157,7 +157,7 @@ public class Tokenizer {
 
 	private TokenItem alphabetic() throws IOException {
 		int start = column;
-		String s = loadAlphaNumeric();
+		String s = loadAlphanumeric();
 		switch (s) {
 		case "fun":
 			return TokenItem.mkFun(line, start);
@@ -204,9 +204,18 @@ public class Tokenizer {
 		return TokenItem.mkEol(line++, start);
 	}
 
-	private TokenItem period() throws IOException {
+	private TokenItem period() throws IOException, TokenizerException {
 		pos++;
-		return TokenItem.mkPeriod(line, column++);
+		int start = column;
+		column++;
+		if (loadBuffer() && Character.isDigit(buf[pos])) {
+			StringBuilder sb = new StringBuilder();
+			sb.append('.');
+			loadDigitString(sb);
+			String modifier = loadModifier();
+			return number(sb.toString(), NumberType.FP, modifier, start);
+		}
+		return TokenItem.mkPeriod(line, start);
 	}
 
 	private TokenItem semicolon() throws IOException {
@@ -214,11 +223,104 @@ public class Tokenizer {
 		return TokenItem.mkSemicolon(line, column++);
 	}
 
-	private TokenItem number() {
-		throw new UnsupportedOperationException();
+	private static enum NumberType {
+		INT, HEX, FP;
+	}
+	
+	private TokenItem number() throws IOException, TokenizerException {
+		int start = column;
+		StringBuilder sb = new StringBuilder();
+		loadDigitString(sb);
+		NumberType type = NumberType.INT;
+		if (loadBuffer() && buf[pos] == '.') {
+			type = NumberType.FP;
+			pos++;
+			column++;
+			sb.append('.');
+			loadDigitString(sb);
+		} else if (loadBuffer() && Character.toLowerCase(buf[pos]) == 'x' && sb.toString().equals("0")) {
+			type = NumberType.HEX;
+			pos++;
+			column++;
+			sb = new StringBuilder();
+			loadHexSuffix(sb);
+			if (sb.length() == 0) {
+				throw new TokenizerException("Invalid hex literal (line " + line + ", column " + start + ")");
+			}
+		}
+		String modifier = loadModifier();
+		return number(sb.toString(), type, modifier, start);
+	}
+	
+	private TokenItem number(String num, NumberType type, String modifier, int start) throws IOException, TokenizerException {
+		String modUpper = modifier.toUpperCase();
+		int radix = type == NumberType.HEX ? 16 : 10;
+		if (modUpper.equals("L") && type != NumberType.FP) {
+			return TokenItem.mkLong(Long.parseUnsignedLong(num, radix), line, start);
+		}
+		if (modUpper.equals("F")) {
+			return TokenItem.mkFloat(Float.parseFloat(num), line, start);
+		}
+		if (modUpper.equals("D")) {
+			return TokenItem.mkDouble(Double.parseDouble(num), line, start);
+		}
+		if (modUpper.equals("E")) {
+			if (!loadBuffer()) {
+				throw new TokenizerException("Invalid number literal (line " + line + ", column " + start + ")");
+			}
+			StringBuilder sb = new StringBuilder();
+			if (buf[pos] == '-') {
+				sb.append('-');
+				pos++;
+				column++;
+			}
+			loadDigitString(sb);
+			String exp = sb.toString();
+			if (exp.equals("") || exp.equals("-")) {
+				throw new TokenizerException("Invalid number literal (line " + line + ", column " + start + ")");
+			}
+			return TokenItem.mkDouble(Double.parseDouble(num + "e" + exp), line, start);
+		}
+		if (modUpper.equals("")) {
+			if (type == NumberType.FP) {
+				return TokenItem.mkDouble(Double.parseDouble(num), line, start);
+			} else {
+				return TokenItem.mkInt(Integer.parseUnsignedInt(num, radix), line, start);
+			}
+		}
+		throw new TokenizerException(
+				"Unrecognized modifier for number literal: " + modifier + " (line " + line + ", column " + start + ")");
+	}
+	
+	private void loadDigitString(StringBuilder sb) throws IOException {
+		char ch;
+		while (loadBuffer() && Character.isDigit((ch = buf[pos]))) {
+			sb.append(ch);
+			pos++;
+			column++;
+		}
+	}
+	
+	private void loadHexSuffix(StringBuilder sb) throws IOException {
+		char ch;
+		while (loadBuffer() && (Character.isDigit((ch = Character.toUpperCase(buf[pos]))) || ch >= 'A' && ch <= 'F')) {
+			sb.append(ch);
+			pos++;
+			column++;
+		}
+	}
+	
+	private String loadModifier() throws IOException {
+		char ch;
+		while (loadBuffer() && Character.isLetter((ch = buf[pos]))) {
+			pos++;
+			column++;
+			return Character.toString(ch);
+		}
+		return "";
 	}
 
-	private TokenItem string() throws IOException, UnrecognizedTokenException {
+	private TokenItem string() throws IOException, TokenizerException {
 		int start = column;
 		char ch = buf[pos];
 		assert ch == '"';
@@ -230,7 +332,7 @@ public class Tokenizer {
 			boolean wasEscaped = escaped;
 			escaped = false;
 			if (!loadBuffer() || (ch = buf[pos]) == '\n' || ch == '\r') {
-				throw new UnrecognizedTokenException("Unterminated string (line " + line + ", column " + start + ")");
+				throw new TokenizerException("Unterminated string (line " + line + ", column " + start + ")");
 			}
 			if (ch == '"' && !wasEscaped) {
 				break;
@@ -245,7 +347,7 @@ public class Tokenizer {
 		return TokenItem.mkString(sb.toString(), line, start);
 	}
 
-	private String loadAlphaNumeric() throws IOException {
+	private String loadAlphanumeric() throws IOException {
 		StringBuilder sb = new StringBuilder();
 		char ch;
 		while (loadBuffer() && Character.isLetterOrDigit((ch = buf[pos]))) {
@@ -256,12 +358,12 @@ public class Tokenizer {
 		return sb.toString();
 	}
 
-	public static void main(String[] args) throws IOException, UnrecognizedTokenException {
+	public static void main(String[] args) throws IOException, TokenizerException {
 		if (args.length != 1) {
 			throw new IllegalArgumentException();
 		}
 		Reader reader = new FileReader(args[0]);
-//		reader = new StringReader("hello :-\r\ngoodbye.");
+		reader = new StringReader("hello :-\r\ngoodbye. 1f 2.0 .5f .5 1f 2l 3d 0xA 0xAl 1e3 1e-3 1e-4");
 		Tokenizer t = new Tokenizer(reader, false);
 		while (t.hasToken()) {
 			System.out.println(t.current());

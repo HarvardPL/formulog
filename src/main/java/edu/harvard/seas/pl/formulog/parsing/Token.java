@@ -26,13 +26,21 @@ public enum Token {
 	
 	COMMA,
 	
+	DOUBLE,
+	
 	EOL,
+	
+	FLOAT,
 	
 	FUN,
 	
 	ID,
 	
 	INPUT,
+	
+	INT,
+	
+	LONG,
 	
 	OUTPUT,
 	

@@ -20,23 +20,23 @@ package edu.harvard.seas.pl.formulog.parsing;
  * #L%
  */
 
-public class UnrecognizedTokenException extends Exception {
+public class TokenizerException extends Exception {
 
 	private static final long serialVersionUID = -5852201138341127150L;
 
-	public UnrecognizedTokenException(String message) {
+	public TokenizerException(String message) {
 		super(message);
 	}
 
-	public UnrecognizedTokenException(Throwable cause) {
+	public TokenizerException(Throwable cause) {
 		super(cause);
 	}
 
-	public UnrecognizedTokenException(String message, Throwable cause) {
+	public TokenizerException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
-	public UnrecognizedTokenException(String message, Throwable cause, boolean enableSuppression,
+	public TokenizerException(String message, Throwable cause, boolean enableSuppression,
 			boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
