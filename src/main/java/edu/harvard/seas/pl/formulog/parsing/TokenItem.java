@@ -51,6 +51,10 @@ public class TokenItem {
 		return new TokenItem(Token.COMMA, null, line, column);
 	}
 	
+	public static TokenItem mkEol(int line, int column) {
+		return new TokenItem(Token.EOL, null, line, column);
+	}
+	
 	public static TokenItem mkFun(int line, int column) {
 		return new TokenItem(Token.FUN, null, line, column);
 	}

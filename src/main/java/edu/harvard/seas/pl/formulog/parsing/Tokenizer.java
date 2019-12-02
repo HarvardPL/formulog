@@ -24,6 +24,7 @@ import java.io.FileReader;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.io.StringReader;
 import java.util.NoSuchElementException;
 
 public class Tokenizer {
@@ -41,8 +42,14 @@ public class Tokenizer {
 	private TokenItem curTokenItem = null;
 	private TokenItem peekTokenItem = null;
 
+	private boolean eolIsSignificant = false;
+
 	public Tokenizer(Reader reader) throws IOException {
 		this.reader = reader;
+	}
+
+	public void eolIsSignificant(boolean isSignificant) {
+		eolIsSignificant = isSignificant;
 	}
 
 	public boolean hasToken() throws IOException, UnrecognizedTokenException {
@@ -98,12 +105,18 @@ public class Tokenizer {
 		boolean skipNextLineFeed = false;
 		while (loadBuffer() && (Character.isWhitespace((ch = buf[pos])))) {
 			if (ch == '\n') {
+				if (eolIsSignificant) {
+					break;
+				}
 				if (!skipNextLineFeed) {
 					line++;
 					column = 1;
 				}
 				skipNextLineFeed = false;
 			} else if (ch == '\r') {
+				if (eolIsSignificant) {
+					break;
+				}
 				line++;
 				column = 1;
 				skipNextLineFeed = true;
@@ -116,29 +129,20 @@ public class Tokenizer {
 		if (!loadBuffer()) {
 			return null;
 		}
-		
+
 		ch = buf[pos];
-		if (ch == '"') {
-			return loadString();
-		} else if (Character.isLetter(ch)) {
-			return loadAlphabetic();
-		} else if (Character.isDigit(ch)) {
-			return loadNumber();
-		} else if (ch == '.') {
-			pos++;
-			return TokenItem.mkPeriod(line, column++);
-		} else if (ch == ':') {
-			return loadInitialColon();
-		} else if (ch == ',') {
-			pos++;
-			return TokenItem.mkComma(line, column++);
-		} else if (ch == ';') {
-			pos++;
-			return TokenItem.mkSemicolon(line, column++);
-		} else {
-			throw new UnrecognizedTokenException(
-					"Unrecognized character: " + ch + " (line " + line + ", column " + column + ")");
-		}
+		if (ch == '"') return string();
+		if (ch == '.') return period();
+		if (ch == ':') return colon();
+		if (ch == ',') return comma();
+		if (ch == ';') return semicolon();
+		if (ch == '\n') return lineFeed();
+		if (ch == '\r') return carriageReturn();
+		if (Character.isLetter(ch)) return alphabetic();
+		if (Character.isDigit(ch)) return number();
+		
+		throw new UnrecognizedTokenException(
+				"Unrecognized character: " + ch + " (line " + line + ", column " + column + ")");
 	}
 
 	private boolean loadBuffer() throws IOException {
@@ -154,7 +158,7 @@ public class Tokenizer {
 		return true;
 	}
 
-	private TokenItem loadAlphabetic() throws IOException {
+	private TokenItem alphabetic() throws IOException {
 		int start = column;
 		String s = loadAlphaNumeric();
 		switch (s) {
@@ -168,11 +172,21 @@ public class Tokenizer {
 			return TokenItem.mkId(s, line, start);
 		}
 	}
-
-	private TokenItem loadInitialColon() throws IOException {
+	
+	private TokenItem carriageReturn() throws IOException {
 		int start = column;
-		column++;
 		pos++;
+		column = 1;
+		if (loadBuffer() && buf[pos] == '\n') {
+			pos++;
+		}
+		return TokenItem.mkEol(line++, start);
+	}
+
+	private TokenItem colon() throws IOException {
+		int start = column;
+		pos++;
+		column++;
 		if (loadBuffer() && buf[pos] == '-') {
 			pos++;
 			column++;
@@ -181,11 +195,33 @@ public class Tokenizer {
 		return TokenItem.mkColon(line, start);
 	}
 
-	private TokenItem loadNumber() {
+	private TokenItem comma() throws IOException {
+		pos++;
+		return TokenItem.mkComma(line, column++);
+	}
+	
+	private TokenItem lineFeed() throws IOException {
+		pos++;
+		int start = column;
+		column = 1;
+		return TokenItem.mkEol(line++, start);
+	}
+
+	private TokenItem period() throws IOException {
+		pos++;
+		return TokenItem.mkPeriod(line, column++);
+	}
+
+	private TokenItem semicolon() throws IOException {
+		pos++;
+		return TokenItem.mkSemicolon(line, column++);
+	}
+
+	private TokenItem number() {
 		throw new UnsupportedOperationException();
 	}
 
-	private TokenItem loadString() {
+	private TokenItem string() {
 		throw new UnsupportedOperationException();
 	}
 
@@ -204,8 +240,10 @@ public class Tokenizer {
 		if (args.length != 1) {
 			throw new IllegalArgumentException();
 		}
-		FileReader reader = new FileReader(args[0]);
+		Reader reader = new FileReader(args[0]);
+		reader = new StringReader("hello :-\r\ngoodbye.");
 		Tokenizer t = new Tokenizer(reader);
+		t.eolIsSignificant(false);
 		while (t.hasToken()) {
 			System.out.println(t.current());
 			t.step();

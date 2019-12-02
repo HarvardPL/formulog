@@ -26,6 +26,8 @@ public enum Token {
 	
 	COMMA,
 	
+	EOL,
+	
 	FUN,
 	
 	ID,
