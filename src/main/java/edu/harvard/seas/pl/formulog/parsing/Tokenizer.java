@@ -24,54 +24,75 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.NoSuchElementException;
 
 public class Tokenizer {
 
+	private static final int BUF_CAPACITY = 1024;
+	
 	private final Reader reader;
-	private int bufSize = 1024;
-	private final char[] buf = new char[bufSize];
-	private int pos = buf.length;
+	private final char[] buf = new char[BUF_CAPACITY];
+	
+	private int bufSize = BUF_CAPACITY;
+	private int pos = BUF_CAPACITY;
+	private int line = 1;
+	private int column = 1;
 
-	private final Deque<TokenItem> queue = new ArrayDeque<TokenItem>();
+	private TokenItem curTokenItem = null;
+	private TokenItem peekTokenItem = null;
 
 	public Tokenizer(Reader reader) {
 		this.reader = reader;
 	}
 
-	public boolean hasNext() throws IOException {
+	public boolean hasToken() throws IOException {
 		return load();
 	}
 
-	public TokenItem next() throws IOException {
-		load();
-		try {
-			return queue.remove();
-		} catch (NoSuchElementException e) {
-			throw new NoSuchElementException("Token stream is exhausted");
-		}
+	public boolean canPeek() throws IOException {
+		return loadLookAhead(); 
 	}
-
-	public TokenItem peek() throws IOException {
-		load();
-		try {
-			return queue.getFirst();
-		} catch (NoSuchElementException e) {
-			throw new NoSuchElementException("Token stream is exhausted");
+	
+	public TokenItem current() throws IOException {
+		if (!load()) {
+			throw new NoSuchElementException("Tokenizer is exhausted.");
 		}
+		assert curTokenItem != null;
+		return curTokenItem;
+	}
+	
+	public TokenItem peek() throws IOException {
+		if (!loadLookAhead()) {
+			throw new NoSuchElementException("Tokenizer is exhausted.");
+		}
+		assert curTokenItem != null;
+		assert peekTokenItem != null;
+		return peekTokenItem;
+	}
+	
+	public void step() throws IOException {
+		loadLookAhead();
+		curTokenItem = peekTokenItem;
+		peekTokenItem = null;
 	}
 
 	private boolean load() throws IOException {
-		if (!queue.isEmpty()) {
-			return true;
+		if (curTokenItem == null) {
+			curTokenItem = loadToken();
 		}
-		TokenItem next = loadToken();
-		if (next == null) {
-			return false;
+		return curTokenItem != null;
+	}
+	
+	private boolean loadLookAhead() throws IOException {
+		if (!load()) {
+			throw new NoSuchElementException("Tokenizer is exhausted.");
 		}
-		queue.addFirst(next);
-		return true;
+		if (peekTokenItem == null) {
+			peekTokenItem = loadToken();
+		}
+		return peekTokenItem != null;
 	}
 
 	private TokenItem loadToken() throws IOException {
@@ -156,8 +177,13 @@ public class Tokenizer {
 	public static void main(String[] args) throws IOException {
 		StringReader reader = new StringReader("fun input output foo : :- . ;");
 		Tokenizer t = new Tokenizer(reader);
-		while (t.hasNext()) {
-			System.out.println(t.next());
+		while (t.hasToken()) {
+			System.out.print(t.current());
+			if (t.canPeek()) {
+				System.out.print(" " + t.peek());
+			}
+			System.out.println();
+			t.step();
 		}
 	}
 
