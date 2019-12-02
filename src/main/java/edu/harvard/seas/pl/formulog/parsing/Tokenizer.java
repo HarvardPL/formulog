@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.parsing;
 
+import java.io.FileReader;
+
 /*-
  * #%L
  * FormuLog
@@ -22,19 +24,15 @@ package edu.harvard.seas.pl.formulog.parsing;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.io.StringReader;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
 import java.util.NoSuchElementException;
 
 public class Tokenizer {
 
 	private static final int BUF_CAPACITY = 1024;
-	
+
 	private final Reader reader;
 	private final char[] buf = new char[BUF_CAPACITY];
-	
+
 	private int bufSize = BUF_CAPACITY;
 	private int pos = BUF_CAPACITY;
 	private int line = 1;
@@ -43,27 +41,27 @@ public class Tokenizer {
 	private TokenItem curTokenItem = null;
 	private TokenItem peekTokenItem = null;
 
-	public Tokenizer(Reader reader) {
+	public Tokenizer(Reader reader) throws IOException {
 		this.reader = reader;
 	}
 
-	public boolean hasToken() throws IOException {
+	public boolean hasToken() throws IOException, UnrecognizedTokenException {
 		return load();
 	}
 
-	public boolean canPeek() throws IOException {
-		return loadLookAhead(); 
+	public boolean canPeek() throws IOException, UnrecognizedTokenException {
+		return loadLookAhead();
 	}
-	
-	public TokenItem current() throws IOException {
+
+	public TokenItem current() throws IOException, UnrecognizedTokenException {
 		if (!load()) {
 			throw new NoSuchElementException("Tokenizer is exhausted.");
 		}
 		assert curTokenItem != null;
 		return curTokenItem;
 	}
-	
-	public TokenItem peek() throws IOException {
+
+	public TokenItem peek() throws IOException, UnrecognizedTokenException {
 		if (!loadLookAhead()) {
 			throw new NoSuchElementException("Tokenizer is exhausted.");
 		}
@@ -71,21 +69,21 @@ public class Tokenizer {
 		assert peekTokenItem != null;
 		return peekTokenItem;
 	}
-	
-	public void step() throws IOException {
+
+	public void step() throws IOException, UnrecognizedTokenException {
 		loadLookAhead();
 		curTokenItem = peekTokenItem;
 		peekTokenItem = null;
 	}
 
-	private boolean load() throws IOException {
+	private boolean load() throws IOException, UnrecognizedTokenException {
 		if (curTokenItem == null) {
 			curTokenItem = loadToken();
 		}
 		return curTokenItem != null;
 	}
-	
-	private boolean loadLookAhead() throws IOException {
+
+	private boolean loadLookAhead() throws IOException, UnrecognizedTokenException {
 		if (!load()) {
 			throw new NoSuchElementException("Tokenizer is exhausted.");
 		}
@@ -95,31 +93,52 @@ public class Tokenizer {
 		return peekTokenItem != null;
 	}
 
-	private TokenItem loadToken() throws IOException {
-		while (loadBuffer()) {
-			char ch = buf[pos++];
-			if (!Character.isWhitespace(ch)) {
-				if (ch == '"') {
-					return loadString();
-				} else if (Character.isLetter(ch)) {
-					pos--;
-					return loadAlphabetic();
-				} else if (Character.isDigit(ch)) {
-					pos--;
-					return loadNumber();
-				} else if (ch == '.') {
-					return TokenItems.period;
-				} else if (ch == ':') {
-					return loadInitialColon();
-				} else if (ch == ',') {
-					return TokenItems.comma;
-				} else if (ch == ';') {
-					return TokenItems.semicolon;
+	private TokenItem loadToken() throws IOException, UnrecognizedTokenException {
+		char ch;
+		boolean skipNextLineFeed = false;
+		while (loadBuffer() && (Character.isWhitespace((ch = buf[pos])))) {
+			if (ch == '\n') {
+				if (!skipNextLineFeed) {
+					line++;
+					column = 1;
 				}
-				break;
+				skipNextLineFeed = false;
+			} else if (ch == '\r') {
+				line++;
+				column = 1;
+				skipNextLineFeed = true;
+			} else {
+				column++;
+				skipNextLineFeed = false;
 			}
+			pos++;
 		}
-		return null;
+		if (!loadBuffer()) {
+			return null;
+		}
+		
+		ch = buf[pos];
+		if (ch == '"') {
+			return loadString();
+		} else if (Character.isLetter(ch)) {
+			return loadAlphabetic();
+		} else if (Character.isDigit(ch)) {
+			return loadNumber();
+		} else if (ch == '.') {
+			pos++;
+			return TokenItem.mkPeriod(line, column++);
+		} else if (ch == ':') {
+			return loadInitialColon();
+		} else if (ch == ',') {
+			pos++;
+			return TokenItem.mkComma(line, column++);
+		} else if (ch == ';') {
+			pos++;
+			return TokenItem.mkSemicolon(line, column++);
+		} else {
+			throw new UnrecognizedTokenException(
+					"Unrecognized character: " + ch + " (line " + line + ", column " + column + ")");
+		}
 	}
 
 	private boolean loadBuffer() throws IOException {
@@ -136,25 +155,30 @@ public class Tokenizer {
 	}
 
 	private TokenItem loadAlphabetic() throws IOException {
+		int start = column;
 		String s = loadAlphaNumeric();
 		switch (s) {
 		case "fun":
-			return TokenItems.fun;
+			return TokenItem.mkFun(line, start);
 		case "input":
-			return TokenItems.input;
+			return TokenItem.mkInput(line, start);
 		case "output":
-			return TokenItems.output;
+			return TokenItem.mkOutput(line, start);
 		default:
-			return new TokenItem(Token.ID, s);
+			return TokenItem.mkId(s, line, start);
 		}
 	}
 
 	private TokenItem loadInitialColon() throws IOException {
+		int start = column;
+		column++;
+		pos++;
 		if (loadBuffer() && buf[pos] == '-') {
 			pos++;
-			return TokenItems.turnstile;
+			column++;
+			return TokenItem.mkTurnstile(line, start);
 		}
-		return TokenItems.colon;
+		return TokenItem.mkColon(line, start);
 	}
 
 	private TokenItem loadNumber() {
@@ -164,25 +188,26 @@ public class Tokenizer {
 	private TokenItem loadString() {
 		throw new UnsupportedOperationException();
 	}
-	
+
 	private String loadAlphaNumeric() throws IOException {
 		StringBuilder sb = new StringBuilder();
 		char ch;
-		while (loadBuffer() && Character.isLetterOrDigit((ch = buf[pos++]))) {
+		while (loadBuffer() && Character.isLetterOrDigit((ch = buf[pos]))) {
 			sb.append(ch);
+			pos++;
+			column++;
 		}
 		return sb.toString();
 	}
-	
-	public static void main(String[] args) throws IOException {
-		StringReader reader = new StringReader("fun input output foo : :- . ;");
+
+	public static void main(String[] args) throws IOException, UnrecognizedTokenException {
+		if (args.length != 1) {
+			throw new IllegalArgumentException();
+		}
+		FileReader reader = new FileReader(args[0]);
 		Tokenizer t = new Tokenizer(reader);
 		while (t.hasToken()) {
-			System.out.print(t.current());
-			if (t.canPeek()) {
-				System.out.print(" " + t.peek());
-			}
-			System.out.println();
+			System.out.println(t.current());
 			t.step();
 		}
 	}

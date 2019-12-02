@@ -20,19 +20,25 @@ package edu.harvard.seas.pl.formulog.parsing;
  * #L%
  */
 
-public final class TokenItems {
+public class UnrecognizedTokenException extends Exception {
 
-	private TokenItems() {
-		throw new AssertionError("impossible");
+	private static final long serialVersionUID = -5852201138341127150L;
+
+	public UnrecognizedTokenException(String message) {
+		super(message);
 	}
-	
-	public static final TokenItem colon = new TokenItem(Token.COLON, null);
-	public static final TokenItem comma = new TokenItem(Token.COMMA, null);
-	public static final TokenItem fun = new TokenItem(Token.FUN, null);
-	public static final TokenItem input = new TokenItem(Token.INPUT, null);
-	public static final TokenItem output = new TokenItem(Token.OUTPUT, null);
-	public static final TokenItem period = new TokenItem(Token.PERIOD, null);
-	public static final TokenItem semicolon = new TokenItem(Token.SEMICOLON, null);
-	public static final TokenItem turnstile = new TokenItem(Token.TURNSTILE, null);
-	
+
+	public UnrecognizedTokenException(Throwable cause) {
+		super(cause);
+	}
+
+	public UnrecognizedTokenException(String message, Throwable cause) {
+		super(message, cause);
+	}
+
+	public UnrecognizedTokenException(String message, Throwable cause, boolean enableSuppression,
+			boolean writableStackTrace) {
+		super(message, cause, enableSuppression, writableStackTrace);
+	}
+
 }

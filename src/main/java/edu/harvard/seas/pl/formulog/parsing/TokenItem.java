@@ -23,20 +23,60 @@ package edu.harvard.seas.pl.formulog.parsing;
 public class TokenItem {
 
 	public final Token token;
-	public final Object data;
+	public final Object value;
+	public final int line;
+	public final int column;
 
-	public TokenItem(Token token, Object data) {
+	private TokenItem(Token token, Object value, int line, int column) {
 		this.token = token;
-		this.data = data;
+		this.value = value;
+		this.line = line;
+		this.column = column;
 	}
 
 	@Override
 	public String toString() {
 		String s = "" + token;
-		if (data != null) {
-			s += "(" + data + ")";
+		if (value != null) {
+			s += "(" + value + ")";
 		}
-		return s;
+		return s + "@" + line + ":" + column;
+	}
+	
+	public static TokenItem mkColon(int line, int column) {
+		return new TokenItem(Token.COLON, null, line, column);
+	}
+	
+	public static TokenItem mkComma(int line, int column) {
+		return new TokenItem(Token.COMMA, null, line, column);
+	}
+	
+	public static TokenItem mkFun(int line, int column) {
+		return new TokenItem(Token.FUN, null, line, column);
+	}
+	
+	public static TokenItem mkInput(int line, int column) {
+		return new TokenItem(Token.INPUT, null, line, column);
+	}
+	
+	public static TokenItem mkOutput(int line, int column) {
+		return new TokenItem(Token.OUTPUT, null, line, column);
+	}
+	
+	public static TokenItem mkPeriod(int line, int column) {
+		return new TokenItem(Token.PERIOD, null, line, column);
+	}
+	
+	public static TokenItem mkSemicolon(int line, int column) {
+		return new TokenItem(Token.SEMICOLON, null, line, column);
+	}
+	
+	public static TokenItem mkTurnstile(int line, int column) {
+		return new TokenItem(Token.TURNSTILE, null, line, column);
+	}
+	
+	public static TokenItem mkId(String id, int line, int column) {
+		return new TokenItem(Token.ID, id, line, column);
 	}
 	
 }
