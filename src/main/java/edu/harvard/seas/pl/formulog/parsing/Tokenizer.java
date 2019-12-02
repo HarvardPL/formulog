@@ -39,8 +39,8 @@ public class Tokenizer {
 	private int line = 1;
 	private int column = 1;
 
-	private TokenItem curTokenItem = null;
-	private TokenItem peekTokenItem = null;
+	private TokenItem current = null;
+	private TokenItem lookahead = null;
 
 	private final boolean eolIsSignificant;
 
@@ -61,40 +61,40 @@ public class Tokenizer {
 		if (!load()) {
 			throw new NoSuchElementException("Tokenizer is exhausted.");
 		}
-		assert curTokenItem != null;
-		return curTokenItem;
+		assert current != null;
+		return current;
 	}
 
 	public TokenItem peek() throws IOException, TokenizerException {
 		if (!loadLookAhead()) {
 			throw new NoSuchElementException("Tokenizer is exhausted.");
 		}
-		assert curTokenItem != null;
-		assert peekTokenItem != null;
-		return peekTokenItem;
+		assert current != null;
+		assert lookahead != null;
+		return lookahead;
 	}
 
 	public void step() throws IOException, TokenizerException {
 		loadLookAhead();
-		curTokenItem = peekTokenItem;
-		peekTokenItem = null;
+		current = lookahead;
+		lookahead = null;
 	}
 
 	private boolean load() throws IOException, TokenizerException {
-		if (curTokenItem == null) {
-			curTokenItem = loadToken();
+		if (current == null) {
+			current = loadToken();
 		}
-		return curTokenItem != null;
+		return current != null;
 	}
 
 	private boolean loadLookAhead() throws IOException, TokenizerException {
 		if (!load()) {
 			throw new NoSuchElementException("Tokenizer is exhausted.");
 		}
-		if (peekTokenItem == null) {
-			peekTokenItem = loadToken();
+		if (lookahead == null) {
+			lookahead = loadToken();
 		}
-		return peekTokenItem != null;
+		return lookahead != null;
 	}
 
 	private TokenItem loadToken() throws IOException, TokenizerException {
@@ -209,11 +209,9 @@ public class Tokenizer {
 		int start = column;
 		column++;
 		if (loadBuffer() && Character.isDigit(buf[pos])) {
-			StringBuilder sb = new StringBuilder();
-			sb.append('.');
-			loadDigitString(sb);
+			String num = "." + loadDigitString();
 			String modifier = loadModifier();
-			return number(sb.toString(), NumberType.FP, modifier, start);
+			return number(num, NumberType.FP, modifier, start);
 		}
 		return TokenItem.mkPeriod(line, start);
 	}
@@ -229,27 +227,24 @@ public class Tokenizer {
 	
 	private TokenItem number() throws IOException, TokenizerException {
 		int start = column;
-		StringBuilder sb = new StringBuilder();
-		loadDigitString(sb);
 		NumberType type = NumberType.INT;
+		String num = loadDigitString();
 		if (loadBuffer() && buf[pos] == '.') {
 			type = NumberType.FP;
 			pos++;
 			column++;
-			sb.append('.');
-			loadDigitString(sb);
-		} else if (loadBuffer() && Character.toLowerCase(buf[pos]) == 'x' && sb.toString().equals("0")) {
+			num += "." + loadDigitString();
+		} else if (loadBuffer() && Character.toLowerCase(buf[pos]) == 'x' && num.equals("0")) {
 			type = NumberType.HEX;
 			pos++;
 			column++;
-			sb = new StringBuilder();
-			loadHexSuffix(sb);
-			if (sb.length() == 0) {
+			num = loadHexSuffix();
+			if (num.equals("")) {
 				throw new TokenizerException("Invalid hex literal (line " + line + ", column " + start + ")");
 			}
 		}
 		String modifier = loadModifier();
-		return number(sb.toString(), type, modifier, start);
+		return number(num, type, modifier, start);
 	}
 	
 	private TokenItem number(String num, NumberType type, String modifier, int start) throws IOException, TokenizerException {
@@ -268,14 +263,13 @@ public class Tokenizer {
 			if (!loadBuffer()) {
 				throw new TokenizerException("Invalid number literal (line " + line + ", column " + start + ")");
 			}
-			StringBuilder sb = new StringBuilder();
+			String exp = "";
 			if (buf[pos] == '-') {
-				sb.append('-');
+				exp += "-";
 				pos++;
 				column++;
 			}
-			loadDigitString(sb);
-			String exp = sb.toString();
+			exp += loadDigitString();
 			if (exp.equals("") || exp.equals("-")) {
 				throw new TokenizerException("Invalid number literal (line " + line + ", column " + start + ")");
 			}
@@ -292,22 +286,26 @@ public class Tokenizer {
 				"Unrecognized modifier for number literal: " + modifier + " (line " + line + ", column " + start + ")");
 	}
 	
-	private void loadDigitString(StringBuilder sb) throws IOException {
+	private String loadDigitString() throws IOException {
+		StringBuilder sb = new StringBuilder();
 		char ch;
 		while (loadBuffer() && Character.isDigit((ch = buf[pos]))) {
 			sb.append(ch);
 			pos++;
 			column++;
 		}
+		return sb.toString();
 	}
 	
-	private void loadHexSuffix(StringBuilder sb) throws IOException {
+	private String loadHexSuffix() throws IOException {
+		StringBuilder sb = new StringBuilder();
 		char ch;
 		while (loadBuffer() && (Character.isDigit((ch = Character.toUpperCase(buf[pos]))) || ch >= 'A' && ch <= 'F')) {
 			sb.append(ch);
 			pos++;
 			column++;
 		}
+		return sb.toString();
 	}
 	
 	private String loadModifier() throws IOException {
@@ -363,7 +361,7 @@ public class Tokenizer {
 			throw new IllegalArgumentException();
 		}
 		Reader reader = new FileReader(args[0]);
-		reader = new StringReader("hello :-\r\ngoodbye. 1f 2.0 .5f .5 1f 2l 3d 0xA 0xAl 1e3 1e-3 1e-4");
+		reader = new StringReader("hello :-\r\ngoodbye. 1. 1f 2.0 .5f .5 1f 2l 3d 0xA 0xAl 1e3 1e-3 1e-4");
 		Tokenizer t = new Tokenizer(reader, false);
 		while (t.hasToken()) {
 			System.out.println(t.current());
