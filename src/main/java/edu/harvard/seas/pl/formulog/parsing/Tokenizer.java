@@ -42,14 +42,11 @@ public class Tokenizer {
 	private TokenItem curTokenItem = null;
 	private TokenItem peekTokenItem = null;
 
-	private boolean eolIsSignificant = false;
+	private final boolean eolIsSignificant;
 
-	public Tokenizer(Reader reader) throws IOException {
+	public Tokenizer(Reader reader, boolean eolIsSignificant) throws IOException {
 		this.reader = reader;
-	}
-
-	public void eolIsSignificant(boolean isSignificant) {
-		eolIsSignificant = isSignificant;
+		this.eolIsSignificant = eolIsSignificant;
 	}
 
 	public boolean hasToken() throws IOException, UnrecognizedTokenException {
@@ -242,8 +239,7 @@ public class Tokenizer {
 		}
 		Reader reader = new FileReader(args[0]);
 		reader = new StringReader("hello :-\r\ngoodbye.");
-		Tokenizer t = new Tokenizer(reader);
-		t.eolIsSignificant(false);
+		Tokenizer t = new Tokenizer(reader, false);
 		while (t.hasToken()) {
 			System.out.println(t.current());
 			t.step();
