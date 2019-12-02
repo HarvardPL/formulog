@@ -75,6 +75,10 @@ public class TokenItem {
 		return new TokenItem(Token.SEMICOLON, null, line, column);
 	}
 	
+	public static TokenItem mkString(String s, int line, int column) {
+		return new TokenItem(Token.STRING, s, line, column);
+	}
+	
 	public static TokenItem mkTurnstile(int line, int column) {
 		return new TokenItem(Token.TURNSTILE, null, line, column);
 	}

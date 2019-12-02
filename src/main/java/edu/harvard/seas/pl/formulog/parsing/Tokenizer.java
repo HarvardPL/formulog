@@ -218,8 +218,31 @@ public class Tokenizer {
 		throw new UnsupportedOperationException();
 	}
 
-	private TokenItem string() {
-		throw new UnsupportedOperationException();
+	private TokenItem string() throws IOException, UnrecognizedTokenException {
+		int start = column;
+		char ch = buf[pos];
+		assert ch == '"';
+		StringBuilder sb = new StringBuilder();
+		boolean escaped = false;
+		while (true) {
+			pos++;
+			column++;
+			boolean wasEscaped = escaped;
+			escaped = false;
+			if (!loadBuffer() || (ch = buf[pos]) == '\n' || ch == '\r') {
+				throw new UnrecognizedTokenException("Unterminated string (line " + line + ", column " + start + ")");
+			}
+			if (ch == '"' && !wasEscaped) {
+				break;
+			}
+			if (ch == '\\') {
+				escaped = !wasEscaped;
+			}
+			sb.append(ch);
+		}
+		pos++;
+		column++;
+		return TokenItem.mkString(sb.toString(), line, start);
 	}
 
 	private String loadAlphaNumeric() throws IOException {
@@ -238,7 +261,7 @@ public class Tokenizer {
 			throw new IllegalArgumentException();
 		}
 		Reader reader = new FileReader(args[0]);
-		reader = new StringReader("hello :-\r\ngoodbye.");
+//		reader = new StringReader("hello :-\r\ngoodbye.");
 		Tokenizer t = new Tokenizer(reader, false);
 		while (t.hasToken()) {
 			System.out.println(t.current());

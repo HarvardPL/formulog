@@ -40,6 +40,8 @@ public enum Token {
 	
 	SEMICOLON,
 	
+	STRING,
+	
 	TURNSTILE,
 	
 	;
