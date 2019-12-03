@@ -27,7 +27,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.NoSuchElementException;
 
-public class Tokenizer {
+public class Lexer {
 
 	private static final int BUF_CAPACITY = 1024;
 
@@ -44,20 +44,20 @@ public class Tokenizer {
 
 	private final boolean eolIsSignificant;
 
-	public Tokenizer(Reader reader, boolean eolIsSignificant) throws IOException {
+	public Lexer(Reader reader, boolean eolIsSignificant) throws IOException {
 		this.reader = reader;
 		this.eolIsSignificant = eolIsSignificant;
 	}
 
-	public boolean hasToken() throws IOException, TokenizerException {
+	public boolean hasToken() throws IOException, LexingException {
 		return load();
 	}
 
-	public boolean canPeek() throws IOException, TokenizerException {
+	public boolean canPeek() throws IOException, LexingException {
 		return loadLookAhead();
 	}
 
-	public TokenItem current() throws IOException, TokenizerException {
+	public TokenItem current() throws IOException, LexingException {
 		if (!load()) {
 			throw new NoSuchElementException("Tokenizer is exhausted.");
 		}
@@ -65,7 +65,7 @@ public class Tokenizer {
 		return current;
 	}
 
-	public TokenItem peek() throws IOException, TokenizerException {
+	public TokenItem peek() throws IOException, LexingException {
 		if (!loadLookAhead()) {
 			throw new NoSuchElementException("Tokenizer is exhausted.");
 		}
@@ -74,20 +74,20 @@ public class Tokenizer {
 		return lookahead;
 	}
 
-	public void step() throws IOException, TokenizerException {
+	public void step() throws IOException, LexingException {
 		loadLookAhead();
 		current = lookahead;
 		lookahead = null;
 	}
 
-	private boolean load() throws IOException, TokenizerException {
+	private boolean load() throws IOException, LexingException {
 		if (current == null) {
 			current = loadToken();
 		}
 		return current != null;
 	}
 
-	private boolean loadLookAhead() throws IOException, TokenizerException {
+	private boolean loadLookAhead() throws IOException, LexingException {
 		if (!load()) {
 			throw new NoSuchElementException("Tokenizer is exhausted.");
 		}
@@ -97,7 +97,7 @@ public class Tokenizer {
 		return lookahead != null;
 	}
 
-	private TokenItem loadToken() throws IOException, TokenizerException {
+	private TokenItem loadToken() throws IOException, LexingException {
 		char ch;
 		boolean skipNextLineFeed = false;
 		while (loadBuffer() && (Character.isWhitespace((ch = buf[pos])))) {
@@ -140,7 +140,7 @@ public class Tokenizer {
 		if (Character.isLetter(ch)) return alphabetic();
 		if (Character.isDigit(ch)) return number();
 		
-		throw new TokenizerException(
+		throw new LexingException(
 				"Unrecognized character: " + ch + " (line " + line + ", column " + column + ")");
 	}
 
@@ -204,7 +204,7 @@ public class Tokenizer {
 		return TokenItem.mkRightParen(line, column++);
 	}
 	
-	private TokenItem lparen() throws IOException, TokenizerException {
+	private TokenItem lparen() throws IOException, LexingException {
 		int start = column;
 		pos++;
 		column++;
@@ -219,7 +219,7 @@ public class Tokenizer {
 		SAW_STAR, SAW_LPAREN, SAW_NEITHER
 	}
 	
-	private void comment(int start) throws IOException, TokenizerException {
+	private void comment(int start) throws IOException, LexingException {
 		assert buf[pos] == '*';
 		CommentState state = CommentState.SAW_NEITHER;
 		int prevColumn;
@@ -227,7 +227,7 @@ public class Tokenizer {
 			pos++;
 			prevColumn = column++;
 			if (!loadBuffer()) {
-				throw new TokenizerException("Unterminated comment (line " + line + ", column " + start + ")");
+				throw new LexingException("Unterminated comment (line " + line + ", column " + start + ")");
 			}
 			CommentState newState = CommentState.SAW_NEITHER;
 			char ch = buf[pos];
@@ -259,7 +259,7 @@ public class Tokenizer {
 		return TokenItem.mkEol(line++, start);
 	}
 
-	private TokenItem period() throws IOException, TokenizerException {
+	private TokenItem period() throws IOException, LexingException {
 		pos++;
 		int start = column;
 		column++;
@@ -280,7 +280,7 @@ public class Tokenizer {
 		INT, HEX, FP;
 	}
 	
-	private TokenItem number() throws IOException, TokenizerException {
+	private TokenItem number() throws IOException, LexingException {
 		int start = column;
 		NumberType type = NumberType.INT;
 		String num = loadDigitString();
@@ -295,14 +295,14 @@ public class Tokenizer {
 			column++;
 			num = loadHexSuffix();
 			if (num.equals("")) {
-				throw new TokenizerException("Invalid hex literal (line " + line + ", column " + start + ")");
+				throw new LexingException("Invalid hex literal (line " + line + ", column " + start + ")");
 			}
 		}
 		String modifier = loadModifier();
 		return number(num, type, modifier, start);
 	}
 	
-	private TokenItem number(String num, NumberType type, String modifier, int start) throws IOException, TokenizerException {
+	private TokenItem number(String num, NumberType type, String modifier, int start) throws IOException, LexingException {
 		String modUpper = modifier.toUpperCase();
 		int radix = type == NumberType.HEX ? 16 : 10;
 		if (modUpper.equals("L") && type != NumberType.FP) {
@@ -316,7 +316,7 @@ public class Tokenizer {
 		}
 		if (modUpper.equals("E")) {
 			if (!loadBuffer()) {
-				throw new TokenizerException("Invalid number literal (line " + line + ", column " + start + ")");
+				throw new LexingException("Invalid number literal (line " + line + ", column " + start + ")");
 			}
 			String exp = "";
 			if (buf[pos] == '-') {
@@ -326,7 +326,7 @@ public class Tokenizer {
 			}
 			exp += loadDigitString();
 			if (exp.equals("") || exp.equals("-")) {
-				throw new TokenizerException("Invalid number literal (line " + line + ", column " + start + ")");
+				throw new LexingException("Invalid number literal (line " + line + ", column " + start + ")");
 			}
 			return TokenItem.mkDouble(Double.parseDouble(num + "e" + exp), line, start);
 		}
@@ -337,7 +337,7 @@ public class Tokenizer {
 				return TokenItem.mkInt(Integer.parseUnsignedInt(num, radix), line, start);
 			}
 		}
-		throw new TokenizerException(
+		throw new LexingException(
 				"Unrecognized modifier for number literal: " + modifier + " (line " + line + ", column " + start + ")");
 	}
 	
@@ -373,7 +373,7 @@ public class Tokenizer {
 		return "";
 	}
 
-	private TokenItem string() throws IOException, TokenizerException {
+	private TokenItem string() throws IOException, LexingException {
 		int start = column;
 		char ch = buf[pos];
 		assert ch == '"';
@@ -385,7 +385,7 @@ public class Tokenizer {
 			boolean wasEscaped = escaped;
 			escaped = false;
 			if (!loadBuffer() || (ch = buf[pos]) == '\n' || ch == '\r') {
-				throw new TokenizerException("Unterminated string (line " + line + ", column " + start + ")");
+				throw new LexingException("Unterminated string (line " + line + ", column " + start + ")");
 			}
 			if (ch == '"' && !wasEscaped) {
 				break;
@@ -411,13 +411,13 @@ public class Tokenizer {
 		return sb.toString();
 	}
 
-	public static void main(String[] args) throws IOException, TokenizerException {
+	public static void main(String[] args) throws IOException, LexingException {
 		if (args.length != 1) {
 			throw new IllegalArgumentException();
 		}
 		Reader reader = new FileReader(args[0]);
 		reader = new StringReader("hello :-\r\ngoodbye. 1. 1f 2.0 .5f .5 1f 2l 3d 0xA 0xAl(* hello (* 1e3 *) 1e-3 *) 1e-4 ");
-		Tokenizer t = new Tokenizer(reader, false);
+		Lexer t = new Lexer(reader, false);
 		while (t.hasToken()) {
 			System.out.println(t.current());
 			t.step();

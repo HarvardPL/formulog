@@ -20,23 +20,23 @@ package edu.harvard.seas.pl.formulog.parsing;
  * #L%
  */
 
-public class TokenizerException extends Exception {
+public class LexingException extends Exception {
 
 	private static final long serialVersionUID = -5852201138341127150L;
 
-	public TokenizerException(String message) {
+	public LexingException(String message) {
 		super(message);
 	}
 
-	public TokenizerException(Throwable cause) {
+	public LexingException(Throwable cause) {
 		super(cause);
 	}
 
-	public TokenizerException(String message, Throwable cause) {
+	public LexingException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
-	public TokenizerException(String message, Throwable cause, boolean enableSuppression,
+	public LexingException(String message, Throwable cause, boolean enableSuppression,
 			boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
