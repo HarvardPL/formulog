@@ -135,6 +135,8 @@ public class Tokenizer {
 		if (ch == ';') return semicolon();
 		if (ch == '\n') return lineFeed();
 		if (ch == '\r') return carriageReturn();
+		if (ch == '(') return lparen();
+		if (ch == ')') return rparen();
 		if (Character.isLetter(ch)) return alphabetic();
 		if (Character.isDigit(ch)) return number();
 		
@@ -192,12 +194,65 @@ public class Tokenizer {
 		return TokenItem.mkColon(line, start);
 	}
 
-	private TokenItem comma() throws IOException {
+	private TokenItem comma() {
 		pos++;
 		return TokenItem.mkComma(line, column++);
 	}
 	
-	private TokenItem lineFeed() throws IOException {
+	private TokenItem rparen() {
+		pos++;
+		return TokenItem.mkRightParen(line, column++);
+	}
+	
+	private TokenItem lparen() throws IOException, TokenizerException {
+		int start = column;
+		pos++;
+		column++;
+		if (loadBuffer() && buf[pos] == '*') {
+			comment(start);
+			return loadToken();
+		}
+		return TokenItem.mkLeftParen(line, start);
+	}
+
+	private enum CommentState {
+		SAW_STAR, SAW_LPAREN, SAW_NEITHER
+	}
+	
+	private void comment(int start) throws IOException, TokenizerException {
+		assert buf[pos] == '*';
+		CommentState state = CommentState.SAW_NEITHER;
+		int prevColumn;
+		while (true) {
+			pos++;
+			prevColumn = column++;
+			if (!loadBuffer()) {
+				throw new TokenizerException("Unterminated comment (line " + line + ", column " + start + ")");
+			}
+			CommentState newState = CommentState.SAW_NEITHER;
+			char ch = buf[pos];
+			if (ch == '*') {
+				if (state == CommentState.SAW_LPAREN) {
+					comment(prevColumn);
+				} else {
+					newState = CommentState.SAW_STAR;
+				}
+			} else if (ch == '(') {
+				newState = CommentState.SAW_LPAREN;
+			} else if (ch == '\n') {
+				lineFeed();
+			} else if (ch == '\r') {
+				carriageReturn();
+			} else if (ch == ')' && state == CommentState.SAW_STAR) {
+				break;
+			}
+			state = newState;
+		}
+		pos++;
+		column++;
+	}
+	
+	private TokenItem lineFeed() {
 		pos++;
 		int start = column;
 		column = 1;
@@ -216,7 +271,7 @@ public class Tokenizer {
 		return TokenItem.mkPeriod(line, start);
 	}
 
-	private TokenItem semicolon() throws IOException {
+	private TokenItem semicolon() {
 		pos++;
 		return TokenItem.mkSemicolon(line, column++);
 	}
@@ -361,7 +416,7 @@ public class Tokenizer {
 			throw new IllegalArgumentException();
 		}
 		Reader reader = new FileReader(args[0]);
-		reader = new StringReader("hello :-\r\ngoodbye. 1. 1f 2.0 .5f .5 1f 2l 3d 0xA 0xAl 1e3 1e-3 1e-4");
+		reader = new StringReader("hello :-\r\ngoodbye. 1. 1f 2.0 .5f .5 1f 2l 3d 0xA 0xAl(* hello (* 1e3 *) 1e-3 *) 1e-4 ");
 		Tokenizer t = new Tokenizer(reader, false);
 		while (t.hasToken()) {
 			System.out.println(t.current());

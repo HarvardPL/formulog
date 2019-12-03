@@ -67,6 +67,10 @@ public class TokenItem {
 		return new TokenItem(Token.FUN, null, line, column);
 	}
 	
+	public static TokenItem mkLeftParen(int line, int column) {
+		return new TokenItem(Token.LPAREN, null, line, column);
+	}
+	
 	public static TokenItem mkLong(long val, int line, int column) {
 		return new TokenItem(Token.LONG, val, line, column);
 	}
@@ -85,6 +89,10 @@ public class TokenItem {
 	
 	public static TokenItem mkPeriod(int line, int column) {
 		return new TokenItem(Token.PERIOD, null, line, column);
+	}
+	
+	public static TokenItem mkRightParen(int line, int column) {
+		return new TokenItem(Token.RPAREN, null, line, column);
 	}
 	
 	public static TokenItem mkSemicolon(int line, int column) {

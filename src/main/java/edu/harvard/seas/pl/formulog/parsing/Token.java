@@ -42,9 +42,13 @@ public enum Token {
 	
 	LONG,
 	
+	LPAREN,
+	
 	OUTPUT,
 	
 	PERIOD,
+	
+	RPAREN,
 	
 	SEMICOLON,
 	
