@@ -22,10 +22,9 @@ package edu.harvard.seas.pl.formulog.parsing;
 
 import static edu.harvard.seas.pl.formulog.util.Util.map;
 
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.io.StringReader;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -45,8 +44,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
+import org.antlr.v4.runtime.BufferedTokenStream;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -127,6 +126,7 @@ import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.RelDeclCont
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.SmtEqTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.SpecialFPTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.StringTermContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TabSeparatedTermLineContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TermAtomContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TermSymFormulaContext;
@@ -183,11 +183,22 @@ public class Parser {
 		symbolManager.initialize();
 	}
 
-	private FormulogParser getParser(Reader r) throws ParseException {
+	private FormulogParser getProgramParser(Reader r) throws ParseException {
 		try {
 			CharStream chars = CharStreams.fromReader(r);
 			FormulogLexer lexer = new FormulogLexer(chars);
 			CommonTokenStream tokens = new CommonTokenStream(lexer);
+			return new FormulogParser(tokens);
+		} catch (IOException e) {
+			throw new ParseException(e.getMessage());
+		}
+	}
+	
+	private FormulogParser getTsvFileParser(Reader r) throws ParseException {
+		try {
+			CharStream chars = CharStreams.fromReader(r);
+			FormulogLexer lexer = new FormulogLexer(chars);
+			BufferedTokenStream tokens = new BufferedTokenStream(lexer);
 			return new FormulogParser(tokens);
 		} catch (IOException e) {
 			throw new ParseException(e.getMessage());
@@ -200,7 +211,7 @@ public class Parser {
 
 	public BasicProgram parse(Reader r, List<Path> inputDir) throws ParseException {
 		try {
-			FormulogParser parser = getParser(r);
+			FormulogParser parser = getProgramParser(r);
 			StmtProcessor stmtProcessor = new StmtProcessor(inputDir);
 			parser.prog().accept(stmtProcessor);
 			return stmtProcessor.getProgram();
@@ -1300,29 +1311,22 @@ public class Parser {
 		private void readEdbFromFile(RelationSymbol sym, Path inputDir) throws ParseException {
 			Path path = inputDir.resolve(sym.toString() + ".csv");
 			Set<Term[]> facts = initialFacts.get(sym);
+			int arity = sym.getArity();
 			int line = 0;
-			try {
-				Stream<String> lines;
-				lines = Files.lines(path);
-				for (Iterator<String> it = lines.iterator(); it.hasNext();) {
-					line++;
-					readLineFromCsv(sym, new StringReader(it.next()), facts);
+			try (FileReader fr = new FileReader(path.toFile())) {
+				FormulogParser parser = getTsvFileParser(fr);
+				for (TabSeparatedTermLineContext l : parser.tsvFile().tabSeparatedTermLine()) {
+					Term[] args = termContextsToTerms(l.term());
+					if (args.length != arity) {
+						throw new ParseException("Arity mismatch: expected " + arity + " terms, but got " + args.length);
+					}
+					args = varChecker.checkFact(args);
+					facts.add(args);
 				}
-				lines.close();
 			} catch (Exception e) {
 				throw new ParseException(
 						"Exception when extracting facts from " + path + " (line " + line + "):\n" + e);
 			}
-		}
-
-		private void readLineFromCsv(RelationSymbol sym, Reader r, Set<Term[]> facts) throws ParseException {
-			FormulogParser parser = getParser(r);
-			Term[] args = new Term[sym.getArity()];
-			for (int i = 0; i < args.length; i++) {
-				args[i] = extract(parser.term());
-			}
-			args = varChecker.checkFact(args);
-			facts.add(args);
 		}
 
 		public BasicProgram getProgram() throws ParseException {

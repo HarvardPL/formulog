@@ -8,6 +8,16 @@ prog
 	)* EOF
 ;
 
+tsvFile
+:
+	tabSeparatedTermLine* EOF
+;
+
+tabSeparatedTermLine
+:
+	(term (TAB term)*)? NEWLINE	
+;
+
 // Program metadata ////////////////////////////////////////////////////////////
 
 metadata
@@ -290,7 +300,10 @@ term
 		'|' matchClause
 	)* 'end' # matchExpr
 	| 'let' lhs = letBind '=' assign = term 'in' body = term # letExpr
-	| 'let' 'fun' funDefLHS '=' term ('and' funDefLHS '=' term)* # letFunExpr
+	| 'let' 'fun' funDefLHS '=' term
+	(
+		'and' funDefLHS '=' term
+	)* # letFunExpr
 	| 'if' guard = term 'then' thenExpr = term 'else' elseExpr = term # ifExpr
 ;
 
@@ -632,9 +645,19 @@ HOLE
 	'??'
 ;
 
-WS
+NEWLINE
 :
-	[ \t\r\n]+ -> skip
+	('\r\n' | [\n\r]) -> channel(HIDDEN)
+;
+
+TAB
+:
+	'\t' -> channel(HIDDEN)
+;
+
+SPACES
+:
+	[ ]+ -> skip
 ;
 
 COMMENT
