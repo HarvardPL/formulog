@@ -25,7 +25,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
-import java.util.NoSuchElementException;
 
 public class Lexer {
 
@@ -48,6 +47,10 @@ public class Lexer {
 		this.reader = reader;
 		this.eolIsSignificant = eolIsSignificant;
 	}
+	
+	public boolean eolIsSignificant() {
+		return eolIsSignificant;
+	}
 
 	public boolean hasToken() throws IOException, LexingException {
 		return load();
@@ -59,7 +62,7 @@ public class Lexer {
 
 	public TokenItem current() throws IOException, LexingException {
 		if (!load()) {
-			throw new NoSuchElementException("Tokenizer is exhausted.");
+			throw new LexingException("Unexpected EOF.");
 		}
 		assert current != null;
 		return current;
@@ -67,17 +70,21 @@ public class Lexer {
 
 	public TokenItem peek() throws IOException, LexingException {
 		if (!loadLookAhead()) {
-			throw new NoSuchElementException("Tokenizer is exhausted.");
+			throw new LexingException("Unexpected EOF.");
 		}
 		assert current != null;
 		assert lookahead != null;
 		return lookahead;
 	}
 
-	public void step() throws IOException, LexingException {
+	public TokenItem step() throws IOException, LexingException {
 		loadLookAhead();
 		current = lookahead;
 		lookahead = null;
+		if (current == null) {
+			throw new LexingException("Unexpected EOF.");
+		}
+		return current;
 	}
 
 	private boolean load() throws IOException, LexingException {
@@ -89,7 +96,7 @@ public class Lexer {
 
 	private boolean loadLookAhead() throws IOException, LexingException {
 		if (!load()) {
-			throw new NoSuchElementException("Tokenizer is exhausted.");
+			throw new LexingException("Unexpected EOF.");
 		}
 		if (lookahead == null) {
 			lookahead = loadToken();

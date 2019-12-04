@@ -20,44 +20,10 @@ package edu.harvard.seas.pl.formulog.parsing;
  * #L%
  */
 
-public enum Token {
+class ParsingContext {
 	
-	COLON,
-	
-	COMMA,
-	
-	DOUBLE,
-	
-	EOL,
-	
-	FLOAT,
-	
-	FUN,
-	
-	ID,
-	
-	INPUT,
-	
-	INT,
-	
-	LONG,
-	
-	LPAREN,
-	
-	OUTPUT,
-	
-	PERIOD,
-	
-	RPAREN,
-	
-	SEMICOLON,
-	
-	STRING,
-	
-	TURNSTILE,
-	
-	AT_ID,
-	
-	;
-	
+	public ParsingContext() {
+		// TODO Auto-generated constructor stub
+	}
+
 }
