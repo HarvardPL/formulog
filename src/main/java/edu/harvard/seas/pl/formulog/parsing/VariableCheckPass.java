@@ -69,7 +69,7 @@ public class VariableCheckPass {
 		ctx.checkCounts();
 		return newBody;
 	}
-	
+
 	public BasicRule checkRule(BasicRule r) throws ParseException {
 		PassContext ctx = new PassContext();
 		BasicRule newR = ctx.checkRule(r);
@@ -106,11 +106,11 @@ public class VariableCheckPass {
 				cnts.put(x, cnt + 1);
 			}
 		}
-		
+
 		public PassContext() {
-			
+
 		}
-		
+
 		public BasicRule checkRule(BasicRule r) {
 			UserPredicate head = (UserPredicate) checkLiteral(r.getHead());
 			List<ComplexLiteral> body = new ArrayList<>();
@@ -202,16 +202,19 @@ public class VariableCheckPass {
 					}
 					return factory.make(sym, newArgs);
 				}
-				
+
 				@Override
-				public Expr visit(LetFunExpr funcDef, Void in) {
-					throw new AssertionError("Not yet supported");
-//					List<Var> newParams = new ArrayList<>();
-//					for (Var x : funcDef.getParams()) {
-//						newParams.add((Var) checkTerm(x));
-//					}
-//					Term newBody = checkTerm(funcDef.getBody());
-//					return NestedFunctionDef.make(funcDef.getSymbol(), newParams, newBody);
+				public Expr visit(LetFunExpr letFun, Void in) {
+					Set<NestedFunctionDef> defs = new HashSet<>();
+					for (NestedFunctionDef funcDef : letFun.getDefs()) {
+						List<Var> newParams = new ArrayList<>();
+						for (Var x : funcDef.getParams()) {
+							newParams.add((Var) checkTerm(x));
+						}
+						Term newBody = checkTerm(funcDef.getBody());
+						defs.add(NestedFunctionDef.make(funcDef.getSymbol(), newParams, newBody));
+					}
+					return LetFunExpr.make(defs, checkTerm(letFun.getLetBody()));
 				}
 
 			}, null);
