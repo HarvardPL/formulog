@@ -1,7 +1,5 @@
 package edu.harvard.seas.pl.formulog.symbols;
 
-import java.util.Collections;
-
 /*-
  * #%L
  * FormuLog
@@ -22,11 +20,11 @@ import java.util.Collections;
  * #L%
  */
 
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import edu.harvard.seas.pl.formulog.ast.BindingType;
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
@@ -35,12 +33,12 @@ import edu.harvard.seas.pl.formulog.types.Types;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
 import edu.harvard.seas.pl.formulog.util.Pair;
+import edu.harvard.seas.pl.formulog.util.Util;
 
-// TODO probably should make this thread-safe...
 public class SymbolManager {
 	
-	private final Map<String, Symbol> memo = new HashMap<>();
-	private final Set<TypeSymbol> typeSymbols = new HashSet<>();
+	private final Map<String, Symbol> memo = new ConcurrentHashMap<>();
+	private final Set<TypeSymbol> typeSymbols = Util.concurrentSet();
 
 	private boolean initialized = false;
 
@@ -173,7 +171,7 @@ public class SymbolManager {
 		return sym;
 	}
 
-	public synchronized ConstructorSymbol lookupIndexConstructorSymbol(int index) {
+	public ConstructorSymbol lookupIndexConstructorSymbol(int index) {
 		String name = "index$" + index;
 		ConstructorSymbol sym = (ConstructorSymbol) memo.get(name);
 		if (sym == null) {
