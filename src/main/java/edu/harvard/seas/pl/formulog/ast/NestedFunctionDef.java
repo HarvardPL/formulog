@@ -22,15 +22,8 @@ package edu.harvard.seas.pl.formulog.ast;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
-import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
-import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitorExn;
-import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
-import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
-import edu.harvard.seas.pl.formulog.unification.Substitution;
 
 public class NestedFunctionDef {
 
@@ -63,54 +56,6 @@ public class NestedFunctionDef {
 	public Term getBody() {
 		return body;
 	}
-//
-//	@Override
-//	public boolean isGround() {
-//		return varSet().isEmpty();
-//	}
-//
-//	@Override
-//	public Term applySubstitution(Substitution s) {
-//		Substitution s2 = new SimpleSubstitution();
-//		for (Var x : s2.iterateKeys()) {
-//			if (!params.contains(x)) {
-//				s2.put(x, s.get(x));
-//			}
-//		}
-//		return body.applySubstitution(s2);
-//	}
-//
-//	@Override
-//	public Term normalize(Substitution s) throws EvaluationException {
-//		throw new UnsupportedOperationException();
-//	}
-//
-//	@Override
-//	public void varSet(Set<Var> acc) {
-//		Set<Var> xs = body.varSet();
-//		xs.removeAll(params);
-//		acc.addAll(xs);
-//	}
-//
-//	@Override
-//	public void updateVarCounts(Map<Var, Integer> counts) {
-//		throw new UnsupportedOperationException();
-//	}
-//
-//	@Override
-//	public int getId() {
-//		throw new UnsupportedOperationException();
-//	}
-//
-//	@Override
-//	public <I, O> O accept(ExprVisitor<I, O> visitor, I in) {
-//		return visitor.visit(this, in);
-//	}
-//
-//	@Override
-//	public <I, O, E extends Throwable> O accept(ExprVisitorExn<I, O, E> visitor, I in) throws E {
-//		return visitor.visit(this, in);
-//	}
 
 	@Override
 	public int hashCode() {

@@ -22,6 +22,7 @@ package edu.harvard.seas.pl.formulog.validating;
 
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.Program;
@@ -65,7 +66,7 @@ public class FunctionDefValidation {
 		}
 	}
 	
-	private static Set<Var> checkParams(Var[] params) throws InvalidProgramException {
+	private static Set<Var> checkParams(List<Var> params) throws InvalidProgramException {
 		Set<Var> vars = new HashSet<>();
 		for (Var param : params) {
 			if (!vars.add(param)) {

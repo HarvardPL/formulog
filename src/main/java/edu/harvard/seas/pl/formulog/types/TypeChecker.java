@@ -50,6 +50,7 @@ import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.I32;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
+import edu.harvard.seas.pl.formulog.ast.NestedFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.LetFunExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
@@ -85,12 +86,16 @@ import edu.harvard.seas.pl.formulog.util.Util;
 public class TypeChecker {
 
 	private final Program<UserPredicate, BasicRule> prog;
+	private WellTypedProgram outputProgram;
 
 	public TypeChecker(Program<UserPredicate, BasicRule> prog2) {
 		this.prog = prog2;
 	}
 
-	public WellTypedProgram typeCheck() throws TypeException {
+	public synchronized WellTypedProgram typeCheck() throws TypeException {
+		if (outputProgram != null) {
+			return outputProgram;
+		}
 		ExecutorService exec = Executors.newFixedThreadPool(Configuration.parallelism);
 		Map<RelationSymbol, Set<Term[]>> newFacts = typeCheckFacts(exec);
 		Map<FunctionSymbol, FunctionDef> newFuncs = typeCheckFunctions(exec);
@@ -101,7 +106,7 @@ public class TypeChecker {
 		Map<RelationSymbol, Set<BasicRule>> newRules = typeCheckRules(exec);
 		UserPredicate newQuery = typeCheckQuery();
 		exec.shutdown();
-		return new WellTypedProgram() {
+		outputProgram = new WellTypedProgram() {
 
 			@Override
 			public Set<FunctionSymbol> getFunctionSymbols() {
@@ -176,6 +181,7 @@ public class TypeChecker {
 			}
 
 		};
+		return outputProgram;
 	}
 
 	private UserPredicate typeCheckQuery() throws TypeException {
@@ -275,81 +281,6 @@ public class TypeChecker {
 		private final Deque<Pair<Constructor, Type>> smtEqsToResolve = new ArrayDeque<>();
 		private String error;
 
-		private final TermVisitorExn<Substitution, Term, TypeException> termRewriter = new TermVisitorExn<Substitution, Term, TypeException>() {
-
-			@Override
-			public Term visit(Var x, Substitution subst) throws TypeException {
-				if (subst.containsKey(x)) {
-					return subst.get(x);
-				}
-				return x;
-			}
-
-			@Override
-			public Term visit(Constructor c, Substitution subst) throws TypeException {
-				ConstructorSymbol sym = c.getSymbol();
-				if (sym.equals(BuiltInConstructorSymbol.FORMULA_EQ)) {
-					Pair<Constructor, Type> p = smtEqsToResolve.removeFirst();
-					Type eltType = simplify(lookupType(p.snd()));
-					if (Types.containsTypeVarOrOpaqueType(eltType)) {
-						throw new TypeException("Cannot determine element type in solver equality: " + p.fst());
-					}
-					sym = prog.getSymbolManager().lookupSmtEqSymbol(eltType);
-				}
-				Term[] args = c.getArgs();
-				Term[] newArgs = new Term[args.length];
-				for (int i = 0; i < args.length; ++i) {
-					newArgs[i] = args[i].accept(this, subst);
-				}
-				if (sym.equals(BuiltInConstructorSymbol.ENTER_FORMULA) || sym.equals(BuiltInConstructorSymbol.EXIT_FORMULA)) {
-					return newArgs[0];
-				}
-				return Constructors.make(sym, newArgs);
-			}
-
-			@Override
-			public Term visit(Primitive<?> p, Substitution subst) throws TypeException {
-				return p;
-			}
-
-			@Override
-			public Term visit(Expr e, Substitution subst) throws TypeException {
-				return e.accept(exprRewriter, subst);
-			}
-
-		};
-
-		private final ExprVisitorExn<Substitution, Term, TypeException> exprRewriter = new ExprVisitorExn<Substitution, Term, TypeException>() {
-
-			@Override
-			public Term visit(MatchExpr matchExpr, Substitution subst) throws TypeException {
-				Term scrutinee = matchExpr.getMatchee().accept(termRewriter, subst);
-				List<MatchClause> clauses = new ArrayList<>();
-				for (MatchClause cl : matchExpr) {
-					Term lhs = cl.getLhs().accept(termRewriter, subst);
-					Term rhs = cl.getRhs().accept(termRewriter, subst);
-					clauses.add(MatchClause.make(lhs, rhs));
-				}
-				return MatchExpr.make(scrutinee, clauses);
-			}
-
-			@Override
-			public Term visit(FunctionCall funcCall, Substitution subst) throws TypeException {
-				Term[] args = funcCall.getArgs();
-				Term[] newArgs = new Term[args.length];
-				for (int i = 0; i < args.length; ++i) {
-					newArgs[i] = args[i].accept(termRewriter, subst);
-				}
-				return funcCall.copyWithNewArgs(newArgs);
-			}
-
-			@Override
-			public Term visit(LetFunExpr funcDefs, Substitution in) throws TypeException {
-					throw new AssertionError("not yet supported");
-			}
-
-		};
-
 		public Term[] typeCheckFact(RelationSymbol sym, Term[] args) throws TypeException {
 			Map<Var, Type> subst = new HashMap<>();
 			genConstraints(sym, args, subst);
@@ -432,28 +363,6 @@ public class TypeChecker {
 					functionDef.getBody().accept(termRewriter, m));
 		}
 
-		// public Term typeCheckTerm(Term t, Type type) throws TypeException {
-		// Map<Var, Type> subst = new HashMap<>();
-		// genConstraints(t, type, subst, false);
-		// if (!checkConstraints()) {
-		// throw new TypeException(error);
-		// }
-		// Substitution m = makeIndexSubstitution(subst);
-		// return t.applySubstitution(m);
-		// }
-		//
-		// public void checkUnifiability(List<Type> xs, List<Type> ys) throws
-		// TypeException {
-		// assert xs.size() == ys.size();
-		// for (Iterator<Type> it1 = xs.iterator(), it2 = ys.iterator(); it1.hasNext();)
-		// {
-		// addConstraint(it1.next(), it2.next(), false);
-		// }
-		// if (!checkConstraints()) {
-		// throw new TypeException(error);
-		// }
-		// }
-
 		private void processAtoms(Iterable<ComplexLiteral> atoms, Map<Var, Type> subst) {
 			for (ComplexLiteral a : atoms) {
 				genConstraints(a, subst);
@@ -492,6 +401,10 @@ public class TypeChecker {
 
 		private void genConstraints(UserFunctionDef def, Map<Var, Type> subst) {
 			FunctionSymbol sym = def.getSymbol();
+			genConstraints(sym, def.getParams(), def.getBody(), subst);
+		}
+
+		private void genConstraints(FunctionSymbol sym, List<Var> params, Term body, Map<Var, Type> subst) {
 			FunctorType scheme = sym.getCompileTimeType().freshen();
 			Map<TypeVar, OpaqueType> opaqueTypes = new HashMap<>();
 			List<Type> argTypes = scheme.getArgTypes();
@@ -504,38 +417,42 @@ public class TypeChecker {
 			if (r instanceof TypeVar) {
 				addConstraint(r, Util.lookupOrCreate(opaqueTypes, (TypeVar) r, () -> OpaqueType.get()), false);
 			}
-			Var[] params = def.getParams();
-			for (int i = 0; i < params.length; ++i) {
-				subst.put(params[i], argTypes.get(i));
+			for (int i = 0; i < params.size(); ++i) {
+				subst.put(params.get(i), argTypes.get(i));
 			}
-			genConstraints(def.getBody(), r, subst, false);
+			genConstraints(body, r, subst, false);
 		}
 
-		private void genConstraintsForExpr(Expr e, Type exprType, Map<Var, Type> varTypes, boolean allowSubtype) {
+		private void genConstraintsForExpr(Expr e, Type exprType, Map<Var, Type> varTypes, boolean inFormula) {
 			e.accept(new ExprVisitor<Void, Void>() {
 
 				@Override
 				public Void visit(MatchExpr matchExpr, Void in) {
-					assert !allowSubtype;
+					assert !inFormula;
 					TypeVar guardType = TypeVar.fresh();
 					Term guard = matchExpr.getMatchee();
-					genConstraints(guard, guardType, varTypes, allowSubtype);
+					genConstraints(guard, guardType, varTypes, inFormula);
 					for (MatchClause cl : matchExpr) {
-						genConstraints(cl.getLhs(), guardType, varTypes, allowSubtype);
-						genConstraints(cl.getRhs(), exprType, varTypes, allowSubtype);
+						genConstraints(cl.getLhs(), guardType, varTypes, inFormula);
+						genConstraints(cl.getRhs(), exprType, varTypes, inFormula);
 					}
 					return null;
 				}
 
 				@Override
 				public Void visit(FunctionCall funcCall, Void in) {
-					genConstraintsForFunctionCall(funcCall, exprType, varTypes, allowSubtype);
+					genConstraintsForFunctionCall(funcCall, exprType, varTypes, inFormula);
 					return null;
 				}
 
 				@Override
-				public Void visit(LetFunExpr funcDefs, Void in) {
-					throw new AssertionError("not yet supported");
+				public Void visit(LetFunExpr letFun, Void in) {
+					assert !inFormula;
+					for (NestedFunctionDef def : letFun.getDefs()) {
+						genConstraints(def.getSymbol(), def.getParams(), def.getBody(), varTypes);
+					}
+					genConstraints(letFun.getLetBody(), exprType, varTypes, inFormula);
+					return null;
 				}
 
 			}, null);
@@ -550,30 +467,30 @@ public class TypeChecker {
 			}
 		}
 
-		private void genConstraints(Term t, Type ttype, Map<Var, Type> subst, boolean allowSubtype) {
+		private void genConstraints(Term t, Type ttype, Map<Var, Type> subst, boolean inFormula) {
 			t.accept(new TermVisitor<Void, Void>() {
 
 				@Override
 				public Void visit(Var t, Void in) {
-					genConstraintsForVar(t, ttype, subst, allowSubtype);
+					genConstraintsForVar(t, ttype, subst, inFormula);
 					return null;
 				}
 
 				@Override
 				public Void visit(Constructor t, Void in) {
-					genConstraintsForConstructor(t, ttype, subst, allowSubtype);
+					genConstraintsForConstructor(t, ttype, subst, inFormula);
 					return null;
 				}
 
 				@Override
 				public Void visit(Primitive<?> prim, Void in) {
-					genConstraintsForPrimitive(prim, ttype, allowSubtype);
+					genConstraintsForPrimitive(prim, ttype, inFormula);
 					return null;
 				}
 
 				@Override
 				public Void visit(Expr expr, Void in) {
-					genConstraintsForExpr(expr, ttype, subst, allowSubtype);
+					genConstraintsForExpr(expr, ttype, subst, inFormula);
 					return null;
 				}
 
@@ -589,8 +506,7 @@ public class TypeChecker {
 			addConstraint(ttype, t.getType(), inFormula);
 		}
 
-		private void genConstraintsForConstructor(Constructor t, Type ttype, Map<Var, Type> subst,
-				boolean inFormula) {
+		private void genConstraintsForConstructor(Constructor t, Type ttype, Map<Var, Type> subst, boolean inFormula) {
 			boolean wasInFormula = inFormula;
 			ConstructorSymbol cnstrSym = t.getSymbol();
 			if (cnstrSym.equals(BuiltInConstructorSymbol.ENTER_FORMULA)) {
@@ -769,6 +685,137 @@ public class TypeChecker {
 		private Type lookupType(Type t) {
 			return TypeChecker.lookupType(t, typeVars);
 		}
+
+		private final TermVisitorExn<Substitution, Term, TypeException> termRewriter = new TermVisitorExn<Substitution, Term, TypeException>() {
+
+			@Override
+			public Term visit(Var x, Substitution subst) throws TypeException {
+				if (subst.containsKey(x)) {
+					return subst.get(x);
+				}
+				return x;
+			}
+
+			@Override
+			public Term visit(Constructor c, Substitution subst) throws TypeException {
+				ConstructorSymbol sym = c.getSymbol();
+				if (sym.equals(BuiltInConstructorSymbol.FORMULA_EQ)) {
+					Pair<Constructor, Type> p = smtEqsToResolve.removeFirst();
+					Type eltType = simplify(lookupType(p.snd()));
+					if (Types.containsTypeVarOrOpaqueType(eltType)) {
+						throw new TypeException("Cannot determine element type in solver equality: " + p.fst());
+					}
+					sym = prog.getSymbolManager().lookupSmtEqSymbol(eltType);
+				}
+				Term[] args = c.getArgs();
+				Term[] newArgs = new Term[args.length];
+				for (int i = 0; i < args.length; ++i) {
+					newArgs[i] = args[i].accept(this, subst);
+				}
+				if (sym.equals(BuiltInConstructorSymbol.ENTER_FORMULA)
+						|| sym.equals(BuiltInConstructorSymbol.EXIT_FORMULA)) {
+					return newArgs[0];
+				}
+				return Constructors.make(sym, newArgs);
+			}
+
+			@Override
+			public Term visit(Primitive<?> p, Substitution subst) throws TypeException {
+				return p;
+			}
+
+			@Override
+			public Term visit(Expr e, Substitution subst) throws TypeException {
+				return e.accept(exprRewriter, subst);
+			}
+
+		};
+		
+		private final Map<FunctionSymbol, FunctionSymbol> topLevelSymbolOfNestedFunction = new HashMap<>();
+		private final Map<FunctionSymbol, List<Var>> capturedVarsOfNestedFunction = new HashMap<>();
+
+		private final ExprVisitorExn<Substitution, Term, TypeException> exprRewriter = new ExprVisitorExn<Substitution, Term, TypeException>() {
+
+			@Override
+			public Term visit(MatchExpr matchExpr, Substitution subst) throws TypeException {
+				Term scrutinee = matchExpr.getMatchee().accept(termRewriter, subst);
+				List<MatchClause> clauses = new ArrayList<>();
+				for (MatchClause cl : matchExpr) {
+					Term lhs = cl.getLhs().accept(termRewriter, subst);
+					Term rhs = cl.getRhs().accept(termRewriter, subst);
+					clauses.add(MatchClause.make(lhs, rhs));
+				}
+				return MatchExpr.make(scrutinee, clauses);
+			}
+
+			@Override
+			public Term visit(FunctionCall funcCall, Substitution subst) throws TypeException {
+				FunctionSymbol sym = funcCall.getSymbol();
+				List<Var> capturedVars = Collections.emptyList();
+				if (topLevelSymbolOfNestedFunction.containsKey(sym)) {
+					sym = topLevelSymbolOfNestedFunction.get(sym);
+					capturedVars = capturedVarsOfNestedFunction.get(sym);
+				}
+				Term[] args = funcCall.getArgs();
+				Term[] newArgs = new Term[args.length + capturedVars.size()];
+				int i = 0;
+				for (; i < args.length; ++i) {
+					newArgs[i] = args[i].accept(termRewriter, subst);
+				}
+				for (Var x : capturedVars) {
+					newArgs[i] = x;
+					++i;
+				}
+				return prog.getFunctionCallFactory().make(sym, newArgs);
+			}
+
+			@Override
+			public Term visit(LetFunExpr letFun, Substitution in) throws TypeException {
+				Set<NestedFunctionDef> defs = new HashSet<>();
+				Set<Var> capturedVarSet = new HashSet<>();
+				for (NestedFunctionDef def : letFun.getDefs()) {
+					def = firstRewritingPass(def, in);
+					defs.add(def);
+					Set<Var> s = def.getBody().varSet();
+					s.removeAll(def.getParams());
+					capturedVarSet.addAll(s);
+				}
+				List<Var> capturedVars = new ArrayList<>(capturedVarSet);
+				for (NestedFunctionDef def : defs) {
+					FunctionSymbol oldSym = def.getSymbol();
+					int newArity = oldSym.getArity() + capturedVarSet.size();
+					FunctionSymbol newSym = prog.getSymbolManager().createFunctionSymbol(oldSym + "$toplevel", newArity, null);
+					topLevelSymbolOfNestedFunction.put(oldSym, newSym);
+					capturedVarsOfNestedFunction.put(newSym, capturedVars);
+				}
+				for (NestedFunctionDef def : defs) {
+					FunctionSymbol sym = topLevelSymbolOfNestedFunction.get(def.getSymbol());
+					List<Var> params = new ArrayList<>(def.getParams());
+					params.addAll(capturedVars);
+					FunctionDef newDef = UserFunctionDef.get(sym, params, def.getBody().accept(termRewriter, in));
+					prog.getFunctionCallFactory().getDefManager().register(newDef);
+				}
+				return letFun.getLetBody().accept(termRewriter, in);
+			}
+			
+			NestedFunctionDef firstRewritingPass(NestedFunctionDef def, Substitution subst) throws TypeException {
+				Substitution s = new SimpleSubstitution();
+				List<Var> newParams = new ArrayList<>();
+				for (Var param : def.getParams()) {
+					if (!s.containsKey(param)) {
+						Var newParam = Var.fresh(param.toString());
+						s.put(param, newParam);
+						newParams.add(newParam);
+					} else {
+						newParams.add((Var) s.get(param));
+					}
+					
+				}
+				Term body = def.getBody().applySubstitution(s).accept(termRewriter, subst);
+				return NestedFunctionDef.make(def.getSymbol(), newParams, body);
+			}
+
+		};
 
 	}
 

@@ -131,7 +131,7 @@ class TopLevelParser {
 				Term body = bodies.next();
 				try {
 					Term newBody = varChecker.checkFunction(args, body);
-					pc.functionDefManager().register(UserFunctionDef.get(sym, args.toArray(new Var[0]), newBody));
+					pc.functionDefManager().register(UserFunctionDef.get(sym, args, newBody));
 				} catch (ParseException e) {
 					throw new RuntimeException(
 							"Error in definition for function " + sym + ": " + e.getMessage() + "\n" + body);

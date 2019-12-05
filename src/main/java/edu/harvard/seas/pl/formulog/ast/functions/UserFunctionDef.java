@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.ast.functions;
 
+import java.util.List;
+
 /*-
  * #%L
  * FormuLog
@@ -31,16 +33,16 @@ import edu.harvard.seas.pl.formulog.unification.Substitution;
 public class UserFunctionDef implements FunctionDef {
 
 	private final FunctionSymbol sym;
-	private final Var[] params;
+	private final List<Var> params;
 	private volatile Term body;
 
-	private UserFunctionDef(FunctionSymbol sym, Var[] params, Term body) {
+	private UserFunctionDef(FunctionSymbol sym, List<Var> params, Term body) {
 		this.sym = sym;
 		this.params = params;
 		this.body = body;
 	}
 
-	public Var[] getParams() {
+	public List<Var> getParams() {
 		return params;
 	}
 
@@ -60,9 +62,11 @@ public class UserFunctionDef implements FunctionDef {
 	@Override
 	public Term evaluate(Term[] args) throws EvaluationException {
 		Substitution s = new SimpleSubstitution();
-		assert params.length == args.length;
-		for (int i = 0; i < params.length; ++i) {
-			s.put(params[i], args[i]);
+		assert params.size() == args.length;
+		int i = 0;
+		for (Var param : params) {
+			s.put(param, args[i]);
+			i++;
 		}
 		try {
 			return body.normalize(s);
@@ -71,8 +75,13 @@ public class UserFunctionDef implements FunctionDef {
 		}
 	}
 
-	public static UserFunctionDef get(FunctionSymbol sym, Var[] params, Term body) {
+	public static UserFunctionDef get(FunctionSymbol sym, List<Var> params, Term body) {
 		return new UserFunctionDef(sym, params, body);
 	}
+
+	@Override
+	public String toString() {
+		return "UserFunctionDef [sym=" + sym + ", params=" + params + ", body=" + body + "]";
+	}	
 
 }

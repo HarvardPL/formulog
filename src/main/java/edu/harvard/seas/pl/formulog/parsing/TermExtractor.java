@@ -745,6 +745,9 @@ class TermExtractor {
 
 		@Override
 		public Term visitLetFunExpr(LetFunExprContext ctx) {
+			if (inFormula) {
+				throw new RuntimeException("Cannot define a function from within a formula:\n" + ctx.getText());
+			}
 			List<String> names = new ArrayList<>();
 			for (FunDefLHSContext f : ctx.funDefs().funDefLHS()) {
 				String name = f.ID().getText();
