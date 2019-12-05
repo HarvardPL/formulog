@@ -32,8 +32,8 @@ These restrictions ensure that every variable is bound to a ground term going in
 
 To help catch bugs related to variable usage, Formulog requires that every variable that does not start with an underscore occurs more than once in its scope. Every variable that begins with an underscore is treated as "anonymous," in that every occurrence of that variable represents a distinct variable. For this reason, Formulog also does not allow any variable that begins with an underscore to occur more than once in a scope, except for the special (fully anonymous) variable `_`.
 
-## Negation
+## Negation, aggregation, and stratification
 
-To ensure that every program has a least model, Formulog requires the use of stratified negation, a common restriction in Datalog. Intuitively, stratified negation ensures that there are no recursive negative dependencies between predicates.
+To ensure that every program has a least model, Formulog requires the use of stratified negation and aggregation, a common restriction in Datalog. Intuitively, this restriction ensures that there are no recursive negative dependencies between predicates.
 
 Since Formulog allows predicate symbols to appear in function bodies, determining whether a Formulog program is stratified is slightly more complicated than in the Datalog case. To determine if a program is stratified we construct a dependence graph, where each node represents a different predicate. There is a "positive" edge from a predicate `p` to a predicate `q` if `p` appears in a positive atom in the body of a rule defining `q`. There is a "negative" edge from `p` to `q` if `p` appears in a negated atom in the body of a rule defining `q`, or `p` appears in the body of a function that may be transitively invoked from a rule defining `q`. A program is stratified if there are no cycles in the dependence graph that include a "negative" edge.

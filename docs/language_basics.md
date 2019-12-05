@@ -175,17 +175,25 @@ and is_odd(X: i32) : bool =
 ```
 We support some of the basic ML syntax constructions, like `match` and `let`. However, you will find Formulog's syntax to be less flexible than most ML implementations; for example, `some(X)` is okay but `some X` is not.
 
-Furthermore, Formulog allows any predicate (i.e., input predicates, output predicates, and the built-in predicates `!=` and `=`) to be lifted to a boolean-returning function. For instance, we can write code like this:
+### Lifted predicates and aggregation 
+
+Formulog allows any predicate (i.e., input predicates, output predicates, and the built-in predicates `!=` and `=`) to be lifted to a boolean-returning function. For instance, we can write code like this:
 ```
-output bar(i32).
+output bar(i32)
 ...
-fun foo(N:i32) : bool = bar(N + 1).
+fun foo(N:i32) : bool = bar(N + 1)
 ```
-Here, the function `foo(n)` returns `true` when the `bar` relation contains `n + 1`. The term `??` is a special wild card term that can be used as an argument when "invoking" a predicate as function. For example, given the predicate `p` that relates a `bool` to an `i32`, we have:
+Here, the function `foo(n)` returns `true` when the `bar` relation contains `n + 1`.
+
+Formulog supports aggregation through the wild card term `??`, which can be used as an argument when "invoking" a predicate as a function. For example, given the predicate `p` that relates a `bool` to an `i32`, we have:
 * `p(true, 42)` returns a boolean (whether `true` is related to `42`)
 * `p(true, ??)` returns a list of `i32` terms (the ones that are related to `true`)
 * `p(??, 42)` returns a list of `bool` terms (the ones that are related to `42`)
-* `p(??, ??)` returns a list of pairs constituting the relation 
+* `p(??, ??)` returns a list of pairs constituting the relation
+
+The use of lifted predicates must be stratified, as described in the "Program Safety" document.
+
+### Built-in functions
 
 Finally, Formulog already has a bunch of basic functions built-in (mostly to do with manipulating primitives):
 * functions for basic mathematical operations for types for types `i32`, `i64`, `fp32`, and `fp64`:
