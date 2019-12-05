@@ -22,10 +22,7 @@ tabSeparatedTermLine
 
 metadata
 :
-	'fun' funDefLHS EQ term
-	(
-		'and' funDefLHS EQ term
-	)* '.'? # funDecl
+	funDefs '.'? # funDecl
 	| annotation* relType =
 	(
 		INPUT
@@ -43,6 +40,14 @@ metadata
 funDefLHS
 :
 	ID args = varTypeList ':' retType = type
+;
+
+funDefs
+:
+	'fun' funDefLHS EQ term
+	(
+		'and' funDefLHS EQ term
+	)*
 ;
 
 constructorType
@@ -300,10 +305,7 @@ term
 		'|' matchClause
 	)* 'end' # matchExpr
 	| 'let' lhs = letBind '=' assign = term 'in' body = term # letExpr
-	| 'let' 'fun' funDefLHS '=' term
-	(
-		'and' funDefLHS '=' term
-	)* # letFunExpr
+	| 'let' funDefs 'in' letFunBody = term # letFunExpr
 	| 'if' guard = term 'then' thenExpr = term 'else' elseExpr = term # ifExpr
 ;
 

@@ -43,7 +43,7 @@ import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
-import edu.harvard.seas.pl.formulog.ast.NestedFunctionDefs;
+import edu.harvard.seas.pl.formulog.ast.LetFunExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Term;
@@ -236,7 +236,7 @@ public class Stratifier {
 				}
 
 				@Override
-				public Void visit(NestedFunctionDefs funcDef, Void in) {
+				public Void visit(LetFunExpr funcDef, Void in) {
 					throw new AssertionError("impossible");
 				}
 

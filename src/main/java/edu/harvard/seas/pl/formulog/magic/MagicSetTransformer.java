@@ -43,7 +43,7 @@ import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
-import edu.harvard.seas.pl.formulog.ast.NestedFunctionDefs;
+import edu.harvard.seas.pl.formulog.ast.LetFunExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Rule;
@@ -860,7 +860,7 @@ public class MagicSetTransformer {
 			}
 			
 			@Override
-			public Void visit(NestedFunctionDefs funcDef, Set<RelationSymbol> in) {
+			public Void visit(LetFunExpr funcDef, Set<RelationSymbol> in) {
 				throw new AssertionError("impossible");
 			}
 

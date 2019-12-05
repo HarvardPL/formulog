@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.ast;
+package edu.harvard.seas.pl.formulog.util;
 
 /*-
  * #%L
@@ -20,32 +20,36 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.Map;
 
-public final class Exprs {
+public class StackMap<K, V> {
 
-	private Exprs() {
-		throw new AssertionError("impossible");
-	}
-
-	public static interface ExprVisitor<I, O> {
-
-		O visit(MatchExpr matchExpr, I in);
-		
-		O visit(FunctionCall funcCall, I in);
-		
-		O visit(LetFunExpr funcDefs, I in);
-
-	}
-
-	public static interface ExprVisitorExn<I, O, E extends Throwable> {
-
-		O visit(MatchExpr matchExpr, I in) throws E;
-		
-		O visit(FunctionCall funcCall, I in) throws E;
-		
-		O visit(LetFunExpr funcDefs, I in) throws E;
-
+	private final Deque<Map<K, V>> stack = new ArrayDeque<>();
+	
+	public synchronized void push(Map<K, V> m) {
+		stack.addFirst(m);
 	}
 	
+	public synchronized Map<K, V> pop() {
+		return stack.remove();
+	}
+	
+	public synchronized V get(K k) {
+		for (Iterator<Map<K, V>> it = stack.iterator(); it.hasNext();) {
+			Map<K, V> m = it.next();
+			V v = m.get(k);
+			if (v != null) {
+				return v;
+			}
+		}
+		return null;
+	}
+	
+	public synchronized V put(K k, V v) {
+		return stack.getFirst().put(k, v);
+	}
+
 }

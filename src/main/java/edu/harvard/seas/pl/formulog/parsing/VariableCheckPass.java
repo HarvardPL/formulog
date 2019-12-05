@@ -39,7 +39,7 @@ import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.NestedFunctionDef;
-import edu.harvard.seas.pl.formulog.ast.NestedFunctionDefs;
+import edu.harvard.seas.pl.formulog.ast.LetFunExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
@@ -204,7 +204,7 @@ public class VariableCheckPass {
 				}
 				
 				@Override
-				public Expr visit(NestedFunctionDefs funcDef, Void in) {
+				public Expr visit(LetFunExpr funcDef, Void in) {
 					throw new AssertionError("Not yet supported");
 //					List<Var> newParams = new ArrayList<>();
 //					for (Var x : funcDef.getParams()) {

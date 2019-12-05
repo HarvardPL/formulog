@@ -29,20 +29,26 @@ import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitorExn;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 
-public class NestedFunctionDefs implements Expr {
+public class LetFunExpr implements Expr {
 	
 	private final Set<NestedFunctionDef> defs;
+	private final Term letBody;
 	
-	private NestedFunctionDefs(Set<NestedFunctionDef> defs) {
+	private LetFunExpr(Set<NestedFunctionDef> defs, Term letBody) {
 		this.defs = Collections.unmodifiableSet(defs);
+		this.letBody = letBody;
 	}
 	
-	public static NestedFunctionDefs make(Set<NestedFunctionDef> defs) {
-		return new NestedFunctionDefs(defs);
+	public static LetFunExpr make(Set<NestedFunctionDef> defs, Term letBody) {
+		return new LetFunExpr(defs, letBody);
 	}
 	
 	public Set<NestedFunctionDef> getDefs() {
 		return defs;
+	}
+	
+	public Term getLetBody() {
+		return letBody;
 	}
 
 	@Override
@@ -90,6 +96,7 @@ public class NestedFunctionDefs implements Expr {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((defs == null) ? 0 : defs.hashCode());
+		result = prime * result + ((letBody == null) ? 0 : letBody.hashCode());
 		return result;
 	}
 
@@ -101,11 +108,16 @@ public class NestedFunctionDefs implements Expr {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		NestedFunctionDefs other = (NestedFunctionDefs) obj;
+		LetFunExpr other = (LetFunExpr) obj;
 		if (defs == null) {
 			if (other.defs != null)
 				return false;
 		} else if (!defs.equals(other.defs))
+			return false;
+		if (letBody == null) {
+			if (other.letBody != null)
+				return false;
+		} else if (!letBody.equals(other.letBody))
 			return false;
 		return true;
 	}

@@ -50,7 +50,7 @@ import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.I32;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
-import edu.harvard.seas.pl.formulog.ast.NestedFunctionDefs;
+import edu.harvard.seas.pl.formulog.ast.LetFunExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Rule;
@@ -344,7 +344,7 @@ public class TypeChecker {
 			}
 
 			@Override
-			public Term visit(NestedFunctionDefs funcDefs, Substitution in) throws TypeException {
+			public Term visit(LetFunExpr funcDefs, Substitution in) throws TypeException {
 					throw new AssertionError("not yet supported");
 			}
 
@@ -534,7 +534,7 @@ public class TypeChecker {
 				}
 
 				@Override
-				public Void visit(NestedFunctionDefs funcDefs, Void in) {
+				public Void visit(LetFunExpr funcDefs, Void in) {
 					throw new AssertionError("not yet supported");
 				}
 

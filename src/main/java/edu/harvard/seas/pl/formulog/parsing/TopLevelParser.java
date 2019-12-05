@@ -123,8 +123,8 @@ class TopLevelParser {
 
 		@Override
 		public Void visitFunDecl(FunDeclContext ctx) {
-			List<Pair<FunctionSymbol, List<Var>>> ps = ParsingUtil.extractFunDeclarations(pc, ctx.funDefLHS(), false);
-			Iterator<Term> bodies = termExtractor.extractList(ctx.term()).iterator();
+			List<Pair<FunctionSymbol, List<Var>>> ps = ParsingUtil.extractFunDeclarations(pc, ctx.funDefs().funDefLHS(), false);
+			Iterator<Term> bodies = termExtractor.extractList(ctx.funDefs().term()).iterator();
 			for (Pair<FunctionSymbol, List<Var>> p : ps) {
 				FunctionSymbol sym = p.fst();
 				List<Var> args = p.snd();

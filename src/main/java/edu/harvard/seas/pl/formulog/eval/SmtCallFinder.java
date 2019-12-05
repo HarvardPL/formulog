@@ -30,7 +30,7 @@ import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.Literal;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
-import edu.harvard.seas.pl.formulog.ast.NestedFunctionDefs;
+import edu.harvard.seas.pl.formulog.ast.LetFunExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
@@ -128,7 +128,7 @@ public class SmtCallFinder {
 
 
 		@Override
-		public Boolean visit(NestedFunctionDefs funcDef, Void in) {
+		public Boolean visit(LetFunExpr funcDef, Void in) {
 			throw new AssertionError("impossible");
 		}
 

@@ -41,7 +41,7 @@ import edu.harvard.seas.pl.formulog.ast.I64;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.NestedFunctionDef;
-import edu.harvard.seas.pl.formulog.ast.NestedFunctionDefs;
+import edu.harvard.seas.pl.formulog.ast.LetFunExpr;
 import edu.harvard.seas.pl.formulog.ast.StringTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
@@ -104,6 +104,7 @@ import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
 import edu.harvard.seas.pl.formulog.types.Types.TypeVar;
 import edu.harvard.seas.pl.formulog.types.Types.TypeVisitor;
 import edu.harvard.seas.pl.formulog.util.Pair;
+import edu.harvard.seas.pl.formulog.util.StackMap;
 
 class TermExtractor {
 
@@ -140,6 +141,7 @@ class TermExtractor {
 	private final FormulogVisitor<Term> visitor = new FormulogBaseVisitor<Term>() {
 
 		private boolean inFormula;
+		private final StackMap<String, FunctionSymbol> nestedFunctions = new StackMap<>();
 
 		private void assertNotInFormula(String msg) {
 			if (inFormula) {
@@ -180,7 +182,10 @@ class TermExtractor {
 			List<Integer> indices = ParsingUtil.extractIndices(ctx.index());
 			Symbol sym;
 			if (indices.isEmpty()) {
-				sym = pc.symbolManager().lookupSymbol(name);
+				sym = nestedFunctions.get(name);
+				if (sym == null) {
+					sym = pc.symbolManager().lookupSymbol(name);
+				}
 			} else {
 				Pair<IndexedConstructorSymbol, List<Integer>> p = pc.symbolManager()
 						.lookupIndexedConstructorSymbol(name, indices);
@@ -740,8 +745,8 @@ class TermExtractor {
 
 		@Override
 		public Term visitLetFunExpr(LetFunExprContext ctx) {
-			Set<String> names = new HashSet<>();
-			for (FunDefLHSContext f : ctx.funDefLHS()) {
+			List<String> names = new ArrayList<>();
+			for (FunDefLHSContext f : ctx.funDefs().funDefLHS()) {
 				String name = f.ID().getText();
 				if (!names.add(name)) {
 					throw new RuntimeException(
@@ -749,15 +754,24 @@ class TermExtractor {
 									+ name);
 				}
 			}
-			List<Pair<FunctionSymbol, List<Var>>> signatures = ParsingUtil.extractFunDeclarations(pc, ctx.funDefLHS(), true);
+			List<Pair<FunctionSymbol, List<Var>>> signatures = ParsingUtil.extractFunDeclarations(pc,
+					ctx.funDefs().funDefLHS(), true);
 			Iterator<Pair<FunctionSymbol, List<Var>>> sigIt = signatures.iterator();
-			List<Term> bodies = extractList(ctx.term());
+			HashMap<String, FunctionSymbol> m = new HashMap<>();
+			for (String name : names) {
+				m.put(name, sigIt.next().fst());
+			}
+			nestedFunctions.push(m);
+			List<Term> funBodies = extractList(ctx.funDefs().term());
+			Term letBody = extract(ctx.letFunBody);
+			nestedFunctions.pop();
+			sigIt = signatures.iterator();
 			Set<NestedFunctionDef> defs = new HashSet<>();
-			for (Term body : bodies) {
+			for (Term body : funBodies) {
 				Pair<FunctionSymbol, List<Var>> p = sigIt.next();
 				defs.add(NestedFunctionDef.make(p.fst(), p.snd(), body));
 			}
-			return NestedFunctionDefs.make(defs);
+			return LetFunExpr.make(defs, letBody);
 		}
 
 		@Override
