@@ -54,7 +54,6 @@ public final class Main {
 	private volatile boolean interrupted = true;
 
 	private static final boolean exnStackTrace = System.getProperty("exnStackTrace") != null;
-	private static final boolean debugMst = Configuration.debugMst;
 
 	private Main(String file) {
 		this.file = file;
@@ -144,27 +143,53 @@ public final class Main {
 	}
 
 	private void printResults(Evaluation eval) {
-		if (Configuration.noResults) {
-			return;
-		}
-		System.out.println("Results:");
+		PrintStream out = System.out;
 		EvaluationResult res = eval.getResult();
-		Iterable<UserPredicate> queryRes = res.getQueryAnswer();
-		if (queryRes == null || debugMst) {
-			PrintStream out = System.out;
-			if (debugMst) {
-				out = System.err;
-				out.println("\n*** All generated facts ***");
-			}
-			for (RelationSymbol sym : res.getSymbols()) {
+		switch (Configuration.printResultsPreference) {
+		case ALL:
+			printEdb(res, out);
+			out.println();
+			printIdb(res, out);
+			break;
+		case EDB:
+			printEdb(res, out);
+			break;
+		case IDB:
+			printIdb(res, out);
+			break;
+		case QUERY:
+			printQueryResults(res, out);
+			break;
+		case NONE:
+			break;
+		}
+	}
+
+	public void printEdb(EvaluationResult res, PrintStream out) {
+		out.println("Extensional database:");
+		for (RelationSymbol sym : res.getSymbols()) {
+			if (sym.isEdbSymbol()) {
 				Util.printSortedFacts(res.getAll(sym), out);
 			}
 		}
-		if (queryRes != null) {
-			if (debugMst) {
-				System.err.println("\n*** Query results ***");
+	}
+
+	public void printIdb(EvaluationResult res, PrintStream out) {
+		out.println("Intensional database:");
+		for (RelationSymbol sym : res.getSymbols()) {
+			if (sym.isIdbSymbol()) {
+				Util.printSortedFacts(res.getAll(sym), out);
 			}
-			Util.printSortedFacts(queryRes, System.out);
+		}
+	}
+
+	public void printQueryResults(EvaluationResult res, PrintStream out) {
+		out.println("Query results:");
+		Iterable<UserPredicate> ans = res.getQueryAnswer();
+		if (ans == null) {
+			out.println("[there was no query]");
+		} else {
+			Util.printSortedFacts(res.getQueryAnswer(), out);
 		}
 	}
 

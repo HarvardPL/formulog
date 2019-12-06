@@ -73,6 +73,7 @@ You can set the following system properties (using the `-D` flag, as in
 * `debugMst` - print debugging information related to the magic set
   transformation (defaults to false)
 * `debugRounds` - print statistics for each round of seminaive evaluation
+  (defaults to false)
 * `useDemandTransformation` - apply the demand transformation as a
   post-processing step after the magic set transformation (defaults to true)
 * `softExceptions` - ignore exceptions during evaluation (i.e., treat them as
@@ -87,6 +88,8 @@ You can set the following system properties (using the `-D` flag, as in
   (defaults to the current directory)
 * `trackedRelations=rel_1,...,rel_n` - print facts from listed relations as
   they are derived (defaults to the empty list)
+* `printResults=(all|none|edb|idb|query)` - restrict which types of facts are
+  printed after evaluation (default is all)
 
 For example, to run the test program above with SMT debug information and 3
 threads, use

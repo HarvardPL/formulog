@@ -54,7 +54,7 @@ public final class Configuration {
 	private static final Map<Rule<?, ?>, AtomicLong> ruleTimes = new ConcurrentHashMap<>();
 
 	public static final boolean debugSmt = propIsSet("debugSmt");
-	
+
 	public static final boolean timeSmt = propIsSet("timeSmt");
 	private static final AtomicLong smtEvalTime = new AtomicLong();
 	private static final AtomicLong smtDeclTime = new AtomicLong();
@@ -65,7 +65,6 @@ public final class Configuration {
 	public static final boolean printRelSizes = propIsSet("printRelSizes");
 	public static final boolean printFinalRules = propIsSet("printFinalRules");
 	public static final boolean debugRounds = propIsSet("debugRounds");
-	public static final boolean noResults = propIsSet("noResults");
 
 	public static final int optimizationSetting = getIntProp("optimize", 0);
 
@@ -75,14 +74,16 @@ public final class Configuration {
 	public static final SmtStrategy smtStrategy = getSmtStrategy();
 
 	public static final int parallelism = getIntProp("parallelism", 4);
-	
+
 	public static final boolean useDemandTransformation = propIsSet("useDemandTransformation", true);
-	
+
 	public static final List<String> trackedRelations = getListProp("trackedRelations");
-	
+
 	public static final List<String> factDirs = getListProp("factDirs");
-	
+
 	public static final boolean debugMst = propIsSet("debugMst");
+
+	public static final PrintPreference printResultsPreference = getPrintResultsPreference();
 
 	public static final int memoizeThreshold() {
 		return getIntProp("memoizeThreshold", 0);
@@ -91,9 +92,9 @@ public final class Configuration {
 	public static boolean noModel() {
 		return propIsSet("noModel");
 	}
-	
+
 	public static final boolean codegen = propIsSet("codegen", true);
-	
+
 	public static final boolean inlineInRules = propIsSet("inlineInRules", true);
 
 	static {
@@ -251,7 +252,7 @@ public final class Configuration {
 		}
 		throw new IllegalArgumentException("Unexpected argument for property " + prop + ": " + val);
 	}
-	
+
 	private static boolean propIsSet(String prop) {
 		return propIsSet(prop, false);
 	}
@@ -267,7 +268,7 @@ public final class Configuration {
 			throw new IllegalArgumentException("Property " + prop + " expects an integer argument");
 		}
 	}
-	
+
 	private static List<String> getListProp(String prop) {
 		String val = System.getProperty(prop);
 		if (val == null || val.equals("")) {
@@ -286,7 +287,7 @@ public final class Configuration {
 		l.add(val);
 		return Collections.unmodifiableList(l);
 	}
-	
+
 	private static SmtStrategy getSmtStrategy() {
 		String val = System.getProperty("smtStrategy");
 		if (val == null) {
@@ -317,6 +318,27 @@ public final class Configuration {
 			return new SmtStrategy(SmtStrategy.Tag.PER_THREAD_BEST_MATCH, size);
 		}
 		throw new IllegalArgumentException("Unrecognized SMT strategy: " + val);
+	}
+
+	private static PrintPreference getPrintResultsPreference() {
+		String val = System.getProperty("printResults");
+		if (val == null) {
+			val = "all";
+		}
+		switch (val) {
+		case "all":
+			return PrintPreference.ALL;
+		case "none":
+			return PrintPreference.NONE;
+		case "edb":
+			return PrintPreference.EDB;
+		case "idb":
+			return PrintPreference.IDB;
+		case "query":
+			return PrintPreference.QUERY;
+		default:
+			throw new IllegalArgumentException("Unrecognized print result preference: " + val);
+		}
 	}
 
 }

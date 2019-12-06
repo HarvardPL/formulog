@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Added
+- Options to restrict which results are printed after evaluation. 
+- Nested, variable-capturing functions (i.e., `let fun` expressions).
 ### Fixed
 - Require variables in the "names" (i.e., the arguments) of solver variables
   to be bound.
