@@ -48,9 +48,9 @@ public class Check implements SimpleLiteral {
 		Term lhs = this.lhs.normalize(subst);
 		Term rhs = this.rhs.normalize(subst);
 		assert lhs.isGround();
-		assert !lhs.containsFunctionCall();
+		assert !lhs.containsUnevaluatedTerm();
 		assert rhs.isGround();
-		assert !rhs.containsFunctionCall();
+		assert !rhs.containsUnevaluatedTerm();
 		return lhs.equals(rhs) ^ negated;
 	}
 	

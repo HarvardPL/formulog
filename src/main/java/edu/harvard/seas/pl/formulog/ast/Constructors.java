@@ -814,7 +814,7 @@ public final class Constructors {
 			boolean f = false;
 			for (Term t : args) {
 				g &= t.isGround();
-				f |= t.containsFunctionCall();
+				f |= t.containsUnevaluatedTerm();
 			}
 			isGround = g;
 			containsFunctionCall = f;
@@ -835,7 +835,7 @@ public final class Constructors {
 		}
 
 		@Override
-		public boolean containsFunctionCall() {
+		public boolean containsUnevaluatedTerm() {
 			return containsFunctionCall;
 		}
 

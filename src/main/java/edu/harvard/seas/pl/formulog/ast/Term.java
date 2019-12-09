@@ -37,7 +37,7 @@ public interface Term {
 	
 	boolean isGround();
 
-	boolean containsFunctionCall();
+	boolean containsUnevaluatedTerm();
 
 	Term applySubstitution(Substitution s);
 	

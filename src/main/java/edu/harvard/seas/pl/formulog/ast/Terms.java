@@ -261,7 +261,7 @@ public final class Terms {
 		}
 
 		@Override
-		public boolean containsFunctionCall() {
+		public boolean containsUnevaluatedTerm() {
 			return false;
 		}
 

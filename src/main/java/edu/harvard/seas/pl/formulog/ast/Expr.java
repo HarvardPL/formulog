@@ -42,7 +42,7 @@ public interface Expr extends Term {
 	}
 	
 	@Override
-	default boolean containsFunctionCall() {
+	default boolean containsUnevaluatedTerm() {
 		return true;
 	}
 

@@ -56,7 +56,7 @@ public interface Constructor extends Functor<ConstructorSymbol>, SmtLibTerm {
 	
 	@Override
 	default Term normalize(Substitution s) throws EvaluationException {
-		if (isGround() && !containsFunctionCall()) {
+		if (isGround() && !containsUnevaluatedTerm()) {
 			return this;
 		}
 		Term[] args = getArgs();

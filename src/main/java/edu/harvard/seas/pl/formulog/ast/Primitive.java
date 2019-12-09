@@ -43,7 +43,7 @@ public interface Primitive<T> extends Term {
 	}
 
 	@Override
-	public default boolean containsFunctionCall() {
+	public default boolean containsUnevaluatedTerm() {
 		return false;
 	}
 

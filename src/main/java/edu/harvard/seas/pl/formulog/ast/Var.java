@@ -80,7 +80,7 @@ public class Var extends AbstractTerm implements Term {
 	}
 
 	@Override
-	public boolean containsFunctionCall() {
+	public boolean containsUnevaluatedTerm() {
 		return false;
 	}
 

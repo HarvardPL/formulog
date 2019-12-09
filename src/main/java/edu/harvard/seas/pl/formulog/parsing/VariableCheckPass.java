@@ -34,6 +34,7 @@ import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralVisitor;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Expr;
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
+import edu.harvard.seas.pl.formulog.ast.Fold;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
@@ -53,6 +54,7 @@ import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.util.Pair;
+import edu.harvard.seas.pl.formulog.util.TodoException;
 import edu.harvard.seas.pl.formulog.util.Util;
 
 public class VariableCheckPass {
@@ -215,6 +217,11 @@ public class VariableCheckPass {
 						defs.add(NestedFunctionDef.make(funcDef.getSymbol(), newParams, newBody));
 					}
 					return LetFunExpr.make(defs, checkTerm(letFun.getLetBody()));
+				}
+
+				@Override
+				public Expr visit(Fold fold, Void in) {
+					throw new TodoException();
 				}
 
 			}, null);

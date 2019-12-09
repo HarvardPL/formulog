@@ -36,6 +36,8 @@ public final class Exprs {
 		
 		O visit(LetFunExpr funcDefs, I in);
 
+		O visit(Fold fold, I in);
+
 	}
 
 	public static interface ExprVisitorExn<I, O, E extends Throwable> {
@@ -45,6 +47,8 @@ public final class Exprs {
 		O visit(FunctionCall funcCall, I in) throws E;
 		
 		O visit(LetFunExpr funcDefs, I in) throws E;
+		
+		O visit(Fold fold, I in) throws E;
 
 	}
 	

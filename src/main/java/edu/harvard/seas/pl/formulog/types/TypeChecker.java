@@ -45,6 +45,7 @@ import edu.harvard.seas.pl.formulog.ast.Constructors;
 import edu.harvard.seas.pl.formulog.ast.Expr;
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitorExn;
+import edu.harvard.seas.pl.formulog.ast.Fold;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.I32;
@@ -81,6 +82,7 @@ import edu.harvard.seas.pl.formulog.types.Types.TypeVisitor;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.Pair;
+import edu.harvard.seas.pl.formulog.util.TodoException;
 import edu.harvard.seas.pl.formulog.util.Util;
 
 public class TypeChecker {
@@ -455,6 +457,11 @@ public class TypeChecker {
 					return null;
 				}
 
+				@Override
+				public Void visit(Fold fold, Void in) {
+					throw new TodoException();
+				}
+
 			}, null);
 		}
 
@@ -813,6 +820,11 @@ public class TypeChecker {
 				}
 				Term body = def.getBody().applySubstitution(s).accept(termRewriter, subst);
 				return NestedFunctionDef.make(def.getSymbol(), newParams, body);
+			}
+
+			@Override
+			public Term visit(Fold fold, Substitution in) throws TypeException {
+				throw new TodoException();
 			}
 
 		};

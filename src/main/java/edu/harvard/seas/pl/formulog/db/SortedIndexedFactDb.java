@@ -125,7 +125,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 
 	private boolean allNormal(Term[] args) {
 		for (Term arg : args) {
-			if (!arg.isGround() || arg.containsFunctionCall()) {
+			if (!arg.isGround() || arg.containsUnevaluatedTerm()) {
 				return false;
 			}
 		}

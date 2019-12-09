@@ -29,6 +29,7 @@ import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
 import edu.harvard.seas.pl.formulog.ast.Expr;
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
+import edu.harvard.seas.pl.formulog.ast.Fold;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
@@ -54,6 +55,7 @@ import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
+import edu.harvard.seas.pl.formulog.util.TodoException;
 
 public class PredicateFunctionSetter {
 
@@ -153,6 +155,11 @@ public class PredicateFunctionSetter {
 		@Override
 		public Void visit(LetFunExpr funcDef, Void in) {
 			throw new AssertionError("impossible");
+		}
+
+		@Override
+		public Void visit(Fold fold, Void in) {
+			throw new TodoException();
 		}
 
 	};

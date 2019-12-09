@@ -97,7 +97,7 @@ public final class FunctionCallFactory {
 		}
 
 		@Override
-		public boolean containsFunctionCall() {
+		public boolean containsUnevaluatedTerm() {
 			return true;
 		}
 
