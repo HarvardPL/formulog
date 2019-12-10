@@ -138,5 +138,17 @@ public class Fold implements Expr {
 	public <I, O, E extends Throwable> O accept(ExprVisitorExn<I, O, E> visitor, I in) throws E {
 		return visitor.visit(this, in);
 	}
+	
+	@Override
+	public String toString() {
+		String s = "fold[" + f + "](";
+		for (int i = 0; i < args.length; ++i) {
+			s += args[i];
+			if (i < args.length -1) {
+				s += ", ";
+			}
+		}
+		return s + ")";
+	}
 
 }

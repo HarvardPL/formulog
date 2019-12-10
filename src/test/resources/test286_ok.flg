@@ -1,0 +1,7 @@
+fun foo(Xs: i32 list) : i32 list =
+  let fun add1(Xs: i32 list, Y: i32) : i32 list = (Y + 1) :: Xs in
+  let fun cons_wrapper(Xs: i32 list, X: i32) : i32 list = X :: Xs in
+  fold[cons_wrapper]([], fold[add1]([], Xs))
+
+output ok
+ok :- foo([1, 2, 3]) = [2, 3, 4].

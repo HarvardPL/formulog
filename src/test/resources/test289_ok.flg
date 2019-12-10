@@ -1,0 +1,6 @@
+fun foo(X: string, Y: i32) : string =
+  let fun id(Y: 'a) : 'a = Y in
+  strcat(id(X), string_of_i32(id(Y)))
+
+output ok
+ok :- foo("hello #", 42) = "hello #42".

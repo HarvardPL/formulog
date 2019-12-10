@@ -82,6 +82,7 @@ import edu.harvard.seas.pl.formulog.types.Types.TypeVisitor;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.Pair;
+import edu.harvard.seas.pl.formulog.util.Triple;
 import edu.harvard.seas.pl.formulog.util.Util;
 
 public class TypeChecker {
@@ -276,8 +277,8 @@ public class TypeChecker {
 
 	private class TypeCheckerContext {
 
-		private final Deque<Pair<Type, Type>> constraints = new ArrayDeque<>();
-		private final Deque<Pair<Type, Type>> formulaConstraints = new ArrayDeque<>();
+		private final Deque<Triple<Term, Type, Type>> constraints = new ArrayDeque<>();
+		private final Deque<Triple<Term, Type, Type>> formulaConstraints = new ArrayDeque<>();
 		private final Map<TypeVar, Type> typeVars = new HashMap<>();
 		private final Deque<Pair<Constructor, Type>> smtEqsToResolve = new ArrayDeque<>();
 		private String error;
@@ -357,7 +358,8 @@ public class TypeChecker {
 			Map<Var, Type> subst = new HashMap<>();
 			genConstraints(functionDef, subst);
 			if (!checkConstraints()) {
-				throw new TypeException("Type error in function: " + functionDef.getSymbol() + "\n" + error);
+				throw new TypeException("Type error in function: " + functionDef.getSymbol() + "\n"
+						+ functionDef.getBody() + "\n" + error);
 			}
 			Substitution m = makeIndexSubstitution(subst);
 			return UserFunctionDef.get(functionDef.getSymbol(), functionDef.getParams(),
@@ -411,12 +413,13 @@ public class TypeChecker {
 			List<Type> argTypes = scheme.getArgTypes();
 			for (Type t : argTypes) {
 				if (t instanceof TypeVar) {
-					addConstraint(t, Util.lookupOrCreate(opaqueTypes, (TypeVar) t, () -> OpaqueType.get()), false);
+					addConstraint(null, t, Util.lookupOrCreate(opaqueTypes, (TypeVar) t, () -> OpaqueType.get()),
+							false);
 				}
 			}
 			Type r = scheme.getRetType();
 			if (r instanceof TypeVar) {
-				addConstraint(r, Util.lookupOrCreate(opaqueTypes, (TypeVar) r, () -> OpaqueType.get()), false);
+				addConstraint(null, r, Util.lookupOrCreate(opaqueTypes, (TypeVar) r, () -> OpaqueType.get()), false);
 			}
 			for (int i = 0; i < params.size(); ++i) {
 				subst.put(params.get(i), argTypes.get(i));
@@ -450,6 +453,7 @@ public class TypeChecker {
 				public Void visit(LetFunExpr letFun, Void in) {
 					assert !inFormula;
 					for (NestedFunctionDef def : letFun.getDefs()) {
+						def = def.freshen();
 						genConstraints(def.getSymbol(), def.getParams(), def.getBody(), varTypes);
 					}
 					genConstraints(letFun.getLetBody(), exprType, varTypes, inFormula);
@@ -461,23 +465,23 @@ public class TypeChecker {
 					assert !inFormula;
 					FunctionSymbol sym = fold.getFunction();
 					Term[] args = fold.getArgs();
-					assert sym.getArity() == args.length && args.length == 2; 
+					assert sym.getArity() == args.length && args.length == 2;
 					Type itemType = TypeVar.fresh();
 					Type listType = BuiltInTypes.list(itemType);
 					FunctorType funType = sym.getCompileTimeType().freshen();
 					genConstraints(args[0], exprType, varTypes, inFormula);
 					genConstraints(args[0], funType.getArgTypes().get(0), varTypes, inFormula);
 					genConstraints(args[1], listType, varTypes, inFormula);
-					addConstraint(itemType, funType.getArgTypes().get(1), inFormula);
-					addConstraint(exprType, funType.getRetType(), inFormula);
+					addConstraint(args[1], itemType, funType.getArgTypes().get(1), inFormula);
+					addConstraint(fold, exprType, funType.getRetType(), inFormula);
 					return null;
 				}
 
 			}, null);
 		}
 
-		private void addConstraint(Type t1, Type t2, boolean inFormula) {
-			Pair<Type, Type> constraint = new Pair<>(t1, t2);
+		private void addConstraint(Term t, Type t1, Type t2, boolean inFormula) {
+			Triple<Term, Type, Type> constraint = new Triple<>(t, t1, t2);
 			if (inFormula) {
 				formulaConstraints.add(constraint);
 			} else {
@@ -517,11 +521,11 @@ public class TypeChecker {
 
 		private void genConstraintsForVar(Var t, Type ttype, Map<Var, Type> subst, boolean inFormula) {
 			Type s = Util.lookupOrCreate(subst, t, () -> TypeVar.fresh());
-			addConstraint(s, ttype, inFormula);
+			addConstraint(t, s, ttype, inFormula);
 		}
 
 		private void genConstraintsForPrimitive(Primitive<?> t, Type ttype, boolean inFormula) {
-			addConstraint(ttype, t.getType(), inFormula);
+			addConstraint(t, ttype, t.getType(), inFormula);
 		}
 
 		private void genConstraintsForConstructor(Constructor t, Type ttype, Map<Var, Type> subst, boolean inFormula) {
@@ -544,7 +548,7 @@ public class TypeChecker {
 				Type argType = argTypes.get(i);
 				genConstraints(args[i], argType, subst, inFormula);
 			}
-			addConstraint(cnstrType.getRetType(), ttype, wasInFormula);
+			addConstraint(t, cnstrType.getRetType(), ttype, wasInFormula);
 		}
 
 		private void genConstraintsForFunctionCall(FunctionCall function, Type ttype, Map<Var, Type> subst,
@@ -555,13 +559,13 @@ public class TypeChecker {
 			for (int i = 0; i < args.length; ++i) {
 				genConstraints(args[i], argTypes.get(i), subst, inFormula);
 			}
-			addConstraint(funType.getRetType(), ttype, inFormula);
+			addConstraint(function, funType.getRetType(), ttype, inFormula);
 		}
 
 		private boolean checkConstraints() {
 			Set<Type> typesInFormulae = new HashSet<>();
-			for (Pair<Type, Type> p : formulaConstraints) {
-				typesInFormulae.add(p.fst());
+			for (Triple<Term, Type, Type> p : formulaConstraints) {
+				typesInFormulae.add(p.second);
 			}
 			// First try to unify constraints generated outside of formula and then
 			// constraints generated inside formula. This might generate more constraints,
@@ -617,11 +621,11 @@ public class TypeChecker {
 		}
 
 		private boolean checkConstraints(boolean inFormulaContext) {
-			Deque<Pair<Type, Type>> q = inFormulaContext ? formulaConstraints : constraints;
+			Deque<Triple<Term, Type, Type>> q = inFormulaContext ? formulaConstraints : constraints;
 			while (!q.isEmpty()) {
-				Pair<Type, Type> pair = q.pop();
-				Type type1 = lookupType(pair.fst());
-				Type type2 = lookupType(pair.snd());
+				Triple<Term, Type, Type> constraint = q.pop();
+				Type type1 = lookupType(constraint.second);
+				Type type2 = lookupType(constraint.third);
 				if (inFormulaContext) {
 					type1 = simplify(type1);
 					type2 = simplify(type2);
@@ -630,8 +634,9 @@ public class TypeChecker {
 					if (!handleVars(type1, type2)) {
 						return false;
 					}
-				} else if (!unify(type1, type2)) {
+				} else if (!unify(constraint.first, type1, type2)) {
 					error = "Cannot unify " + type1 + " and " + type2;
+					error += "\nProblematic term: " + constraint.first;
 					return false;
 				}
 			}
@@ -662,7 +667,7 @@ public class TypeChecker {
 			return true;
 		}
 
-		private boolean unify(Type type1, Type type2) {
+		private boolean unify(Term t, Type type1, Type type2) {
 			return type1.accept(new TypeVisitor<Type, Boolean>() {
 
 				@Override
@@ -682,7 +687,7 @@ public class TypeChecker {
 					List<Type> args1 = typeRef.getTypeArgs();
 					List<Type> args2 = otherTypeRef.getTypeArgs();
 					for (int i = 0; i < args1.size(); ++i) {
-						addConstraint(args1.get(i), args2.get(i), false);
+						addConstraint(t, args1.get(i), args2.get(i), false);
 					}
 					return true;
 				}
@@ -748,7 +753,7 @@ public class TypeChecker {
 			}
 
 		};
-		
+
 		private final Map<FunctionSymbol, FunctionSymbol> topLevelSymbolOfNestedFunction = new HashMap<>();
 		private final Map<FunctionSymbol, List<Var>> capturedVarsOfNestedFunction = new HashMap<>();
 
@@ -802,7 +807,8 @@ public class TypeChecker {
 				for (NestedFunctionDef def : defs) {
 					FunctionSymbol oldSym = def.getSymbol();
 					int newArity = oldSym.getArity() + capturedVarSet.size();
-					FunctionSymbol newSym = prog.getSymbolManager().createFunctionSymbol(oldSym + "$toplevel", newArity, null);
+					FunctionSymbol newSym = prog.getSymbolManager().createFunctionSymbol(oldSym + "$toplevel", newArity,
+							null);
 					topLevelSymbolOfNestedFunction.put(oldSym, newSym);
 					capturedVarsOfNestedFunction.put(newSym, capturedVars);
 				}
@@ -815,7 +821,7 @@ public class TypeChecker {
 				}
 				return letFun.getLetBody().accept(termRewriter, in);
 			}
-			
+
 			NestedFunctionDef firstRewritingPass(NestedFunctionDef def, Substitution subst) throws TypeException {
 				Substitution s = new SimpleSubstitution();
 				List<Var> newParams = new ArrayList<>();
@@ -827,7 +833,7 @@ public class TypeChecker {
 					} else {
 						newParams.add((Var) s.get(param));
 					}
-					
+
 				}
 				Term body = def.getBody().applySubstitution(s).accept(termRewriter, subst);
 				return NestedFunctionDef.make(def.getSymbol(), newParams, body);

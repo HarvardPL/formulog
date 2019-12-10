@@ -74,7 +74,7 @@ public class Parser {
 			loadExternalEdbs(pc, prog, p.snd(), inputDirs);
 			return prog;
 		} catch (Exception e) {
-			throw new ParseException(e.getMessage());
+			throw new ParseException(e);
 		}
 	}
 

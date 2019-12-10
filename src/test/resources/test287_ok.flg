@@ -1,0 +1,6 @@
+fun rev(Xs: 'a list) : 'a list =
+  let fun cons_wrapper(Ys: 'a list, X: 'a) : 'a list = X :: Ys in
+  fold[cons_wrapper]([], Xs)
+  
+output ok
+ok :- rev([1, 2, 3]) = [3, 2, 1].

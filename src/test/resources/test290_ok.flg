@@ -1,0 +1,9 @@
+fun addN(Xs: i32 list, N: i32) : i32 list =
+  let fun rev(Xs: 'a list) : 'a list =
+    let fun cons_wrapper(Ys: 'a list, X: 'a) : 'a list = X :: Ys in
+    fold[cons_wrapper]([], Xs) in
+  let fun addN(Xs: i32 list, X: i32) : i32 list = (X + N) :: Xs in
+  rev(fold[addN]([], Xs))
+  
+output ok
+ok :- addN([1, 2, 3], 10) = [11, 12, 13].

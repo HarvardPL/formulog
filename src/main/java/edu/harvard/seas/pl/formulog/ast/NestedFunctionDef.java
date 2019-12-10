@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.ast;
 
+import java.util.ArrayList;
+
 /*-
  * #%L
  * FormuLog
@@ -24,6 +26,8 @@ import java.util.Collections;
 import java.util.List;
 
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
+import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
+import edu.harvard.seas.pl.formulog.unification.Substitution;
 
 public class NestedFunctionDef {
 
@@ -43,6 +47,27 @@ public class NestedFunctionDef {
 	
 	public static NestedFunctionDef make(FunctionSymbol sym, List<Var> params, Term body) {
 		return new NestedFunctionDef(sym, params, body);
+	}
+	
+	public NestedFunctionDef applySubstitution(Substitution s) {
+		Substitution s2 = new SimpleSubstitution();
+		for (Var x : s.iterateKeys()) {
+			if (!params.contains(x)) {
+				s2.put(x, s.get(x));
+			}
+		}
+		return make(sym, params, body.applySubstitution(s2));
+	}
+	
+	public NestedFunctionDef freshen() {
+		List<Var> newParams = new ArrayList<>();
+		Substitution s = new SimpleSubstitution();
+		for (Var param : params) {
+			Var newParam = Var.fresh(param.toString());
+			newParams.add(newParam);
+			s.put(param, newParam);
+		}
+		return make(sym, newParams, body.applySubstitution(s));
 	}
 	
 	public FunctionSymbol getSymbol() {

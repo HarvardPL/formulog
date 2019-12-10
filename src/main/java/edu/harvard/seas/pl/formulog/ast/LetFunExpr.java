@@ -21,6 +21,8 @@ package edu.harvard.seas.pl.formulog.ast;
  */
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -35,7 +37,11 @@ public class LetFunExpr implements Expr {
 	private final Term letBody;
 	
 	private LetFunExpr(Set<NestedFunctionDef> defs, Term letBody) {
-		this.defs = Collections.unmodifiableSet(defs);
+		Set<NestedFunctionDef> freshDefs = new HashSet<>();
+		for (NestedFunctionDef def : defs) {
+			freshDefs.add(def.freshen());
+		}
+		this.defs = Collections.unmodifiableSet(freshDefs);
 		this.letBody = letBody;
 	}
 	
@@ -58,7 +64,11 @@ public class LetFunExpr implements Expr {
 
 	@Override
 	public Term applySubstitution(Substitution s) {
-		throw new UnsupportedOperationException();
+		Set<NestedFunctionDef> newDefs = new HashSet<>();
+		for (NestedFunctionDef def : defs) {
+			newDefs.add(def.applySubstitution(s));
+		}
+		return make(defs, letBody.applySubstitution(s));
 	}
 
 	@Override
@@ -120,6 +130,18 @@ public class LetFunExpr implements Expr {
 		} else if (!letBody.equals(other.letBody))
 			return false;
 		return true;
+	}
+	
+	@Override
+	public String toString() {
+		String s = "let fun ";
+		for (Iterator<NestedFunctionDef> it = defs.iterator(); it.hasNext();) {
+			s += it.next();
+			if (it.hasNext()) {
+				s += "\nand ";
+			}
+		}
+		return s + " in\n" + letBody;
 	}
 
 }

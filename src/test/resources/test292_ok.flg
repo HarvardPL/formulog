@@ -1,0 +1,11 @@
+fun foo(Xs: i32 list, M: i32, B: i32) : i32 list =
+  let fun rev(Xs: 'a list) : 'a list =
+    let fun cons_wrapper(Ys: 'a list, X: 'a) : 'a list = X :: Ys in
+    fold[cons_wrapper]([], Xs) in
+  let
+    fun bar(Xs: i32 list, X: i32) : i32 list = baz(M * X) :: Xs
+    and baz(X: i32) : i32 = X + B in
+  rev(fold[bar]([], Xs))
+  
+output ok
+ok :- foo([1, 2, 3], 2, 1) = [3, 5, 7].

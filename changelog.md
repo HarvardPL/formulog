@@ -3,6 +3,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Added
+- Support for `fold` terms.
 - Options to restrict which results are printed after evaluation. 
 - Nested, variable-capturing functions (i.e., `let fun` expressions).
 ### Fixed
