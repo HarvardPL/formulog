@@ -1,5 +1,25 @@
 package edu.harvard.seas.pl.formulog.ast;
 
+/*-
+ * #%L
+ * FormuLog
+ * %%
+ * Copyright (C) 2018 - 2019 President and Fellows of Harvard College
+ * %%
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * #L%
+ */
+
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
@@ -20,7 +40,7 @@ public class Fold implements Expr {
 	private final FunctionCallFactory funCalls;
 	private Boolean isGround;
 
-	public Fold(FunctionSymbol f, Term[] args, FunctionCallFactory funCalls) {
+	private Fold(FunctionSymbol f, Term[] args, FunctionCallFactory funCalls) {
 		this.f = f;
 		this.args = args;
 		this.funCalls = funCalls;
@@ -28,6 +48,10 @@ public class Fold implements Expr {
 			throw new IllegalArgumentException("Arity mismatch when defining fold over " + f + " (it needs "
 					+ f.getArity() + " arguments, but got the arguments " + Arrays.toString(args) + ").");
 		}
+	}
+	
+	public static Fold mk(FunctionSymbol f, Term[] args, FunctionCallFactory funCalls) {
+		return new Fold(f, args, funCalls);
 	}
 	
 	public Term[] getArgs() {
@@ -38,7 +62,7 @@ public class Fold implements Expr {
 		return f;
 	}
 	
-	public FunctionCall getRepresentativeCall() {
+	public FunctionCall getShamCall() {
 		return funCalls.make(f, args);
 	}
 
@@ -57,32 +81,31 @@ public class Fold implements Expr {
 
 	@Override
 	public Term applySubstitution(Substitution s) {
-		return new Fold(f, applySubstitutionToArgs(s), funCalls);
-	}
-	
-	private Term[] applySubstitutionToArgs(Substitution s) {
 		Term[] newArgs = new Term[args.length];
 		int i = 0;
 		for (Term arg : args) {
 			newArgs[i] = arg.applySubstitution(s);
 			i++;
 		}
-		return newArgs;
+		return new Fold(f, newArgs, funCalls);
 	}
-
+	
 	@Override
 	public Term normalize(Substitution s) throws EvaluationException {
-		Term[] args = applySubstitutionToArgs(s);
-		Term acc = args[0];
-		Constructor list = (Constructor) args[1];
+		Term[] newArgs = new Term[args.length];
+		for (int i = 0; i < args.length; ++i) {
+			newArgs[i] = args[i].normalize(s);
+		}
+		Term acc = newArgs[0];
+		Constructor list = (Constructor) newArgs[1];
 		FunctionDef def = funCalls.getDefManager().lookup(f);
 		while (list.getSymbol().equals(BuiltInConstructorSymbol.CONS)) {
 			Term[] consCell = list.getArgs();
 			Term head = consCell[0];
 			list = (Constructor) consCell[1];
-			args[0] = acc;
-			args[1] = head;
-			acc = def.evaluate(args);
+			newArgs[0] = acc;
+			newArgs[1] = head;
+			acc = def.evaluate(newArgs);
 		}
 		return acc;
 	}

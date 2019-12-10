@@ -42,9 +42,9 @@ import edu.harvard.seas.pl.formulog.ast.Expr;
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.Fold;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
+import edu.harvard.seas.pl.formulog.ast.LetFunExpr;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
-import edu.harvard.seas.pl.formulog.ast.LetFunExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Term;
@@ -58,7 +58,6 @@ import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
-import edu.harvard.seas.pl.formulog.util.TodoException;
 
 public class Stratifier {
 
@@ -244,7 +243,8 @@ public class Stratifier {
 
 				@Override
 				public Void visit(Fold fold, Void in) {
-					throw new TodoException();
+					fold.getShamCall().accept(this, in);
+					return null;
 				}
 
 			}, null);

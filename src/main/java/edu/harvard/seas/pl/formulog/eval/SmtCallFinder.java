@@ -28,10 +28,10 @@ import edu.harvard.seas.pl.formulog.ast.Expr;
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.Fold;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
+import edu.harvard.seas.pl.formulog.ast.LetFunExpr;
 import edu.harvard.seas.pl.formulog.ast.Literal;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
-import edu.harvard.seas.pl.formulog.ast.LetFunExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
@@ -40,7 +40,6 @@ import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.UserFunctionDef;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
-import edu.harvard.seas.pl.formulog.util.TodoException;
 
 public class SmtCallFinder {
 
@@ -136,7 +135,7 @@ public class SmtCallFinder {
 
 		@Override
 		public Boolean visit(Fold fold, Void in) {
-			throw new TodoException();
+			return fold.getShamCall().accept(this, in);
 		}
 
 	};

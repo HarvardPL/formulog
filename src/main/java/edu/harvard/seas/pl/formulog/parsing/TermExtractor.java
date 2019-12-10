@@ -36,6 +36,7 @@ import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
 import edu.harvard.seas.pl.formulog.ast.FP32;
 import edu.harvard.seas.pl.formulog.ast.FP64;
+import edu.harvard.seas.pl.formulog.ast.Fold;
 import edu.harvard.seas.pl.formulog.ast.I32;
 import edu.harvard.seas.pl.formulog.ast.I64;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
@@ -56,6 +57,7 @@ import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ConsTermCon
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ConstSymFormulaContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.DoubleTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.FloatTermContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.FoldTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.FormulaTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.FunDefLHSContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.HoleTermContext;
@@ -257,6 +259,25 @@ class TermExtractor {
 			ConstructorSymbol sym = pc.symbolManager().lookupSmtEqSymbol(type);
 			Term[] args = extractArray(ctx.termArgs().term());
 			return Constructors.make(sym, args);
+		}
+
+		@Override
+		public Term visitFoldTerm(FoldTermContext ctx) {
+			assertNotInFormula("Cannot invoke a fold from within a formula: " + ctx.getText());
+			String name = ctx.ID().getText();
+			Symbol sym = nestedFunctions.get(name);
+			if (sym == null) {
+				sym = pc.symbolManager().lookupSymbol(name);
+			}
+			if (!(sym instanceof FunctionSymbol)) {
+				throw new RuntimeException("Cannot fold over non-function: " + sym);
+			}
+			if (sym.getArity() != 2) {
+				throw new RuntimeException(
+						"Can only fold over a binary function, but " + sym + " has arity " + sym.getArity());
+			}
+			Term[] args = extractArray(ctx.termArgs().term());
+			return Fold.mk((FunctionSymbol) sym, args, pc.functionCallFactory());
 		}
 
 		@Override

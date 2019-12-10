@@ -49,10 +49,10 @@ import edu.harvard.seas.pl.formulog.ast.Fold;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.I32;
+import edu.harvard.seas.pl.formulog.ast.LetFunExpr;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.NestedFunctionDef;
-import edu.harvard.seas.pl.formulog.ast.LetFunExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Rule;
@@ -82,7 +82,6 @@ import edu.harvard.seas.pl.formulog.types.Types.TypeVisitor;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.Pair;
-import edu.harvard.seas.pl.formulog.util.TodoException;
 import edu.harvard.seas.pl.formulog.util.Util;
 
 public class TypeChecker {
@@ -459,7 +458,19 @@ public class TypeChecker {
 
 				@Override
 				public Void visit(Fold fold, Void in) {
-					throw new TodoException();
+					assert !inFormula;
+					FunctionSymbol sym = fold.getFunction();
+					Term[] args = fold.getArgs();
+					assert sym.getArity() == args.length && args.length == 2; 
+					Type itemType = TypeVar.fresh();
+					Type listType = BuiltInTypes.list(itemType);
+					FunctorType funType = sym.getCompileTimeType().freshen();
+					genConstraints(args[0], exprType, varTypes, inFormula);
+					genConstraints(args[0], funType.getArgTypes().get(0), varTypes, inFormula);
+					genConstraints(args[1], listType, varTypes, inFormula);
+					addConstraint(itemType, funType.getArgTypes().get(1), inFormula);
+					addConstraint(exprType, funType.getRetType(), inFormula);
+					return null;
 				}
 
 			}, null);
@@ -824,7 +835,8 @@ public class TypeChecker {
 
 			@Override
 			public Term visit(Fold fold, Substitution in) throws TypeException {
-				throw new TodoException();
+				FunctionCall f = (FunctionCall) fold.getShamCall().accept(this, in);
+				return Fold.mk(f.getSymbol(), f.getArgs(), f.getFactory());
 			}
 
 		};

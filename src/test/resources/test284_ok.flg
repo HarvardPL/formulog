@@ -1,0 +1,5 @@
+fun add1(Xs: i32 list, Y: i32) : i32 list = (Y + 1) :: Xs
+fun foo(Xs: i32 list) : i32 list = fold[add1]([], Xs)
+
+output ok
+ok :- foo([1, 2, 3]) = [4, 3, 2].

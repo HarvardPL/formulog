@@ -37,10 +37,10 @@ import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.Fold;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
+import edu.harvard.seas.pl.formulog.ast.LetFunExpr;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.NestedFunctionDef;
-import edu.harvard.seas.pl.formulog.ast.LetFunExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
@@ -54,7 +54,6 @@ import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.util.Pair;
-import edu.harvard.seas.pl.formulog.util.TodoException;
 import edu.harvard.seas.pl.formulog.util.Util;
 
 public class VariableCheckPass {
@@ -221,7 +220,8 @@ public class VariableCheckPass {
 
 				@Override
 				public Expr visit(Fold fold, Void in) {
-					throw new TodoException();
+					FunctionCall f = (FunctionCall) fold.getShamCall().accept(this, in);
+					return Fold.mk(f.getSymbol(), f.getArgs(), f.getFactory());
 				}
 
 			}, null);

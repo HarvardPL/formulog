@@ -218,6 +218,7 @@ term
 :
 	HOLE # holeTerm
 	| 'smt_eq' '[' type ']' termArgs # smtEqTerm
+	| 'fold' '[' ID ']' termArgs # foldTerm
 	| functor # functorTerm
 	| list # listTerm
 	| tuple # tupleTerm
