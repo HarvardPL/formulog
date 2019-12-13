@@ -23,7 +23,6 @@ package edu.harvard.seas.pl.formulog.parsing;
 import static edu.harvard.seas.pl.formulog.util.Util.map;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,8 +36,8 @@ import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiterals;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
-import edu.harvard.seas.pl.formulog.ast.Constructors;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory;
+import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
@@ -50,37 +49,31 @@ import edu.harvard.seas.pl.formulog.parsing.generated.FormulogBaseVisitor;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogLexer;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.AdtDefContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.AnnotationContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.AtomListContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ClauseStmtContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ConstructorTypeContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.DisunificationContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.FactStmtContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.FunDeclContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.NegatedAtomContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.NormalAtomContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.PredicateContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ProgContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.QueryStmtContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.RecordDefContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.RecordEntryDefContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.RelDeclContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TermAtomContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TypeAliasContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TypeDeclContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TypeDefLHSContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TypeDefRHSContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.UnificationContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.UninterpFunDeclContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.UninterpSortDeclContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.FormulogVisitor;
+import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbolType;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.MutableRelationSymbol;
+import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RecordSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbolType;
@@ -326,8 +319,8 @@ class TopLevelParser {
 
 		@Override
 		public Void visitClauseStmt(ClauseStmtContext ctx) {
-			List<ComplexLiteral> head = atomListContextToAtomList(ctx.clause().head);
-			List<ComplexLiteral> body = atomListContextToAtomList(ctx.clause().body);
+			List<ComplexLiteral> head = termsToLiterals(ctx.clause().head.term());
+			List<ComplexLiteral> body = termsToLiterals(ctx.clause().body.term());
 			List<BasicRule> newRules = makeRules(head, body);
 			for (BasicRule rule : newRules) {
 				RelationSymbol sym = rule.getHead().getSymbol();
@@ -361,7 +354,11 @@ class TopLevelParser {
 
 		@Override
 		public Void visitFactStmt(FactStmtContext ctx) {
-			UserPredicate fact = (UserPredicate) ctx.fact().atom().accept(atomExtractor);
+			ComplexLiteral lit = termToLiteral(ctx.fact().term());
+			if (!(lit instanceof UserPredicate)) {
+				throw new RuntimeException("Facts must be user-defined predicates: " + ctx.getText());
+			}
+			UserPredicate fact = (UserPredicate) lit;
 			RelationSymbol sym = fact.getSymbol();
 			if (sym.isIdbSymbol()) {
 				BasicRule rule = makeRule(fact, Collections.emptyList());
@@ -379,7 +376,7 @@ class TopLevelParser {
 
 		@Override
 		public Void visitQueryStmt(QueryStmtContext ctx) {
-			ComplexLiteral a = ctx.query().atom().accept(atomExtractor);
+			ComplexLiteral a = termToLiteral(ctx.query().term());
 			if (!(a instanceof UserPredicate)) {
 				throw new RuntimeException("Query must be for a user-defined predicate: " + a);
 			}
@@ -395,62 +392,45 @@ class TopLevelParser {
 			return null;
 		}
 
-		List<ComplexLiteral> atomListContextToAtomList(AtomListContext ctx) {
-			return map(ctx.atom(), a -> a.accept(atomExtractor));
+		List<ComplexLiteral> termsToLiterals(Iterable<TermContext> ctxs) {
+			List<ComplexLiteral> l = new ArrayList<>();
+			for (TermContext ctx : ctxs) {
+				l.add(termToLiteral(ctx));
+			}
+			return l;
 		}
-
-		private final FormulogVisitor<ComplexLiteral> atomExtractor = new FormulogBaseVisitor<ComplexLiteral>() {
-
-			private ComplexLiteral extractAtom(PredicateContext ctx, boolean negated) {
-				Term[] args = termExtractor.extractArray(ctx.termArgs().term());
-				Symbol sym = pc.symbolManager().lookupSymbol(ctx.ID().getText());
-				if (sym.getArity() != args.length) {
-					throw new RuntimeException("Symbol " + sym + " has arity " + sym.getArity() + " but args "
-							+ Arrays.toString(args) + " have length " + args.length);
-				}
-				if (sym instanceof FunctionSymbol) {
-					Term f = pc.functionCallFactory().make((FunctionSymbol) sym, args);
-					return ComplexLiterals.unifyWithBool(f, !negated);
-				}
-				if (sym instanceof ConstructorSymbol) {
-					Term c = Constructors.make((ConstructorSymbol) sym, args);
-					return ComplexLiterals.unifyWithBool(c, !negated);
-				}
-				if (sym instanceof RelationSymbol) {
-					return UserPredicate.make((RelationSymbol) sym, args, negated);
-				}
-				throw new AssertionError("impossible");
+		
+		private ComplexLiteral termToLiteral(TermContext ctx) {
+			Term t = termExtractor.extract(ctx);
+			if (!(t instanceof FunctionCall)) {
+				return ComplexLiterals.unifyWithBool(t, true);
 			}
-
-			@Override
-			public ComplexLiteral visitNormalAtom(NormalAtomContext ctx) {
-				return extractAtom(ctx.predicate(), false);
+			FunctionCall call = (FunctionCall) t;
+			FunctionSymbol sym = call.getSymbol();
+			boolean negated = false;
+			if (sym.equals(BuiltInFunctionSymbol.BNOT)) {
+				t = call.getArgs()[0];
+				if (!(t instanceof FunctionCall)) {
+					return ComplexLiterals.unifyWithBool(t, false);
+				}
+				negated = true;
+				call = (FunctionCall) t;
+				sym = call.getSymbol();
 			}
-
-			@Override
-			public ComplexLiteral visitNegatedAtom(NegatedAtomContext ctx) {
-				return extractAtom(ctx.predicate(), true);
+			if (sym instanceof PredicateFunctionSymbol) {
+				RelationSymbol predSym = ((PredicateFunctionSymbol) sym).getPredicateSymbol();
+				return UserPredicate.make(predSym, call.getArgs(), negated);
 			}
-
-			@Override
-			public ComplexLiteral visitUnification(UnificationContext ctx) {
-				Term[] args = termExtractor.extractArray(ctx.term());
+			if (!negated && sym.equals(BuiltInFunctionSymbol.BEQ)) {
+				Term[] args = call.getArgs();
 				return UnificationPredicate.make(args[0], args[1], false);
 			}
-
-			@Override
-			public ComplexLiteral visitDisunification(DisunificationContext ctx) {
-				Term[] args = termExtractor.extractArray(ctx.term());
+			if (!negated && sym.equals(BuiltInFunctionSymbol.BNEQ)) {
+				Term[] args = call.getArgs();
 				return UnificationPredicate.make(args[0], args[1], true);
 			}
-
-			@Override
-			public ComplexLiteral visitTermAtom(TermAtomContext ctx) {
-				Term arg = termExtractor.extract(ctx.term());
-				return ComplexLiterals.unifyWithBool(arg, true);
-			}
-
-		};
+			return ComplexLiterals.unifyWithBool(t, !negated);
+		}
 		
 		public BasicProgram program() throws ParseException {
 			return new BasicProgram() {

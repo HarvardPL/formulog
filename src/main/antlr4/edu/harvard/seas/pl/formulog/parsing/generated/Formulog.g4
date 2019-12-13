@@ -157,34 +157,17 @@ stmt
 
 clause
 :
-	head = atomList ':-' body = atomList '.'
-;
-
-atomList
-:
-	atom
-	(
-		',' atom
-	)*
+	head = nonEmptyTermList ':-' body = nonEmptyTermList '.'
 ;
 
 fact
 :
-	atom '.'
-;
-
-atom
-:
-	predicate # normalAtom
-	| '!' predicate # negatedAtom
-	| term EQ term # unification
-	| term NEQ term # disunification
-	| term # termAtom
+	term '.'
 ;
 
 query
 :
-	':-' atom '.'
+	':-' term '.'
 ;
 
 predicate
@@ -239,6 +222,7 @@ term
 		PLUS
 		| MINUS
 	) term # binopTerm
+	| < assoc = right > term '::' term # consTerm
 	| term op =
 	(
 		LT
@@ -255,7 +239,6 @@ term
 	| term op = CARET term # binopTerm
 	| term op = AMPAMP term # binopTerm
 	| term op = BARBAR term # binopTerm
-	| < assoc = right > term '::' term # consTerm
 	| VAR # varTerm
 	| QSTRING # stringTerm
 	| val =

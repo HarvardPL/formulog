@@ -45,6 +45,7 @@ import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogLexer;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ProgContext;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
@@ -69,7 +70,8 @@ public class Parser {
 		try {
 			FormulogParser parser = getParser(r, false);
 			ParsingContext pc = new ParsingContext();
-			Pair<BasicProgram, Set<RelationSymbol>> p = new TopLevelParser(pc).parse(parser.prog());
+			ProgContext progCtx = parser.prog();
+			Pair<BasicProgram, Set<RelationSymbol>> p = new TopLevelParser(pc).parse(progCtx);
 			BasicProgram prog = p.fst();
 			loadExternalEdbs(pc, prog, p.snd(), inputDirs);
 			return prog;

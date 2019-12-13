@@ -159,6 +159,8 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 
 	BNEQ("bneq", a, a, bool),
 	
+	BNOT("bnot", bool, bool),
+	
 	// String operations
 
 	STRING_OF_I32("string_of_i32", i32, string),

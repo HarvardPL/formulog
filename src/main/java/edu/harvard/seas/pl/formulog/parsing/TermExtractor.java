@@ -421,7 +421,7 @@ class TermExtractor {
 		private Term makeNonFunctionUnop(int tokenType, Term t) {
 			switch (tokenType) {
 			case FormulogParser.BANG:
-				return makeBoolMatch(t, Constructors.falseTerm(), Constructors.trueTerm());
+				return pc.functionCallFactory().make(BuiltInFunctionSymbol.BNOT, new Term[] { t });
 			default:
 				return null;
 			}

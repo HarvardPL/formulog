@@ -163,6 +163,8 @@ public final class BuiltInFunctionDefFactory {
 			return Beq.INSTANCE;
 		case BNEQ:
 			return Bneq.INSTANCE;
+		case BNOT:
+			return bnot;
 		case STRING_OF_I32:
 			return StringOfI32.INSTANCE;
 		case STRCMP:
@@ -1150,6 +1152,24 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 	}
+	
+	private static final FunctionDef bnot = new FunctionDef() {
+
+		@Override
+		public FunctionSymbol getSymbol() {
+			return BuiltInFunctionSymbol.BNOT;
+		}
+
+		@Override
+		public Term evaluate(Term[] args) throws EvaluationException {
+			Term arg = args[0];
+			if (arg.equals(trueTerm)) {
+				return falseTerm;
+			}
+			return trueTerm;
+		}
+		
+	};
 
 	private enum StringOfI32 implements FunctionDef {
 

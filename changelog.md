@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Require variables in the "names" (i.e., the arguments) of solver variables
   to be bound.
+- Made Antlr parser faster by simplifying grammar.
+- Changed precedence of infix cons operator (i.e., `::`).
 
 ## [0.2.0] - 2019-11-25
 ### Added
