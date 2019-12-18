@@ -20,12 +20,15 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-public interface Symbol {
-	
-	int getArity();
-	
-	public PreSymbol getRootPreSymbol();
-	
-	public boolean isFinal();
+import java.util.List;
+
+public interface PreSymbol extends Symbol {
+
+	List<PreIndex> getPreIndices();
+
+	@Override
+	default boolean isFinal() {
+		return getPreIndices().isEmpty();
+	}
 	
 }

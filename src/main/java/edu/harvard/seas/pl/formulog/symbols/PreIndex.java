@@ -20,12 +20,6 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-public interface Symbol {
-	
-	int getArity();
-	
-	public PreSymbol getRootPreSymbol();
-	
-	public boolean isFinal();
-	
+public interface PreIndex {
+
 }

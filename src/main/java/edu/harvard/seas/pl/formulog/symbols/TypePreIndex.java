@@ -20,12 +20,16 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-public interface Symbol {
+import edu.harvard.seas.pl.formulog.types.TypeException;
+import edu.harvard.seas.pl.formulog.types.Types.Type;
+import edu.harvard.seas.pl.formulog.types.Types.TypeVar;
+
+public interface TypePreIndex extends PreIndex {
+
+	void check(Type type) throws TypeException;
 	
-	int getArity();
+	TypeVar getTypeVar();
 	
-	public PreSymbol getRootPreSymbol();
-	
-	public boolean isFinal();
+	TypePreIndex freshen();
 	
 }

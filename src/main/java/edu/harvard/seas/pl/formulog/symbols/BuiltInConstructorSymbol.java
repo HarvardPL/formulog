@@ -28,9 +28,7 @@ import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.b;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.bool;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.bv;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.cmp;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.formula_var_list;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.fp;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.heterogeneous_list;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.int_;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.list;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.option;
@@ -38,10 +36,13 @@ import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.smt;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.string;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.sym;
 
+import java.util.Arrays;
+import java.util.List;
+
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 
-public enum BuiltInConstructorSymbol implements ConstructorSymbol {
+public enum BuiltInConstructorSymbol implements ConstructorSymbol, PreSymbol {
 
 	// Lists
 	
@@ -71,33 +72,27 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 	
 	// Constraints
 	
-	FORMULA_NOT("not%", 1, SOLVER_EXPR),
+	FORMULA_NOT("smt_not", 1, SOLVER_EXPR),
 	
-	FORMULA_AND("and%", 2, SOLVER_EXPR),
+	FORMULA_AND("smt_and", 2, SOLVER_EXPR),
 	
-	FORMULA_OR("or%", 2, SOLVER_EXPR),
+	FORMULA_OR("smt_or", 2, SOLVER_EXPR),
 	
-	FORMULA_EQ("eq%", 2, SOLVER_EXPR),
+	FORMULA_EQ("smt_eq", 2, SOLVER_EXPR, SmtTypePreIndex.a),
 	
-	FORMULA_IMP("imp%", 2, SOLVER_EXPR),
+	FORMULA_IMP("smt_imp", 2, SOLVER_EXPR),
 	
-	FORMULA_LET("let%", 3, SOLVER_EXPR),
+	FORMULA_LET("smt_let", 3, SOLVER_EXPR, SmtTypePreIndex.a),
 	
-	FORMULA_ITE("ite%", 3, SOLVER_EXPR),
+	FORMULA_ITE("smt_ite", 3, SOLVER_EXPR),
 	
-	FORMULA_FORALL("forall%", 3, SOLVER_EXPR),
+	FORMULA_FORALL("smt_forall", 2, SOLVER_EXPR, MultiSymTypePreIndex.a),
 	
-	FORMULA_EXISTS("exists%", 3, SOLVER_EXPR),
+	FORMULA_EXISTS("smt_exists", 2, SOLVER_EXPR, MultiSymTypePreIndex.a),
 	
-	FORMULA_VAR_LIST_NIL("formula_var_list_nil%", 0, VANILLA_CONSTRUCTOR),
+	FORMULA_FORALL_PAT("smt_forall_pat", 3, SOLVER_EXPR, MultiSymTypePreIndex.a, QuantifierPatTypePreIndex.b),
 	
-	FORMULA_VAR_LIST_CONS("formula_var_list_cons%", 2, VANILLA_CONSTRUCTOR),
-	
-	// Heterogeneous lists (used for quantifier patterns)
-
-	HETEROGENEOUS_LIST_NIL("heterogeneous_list_nil%", 0, VANILLA_CONSTRUCTOR),
-	
-	HETEROGENEOUS_LIST_CONS("heterogeneous_list_cons%", 2, VANILLA_CONSTRUCTOR),
+	FORMULA_EXISTS_PAT("smt_forall_pat", 3, SOLVER_EXPR, MultiSymTypePreIndex.a, QuantifierPatTypePreIndex.b),
 	
 	// Floating point
 	
@@ -230,15 +225,17 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 	EXIT_FORMULA("exit_formula%", 1, VANILLA_CONSTRUCTOR),	
 	
 	;
-
+	
 	private final String name;
 	private final int arity;
 	private final ConstructorSymbolType st;
+	private final List<PreIndex> preIndices;
 	
-	private BuiltInConstructorSymbol(String name, int arity, ConstructorSymbolType st) {
+	private BuiltInConstructorSymbol(String name, int arity, ConstructorSymbolType st, PreIndex... preIndices) {
 		this.name = name;
 		this.arity = arity;
 		this.st = st;
+		this.preIndices = Arrays.asList(preIndices);
 	}
 
 	@Override
@@ -283,17 +280,11 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 		case FORMULA_NOT:
 			return makeType(smt(bool), smt(bool));
 		case FORMULA_EXISTS:
-			return makeType(formula_var_list, smt(bool), option(a), smt(bool));
 		case FORMULA_FORALL:
-			return makeType(formula_var_list, smt(bool), option(a), smt(bool));
-		case FORMULA_VAR_LIST_NIL:
-			return makeType(formula_var_list);
-		case FORMULA_VAR_LIST_CONS:
-			return makeType(sym(a), formula_var_list, formula_var_list);
-		case HETEROGENEOUS_LIST_NIL:
-			return makeType(heterogeneous_list);
-		case HETEROGENEOUS_LIST_CONS:
-			return makeType(a, heterogeneous_list, heterogeneous_list);
+			return makeType(a, smt(bool), smt(bool));
+		case FORMULA_EXISTS_PAT:
+		case FORMULA_FORALL_PAT:
+			return makeType(a, b, smt(bool), smt(bool));
 		case NONE:
 			return makeType(option(a));
 		case SOME:
@@ -391,6 +382,16 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 	@Override
 	public ConstructorSymbolType getConstructorSymbolType() {
 		return st;
+	}
+
+	@Override
+	public PreSymbol getRootPreSymbol() {
+		return this;
+	}
+
+	@Override
+	public List<PreIndex> getPreIndices() {
+		return preIndices;
 	}
 
 }
