@@ -75,20 +75,25 @@ typeList
 
 ;
 
-type
+type0
 :
-	(
+	'(' type ')' # parenType
+	| TYPEVAR # typeVar
+	| type0 ID index # typeRef
+	| (
 		'(' type
 		(
 			',' type
-		)* ')'
+		)+ ')'
 	)? ID index # typeRef
-	| type ID index # typeRef
-	| TYPEVAR # typeVar
-	| '(' type '*' type
+;
+
+type
+:
+	type0
 	(
-		'*' type
-	)* ')' # tupleType
+		'*' type0
+	)* # tupleType
 ;
 
 index

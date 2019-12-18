@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 - Support for `fold` terms.
 - Options to restrict which results are printed after evaluation. 
 - Nested, variable-capturing functions (i.e., `let fun` expressions).
+
+### Changed
+- Do not require parentheses around tuple types.
+
 ### Fixed
 - Require variables in the "names" (i.e., the arguments) of solver variables
   to be bound.
