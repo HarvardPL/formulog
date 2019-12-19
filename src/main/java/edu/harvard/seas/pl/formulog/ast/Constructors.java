@@ -38,7 +38,7 @@ import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbolType;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
-import edu.harvard.seas.pl.formulog.symbols.IndexedConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.BuiltInPreConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RecordSymbol;
 import edu.harvard.seas.pl.formulog.symbols.SmtEqSymbol;
 import edu.harvard.seas.pl.formulog.symbols.TupleSymbol;
@@ -62,8 +62,8 @@ public final class Constructors {
 		if (sym instanceof BuiltInConstructorSymbol) {
 			return lookupOrCreateBuiltInConstructor((BuiltInConstructorSymbol) sym, args);
 		}
-		if (sym instanceof IndexedConstructorSymbol) {
-			return lookupOrCreateIndexedConstructor((IndexedConstructorSymbol) sym, args);
+		if (sym instanceof BuiltInPreConstructorSymbol) {
+			return lookupOrCreateIndexedConstructor((BuiltInPreConstructorSymbol) sym, args);
 		}
 		if (sym instanceof TupleSymbol) {
 			return memo.lookupOrCreate(sym, args, () -> new Tuple((TupleSymbol) sym, args));
@@ -615,7 +615,7 @@ public final class Constructors {
 		});
 	}
 
-	private static Term lookupOrCreateIndexedConstructor(IndexedConstructorSymbol sym, Term[] args) {
+	private static Term lookupOrCreateIndexedConstructor(BuiltInPreConstructorSymbol sym, Term[] args) {
 		switch (sym) {
 		case BV_TO_BV_SIGNED:
 			return makeBvToBvSigned(sym, args);
@@ -702,7 +702,7 @@ public final class Constructors {
 		return ((I32) t.getArgs()[0]).getVal();
 	}
 
-	private static Term makeBvToBvSigned(IndexedConstructorSymbol sym, Term[] args) {
+	private static Term makeBvToBvSigned(BuiltInPreConstructorSymbol sym, Term[] args) {
 		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
 
 			@Override
@@ -728,7 +728,7 @@ public final class Constructors {
 		});
 	}
 
-	private static Term makeBvToBvUnsigned(IndexedConstructorSymbol sym, Term[] args) {
+	private static Term makeBvToBvUnsigned(BuiltInPreConstructorSymbol sym, Term[] args) {
 		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
 
 			@Override
@@ -755,7 +755,7 @@ public final class Constructors {
 
 	}
 
-	private static Term makeBvToFp(IndexedConstructorSymbol sym, Term[] args) {
+	private static Term makeBvToFp(BuiltInPreConstructorSymbol sym, Term[] args) {
 		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
 
 			@Override
@@ -770,7 +770,7 @@ public final class Constructors {
 		});
 	}
 
-	private static Term makeFpToFp(IndexedConstructorSymbol sym, Term[] args) {
+	private static Term makeFpToFp(BuiltInPreConstructorSymbol sym, Term[] args) {
 		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
 
 			@Override
@@ -785,7 +785,7 @@ public final class Constructors {
 		});
 	}
 
-	private static Term makeFpToBv(IndexedConstructorSymbol sym, Term[] args) {
+	private static Term makeFpToBv(BuiltInPreConstructorSymbol sym, Term[] args) {
 		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
 
 			@Override

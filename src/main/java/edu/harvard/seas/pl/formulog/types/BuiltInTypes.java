@@ -27,11 +27,11 @@ import static edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol.CONS
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol.NIL;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol.NONE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol.SOME;
+import static edu.harvard.seas.pl.formulog.symbols.BuiltInPreTypeSymbol.BV;
+import static edu.harvard.seas.pl.formulog.symbols.BuiltInPreTypeSymbol.FP;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.ARRAY_TYPE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.BOOL_TYPE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.CMP_TYPE;
-import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.FORMULA_VAR_LIST_TYPE;
-import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.HETEROGENEOUS_LIST_TYPE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.INT_TYPE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.LIST_TYPE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.MODEL_TYPE;
@@ -39,8 +39,6 @@ import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.OPTION_TYPE
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.SMT_TYPE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.STRING_TYPE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.SYM_TYPE;
-import static edu.harvard.seas.pl.formulog.symbols.IndexedTypeSymbol.BV;
-import static edu.harvard.seas.pl.formulog.symbols.IndexedTypeSymbol.FP;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -48,10 +46,12 @@ import java.util.List;
 
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorGetterSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.GlobalSymbolManager;
+import edu.harvard.seas.pl.formulog.symbols.NatParam;
+import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType.ConstructorScheme;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
-import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
 import edu.harvard.seas.pl.formulog.types.Types.TypeVar;
 
 public final class BuiltInTypes {
@@ -73,8 +73,6 @@ public final class BuiltInTypes {
 	public static final Type bool = AlgebraicDataType.make(BOOL_TYPE);
 	public static final Type cmp = AlgebraicDataType.make(CMP_TYPE);
 	public static final Type model = AlgebraicDataType.make(MODEL_TYPE);
-	public static final Type formula_var_list = AlgebraicDataType.make(FORMULA_VAR_LIST_TYPE);
-	public static final Type heterogeneous_list = AlgebraicDataType.make(HETEROGENEOUS_LIST_TYPE);
 	public static final Type int_ = AlgebraicDataType.make(INT_TYPE);
 
 	static {
@@ -123,24 +121,16 @@ public final class BuiltInTypes {
 		return AlgebraicDataType.make(SYM_TYPE, Collections.singletonList(a));
 	}
 
-	public static AlgebraicDataType bv(Type a) {
-		assert a instanceof TypeVar || a instanceof TypeIndex;
-		return AlgebraicDataType.make(BV, Collections.singletonList(a));
-	}
-
-	public static AlgebraicDataType fp(Type a, Type b) {
-		assert (a instanceof TypeVar && b instanceof TypeVar) || (b instanceof TypeIndex && b instanceof TypeIndex);
-		return AlgebraicDataType.make(FP, Arrays.asList(a, b));
-	}
-	
 	public static AlgebraicDataType bv(int width) {
-		return bv(TypeIndex.make(width));
+		TypeSymbol sym = (TypeSymbol) GlobalSymbolManager.INSTANCE.instantiatePreSymbol(BV, new NatParam(width));
+		return AlgebraicDataType.make(sym);
 	}
 
 	public static AlgebraicDataType fp(int exponent, int significand) {
-		return fp(TypeIndex.make(exponent), TypeIndex.make(significand));
+		TypeSymbol sym = (TypeSymbol) GlobalSymbolManager.INSTANCE.instantiatePreSymbol(FP, new NatParam(exponent), new NatParam(significand));
+		return AlgebraicDataType.make(sym);
 	}
-	
+
 	public static AlgebraicDataType array(Type a, Type b) {
 		return AlgebraicDataType.make(ARRAY_TYPE, Arrays.asList(a, b));
 	}

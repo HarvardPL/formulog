@@ -20,51 +20,48 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-public enum BuiltInTypeSymbol implements TypeSymbol {
+import java.util.Map;
 
-	BOOL_TYPE("bool", 0),
+public class NatParam implements ParamElt {
 
-	LIST_TYPE("list", 1),
-
-	OPTION_TYPE("option", 1),
-
-	CMP_TYPE("cmp", 0),
+	private final int nat;
 	
-	STRING_TYPE("string", 0),
-	
-	SMT_TYPE("smt", 1),
-	
-	SYM_TYPE("sym", 1),
-	
-	ARRAY_TYPE("array", 2),
-	
-	MODEL_TYPE("model", 0),
-	
-	INT_TYPE("int", 0),
-	
-	;
-
-	private final String name;
-	private final int arity;
-
-	private BuiltInTypeSymbol(String name, int arity) {
-		this.name = name;
-		this.arity = arity;
+	public NatParam(int nat) {
+		if (nat < 0) {
+			throw new IllegalArgumentException("Parameter cannot be less than zero.");
+		}
+		this.nat = nat;
 	}
 
 	@Override
-	public int getArity() {
-		return arity;
+	public ParamElt applySubst(Map<ParamVar, ParamElt> subst) {
+		return this;
+	}
+	
+	public int getNat() {
+		return nat;
 	}
 
 	@Override
-	public TypeSymbolType getTypeSymbolType() {
-		return TypeSymbolType.NORMAL_TYPE;
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + nat;
+		return result;
 	}
 
 	@Override
-	public String getName() {
-		return name;
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		NatParam other = (NatParam) obj;
+		if (nat != other.nat)
+			return false;
+		return true;
 	}
 
 }

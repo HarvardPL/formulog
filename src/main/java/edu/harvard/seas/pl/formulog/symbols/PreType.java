@@ -20,51 +20,11 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-public enum BuiltInTypeSymbol implements TypeSymbol {
+import java.util.Map;
 
-	BOOL_TYPE("bool", 0),
-
-	LIST_TYPE("list", 1),
-
-	OPTION_TYPE("option", 1),
-
-	CMP_TYPE("cmp", 0),
-	
-	STRING_TYPE("string", 0),
-	
-	SMT_TYPE("smt", 1),
-	
-	SYM_TYPE("sym", 1),
-	
-	ARRAY_TYPE("array", 2),
-	
-	MODEL_TYPE("model", 0),
-	
-	INT_TYPE("int", 0),
-	
-	;
-
-	private final String name;
-	private final int arity;
-
-	private BuiltInTypeSymbol(String name, int arity) {
-		this.name = name;
-		this.arity = arity;
-	}
+public interface PreType extends ParamElt {
 
 	@Override
-	public int getArity() {
-		return arity;
-	}
-
-	@Override
-	public TypeSymbolType getTypeSymbolType() {
-		return TypeSymbolType.NORMAL_TYPE;
-	}
-
-	@Override
-	public String getName() {
-		return name;
-	}
-
+	PreType applySubst(Map<ParamVar, ParamElt> subst);
+	
 }

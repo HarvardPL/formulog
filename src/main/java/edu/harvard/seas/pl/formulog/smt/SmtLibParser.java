@@ -42,7 +42,7 @@ import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
-import edu.harvard.seas.pl.formulog.symbols.IndexedTypeSymbol;
+import edu.harvard.seas.pl.formulog.symbols.BuiltInPreTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
@@ -150,8 +150,8 @@ public class SmtLibParser {
 		if (!seen.add(sym)) {
 			return true;
 		}
-		if (sym instanceof IndexedTypeSymbol) {
-			switch ((IndexedTypeSymbol) sym) {
+		if (sym instanceof BuiltInPreTypeSymbol) {
+			switch ((BuiltInPreTypeSymbol) sym) {
 			case BV: {
 				TypeIndex idx = (TypeIndex) type.getTypeArgs().get(0);
 				int w = idx.getIndex();
@@ -204,8 +204,8 @@ public class SmtLibParser {
 
 	private TermType getTermType(AlgebraicDataType type) throws SmtLibParseException {
 		TypeSymbol sym = type.getSymbol();
-		if (sym instanceof IndexedTypeSymbol) {
-			switch ((IndexedTypeSymbol) sym) {
+		if (sym instanceof BuiltInPreTypeSymbol) {
+			switch ((BuiltInPreTypeSymbol) sym) {
 			case BV: {
 				TypeIndex idx = (TypeIndex) type.getTypeArgs().get(0);
 				int w = idx.getIndex();

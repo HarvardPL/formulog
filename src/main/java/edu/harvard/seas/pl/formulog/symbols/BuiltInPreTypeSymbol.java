@@ -1,5 +1,8 @@
 package edu.harvard.seas.pl.formulog.symbols;
 
+import java.util.Arrays;
+import java.util.List;
+
 /*-
  * #%L
  * FormuLog
@@ -20,50 +23,35 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-public enum IndexedTypeSymbol implements TypeSymbol, IndexedSymbol {
+public enum BuiltInPreTypeSymbol implements PreTypeSymbol {
 	
-	BV("bv", 0, 1, 0),
+	BV("bv", ParamType.NAT),
 
-	FP("fp", 0, 2, 0),
+	FP("fp", ParamType.NAT, ParamType.NAT),
 	
 	;
 	
 	private final String name;
-	private final int arity;
-	private final int numExplicitIndices;
-	private final int numImplicitIndices;
+	private final List<ParamType> paramTypes;
 
-	private IndexedTypeSymbol(String name, int nonIndexArity, int numExplicitIndices, int numImplicitIndices) {
+	private BuiltInPreTypeSymbol(String name, ParamType... params) {
 		this.name = name;
-		this.arity = nonIndexArity + numExplicitIndices + numImplicitIndices;
-		this.numExplicitIndices = numExplicitIndices;
-		this.numImplicitIndices = numImplicitIndices;
+		this.paramTypes = Arrays.asList(params);
 	}
 
 	@Override
 	public int getArity() {
-		return arity;
+		return 0;
 	}
 
 	@Override
-	public int getNumExplicitIndices() {
-		return numExplicitIndices;
+	public List<ParamType> getParamTypes() {
+		return paramTypes;
 	}
 
 	@Override
-	public int getNumImplicitIndices() {
-		return numImplicitIndices;
-	}
-
-	@Override
-	public String toString() {
+	public String getName() {
 		return name;
 	}
-
-	@Override
-	public TypeSymbolType getTypeSymbolType() {
-		return TypeSymbolType.NORMAL_TYPE;
-	}
-
 
 }

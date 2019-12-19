@@ -21,6 +21,7 @@ package edu.harvard.seas.pl.formulog.symbols;
  */
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,30 +41,7 @@ public class SymbolManager {
 	private final Map<String, Symbol> memo = new ConcurrentHashMap<>();
 	private final Set<TypeSymbol> typeSymbols = Util.concurrentSet();
 
-	private boolean initialized = false;
-
-	public void initialize() {
-		if (initialized) {
-			throw new IllegalStateException("Cannot initialize symbol manager multiple times.");
-		}
-		registerAll(BuiltInTypeSymbol.values());
-		registerAll(BuiltInConstructorSymbol.values());
-		registerAll(BuiltInFunctionSymbol.values());
-		registerAll(BuiltInConstructorTesterSymbol.values());
-		registerAll(BuiltInConstructorGetterSymbol.values());
-		registerAll(IndexedTypeSymbol.values());
-		registerAll(IndexedConstructorSymbol.values());
-		initialized = true;
-	}
-
-	public void assertInitialized() {
-		if (!initialized) {
-			throw new IllegalStateException("Symbol manager is not initialized.");
-		}
-	}
-
 	public TypeSymbol createTypeSymbol(String name, int arity, TypeSymbolType st) {
-		assertInitialized();
 		checkNotUsed(name);
 		TypeSymbol sym = new TypeSymbolImpl(name, arity, st);
 		registerSymbol(sym);
@@ -72,7 +50,6 @@ public class SymbolManager {
 
 	public ConstructorSymbol createConstructorSymbol(String name, int arity, ConstructorSymbolType st,
 			FunctorType type) {
-		assertInitialized();
 		checkNotUsed(name);
 		ConstructorSymbol sym = new ConstructorSymbolImpl(name, arity, st, type);
 		registerSymbol(sym);
@@ -80,7 +57,6 @@ public class SymbolManager {
 	}
 
 	public RecordSymbol createRecordSymbol(String name, int arity, FunctorType type, List<FunctionSymbol> labels) {
-		assertInitialized();
 		checkNotUsed(name);
 		RecordSymbol sym = new RecordSymbolImpl(name, arity, type, labels);
 		registerSymbol(sym);
@@ -88,7 +64,6 @@ public class SymbolManager {
 	}
 
 	public FunctionSymbol createFunctionSymbol(String name, int arity, FunctorType type) {
-		assertInitialized();
 		checkNotUsed(name);
 		FunctionSymbol sym = new FunctionSymbolImpl(name, arity, type);
 		registerSymbol(sym);
@@ -96,7 +71,6 @@ public class SymbolManager {
 	}
 
 	public MutableRelationSymbol createRelationSymbol(String name, int arity, boolean isIdb, FunctorType type) {
-		assertInitialized();
 		checkNotUsed(name);
 		MutableRelationSymbol sym = new RelationSymbolImpl(name, arity, isIdb, type);
 		registerSymbol(sym);
@@ -115,26 +89,23 @@ public class SymbolManager {
 	}
 
 	public Symbol lookupSymbol(String name) {
-		assertInitialized();
 		Symbol sym = memo.get(name);
 		if (sym == null) {
 			throw new IllegalArgumentException("No symbol exists with name " + name + ".");
 		}
-		if (sym instanceof IndexedSymbol) {
+		if (sym instanceof PreSymbol) {
 			throw new IllegalArgumentException("Symbol " + sym + " is indexed, but no indices provided.");
 		}
 		return sym;
 	}
 
-	public Pair<IndexedConstructorSymbol, List<Integer>> lookupIndexedConstructorSymbol(String name,
+	public Pair<BuiltInPreConstructorSymbol, List<Integer>> lookupIndexedConstructorSymbol(String name,
 			List<Integer> indices) {
-		assertInitialized();
 		assert !indices.isEmpty();
 		return IndexedSymbols.lookupConstructorSymbol(name, this, indices);
 	}
 
-	public Pair<IndexedTypeSymbol, List<Integer>> lookupIndexedTypeSymbol(String name, List<Integer> indices) {
-		assertInitialized();
+	public Pair<BuiltInPreTypeSymbol, List<Integer>> lookupIndexedTypeSymbol(String name, List<Integer> indices) {
 		assert !indices.isEmpty();
 		return IndexedSymbols.lookupTypeSymbol(name, this, indices);
 	}
@@ -182,86 +153,10 @@ public class SymbolManager {
 		return sym;
 	}
 	
-	public SmtEqSymbol lookupSmtEqSymbol(Type eltType) {
-		SmtEqSymbol sym = SmtEqSymbol.make(eltType);
-		registerSymbol(sym);
-		return sym;
-	}
-
-	private abstract class AbstractSymbol implements Symbol {
-
-		private final String name;
-		private final int arity;
-
-		public AbstractSymbol(String name, int arity) {
-			this.name = name;
-			this.arity = arity;
-		}
-
-		@Override
-		public int getArity() {
-			return arity;
-		}
-
-		@Override
-		public String toString() {
-			return name;
-		}
-
-	}
-
-	private class TypeSymbolImpl extends AbstractSymbol implements TypeSymbol {
-
-		private final TypeSymbolType st;
-
-		public TypeSymbolImpl(String name, int arity, TypeSymbolType st) {
-			super(name, arity);
-			this.st = st;
-		}
-
-		@Override
-		public TypeSymbolType getTypeSymbolType() {
-			return st;
-		}
-
-	}
-
-	private abstract class AbstractTypedSymbol extends AbstractSymbol implements TypedSymbol {
-
-		private final FunctorType type;
-
-		public AbstractTypedSymbol(String name, int arity, FunctorType type) {
-			super(name, arity);
-			this.type = type;
-		}
-
-		@Override
-		public FunctorType getCompileTimeType() {
-			return type;
-		}
-
-	}
-
 	private class FunctionSymbolImpl extends AbstractTypedSymbol implements FunctionSymbol {
 
 		public FunctionSymbolImpl(String name, int arity, FunctorType type) {
 			super(name, arity, type);
-		}
-
-	}
-
-	private class ConstructorSymbolImpl extends AbstractTypedSymbol implements ConstructorSymbol {
-
-		private final ConstructorSymbolType cst;
-
-		public ConstructorSymbolImpl(String name, int arity, ConstructorSymbolType cst, FunctorType type) {
-			super(name, arity, type);
-			this.cst = cst;
-		}
-
-		@Override
-		public ConstructorSymbolType getConstructorSymbolType() {
-			return cst;
 		}
 
 	}
@@ -341,14 +236,10 @@ public class SymbolManager {
 					"Cannot register symbol " + sym + "; a different symbol is already registered with that name.");
 		}
 	}
-
-	private void registerAll(Symbol[] symbols) {
-		for (Symbol sym : symbols) {
-			registerSymbol(sym);
-		}
-	}
 	
 	public Set<TypeSymbol> getTypeSymbols() {
+		Set<TypeSymbol> syms = new HashSet<>(typeSymbols);
+		syms.addAll(GlobalSymbolManager.INSTANCE.getTypeSymbols());
 		return Collections.unmodifiableSet(typeSymbols);
 	}
 

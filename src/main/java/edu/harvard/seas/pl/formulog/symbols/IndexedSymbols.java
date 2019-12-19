@@ -32,7 +32,7 @@ public final class IndexedSymbols {
 		throw new AssertionError("impossible");
 	}
 
-	public static Pair<IndexedTypeSymbol, List<Integer>> lookupTypeSymbol(String name, SymbolManager sm,
+	public static Pair<BuiltInPreTypeSymbol, List<Integer>> lookupTypeSymbol(String name, SymbolManager sm,
 			int... indices) {
 		List<Integer> is = new ArrayList<>();
 		for (int i : indices) {
@@ -41,11 +41,11 @@ public final class IndexedSymbols {
 		return lookupTypeSymbol(name, sm, is);
 	}
 
-	public static Pair<IndexedTypeSymbol, List<Integer>> lookupTypeSymbol(String name, SymbolManager sm,
+	public static Pair<BuiltInPreTypeSymbol, List<Integer>> lookupTypeSymbol(String name, SymbolManager sm,
 			List<Integer> indices) {
-		IndexedTypeSymbol sym;
+		BuiltInPreTypeSymbol sym;
 		try {
-			sym = IndexedTypeSymbol.valueOf(name.toUpperCase());
+			sym = BuiltInPreTypeSymbol.valueOf(name.toUpperCase());
 		} catch (IllegalArgumentException e) {
 			throw new IllegalArgumentException("Unrecognized symbol name: " + name);
 		}
@@ -53,7 +53,7 @@ public final class IndexedSymbols {
 		return new Pair<>(sym, massageIndices(sym, indices));
 	}
 
-	public static Pair<IndexedConstructorSymbol, List<Integer>> lookupConstructorSymbol(String name, SymbolManager sm,
+	public static Pair<BuiltInPreConstructorSymbol, List<Integer>> lookupConstructorSymbol(String name, SymbolManager sm,
 			int... indices) {
 		List<Integer> is = new ArrayList<>();
 		for (int i : indices) {
@@ -62,11 +62,11 @@ public final class IndexedSymbols {
 		return lookupConstructorSymbol(name, sm, is);
 	}
 
-	public static Pair<IndexedConstructorSymbol, List<Integer>> lookupConstructorSymbol(String name, SymbolManager sm,
+	public static Pair<BuiltInPreConstructorSymbol, List<Integer>> lookupConstructorSymbol(String name, SymbolManager sm,
 			List<Integer> indices) {
-		IndexedConstructorSymbol sym;
+		BuiltInPreConstructorSymbol sym;
 		try {
-			sym = IndexedConstructorSymbol.valueOf(name.toUpperCase());
+			sym = BuiltInPreConstructorSymbol.valueOf(name.toUpperCase());
 		} catch (IllegalArgumentException e) {
 			throw new IllegalArgumentException("Unrecognized symbol name: " + name);
 		}
@@ -74,7 +74,7 @@ public final class IndexedSymbols {
 		return new Pair<>(sym, massageIndices(sym, indices));
 	}
 
-	private static List<Integer> massageIndices(IndexedSymbol sym, List<Integer> indices) {
+	private static List<Integer> massageIndices(PreSymbol sym, List<Integer> indices) {
 		indices = expandIndices(sym, indices);
 		if (indices.size() != sym.getNumExplicitIndices()) {
 			throw new IllegalArgumentException("Unexpected number of indices: " + sym);
@@ -103,7 +103,7 @@ public final class IndexedSymbols {
 		return new ArrayList<>(is);
 	}
 
-	public static List<Integer> padIndices(IndexedSymbol sym, List<Integer> indices) {
+	public static List<Integer> padIndices(PreSymbol sym, List<Integer> indices) {
 		List<Integer> l = new ArrayList<>();
 		// All padding happens at front of index list...
 		for (int i = 0; i < sym.getNumImplicitIndices(); ++i) {
@@ -113,9 +113,9 @@ public final class IndexedSymbols {
 		return l;
 	}
 
-	private static List<Integer> expandIndices(IndexedSymbol sym, List<Integer> indices) {
-		if (sym instanceof IndexedTypeSymbol) {
-			switch ((IndexedTypeSymbol) sym) {
+	private static List<Integer> expandIndices(PreSymbol sym, List<Integer> indices) {
+		if (sym instanceof BuiltInPreTypeSymbol) {
+			switch ((BuiltInPreTypeSymbol) sym) {
 			case BV:
 				break;
 			case FP:
@@ -124,8 +124,8 @@ public final class IndexedSymbols {
 				}
 				break;
 			}
-		} else if (sym instanceof IndexedConstructorSymbol) {
-			switch ((IndexedConstructorSymbol) sym) {
+		} else if (sym instanceof BuiltInPreConstructorSymbol) {
+			switch ((BuiltInPreConstructorSymbol) sym) {
 			case BV_BIG_CONST:
 			case BV_CONST:
 			case BV_TO_BV_SIGNED:

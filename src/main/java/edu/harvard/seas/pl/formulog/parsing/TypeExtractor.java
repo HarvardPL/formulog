@@ -32,7 +32,7 @@ import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TypeContext
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TypeRefContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TypeVarContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogVisitor;
-import edu.harvard.seas.pl.formulog.symbols.IndexedTypeSymbol;
+import edu.harvard.seas.pl.formulog.symbols.BuiltInPreTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
@@ -120,7 +120,7 @@ class TypeExtractor {
 				String name = ctx.ID().getText();
 				TypeSymbol sym;
 				if (!indices.isEmpty()) {
-					Pair<IndexedTypeSymbol, List<Integer>> p = pc.symbolManager().lookupIndexedTypeSymbol(name,
+					Pair<BuiltInPreTypeSymbol, List<Integer>> p = pc.symbolManager().lookupIndexedTypeSymbol(name,
 							indices);
 					sym = p.fst();
 					indices = p.snd();

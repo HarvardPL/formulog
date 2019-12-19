@@ -94,7 +94,7 @@ import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
-import edu.harvard.seas.pl.formulog.symbols.IndexedConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.BuiltInPreConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
@@ -189,7 +189,7 @@ class TermExtractor {
 					sym = pc.symbolManager().lookupSymbol(name);
 				}
 			} else {
-				Pair<IndexedConstructorSymbol, List<Integer>> p = pc.symbolManager()
+				Pair<BuiltInPreConstructorSymbol, List<Integer>> p = pc.symbolManager()
 						.lookupIndexedConstructorSymbol(name, indices);
 				sym = p.fst();
 				indices = p.snd();
@@ -213,8 +213,8 @@ class TermExtractor {
 			// For a couple constructors, we want to make sure that their arguments are
 			// forced to be non-formula types. For example, the constructor bv_const needs
 			// to take something of type i32, not i32 expr.
-			if (sym instanceof IndexedConstructorSymbol) {
-				switch ((IndexedConstructorSymbol) sym) {
+			if (sym instanceof BuiltInPreConstructorSymbol) {
+				switch ((BuiltInPreConstructorSymbol) sym) {
 				case BV_BIG_CONST:
 				case BV_CONST:
 				case FP_BIG_CONST:

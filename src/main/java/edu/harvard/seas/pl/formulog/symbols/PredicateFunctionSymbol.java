@@ -110,8 +110,16 @@ public class PredicateFunctionSymbol implements FunctionSymbol {
 		return type;
 	}
 
+	public RelationSymbol getPredicateSymbol() {
+		return predSymbol;
+	}
+
+	public BindingType[] getBindings() {
+		return bindings;
+	}
+
 	@Override
-	public String toString() {
+	public String getName() {
 		String s = predSymbol.toString();
 		if (bindings != null) {
 			if (bindings.length > 0) {
@@ -128,14 +136,6 @@ public class PredicateFunctionSymbol implements FunctionSymbol {
 			s += "?";
 		}
 		return s + "?";
-	}
-
-	public RelationSymbol getPredicateSymbol() {
-		return predSymbol;
-	}
-
-	public BindingType[] getBindings() {
-		return bindings;
 	}
 
 }

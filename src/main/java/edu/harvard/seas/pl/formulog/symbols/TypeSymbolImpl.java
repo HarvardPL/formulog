@@ -20,51 +20,18 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-public enum BuiltInTypeSymbol implements TypeSymbol {
+class TypeSymbolImpl extends AbstractSymbol implements TypeSymbol {
 
-	BOOL_TYPE("bool", 0),
-
-	LIST_TYPE("list", 1),
-
-	OPTION_TYPE("option", 1),
-
-	CMP_TYPE("cmp", 0),
+	private final TypeSymbolType symType;
 	
-	STRING_TYPE("string", 0),
-	
-	SMT_TYPE("smt", 1),
-	
-	SYM_TYPE("sym", 1),
-	
-	ARRAY_TYPE("array", 2),
-	
-	MODEL_TYPE("model", 0),
-	
-	INT_TYPE("int", 0),
-	
-	;
-
-	private final String name;
-	private final int arity;
-
-	private BuiltInTypeSymbol(String name, int arity) {
-		this.name = name;
-		this.arity = arity;
-	}
-
-	@Override
-	public int getArity() {
-		return arity;
+	public TypeSymbolImpl(String name, int arity, TypeSymbolType symType) {
+		super(name, arity);
+		this.symType = symType;
 	}
 
 	@Override
 	public TypeSymbolType getTypeSymbolType() {
-		return TypeSymbolType.NORMAL_TYPE;
-	}
-
-	@Override
-	public String getName() {
-		return name;
+		return symType;
 	}
 
 }

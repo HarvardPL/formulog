@@ -20,51 +20,25 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-public enum BuiltInTypeSymbol implements TypeSymbol {
+import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 
-	BOOL_TYPE("bool", 0),
+public final class PreTypes {
 
-	LIST_TYPE("list", 1),
-
-	OPTION_TYPE("option", 1),
-
-	CMP_TYPE("cmp", 0),
-	
-	STRING_TYPE("string", 0),
-	
-	SMT_TYPE("smt", 1),
-	
-	SYM_TYPE("sym", 1),
-	
-	ARRAY_TYPE("array", 2),
-	
-	MODEL_TYPE("model", 0),
-	
-	INT_TYPE("int", 0),
-	
-	;
-
-	private final String name;
-	private final int arity;
-
-	private BuiltInTypeSymbol(String name, int arity) {
-		this.name = name;
-		this.arity = arity;
+	private PreTypes() {
+		throw new AssertionError("impossible");
 	}
+	
+	public static final PreType fp32 = new InstantiatedType(BuiltInTypes.fp32);
+	public static final PreType fp64 = new InstantiatedType(BuiltInTypes.fp64);
+	public static final PreType i32 = new InstantiatedType(BuiltInTypes.i32);
+	public static final PreType i64 = new InstantiatedType(BuiltInTypes.i64);
 
-	@Override
-	public int getArity() {
-		return arity;
+	public static PreType bv(ParamElt width) {
+		return new UninstantiatedType(BuiltInPreTypeSymbol.BV, width);
 	}
-
-	@Override
-	public TypeSymbolType getTypeSymbolType() {
-		return TypeSymbolType.NORMAL_TYPE;
-	}
-
-	@Override
-	public String getName() {
-		return name;
+	
+	public static PreType fp(ParamElt exponent, ParamElt significand) {
+		return new UninstantiatedType(BuiltInPreTypeSymbol.FP, exponent, significand);
 	}
 
 }

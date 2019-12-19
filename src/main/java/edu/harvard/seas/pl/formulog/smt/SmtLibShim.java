@@ -59,7 +59,7 @@ import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.smt.SmtLibParser.SmtLibParseException;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
-import edu.harvard.seas.pl.formulog.symbols.IndexedTypeSymbol;
+import edu.harvard.seas.pl.formulog.symbols.BuiltInPreTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
@@ -404,8 +404,8 @@ public class SmtLibShim {
 			@Override
 			public String visit(AlgebraicDataType algebraicType, Void in) {
 				TypeSymbol sym = algebraicType.getSymbol();
-				if (sym instanceof IndexedTypeSymbol) {
-					return stringifyIndexedSymbol((IndexedTypeSymbol) sym, algebraicType.getTypeArgs());
+				if (sym instanceof BuiltInPreTypeSymbol) {
+					return stringifyIndexedSymbol((BuiltInPreTypeSymbol) sym, algebraicType.getTypeArgs());
 				}
 				if (sym instanceof BuiltInTypeSymbol) {
 					switch ((BuiltInTypeSymbol) sym) {
@@ -444,7 +444,7 @@ public class SmtLibShim {
 				throw new AssertionError("impossible");
 			}
 
-			private String stringifyIndexedSymbol(IndexedTypeSymbol sym, List<Type> typeArgs) {
+			private String stringifyIndexedSymbol(BuiltInPreTypeSymbol sym, List<Type> typeArgs) {
 				Function<Type, Integer> forceIdx = t -> ((TypeIndex) t).getIndex();
 				switch (sym) {
 				case BV:
@@ -543,8 +543,8 @@ public class SmtLibShim {
 			if (sym.isAlias()) {
 				return false;
 			}
-			if (sym instanceof IndexedTypeSymbol) {
-				switch ((IndexedTypeSymbol) sym) {
+			if (sym instanceof BuiltInPreTypeSymbol) {
+				switch ((BuiltInPreTypeSymbol) sym) {
 				case BV:
 				case FP:
 					return false;

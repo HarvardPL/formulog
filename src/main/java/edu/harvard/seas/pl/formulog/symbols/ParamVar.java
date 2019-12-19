@@ -20,10 +20,35 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-public interface IndexedSymbol {
+import java.util.Map;
 
-	int getNumExplicitIndices();
+public class ParamVar implements ParamElt {
+
+	public static final ParamVar h = new ParamVar(ParamType.NAT);
+	public static final ParamVar i = new ParamVar(ParamType.NAT);
+	public static final ParamVar j = new ParamVar(ParamType.NAT);
+	public static final ParamVar k = new ParamVar(ParamType.NAT);
 	
-	int getNumImplicitIndices();
+	private final ParamType paramType;
 	
+	public ParamVar(ParamType paramType) {
+		this.paramType = paramType;
+	}
+	
+	public ParamVar fresh() {
+		return new ParamVar(paramType);
+	}
+	
+	public ParamType getParamType() {
+		return paramType;
+	}
+
+	@Override
+	public ParamElt applySubst(Map<ParamVar, ParamElt> subst) {
+		if (subst.containsKey(this)) {
+			return subst.get(this);
+		}
+		return this;
+	}
+
 }
