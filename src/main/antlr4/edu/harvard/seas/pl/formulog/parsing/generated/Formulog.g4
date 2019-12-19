@@ -84,7 +84,7 @@ type0
 		'(' type
 		(
 			',' type
-		)+ ')'
+		)* ')'
 	)? ID index # typeRef
 ;
 
