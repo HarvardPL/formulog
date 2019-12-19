@@ -30,7 +30,7 @@ import org.pcollections.PMap;
 
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.smt.SmtLibShim;
-import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
+import edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.util.Util;
 
@@ -87,7 +87,7 @@ public class FP64 extends AbstractTerm implements Primitive<Double>, SmtLibTerm 
 
 	@Override
 	public Type getType() {
-		return BuiltInTypes.fp64;
+		return BuiltInTypesFactory.fp64;
 	}
 	
 	@Override

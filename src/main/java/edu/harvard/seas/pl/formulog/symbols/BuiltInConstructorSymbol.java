@@ -22,19 +22,25 @@ package edu.harvard.seas.pl.formulog.symbols;
 
 import static edu.harvard.seas.pl.formulog.symbols.ConstructorSymbolType.SOLVER_EXPR;
 import static edu.harvard.seas.pl.formulog.symbols.ConstructorSymbolType.VANILLA_CONSTRUCTOR;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.a;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.array;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.b;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.bool;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.bv;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.cmp;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.fp;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.int_;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.list;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.option;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.smt;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.string;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.sym;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.a;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.array;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.b;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.bool;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.bv;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.c;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.cmp;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.d;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.fp;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.fp32;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.fp64;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.i32;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.i64;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.int_;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.list;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.option;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.smt;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.string;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.sym;
 
 import java.util.Arrays;
 import java.util.List;
@@ -120,6 +126,12 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol, PreSymbol {
 
 	FP_IS_NAN("fp_is_nan", 1, SOLVER_EXPR),
 	
+	FP_CONST("fp_const", 1, SOLVER_EXPR, NatPreIndex.a, NatPreIndex.b),
+
+	FP_BIG_CONST("fp_big_const", 1, SOLVER_EXPR, NatPreIndex.a, NatPreIndex.b),
+
+	FP_TO_FP("fp_to_fp", 1, SOLVER_EXPR, NatPreIndex.a, NatPreIndex.b, NatPreIndex.c, NatPreIndex.d),
+	
 	// Bit vector
 
 	BV_NEG("bv_neg", 1, SOLVER_EXPR),
@@ -159,6 +171,20 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol, PreSymbol {
 	BV_UGT("bv_ugt", 2, SOLVER_EXPR),
 
 	BV_UGE("bv_uge", 2, SOLVER_EXPR),
+	
+	BV_CONST("bv_const", 1, SOLVER_EXPR, NatPreIndex.a),
+
+	BV_BIG_CONST("bv_big_const", 1, SOLVER_EXPR, NatPreIndex.a),
+
+	BV_TO_BV_SIGNED("bv_to_bv_signed", 1, SOLVER_EXPR, NatPreIndex.a, NatPreIndex.b),
+
+	BV_TO_BV_UNSIGNED("bv_to_bv_unsigned", 1, SOLVER_EXPR, NatPreIndex.a, NatPreIndex.b),
+	
+	// Numeric conversions
+
+	FP_TO_BV("fp_to_bv", 1, SOLVER_EXPR, NatPreIndex.a, NatPreIndex.b, NatPreIndex.c),
+
+	BV_TO_FP("bv_to_fp", 1, SOLVER_EXPR, NatPreIndex.a, NatPreIndex.b, NatPreIndex.c),
 	
 	// Arrays
 
@@ -357,9 +383,9 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol, PreSymbol {
 		case INT_NEG:
 			return makeType(smt(int_), smt(int_));
 		case INT_BIG_CONST:
-			return makeType(bv(64), smt(int_));
+			return makeType(i64, smt(int_));
 		case INT_CONST:
-			return makeType(bv(32), smt(int_));
+			return makeType(i32, smt(int_));
 		case INT_GE:
 		case INT_GT:
 		case INT_LE:
@@ -375,6 +401,26 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol, PreSymbol {
 			return makeType(smt(a), smt(a));
 		case EXIT_FORMULA:
 			return makeType(a, a);
+		case BV_BIG_CONST:
+			return makeType(i64, smt(bv(a)));
+		case BV_CONST:
+			return makeType(i32, smt(bv(a)));
+		case BV_TO_BV_SIGNED:
+			return makeType(smt(bv(a)), smt(bv(b)));
+		case BV_TO_BV_UNSIGNED:
+			return makeType(smt(bv(a)), smt(bv(b)));
+		case BV_TO_FP:
+			return makeType(smt(bv(a)), smt(fp(b, c)));
+		case FP_BIG_CONST:
+			return makeType(fp64, smt(bv(a)));
+		case FP_CONST:
+			return makeType(fp32, smt(bv(a)));
+		case FP_TO_BV:
+			return makeType(smt(fp(a, b)), smt(bv(c)));
+		case FP_TO_FP:
+			return makeType(smt(fp(a, b)), smt(fp(c, d)));
+		default:
+			break;
 		}
 		throw new AssertionError("impossible");
 	}

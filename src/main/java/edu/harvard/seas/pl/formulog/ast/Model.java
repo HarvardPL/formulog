@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
-import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
+import edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.util.Util;
 
@@ -50,7 +50,7 @@ public class Model extends AbstractTerm implements Primitive<Map<SolverVariable,
 
 	@Override
 	public Type getType() {
-		return BuiltInTypes.model;
+		return BuiltInTypesFactory.model;
 	}
 
 	@Override

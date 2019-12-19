@@ -20,10 +20,10 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.a;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.list;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.option;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.smt;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.a;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.list;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.option;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.smt;
 
 import java.util.ArrayList;
 import java.util.Arrays;

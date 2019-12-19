@@ -467,7 +467,7 @@ public class TypeChecker {
 					Term[] args = fold.getArgs();
 					assert sym.getArity() == args.length && args.length == 2;
 					Type itemType = TypeVar.fresh();
-					Type listType = BuiltInTypes.list(itemType);
+					Type listType = BuiltInTypesFactory.list(itemType);
 					FunctorType funType = sym.getCompileTimeType().freshen();
 					genConstraints(args[0], exprType, varTypes, inFormula);
 					genConstraints(args[0], funType.getArgTypes().get(0), varTypes, inFormula);

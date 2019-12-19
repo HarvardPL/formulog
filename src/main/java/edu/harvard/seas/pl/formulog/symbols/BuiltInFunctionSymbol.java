@@ -20,19 +20,19 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.a;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.b;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.bool;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.cmp;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.fp32;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.fp64;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.i32;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.i64;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.model;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.option;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.smt;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.string;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.sym;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.a;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.b;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.bool;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.cmp;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.fp32;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.fp64;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.i32;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.i64;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.model;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.option;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.smt;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.string;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory.sym;
 
 import java.util.ArrayList;
 import java.util.Arrays;

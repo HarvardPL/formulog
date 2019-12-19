@@ -53,7 +53,7 @@ import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
-import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
+import edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 
 public class PredicateFunctionSetter {
@@ -182,7 +182,7 @@ public class PredicateFunctionSetter {
 		FunctorType type = sym.getCompileTimeType();
 		Term[] paddedArgs = padArgs(sym);
 		FunctionDef innerDef;
-		if (type.getRetType().equals(BuiltInTypes.bool)) {
+		if (type.getRetType().equals(BuiltInTypesFactory.bool)) {
 			innerDef = makePredicate(sym, paddedArgs, idx);
 		} else {
 			innerDef = makeAggregate(sym, paddedArgs, idx);

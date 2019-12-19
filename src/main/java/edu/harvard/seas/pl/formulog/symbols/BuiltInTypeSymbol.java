@@ -1,5 +1,8 @@
 package edu.harvard.seas.pl.formulog.symbols;
 
+import java.util.Arrays;
+import java.util.List;
+
 /*-
  * #%L
  * FormuLog
@@ -20,7 +23,7 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-public enum BuiltInTypeSymbol implements TypeSymbol {
+public enum BuiltInTypeSymbol implements TypeSymbol, PreSymbol {
 
 	BOOL_TYPE("bool", 0),
 
@@ -40,20 +43,22 @@ public enum BuiltInTypeSymbol implements TypeSymbol {
 	
 	MODEL_TYPE("model", 0),
 	
-	FORMULA_VAR_LIST_TYPE("formula_var_list", 0),
-	
-	HETEROGENEOUS_LIST_TYPE("heterogenous_list", 0),
-	
 	INT_TYPE("int", 0),
+	
+	BV("bv", 0, NatPreIndex.a),
+	
+	FP("fp", 0, NatPreIndex.a, NatPreIndex.b),
 	
 	;
 
 	private final String name;
 	private final int arity;
+	private final List<PreIndex> preIndices;
 
-	private BuiltInTypeSymbol(String name, int arity) {
+	private BuiltInTypeSymbol(String name, int arity, PreIndex... preIndices) {
 		this.name = name;
 		this.arity = arity;
+		this.preIndices = Arrays.asList(preIndices);
 	}
 
 	@Override
@@ -69,6 +74,16 @@ public enum BuiltInTypeSymbol implements TypeSymbol {
 	@Override
 	public TypeSymbolType getTypeSymbolType() {
 		return TypeSymbolType.NORMAL_TYPE;
+	}
+
+	@Override
+	public PreSymbol getRootPreSymbol() {
+		return this;
+	}
+
+	@Override
+	public List<PreIndex> getPreIndices() {
+		return preIndices;
 	}
 
 }

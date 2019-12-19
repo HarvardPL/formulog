@@ -28,7 +28,7 @@ import java.util.Map;
 
 import edu.harvard.seas.pl.formulog.ast.BindingType;
 import edu.harvard.seas.pl.formulog.db.BindingTypeArrayWrapper;
-import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
+import edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
@@ -77,12 +77,12 @@ public class PredicateFunctionSymbol implements FunctionSymbol {
 		}
 		Type retType;
 		if (retTypes.isEmpty()) {
-			retType = BuiltInTypes.bool;
+			retType = BuiltInTypesFactory.bool;
 		} else if (retTypes.size() == 1) {
-			retType = BuiltInTypes.list(retTypes.get(0));
+			retType = BuiltInTypesFactory.list(retTypes.get(0));
 		} else {
 			TypeSymbol tupTypeSym = sm.lookupTupleTypeSymbol(retTypes.size());
-			retType = BuiltInTypes.list(AlgebraicDataType.make(tupTypeSym, retTypes));
+			retType = BuiltInTypesFactory.list(AlgebraicDataType.make(tupTypeSym, retTypes));
 		}
 		type = new FunctorType(argTypes, retType);
 		PredicateFunctionSymbol funcSym = new PredicateFunctionSymbol(predSym, bindings, type);
