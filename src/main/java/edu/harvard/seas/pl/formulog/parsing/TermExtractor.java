@@ -97,7 +97,7 @@ import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.IndexedConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
-import edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory;
+import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.OpaqueType;
@@ -707,7 +707,7 @@ class TermExtractor {
 				isNotFun = (FunctionSymbol) pc.symbolManager().lookupSymbol(name);
 			} else {
 				isNotFun = pc.symbolManager().createFunctionSymbol("not%" + ctor, 1,
-						new FunctorType(ctorType.getRetType(), BuiltInTypesFactory.bool));
+						new FunctorType(ctorType.getRetType(), BuiltInTypes.bool));
 			}
 
 			// generate the function if needed

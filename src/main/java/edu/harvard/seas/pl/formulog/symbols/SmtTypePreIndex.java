@@ -20,7 +20,7 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory;
+import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.TypeException;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.types.Types.TypeVar;
@@ -28,7 +28,7 @@ import edu.harvard.seas.pl.formulog.util.TodoException;
 
 public class SmtTypePreIndex implements TypePreIndex {
 
-	public static final SmtTypePreIndex a = new SmtTypePreIndex(BuiltInTypesFactory.a);
+	public static final SmtTypePreIndex a = new SmtTypePreIndex(BuiltInTypes.a);
 	
 	private final TypeVar var;
 	

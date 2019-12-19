@@ -77,7 +77,7 @@ import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbolType;
-import edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory;
+import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.TypeAlias;
 import edu.harvard.seas.pl.formulog.types.Types;
@@ -142,7 +142,7 @@ class TopLevelParser {
 			}
 			boolean isIdb = ctx.relType.getType() == FormulogLexer.OUTPUT;
 			MutableRelationSymbol sym = pc.symbolManager().createRelationSymbol(name, types.size(), isIdb,
-					new FunctorType(types, BuiltInTypesFactory.bool));
+					new FunctorType(types, BuiltInTypes.bool));
 			for (AnnotationContext actx : ctx.annotation()) {
 				switch (actx.getText()) {
 				case "@bottomup":
@@ -217,7 +217,7 @@ class TopLevelParser {
 					throw new RuntimeException("Unbound type variable in definition of " + csym);
 				}
 				pc.symbolManager().createConstructorSymbol("#is_" + csym.toString(), 1,
-						ConstructorSymbolType.SOLVER_CONSTRUCTOR_TESTER, new FunctorType(type, BuiltInTypesFactory.bool));
+						ConstructorSymbolType.SOLVER_CONSTRUCTOR_TESTER, new FunctorType(type, BuiltInTypes.bool));
 				List<ConstructorSymbol> getterSyms = new ArrayList<>();
 				for (int i = 0; i < csym.getArity(); ++i) {
 					FunctorType t = new FunctorType(type, typeArgs.get(i));

@@ -45,7 +45,7 @@ import edu.harvard.seas.pl.formulog.smt.SmtLibShim.Status;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbolType;
-import edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory;
+import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
@@ -168,7 +168,7 @@ public class Z3Process {
 
 			@Override
 			public FunctorType getCompileTimeType() {
-				return new FunctorType(BuiltInTypesFactory.a, BuiltInTypesFactory.sym(BuiltInTypesFactory.bool));
+				return new FunctorType(BuiltInTypes.a, BuiltInTypes.sym(BuiltInTypes.bool));
 			}
 
 			@Override

@@ -27,13 +27,12 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import edu.harvard.seas.pl.formulog.ast.BindingType;
-import edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory;
+import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
 import edu.harvard.seas.pl.formulog.util.Pair;
-import edu.harvard.seas.pl.formulog.util.TodoException;
 import edu.harvard.seas.pl.formulog.util.Util;
 
 public class SymbolManager {
@@ -166,7 +165,7 @@ public class SymbolManager {
 		ConstructorSymbol sym = (ConstructorSymbol) memo.get(name);
 		if (sym == null) {
 			sym = createConstructorSymbol(name, 1, ConstructorSymbolType.SOLVER_VARIABLE,
-					new FunctorType(BuiltInTypesFactory.a, BuiltInTypesFactory.sym(type)));
+					new FunctorType(BuiltInTypes.a, BuiltInTypes.sym(type)));
 			registerSymbol(sym);
 		}
 		return sym;
@@ -177,7 +176,7 @@ public class SymbolManager {
 		ConstructorSymbol sym = (ConstructorSymbol) memo.get(name);
 		if (sym == null) {
 			sym = createConstructorSymbol(name, 1, ConstructorSymbolType.INDEX_CONSTRUCTOR,
-					new FunctorType(BuiltInTypesFactory.i32, TypeIndex.make(index)));
+					new FunctorType(BuiltInTypes.i32, TypeIndex.make(index)));
 			registerSymbol(sym);
 		}
 		return sym;
@@ -351,16 +350,6 @@ public class SymbolManager {
 	
 	public Set<TypeSymbol> getTypeSymbols() {
 		return Collections.unmodifiableSet(typeSymbols);
-	}
-	
-	// XXX
-	
-	public <T extends Symbol> T instantiate(T sym, List<Object> indices) {
-		throw new TodoException();
-	}
-	
-	public <T extends Symbol> T instantiate(T sym, Object... indices) {
-		throw new TodoException();
 	}
 
 }

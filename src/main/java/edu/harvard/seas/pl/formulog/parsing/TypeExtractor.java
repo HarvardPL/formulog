@@ -35,7 +35,7 @@ import edu.harvard.seas.pl.formulog.parsing.generated.FormulogVisitor;
 import edu.harvard.seas.pl.formulog.symbols.IndexedTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
-import edu.harvard.seas.pl.formulog.types.BuiltInTypesFactory;
+import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
@@ -95,27 +95,27 @@ class TypeExtractor {
 				if (params.size() != 0) {
 					throw new RuntimeException("Built in type i32 does not have any type parameters.");
 				}
-				return BuiltInTypesFactory.i32;
+				return BuiltInTypes.i32;
 			case "i64":
 				if (params.size() != 0) {
 					throw new RuntimeException("Built in type i64 does not have any type parameters.");
 				}
-				return BuiltInTypesFactory.i64;
+				return BuiltInTypes.i64;
 			case "fp32":
 				if (params.size() != 0) {
 					throw new RuntimeException("Built in type fp32 does not have any type parameters.");
 				}
-				return BuiltInTypesFactory.fp32;
+				return BuiltInTypes.fp32;
 			case "fp64":
 				if (params.size() != 0) {
 					throw new RuntimeException("Built in type fp64 does not have any type parameters.");
 				}
-				return BuiltInTypesFactory.fp64;
+				return BuiltInTypes.fp64;
 			case "string":
 				if (params.size() != 0) {
 					throw new RuntimeException("Built in type string does not have any type parameters.");
 				}
-				return BuiltInTypesFactory.string;
+				return BuiltInTypes.string;
 			default:
 				String name = ctx.ID().getText();
 				TypeSymbol sym;
