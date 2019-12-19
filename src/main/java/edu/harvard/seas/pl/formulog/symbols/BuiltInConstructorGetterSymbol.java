@@ -27,13 +27,12 @@ import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.smt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 
-public enum BuiltInConstructorGetterSymbol implements ConstructorSymbol, PreSymbol {
+public enum BuiltInConstructorGetterSymbol implements ConstructorSymbol {
 
 	CONS_1("#cons_1", list(a), smt(a)),
 	
@@ -72,15 +71,5 @@ public enum BuiltInConstructorGetterSymbol implements ConstructorSymbol, PreSymb
 	public ConstructorSymbolType getConstructorSymbolType() {
 		return ConstructorSymbolType.SOLVER_CONSTRUCTOR_GETTER;
 	}
-
-	@Override
-	public List<PreIndex> getPreIndices() {
-		return Collections.emptyList();
-	}
-
-	@Override
-	public PreSymbol getRootPreSymbol() {
-		return this;
-	}
-
+	
 }

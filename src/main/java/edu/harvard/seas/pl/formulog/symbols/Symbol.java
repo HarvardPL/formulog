@@ -24,8 +24,4 @@ public interface Symbol {
 	
 	int getArity();
 	
-	public PreSymbol getRootPreSymbol();
-	
-	public boolean isFinal();
-	
 }

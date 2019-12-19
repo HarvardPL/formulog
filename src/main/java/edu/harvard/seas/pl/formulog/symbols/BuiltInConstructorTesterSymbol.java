@@ -29,13 +29,12 @@ import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.smt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 
-public enum BuiltInConstructorTesterSymbol implements ConstructorSymbol, PreSymbol {
+public enum BuiltInConstructorTesterSymbol implements ConstructorSymbol {
 
 	IS_CMP_LT("#is_cmp_lt", cmp, smt(bool)),
 	
@@ -81,16 +80,6 @@ public enum BuiltInConstructorTesterSymbol implements ConstructorSymbol, PreSymb
 	@Override
 	public String toString() {
 		return name;
-	}
-
-	@Override
-	public PreSymbol getRootPreSymbol() {
-		return this;
-	}
-
-	@Override
-	public List<PreIndex> getPreIndices() {
-		return Collections.emptyList();
 	}
 
 }

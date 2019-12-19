@@ -140,7 +140,7 @@ public final class Types {
 		}
 
 		@Override
-		public TypeVar freshen() {
+		public Type freshen() {
 			return fresh();
 		}
 
