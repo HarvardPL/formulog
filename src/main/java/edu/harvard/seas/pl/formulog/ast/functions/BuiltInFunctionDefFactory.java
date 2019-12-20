@@ -1472,7 +1472,7 @@ public final class BuiltInFunctionDefFactory {
 		@Override
 		public Term evaluate(Term[] args) throws EvaluationException {
 			SmtLibTerm formula = (SmtLibTerm) args[0];
-			formula = (SmtLibTerm) Constructors.make(BuiltInConstructorSymbol.FORMULA_NOT,
+			formula = (SmtLibTerm) Constructors.make(BuiltInConstructorSymbol.SMT_NOT,
 					Terms.singletonArray(formula));
 			Constructor timeoutOpt = (Constructor) args[1];
 			Integer timeout = extractOptionalTimeout(timeoutOpt);
@@ -1499,7 +1499,7 @@ public final class BuiltInFunctionDefFactory {
 		@Override
 		public Term evaluate(Term[] args) throws EvaluationException {
 			SmtLibTerm formula = (SmtLibTerm) args[0];
-			formula = (SmtLibTerm) Constructors.make(BuiltInConstructorSymbol.FORMULA_NOT, args);
+			formula = (SmtLibTerm) Constructors.make(BuiltInConstructorSymbol.SMT_NOT, args);
 			Optional<Model> m = querySmt(formula, -1);
 			if (m == null) {
 				throw new EvaluationException("Z3 returned \"unknown\"");

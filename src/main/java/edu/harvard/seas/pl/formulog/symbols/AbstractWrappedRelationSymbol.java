@@ -85,7 +85,4 @@ public abstract class AbstractWrappedRelationSymbol<R extends RelationSymbol> im
 		return true;
 	}
 
-	@Override
-	public abstract String toString();
-
 }

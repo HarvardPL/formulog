@@ -43,10 +43,6 @@ class ParsingContext {
 	private final TypeManager tm = new TypeManager();
 	private final Map<String, AtomicInteger> nfc = new HashMap<>();
 	
-	public ParsingContext() {
-		sm.initialize();
-	}
-	
 	public SymbolManager symbolManager() {
 		return sm;
 	}

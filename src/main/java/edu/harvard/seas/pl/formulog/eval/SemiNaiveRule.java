@@ -91,7 +91,7 @@ public class SemiNaiveRule extends AbstractRule<UserPredicate, ComplexLiteral> {
 		}
 
 		@Override
-		public String toString() {
+		public String getName() {
 			return "delta:" + getBaseSymbol();
 		}
 		

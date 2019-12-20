@@ -41,6 +41,7 @@ import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
 import edu.harvard.seas.pl.formulog.types.Types.TypeVar;
 import edu.harvard.seas.pl.formulog.util.Pair;
+import edu.harvard.seas.pl.formulog.util.TodoException;
 
 class TypeExtractor {
 
@@ -118,22 +119,29 @@ class TypeExtractor {
 				return BuiltInTypes.string;
 			default:
 				String name = ctx.ID().getText();
-				TypeSymbol sym;
 				if (!indices.isEmpty()) {
-					Pair<BuiltInPreTypeSymbol, List<Integer>> p = pc.symbolManager().lookupIndexedTypeSymbol(name,
-							indices);
-					sym = p.fst();
-					indices = p.snd();
-					params.addAll(map(indices, i -> TypeIndex.make(i)));
-				} else {
-					Symbol sym2 = pc.symbolManager().lookupSymbol(name);
-					if (!(sym2 instanceof TypeSymbol)) {
-						throw new RuntimeException("Not a type symbol: " + sym2);
-					}
-					sym = (TypeSymbol) sym2;
+					throw new TodoException();
 				}
-				// XXX Update this to make sure you don't create types with nested smts or syms
-				return pc.typeManager().lookup(sym, params);
+				Symbol sym = pc.symbolManager().lookupSymbol(name);
+				if (!(sym instanceof TypeSymbol)) {
+					throw new RuntimeException("Not a type symbol: " + sym);
+				}
+				return pc.typeManager().lookup((TypeSymbol) sym, params);
+//				TypeSymbol sym;
+//				if (!indices.isEmpty()) {
+//					Pair<BuiltInPreTypeSymbol, List<Integer>> p = pc.symbolManager().lookupIndexedTypeSymbol(name,
+//							indices);
+//					sym = p.fst();
+//					indices = p.snd();
+//					params.addAll(map(indices, i -> TypeIndex.make(i)));
+//				} else {
+//					Symbol sym2 = pc.symbolManager().lookupSymbol(name);
+//					if (!(sym2 instanceof TypeSymbol)) {
+//						throw new RuntimeException("Not a type symbol: " + sym2);
+//					}
+//					sym = (TypeSymbol) sym2;
+//				}
+//				// XXX Update this to make sure you don't create types with nested smts or syms
 			}
 		}
 

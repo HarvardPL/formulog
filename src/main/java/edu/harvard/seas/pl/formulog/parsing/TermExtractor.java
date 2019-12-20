@@ -94,6 +94,7 @@ import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
+import edu.harvard.seas.pl.formulog.symbols.InstantiatedPreConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInPreConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
@@ -107,6 +108,7 @@ import edu.harvard.seas.pl.formulog.types.Types.TypeVar;
 import edu.harvard.seas.pl.formulog.types.Types.TypeVisitor;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.StackMap;
+import edu.harvard.seas.pl.formulog.util.TodoException;
 
 class TermExtractor {
 
@@ -189,10 +191,11 @@ class TermExtractor {
 					sym = pc.symbolManager().lookupSymbol(name);
 				}
 			} else {
-				Pair<BuiltInPreConstructorSymbol, List<Integer>> p = pc.symbolManager()
-						.lookupIndexedConstructorSymbol(name, indices);
-				sym = p.fst();
-				indices = p.snd();
+				throw new TodoException();
+//				Pair<BuiltInPreConstructorSymbol, List<Integer>> p = pc.symbolManager()
+//						.lookupIndexedConstructorSymbol(name, indices);
+//				sym = p.fst();
+//				indices = p.snd();
 			}
 			Term[] args = extractArray(ctx.termArgs().term());
 			Term[] expandedArgs = new Term[args.length + indices.size()];
@@ -213,8 +216,8 @@ class TermExtractor {
 			// For a couple constructors, we want to make sure that their arguments are
 			// forced to be non-formula types. For example, the constructor bv_const needs
 			// to take something of type i32, not i32 expr.
-			if (sym instanceof BuiltInPreConstructorSymbol) {
-				switch ((BuiltInPreConstructorSymbol) sym) {
+			if (sym instanceof InstantiatedPreConstructorSymbol) {
+				switch (((InstantiatedPreConstructorSymbol) sym).getPreSymbol()) {
 				case BV_BIG_CONST:
 				case BV_CONST:
 				case FP_BIG_CONST:
@@ -250,15 +253,16 @@ class TermExtractor {
 
 		@Override
 		public Term visitSmtEqTerm(SmtEqTermContext ctx) {
-			Type type = typeExtractor.extract(ctx.type());
-			if (isSolverUnfriendlyType(type)) {
-				throw new RuntimeException(
-						"Cannot create an smt_eq with a type that contains a type variable, an smt type, or a sym type: "
-								+ ctx.getText());
-			}
-			ConstructorSymbol sym = pc.symbolManager().lookupSmtEqSymbol(type);
-			Term[] args = extractArray(ctx.termArgs().term());
-			return Constructors.make(sym, args);
+			throw new TodoException();
+//			Type type = typeExtractor.extract(ctx.type());
+//			if (isSolverUnfriendlyType(type)) {
+//				throw new RuntimeException(
+//						"Cannot create an smt_eq with a type that contains a type variable, an smt type, or a sym type: "
+//								+ ctx.getText());
+//			}
+//			ConstructorSymbol sym = pc.symbolManager().lookupSmtEqSymbol(type);
+//			Term[] args = extractArray(ctx.termArgs().term());
+//			return Constructors.make(sym, args);
 		}
 
 		@Override
@@ -544,7 +548,7 @@ class TermExtractor {
 		@Override
 		public Term visitNotFormula(NotFormulaContext ctx) {
 			Term t = extract(ctx.term());
-			return Constructors.make(BuiltInConstructorSymbol.FORMULA_NOT, Terms.singletonArray(t));
+			return Constructors.make(BuiltInConstructorSymbol.SMT_NOT, Terms.singletonArray(t));
 		}
 
 		@Override
@@ -554,16 +558,17 @@ class TermExtractor {
 			switch (ctx.op.getType()) {
 			case FormulogParser.FORMULA_EQ:
 			case FormulogParser.IFF:
-				sym = BuiltInConstructorSymbol.FORMULA_EQ;
-				break;
+				throw new TodoException();
+//				sym = BuiltInConstructorSymbol.SMT_EQ;
+//				break;
 			case FormulogParser.IMP:
-				sym = BuiltInConstructorSymbol.FORMULA_IMP;
+				sym = BuiltInConstructorSymbol.SMT_IMP;
 				break;
 			case FormulogParser.AND:
-				sym = BuiltInConstructorSymbol.FORMULA_AND;
+				sym = BuiltInConstructorSymbol.SMT_AND;
 				break;
 			case FormulogParser.OR:
-				sym = BuiltInConstructorSymbol.FORMULA_OR;
+				sym = BuiltInConstructorSymbol.SMT_OR;
 				break;
 			default:
 				throw new AssertionError();
@@ -573,62 +578,64 @@ class TermExtractor {
 
 		@Override
 		public Term visitLetFormula(LetFormulaContext ctx) {
-			Term[] args = extractArray(ctx.term());
-			args[1] = makeEnterFormula(args[1]);
-			args[2] = makeEnterFormula(args[2]);
-			return makeExitFormula(Constructors.make(BuiltInConstructorSymbol.FORMULA_LET, args));
+			throw new TodoException();
+//			Term[] args = extractArray(ctx.term());
+//			args[1] = makeEnterFormula(args[1]);
+//			args[2] = makeEnterFormula(args[2]);
+//			return makeExitFormula(Constructors.make(BuiltInConstructorSymbol.FORMULA_LET, args));
 		}
 
 		@Override
 		public Term visitQuantifiedFormula(QuantifiedFormulaContext ctx) {
-			Term[] args = new Term[3];
-			args[0] = parseFormulaVarList(ctx.variables);
-			args[1] = makeEnterFormula(extract(ctx.boundTerm));
-			if (ctx.pattern != null) {
-				args[2] = Constructors.make(BuiltInConstructorSymbol.SOME,
-						Terms.singletonArray(makeEnterFormula(parseHeterogeneousList(ctx.pattern))));
-			} else {
-				args[2] = Constructors.makeZeroAry(BuiltInConstructorSymbol.NONE);
-			}
-			ConstructorSymbol sym;
-			switch (ctx.quantifier.getType()) {
-			case FormulogParser.FORALL:
-				sym = BuiltInConstructorSymbol.FORMULA_FORALL;
-				break;
-			case FormulogParser.EXISTS:
-				sym = BuiltInConstructorSymbol.FORMULA_EXISTS;
-				break;
-			default:
-				throw new AssertionError();
-			}
-			return makeExitFormula(Constructors.make(sym, args));
+			throw new TodoException();
+//			Term[] args = new Term[3];
+//			args[0] = parseFormulaVarList(ctx.variables);
+//			args[1] = makeEnterFormula(extract(ctx.boundTerm));
+//			if (ctx.pattern != null) {
+//				args[2] = Constructors.make(BuiltInConstructorSymbol.SOME,
+//						Terms.singletonArray(makeEnterFormula(parseHeterogeneousList(ctx.pattern))));
+//			} else {
+//				args[2] = Constructors.makeZeroAry(BuiltInConstructorSymbol.NONE);
+//			}
+//			ConstructorSymbol sym;
+//			switch (ctx.quantifier.getType()) {
+//			case FormulogParser.FORALL:
+//				sym = BuiltInConstructorSymbol.FORMULA_FORALL;
+//				break;
+//			case FormulogParser.EXISTS:
+//				sym = BuiltInConstructorSymbol.FORMULA_EXISTS;
+//				break;
+//			default:
+//				throw new AssertionError();
+//			}
+//			return makeExitFormula(Constructors.make(sym, args));
 		}
 
-		private Term parseFormulaVarList(NonEmptyTermListContext ctx) {
-			return parseNonEmptyTermList(ctx, BuiltInConstructorSymbol.FORMULA_VAR_LIST_NIL,
-					BuiltInConstructorSymbol.FORMULA_VAR_LIST_CONS);
-		}
-
-		private Term parseHeterogeneousList(NonEmptyTermListContext ctx) {
-			return parseNonEmptyTermList(ctx, BuiltInConstructorSymbol.HETEROGENEOUS_LIST_NIL,
-					BuiltInConstructorSymbol.HETEROGENEOUS_LIST_CONS);
-		}
-
-		private Term parseNonEmptyTermList(NonEmptyTermListContext ctx, ConstructorSymbol nil, ConstructorSymbol cons) {
-			Term t = Constructors.makeZeroAry(nil);
-			List<TermContext> ctxs = new ArrayList<>(ctx.term());
-			Collections.reverse(ctxs);
-			for (TermContext tc : ctxs) {
-				t = Constructors.make(cons, new Term[] { extract(tc), t });
-			}
-			return t;
-		}
+//		private Term parseFormulaVarList(NonEmptyTermListContext ctx) {
+//			return parseNonEmptyTermList(ctx, BuiltInConstructorSymbol.FORMULA_VAR_LIST_NIL,
+//					BuiltInConstructorSymbol.FORMULA_VAR_LIST_CONS);
+//		}
+//
+//		private Term parseHeterogeneousList(NonEmptyTermListContext ctx) {
+//			return parseNonEmptyTermList(ctx, BuiltInConstructorSymbol.HETEROGENEOUS_LIST_NIL,
+//					BuiltInConstructorSymbol.HETEROGENEOUS_LIST_CONS);
+//		}
+//
+//		private Term parseNonEmptyTermList(NonEmptyTermListContext ctx, ConstructorSymbol nil, ConstructorSymbol cons) {
+//			Term t = Constructors.makeZeroAry(nil);
+//			List<TermContext> ctxs = new ArrayList<>(ctx.term());
+//			Collections.reverse(ctxs);
+//			for (TermContext tc : ctxs) {
+//				t = Constructors.make(cons, new Term[] { extract(tc), t });
+//			}
+//			return t;
+//		}
 
 		@Override
 		public Term visitIteTerm(IteTermContext ctx) {
 			Term[] args = extractArray(ctx.term());
 			if (inFormula) {
-				return Constructors.make(BuiltInConstructorSymbol.FORMULA_ITE, args);
+				return Constructors.make(BuiltInConstructorSymbol.SMT_ITE, args);
 			} else {
 				return makeBoolMatch(args[0], args[1], args[2]);
 			}
@@ -703,7 +710,7 @@ class TermExtractor {
 			FunctorType ctorType = ((ConstructorSymbol) ctor).getCompileTimeType();
 			String name = "not%" + ctor;
 			FunctionSymbol isNotFun;
-			if (pc.symbolManager().hasSymbol(name)) {
+			if (pc.symbolManager().hasName(name)) {
 				isNotFun = (FunctionSymbol) pc.symbolManager().lookupSymbol(name);
 			} else {
 				isNotFun = pc.symbolManager().createFunctionSymbol("not%" + ctor, 1,

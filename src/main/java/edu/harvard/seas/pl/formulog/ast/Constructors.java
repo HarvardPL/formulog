@@ -38,15 +38,16 @@ import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbolType;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
+import edu.harvard.seas.pl.formulog.symbols.InstantiatedPreConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInPreConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RecordSymbol;
-import edu.harvard.seas.pl.formulog.symbols.SmtEqSymbol;
 import edu.harvard.seas.pl.formulog.symbols.TupleSymbol;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.util.FunctorUtil;
 import edu.harvard.seas.pl.formulog.util.FunctorUtil.Memoizer;
+import edu.harvard.seas.pl.formulog.util.TodoException;
 import edu.harvard.seas.pl.formulog.util.Util;
 
 public final class Constructors {
@@ -62,8 +63,8 @@ public final class Constructors {
 		if (sym instanceof BuiltInConstructorSymbol) {
 			return lookupOrCreateBuiltInConstructor((BuiltInConstructorSymbol) sym, args);
 		}
-		if (sym instanceof BuiltInPreConstructorSymbol) {
-			return lookupOrCreateIndexedConstructor((BuiltInPreConstructorSymbol) sym, args);
+		if (sym instanceof InstantiatedPreConstructorSymbol) {
+			return lookupOrCreateIndexedConstructor((InstantiatedPreConstructorSymbol) sym, args);
 		}
 		if (sym instanceof TupleSymbol) {
 			return memo.lookupOrCreate(sym, args, () -> new Tuple((TupleSymbol) sym, args));
@@ -71,9 +72,10 @@ public final class Constructors {
 		if (sym instanceof RecordSymbol) {
 			return memo.lookupOrCreate(sym, args, () -> new Record((RecordSymbol) sym, args));
 		}
-		if (sym instanceof SmtEqSymbol) {
-			return memo.lookupOrCreate(sym, args, () -> new SolverOperation(sym, args, "="));
-		}
+		// if (sym instanceof SmtEqSymbol) {
+		// return memo.lookupOrCreate(sym, args, () -> new SolverOperation(sym, args,
+		// "="));
+		// }
 		switch (sym.getConstructorSymbolType()) {
 		case SOLVER_UNINTERPRETED_FUNCTION:
 			return memo.lookupOrCreate(sym, args, () -> new SolverUninterpretedFunction(sym, args));
@@ -125,97 +127,18 @@ public final class Constructors {
 		case NONE:
 		case SOME:
 			return memo.lookupOrCreate(sym, args, () -> new VanillaConstructor(sym, args));
-		case FORMULA_AND:
+		case SMT_AND:
 			return makeAnd(args);
-		case FORMULA_EQ:
-			return makeSolverOp.apply("=");
-		case FORMULA_IMP:
+		case SMT_IMP:
 			return makeSolverOp.apply("=>");
-		case FORMULA_ITE:
+		case SMT_ITE:
 			return memo.lookupOrCreate(sym, args, () -> new SolverIte(sym, args));
-		case FORMULA_LET:
-			return SolverLet.make(sym, args);
-		case FORMULA_NOT:
+		case SMT_NOT:
 			return makeSolverOp.apply("not");
-		case FORMULA_OR:
+		case SMT_OR:
 			return makeOr(args);
-		case FORMULA_VAR_LIST_NIL:
-		case FORMULA_VAR_LIST_CONS:
-		case HETEROGENEOUS_LIST_NIL:
-		case HETEROGENEOUS_LIST_CONS:
-			return memo.lookupOrCreate(sym, args, () -> new VanillaConstructor(sym, args));
-		case BV_ADD:
-			return makeSolverOp.apply("bvadd");
-		case BV_AND:
-			return makeSolverOp.apply("bvand");
-		case BV_MUL:
-			return makeSolverOp.apply("bvmul");
-		case BV_NEG:
-			return makeSolverOp.apply("bvneg");
-		case BV_OR:
-			return makeSolverOp.apply("bvor");
-		case BV_SDIV:
-			return makeSolverOp.apply("bvsdiv");
-		case BV_UDIV:
-			return makeSolverOp.apply("bvudiv");
-		case BV_SGE:
-			return makeSolverOp.apply("bvsge");
-		case BV_SGT:
-			return makeSolverOp.apply("bvsgt");
-		case BV_SLE:
-			return makeSolverOp.apply("bvsle");
-		case BV_SLT:
-			return makeSolverOp.apply("bvslt");
-		case BV_UGE:
-			return makeSolverOp.apply("bvuge");
-		case BV_UGT:
-			return makeSolverOp.apply("bvugt");
-		case BV_ULE:
-			return makeSolverOp.apply("bvule");
-		case BV_ULT:
-			return makeSolverOp.apply("bvult");
-		case BV_SREM:
-			return makeSolverOp.apply("bvsrem");
-		case BV_UREM:
-			return makeSolverOp.apply("bvurem");
-		case BV_SUB:
-			return makeSolverOp.apply("bvsub");
-		case BV_XOR:
-			return makeSolverOp.apply("bvxor");
-		case FP_ADD:
-			return makeSolverOp.apply("fp.add");
-		case FP_DIV:
-			return makeSolverOp.apply("fp.div");
-		case FP_EQ:
-			return makeSolverOp.apply("fp.eq");
-		case FP_GE:
-			return makeSolverOp.apply("fp.geq");
-		case FP_GT:
-			return makeSolverOp.apply("fp.gt");
-		case FP_IS_NAN:
-			return makeSolverOp.apply("fp.isNaN");
-		case FP_LE:
-			return makeSolverOp.apply("fp.leq");
-		case FP_LT:
-			return makeSolverOp.apply("fp.lt");
-		case FP_MUL:
-			return makeSolverOp.apply("fp.mul");
-		case FP_NEG:
-			return makeSolverOp.apply("fp.neg");
-		case FP_REM:
-			return makeSolverOp.apply("fp.rem");
-		case FP_SUB:
-			return makeSolverOp.apply("fp.sub");
-		case FORMULA_EXISTS:
-			return memo.lookupOrCreate(sym, args, () -> new Quantifier(sym, args));
-		case FORMULA_FORALL:
-			return memo.lookupOrCreate(sym, args, () -> new Quantifier(sym, args));
-		case ARRAY_SELECT:
-			return makeSolverOp.apply("select");
 		case ARRAY_STORE:
 			return makeSolverOp.apply("store");
-		case ARRAY_DEFAULT:
-			return makeSolverOp.apply("default");
 		case ARRAY_CONST:
 			return makeSolverOp.apply("const");
 		case INT_ABS:
@@ -270,51 +193,51 @@ public final class Constructors {
 	}
 
 	private static Term makeAnd(Term[] args) {
-		ConstructorSymbol sym = BuiltInConstructorSymbol.FORMULA_AND;
+		ConstructorSymbol sym = BuiltInConstructorSymbol.SMT_AND;
 		return memo.lookupOrCreate(sym, args, () -> {
-//			Term x = args[0];
-//			Term y = args[1];
-//			if (x instanceof Constructor) {
-//				Constructor c = (Constructor) x;
-//				if (c.equals(trueTerm)) {
-//					return y;
-//				} else if (c.equals(falseTerm)) {
-//					return falseTerm;
-//				}
-//			}
-//			if (y instanceof Constructor) {
-//				Constructor c = (Constructor) y;
-//				if (c.equals(trueTerm)) {
-//					return x;
-//				} else if (c.equals(falseTerm)) {
-//					return falseTerm;
-//				}
-//			}
+			// Term x = args[0];
+			// Term y = args[1];
+			// if (x instanceof Constructor) {
+			// Constructor c = (Constructor) x;
+			// if (c.equals(trueTerm)) {
+			// return y;
+			// } else if (c.equals(falseTerm)) {
+			// return falseTerm;
+			// }
+			// }
+			// if (y instanceof Constructor) {
+			// Constructor c = (Constructor) y;
+			// if (c.equals(trueTerm)) {
+			// return x;
+			// } else if (c.equals(falseTerm)) {
+			// return falseTerm;
+			// }
+			// }
 			return new SolverOperation(sym, args, "and");
 		});
 	}
 
 	private static Term makeOr(Term[] args) {
-		ConstructorSymbol sym = BuiltInConstructorSymbol.FORMULA_OR;
+		ConstructorSymbol sym = BuiltInConstructorSymbol.SMT_OR;
 		return memo.lookupOrCreate(sym, args, () -> {
-//			Term x = args[0];
-//			Term y = args[1];
-//			if (x instanceof Constructor) {
-//				Constructor c = (Constructor) x;
-//				if (c.equals(trueTerm)) {
-//					return trueTerm;
-//				} else if (c.equals(falseTerm)) {
-//					return y;
-//				}
-//			}
-//			if (y instanceof Constructor) {
-//				Constructor c = (Constructor) y;
-//				if (c.equals(trueTerm)) {
-//					return trueTerm;
-//				} else if (c.equals(falseTerm)) {
-//					return x;
-//				}
-//			}
+			// Term x = args[0];
+			// Term y = args[1];
+			// if (x instanceof Constructor) {
+			// Constructor c = (Constructor) x;
+			// if (c.equals(trueTerm)) {
+			// return trueTerm;
+			// } else if (c.equals(falseTerm)) {
+			// return y;
+			// }
+			// }
+			// if (y instanceof Constructor) {
+			// Constructor c = (Constructor) y;
+			// if (c.equals(trueTerm)) {
+			// return trueTerm;
+			// } else if (c.equals(falseTerm)) {
+			// return x;
+			// }
+			// }
 			return new SolverOperation(sym, args, "or");
 		});
 	}
@@ -341,6 +264,11 @@ public final class Constructors {
 			@Override
 			public ConstructorSymbolType getConstructorSymbolType() {
 				return ConstructorSymbolType.SOLVER_VARIABLE;
+			}
+
+			@Override
+			public String getName() {
+				throw new UnsupportedOperationException();
 			}
 
 		};
@@ -411,131 +339,135 @@ public final class Constructors {
 
 	}
 
-	private static class Quantifier extends AbstractConstructor {
-
-		protected Quantifier(ConstructorSymbol sym, Term[] args) {
-			super(sym, args);
-		}
-
-		@Override
-		public void toSmtLib(SmtLibShim shim) {
-			String quantifier = "forall (";
-			if (sym.equals(BuiltInConstructorSymbol.FORMULA_EXISTS)) {
-				quantifier = "exists (";
-			}
-			shim.print("(");
-			shim.print(quantifier);
-			for (Term t : getBoundVars()) {
-				SolverVariable x = (SolverVariable) t;
-				shim.print("(");
-				x.toSmtLib(shim);
-				shim.print(" ");
-				FunctorType ft = (FunctorType) x.getSymbol().getCompileTimeType();
-				shim.print(ft.getRetType());
-				shim.print(")");
-			}
-			shim.print(") ");
-			SmtLibTerm pattern = (SmtLibTerm) getPatternList();
-			// XXX Need to check if pattern is valid!
-			if (pattern != null) {
-				shim.print("(! ");
-			} else {
-				// Need to consume type annotation for none
-				shim.getTypeAnnotation((Constructor) args[2]);
-			}
-			((SmtLibTerm) args[1]).toSmtLib(shim);
-			if (pattern != null) {
-				shim.print(" :pattern (");
-				for (Iterator<Term> it = breakPatternList(pattern).iterator(); it.hasNext();) {
-					SmtLibTerm pat = (SmtLibTerm) it.next();
-					pat.toSmtLib(shim);
-					if (it.hasNext()) {
-						shim.print(" ");
-					}
-				}
-				shim.print("))");
-			}
-			shim.print(")");
-		}
-
-		@Override
-		public SmtLibTerm substSolverTerms(PMap<SolverVariable, SmtLibTerm> subst) {
-			// Rename bound variable to avoid variable capture.
-			List<SolverVariable> newVars = new ArrayList<>();
-			PMap<SolverVariable, SmtLibTerm> newSubst = subst;
-			for (Term t : getBoundVars()) {
-				SolverVariable x = (SolverVariable) t;
-				SolverVariable y = Util.lookupOrCreate(binderMemo, subst, () -> renameBinder(x));
-				newVars.add(y);
-				newSubst = subst.plus(x, y);
-			}
-			Term[] newArgs = new Term[args.length];
-			newArgs[0] = makeFormulaVarList(newVars);
-			newArgs[1] = ((SmtLibTerm) args[1]).substSolverTerms(newSubst);
-			newArgs[2] = ((SmtLibTerm) args[2]).substSolverTerms(newSubst);
-			return (SmtLibTerm) copyWithNewArgs(newArgs);
-		}
-
-		@Override
-		public String toString() {
-			String s = "(";
-			s += sym.equals(BuiltInConstructorSymbol.FORMULA_EXISTS) ? "exists " : "forall ";
-			for (Iterator<Term> it = getBoundVars().iterator(); it.hasNext();) {
-				s += it.next();
-				if (it.hasNext()) {
-					s += ", ";
-				}
-			}
-			Term pat = getPatternList();
-			if (pat != null) {
-				s += " : " + pat;
-			}
-			return s + ". " + args[1] + ")";
-		}
-
-		private Term getPatternList() {
-			Constructor option = (Constructor) args[2];
-			if (option.getSymbol().equals(BuiltInConstructorSymbol.SOME)) {
-				return option.getArgs()[0];
-			}
-			return null;
-		}
-
-		private static List<Term> breakList(Term list, ConstructorSymbol cons) {
-			List<Term> terms = new ArrayList<>();
-			Constructor xs = (Constructor) list;
-			while (xs.getSymbol().equals(cons)) {
-				terms.add(xs.getArgs()[0]);
-				xs = (Constructor) xs.getArgs()[1];
-			}
-			return terms;
-		}
-
-		private static List<Term> breakPatternList(Term patternList) {
-			return breakList(patternList, BuiltInConstructorSymbol.HETEROGENEOUS_LIST_CONS);
-		}
-
-		private List<Term> getBoundVars() {
-			return breakList(args[0], BuiltInConstructorSymbol.FORMULA_VAR_LIST_CONS);
-		}
-
-		private static Term makeFormulaVarList(List<SolverVariable> vars) {
-			Collections.reverse(vars);
-			Term t = Constructors.makeZeroAry(BuiltInConstructorSymbol.FORMULA_VAR_LIST_NIL);
-			for (SolverVariable x : vars) {
-				t = Constructors.make(BuiltInConstructorSymbol.FORMULA_VAR_LIST_CONS, new Term[] { x, t });
-			}
-			return t;
-		}
-
-		@Override
-		public Set<SolverVariable> freeVars() {
-			Set<SolverVariable> vars = super.freeVars();
-			vars.removeAll(getBoundVars());
-			return vars;
-		}
-
-	}
+	// private static class Quantifier extends AbstractConstructor {
+	//
+	// protected Quantifier(ConstructorSymbol sym, Term[] args) {
+	// super(sym, args);
+	// }
+	//
+	// @Override
+	// public void toSmtLib(SmtLibShim shim) {
+	// String quantifier = "forall (";
+	// if (sym.equals(BuiltInConstructorSymbol.SMT_EXISTS)) {
+	// quantifier = "exists (";
+	// }
+	// shim.print("(");
+	// shim.print(quantifier);
+	// for (Term t : getBoundVars()) {
+	// SolverVariable x = (SolverVariable) t;
+	// shim.print("(");
+	// x.toSmtLib(shim);
+	// shim.print(" ");
+	// FunctorType ft = (FunctorType) x.getSymbol().getCompileTimeType();
+	// shim.print(ft.getRetType());
+	// shim.print(")");
+	// }
+	// shim.print(") ");
+	// SmtLibTerm pattern = (SmtLibTerm) getPatternList();
+	// // XXX Need to check if pattern is valid!
+	// if (pattern != null) {
+	// shim.print("(! ");
+	// } else {
+	// // Need to consume type annotation for none
+	// shim.getTypeAnnotation((Constructor) args[2]);
+	// }
+	// ((SmtLibTerm) args[1]).toSmtLib(shim);
+	// if (pattern != null) {
+	// shim.print(" :pattern (");
+	// for (Iterator<Term> it = breakPatternList(pattern).iterator(); it.hasNext();)
+	// {
+	// SmtLibTerm pat = (SmtLibTerm) it.next();
+	// pat.toSmtLib(shim);
+	// if (it.hasNext()) {
+	// shim.print(" ");
+	// }
+	// }
+	// shim.print("))");
+	// }
+	// shim.print(")");
+	// }
+	//
+	// @Override
+	// public SmtLibTerm substSolverTerms(PMap<SolverVariable, SmtLibTerm> subst) {
+	// // Rename bound variable to avoid variable capture.
+	// List<SolverVariable> newVars = new ArrayList<>();
+	// PMap<SolverVariable, SmtLibTerm> newSubst = subst;
+	// for (Term t : getBoundVars()) {
+	// SolverVariable x = (SolverVariable) t;
+	// SolverVariable y = Util.lookupOrCreate(binderMemo, subst, () ->
+	// renameBinder(x));
+	// newVars.add(y);
+	// newSubst = subst.plus(x, y);
+	// }
+	// Term[] newArgs = new Term[args.length];
+	// newArgs[0] = makeFormulaVarList(newVars);
+	// newArgs[1] = ((SmtLibTerm) args[1]).substSolverTerms(newSubst);
+	// newArgs[2] = ((SmtLibTerm) args[2]).substSolverTerms(newSubst);
+	// return (SmtLibTerm) copyWithNewArgs(newArgs);
+	// }
+	//
+	// @Override
+	// public String toString() {
+	// String s = "(";
+	// s += sym.equals(BuiltInConstructorSymbol.SMT_EXISTS) ? "exists " : "forall ";
+	// for (Iterator<Term> it = getBoundVars().iterator(); it.hasNext();) {
+	// s += it.next();
+	// if (it.hasNext()) {
+	// s += ", ";
+	// }
+	// }
+	// Term pat = getPatternList();
+	// if (pat != null) {
+	// s += " : " + pat;
+	// }
+	// return s + ". " + args[1] + ")";
+	// }
+	//
+	// private Term getPatternList() {
+	// Constructor option = (Constructor) args[2];
+	// if (option.getSymbol().equals(BuiltInConstructorSymbol.SOME)) {
+	// return option.getArgs()[0];
+	// }
+	// return null;
+	// }
+	//
+	// private static List<Term> breakList(Term list, ConstructorSymbol cons) {
+	// List<Term> terms = new ArrayList<>();
+	// Constructor xs = (Constructor) list;
+	// while (xs.getSymbol().equals(cons)) {
+	// terms.add(xs.getArgs()[0]);
+	// xs = (Constructor) xs.getArgs()[1];
+	// }
+	// return terms;
+	// }
+	//
+	// private static List<Term> breakPatternList(Term patternList) {
+	// return breakList(patternList,
+	// BuiltInConstructorSymbol.HETEROGENEOUS_LIST_CONS);
+	// }
+	//
+	// private List<Term> getBoundVars() {
+	// return breakList(args[0], BuiltInConstructorSymbol.SMT_VAR_LIST_CONS);
+	// }
+	//
+	// private static Term makeFormulaVarList(List<SolverVariable> vars) {
+	// Collections.reverse(vars);
+	// Term t = Constructors.makeZeroAry(BuiltInConstructorSymbol.SMT_VAR_LIST_NIL);
+	// for (SolverVariable x : vars) {
+	// t = Constructors.make(BuiltInConstructorSymbol.SMT_VAR_LIST_CONS, new Term[]
+	// { x, t });
+	// }
+	// return t;
+	// }
+	//
+	// @Override
+	// public Set<SolverVariable> freeVars() {
+	// Set<SolverVariable> vars = super.freeVars();
+	// vars.removeAll(getBoundVars());
+	// return vars;
+	// }
+	//
+	// }
 
 	private static class Nil extends AbstractConstructor {
 
@@ -615,8 +547,91 @@ public final class Constructors {
 		});
 	}
 
-	private static Term lookupOrCreateIndexedConstructor(BuiltInPreConstructorSymbol sym, Term[] args) {
-		switch (sym) {
+	private static Term lookupOrCreateIndexedConstructor(InstantiatedPreConstructorSymbol sym, Term[] args) {
+		Function<String, Term> makeSolverOp = op -> memo.lookupOrCreate(sym, args,
+				() -> new SolverOperation(sym, args, op));
+		BuiltInPreConstructorSymbol preSym = sym.getPreSymbol();
+		switch (preSym) {
+		case SMT_EQ:
+			return makeSolverOp.apply("=");
+		case SMT_LET:
+			return SolverLet.make(sym, args);
+		case ARRAY_DEFAULT:
+			return makeSolverOp.apply("default");
+		case ARRAY_SELECT:
+			return makeSolverOp.apply("select");
+		case BV_ADD:
+			return makeSolverOp.apply("bvadd");
+		case BV_AND:
+			return makeSolverOp.apply("bvand");
+		case BV_MUL:
+			return makeSolverOp.apply("bvmul");
+		case BV_NEG:
+			return makeSolverOp.apply("bvneg");
+		case BV_OR:
+			return makeSolverOp.apply("bvor");
+		case BV_SDIV:
+			return makeSolverOp.apply("bvsdiv");
+		case BV_UDIV:
+			return makeSolverOp.apply("bvudiv");
+		case BV_SGE:
+			return makeSolverOp.apply("bvsge");
+		case BV_SGT:
+			return makeSolverOp.apply("bvsgt");
+		case BV_SLE:
+			return makeSolverOp.apply("bvsle");
+		case BV_SLT:
+			return makeSolverOp.apply("bvslt");
+		case BV_UGE:
+			return makeSolverOp.apply("bvuge");
+		case BV_UGT:
+			return makeSolverOp.apply("bvugt");
+		case BV_ULE:
+			return makeSolverOp.apply("bvule");
+		case BV_ULT:
+			return makeSolverOp.apply("bvult");
+		case BV_SREM:
+			return makeSolverOp.apply("bvsrem");
+		case BV_UREM:
+			return makeSolverOp.apply("bvurem");
+		case BV_SUB:
+			return makeSolverOp.apply("bvsub");
+		case BV_XOR:
+			return makeSolverOp.apply("bvxor");
+		case FP_ADD:
+			return makeSolverOp.apply("fp.add");
+		case FP_DIV:
+			return makeSolverOp.apply("fp.div");
+		case FP_EQ:
+			return makeSolverOp.apply("fp.eq");
+		case FP_GE:
+			return makeSolverOp.apply("fp.geq");
+		case FP_GT:
+			return makeSolverOp.apply("fp.gt");
+		case FP_IS_NAN:
+			return makeSolverOp.apply("fp.isNaN");
+		case FP_LE:
+			return makeSolverOp.apply("fp.leq");
+		case FP_LT:
+			return makeSolverOp.apply("fp.lt");
+		case FP_MUL:
+			return makeSolverOp.apply("fp.mul");
+		case FP_NEG:
+			return makeSolverOp.apply("fp.neg");
+		case FP_REM:
+			return makeSolverOp.apply("fp.rem");
+		case FP_SUB:
+			return makeSolverOp.apply("fp.sub");
+		case SMT_EXISTS:
+		case SMT_FORALL:
+		case SMT_EXISTS_PAT:
+		case SMT_FORALL_PAT:
+			throw new TodoException();
+//			return memo.lookupOrCreate(sym, args, () -> new Quantifier(sym, args));
+//			
+//			return memo.lookupOrCreate(sym, args, () -> new Quantifier(sym, args));
+//			return memo.lookupOrCreate(sym, args, () -> new Quantifier(sym, args));
+//			return memo.lookupOrCreate(sym, args, () -> new Quantifier(sym, args));
 		case BV_TO_BV_SIGNED:
 			return makeBvToBvSigned(sym, args);
 		case BV_TO_BV_UNSIGNED:
@@ -702,101 +717,106 @@ public final class Constructors {
 		return ((I32) t.getArgs()[0]).getVal();
 	}
 
-	private static Term makeBvToBvSigned(BuiltInPreConstructorSymbol sym, Term[] args) {
-		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
-
-			@Override
-			public void toSmtLib(SmtLibShim shim) {
-				int idx1 = idx(args, 1);
-				int idx2 = idx(args, 2);
-				SmtLibTerm t = (SmtLibTerm) args[0];
-				if (idx1 < idx2) {
-					shim.print("(");
-					shim.print("(_ sign_extend " + (idx2 - idx1) + ") ");
-					t.toSmtLib(shim);
-					shim.print(")");
-				} else if (idx1 == idx2) {
-					t.toSmtLib(shim);
-				} else {
-					shim.print("(");
-					shim.print("(_ extract " + (idx2 - 1) + " 0) ");
-					t.toSmtLib(shim);
-					shim.print(")");
-				}
-			}
-
-		});
+	private static Term makeBvToBvSigned(InstantiatedPreConstructorSymbol sym, Term[] args) {
+		throw new TodoException();
+//		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
+//
+//			@Override
+//			public void toSmtLib(SmtLibShim shim) {
+//				int idx1 = idx(args, 1);
+//				int idx2 = idx(args, 2);
+//				SmtLibTerm t = (SmtLibTerm) args[0];
+//				if (idx1 < idx2) {
+//					shim.print("(");
+//					shim.print("(_ sign_extend " + (idx2 - idx1) + ") ");
+//					t.toSmtLib(shim);
+//					shim.print(")");
+//				} else if (idx1 == idx2) {
+//					t.toSmtLib(shim);
+//				} else {
+//					shim.print("(");
+//					shim.print("(_ extract " + (idx2 - 1) + " 0) ");
+//					t.toSmtLib(shim);
+//					shim.print(")");
+//				}
+//			}
+//
+//		});
 	}
 
-	private static Term makeBvToBvUnsigned(BuiltInPreConstructorSymbol sym, Term[] args) {
-		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
-
-			@Override
-			public void toSmtLib(SmtLibShim shim) {
-				int idx1 = idx(args, 1);
-				int idx2 = idx(args, 2);
-				SmtLibTerm t = (SmtLibTerm) args[0];
-				if (idx1 < idx2) {
-					shim.print("(");
-					shim.print("(_ zero_extend " + (idx2 - idx1) + ") ");
-					t.toSmtLib(shim);
-					shim.print(")");
-				} else if (idx1 == idx2) {
-					t.toSmtLib(shim);
-				} else {
-					shim.print("(");
-					shim.print("(_ extract " + (idx2 - 1) + " 0) ");
-					t.toSmtLib(shim);
-					shim.print(")");
-				}
-			}
-
-		});
+	private static Term makeBvToBvUnsigned(InstantiatedPreConstructorSymbol sym, Term[] args) {
+		throw new TodoException();
+//		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
+//
+//			@Override
+//			public void toSmtLib(SmtLibShim shim) {
+//				int idx1 = idx(args, 1);
+//				int idx2 = idx(args, 2);
+//				SmtLibTerm t = (SmtLibTerm) args[0];
+//				if (idx1 < idx2) {
+//					shim.print("(");
+//					shim.print("(_ zero_extend " + (idx2 - idx1) + ") ");
+//					t.toSmtLib(shim);
+//					shim.print(")");
+//				} else if (idx1 == idx2) {
+//					t.toSmtLib(shim);
+//				} else {
+//					shim.print("(");
+//					shim.print("(_ extract " + (idx2 - 1) + " 0) ");
+//					t.toSmtLib(shim);
+//					shim.print(")");
+//				}
+//			}
+//
+//		});
 
 	}
 
-	private static Term makeBvToFp(BuiltInPreConstructorSymbol sym, Term[] args) {
-		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
-
-			@Override
-			public void toSmtLib(SmtLibShim shim) {
-				int exponent = idx(args, 2);
-				int significand = idx(args, 3);
-				shim.print("((_ to_fp " + exponent + " " + significand + ") RNE ");
-				((SmtLibTerm) args[0]).toSmtLib(shim);
-				shim.print(")");
-			}
-
-		});
+	private static Term makeBvToFp(InstantiatedPreConstructorSymbol sym, Term[] args) {
+		throw new TodoException();
+//		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
+//
+//			@Override
+//			public void toSmtLib(SmtLibShim shim) {
+//				int exponent = idx(args, 2);
+//				int significand = idx(args, 3);
+//				shim.print("((_ to_fp " + exponent + " " + significand + ") RNE ");
+//				((SmtLibTerm) args[0]).toSmtLib(shim);
+//				shim.print(")");
+//			}
+//
+//		});
 	}
 
-	private static Term makeFpToFp(BuiltInPreConstructorSymbol sym, Term[] args) {
-		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
-
-			@Override
-			public void toSmtLib(SmtLibShim shim) {
-				int exponent = idx(args, 3);
-				int significand = idx(args, 4);
-				shim.print("((_ to_fp " + exponent + " " + significand + ") RNE ");
-				((SmtLibTerm) args[0]).toSmtLib(shim);
-				shim.print(")");
-			}
-
-		});
+	private static Term makeFpToFp(InstantiatedPreConstructorSymbol sym, Term[] args) {
+		throw new TodoException();
+//		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
+//
+//			@Override
+//			public void toSmtLib(SmtLibShim shim) {
+//				int exponent = idx(args, 3);
+//				int significand = idx(args, 4);
+//				shim.print("((_ to_fp " + exponent + " " + significand + ") RNE ");
+//				((SmtLibTerm) args[0]).toSmtLib(shim);
+//				shim.print(")");
+//			}
+//
+//		});
 	}
 
-	private static Term makeFpToBv(BuiltInPreConstructorSymbol sym, Term[] args) {
-		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
-
-			@Override
-			public void toSmtLib(SmtLibShim shim) {
-				int width = idx(args, 3);
-				shim.print("((_ fp.to_sbv " + width + ") RNE ");
-				((SmtLibTerm) args[0]).toSmtLib(shim);
-				shim.print(")");
-			}
-
-		});
+	private static Term makeFpToBv(InstantiatedPreConstructorSymbol sym, Term[] args) {
+		throw new TodoException();
+//		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
+//
+//			@Override
+//			public void toSmtLib(SmtLibShim shim) {
+//				int width = idx(args, 3);
+//				shim.print("((_ fp.to_sbv " + width + ") RNE ");
+//				((SmtLibTerm) args[0]).toSmtLib(shim);
+//				shim.print(")");
+//			}
+//
+//		});
 	}
 
 	private static abstract class AbstractConstructor extends AbstractTerm implements Constructor {
@@ -819,7 +839,7 @@ public final class Constructors {
 			isGround = g;
 			containsFunctionCall = f;
 		}
-		
+
 		private boolean noneNull(Term[] ts) {
 			for (Term t : ts) {
 				if (t == null) {
@@ -920,9 +940,9 @@ public final class Constructors {
 		}
 
 	}
-	
+
 	public static class Record extends AbstractConstructor {
-		
+
 		private Record(RecordSymbol sym, Term[] args) {
 			super(sym, args);
 		}
@@ -931,7 +951,7 @@ public final class Constructors {
 		public void toSmtLib(SmtLibShim shim) {
 			Constructors.toSmtLib(this, shim);
 		}
-		
+
 		@Override
 		public String toString() {
 			StringBuilder sb = new StringBuilder("{ ");
@@ -946,7 +966,7 @@ public final class Constructors {
 			sb.append("}");
 			return sb.toString();
 		}
-		
+
 	}
 
 	public static class SolverVariable extends AbstractConstructor {
@@ -969,7 +989,7 @@ public final class Constructors {
 			Type ty = ((FunctorType) sym.getCompileTimeType()).getRetType();
 			ty = ((AlgebraicDataType) ty).getTypeArgs().get(0);
 			return "#{" + args[0] + "}[" + ty + "]";
-//			return "#x" + varIds.get(this) + "[" + ty + "]";
+			// return "#x" + varIds.get(this) + "[" + ty + "]";
 		}
 
 		@Override
@@ -1040,23 +1060,27 @@ public final class Constructors {
 		}
 
 		private String getSyntax() {
-			if (!(sym instanceof BuiltInConstructorSymbol)) {
-				return null;
+			if (sym instanceof InstantiatedPreConstructorSymbol) {
+				if (((InstantiatedPreConstructorSymbol) sym).getPreSymbol()
+						.equals(BuiltInPreConstructorSymbol.SMT_EQ)) {
+					return "#=";
+				}
 			}
-			switch ((BuiltInConstructorSymbol) sym) {
-			case FORMULA_AND:
-				return "/\\";
-			case FORMULA_EQ:
-				return "#=";
-			case FORMULA_IMP:
-				return "==>";
-			case FORMULA_NOT:
-				return "~";
-			case FORMULA_OR:
-				return "\\/";
-			default:
-				return null;
+			if (sym instanceof BuiltInConstructorSymbol) {
+				switch ((BuiltInConstructorSymbol) sym) {
+				case SMT_AND:
+					return "/\\";
+				case SMT_IMP:
+					return "==>";
+				case SMT_NOT:
+					return "~";
+				case SMT_OR:
+					return "\\/";
+				default:
+					return null;
+				}
 			}
+			return null;
 		}
 
 		@Override

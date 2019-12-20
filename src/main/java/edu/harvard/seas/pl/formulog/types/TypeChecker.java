@@ -70,6 +70,7 @@ import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
+import edu.harvard.seas.pl.formulog.symbols.InstantiatedPreConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
@@ -82,6 +83,7 @@ import edu.harvard.seas.pl.formulog.types.Types.TypeVisitor;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.Pair;
+import edu.harvard.seas.pl.formulog.util.TodoException;
 import edu.harvard.seas.pl.formulog.util.Triple;
 import edu.harvard.seas.pl.formulog.util.Util;
 
@@ -541,8 +543,11 @@ public class TypeChecker {
 			FunctorType cnstrType = cnstrSym.getCompileTimeType().freshen();
 			Term[] args = t.getArgs();
 			List<Type> argTypes = cnstrType.getArgTypes();
-			if (cnstrSym.equals(BuiltInConstructorSymbol.FORMULA_EQ)) {
-				smtEqsToResolve.add(new Pair<>(t, argTypes.get(0)));
+			if (cnstrSym instanceof InstantiatedPreConstructorSymbol) {
+				throw new TodoException();
+//				if (cnstrSym.equals(BuiltInConstructorSymbol.FORMULA_EQ)) {
+//					smtEqsToResolve.add(new Pair<>(t, argTypes.get(0)));
+//				}
 			}
 			for (int i = 0; i < args.length; ++i) {
 				Type argType = argTypes.get(i);
@@ -722,13 +727,16 @@ public class TypeChecker {
 			@Override
 			public Term visit(Constructor c, Substitution subst) throws TypeException {
 				ConstructorSymbol sym = c.getSymbol();
-				if (sym.equals(BuiltInConstructorSymbol.FORMULA_EQ)) {
-					Pair<Constructor, Type> p = smtEqsToResolve.removeFirst();
-					Type eltType = simplify(lookupType(p.snd()));
-					if (Types.containsTypeVarOrOpaqueType(eltType)) {
-						throw new TypeException("Cannot determine element type in solver equality: " + p.fst());
-					}
-					sym = prog.getSymbolManager().lookupSmtEqSymbol(eltType);
+				if (sym instanceof InstantiatedPreConstructorSymbol) {
+					throw new TodoException();
+//					if (sym.equals(BuiltInConstructorSymbol.FORMULA_EQ)) {
+//						Pair<Constructor, Type> p = smtEqsToResolve.removeFirst();
+//						Type eltType = simplify(lookupType(p.snd()));
+//						if (Types.containsTypeVarOrOpaqueType(eltType)) {
+//							throw new TypeException("Cannot determine element type in solver equality: " + p.fst());
+//						}
+//						sym = prog.getSymbolManager().lookupSmtEqSymbol(eltType);
+//					}
 				}
 				Term[] args = c.getArgs();
 				Term[] newArgs = new Term[args.length];

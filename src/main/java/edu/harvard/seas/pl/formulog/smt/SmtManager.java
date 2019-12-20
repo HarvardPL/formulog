@@ -51,22 +51,22 @@ public abstract class SmtManager {
 		Constructor c = (Constructor) assertion;
 		ConstructorSymbol sym = c.getSymbol();
 		Term[] args = c.getArgs();
-		if (sym.equals(BuiltInConstructorSymbol.FORMULA_AND)) {
+		if (sym.equals(BuiltInConstructorSymbol.SMT_AND)) {
 			breakIntoConjuncts((SmtLibTerm) args[0], acc);
 			breakIntoConjuncts((SmtLibTerm) args[1], acc);
 			return;
 		}
-		if (sym.equals(BuiltInConstructorSymbol.FORMULA_NOT)) {
+		if (sym.equals(BuiltInConstructorSymbol.SMT_NOT)) {
 			c = (Constructor) args[0];
 			sym = c.getSymbol();
 			args = c.getArgs();
-			if (sym.equals(BuiltInConstructorSymbol.FORMULA_IMP)) {
+			if (sym.equals(BuiltInConstructorSymbol.SMT_IMP)) {
 				// Turn ~(A => B) into A /\ ~B
 				breakIntoConjuncts((SmtLibTerm) args[0], acc);
 				breakIntoConjuncts(negate(args[1]), acc);
 				return;
 			}
-			if (sym.equals(BuiltInConstructorSymbol.FORMULA_OR)) {
+			if (sym.equals(BuiltInConstructorSymbol.SMT_OR)) {
 				// Turn ~(A \/ B) to ~A /\ ~B
 				breakIntoConjuncts(negate(args[0]), acc);
 				breakIntoConjuncts(negate(args[1]), acc);
@@ -77,7 +77,7 @@ public abstract class SmtManager {
 	}
 	
 	private SmtLibTerm negate(Term t) {
-		return (SmtLibTerm) Constructors.make(BuiltInConstructorSymbol.FORMULA_NOT, Terms.singletonArray(t));
+		return (SmtLibTerm) Constructors.make(BuiltInConstructorSymbol.SMT_NOT, Terms.singletonArray(t));
 	}
 
 }

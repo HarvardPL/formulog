@@ -159,7 +159,7 @@ public class Z3Process {
 
 	private SmtLibTerm makeImp(SolverVariable x, SmtLibTerm assertion) {
 		Term[] args = { x, assertion };
-		return (SmtLibTerm) Constructors.make(BuiltInConstructorSymbol.FORMULA_IMP, args);
+		return (SmtLibTerm) Constructors.make(BuiltInConstructorSymbol.SMT_IMP, args);
 	}
 	
 	private SolverVariable makeIndicatorVar(SmtLibTerm assertion) {
@@ -179,6 +179,11 @@ public class Z3Process {
 			@Override
 			public ConstructorSymbolType getConstructorSymbolType() {
 				return ConstructorSymbolType.SOLVER_VARIABLE;
+			}
+			
+			@Override
+			public String getName() {
+				throw new UnsupportedOperationException();
 			}
 
 		};

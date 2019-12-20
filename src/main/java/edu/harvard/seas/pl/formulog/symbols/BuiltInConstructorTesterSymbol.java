@@ -76,9 +76,9 @@ public enum BuiltInConstructorTesterSymbol implements ConstructorSymbol {
 	public FunctorType getCompileTimeType() {
 		return type;
 	}
-	
+
 	@Override
-	public String toString() {
+	public String getName() {
 		return name;
 	}
 

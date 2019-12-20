@@ -64,21 +64,20 @@ public enum GlobalSymbolManager {
 		if (!hasName(name)) {
 			throw new IllegalArgumentException("Unrecognized name: " + name);
 		}
-		if (!params.isEmpty()) {
+		if (preSymbolMemo.containsKey(name)) {
 			return lookupPreSymbol(name, params);
 		}
-		Symbol sym = memo.get(name);
-		if (sym == null) {
-			throw new IllegalArgumentException("Symbol " + name +  " is parameterized; no parameters provided.");
+		if (!params.isEmpty()) {
+			throw new IllegalArgumentException("Symbol " + name +  " is not parameterized; parameters were provided.");
 		}
+		Symbol sym = memo.get(name);
+		assert sym != null;
 		return sym;
 	}
 	
 	private Symbol lookupPreSymbol(String name, List<ParamElt> params) {
 		PreSymbol sym = preSymbolMemo.get(name);
-		if (sym == null) {
-			throw new IllegalArgumentException("Symbol " + name + " is not parameterized; parameters were provided.");
-		}
+		assert sym != null;
 		return instantiatePreSymbol(sym, params);
 	}
 
@@ -113,7 +112,7 @@ public enum GlobalSymbolManager {
 			return;
 		}
 		register(BuiltInTypeSymbol.values());
-		register(BuiltInConstructorSymbol.values());
+//		register(BuiltInConstructorSymbol.values());
 		register(BuiltInFunctionSymbol.values());
 		register(BuiltInConstructorTesterSymbol.values());
 		register(BuiltInConstructorGetterSymbol.values());

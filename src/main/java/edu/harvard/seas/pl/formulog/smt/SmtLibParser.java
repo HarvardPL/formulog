@@ -41,6 +41,7 @@ import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.InstantiatedPreTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInPreTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
@@ -50,6 +51,7 @@ import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType.ConstructorScheme;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
+import edu.harvard.seas.pl.formulog.util.TodoException;
 
 public class SmtLibParser {
 
@@ -150,19 +152,21 @@ public class SmtLibParser {
 		if (!seen.add(sym)) {
 			return true;
 		}
-		if (sym instanceof BuiltInPreTypeSymbol) {
-			switch ((BuiltInPreTypeSymbol) sym) {
+		if (sym instanceof InstantiatedPreTypeSymbol) {
+			switch (((InstantiatedPreTypeSymbol) sym).getPreSymbol()) {
 			case BV: {
-				TypeIndex idx = (TypeIndex) type.getTypeArgs().get(0);
-				int w = idx.getIndex();
-				return w == 32 || w == 64;
+				throw new TodoException();
+//				TypeIndex idx = (TypeIndex) type.getTypeArgs().get(0);
+//				int w = idx.getIndex();
+//				return w == 32 || w == 64;
 			}
 			case FP: {
-				TypeIndex idx1 = (TypeIndex) type.getTypeArgs().get(0);
-				int e = idx1.getIndex();
-				TypeIndex idx2 = (TypeIndex) type.getTypeArgs().get(1);
-				int s = idx2.getIndex();
-				return (e == 8 && s == 24) || (e == 11 && s == 53);
+				throw new TodoException();
+//				TypeIndex idx1 = (TypeIndex) type.getTypeArgs().get(0);
+//				int e = idx1.getIndex();
+//				TypeIndex idx2 = (TypeIndex) type.getTypeArgs().get(1);
+//				int s = idx2.getIndex();
+//				return (e == 8 && s == 24) || (e == 11 && s == 53);
 			}
 			default:
 				die("unexpected indexed symbol: " + sym);
@@ -204,29 +208,31 @@ public class SmtLibParser {
 
 	private TermType getTermType(AlgebraicDataType type) throws SmtLibParseException {
 		TypeSymbol sym = type.getSymbol();
-		if (sym instanceof BuiltInPreTypeSymbol) {
-			switch ((BuiltInPreTypeSymbol) sym) {
+		if (sym instanceof InstantiatedPreTypeSymbol) {
+			switch (((InstantiatedPreTypeSymbol) sym).getPreSymbol()) {
 			case BV: {
-				TypeIndex idx = (TypeIndex) type.getTypeArgs().get(0);
-				int w = idx.getIndex();
-				if (w == 32) {
-					return TermType.BV32;
-				} else if (w == 64) {
-					return TermType.BV64;
-				}
-				die("unexpected BV width " + w);
+				throw new TodoException();
+//				TypeIndex idx = (TypeIndex) type.getTypeArgs().get(0);
+//				int w = idx.getIndex();
+//				if (w == 32) {
+//					return TermType.BV32;
+//				} else if (w == 64) {
+//					return TermType.BV64;
+//				}
+//				die("unexpected BV width " + w);
 			}
 			case FP: {
-				TypeIndex idx1 = (TypeIndex) type.getTypeArgs().get(0);
-				int e = idx1.getIndex();
-				TypeIndex idx2 = (TypeIndex) type.getTypeArgs().get(1);
-				int s = idx2.getIndex();
-				if (e == 8 && s == 24) {
-					return TermType.FP32;
-				} else if (e == 11 && s == 53) {
-					return TermType.FP64;
-				}
-				die("unexpected FP dimensions " + e + "/" + s);
+				throw new TodoException();
+//				TypeIndex idx1 = (TypeIndex) type.getTypeArgs().get(0);
+//				int e = idx1.getIndex();
+//				TypeIndex idx2 = (TypeIndex) type.getTypeArgs().get(1);
+//				int s = idx2.getIndex();
+//				if (e == 8 && s == 24) {
+//					return TermType.FP32;
+//				} else if (e == 11 && s == 53) {
+//					return TermType.FP64;
+//				}
+//				die("unexpected FP dimensions " + e + "/" + s);
 			}
 			default:
 				die("unexpected indexed symbol: " + sym);

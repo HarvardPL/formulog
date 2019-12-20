@@ -28,15 +28,11 @@ import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.b;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.bool;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.bv;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.cmp;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.formula_var_list;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.fp;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.heterogeneous_list;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.int_;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.list;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.option;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.smt;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.string;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.sym;
 
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
@@ -71,107 +67,19 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 	
 	// Constraints
 	
-	FORMULA_NOT("not%", 1, SOLVER_EXPR),
+	SMT_NOT("smt_not", 1, SOLVER_EXPR),
 	
-	FORMULA_AND("and%", 2, SOLVER_EXPR),
+	SMT_AND("smt_and", 2, SOLVER_EXPR),
 	
-	FORMULA_OR("or%", 2, SOLVER_EXPR),
+	SMT_OR("smt_or", 2, SOLVER_EXPR),
 	
-	FORMULA_EQ("eq%", 2, SOLVER_EXPR),
+	SMT_IMP("smt_imp", 2, SOLVER_EXPR),
 	
-	FORMULA_IMP("imp%", 2, SOLVER_EXPR),
-	
-	FORMULA_LET("let%", 3, SOLVER_EXPR),
-	
-	FORMULA_ITE("ite%", 3, SOLVER_EXPR),
-	
-	FORMULA_FORALL("forall%", 3, SOLVER_EXPR),
-	
-	FORMULA_EXISTS("exists%", 3, SOLVER_EXPR),
-	
-	FORMULA_VAR_LIST_NIL("formula_var_list_nil%", 0, VANILLA_CONSTRUCTOR),
-	
-	FORMULA_VAR_LIST_CONS("formula_var_list_cons%", 2, VANILLA_CONSTRUCTOR),
-	
-	// Heterogeneous lists (used for quantifier patterns)
-
-	HETEROGENEOUS_LIST_NIL("heterogeneous_list_nil%", 0, VANILLA_CONSTRUCTOR),
-	
-	HETEROGENEOUS_LIST_CONS("heterogeneous_list_cons%", 2, VANILLA_CONSTRUCTOR),
-	
-	// Floating point
-	
-	FP_NEG("fp_neg", 1,SOLVER_EXPR),
-
-	FP_ADD("fp_add", 2,SOLVER_EXPR),
-
-	FP_SUB("fp_sub", 2,SOLVER_EXPR),
-
-	FP_MUL("fp_mul", 2, SOLVER_EXPR),
-
-	FP_DIV("fp_div", 2, SOLVER_EXPR),
-
-	FP_REM("fp_rem", 2, SOLVER_EXPR),
-
-	FP_EQ("fp_eq", 2, SOLVER_EXPR),
-	
-	FP_LT("fp_lt", 2, SOLVER_EXPR),
-
-	FP_LE("fp_le", 2, SOLVER_EXPR),
-
-	FP_GT("fp_gt", 2, SOLVER_EXPR),
-
-	FP_GE("fp_ge", 2, SOLVER_EXPR),
-
-	FP_IS_NAN("fp_is_nan", 1, SOLVER_EXPR),
-	
-	// Bit vector
-
-	BV_NEG("bv_neg", 1, SOLVER_EXPR),
-
-	BV_ADD("bv_add", 2, SOLVER_EXPR),
-
-	BV_SUB("bv_sub", 2, SOLVER_EXPR),
-
-	BV_MUL("bv_mul", 2, SOLVER_EXPR),
-
-	BV_SDIV("bv_sdiv", 2, SOLVER_EXPR),
-
-	BV_SREM("bv_srem", 2, SOLVER_EXPR),
-	
-	BV_UDIV("bv_udiv", 2, SOLVER_EXPR),
-
-	BV_UREM("bv_urem", 2, SOLVER_EXPR),
-
-	BV_AND("bv_and", 2, SOLVER_EXPR),
-
-	BV_OR("bv_or", 2, SOLVER_EXPR),
-
-	BV_XOR("bv_xor", 2, SOLVER_EXPR),
-	
-	BV_SLT("bv_slt", 2, SOLVER_EXPR),
-
-	BV_SLE("bv_sle", 2, SOLVER_EXPR),
-
-	BV_SGT("bv_sgt", 2, SOLVER_EXPR),
-
-	BV_SGE("bv_sge", 2, SOLVER_EXPR),
-	
-	BV_ULT("bv_ult", 2, SOLVER_EXPR),
-
-	BV_ULE("bv_ule", 2, SOLVER_EXPR),
-
-	BV_UGT("bv_ugt", 2, SOLVER_EXPR),
-
-	BV_UGE("bv_uge", 2, SOLVER_EXPR),
+	SMT_ITE("smt_ite", 3, SOLVER_EXPR),
 	
 	// Arrays
 
-	ARRAY_SELECT("array_select", 2, SOLVER_EXPR),
-	
 	ARRAY_STORE("array_store", 3, SOLVER_EXPR),
-	
-	ARRAY_DEFAULT("array_default", 1, SOLVER_EXPR),
 	
 	ARRAY_CONST("array_const", 1, SOLVER_EXPR),
 	
@@ -225,9 +133,9 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 	
 	// Stuff for type checking formulas
 	
-	ENTER_FORMULA("enter_formula%", 1, VANILLA_CONSTRUCTOR),
+	ENTER_FORMULA("enter_formula", 1, VANILLA_CONSTRUCTOR),
 	
-	EXIT_FORMULA("exit_formula%", 1, VANILLA_CONSTRUCTOR),	
+	EXIT_FORMULA("exit_formula", 1, VANILLA_CONSTRUCTOR),	
 	
 	;
 
@@ -244,11 +152,6 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 	@Override
 	public int getArity() {
 		return arity;
-	}
-
-	@Override
-	public String toString() {
-		return name;
 	}
 
 	private FunctorType makeType(Type...types) {
@@ -270,78 +173,66 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 		case FALSE:
 		case TRUE:
 			return makeType(bool);
-		case FORMULA_AND:
-		case FORMULA_OR:
-		case FORMULA_IMP:
+		case SMT_AND:
+		case SMT_OR:
+		case SMT_IMP:
 			return makeType(smt(bool), smt(bool), smt(bool));
-		case FORMULA_EQ:
-			return makeType(smt(a), smt(a), smt(bool));
-		case FORMULA_ITE:
+//		case SMT_EQ:
+//			return makeType(smt(a), smt(a), smt(bool));
+		case SMT_ITE:
 			return makeType(smt(bool), smt(a), smt(a), smt(a));
-		case FORMULA_LET:
-			return makeType(sym(a), smt(a), smt(b), smt(b));
-		case FORMULA_NOT:
+//		case SMT_LET:
+//			return makeType(sym(a), smt(a), smt(b), smt(b));
+		case SMT_NOT:
 			return makeType(smt(bool), smt(bool));
-		case FORMULA_EXISTS:
-			return makeType(formula_var_list, smt(bool), option(a), smt(bool));
-		case FORMULA_FORALL:
-			return makeType(formula_var_list, smt(bool), option(a), smt(bool));
-		case FORMULA_VAR_LIST_NIL:
-			return makeType(formula_var_list);
-		case FORMULA_VAR_LIST_CONS:
-			return makeType(sym(a), formula_var_list, formula_var_list);
-		case HETEROGENEOUS_LIST_NIL:
-			return makeType(heterogeneous_list);
-		case HETEROGENEOUS_LIST_CONS:
-			return makeType(a, heterogeneous_list, heterogeneous_list);
 		case NONE:
 			return makeType(option(a));
 		case SOME:
 			return makeType(a, option(a));
-		case BV_ADD:
-		case BV_AND:
-		case BV_MUL:
-		case BV_OR:
-		case BV_SDIV:
-		case BV_SREM:
-		case BV_UDIV:
-		case BV_UREM:
-		case BV_SUB:
-		case BV_XOR:
-			return makeType(smt(bv(a)), smt(bv(a)), smt(bv(a)));
-		case BV_NEG:
-			return makeType(smt(bv(a)), smt(bv(a)));
-		case BV_SGE:
-		case BV_SGT:
-		case BV_SLE:
-		case BV_SLT:
-		case BV_UGE:
-		case BV_UGT:
-		case BV_ULE:
-		case BV_ULT:
-			return makeType(smt(bv(a)), smt(bv(a)), smt(bool));
-		case FP_ADD:
-		case FP_DIV:
-		case FP_REM:
-		case FP_SUB:
-		case FP_MUL:
-			return makeType(smt(fp(a, b)), smt(fp(a, b)), smt(fp(a, b)));
-		case FP_EQ:
-		case FP_GE:
-		case FP_GT:
-		case FP_LE:
-		case FP_LT:
-			return makeType(smt(fp(a, b)), smt(fp(a, b)), smt(bool));
-		case FP_IS_NAN:
-			return makeType(smt(fp(a, b)), smt(bool));
-		case FP_NEG:
-			return makeType(smt(fp(a, b)), smt(fp(a, b)));
-		case ARRAY_SELECT:
-			return makeType(smt(array(a, b)), smt(a), smt(b));
+//		case BV_ADD:
+//		case BV_AND:
+//		case BV_MUL:
+//		case BV_OR:
+//		case BV_SDIV:
+//		case BV_SREM:
+//		case BV_UDIV:
+//		case BV_UREM:
+//		case BV_SUB:
+//		case BV_XOR:
+//			return makeType(smt(bv(a)), smt(bv(a)), smt(bv(a)));
+//		case BV_NEG:
+//			return makeType(smt(bv(a)), smt(bv(a)));
+//		case BV_SGE:
+//		case BV_SGT:
+//		case BV_SLE:
+//		case BV_SLT:
+//		case BV_UGE:
+//		case BV_UGT:
+//		case BV_ULE:
+//		case BV_ULT:
+//			return makeType(smt(bv(a)), smt(bv(a)), smt(bool));
+//		case FP_ADD:
+//		case FP_DIV:
+//		case FP_REM:
+//		case FP_SUB:
+//		case FP_MUL:
+//			return makeType(smt(fp(a, b)), smt(fp(a, b)), smt(fp(a, b)));
+//		case FP_EQ:
+//		case FP_GE:
+//		case FP_GT:
+//		case FP_LE:
+//		case FP_LT:
+//			return makeType(smt(fp(a, b)), smt(fp(a, b)), smt(bool));
+//		case FP_IS_NAN:
+//			return makeType(smt(fp(a, b)), smt(bool));
+//		case FP_NEG:
+//			return makeType(smt(fp(a, b)), smt(fp(a, b)));
+//		case ARRAY_SELECT:
+//			return makeType(smt(array(a, b)), smt(a), smt(b));
 		case ARRAY_STORE:
 			return makeType(smt(array(a, b)), smt(a), smt(b), smt(array(a, b)));
-		case ARRAY_DEFAULT:
-			return makeType(smt(array(a, b)), smt(b));
+//		case ARRAY_DEFAULT:
+//			return makeType(smt(array(a, b)), smt(b));
 		case ARRAY_CONST:
 			return makeType(smt(b), smt(array(a, b)));
 		case STR_AT:
@@ -391,6 +282,11 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 	@Override
 	public ConstructorSymbolType getConstructorSymbolType() {
 		return st;
+	}
+
+	@Override
+	public String getName() {
+		return name;
 	}
 
 }

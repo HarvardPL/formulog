@@ -167,7 +167,7 @@ public class MagicSetTransformer {
 			}
 
 			@Override
-			public String toString() {
+			public String getName() {
 				Symbol sym = oldSym;
 				if (oldSym instanceof AdornedSymbol) {
 					sym = ((AdornedSymbol) oldSym).getBaseSymbol();
@@ -572,7 +572,7 @@ public class MagicSetTransformer {
 		}
 
 		@Override
-		public String toString() {
+		public String getName() {
 			return "sup_" + ruleNum + "_" + supCount;
 		}
 
@@ -617,7 +617,7 @@ public class MagicSetTransformer {
 		}
 
 		@Override
-		public String toString() {
+		public String getName() {
 			return "input_" + getBaseSymbol();
 		}
 
@@ -724,7 +724,7 @@ public class MagicSetTransformer {
 		}
 
 		@Override
-		public String toString() {
+		public String getName() {
 			return "p_" + getBaseSymbol();
 		}
 

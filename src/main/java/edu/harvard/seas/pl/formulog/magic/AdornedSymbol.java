@@ -44,7 +44,7 @@ class AdornedSymbol implements WrappedRelationSymbol<RelationSymbol> {
 	}
 
 	@Override
-	public String toString() {
+	public String getName() {
 		String s = getBaseSymbol() + "_";
 		for (boolean b : adornment) {
 			s += b ? "b" : "f";
@@ -109,5 +109,6 @@ class AdornedSymbol implements WrappedRelationSymbol<RelationSymbol> {
 			return false;
 		return true;
 	}
+
 
 }

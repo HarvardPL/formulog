@@ -211,7 +211,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 	static Set<RelationSymbol> getTrackedRelations(SymbolManager sm) {
 		Set<RelationSymbol> s = new HashSet<>();
 		for (String name : Configuration.trackedRelations) {
-			if (sm.hasSymbol(name)) {
+			if (sm.hasName(name)) {
 				Symbol sym = sm.lookupSymbol(name);
 				if (sym instanceof RelationSymbol) {
 					s.add((RelationSymbol) sm.lookupSymbol(name));

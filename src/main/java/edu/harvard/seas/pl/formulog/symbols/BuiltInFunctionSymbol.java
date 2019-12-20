@@ -243,13 +243,13 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 	}
 
 	@Override
-	public String toString() {
-		return name;
+	public FunctorType getCompileTimeType() {
+		return new FunctorType(argTypes, retType);
 	}
 
 	@Override
-	public FunctorType getCompileTimeType() {
-		return new FunctorType(argTypes, retType);
+	public String getName() {
+		return name;
 	}
 
 }

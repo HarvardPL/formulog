@@ -34,11 +34,13 @@ import edu.harvard.seas.pl.formulog.types.Types;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
 import edu.harvard.seas.pl.formulog.util.Pair;
+import edu.harvard.seas.pl.formulog.util.TodoException;
 import edu.harvard.seas.pl.formulog.util.Util;
 
 public class SymbolManager {
-	
+
 	private final Map<String, Symbol> memo = new ConcurrentHashMap<>();
+	private final Map<String, PreSymbol> preSymMemo = new ConcurrentHashMap<>();
 	private final Set<TypeSymbol> typeSymbols = Util.concurrentSet();
 
 	public TypeSymbol createTypeSymbol(String name, int arity, TypeSymbolType st) {
@@ -78,14 +80,14 @@ public class SymbolManager {
 	}
 
 	public void checkNotUsed(String name) {
-		if (memo.containsKey(name)) {
+		if (hasName(name)) {
 			throw new IllegalArgumentException(
 					"Cannot create symbol " + name + "; a symbol already exists with that name.");
 		}
 	}
 
-	public boolean hasSymbol(String name) {
-		return memo.containsKey(name);
+	public boolean hasName(String name) {
+		return memo.containsKey(name) || preSymMemo.containsKey(name);
 	}
 
 	public Symbol lookupSymbol(String name) {
@@ -99,15 +101,23 @@ public class SymbolManager {
 		return sym;
 	}
 
-	public Pair<BuiltInPreConstructorSymbol, List<Integer>> lookupIndexedConstructorSymbol(String name,
-			List<Integer> indices) {
-		assert !indices.isEmpty();
-		return IndexedSymbols.lookupConstructorSymbol(name, this, indices);
+	public Symbol lookupSymbol(String name, List<ParamElt> params) {
+		if (GlobalSymbolManager.INSTANCE.hasName(name)) {
+			return GlobalSymbolManager.INSTANCE.lookup(name, params);
+		}
+		if (!hasName(name)) {
+			throw new IllegalArgumentException("No symbol exists with name " + name + ".");
+		}
+		if (preSymMemo.containsKey(name)) {
+			return instantiatePreSymbol(preSymMemo.get(name), params);
+		}
+		Symbol sym = memo.get(name);
+		assert sym != null;
+		return sym;
 	}
 
-	public Pair<BuiltInPreTypeSymbol, List<Integer>> lookupIndexedTypeSymbol(String name, List<Integer> indices) {
-		assert !indices.isEmpty();
-		return IndexedSymbols.lookupTypeSymbol(name, this, indices);
+	public Symbol instantiatePreSymbol(PreSymbol preSym, List<ParamElt> params) {
+		throw new TodoException();
 	}
 
 	public ConstructorSymbol lookupTupleSymbol(int arity) {
@@ -124,7 +134,7 @@ public class SymbolManager {
 		PredicateFunctionSymbol funcSym = PredicateFunctionSymbol.create(sym, bindings, this);
 		return funcSym;
 	}
-	
+
 	public PredicateFunctionSymbol createPredicateFunctionSymbolPlaceholder(RelationSymbol sym) {
 		PredicateFunctionSymbol funcSym = PredicateFunctionSymbol.createPlaceholder(sym, this);
 		return funcSym;
@@ -152,7 +162,7 @@ public class SymbolManager {
 		}
 		return sym;
 	}
-	
+
 	private class FunctionSymbolImpl extends AbstractTypedSymbol implements FunctionSymbol {
 
 		public FunctionSymbolImpl(String name, int arity, FunctorType type) {
@@ -230,13 +240,17 @@ public class SymbolManager {
 		if (sym instanceof TypeSymbol) {
 			typeSymbols.add((TypeSymbol) sym);
 		}
-		Symbol sym2 = memo.putIfAbsent(sym.toString(), sym);
+		if (preSymMemo.containsKey(sym.getName())) {
+			throw new IllegalArgumentException(
+					"Cannot register symbol " + sym + "; a pre-symbol is already registered with that name.");
+		}
+		Symbol sym2 = memo.putIfAbsent(sym.getName(), sym);
 		if (sym2 != null && !sym2.equals(sym)) {
 			throw new IllegalArgumentException(
 					"Cannot register symbol " + sym + "; a different symbol is already registered with that name.");
 		}
 	}
-	
+
 	public Set<TypeSymbol> getTypeSymbols() {
 		Set<TypeSymbol> syms = new HashSet<>(typeSymbols);
 		syms.addAll(GlobalSymbolManager.INSTANCE.getTypeSymbols());

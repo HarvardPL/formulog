@@ -59,6 +59,7 @@ import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.smt.SmtLibParser.SmtLibParseException;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.InstantiatedPreTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInPreTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
@@ -404,8 +405,8 @@ public class SmtLibShim {
 			@Override
 			public String visit(AlgebraicDataType algebraicType, Void in) {
 				TypeSymbol sym = algebraicType.getSymbol();
-				if (sym instanceof BuiltInPreTypeSymbol) {
-					return stringifyIndexedSymbol((BuiltInPreTypeSymbol) sym, algebraicType.getTypeArgs());
+				if (sym instanceof InstantiatedPreTypeSymbol) {
+					return stringifyIndexedSymbol(((InstantiatedPreTypeSymbol) sym).getPreSymbol(), algebraicType.getTypeArgs());
 				}
 				if (sym instanceof BuiltInTypeSymbol) {
 					switch ((BuiltInTypeSymbol) sym) {
@@ -543,8 +544,8 @@ public class SmtLibShim {
 			if (sym.isAlias()) {
 				return false;
 			}
-			if (sym instanceof BuiltInPreTypeSymbol) {
-				switch ((BuiltInPreTypeSymbol) sym) {
+			if (sym instanceof InstantiatedPreTypeSymbol) {
+				switch (((InstantiatedPreTypeSymbol) sym).getPreSymbol()) {
 				case BV:
 				case FP:
 					return false;
@@ -559,8 +560,6 @@ public class SmtLibShim {
 				case BOOL_TYPE:
 				case STRING_TYPE:
 				case ARRAY_TYPE:
-				case FORMULA_VAR_LIST_TYPE:
-				case HETEROGENEOUS_LIST_TYPE:
 				case INT_TYPE:
 				case MODEL_TYPE:
 					return false;

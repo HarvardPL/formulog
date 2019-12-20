@@ -63,7 +63,7 @@ public enum BuiltInConstructorGetterSymbol implements ConstructorSymbol {
 	}
 	
 	@Override
-	public String toString() {
+	public String getName() {
 		return name;
 	}
 
