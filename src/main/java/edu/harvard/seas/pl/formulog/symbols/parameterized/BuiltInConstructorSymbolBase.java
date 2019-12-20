@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.symbols;
+package edu.harvard.seas.pl.formulog.symbols.parameterized;
 
 /*-
  * #%L
@@ -23,7 +23,7 @@ package edu.harvard.seas.pl.formulog.symbols;
 import java.util.Arrays;
 import java.util.List;
 
-public enum BuiltInPreConstructorSymbol implements PreFunctorSymbol {
+public enum BuiltInConstructorSymbolBase implements FunctorBase {
 
 	// Bit vectors
 
@@ -135,7 +135,7 @@ public enum BuiltInPreConstructorSymbol implements PreFunctorSymbol {
 	private final int arity;
 	private final List<ParamType> paramTypes;
 
-	private BuiltInPreConstructorSymbol(String name, int arity, ParamType... paramTypes) {
+	private BuiltInConstructorSymbolBase(String name, int arity, ParamType... paramTypes) {
 		this.name = name;
 		this.arity = arity;
 		this.paramTypes = Arrays.asList(paramTypes);

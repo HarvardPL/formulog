@@ -59,11 +59,11 @@ import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.smt.SmtLibParser.SmtLibParseException;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
-import edu.harvard.seas.pl.formulog.symbols.InstantiatedPreTypeSymbol;
-import edu.harvard.seas.pl.formulog.symbols.BuiltInPreTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInTypeSymbolBase;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.InstantiatedPreTypeSymbol;
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
@@ -445,7 +445,7 @@ public class SmtLibShim {
 				throw new AssertionError("impossible");
 			}
 
-			private String stringifyIndexedSymbol(BuiltInPreTypeSymbol sym, List<Type> typeArgs) {
+			private String stringifyIndexedSymbol(BuiltInTypeSymbolBase sym, List<Type> typeArgs) {
 				Function<Type, Integer> forceIdx = t -> ((TypeIndex) t).getIndex();
 				switch (sym) {
 				case BV:

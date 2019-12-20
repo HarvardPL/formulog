@@ -81,7 +81,7 @@ public class PredicateFunctionSymbol implements FunctionSymbol {
 		} else if (retTypes.size() == 1) {
 			retType = BuiltInTypes.list(retTypes.get(0));
 		} else {
-			TypeSymbol tupTypeSym = sm.lookupTupleTypeSymbol(retTypes.size());
+			TypeSymbol tupTypeSym = GlobalSymbolManager.lookupTupleTypeSymbol(retTypes.size());
 			retType = BuiltInTypes.list(AlgebraicDataType.make(tupTypeSym, retTypes));
 		}
 		type = new FunctorType(argTypes, retType);

@@ -1,4 +1,6 @@
-package edu.harvard.seas.pl.formulog.symbols;
+package edu.harvard.seas.pl.formulog.symbols.parameterized;
+
+import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
 
 /*-
  * #%L
@@ -20,10 +22,8 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-import java.util.Map;
-
-public interface ParamElt {
-
-	ParamElt applySubst(Map<ParamVar, ParamElt> subst);
+public interface InstantiatedPreTypeSymbol extends TypeSymbol {
+	
+	BuiltInTypeSymbolBase getPreSymbol();
 	
 }

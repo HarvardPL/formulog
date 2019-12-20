@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.symbols;
+package edu.harvard.seas.pl.formulog.symbols.parameterized;
 
 /*-
  * #%L
@@ -20,20 +20,11 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-public enum ParamType {
+import java.util.Map;
 
-	NAT,
-	
-	ANY_TYPE,
-	
-	SMT_QUANTIFIER_PAT,
-	
-	SMT_VAR,
-	
-	SMT_VARS,
-	
-	PRE_SMT_TYPE,
-	
-	FUN;
+public interface PreType extends ParamElt {
+
+	@Override
+	PreType applySubst(Map<ParamVar, ParamElt> subst);
 	
 }

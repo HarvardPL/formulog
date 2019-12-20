@@ -50,23 +50,21 @@ import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
+import edu.harvard.seas.pl.formulog.symbols.GlobalSymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
-import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 
 public class PredicateFunctionSetter {
 
 	private final FunctionDefManager defs;
-	private final SymbolManager symbols;
 	private final IndexedFactDbBuilder<?> dbb;
 	private IndexedFactDb db;
 	Set<FunctionSymbol> visitedFunctions = new HashSet<>();
 
-	public PredicateFunctionSetter(FunctionDefManager funcs, SymbolManager symbols, IndexedFactDbBuilder<?> dbb) {
+	public PredicateFunctionSetter(FunctionDefManager funcs, IndexedFactDbBuilder<?> dbb) {
 		this.defs = funcs;
-		this.symbols = symbols;
 		this.dbb = dbb;
 	}
 	
@@ -222,7 +220,7 @@ public class PredicateFunctionSetter {
 			}
 		}
 		final int arity2 = arity;
-		ConstructorSymbol tupSym = (arity > 1) ? symbols.lookupTupleSymbol(arity) : null;
+		ConstructorSymbol tupSym = (arity > 1) ? GlobalSymbolManager.lookupTupleSymbol(arity) : null;
 		return new FunctionDef() {
 
 			@Override

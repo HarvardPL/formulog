@@ -107,7 +107,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		SortedIndexedFactDbBuilder dbb = new SortedIndexedFactDbBuilder(allRelations);
 		SortedIndexedFactDbBuilder deltaDbb = new SortedIndexedFactDbBuilder(magicProg.getRuleSymbols());
 		PredicateFunctionSetter predFuncs = new PredicateFunctionSetter(
-				magicProg.getFunctionCallFactory().getDefManager(), magicProg.getSymbolManager(), dbb);
+				magicProg.getFunctionCallFactory().getDefManager(), dbb);
 
 		Map<RelationSymbol, Iterable<IndexedRule>> rules = new HashMap<>();
 		List<Stratum> strata = new Stratifier(magicProg).stratify();
@@ -582,8 +582,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 			this.s = s;
 			this.it = it;
 		}
-		
-		protected RuleSuffixEvaluator(IndexedRule rule, int pos, OverwriteSubstitution s, Iterator<Iterable<Term[]>> it) {
+
+		protected RuleSuffixEvaluator(IndexedRule rule, int pos, OverwriteSubstitution s,
+				Iterator<Iterable<Term[]>> it) {
 			super(exec);
 			this.rule = rule;
 			this.head = rule.getHead();
@@ -633,8 +634,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 					try {
 						reportFact(head.normalize(s));
 					} catch (EvaluationException e) {
-						throw new UncheckedEvaluationException("Exception raised while evaluating the literal: "
-								+ head + "\n\n" + e.getMessage());
+						throw new UncheckedEvaluationException(
+								"Exception raised while evaluating the literal: " + head + "\n\n" + e.getMessage());
 					}
 					pos--;
 					movingRight = false;
@@ -675,7 +676,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 								if (tups.hasNext()) {
 									stack[pos] = tups.next().iterator();
 									if (tups.hasNext()) {
-										exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, head, body, pos, s.copy(), tups));
+										exec.recursivelyAddTask(
+												new RuleSuffixEvaluator(rule, head, body, pos, s.copy(), tups));
 									}
 									// No need to do anything else: we'll hit the right case on the next iteration.
 								} else {

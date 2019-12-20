@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.symbols;
+package edu.harvard.seas.pl.formulog.symbols.parameterized;
 
 /*-
  * #%L

@@ -27,8 +27,6 @@ import static edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol.CONS
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol.NIL;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol.NONE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol.SOME;
-import static edu.harvard.seas.pl.formulog.symbols.BuiltInPreTypeSymbol.BV;
-import static edu.harvard.seas.pl.formulog.symbols.BuiltInPreTypeSymbol.FP;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.ARRAY_TYPE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.BOOL_TYPE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.CMP_TYPE;
@@ -39,6 +37,8 @@ import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.OPTION_TYPE
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.SMT_TYPE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.STRING_TYPE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.SYM_TYPE;
+import static edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInTypeSymbolBase.BV;
+import static edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInTypeSymbolBase.FP;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -47,8 +47,9 @@ import java.util.List;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorGetterSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.GlobalSymbolManager;
-import edu.harvard.seas.pl.formulog.symbols.NatParam;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.NatParam;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedSymbol;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType.ConstructorScheme;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
@@ -122,12 +123,14 @@ public final class BuiltInTypes {
 	}
 
 	public static AlgebraicDataType bv(int width) {
-		TypeSymbol sym = (TypeSymbol) GlobalSymbolManager.INSTANCE.instantiatePreSymbol(BV, new NatParam(width));
+		ParameterizedSymbol preSym = GlobalSymbolManager.getParameterizedSymbol(BV);
+		TypeSymbol sym = (TypeSymbol) preSym.instantiate(new NatParam(width));
 		return AlgebraicDataType.make(sym);
 	}
 
 	public static AlgebraicDataType fp(int exponent, int significand) {
-		TypeSymbol sym = (TypeSymbol) GlobalSymbolManager.INSTANCE.instantiatePreSymbol(FP, new NatParam(exponent), new NatParam(significand));
+		ParameterizedSymbol preSym = GlobalSymbolManager.getParameterizedSymbol(FP);
+		TypeSymbol sym = (TypeSymbol) preSym.instantiate(new NatParam(exponent), new NatParam(significand));
 		return AlgebraicDataType.make(sym);
 	}
 

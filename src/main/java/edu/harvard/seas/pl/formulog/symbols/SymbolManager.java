@@ -28,19 +28,18 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import edu.harvard.seas.pl.formulog.ast.BindingType;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.ParamElt;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedSymbol;
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
-import edu.harvard.seas.pl.formulog.util.Pair;
-import edu.harvard.seas.pl.formulog.util.TodoException;
 import edu.harvard.seas.pl.formulog.util.Util;
 
 public class SymbolManager {
 
 	private final Map<String, Symbol> memo = new ConcurrentHashMap<>();
-	private final Map<String, PreSymbol> preSymMemo = new ConcurrentHashMap<>();
 	private final Set<TypeSymbol> typeSymbols = Util.concurrentSet();
 
 	public TypeSymbol createTypeSymbol(String name, int arity, TypeSymbolType st) {
@@ -87,46 +86,27 @@ public class SymbolManager {
 	}
 
 	public boolean hasName(String name) {
-		return memo.containsKey(name) || preSymMemo.containsKey(name);
+		return memo.containsKey(name);
 	}
 
 	public Symbol lookupSymbol(String name) {
-		Symbol sym = memo.get(name);
-		if (sym == null) {
-			throw new IllegalArgumentException("No symbol exists with name " + name + ".");
-		}
-		if (sym instanceof PreSymbol) {
-			throw new IllegalArgumentException("Symbol " + sym + " is indexed, but no indices provided.");
-		}
-		return sym;
+		return lookupSymbol(name, Collections.emptyList());
 	}
 
 	public Symbol lookupSymbol(String name, List<ParamElt> params) {
-		if (GlobalSymbolManager.INSTANCE.hasName(name)) {
-			return GlobalSymbolManager.INSTANCE.lookup(name, params);
+		if (GlobalSymbolManager.hasName(name)) {
+			return GlobalSymbolManager.lookup(name, params);
 		}
 		if (!hasName(name)) {
 			throw new IllegalArgumentException("No symbol exists with name " + name + ".");
 		}
-		if (preSymMemo.containsKey(name)) {
-			return instantiatePreSymbol(preSymMemo.get(name), params);
-		}
 		Symbol sym = memo.get(name);
 		assert sym != null;
-		return sym;
-	}
-
-	public Symbol instantiatePreSymbol(PreSymbol preSym, List<ParamElt> params) {
-		throw new TodoException();
-	}
-
-	public ConstructorSymbol lookupTupleSymbol(int arity) {
-		ConstructorSymbol sym = TupleSymbol.lookup(arity, this);
-		return sym;
-	}
-
-	public TypeSymbol lookupTupleTypeSymbol(int arity) {
-		TypeSymbol sym = TupleSymbol.lookupType(arity, this).getSymbol();
+		if (sym instanceof ParameterizedSymbol) {
+			return ((ParameterizedSymbol) sym).instantiate(params);
+		} else if (!params.isEmpty()) {
+			throw new IllegalArgumentException("Cannot supply parameters to non-parameterized symbol: " + sym);
+		}
 		return sym;
 	}
 
@@ -240,10 +220,6 @@ public class SymbolManager {
 		if (sym instanceof TypeSymbol) {
 			typeSymbols.add((TypeSymbol) sym);
 		}
-		if (preSymMemo.containsKey(sym.getName())) {
-			throw new IllegalArgumentException(
-					"Cannot register symbol " + sym + "; a pre-symbol is already registered with that name.");
-		}
 		Symbol sym2 = memo.putIfAbsent(sym.getName(), sym);
 		if (sym2 != null && !sym2.equals(sym)) {
 			throw new IllegalArgumentException(
@@ -253,7 +229,7 @@ public class SymbolManager {
 
 	public Set<TypeSymbol> getTypeSymbols() {
 		Set<TypeSymbol> syms = new HashSet<>(typeSymbols);
-		syms.addAll(GlobalSymbolManager.INSTANCE.getTypeSymbols());
+		syms.addAll(GlobalSymbolManager.getTypeSymbols());
 		return Collections.unmodifiableSet(typeSymbols);
 	}
 

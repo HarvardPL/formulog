@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.symbols;
+package edu.harvard.seas.pl.formulog.symbols.parameterized;
 
 /*-
  * #%L
@@ -34,11 +34,11 @@ public final class PreTypes {
 	public static final PreType i64 = new InstantiatedType(BuiltInTypes.i64);
 
 	public static PreType bv(ParamElt width) {
-		return new UninstantiatedType(BuiltInPreTypeSymbol.BV, width);
+		return new UninstantiatedType(BuiltInTypeSymbolBase.BV, width);
 	}
 	
 	public static PreType fp(ParamElt exponent, ParamElt significand) {
-		return new UninstantiatedType(BuiltInPreTypeSymbol.FP, exponent, significand);
+		return new UninstantiatedType(BuiltInTypeSymbolBase.FP, exponent, significand);
 	}
 
 }

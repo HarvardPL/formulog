@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.symbols;
+package edu.harvard.seas.pl.formulog.symbols.parameterized;
 
 /*-
  * #%L
@@ -20,6 +20,6 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-public interface PreTypeSymbol extends PreSymbol {
+public interface FunctorBase extends SymbolBase {
 
 }

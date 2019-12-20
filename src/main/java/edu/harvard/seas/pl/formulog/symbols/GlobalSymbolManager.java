@@ -28,6 +28,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInConstructorSymbolBase;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInTypeSymbolBase;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.ParamElt;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedSymbol;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.SymbolBase;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType.ConstructorScheme;
@@ -36,140 +41,129 @@ import edu.harvard.seas.pl.formulog.types.Types.TypeVar;
 import edu.harvard.seas.pl.formulog.util.TodoException;
 import edu.harvard.seas.pl.formulog.util.Util;
 
-public enum GlobalSymbolManager {
+public final class GlobalSymbolManager {
 
-	INSTANCE;
-
-	private boolean initialized = false;
-
-	private final Map<String, Symbol> memo = new ConcurrentHashMap<>();
-	private final Map<String, PreSymbol> preSymbolMemo = new ConcurrentHashMap<>();
-	private final Set<TypeSymbol> typeSymbols = Util.concurrentSet();
-
-	public boolean hasName(String name) {
-		checkInitialized();
-		return memo.containsKey(name) || preSymbolMemo.containsKey(name);
+	private GlobalSymbolManager() {
+		throw new AssertionError("impossible");
 	}
 
-	public Symbol lookup(String name) {
+	private static boolean initialized = false;
+
+	private static final Map<String, Symbol> memo = new ConcurrentHashMap<>();
+	private static final Set<TypeSymbol> typeSymbols = Util.concurrentSet();
+
+	public static boolean hasName(String name) {
+		checkInitialized();
+		return memo.containsKey(name);
+	}
+
+	public static Symbol lookup(String name) {
 		return lookup(name, Collections.emptyList());
 	}
 
-	public Symbol lookup(String name, ParamElt... params) {
+	public static Symbol lookup(String name, ParamElt... params) {
 		return lookup(name, Arrays.asList(params));
 	}
 
-	public Symbol lookup(String name, List<ParamElt> params) {
+	public static Symbol lookup(String name, List<ParamElt> params) {
 		checkInitialized();
 		if (!hasName(name)) {
 			throw new IllegalArgumentException("Unrecognized name: " + name);
 		}
-		if (preSymbolMemo.containsKey(name)) {
-			return lookupPreSymbol(name, params);
-		}
-		if (!params.isEmpty()) {
-			throw new IllegalArgumentException("Symbol " + name +  " is not parameterized; parameters were provided.");
-		}
 		Symbol sym = memo.get(name);
 		assert sym != null;
+		if (sym instanceof ParameterizedSymbol) {
+			return ((ParameterizedSymbol) sym).instantiate(params);
+		} else if (!params.isEmpty()) {
+			throw new IllegalArgumentException("Cannot supply parameters to non-parameterized symbol: " + sym);
+		}
 		return sym;
 	}
-	
-	private Symbol lookupPreSymbol(String name, List<ParamElt> params) {
-		PreSymbol sym = preSymbolMemo.get(name);
-		assert sym != null;
-		return instantiatePreSymbol(sym, params);
+
+	public static ParameterizedSymbol getParameterizedSymbol(SymbolBase base) {
+		initialize();
+		return getParameterizedSymbolInternal(base);
 	}
 
-	public Symbol instantiatePreSymbol(PreSymbol sym, ParamElt... params) {
-		return instantiatePreSymbol(sym, Arrays.asList(params));
-	}
-
-	public Symbol instantiatePreSymbol(PreSymbol sym, List<ParamElt> params) {
-		if (sym instanceof BuiltInPreTypeSymbol) {
-			return instantiateTypePreSymbol((BuiltInPreTypeSymbol) sym, params);
-		}
-		assert sym instanceof BuiltInPreConstructorSymbol;
-		return instantiateConstructorPreSymbol((BuiltInPreConstructorSymbol) sym, params);
-	}
-
-	public Symbol instantiateTypePreSymbol(BuiltInPreTypeSymbol sym, List<ParamElt> params) {
+	private static ParameterizedSymbol getParameterizedSymbolInternal(SymbolBase base) {
 		throw new TodoException();
 	}
 
-	private Symbol instantiateConstructorPreSymbol(BuiltInPreConstructorSymbol sym, List<ParamElt> params) {
-		throw new TodoException();
-	}
-
-	private void checkInitialized() {
+	private static void checkInitialized() {
 		if (!initialized) {
 			initialize();
 		}
 	}
 
-	private synchronized void initialize() {
+	private synchronized static void initialize() {
 		if (initialized) {
 			return;
 		}
 		register(BuiltInTypeSymbol.values());
-//		register(BuiltInConstructorSymbol.values());
+		register(BuiltInConstructorSymbol.values());
 		register(BuiltInFunctionSymbol.values());
 		register(BuiltInConstructorTesterSymbol.values());
 		register(BuiltInConstructorGetterSymbol.values());
-		register(BuiltInPreTypeSymbol.values());
-		register(BuiltInPreConstructorSymbol.values());
+		register(BuiltInTypeSymbolBase.values());
+		register(BuiltInConstructorSymbolBase.values());
 		initialized = true;
 	}
 
-	private void register(Symbol[] symbols) {
+	private static void register(Symbol[] symbols) {
 		for (Symbol sym : symbols) {
 			register(sym);
 		}
 	}
 
-	private void register(Symbol sym) {
+	private static void register(Symbol sym) {
 		if (sym instanceof TypeSymbol) {
 			typeSymbols.add((TypeSymbol) sym);
 		}
 		Symbol other = memo.putIfAbsent(sym.getName(), sym);
 		assert other == null;
 	}
-	
-	private void register(PreSymbol[] symbols) {
-		for (PreSymbol sym : symbols) {
-			PreSymbol other = preSymbolMemo.putIfAbsent(sym.getName(), sym);
+
+	private static void register(SymbolBase[] bases) {
+		for (SymbolBase base : bases) {
+			ParameterizedSymbol sym = getParameterizedSymbolInternal(base);
+			Symbol other = memo.putIfAbsent(base.getName(), sym);
 			assert other == null;
 		}
 	}
 
-	private TypeSymbol createTypeSymbol(String name, int arity, TypeSymbolType symType) {
+	private static TypeSymbol createTypeSymbol(String name, int arity, TypeSymbolType symType) {
 		initialize();
 		TypeSymbol sym = new TypeSymbolImpl(name, arity, symType);
 		register(sym);
 		return sym;
 	}
-	
-	private ConstructorSymbol createConstructorSymbol(String name, int arity, ConstructorSymbolType symType, FunctorType type)  {
+
+	private static ConstructorSymbol createConstructorSymbol(String name, int arity, ConstructorSymbolType symType,
+			FunctorType type) {
 		initialize();
 		ConstructorSymbol sym = new ConstructorSymbolImpl(name, arity, symType, type);
 		register(sym);
 		return sym;
 	}
-	
-	private final Map<Integer, TupleSymbol> tupleSymbolMemo = new ConcurrentHashMap<>();
-	private final Map<Integer, TypeSymbol> tupleTypeSymbolMemo = new ConcurrentHashMap<>();
-	
-	public TupleSymbol lookupTupleSymbol(int arity) {
+
+	public static Set<TypeSymbol> getTypeSymbols() {
+		return typeSymbols;
+	}
+
+	private static final Map<Integer, TupleSymbol> tupleSymbolMemo = new ConcurrentHashMap<>();
+	private static final Map<Integer, TypeSymbol> tupleTypeSymbolMemo = new ConcurrentHashMap<>();
+
+	public static TupleSymbol lookupTupleSymbol(int arity) {
 		instantiateTuple(arity);
 		return tupleSymbolMemo.get(arity);
 	}
-	
-	public TypeSymbol lookupTupleTypeSymbol(int arity) {
+
+	public static TypeSymbol lookupTupleTypeSymbol(int arity) {
 		instantiateTuple(arity);
 		return tupleTypeSymbolMemo.get(arity);
 	}
-	
-	private void instantiateTuple(int arity) {
+
+	private static void instantiateTuple(int arity) {
 		TupleSymbol tupSym = tupleSymbolMemo.get(arity);
 		if (tupSym != null) {
 			return;
@@ -198,17 +192,17 @@ public enum GlobalSymbolManager {
 		tupleSymbolMemo.put(arity, tupSym);
 		tupleTypeSymbolMemo.put(arity, typeSym);
 	}
-	
+
 	public static class TupleSymbol implements ConstructorSymbol {
 
 		private final int arity;
 		private final FunctorType type;
-	
+
 		private TupleSymbol(int arity, FunctorType type) {
 			this.arity = arity;
 			this.type = type;
 		}
-		
+
 		@Override
 		public FunctorType getCompileTimeType() {
 			return type;
@@ -228,11 +222,7 @@ public enum GlobalSymbolManager {
 		public ConstructorSymbolType getConstructorSymbolType() {
 			return ConstructorSymbolType.VANILLA_CONSTRUCTOR;
 		}
-		
+
 	}
 
-	public Set<TypeSymbol> getTypeSymbols() {
-		return typeSymbols;
-	}
-	
 }

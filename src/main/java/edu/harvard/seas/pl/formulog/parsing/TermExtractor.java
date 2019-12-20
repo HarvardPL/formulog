@@ -94,10 +94,11 @@ import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
-import edu.harvard.seas.pl.formulog.symbols.InstantiatedPreConstructorSymbol;
-import edu.harvard.seas.pl.formulog.symbols.BuiltInPreConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.GlobalSymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInConstructorSymbolBase;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.FinalizedPreConstructorSymbol;
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
@@ -216,8 +217,8 @@ class TermExtractor {
 			// For a couple constructors, we want to make sure that their arguments are
 			// forced to be non-formula types. For example, the constructor bv_const needs
 			// to take something of type i32, not i32 expr.
-			if (sym instanceof InstantiatedPreConstructorSymbol) {
-				switch (((InstantiatedPreConstructorSymbol) sym).getPreSymbol()) {
+			if (sym instanceof FinalizedPreConstructorSymbol) {
+				switch (((FinalizedPreConstructorSymbol) sym).getPreSymbol()) {
 				case BV_BIG_CONST:
 				case BV_CONST:
 				case FP_BIG_CONST:
@@ -287,7 +288,7 @@ class TermExtractor {
 		@Override
 		public Term visitTupleTerm(TupleTermContext ctx) {
 			Term[] args = extractArray(ctx.tuple().term());
-			return Constructors.make(pc.symbolManager().lookupTupleSymbol(args.length), args);
+			return Constructors.make(GlobalSymbolManager.lookupTupleSymbol(args.length), args);
 		}
 
 		private final Pattern hex = Pattern.compile("0x([0-9a-fA-F]+)[lL]?");
@@ -761,7 +762,7 @@ class TermExtractor {
 			List<Term> ts = extractList(ctx.letBind().term());
 			Term t;
 			if (ts.size() > 1) {
-				t = Constructors.make(pc.symbolManager().lookupTupleSymbol(ts.size()), ts.toArray(Terms.emptyArray()));
+				t = Constructors.make(GlobalSymbolManager.lookupTupleSymbol(ts.size()), ts.toArray(Terms.emptyArray()));
 			} else {
 				t = ts.get(0);
 			}

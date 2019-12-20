@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.symbols;
+package edu.harvard.seas.pl.formulog.symbols.parameterized;
 
 /*-
  * #%L
@@ -20,32 +20,40 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
-import edu.harvard.seas.pl.formulog.types.Types.Type;
+public class UninstantiatedType implements PreType {
 
-public class InstantiatedType implements PreType {
-
-	private final Type type;
+	private final BuiltInTypeSymbolBase sym;
+	private final List<ParamElt> params;
 	
-	public InstantiatedType(Type type) {
-		this.type = type;
+	public UninstantiatedType(BuiltInTypeSymbolBase sym, List<ParamElt> params) {
+		this.sym = sym;
+		this.params = params;
+	}
+	
+	public UninstantiatedType(BuiltInTypeSymbolBase sym, ParamElt... params) {
+		this(sym, Arrays.asList(params));
 	}
 
 	@Override
 	public PreType applySubst(Map<ParamVar, ParamElt> subst) {
-		return this;
-	}
-	
-	public Type getType() {
-		return type;
+		List<ParamElt> newParams = new ArrayList<>();
+		for (ParamElt p : params) {
+			newParams.add(p.applySubst(subst));
+		}
+		return new UninstantiatedType(sym, newParams);
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		result = prime * result + ((params == null) ? 0 : params.hashCode());
+		result = prime * result + ((sym == null) ? 0 : sym.hashCode());
 		return result;
 	}
 
@@ -57,11 +65,16 @@ public class InstantiatedType implements PreType {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		InstantiatedType other = (InstantiatedType) obj;
-		if (type == null) {
-			if (other.type != null)
+		UninstantiatedType other = (UninstantiatedType) obj;
+		if (params == null) {
+			if (other.params != null)
 				return false;
-		} else if (!type.equals(other.type))
+		} else if (!params.equals(other.params))
+			return false;
+		if (sym == null) {
+			if (other.sym != null)
+				return false;
+		} else if (!sym.equals(other.sym))
 			return false;
 		return true;
 	}

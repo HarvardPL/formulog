@@ -32,9 +32,10 @@ import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TypeContext
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TypeRefContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TypeVarContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogVisitor;
-import edu.harvard.seas.pl.formulog.symbols.BuiltInPreTypeSymbol;
+import edu.harvard.seas.pl.formulog.symbols.GlobalSymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInTypeSymbolBase;
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
@@ -71,7 +72,7 @@ class TypeExtractor {
 			if (typeArgs.size() == 1) {
 				return typeArgs.get(0);
 			}
-			TypeSymbol sym = pc.symbolManager().lookupTupleTypeSymbol(typeArgs.size());
+			TypeSymbol sym = GlobalSymbolManager.lookupTupleTypeSymbol(typeArgs.size());
 			return AlgebraicDataType.make(sym, typeArgs);
 		}
 

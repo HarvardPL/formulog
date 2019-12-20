@@ -1,5 +1,6 @@
-package edu.harvard.seas.pl.formulog.symbols;
+package edu.harvard.seas.pl.formulog.symbols.parameterized;
 
+import java.util.Arrays;
 import java.util.List;
 
 /*-
@@ -22,14 +23,35 @@ import java.util.List;
  * #L%
  */
 
-public interface ParameterizedPreSymbol {
+public enum BuiltInTypeSymbolBase implements SymbolBase {
+	
+	BV("bv", ParamType.NAT),
 
-	PreSymbol getPreSymbol();
+	FP("fp", ParamType.NAT, ParamType.NAT),
 	
-	int getArity();
+	;
 	
-	List<ParamVar> getParams();
-	
-	ParameterizedPreSymbol fresh();
-	
+	private final String name;
+	private final List<ParamType> paramTypes;
+
+	private BuiltInTypeSymbolBase(String name, ParamType... params) {
+		this.name = name;
+		this.paramTypes = Arrays.asList(params);
+	}
+
+	@Override
+	public int getArity() {
+		return 0;
+	}
+
+	@Override
+	public List<ParamType> getParamTypes() {
+		return paramTypes;
+	}
+
+	@Override
+	public String getName() {
+		return name;
+	}
+
 }

@@ -1,4 +1,6 @@
-package edu.harvard.seas.pl.formulog.symbols;
+package edu.harvard.seas.pl.formulog.symbols.parameterized;
+
+import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 
 /*-
  * #%L
@@ -20,14 +22,8 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-import java.util.List;
+public interface FinalizedPreConstructorSymbol extends ConstructorSymbol {
 
-public interface PreSymbol {
-
-	int getArity();
-	
-	String getName();
-	
-	List<ParamType> getParamTypes();
+	BuiltInConstructorSymbolBase getPreSymbol();
 	
 }

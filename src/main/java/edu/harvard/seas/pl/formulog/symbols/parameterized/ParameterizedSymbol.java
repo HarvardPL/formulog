@@ -1,4 +1,9 @@
-package edu.harvard.seas.pl.formulog.symbols;
+package edu.harvard.seas.pl.formulog.symbols.parameterized;
+
+import java.util.Arrays;
+import java.util.List;
+
+import edu.harvard.seas.pl.formulog.symbols.Symbol;
 
 /*-
  * #%L
@@ -20,8 +25,18 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-public interface InstantiatedPreTypeSymbol extends TypeSymbol {
-	
-	BuiltInPreTypeSymbol getPreSymbol();
+public interface ParameterizedSymbol extends Symbol {
 
+	SymbolBase getPreSymbol();
+	
+	List<ParamElt> getArgs();
+	
+	ParameterizedSymbol fresh();
+	
+	ParameterizedSymbol instantiate(List<ParamElt> args);
+	
+	default ParameterizedSymbol instantiate(ParamElt... args) {
+		return instantiate(Arrays.asList(args));
+	}
+	
 }

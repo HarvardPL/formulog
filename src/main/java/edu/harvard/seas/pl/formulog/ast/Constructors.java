@@ -38,10 +38,10 @@ import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbolType;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
-import edu.harvard.seas.pl.formulog.symbols.InstantiatedPreConstructorSymbol;
-import edu.harvard.seas.pl.formulog.symbols.BuiltInPreConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.GlobalSymbolManager.TupleSymbol;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInConstructorSymbolBase;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.FinalizedPreConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RecordSymbol;
-import edu.harvard.seas.pl.formulog.symbols.TupleSymbol;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
@@ -63,8 +63,8 @@ public final class Constructors {
 		if (sym instanceof BuiltInConstructorSymbol) {
 			return lookupOrCreateBuiltInConstructor((BuiltInConstructorSymbol) sym, args);
 		}
-		if (sym instanceof InstantiatedPreConstructorSymbol) {
-			return lookupOrCreateIndexedConstructor((InstantiatedPreConstructorSymbol) sym, args);
+		if (sym instanceof FinalizedPreConstructorSymbol) {
+			return lookupOrCreateIndexedConstructor((FinalizedPreConstructorSymbol) sym, args);
 		}
 		if (sym instanceof TupleSymbol) {
 			return memo.lookupOrCreate(sym, args, () -> new Tuple((TupleSymbol) sym, args));
@@ -547,10 +547,10 @@ public final class Constructors {
 		});
 	}
 
-	private static Term lookupOrCreateIndexedConstructor(InstantiatedPreConstructorSymbol sym, Term[] args) {
+	private static Term lookupOrCreateIndexedConstructor(FinalizedPreConstructorSymbol sym, Term[] args) {
 		Function<String, Term> makeSolverOp = op -> memo.lookupOrCreate(sym, args,
 				() -> new SolverOperation(sym, args, op));
-		BuiltInPreConstructorSymbol preSym = sym.getPreSymbol();
+		BuiltInConstructorSymbolBase preSym = sym.getPreSymbol();
 		switch (preSym) {
 		case SMT_EQ:
 			return makeSolverOp.apply("=");
@@ -717,7 +717,7 @@ public final class Constructors {
 		return ((I32) t.getArgs()[0]).getVal();
 	}
 
-	private static Term makeBvToBvSigned(InstantiatedPreConstructorSymbol sym, Term[] args) {
+	private static Term makeBvToBvSigned(FinalizedPreConstructorSymbol sym, Term[] args) {
 		throw new TodoException();
 //		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
 //
@@ -744,7 +744,7 @@ public final class Constructors {
 //		});
 	}
 
-	private static Term makeBvToBvUnsigned(InstantiatedPreConstructorSymbol sym, Term[] args) {
+	private static Term makeBvToBvUnsigned(FinalizedPreConstructorSymbol sym, Term[] args) {
 		throw new TodoException();
 //		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
 //
@@ -772,7 +772,7 @@ public final class Constructors {
 
 	}
 
-	private static Term makeBvToFp(InstantiatedPreConstructorSymbol sym, Term[] args) {
+	private static Term makeBvToFp(FinalizedPreConstructorSymbol sym, Term[] args) {
 		throw new TodoException();
 //		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
 //
@@ -788,7 +788,7 @@ public final class Constructors {
 //		});
 	}
 
-	private static Term makeFpToFp(InstantiatedPreConstructorSymbol sym, Term[] args) {
+	private static Term makeFpToFp(FinalizedPreConstructorSymbol sym, Term[] args) {
 		throw new TodoException();
 //		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
 //
@@ -804,7 +804,7 @@ public final class Constructors {
 //		});
 	}
 
-	private static Term makeFpToBv(InstantiatedPreConstructorSymbol sym, Term[] args) {
+	private static Term makeFpToBv(FinalizedPreConstructorSymbol sym, Term[] args) {
 		throw new TodoException();
 //		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
 //
@@ -1060,9 +1060,9 @@ public final class Constructors {
 		}
 
 		private String getSyntax() {
-			if (sym instanceof InstantiatedPreConstructorSymbol) {
-				if (((InstantiatedPreConstructorSymbol) sym).getPreSymbol()
-						.equals(BuiltInPreConstructorSymbol.SMT_EQ)) {
+			if (sym instanceof FinalizedPreConstructorSymbol) {
+				if (((FinalizedPreConstructorSymbol) sym).getPreSymbol()
+						.equals(BuiltInConstructorSymbolBase.SMT_EQ)) {
 					return "#=";
 				}
 			}

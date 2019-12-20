@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.symbols;
+package edu.harvard.seas.pl.formulog.symbols.parameterized;
 
 /*-
  * #%L
@@ -20,8 +20,20 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-public interface InstantiatedPreConstructorSymbol extends ConstructorSymbol {
+public enum ParamType {
 
-	BuiltInPreConstructorSymbol getPreSymbol();
+	NAT,
+	
+	ANY_TYPE,
+	
+	SMT_QUANTIFIER_PAT,
+	
+	SMT_VAR,
+	
+	SMT_VARS,
+	
+	PRE_SMT_TYPE,
+	
+	FUN;
 	
 }
