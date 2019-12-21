@@ -45,7 +45,7 @@ import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInTypeSymbolBase;
-import edu.harvard.seas.pl.formulog.symbols.parameterized.InstantiatedPreTypeSymbol;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.InstantiatedTypeSymbol;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType.ConstructorScheme;
@@ -152,8 +152,8 @@ public class SmtLibParser {
 		if (!seen.add(sym)) {
 			return true;
 		}
-		if (sym instanceof InstantiatedPreTypeSymbol) {
-			switch (((InstantiatedPreTypeSymbol) sym).getPreSymbol()) {
+		if (sym instanceof InstantiatedTypeSymbol) {
+			switch (((InstantiatedTypeSymbol) sym).getPreSymbol()) {
 			case BV: {
 				throw new TodoException();
 //				TypeIndex idx = (TypeIndex) type.getTypeArgs().get(0);
@@ -208,8 +208,8 @@ public class SmtLibParser {
 
 	private TermType getTermType(AlgebraicDataType type) throws SmtLibParseException {
 		TypeSymbol sym = type.getSymbol();
-		if (sym instanceof InstantiatedPreTypeSymbol) {
-			switch (((InstantiatedPreTypeSymbol) sym).getPreSymbol()) {
+		if (sym instanceof InstantiatedTypeSymbol) {
+			switch (((InstantiatedTypeSymbol) sym).getPreSymbol()) {
 			case BV: {
 				throw new TodoException();
 //				TypeIndex idx = (TypeIndex) type.getTypeArgs().get(0);

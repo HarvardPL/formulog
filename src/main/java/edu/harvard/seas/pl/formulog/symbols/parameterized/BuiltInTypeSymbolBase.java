@@ -3,6 +3,8 @@ package edu.harvard.seas.pl.formulog.symbols.parameterized;
 import java.util.Arrays;
 import java.util.List;
 
+import edu.harvard.seas.pl.formulog.symbols.TypeSymbolType;
+
 /*-
  * #%L
  * FormuLog
@@ -25,16 +27,16 @@ import java.util.List;
 
 public enum BuiltInTypeSymbolBase implements SymbolBase {
 	
-	BV("bv", ParamType.NAT),
+	BV("bv", ParamKind.NAT),
 
-	FP("fp", ParamType.NAT, ParamType.NAT),
+	FP("fp", ParamKind.NAT, ParamKind.NAT),
 	
 	;
 	
 	private final String name;
-	private final List<ParamType> paramTypes;
+	private final List<ParamKind> paramTypes;
 
-	private BuiltInTypeSymbolBase(String name, ParamType... params) {
+	private BuiltInTypeSymbolBase(String name, ParamKind... params) {
 		this.name = name;
 		this.paramTypes = Arrays.asList(params);
 	}
@@ -45,13 +47,17 @@ public enum BuiltInTypeSymbolBase implements SymbolBase {
 	}
 
 	@Override
-	public List<ParamType> getParamTypes() {
+	public List<ParamKind> getParamKinds() {
 		return paramTypes;
 	}
 
 	@Override
 	public String getName() {
 		return name;
+	}
+	
+	public TypeSymbolType getTypeSymbolType() {
+		return TypeSymbolType.NORMAL_TYPE;
 	}
 
 }

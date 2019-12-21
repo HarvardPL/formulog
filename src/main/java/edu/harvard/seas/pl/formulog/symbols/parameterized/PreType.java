@@ -27,4 +27,20 @@ public interface PreType extends ParamElt {
 	@Override
 	PreType applySubst(Map<ParamVar, ParamElt> subst);
 	
+	@Override
+	default boolean matchesParamKind(ParamKind kind) {
+		switch (kind) {
+		case ANY_TYPE:
+		case PRE_SMT_TYPE:
+		case SMT_QUANTIFIER_PAT:
+		case SMT_VAR:
+		case SMT_VARS:
+			return true;
+		case FUN:
+		case NAT:
+			return false;
+		}
+		throw new AssertionError("impossible");
+	}
+	
 }

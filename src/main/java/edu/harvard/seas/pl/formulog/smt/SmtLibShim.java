@@ -63,7 +63,7 @@ import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInTypeSymbolBase;
-import edu.harvard.seas.pl.formulog.symbols.parameterized.InstantiatedPreTypeSymbol;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.InstantiatedTypeSymbol;
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
@@ -405,8 +405,8 @@ public class SmtLibShim {
 			@Override
 			public String visit(AlgebraicDataType algebraicType, Void in) {
 				TypeSymbol sym = algebraicType.getSymbol();
-				if (sym instanceof InstantiatedPreTypeSymbol) {
-					return stringifyIndexedSymbol(((InstantiatedPreTypeSymbol) sym).getPreSymbol(), algebraicType.getTypeArgs());
+				if (sym instanceof InstantiatedTypeSymbol) {
+					return stringifyIndexedSymbol(((InstantiatedTypeSymbol) sym).getPreSymbol(), algebraicType.getTypeArgs());
 				}
 				if (sym instanceof BuiltInTypeSymbol) {
 					switch ((BuiltInTypeSymbol) sym) {
@@ -544,8 +544,8 @@ public class SmtLibShim {
 			if (sym.isAlias()) {
 				return false;
 			}
-			if (sym instanceof InstantiatedPreTypeSymbol) {
-				switch (((InstantiatedPreTypeSymbol) sym).getPreSymbol()) {
+			if (sym instanceof InstantiatedTypeSymbol) {
+				switch (((InstantiatedTypeSymbol) sym).getPreSymbol()) {
 				case BV:
 				case FP:
 					return false;

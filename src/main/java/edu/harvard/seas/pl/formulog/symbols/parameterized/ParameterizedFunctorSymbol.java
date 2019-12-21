@@ -20,7 +20,7 @@ package edu.harvard.seas.pl.formulog.symbols.parameterized;
  * #L%
  */
 
-public interface ParameterizedPreFunctorSymbol {
+public interface ParameterizedFunctorSymbol extends ParameterizedSymbol {
 	
 	PreFunctorType getPreType();
 	

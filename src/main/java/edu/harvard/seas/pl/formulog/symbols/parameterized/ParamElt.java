@@ -26,4 +26,6 @@ public interface ParamElt {
 
 	ParamElt applySubst(Map<ParamVar, ParamElt> subst);
 	
+	boolean matchesParamKind(ParamKind kind);
+	
 }

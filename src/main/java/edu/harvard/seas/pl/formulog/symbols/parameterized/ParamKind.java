@@ -20,7 +20,7 @@ package edu.harvard.seas.pl.formulog.symbols.parameterized;
  * #L%
  */
 
-public enum ParamType {
+public enum ParamKind {
 
 	NAT,
 	

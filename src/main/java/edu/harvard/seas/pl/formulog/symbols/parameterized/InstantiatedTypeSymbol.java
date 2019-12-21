@@ -22,7 +22,7 @@ import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
  * #L%
  */
 
-public interface InstantiatedPreTypeSymbol extends TypeSymbol {
+public interface InstantiatedTypeSymbol extends TypeSymbol {
 	
 	BuiltInTypeSymbolBase getPreSymbol();
 	

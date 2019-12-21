@@ -27,16 +27,16 @@ import edu.harvard.seas.pl.formulog.symbols.Symbol;
 
 public interface ParameterizedSymbol extends Symbol {
 
-	SymbolBase getPreSymbol();
+	SymbolBase getBase();
 	
 	List<ParamElt> getArgs();
 	
-	ParameterizedSymbol fresh();
+	ParameterizedSymbol copyWithNewArgs(List<ParamElt> args);
 	
-	ParameterizedSymbol instantiate(List<ParamElt> args);
-	
-	default ParameterizedSymbol instantiate(ParamElt... args) {
-		return instantiate(Arrays.asList(args));
+	default ParameterizedSymbol copyWithNewArgs(ParamElt... args) {
+		return copyWithNewArgs(Arrays.asList(args));
 	}
+	
+	Symbol mkFinal();
 	
 }

@@ -1,5 +1,8 @@
 package edu.harvard.seas.pl.formulog.symbols.parameterized;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /*-
  * #%L
  * FormuLog
@@ -24,23 +27,31 @@ import java.util.Map;
 
 public class ParamVar implements ParamElt {
 
-	public static final ParamVar h = new ParamVar(ParamType.NAT);
-	public static final ParamVar i = new ParamVar(ParamType.NAT);
-	public static final ParamVar j = new ParamVar(ParamType.NAT);
-	public static final ParamVar k = new ParamVar(ParamType.NAT);
+	public static final ParamVar h = new ParamVar(ParamKind.NAT);
+	public static final ParamVar i = new ParamVar(ParamKind.NAT);
+	public static final ParamVar j = new ParamVar(ParamKind.NAT);
+	public static final ParamVar k = new ParamVar(ParamKind.NAT);
 	
-	private final ParamType paramType;
+	private final ParamKind kind;
 	
-	public ParamVar(ParamType paramType) {
-		this.paramType = paramType;
+	public ParamVar(ParamKind kind) {
+		this.kind = kind;
 	}
 	
 	public ParamVar fresh() {
-		return new ParamVar(paramType);
+		return new ParamVar(kind);
 	}
 	
-	public ParamType getParamType() {
-		return paramType;
+	public static List<ParamElt> fresh(List<ParamKind> kinds) {
+		List<ParamElt> vars = new ArrayList<>();
+		for (ParamKind kind : kinds) {
+			vars.add(new ParamVar(kind));
+		}
+		return vars;
+	}
+	
+	public ParamKind getParamType() {
+		return kind;
 	}
 
 	@Override
@@ -49,6 +60,11 @@ public class ParamVar implements ParamElt {
 			return subst.get(this);
 		}
 		return this;
+	}
+
+	@Override
+	public boolean matchesParamKind(ParamKind otherKind) {
+		return kind.equals(otherKind);
 	}
 
 }

@@ -31,14 +31,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInConstructorSymbolBase;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInTypeSymbolBase;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParamElt;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.ParamVar;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedSymbol;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.SymbolBase;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType.ConstructorScheme;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.types.Types.TypeVar;
-import edu.harvard.seas.pl.formulog.util.TodoException;
 import edu.harvard.seas.pl.formulog.util.Util;
 
 public final class GlobalSymbolManager {
@@ -73,7 +75,7 @@ public final class GlobalSymbolManager {
 		Symbol sym = memo.get(name);
 		assert sym != null;
 		if (sym instanceof ParameterizedSymbol) {
-			return ((ParameterizedSymbol) sym).instantiate(params);
+			return ((ParameterizedSymbol) sym).copyWithNewArgs(params);
 		} else if (!params.isEmpty()) {
 			throw new IllegalArgumentException("Cannot supply parameters to non-parameterized symbol: " + sym);
 		}
@@ -86,7 +88,12 @@ public final class GlobalSymbolManager {
 	}
 
 	private static ParameterizedSymbol getParameterizedSymbolInternal(SymbolBase base) {
-		throw new TodoException();
+		List<ParamElt> params = ParamVar.fresh(base.getParamKinds());
+		if (base instanceof BuiltInConstructorSymbolBase) {
+			return ParameterizedConstructorSymbol.mk((BuiltInConstructorSymbolBase) base, params);
+		}
+		assert base instanceof BuiltInTypeSymbolBase;
+		return ParameterizedTypeSymbol.mk((BuiltInTypeSymbolBase) base, params);
 	}
 
 	private static void checkInitialized() {
@@ -101,11 +108,11 @@ public final class GlobalSymbolManager {
 		}
 		register(BuiltInTypeSymbol.values());
 		register(BuiltInConstructorSymbol.values());
-		register(BuiltInFunctionSymbol.values());
 		register(BuiltInConstructorTesterSymbol.values());
 		register(BuiltInConstructorGetterSymbol.values());
 		register(BuiltInTypeSymbolBase.values());
 		register(BuiltInConstructorSymbolBase.values());
+//		register(BuiltInFunctionSymbol.values());
 		initialized = true;
 	}
 
