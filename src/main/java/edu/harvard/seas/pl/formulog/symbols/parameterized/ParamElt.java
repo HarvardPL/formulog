@@ -28,6 +28,8 @@ public interface ParamElt {
 	
 	boolean matchesParamKind(ParamKind kind);
 	
+	boolean matchesParamSubKind(ParamSubKind kind);
+	
 	boolean containsParamVars();
 	
 }

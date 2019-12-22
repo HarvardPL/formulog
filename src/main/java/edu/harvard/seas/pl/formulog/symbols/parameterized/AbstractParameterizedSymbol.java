@@ -40,10 +40,10 @@ public abstract class AbstractParameterizedSymbol<B extends SymbolBase> implemen
 			throw new IllegalArgumentException("Wrong number of parameters for symbol " + base);
 		}
 		int i = 0;
-		Iterator<ParamKind> kinds = base.getParamKinds().iterator();
+		Iterator<ParamSubKind> kinds = base.getParamSubKinds().iterator();
 		for (ParamElt arg : args) {
-			ParamKind paramType = kinds.next();
-			if (!arg.matchesParamKind(paramType)) {
+			ParamSubKind paramType = kinds.next();
+			if (!arg.matchesParamKind(paramType.toKind())) {
 				throw new IllegalArgumentException("Parameter kind mismatch for symbol " + base + ": parameter "
 						+ (i + 1) + " should be of kind " + paramType);
 			}

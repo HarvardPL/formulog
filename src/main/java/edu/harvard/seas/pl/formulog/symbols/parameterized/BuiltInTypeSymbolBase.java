@@ -27,16 +27,16 @@ import edu.harvard.seas.pl.formulog.symbols.TypeSymbolType;
 
 public enum BuiltInTypeSymbolBase implements SymbolBase {
 	
-	BV("bv", ParamKind.NAT),
+	BV("bv", ParamSubKind.NAT),
 
-	FP("fp", ParamKind.NAT, ParamKind.NAT),
+	FP("fp", ParamSubKind.NAT, ParamSubKind.NAT),
 	
 	;
 	
 	private final String name;
-	private final List<ParamKind> paramTypes;
+	private final List<ParamSubKind> paramTypes;
 
-	private BuiltInTypeSymbolBase(String name, ParamKind... params) {
+	private BuiltInTypeSymbolBase(String name, ParamSubKind... params) {
 		this.name = name;
 		this.paramTypes = Arrays.asList(params);
 	}
@@ -47,7 +47,7 @@ public enum BuiltInTypeSymbolBase implements SymbolBase {
 	}
 
 	@Override
-	public List<ParamKind> getParamKinds() {
+	public List<ParamSubKind> getParamSubKinds() {
 		return paramTypes;
 	}
 

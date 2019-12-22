@@ -28,10 +28,10 @@ public interface SymbolBase {
 	
 	String getName();
 	
-	List<ParamKind> getParamKinds();
+	List<ParamSubKind> getParamSubKinds();
 
 	default int getNumParams() {
-		return getParamKinds().size();
+		return getParamSubKinds().size();
 	}
 	
 }

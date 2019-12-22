@@ -76,6 +76,11 @@ public class NatParam implements ParamElt {
 	public boolean matchesParamKind(ParamKind kind) {
 		return kind.equals(ParamKind.NAT);
 	}
+	
+	@Override
+	public boolean matchesParamSubKind(ParamSubKind kind) {
+		return kind.equals(ParamSubKind.NAT);
+	}
 
 	public List<NatParam> expandAsFpAlias() {
 		switch (nat) {

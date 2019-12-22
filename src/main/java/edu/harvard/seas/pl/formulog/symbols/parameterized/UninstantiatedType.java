@@ -33,6 +33,7 @@ public class UninstantiatedType implements PreType {
 	public UninstantiatedType(BuiltInTypeSymbolBase sym, List<ParamElt> params) {
 		this.sym = sym;
 		this.params = params;
+		assert sym == BuiltInTypeSymbolBase.BV || sym == BuiltInTypeSymbolBase.FP;
 	}
 	
 	public UninstantiatedType(BuiltInTypeSymbolBase sym, ParamElt... params) {
@@ -50,7 +51,25 @@ public class UninstantiatedType implements PreType {
 	
 	@Override
 	public boolean containsParamVars() {
-		return ParamUtil.containsParamVars(params);
+		return false;
+	}
+	
+	@Override
+	public boolean matchesParamSubKind(ParamSubKind kind) {
+		switch (kind) {
+		case ANY_TYPE:
+			return true;
+		case FUN:
+		case NAT:
+		case SMT_VAR:
+		case SMT_VARS:
+			return false;
+		case PRE_SMT_TYPE:
+			return ParamUtil.matchParamSubKind(params, ParamSubKind.PRE_SMT_TYPE);
+		case MODEL_FREE_TYPE:
+			return ParamUtil.matchParamSubKind(params, ParamSubKind.MODEL_FREE_TYPE);
+		}
+		throw new AssertionError("impossible");
 	}
 
 	@Override
@@ -83,5 +102,5 @@ public class UninstantiatedType implements PreType {
 			return false;
 		return true;
 	}
-	
+
 }

@@ -27,14 +27,14 @@ import java.util.Map;
 
 public class ParamVar implements ParamElt {
 
-	public static final ParamVar h = new ParamVar(ParamKind.NAT);
-	public static final ParamVar i = new ParamVar(ParamKind.NAT);
-	public static final ParamVar j = new ParamVar(ParamKind.NAT);
-	public static final ParamVar k = new ParamVar(ParamKind.NAT);
+	public static final ParamVar h = new ParamVar(ParamSubKind.NAT);
+	public static final ParamVar i = new ParamVar(ParamSubKind.NAT);
+	public static final ParamVar j = new ParamVar(ParamSubKind.NAT);
+	public static final ParamVar k = new ParamVar(ParamSubKind.NAT);
 	
-	private final ParamKind kind;
+	private final ParamSubKind kind;
 	
-	public ParamVar(ParamKind kind) {
+	public ParamVar(ParamSubKind kind) {
 		this.kind = kind;
 	}
 
@@ -47,15 +47,15 @@ public class ParamVar implements ParamElt {
 		return new ParamVar(kind);
 	}
 	
-	public static List<ParamElt> fresh(List<ParamKind> kinds) {
+	public static List<ParamElt> fresh(List<ParamSubKind> kinds) {
 		List<ParamElt> vars = new ArrayList<>();
-		for (ParamKind kind : kinds) {
+		for (ParamSubKind kind : kinds) {
 			vars.add(new ParamVar(kind));
 		}
 		return vars;
 	}
 	
-	public ParamKind getParamType() {
+	public ParamSubKind getParamSubKind() {
 		return kind;
 	}
 
@@ -69,6 +69,11 @@ public class ParamVar implements ParamElt {
 
 	@Override
 	public boolean matchesParamKind(ParamKind otherKind) {
+		return kind.toKind().equals(otherKind);
+	}
+	
+	@Override
+	public boolean matchesParamSubKind(ParamSubKind otherKind) {
 		return kind.equals(otherKind);
 	}
 

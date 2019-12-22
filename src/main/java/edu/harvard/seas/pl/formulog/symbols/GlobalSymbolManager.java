@@ -34,6 +34,8 @@ import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInTypeSymbolBase;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.FinalizedSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.FinalizedTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParamElt;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.ParamSubKind;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.ParamUtil;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParamVar;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedSymbol;
@@ -44,6 +46,7 @@ import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType.ConstructorScheme;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.types.Types.TypeVar;
+import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.TodoException;
 import edu.harvard.seas.pl.formulog.util.Util;
 
@@ -94,7 +97,7 @@ public final class GlobalSymbolManager {
 	}
 
 	private static ParameterizedSymbol getParameterizedSymbolInternal(SymbolBase base) {
-		List<ParamElt> params = ParamVar.fresh(base.getParamKinds());
+		List<ParamElt> params = ParamVar.fresh(base.getParamSubKinds());
 		if (base instanceof BuiltInConstructorSymbolBase) {
 			return ParameterizedConstructorSymbol.mk((BuiltInConstructorSymbolBase) base, params);
 		}
@@ -158,6 +161,12 @@ public final class GlobalSymbolManager {
 		if (paramSym.containsParamVars()) {
 			throw new IllegalArgumentException(
 					"Cannot finalize a parameterized symbol that still contains unbound parameters: " + paramSym);
+		}
+		Pair<ParamElt, ParamSubKind> p = ParamUtil.findMismatch(paramSym.getArgs(),
+				paramSym.getBase().getParamSubKinds());
+		if (p != null) {
+			throw new IllegalArgumentException("Cannot finalize symbol " + paramSym
+					+ ": there is a mismatch between parameter kind " + p.snd() + " and argument " + p.fst());
 		}
 		if (paramSym instanceof ParameterizedTypeSymbol) {
 			sym = finalizeTypeSymbol((ParameterizedTypeSymbol) paramSym);

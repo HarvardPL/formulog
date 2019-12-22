@@ -23,6 +23,7 @@ package edu.harvard.seas.pl.formulog.symbols.parameterized;
 import java.util.Map;
 
 import edu.harvard.seas.pl.formulog.types.Types.Type;
+import edu.harvard.seas.pl.formulog.util.TodoException;
 
 public class InstantiatedType implements PreType {
 
@@ -39,6 +40,27 @@ public class InstantiatedType implements PreType {
 	
 	public Type getType() {
 		return type;
+	}
+
+	@Override
+	public boolean matchesParamSubKind(ParamSubKind kind) {
+		switch (kind) {
+		case ANY_TYPE:
+			return true;
+		case FUN:
+		case NAT:
+			return false;
+		case PRE_SMT_TYPE:
+			// types.isPreSmtType
+		case MODEL_FREE_TYPE:
+			// types.containsModelType
+		case SMT_VAR:
+			// types.isSmtVarType
+		case SMT_VARS:
+			// types.isTupleType
+			throw new TodoException();
+		}
+		throw new AssertionError("impossible");
 	}
 	
 	@Override

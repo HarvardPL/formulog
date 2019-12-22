@@ -20,12 +20,36 @@ package edu.harvard.seas.pl.formulog.symbols.parameterized;
  * #L%
  */
 
-public enum ParamKind {
+public enum ParamSubKind {
 
 	NAT,
 	
-	TYPE,
+	ANY_TYPE,
+	
+	MODEL_FREE_TYPE,
+	
+	SMT_VAR,
+	
+	SMT_VARS,
+	
+	PRE_SMT_TYPE,
 	
 	FUN;
+	
+	public ParamKind toKind() {
+		switch (this) {
+		case FUN:
+			return ParamKind.FUN;
+		case NAT:
+			return ParamKind.NAT;
+		case ANY_TYPE:
+		case PRE_SMT_TYPE:
+		case MODEL_FREE_TYPE:
+		case SMT_VAR:
+		case SMT_VARS:
+			return ParamKind.TYPE;
+		}
+		throw new AssertionError("impossible");
+	}
 	
 }

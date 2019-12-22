@@ -1,5 +1,10 @@
 package edu.harvard.seas.pl.formulog.symbols.parameterized;
 
+import java.util.Iterator;
+import java.util.List;
+
+import edu.harvard.seas.pl.formulog.util.Pair;
+
 /*-
  * #%L
  * FormuLog
@@ -25,7 +30,7 @@ public final class ParamUtil {
 	private ParamUtil() {
 		throw new AssertionError("impossible");
 	}
-	
+
 	public static boolean containsParamVars(Iterable<ParamElt> params) {
 		for (ParamElt param : params) {
 			if (param.containsParamVars()) {
@@ -33,6 +38,28 @@ public final class ParamUtil {
 			}
 		}
 		return false;
+	}
+
+	public static Pair<ParamElt, ParamSubKind> findMismatch(List<ParamElt> args, List<ParamSubKind> kinds) {
+		assert args.size() == kinds.size();
+		Iterator<ParamSubKind> kindIt = kinds.iterator();
+		for (Iterator<ParamElt> argIt = args.iterator(); argIt.hasNext();) {
+			ParamElt arg = argIt.next();
+			ParamSubKind kind = kindIt.next();
+			if (!arg.matchesParamSubKind(kind)) {
+				return new Pair<>(arg, kind);
+			}
+		}
+		return null;
+	}
+	
+	public static boolean matchParamSubKind(List<ParamElt> args, ParamSubKind kind) {
+		for (ParamElt arg : args) {
+			if (!arg.matchesParamSubKind(kind)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 }
