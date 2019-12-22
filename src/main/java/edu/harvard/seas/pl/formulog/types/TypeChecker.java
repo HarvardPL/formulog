@@ -73,7 +73,7 @@ import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
-import edu.harvard.seas.pl.formulog.symbols.parameterized.FinalizedPreConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.FinalizedConstructorSymbol;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.OpaqueType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
@@ -543,7 +543,7 @@ public class TypeChecker {
 			FunctorType cnstrType = cnstrSym.getCompileTimeType().freshen();
 			Term[] args = t.getArgs();
 			List<Type> argTypes = cnstrType.getArgTypes();
-			if (cnstrSym instanceof FinalizedPreConstructorSymbol) {
+			if (cnstrSym instanceof FinalizedConstructorSymbol) {
 				throw new TodoException();
 //				if (cnstrSym.equals(BuiltInConstructorSymbol.FORMULA_EQ)) {
 //					smtEqsToResolve.add(new Pair<>(t, argTypes.get(0)));
@@ -727,7 +727,7 @@ public class TypeChecker {
 			@Override
 			public Term visit(Constructor c, Substitution subst) throws TypeException {
 				ConstructorSymbol sym = c.getSymbol();
-				if (sym instanceof FinalizedPreConstructorSymbol) {
+				if (sym instanceof FinalizedConstructorSymbol) {
 					throw new TodoException();
 //					if (sym.equals(BuiltInConstructorSymbol.FORMULA_EQ)) {
 //						Pair<Constructor, Type> p = smtEqsToResolve.removeFirst();

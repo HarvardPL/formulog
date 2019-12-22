@@ -23,8 +23,7 @@ package edu.harvard.seas.pl.formulog.symbols.parameterized;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
-import edu.harvard.seas.pl.formulog.util.TodoException;
+import edu.harvard.seas.pl.formulog.symbols.TypeSymbolType;
 
 public class ParameterizedTypeSymbol extends AbstractParameterizedSymbol<BuiltInTypeSymbolBase> {
 
@@ -49,10 +48,9 @@ public class ParameterizedTypeSymbol extends AbstractParameterizedSymbol<BuiltIn
 	public ParameterizedSymbol copyWithNewArgs(List<ParamElt> args) {
 		return mk(getBase(), args);
 	}
-
-	@Override
-	public Symbol mkFinal() {
-		throw new TodoException();
-	}
 	
+	public TypeSymbolType getTypeSymbolType() {
+		return getBase().getTypeSymbolType();
+	}
+
 }

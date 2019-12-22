@@ -47,6 +47,11 @@ public class UninstantiatedType implements PreType {
 		}
 		return new UninstantiatedType(sym, newParams);
 	}
+	
+	@Override
+	public boolean containsParamVars() {
+		return ParamUtil.containsParamVars(params);
+	}
 
 	@Override
 	public int hashCode() {

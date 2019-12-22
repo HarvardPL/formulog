@@ -40,7 +40,7 @@ import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbolType;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.GlobalSymbolManager.TupleSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInConstructorSymbolBase;
-import edu.harvard.seas.pl.formulog.symbols.parameterized.FinalizedPreConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.FinalizedConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RecordSymbol;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
@@ -63,8 +63,8 @@ public final class Constructors {
 		if (sym instanceof BuiltInConstructorSymbol) {
 			return lookupOrCreateBuiltInConstructor((BuiltInConstructorSymbol) sym, args);
 		}
-		if (sym instanceof FinalizedPreConstructorSymbol) {
-			return lookupOrCreateIndexedConstructor((FinalizedPreConstructorSymbol) sym, args);
+		if (sym instanceof FinalizedConstructorSymbol) {
+			return lookupOrCreateIndexedConstructor((FinalizedConstructorSymbol) sym, args);
 		}
 		if (sym instanceof TupleSymbol) {
 			return memo.lookupOrCreate(sym, args, () -> new Tuple((TupleSymbol) sym, args));
@@ -547,10 +547,10 @@ public final class Constructors {
 		});
 	}
 
-	private static Term lookupOrCreateIndexedConstructor(FinalizedPreConstructorSymbol sym, Term[] args) {
+	private static Term lookupOrCreateIndexedConstructor(FinalizedConstructorSymbol sym, Term[] args) {
 		Function<String, Term> makeSolverOp = op -> memo.lookupOrCreate(sym, args,
 				() -> new SolverOperation(sym, args, op));
-		BuiltInConstructorSymbolBase preSym = sym.getPreSymbol();
+		BuiltInConstructorSymbolBase preSym = sym.getBase();
 		switch (preSym) {
 		case SMT_EQ:
 			return makeSolverOp.apply("=");
@@ -717,7 +717,7 @@ public final class Constructors {
 		return ((I32) t.getArgs()[0]).getVal();
 	}
 
-	private static Term makeBvToBvSigned(FinalizedPreConstructorSymbol sym, Term[] args) {
+	private static Term makeBvToBvSigned(FinalizedConstructorSymbol sym, Term[] args) {
 		throw new TodoException();
 //		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
 //
@@ -744,7 +744,7 @@ public final class Constructors {
 //		});
 	}
 
-	private static Term makeBvToBvUnsigned(FinalizedPreConstructorSymbol sym, Term[] args) {
+	private static Term makeBvToBvUnsigned(FinalizedConstructorSymbol sym, Term[] args) {
 		throw new TodoException();
 //		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
 //
@@ -772,7 +772,7 @@ public final class Constructors {
 
 	}
 
-	private static Term makeBvToFp(FinalizedPreConstructorSymbol sym, Term[] args) {
+	private static Term makeBvToFp(FinalizedConstructorSymbol sym, Term[] args) {
 		throw new TodoException();
 //		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
 //
@@ -788,7 +788,7 @@ public final class Constructors {
 //		});
 	}
 
-	private static Term makeFpToFp(FinalizedPreConstructorSymbol sym, Term[] args) {
+	private static Term makeFpToFp(FinalizedConstructorSymbol sym, Term[] args) {
 		throw new TodoException();
 //		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
 //
@@ -804,7 +804,7 @@ public final class Constructors {
 //		});
 	}
 
-	private static Term makeFpToBv(FinalizedPreConstructorSymbol sym, Term[] args) {
+	private static Term makeFpToBv(FinalizedConstructorSymbol sym, Term[] args) {
 		throw new TodoException();
 //		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
 //
@@ -1060,8 +1060,8 @@ public final class Constructors {
 		}
 
 		private String getSyntax() {
-			if (sym instanceof FinalizedPreConstructorSymbol) {
-				if (((FinalizedPreConstructorSymbol) sym).getPreSymbol()
+			if (sym instanceof FinalizedConstructorSymbol) {
+				if (((FinalizedConstructorSymbol) sym).getBase()
 						.equals(BuiltInConstructorSymbolBase.SMT_EQ)) {
 					return "#=";
 				}

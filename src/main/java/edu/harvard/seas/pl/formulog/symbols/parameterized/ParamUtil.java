@@ -20,14 +20,19 @@ package edu.harvard.seas.pl.formulog.symbols.parameterized;
  * #L%
  */
 
-import java.util.Map;
+public final class ParamUtil {
 
-public interface ParamElt {
+	private ParamUtil() {
+		throw new AssertionError("impossible");
+	}
+	
+	public static boolean containsParamVars(Iterable<ParamElt> params) {
+		for (ParamElt param : params) {
+			if (param.containsParamVars()) {
+				return true;
+			}
+		}
+		return false;
+	}
 
-	ParamElt applySubst(Map<ParamVar, ParamElt> subst);
-	
-	boolean matchesParamKind(ParamKind kind);
-	
-	boolean containsParamVars();
-	
 }

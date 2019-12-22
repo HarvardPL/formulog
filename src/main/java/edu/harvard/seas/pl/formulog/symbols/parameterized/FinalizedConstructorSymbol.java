@@ -22,8 +22,9 @@ import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
  * #L%
  */
 
-public interface FinalizedPreConstructorSymbol extends ConstructorSymbol {
+public interface FinalizedConstructorSymbol extends FinalizedSymbol, ConstructorSymbol {
 
-	BuiltInConstructorSymbolBase getPreSymbol();
+	@Override
+	BuiltInConstructorSymbolBase getBase();
 	
 }

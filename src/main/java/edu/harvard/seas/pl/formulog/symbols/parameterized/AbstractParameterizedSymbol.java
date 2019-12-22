@@ -70,6 +70,11 @@ public abstract class AbstractParameterizedSymbol<B extends SymbolBase> implemen
 	public List<ParamElt> getArgs() {
 		return args;
 	}
+	
+	@Override
+	public boolean containsParamVars() {
+		return ParamUtil.containsParamVars(args);
+	}
 
 	@Override
 	public int hashCode() {

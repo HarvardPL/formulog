@@ -125,13 +125,14 @@ public final class BuiltInTypes {
 	public static AlgebraicDataType bv(int width) {
 		ParameterizedSymbol pSym = GlobalSymbolManager.getParameterizedSymbol(BV);
 		pSym = pSym.copyWithNewArgs(new NatParam(width));
-		TypeSymbol sym = (TypeSymbol) pSym.mkFinal();
+		TypeSymbol sym = (TypeSymbol) GlobalSymbolManager.finalizeSymbol(pSym);
 		return AlgebraicDataType.make(sym);
 	}
 
 	public static AlgebraicDataType fp(int exponent, int significand) {
-		ParameterizedSymbol preSym = GlobalSymbolManager.getParameterizedSymbol(FP);
-		TypeSymbol sym = (TypeSymbol) preSym.copyWithNewArgs(new NatParam(exponent), new NatParam(significand));
+		ParameterizedSymbol pSym = GlobalSymbolManager.getParameterizedSymbol(FP);
+		pSym = pSym.copyWithNewArgs(new NatParam(exponent), new NatParam(significand));
+		TypeSymbol sym = (TypeSymbol) GlobalSymbolManager.finalizeSymbol(pSym);
 		return AlgebraicDataType.make(sym);
 	}
 

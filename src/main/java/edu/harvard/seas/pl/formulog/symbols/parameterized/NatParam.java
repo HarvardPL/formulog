@@ -44,6 +44,11 @@ public class NatParam implements ParamElt {
 	public int getNat() {
 		return nat;
 	}
+	
+	@Override
+	public boolean containsParamVars() {
+		return false;
+	}
 
 	@Override
 	public int hashCode() {

@@ -23,7 +23,6 @@ package edu.harvard.seas.pl.formulog.symbols.parameterized;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.util.TodoException;
 
 public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<BuiltInConstructorSymbolBase> implements ParameterizedFunctorSymbol {
@@ -119,9 +118,4 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 		throw new TodoException();
 	}
 
-	@Override
-	public Symbol mkFinal() {
-		throw new TodoException();
-	}
-	
 }

@@ -20,14 +20,14 @@ package edu.harvard.seas.pl.formulog.symbols.parameterized;
  * #L%
  */
 
-import java.util.Map;
+import java.util.List;
 
-public interface ParamElt {
+import edu.harvard.seas.pl.formulog.symbols.Symbol;
 
-	ParamElt applySubst(Map<ParamVar, ParamElt> subst);
+public interface FinalizedSymbol extends Symbol {
+
+	SymbolBase getBase();
 	
-	boolean matchesParamKind(ParamKind kind);
-	
-	boolean containsParamVars();
+	List<ParamElt> getArgs();
 	
 }

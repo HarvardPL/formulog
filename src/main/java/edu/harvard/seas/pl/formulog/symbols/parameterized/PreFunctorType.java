@@ -49,7 +49,7 @@ public class PreFunctorType {
 		}
 		return new PreFunctorType(newArgTypes, retType.applySubst(subst));
 	}
-
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;

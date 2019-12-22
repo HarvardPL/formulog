@@ -37,6 +37,6 @@ public interface ParameterizedSymbol extends Symbol {
 		return copyWithNewArgs(Arrays.asList(args));
 	}
 	
-	Symbol mkFinal();
+	boolean containsParamVars();
 	
 }

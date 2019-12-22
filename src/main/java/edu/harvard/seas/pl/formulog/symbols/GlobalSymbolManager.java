@@ -27,9 +27,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInConstructorSymbolBase;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInTypeSymbolBase;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.FinalizedSymbol;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.FinalizedTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParamElt;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParamVar;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedConstructorSymbol;
@@ -41,9 +44,12 @@ import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType.ConstructorScheme;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.types.Types.TypeVar;
+import edu.harvard.seas.pl.formulog.util.TodoException;
 import edu.harvard.seas.pl.formulog.util.Util;
 
 public final class GlobalSymbolManager {
+
+	private static final AtomicInteger cnt = new AtomicInteger();
 
 	private GlobalSymbolManager() {
 		throw new AssertionError("impossible");
@@ -112,7 +118,7 @@ public final class GlobalSymbolManager {
 		register(BuiltInConstructorGetterSymbol.values());
 		register(BuiltInTypeSymbolBase.values());
 		register(BuiltInConstructorSymbolBase.values());
-//		register(BuiltInFunctionSymbol.values());
+		register(BuiltInFunctionSymbol.values());
 		initialized = true;
 	}
 
@@ -136,6 +142,67 @@ public final class GlobalSymbolManager {
 			Symbol other = memo.putIfAbsent(base.getName(), sym);
 			assert other == null;
 		}
+	}
+
+	private static final Map<ParameterizedSymbol, FinalizedSymbol> paramMemo = new ConcurrentHashMap<>();
+
+	public static FinalizedSymbol finalizeSymbol(ParameterizedSymbol paramSym) {
+		initialize();
+		FinalizedSymbol sym = paramMemo.get(paramSym);
+		if (sym != null) {
+			return sym;
+		}
+		if (!hasName(paramSym.getName())) {
+			throw new IllegalArgumentException("Unrecognized parameterized symbol: " + paramSym);
+		}
+		if (paramSym.containsParamVars()) {
+			throw new IllegalArgumentException(
+					"Cannot finalize a parameterized symbol that still contains unbound parameters: " + paramSym);
+		}
+		if (paramSym instanceof ParameterizedTypeSymbol) {
+			sym = finalizeTypeSymbol((ParameterizedTypeSymbol) paramSym);
+		} else {
+			throw new TodoException();
+		}
+		FinalizedSymbol sym2 = paramMemo.putIfAbsent(paramSym, sym);
+		if (sym2 == null) {
+			register(sym);
+		} else {
+			sym = sym2;
+		}
+		return sym;
+	}
+
+	private static synchronized FinalizedSymbol finalizeTypeSymbol(ParameterizedTypeSymbol paramSym) {
+		String name = paramSym.getName() + "$" + cnt.getAndIncrement();
+		return new FinalizedTypeSymbol() {
+
+			@Override
+			public List<ParamElt> getArgs() {
+				return paramSym.getArgs();
+			}
+
+			@Override
+			public int getArity() {
+				return paramSym.getArity();
+			}
+
+			@Override
+			public String getName() {
+				return name;
+			}
+
+			@Override
+			public TypeSymbolType getTypeSymbolType() {
+				return paramSym.getTypeSymbolType();
+			}
+
+			@Override
+			public BuiltInTypeSymbolBase getBase() {
+				return paramSym.getBase();
+			}
+
+		};
 	}
 
 	private static TypeSymbol createTypeSymbol(String name, int arity, TypeSymbolType symType) {

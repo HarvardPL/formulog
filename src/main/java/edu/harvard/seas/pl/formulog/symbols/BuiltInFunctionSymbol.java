@@ -34,207 +34,200 @@ import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.smt;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.string;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.sym;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import edu.harvard.seas.pl.formulog.types.FunctorType;
-import edu.harvard.seas.pl.formulog.types.Types.Type;
 
 public enum BuiltInFunctionSymbol implements FunctionSymbol {
 
 	// i32 operations
 
-	I32_ADD("i32_add", i32, i32, i32),
+	I32_ADD("i32_add",2),
 
-	I32_SUB("i32_sub", i32, i32, i32),
+	I32_SUB("i32_sub",2),
 
-	I32_MUL("i32_mul", i32, i32, i32),
+	I32_MUL("i32_mul",2),
 
-	I32_DIV("i32_div", i32, i32, i32),
+	I32_DIV("i32_div",2),
 
-	I32_REM("i32_rem", i32, i32, i32),
+	I32_REM("i32_rem",2),
 
-	I32_NEG("i32_neg", i32, i32),
+	I32_NEG("i32_neg", 1),
 
-	I32_LT("i32_lt", i32, i32, bool),
+	I32_LT("i32_lt",2),
 
-	I32_LE("i32_le", i32, i32, bool),
+	I32_LE("i32_le",2),
 
-	I32_GT("i32_gt", i32, i32, bool),
+	I32_GT("i32_gt",2),
 
-	I32_GE("i32_ge", i32, i32, bool),
+	I32_GE("i32_ge",2),
 
-	I32_AND("i32_and", i32, i32, i32),
+	I32_AND("i32_and",2),
 
-	I32_OR("i32_or", i32, i32, i32),
+	I32_OR("i32_or",2),
 
-	I32_XOR("i32_xor", i32, i32, i32),
+	I32_XOR("i32_xor",2),
 
-	I32_SCMP("i32_scmp", i32, i32, cmp),
+	I32_SCMP("i32_scmp", 2),
 	
-	I32_UCMP("i32_ucmp", i32, i32, cmp),
+	I32_UCMP("i32_ucmp", 2),
 
 	// i64 operations
 
-	I64_ADD("i64_add", i64, i64, i64),
+	I64_ADD("i64_add",2),
 
-	I64_SUB("i64_sub", i64, i64, i64),
+	I64_SUB("i64_sub",2),
 
-	I64_MUL("i64_mul", i64, i64, i64),
+	I64_MUL("i64_mul",2),
 
-	I64_DIV("i64_div", i64, i64, i64),
+	I64_DIV("i64_div",2),
 
-	I64_REM("i64_rem", i64, i64, i64),
+	I64_REM("i64_rem",2),
 
-	I64_NEG("i64_neg", i64, i64),
+	I64_NEG("i64_neg", 1),
 
-	I64_LT("i64_lt", i64, i64, bool),
+	I64_LT("i64_lt",2),
 
-	I64_LE("i64_le", i64, i64, bool),
+	I64_LE("i64_le",2),
 
-	I64_GT("i64_gt", i64, i64, bool),
+	I64_GT("i64_gt",2),
 
-	I64_GE("i64_ge", i64, i64, bool),
+	I64_GE("i64_ge",2),
 
-	I64_AND("i64_and", i64, i64, i64),
+	I64_AND("i64_and",2),
 
-	I64_OR("i64_or", i64, i64, i64),
+	I64_OR("i64_or",2),
 
-	I64_XOR("i64_xor", i64, i64, i64),
+	I64_XOR("i64_xor",2),
 	
-	I64_SCMP("i64_scmp", i64, i64, cmp),
+	I64_SCMP("i64_scmp", 2),
 	
-	I64_UCMP("i64_ucmp", i64, i64, cmp),
+	I64_UCMP("i64_ucmp", 2),
 
 	// fp32 operations
 
-	FP32_ADD("fp32_add", fp32, fp32, fp32),
+	FP32_ADD("fp32_add",2),
 
-	FP32_SUB("fp32_sub", fp32, fp32, fp32),
+	FP32_SUB("fp32_sub",2),
 
-	FP32_MUL("fp32_mul", fp32, fp32, fp32),
+	FP32_MUL("fp32_mul",2),
 
-	FP32_DIV("fp32_div", fp32, fp32, fp32),
+	FP32_DIV("fp32_div",2),
 
-	FP32_REM("fp32_rem", fp32, fp32, fp32),
+	FP32_REM("fp32_rem",2),
 
-	FP32_NEG("fp32_neg", fp32, fp32),
+	FP32_NEG("fp32_neg", 1),
 
-	FP32_LT("fp32_lt", fp32, fp32, bool),
+	FP32_LT("fp32_lt",2),
 
-	FP32_LE("fp32_le", fp32, fp32, bool),
+	FP32_LE("fp32_le",2),
 
-	FP32_GT("fp32_gt", fp32, fp32, bool),
+	FP32_GT("fp32_gt",2),
 
-	FP32_GE("fp32_ge", fp32, fp32, bool),
+	FP32_GE("fp32_ge",2),
 
-	FP32_EQ("fp32_eq", fp32, fp32, bool),
+	FP32_EQ("fp32_eq",2),
 
 	// fp64 operations
 
-	FP64_ADD("fp64_add", fp64, fp64, fp64),
+	FP64_ADD("fp64_add",2),
 
-	FP64_SUB("fp64_sub", fp64, fp64, fp64),
+	FP64_SUB("fp64_sub",2),
 
-	FP64_MUL("fp64_mul", fp64, fp64, fp64),
+	FP64_MUL("fp64_mul",2),
 
-	FP64_DIV("fp64_div", fp64, fp64, fp64),
+	FP64_DIV("fp64_div",2),
 
-	FP64_REM("fp64_rem", fp64, fp64, fp64),
+	FP64_REM("fp64_rem",2),
 
-	FP64_NEG("fp64_neg", fp64, fp64),
+	FP64_NEG("fp64_neg", 1),
 
-	FP64_LT("fp64_lt", fp64, fp64, bool),
+	FP64_LT("fp64_lt",2),
 
-	FP64_LE("fp64_le", fp64, fp64, bool),
+	FP64_LE("fp64_le",2),
 
-	FP64_GT("fp64_gt", fp64, fp64, bool),
+	FP64_GT("fp64_gt",2),
 
-	FP64_GE("fp64_ge", fp64, fp64, bool),
+	FP64_GE("fp64_ge",2),
 
-	FP64_EQ("fp64_eq", fp64, fp64, bool),
+	FP64_EQ("fp64_eq",2),
 
-	BEQ("beq", a, a, bool),
-
-	BNEQ("bneq", a, a, bool),
+	// Boolean operations
 	
-	BNOT("bnot", bool, bool),
+	BEQ("beq", 2),
+
+	BNEQ("bneq", 2),
+	
+	BNOT("bnot", 1),
 	
 	// String operations
 
-	STRING_OF_I32("string_of_i32", i32, string),
+	STRING_OF_I32("string_of_i32", 1),
 
-	STRCMP("strcmp", string, string, cmp),
+	STRCMP("strcmp", 2),
 
-	STRCAT("strcat", string, string, string),
+	STRCAT("strcat", 2),
 	
-	STRING_MATCHES("string_matches", string, string, bool),
+	STRING_MATCHES("string_matches", 2),
 	
-	STRING_STARTS_WITH("string_starts_with", string, string, bool),
+	STRING_STARTS_WITH("string_starts_with", 2),
 
 	// Constraint solving
 
-	IS_SAT("is_sat", smt(bool), bool),
+	IS_SAT("is_sat", 1),
 	
-	IS_VALID("is_valid", smt(bool), bool),
+	IS_VALID("is_valid", 1),
 	
-	IS_SAT_OPT("is_sat_opt", smt(bool), option(i32), option(bool)),
+	IS_SAT_OPT("is_sat_opt", 2),
 	
-	IS_VALID_OPT("is_valid_opt", smt(bool), option(i32), option(bool)),
+	IS_VALID_OPT("is_valid_opt", 2),
 	
-	GET_MODEL("get_model", smt(bool), option(i32), option(model)),
+	GET_MODEL("get_model", 2),
 	
-	QUERY_MODEL("query_model", sym(a), model, option(a)),
+	QUERY_MODEL("query_model", 2),
 	
-	SUBSTITUTE("substitute", sym(a), smt(a), smt(b), smt(b)),
+	SUBSTITUTE("substitute", 3),
 	
-	IS_FREE("is_free", sym(a), smt(b), bool),
+	IS_FREE("is_free", 2),
 	
-	ID("", a, a),
+	ID("", 1),
 
 	// Primitive conversion
 
-	i32ToI64("i32_to_i64", i32, i64),
+	i32ToI64("i32_to_i64", 1),
 
-	i32ToFp32("i32_to_fp32", i32, fp32),
+	i32ToFp32("i32_to_fp32", 1),
 
-	i32ToFp64("i32_to_fp64", i32, fp64),
+	i32ToFp64("i32_to_fp64", 1),
 
-	i64ToI32("i64_to_i32", i64, i32),
+	i64ToI32("i64_to_i32", 1),
 
-	i64ToFp32("i64_to_fp32", i64, fp32),
+	i64ToFp32("i64_to_fp32", 1),
 
-	i64ToFp64("i64_to_fp64", i64, fp64),
+	i64ToFp64("i64_to_fp64", 1),
 
-	fp32ToI32("fp32_to_i32", fp32, i32),
+	fp32ToI32("fp32_to_i32", 1),
 
-	fp32ToI64("fp32_to_i64", fp32, i64),
+	fp32ToI64("fp32_to_i64", 1),
 
-	fp32ToFp64("fp32_to_fp64", fp32, fp64),
+	fp32ToFp64("fp32_to_fp64", 1),
 
-	fp64ToI32("fp64_to_i32", fp64, i32),
+	fp64ToI32("fp64_to_i32", 1),
 
-	fp64ToI64("fp64_to_i64", fp64, i64),
+	fp64ToI64("fp64_to_i64", 1),
 
-	fp64ToFp32("fp64_to_fp32", fp64, fp32),
+	fp64ToFp32("fp64_to_fp32", 1),
 	
 	// Debugging
 	
-	PRINT("print", a, bool)
+	PRINT("print", 1),
 	
 	;
 
 	private final String name;
 	private final int arity;
-	private final List<Type> argTypes;
-	private final Type retType;
 
-	private BuiltInFunctionSymbol(String name, Type... types) {
+	private BuiltInFunctionSymbol(String name, int arity) {
 		this.name = name;
-		this.arity = types.length - 1;
-		argTypes = new ArrayList<>(Arrays.asList(types));
-		retType = argTypes.remove(types.length - 1);
+		this.arity = arity;
 	}
 
 	@Override
@@ -244,7 +237,132 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 
 	@Override
 	public FunctorType getCompileTimeType() {
-		return new FunctorType(argTypes, retType);
+		switch (this) {
+		case BEQ:
+		case BNEQ:
+			return new FunctorType(a, a, bool);
+		case BNOT:
+			return new FunctorType(bool, bool);
+		case FP32_NEG:
+			return new FunctorType(fp32, fp32);
+		case FP32_ADD:
+		case FP32_DIV:
+		case FP32_MUL:
+		case FP32_REM:
+		case FP32_SUB:
+			return new FunctorType(fp32, fp32, fp32);
+		case FP32_EQ:
+		case FP32_GE:
+		case FP32_GT:
+		case FP32_LE:
+		case FP32_LT:
+			return new FunctorType(fp32, fp32, bool);
+		case FP64_NEG:
+			return new FunctorType(fp64, fp64);
+		case FP64_ADD:
+		case FP64_DIV:
+		case FP64_MUL:
+		case FP64_REM:
+		case FP64_SUB:
+			return new FunctorType(fp64, fp64, fp64);
+		case FP64_EQ:
+		case FP64_GE:
+		case FP64_GT:
+		case FP64_LE:
+		case FP64_LT:
+			return new FunctorType(fp64, fp64, bool);
+		case GET_MODEL:
+			return new FunctorType(smt(bool), option(i32), option(model));
+		case I32_NEG:
+			return new FunctorType(i32, i32);
+		case I32_ADD:
+		case I32_AND:
+		case I32_DIV:
+		case I32_MUL:
+		case I32_OR:
+		case I32_REM:
+		case I32_SUB:
+		case I32_XOR:
+			return new FunctorType(i32, i32, i32);
+		case I32_GE:
+		case I32_GT:
+		case I32_LE:
+		case I32_LT:
+			return new FunctorType(i32, i32, bool);
+		case I32_SCMP:
+		case I32_UCMP:
+			return new FunctorType(i32, i32, cmp);
+		case I64_NEG:
+			return new FunctorType(i64, i64);
+		case I64_ADD:
+		case I64_AND:
+		case I64_DIV:
+		case I64_MUL:
+		case I64_OR:
+		case I64_REM:
+		case I64_SUB:
+		case I64_XOR:
+			return new FunctorType(i64, i64, i64);
+		case I64_GE:
+		case I64_GT:
+		case I64_LE:
+		case I64_LT:
+			return new FunctorType(i64, i64, bool);
+		case I64_SCMP:
+		case I64_UCMP:
+			return new FunctorType(i64, i64, cmp);
+		case ID:
+			return new FunctorType(a, a);
+		case IS_FREE:
+			return new FunctorType(sym(a), smt(b), bool);
+		case IS_SAT:
+		case IS_VALID:
+			return new FunctorType(smt(bool), bool);
+		case IS_SAT_OPT:
+		case IS_VALID_OPT:
+			return new FunctorType(smt(bool), option(i32), option(bool));
+		case PRINT:
+			return new FunctorType(a, bool);
+		case QUERY_MODEL:
+			return new FunctorType(model, sym(a), option(a));
+		case STRCAT:
+			return new FunctorType(string, string, string);
+		case STRCMP:
+			return new FunctorType(string, string, cmp);
+		case STRING_MATCHES:
+			return new FunctorType(string, string, bool);
+		case STRING_OF_I32:
+			return new FunctorType(i32, string);
+		case STRING_STARTS_WITH:
+			return new FunctorType(string, string, bool);
+		case SUBSTITUTE:
+			return new FunctorType(sym(a), smt(a), smt(b), smt(b));
+		case fp32ToFp64:
+			return new FunctorType(fp32, fp64);
+		case fp32ToI32:
+			return new FunctorType(fp32, i32);
+		case fp32ToI64:
+			return new FunctorType(fp32, i64);
+		case fp64ToFp32:
+			return new FunctorType(fp64, fp32);
+		case fp64ToI32:
+			return new FunctorType(fp64, i32);
+		case fp64ToI64:
+			return new FunctorType(fp64, i64);
+		case i32ToFp32:
+			return new FunctorType(i32, fp32);
+		case i32ToFp64:
+			return new FunctorType(i32, fp64);
+		case i32ToI64:
+			return new FunctorType(i32, i64);
+		case i64ToFp32:
+			return new FunctorType(i64, fp32);
+		case i64ToFp64:
+			return new FunctorType(i64, fp64);
+		case i64ToI32:
+			return new FunctorType(i64, i32);
+		}
+		throw new AssertionError("impossible");
 	}
 
 	@Override

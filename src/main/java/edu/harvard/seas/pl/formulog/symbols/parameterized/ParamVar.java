@@ -37,6 +37,11 @@ public class ParamVar implements ParamElt {
 	public ParamVar(ParamKind kind) {
 		this.kind = kind;
 	}
+
+	@Override
+	public boolean containsParamVars() {
+		return true;
+	}
 	
 	public ParamVar fresh() {
 		return new ParamVar(kind);

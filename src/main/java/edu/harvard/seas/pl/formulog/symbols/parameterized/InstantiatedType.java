@@ -40,6 +40,11 @@ public class InstantiatedType implements PreType {
 	public Type getType() {
 		return type;
 	}
+	
+	@Override
+	public boolean containsParamVars() {
+		return false;
+	}
 
 	@Override
 	public int hashCode() {
@@ -65,5 +70,5 @@ public class InstantiatedType implements PreType {
 			return false;
 		return true;
 	}
-	
+
 }
