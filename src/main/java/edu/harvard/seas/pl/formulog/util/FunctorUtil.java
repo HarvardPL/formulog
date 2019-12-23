@@ -35,7 +35,7 @@ public final class FunctorUtil {
 	}
 
 	public static String toString(Symbol sym, Term[] args) {
-		StringBuilder sb = new StringBuilder(sym.toString());
+		StringBuilder sb = new StringBuilder(sym.getName());
 		int arity = sym.getArity();
 		if (arity > 0) {
 			sb.append('(');

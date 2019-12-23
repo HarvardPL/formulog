@@ -49,6 +49,7 @@ import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.Expr;
+import edu.harvard.seas.pl.formulog.ast.PreConstructor;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
@@ -294,6 +295,11 @@ public class SmtLibShim {
 
 			@Override
 			public Void visit(Expr expr, Void in) {
+				throw new AssertionError("impossible");
+			}
+
+			@Override
+			public Void visit(PreConstructor c, Void in) {
 				throw new AssertionError("impossible");
 			}
 
@@ -626,6 +632,11 @@ public class SmtLibShim {
 
 				@Override
 				public Type visit(Expr expr, Void in) {
+					throw new AssertionError("impossible");
+				}
+
+				@Override
+				public Type visit(PreConstructor c, Void in) {
 					throw new AssertionError("impossible");
 				}
 

@@ -42,6 +42,7 @@ import edu.harvard.seas.pl.formulog.ast.I64;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.NestedFunctionDef;
+import edu.harvard.seas.pl.formulog.ast.PreConstructor;
 import edu.harvard.seas.pl.formulog.ast.LetFunExpr;
 import edu.harvard.seas.pl.formulog.ast.StringTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
@@ -99,6 +100,7 @@ import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInConstructorSymbolBase;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.FinalizedConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedConstructorSymbol;
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
@@ -555,13 +557,12 @@ class TermExtractor {
 		@Override
 		public Term visitBinopFormula(BinopFormulaContext ctx) {
 			Term[] args = extractArray(ctx.term());
-			ConstructorSymbol sym;
+			Symbol sym;
 			switch (ctx.op.getType()) {
 			case FormulogParser.FORMULA_EQ:
 			case FormulogParser.IFF:
-				throw new TodoException();
-//				sym = BuiltInConstructorSymbol.SMT_EQ;
-//				break;
+				sym = pc.symbolManager().getParameterizedSymbol(BuiltInConstructorSymbolBase.SMT_EQ);
+				break;
 			case FormulogParser.IMP:
 				sym = BuiltInConstructorSymbol.SMT_IMP;
 				break;
@@ -574,7 +575,11 @@ class TermExtractor {
 			default:
 				throw new AssertionError();
 			}
-			return Constructors.make(sym, args);
+			if (sym instanceof ConstructorSymbol) {
+				return Constructors.make((ConstructorSymbol) sym, args);
+			} else {
+				return PreConstructor.make((ParameterizedConstructorSymbol) sym, args);
+			}
 		}
 
 		@Override

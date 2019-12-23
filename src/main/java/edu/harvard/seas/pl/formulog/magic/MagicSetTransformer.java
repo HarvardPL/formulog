@@ -45,6 +45,7 @@ import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.LetFunExpr;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
+import edu.harvard.seas.pl.formulog.ast.PreConstructor;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Rule;
@@ -825,6 +826,11 @@ public class MagicSetTransformer {
 			public Void visit(Expr e, Set<RelationSymbol> in) {
 				e.accept(predicatesInExprExtractor, in);
 				return null;
+			}
+
+			@Override
+			public Void visit(PreConstructor c, Set<RelationSymbol> in) {
+				throw new AssertionError("impossible");
 			}
 
 		};

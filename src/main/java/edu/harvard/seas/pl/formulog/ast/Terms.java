@@ -173,6 +173,11 @@ public final class Terms {
 				return null;
 			}
 
+			@Override
+			public Void visit(PreConstructor c, Void in) {
+				throw new AssertionError("impossible");
+			}
+
 		}, null);
 		return vars;
 	}
@@ -205,6 +210,11 @@ public final class Terms {
 				return null;
 			}
 
+			@Override
+			public Void visit(PreConstructor c, Void in) {
+				throw new AssertionError("impossible");
+			}
+
 		}, null);
 		return vars;
 	}
@@ -218,6 +228,8 @@ public final class Terms {
 		O visit(Primitive<?> p, I in);
 
 		O visit(Expr e, I in);
+		
+		O visit(PreConstructor c, I in);
 
 	}
 
@@ -230,6 +242,8 @@ public final class Terms {
 		O visit(Primitive<?> p, I in) throws E;
 
 		O visit(Expr e, I in) throws E;
+		
+		O visit(PreConstructor c, I in) throws E;
 
 	}
 	

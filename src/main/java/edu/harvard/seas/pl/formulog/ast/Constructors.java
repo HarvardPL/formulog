@@ -957,7 +957,7 @@ public final class Constructors {
 			StringBuilder sb = new StringBuilder("{ ");
 			int i = 0;
 			for (FunctionSymbol label : ((RecordSymbol) sym).getLabels()) {
-				sb.append(label);
+				sb.append(label.getName());
 				sb.append("=");
 				sb.append(args[i]);
 				sb.append("; ");

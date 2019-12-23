@@ -32,6 +32,7 @@ import edu.harvard.seas.pl.formulog.ast.LetFunExpr;
 import edu.harvard.seas.pl.formulog.ast.Literal;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
+import edu.harvard.seas.pl.formulog.ast.PreConstructor;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
@@ -88,6 +89,11 @@ public class SmtCallFinder {
 		@Override
 		public Boolean visit(Expr e, Void in) {
 			return e.accept(ev, in);
+		}
+
+		@Override
+		public Boolean visit(PreConstructor c, Void in) {
+			throw new AssertionError("impossible");
 		}
 
 	};

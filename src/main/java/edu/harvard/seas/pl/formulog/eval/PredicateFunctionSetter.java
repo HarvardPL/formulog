@@ -34,6 +34,7 @@ import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.LetFunExpr;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
+import edu.harvard.seas.pl.formulog.ast.PreConstructor;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
@@ -114,6 +115,11 @@ public class PredicateFunctionSetter {
 		public Void visit(Expr e, Void in) {
 			e.accept(ev, in);
 			return null;
+		}
+
+		@Override
+		public Void visit(PreConstructor c, Void in) {
+			throw new AssertionError("impossible");
 		}
 
 	};

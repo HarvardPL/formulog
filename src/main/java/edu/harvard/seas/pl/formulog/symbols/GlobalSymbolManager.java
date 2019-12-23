@@ -91,6 +91,10 @@ public final class GlobalSymbolManager {
 		}
 		return sym;
 	}
+	
+	public static ParameterizedSymbol getParameterizedSymbol(SymbolBase base, List<ParamElt> params) {
+		return getParameterizedSymbol(base).copyWithNewArgs(params);
+	}
 
 	public static ParameterizedSymbol getParameterizedSymbol(SymbolBase base) {
 		initialize();
@@ -151,8 +155,7 @@ public final class GlobalSymbolManager {
 	private static final Map<ParameterizedSymbol, FinalizedSymbol> paramMemo = new ConcurrentHashMap<>();
 
 	public static FinalizedSymbol finalizeSymbol(SymbolBase base, List<ParamElt> params) {
-		ParameterizedSymbol sym = getParameterizedSymbol(base);
-		return finalizeSymbol(sym.copyWithNewArgs(params));
+		return finalizeSymbol(getParameterizedSymbol(base, params));
 	}
 	
 	public static FinalizedSymbol finalizeSymbol(ParameterizedSymbol paramSym) {

@@ -80,6 +80,15 @@ public class MatchClause {
 		public Boolean visit(Expr e, Set<Var> in) {
 			throw new AssertionError("Shouldn't be expressions in patterns");
 		}
+
+		@Override
+		public Boolean visit(PreConstructor c, Set<Var> in) {
+			boolean ok = true;
+			for (Term t : c.getArgs()) {
+				ok &= t.accept(this, in);
+			}
+			return ok;
+		}
 		
 	};
 	

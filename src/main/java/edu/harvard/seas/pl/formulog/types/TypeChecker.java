@@ -53,6 +53,7 @@ import edu.harvard.seas.pl.formulog.ast.LetFunExpr;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.NestedFunctionDef;
+import edu.harvard.seas.pl.formulog.ast.PreConstructor;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Rule;
@@ -74,6 +75,9 @@ import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.FinalizedConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.PreFunctorType;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.PreType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.OpaqueType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
@@ -282,7 +286,9 @@ public class TypeChecker {
 		private final Deque<Triple<Term, Type, Type>> constraints = new ArrayDeque<>();
 		private final Deque<Triple<Term, Type, Type>> formulaConstraints = new ArrayDeque<>();
 		private final Map<TypeVar, Type> typeVars = new HashMap<>();
-		private final Deque<Pair<Constructor, Type>> smtEqsToResolve = new ArrayDeque<>();
+//		private final Deque<Pair<Constructor, Type>> smtEqsToResolve = new ArrayDeque<>();
+		private final Deque<Triple<Term, PreType, Type>> preTypeConstraints = new ArrayDeque<>();
+		private final Deque<Triple<Term, PreType, Type>> formulaPreTypeConstraints = new ArrayDeque<>();
 		private String error;
 
 		public Term[] typeCheckFact(RelationSymbol sym, Term[] args) throws TypeException {
@@ -490,6 +496,15 @@ public class TypeChecker {
 				constraints.add(constraint);
 			}
 		}
+		
+		private void addConstraint(Term t, PreType t1, Type t2, boolean inFormula) {
+			Triple<Term, PreType, Type> constraint = new Triple<>(t, t1, t2);
+			if (inFormula) {
+				formulaPreTypeConstraints.add(constraint);
+			} else {
+				preTypeConstraints.add(constraint);
+			}
+		}
 
 		private void genConstraints(Term t, Type ttype, Map<Var, Type> subst, boolean inFormula) {
 			t.accept(new TermVisitor<Void, Void>() {
@@ -518,6 +533,12 @@ public class TypeChecker {
 					return null;
 				}
 
+				@Override
+				public Void visit(PreConstructor c, Void in) {
+					genConstraintsForPreConstructor(c, ttype, subst, inFormula);
+					return null;
+				}
+
 			}, null);
 		}
 
@@ -543,17 +564,22 @@ public class TypeChecker {
 			FunctorType cnstrType = cnstrSym.getCompileTimeType().freshen();
 			Term[] args = t.getArgs();
 			List<Type> argTypes = cnstrType.getArgTypes();
-			if (cnstrSym instanceof FinalizedConstructorSymbol) {
-				throw new TodoException();
-//				if (cnstrSym.equals(BuiltInConstructorSymbol.FORMULA_EQ)) {
-//					smtEqsToResolve.add(new Pair<>(t, argTypes.get(0)));
-//				}
-			}
 			for (int i = 0; i < args.length; ++i) {
 				Type argType = argTypes.get(i);
 				genConstraints(args[i], argType, subst, inFormula);
 			}
 			addConstraint(t, cnstrType.getRetType(), ttype, wasInFormula);
+		}
+		
+		private void genConstraintsForPreConstructor(PreConstructor c, Type ttype, Map<Var, Type> subst, boolean inFormula) {
+			ParameterizedConstructorSymbol sym = c.getSymbol();
+			PreFunctorType preFunctorType = sym.getPreType();
+			Term[] args = c.getArgs();
+			List<PreType> argTypes = preFunctorType.getArgTypes();
+			for (int i = 0; i < args.length; ++i) {
+				PreType preType = argTypes.get(i);
+				throw new TodoException();
+			}
 		}
 
 		private void genConstraintsForFunctionCall(FunctionCall function, Type ttype, Map<Var, Type> subst,
@@ -595,6 +621,7 @@ public class TypeChecker {
 
 				@Override
 				public Boolean visit(TypeVar typeVar, Void in) {
+					// XXX This should probably return false to be conservative.
 					return true;
 				}
 
@@ -758,6 +785,11 @@ public class TypeChecker {
 			@Override
 			public Term visit(Expr e, Substitution subst) throws TypeException {
 				return e.accept(exprRewriter, subst);
+			}
+
+			@Override
+			public Term visit(PreConstructor c, Substitution in) throws TypeException {
+				throw new TodoException();
 			}
 
 		};
