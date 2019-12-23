@@ -24,6 +24,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import edu.harvard.seas.pl.formulog.types.FunctorType;
+import edu.harvard.seas.pl.formulog.types.Types.Type;
+
 public class PreFunctorType {
 
 	private final List<PreType> argTypes;
@@ -48,6 +51,14 @@ public class PreFunctorType {
 			newArgTypes.add(argType.applySubst(subst));
 		}
 		return new PreFunctorType(newArgTypes, retType.applySubst(subst));
+	}
+	
+	public FunctorType mkFinal() {
+		List<Type> types = new ArrayList<>();
+		for (PreType pre : argTypes) {
+			types.add(pre.mkFinal());
+		}
+		return new FunctorType(types, retType.mkFinal());
 	}
 	
 	@Override

@@ -82,6 +82,11 @@ public class InstantiatedType implements PreType {
 	public boolean containsParamVars() {
 		return false;
 	}
+	
+	@Override
+	public Type mkFinal() {
+		return type;
+	}
 
 	@Override
 	public int hashCode() {

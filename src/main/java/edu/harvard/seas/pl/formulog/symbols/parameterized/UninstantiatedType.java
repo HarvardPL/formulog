@@ -25,6 +25,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import edu.harvard.seas.pl.formulog.symbols.GlobalSymbolManager;
+import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
+import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
+import edu.harvard.seas.pl.formulog.types.Types.Type;
+
 public class UninstantiatedType implements PreType {
 
 	private final BuiltInTypeSymbolBase sym;
@@ -34,6 +39,11 @@ public class UninstantiatedType implements PreType {
 		this.sym = sym;
 		this.params = params;
 		assert sym == BuiltInTypeSymbolBase.BV || sym == BuiltInTypeSymbolBase.FP;
+		for (ParamElt param : params) {
+			if (!(param instanceof ParamVar || param instanceof NatParam)) {
+				throw new IllegalArgumentException("Cannot parameterize type " + sym + " with parameter " + param);
+			}
+		}
 	}
 	
 	public UninstantiatedType(BuiltInTypeSymbolBase sym, ParamElt... params) {
@@ -51,7 +61,13 @@ public class UninstantiatedType implements PreType {
 	
 	@Override
 	public boolean containsParamVars() {
-		return false;
+		return ParamUtil.containsParamVars(params);
+	}
+	
+	@Override
+	public Type mkFinal() {
+		TypeSymbol typeSym = (TypeSymbol) GlobalSymbolManager.finalizeSymbol(sym, params);
+		return AlgebraicDataType.make(typeSym);
 	}
 	
 	@Override

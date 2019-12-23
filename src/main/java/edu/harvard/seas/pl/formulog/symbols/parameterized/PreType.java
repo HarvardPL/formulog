@@ -22,6 +22,8 @@ package edu.harvard.seas.pl.formulog.symbols.parameterized;
 
 import java.util.Map;
 
+import edu.harvard.seas.pl.formulog.types.Types.Type;
+
 public interface PreType extends ParamElt {
 
 	@Override
@@ -31,5 +33,7 @@ public interface PreType extends ParamElt {
 	default boolean matchesParamKind(ParamKind kind) {
 		return kind.equals(ParamKind.TYPE);
 	}
+	
+	Type mkFinal();
 	
 }

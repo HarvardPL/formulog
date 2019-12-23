@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInConstructorSymbolBase;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInTypeSymbolBase;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.FinalizedConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.FinalizedSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.FinalizedTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParamElt;
@@ -149,6 +150,11 @@ public final class GlobalSymbolManager {
 
 	private static final Map<ParameterizedSymbol, FinalizedSymbol> paramMemo = new ConcurrentHashMap<>();
 
+	public static FinalizedSymbol finalizeSymbol(SymbolBase base, List<ParamElt> params) {
+		ParameterizedSymbol sym = getParameterizedSymbol(base);
+		return finalizeSymbol(sym.copyWithNewArgs(params));
+	}
+	
 	public static FinalizedSymbol finalizeSymbol(ParameterizedSymbol paramSym) {
 		initialize();
 		FinalizedSymbol sym = paramMemo.get(paramSym);
@@ -170,6 +176,8 @@ public final class GlobalSymbolManager {
 		}
 		if (paramSym instanceof ParameterizedTypeSymbol) {
 			sym = finalizeTypeSymbol((ParameterizedTypeSymbol) paramSym);
+		} else if (paramSym instanceof ParameterizedConstructorSymbol) {
+			sym = finalizeConstructorSymbol((ParameterizedConstructorSymbol) paramSym);
 		} else {
 			throw new TodoException();
 		}
@@ -180,6 +188,43 @@ public final class GlobalSymbolManager {
 			sym = sym2;
 		}
 		return sym;
+	}
+
+	private static FinalizedSymbol finalizeConstructorSymbol(ParameterizedConstructorSymbol paramSym) {
+		String name = paramSym.getName() + "$" + cnt.getAndIncrement();
+		return new FinalizedConstructorSymbol() {
+
+			@Override
+			public List<ParamElt> getArgs() {
+				return paramSym.getArgs();
+			}
+
+			@Override
+			public int getArity() {
+				return paramSym.getArity();
+			}
+
+			@Override
+			public String getName() {
+				return name;
+			}
+
+			@Override
+			public ConstructorSymbolType getConstructorSymbolType() {
+				return paramSym.getConstructorSymbolType();
+			}
+
+			@Override
+			public FunctorType getCompileTimeType() {
+				return paramSym.getPreType().mkFinal();
+			}
+
+			@Override
+			public BuiltInConstructorSymbolBase getBase() {
+				return paramSym.getBase();
+			}
+			
+		};
 	}
 
 	private static synchronized FinalizedSymbol finalizeTypeSymbol(ParameterizedTypeSymbol paramSym) {
