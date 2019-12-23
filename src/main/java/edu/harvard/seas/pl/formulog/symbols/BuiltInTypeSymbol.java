@@ -42,6 +42,10 @@ public enum BuiltInTypeSymbol implements TypeSymbol {
 	
 	INT_TYPE("int", 0),
 	
+	BV("bv", 1),
+	
+	FP("fp", 2),
+	
 	;
 
 	private final String name;

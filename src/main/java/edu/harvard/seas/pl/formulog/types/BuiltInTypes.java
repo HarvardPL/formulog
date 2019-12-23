@@ -29,7 +29,9 @@ import static edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol.NONE
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol.SOME;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.ARRAY_TYPE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.BOOL_TYPE;
+import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.BV;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.CMP_TYPE;
+import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.FP;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.INT_TYPE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.LIST_TYPE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.MODEL_TYPE;
@@ -37,8 +39,6 @@ import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.OPTION_TYPE
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.SMT_TYPE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.STRING_TYPE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.SYM_TYPE;
-import static edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInTypeSymbolBase.BV;
-import static edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInTypeSymbolBase.FP;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -46,13 +46,10 @@ import java.util.List;
 
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorGetterSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
-import edu.harvard.seas.pl.formulog.symbols.GlobalSymbolManager;
-import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
-import edu.harvard.seas.pl.formulog.symbols.parameterized.NatParam;
-import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedSymbol;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType.ConstructorScheme;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
+import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
 import edu.harvard.seas.pl.formulog.types.Types.TypeVar;
 
 public final class BuiltInTypes {
@@ -121,19 +118,21 @@ public final class BuiltInTypes {
 	public static AlgebraicDataType sym(Type a) {
 		return AlgebraicDataType.make(SYM_TYPE, Collections.singletonList(a));
 	}
-
+	
+	public static AlgebraicDataType bv(Type a) {
+		return AlgebraicDataType.make(BV, a);
+	}
+	
 	public static AlgebraicDataType bv(int width) {
-		ParameterizedSymbol pSym = GlobalSymbolManager.getParameterizedSymbol(BV);
-		pSym = pSym.copyWithNewArgs(new NatParam(width));
-		TypeSymbol sym = (TypeSymbol) GlobalSymbolManager.finalizeSymbol(pSym);
-		return AlgebraicDataType.make(sym);
+		return bv(new TypeIndex(width));
+	}
+	
+	public static AlgebraicDataType fp(Type a, Type b) {
+		return AlgebraicDataType.make(FP, a, b);
 	}
 
 	public static AlgebraicDataType fp(int exponent, int significand) {
-		ParameterizedSymbol pSym = GlobalSymbolManager.getParameterizedSymbol(FP);
-		pSym = pSym.copyWithNewArgs(new NatParam(exponent), new NatParam(significand));
-		TypeSymbol sym = (TypeSymbol) GlobalSymbolManager.finalizeSymbol(pSym);
-		return AlgebraicDataType.make(sym);
+		return fp(new TypeIndex(exponent), new TypeIndex(significand));
 	}
 
 	public static AlgebraicDataType array(Type a, Type b) {

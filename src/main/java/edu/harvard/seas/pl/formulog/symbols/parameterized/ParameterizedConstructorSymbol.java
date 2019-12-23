@@ -23,10 +23,12 @@ package edu.harvard.seas.pl.formulog.symbols.parameterized;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbolType;
+import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.util.TodoException;
 
-public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<BuiltInConstructorSymbolBase> implements ParameterizedFunctorSymbol {
+public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<BuiltInConstructorSymbolBase> implements ConstructorSymbol {
 
 	private ParameterizedConstructorSymbol(BuiltInConstructorSymbolBase base, List<ParamElt> args) {
 		super(base, args);
@@ -110,17 +112,17 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 	}
 	
 	@Override
-	public ParameterizedSymbol copyWithNewArgs(List<ParamElt> args) {
+	public ParameterizedConstructorSymbol copyWithNewArgs(List<ParamElt> args) {
 		return mk(getBase(), args);
-	}
-
-	@Override
-	public PreFunctorType getPreType() {
-		throw new TodoException();
 	}
 
 	public ConstructorSymbolType getConstructorSymbolType() {
 		return ConstructorSymbolType.SOLVER_EXPR;
+	}
+
+	@Override
+	public FunctorType getCompileTimeType() {
+		throw new TodoException();
 	}
 
 }

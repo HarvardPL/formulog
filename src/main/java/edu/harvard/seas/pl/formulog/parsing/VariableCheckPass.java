@@ -41,7 +41,6 @@ import edu.harvard.seas.pl.formulog.ast.LetFunExpr;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.NestedFunctionDef;
-import edu.harvard.seas.pl.formulog.ast.PreConstructor;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
@@ -167,12 +166,6 @@ public class VariableCheckPass {
 				@Override
 				public Term visit(Expr e, Void in) {
 					return checkExpr(e);
-				}
-
-				@Override
-				public Term visit(PreConstructor c, Void in) {
-					Term[] newArgs = Terms.map(c.getArgs(), PassContext.this::checkTerm);
-					return c.copyWithNewArgs(newArgs);
 				}
 
 			}, null);

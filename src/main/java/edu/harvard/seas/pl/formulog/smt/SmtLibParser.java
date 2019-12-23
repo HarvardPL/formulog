@@ -45,7 +45,6 @@ import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInTypeSymbolBase;
-import edu.harvard.seas.pl.formulog.symbols.parameterized.InstantiatedTypeSymbol;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType.ConstructorScheme;
@@ -152,26 +151,26 @@ public class SmtLibParser {
 		if (!seen.add(sym)) {
 			return true;
 		}
-		if (sym instanceof InstantiatedTypeSymbol) {
-			switch (((InstantiatedTypeSymbol) sym).getPreSymbol()) {
-			case BV: {
-				throw new TodoException();
-//				TypeIndex idx = (TypeIndex) type.getTypeArgs().get(0);
-//				int w = idx.getIndex();
-//				return w == 32 || w == 64;
-			}
-			case FP: {
-				throw new TodoException();
-//				TypeIndex idx1 = (TypeIndex) type.getTypeArgs().get(0);
-//				int e = idx1.getIndex();
-//				TypeIndex idx2 = (TypeIndex) type.getTypeArgs().get(1);
-//				int s = idx2.getIndex();
-//				return (e == 8 && s == 24) || (e == 11 && s == 53);
-			}
-			default:
-				die("unexpected indexed symbol: " + sym);
-			}
-		}
+//		if (sym instanceof InstantiatedTypeSymbol) {
+//			switch (((InstantiatedTypeSymbol) sym).getPreSymbol()) {
+//			case BV: {
+//				throw new TodoException();
+////				TypeIndex idx = (TypeIndex) type.getTypeArgs().get(0);
+////				int w = idx.getIndex();
+////				return w == 32 || w == 64;
+//			}
+//			case FP: {
+//				throw new TodoException();
+////				TypeIndex idx1 = (TypeIndex) type.getTypeArgs().get(0);
+////				int e = idx1.getIndex();
+////				TypeIndex idx2 = (TypeIndex) type.getTypeArgs().get(1);
+////				int s = idx2.getIndex();
+////				return (e == 8 && s == 24) || (e == 11 && s == 53);
+//			}
+//			default:
+//				die("unexpected indexed symbol: " + sym);
+//			}
+//		}
 		if (sym instanceof BuiltInTypeSymbol) {
 			switch ((BuiltInTypeSymbol) sym) {
 			case BOOL_TYPE:
@@ -183,6 +182,9 @@ public class SmtLibParser {
 			case ARRAY_TYPE:
 			case INT_TYPE:
 				return false;
+			case BV:
+			case FP:
+				throw new TodoException();
 			case SMT_TYPE:
 			case MODEL_TYPE:
 			case SYM_TYPE:
@@ -208,36 +210,36 @@ public class SmtLibParser {
 
 	private TermType getTermType(AlgebraicDataType type) throws SmtLibParseException {
 		TypeSymbol sym = type.getSymbol();
-		if (sym instanceof InstantiatedTypeSymbol) {
-			switch (((InstantiatedTypeSymbol) sym).getPreSymbol()) {
-			case BV: {
-				throw new TodoException();
-//				TypeIndex idx = (TypeIndex) type.getTypeArgs().get(0);
-//				int w = idx.getIndex();
-//				if (w == 32) {
-//					return TermType.BV32;
-//				} else if (w == 64) {
-//					return TermType.BV64;
-//				}
-//				die("unexpected BV width " + w);
-			}
-			case FP: {
-				throw new TodoException();
-//				TypeIndex idx1 = (TypeIndex) type.getTypeArgs().get(0);
-//				int e = idx1.getIndex();
-//				TypeIndex idx2 = (TypeIndex) type.getTypeArgs().get(1);
-//				int s = idx2.getIndex();
-//				if (e == 8 && s == 24) {
-//					return TermType.FP32;
-//				} else if (e == 11 && s == 53) {
-//					return TermType.FP64;
-//				}
-//				die("unexpected FP dimensions " + e + "/" + s);
-			}
-			default:
-				die("unexpected indexed symbol: " + sym);
-			}
-		}
+//		if (sym instanceof InstantiatedTypeSymbol) {
+//			switch (((InstantiatedTypeSymbol) sym).getPreSymbol()) {
+//			case BV: {
+//				throw new TodoException();
+////				TypeIndex idx = (TypeIndex) type.getTypeArgs().get(0);
+////				int w = idx.getIndex();
+////				if (w == 32) {
+////					return TermType.BV32;
+////				} else if (w == 64) {
+////					return TermType.BV64;
+////				}
+////				die("unexpected BV width " + w);
+//			}
+//			case FP: {
+//				throw new TodoException();
+////				TypeIndex idx1 = (TypeIndex) type.getTypeArgs().get(0);
+////				int e = idx1.getIndex();
+////				TypeIndex idx2 = (TypeIndex) type.getTypeArgs().get(1);
+////				int s = idx2.getIndex();
+////				if (e == 8 && s == 24) {
+////					return TermType.FP32;
+////				} else if (e == 11 && s == 53) {
+////					return TermType.FP64;
+////				}
+////				die("unexpected FP dimensions " + e + "/" + s);
+//			}
+//			default:
+//				die("unexpected indexed symbol: " + sym);
+//			}
+//		}
 		if (sym instanceof BuiltInTypeSymbol) {
 			switch ((BuiltInTypeSymbol) sym) {
 			case BOOL_TYPE:
@@ -247,6 +249,9 @@ public class SmtLibParser {
 				return TermType.ADT;
 			case STRING_TYPE:
 				return TermType.STRING;
+			case BV:
+			case FP:
+				throw new TodoException();
 			default:
 				die("unexpected built-in symbol: " + sym);
 			}

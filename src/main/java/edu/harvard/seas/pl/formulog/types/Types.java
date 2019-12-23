@@ -21,6 +21,7 @@ package edu.harvard.seas.pl.formulog.types;
  */
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -172,16 +173,12 @@ public final class Types {
 			}
 		}
 
+		public static AlgebraicDataType make(TypeSymbol sym, Type... typeArgs) {
+			return make(sym, Arrays.asList(typeArgs));
+		}
+		
 		public static AlgebraicDataType make(TypeSymbol sym, List<Type> typeArgs) {
 			return new AlgebraicDataType(sym, typeArgs);
-		}
-
-		public static AlgebraicDataType make(TypeSymbol sym) {
-			List<Type> typeVars = new ArrayList<>();
-			for (int i = 0; i < sym.getArity(); ++i) {
-				typeVars.add(TypeVar.fresh());
-			}
-			return make(sym, typeVars);
 		}
 
 		public static void setConstructors(TypeSymbol sym, List<TypeVar> typeParams,

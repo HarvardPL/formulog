@@ -49,7 +49,6 @@ import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.Expr;
-import edu.harvard.seas.pl.formulog.ast.PreConstructor;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
@@ -64,7 +63,6 @@ import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInTypeSymbolBase;
-import edu.harvard.seas.pl.formulog.symbols.parameterized.InstantiatedTypeSymbol;
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
@@ -78,6 +76,7 @@ import edu.harvard.seas.pl.formulog.types.Types.TypeVar;
 import edu.harvard.seas.pl.formulog.types.Types.TypeVisitor;
 import edu.harvard.seas.pl.formulog.util.DedupWorkList;
 import edu.harvard.seas.pl.formulog.util.Pair;
+import edu.harvard.seas.pl.formulog.util.TodoException;
 import edu.harvard.seas.pl.formulog.util.Util;
 
 public class SmtLibShim {
@@ -298,11 +297,6 @@ public class SmtLibShim {
 				throw new AssertionError("impossible");
 			}
 
-			@Override
-			public Void visit(PreConstructor c, Void in) {
-				throw new AssertionError("impossible");
-			}
-
 		}, null);
 	}
 
@@ -411,9 +405,9 @@ public class SmtLibShim {
 			@Override
 			public String visit(AlgebraicDataType algebraicType, Void in) {
 				TypeSymbol sym = algebraicType.getSymbol();
-				if (sym instanceof InstantiatedTypeSymbol) {
-					return stringifyIndexedSymbol(((InstantiatedTypeSymbol) sym).getPreSymbol(), algebraicType.getTypeArgs());
-				}
+//				if (sym instanceof InstantiatedTypeSymbol) {
+//					return stringifyIndexedSymbol(((InstantiatedTypeSymbol) sym).getPreSymbol(), algebraicType.getTypeArgs());
+//				}
 				if (sym instanceof BuiltInTypeSymbol) {
 					switch ((BuiltInTypeSymbol) sym) {
 					case BOOL_TYPE:
@@ -432,6 +426,9 @@ public class SmtLibShim {
 					case SMT_TYPE:
 					case SYM_TYPE:
 						return stringifyType(algebraicType.getTypeArgs().get(0));
+					case BV:
+					case FP:
+						throw new TodoException();
 					default:
 						break;
 					}
@@ -550,15 +547,6 @@ public class SmtLibShim {
 			if (sym.isAlias()) {
 				return false;
 			}
-			if (sym instanceof InstantiatedTypeSymbol) {
-				switch (((InstantiatedTypeSymbol) sym).getPreSymbol()) {
-				case BV:
-				case FP:
-					return false;
-				default:
-					throw new AssertionError();
-				}
-			}
 			if (sym instanceof BuiltInTypeSymbol) {
 				switch ((BuiltInTypeSymbol) sym) {
 				case SMT_TYPE:
@@ -568,6 +556,8 @@ public class SmtLibShim {
 				case ARRAY_TYPE:
 				case INT_TYPE:
 				case MODEL_TYPE:
+				case BV:
+				case FP:
 					return false;
 				case CMP_TYPE:
 				case LIST_TYPE:
@@ -632,11 +622,6 @@ public class SmtLibShim {
 
 				@Override
 				public Type visit(Expr expr, Void in) {
-					throw new AssertionError("impossible");
-				}
-
-				@Override
-				public Type visit(PreConstructor c, Void in) {
 					throw new AssertionError("impossible");
 				}
 

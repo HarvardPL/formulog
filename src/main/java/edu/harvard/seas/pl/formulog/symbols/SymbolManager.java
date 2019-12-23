@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import edu.harvard.seas.pl.formulog.ast.BindingType;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInConstructorSymbolBase;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParamElt;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.SymbolBase;
@@ -36,6 +37,7 @@ import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
+import edu.harvard.seas.pl.formulog.util.TodoException;
 import edu.harvard.seas.pl.formulog.util.Util;
 
 public class SymbolManager {
@@ -95,8 +97,10 @@ public class SymbolManager {
 	}
 
 	public ParameterizedSymbol getParameterizedSymbol(SymbolBase base) {
-		// XXX Will have to update this when users can start defining parameterized symbols
-		return GlobalSymbolManager.getParameterizedSymbol(base);
+		if (base instanceof BuiltInConstructorSymbolBase) {
+			return GlobalSymbolManager.getParameterizedSymbol((BuiltInConstructorSymbolBase) base);
+		}
+		throw new TodoException();
 	}
 	
 	public Symbol lookupSymbol(String name, List<ParamElt> params) {

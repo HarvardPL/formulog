@@ -39,11 +39,10 @@ import edu.harvard.seas.pl.formulog.ast.FP64;
 import edu.harvard.seas.pl.formulog.ast.Fold;
 import edu.harvard.seas.pl.formulog.ast.I32;
 import edu.harvard.seas.pl.formulog.ast.I64;
+import edu.harvard.seas.pl.formulog.ast.LetFunExpr;
 import edu.harvard.seas.pl.formulog.ast.MatchClause;
 import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.NestedFunctionDef;
-import edu.harvard.seas.pl.formulog.ast.PreConstructor;
-import edu.harvard.seas.pl.formulog.ast.LetFunExpr;
 import edu.harvard.seas.pl.formulog.ast.StringTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
@@ -73,7 +72,6 @@ import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.LetFunExprC
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ListTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.MatchClauseContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.MatchExprContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.NonEmptyTermListContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.NotFormulaContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.OutermostCtorContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ParensTermContext;
@@ -99,7 +97,6 @@ import edu.harvard.seas.pl.formulog.symbols.GlobalSymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInConstructorSymbolBase;
-import edu.harvard.seas.pl.formulog.symbols.parameterized.FinalizedConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedConstructorSymbol;
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
@@ -219,8 +216,8 @@ class TermExtractor {
 			// For a couple constructors, we want to make sure that their arguments are
 			// forced to be non-formula types. For example, the constructor bv_const needs
 			// to take something of type i32, not i32 expr.
-			if (sym instanceof FinalizedConstructorSymbol) {
-				switch (((FinalizedConstructorSymbol) sym).getBase()) {
+			if (sym instanceof ParameterizedConstructorSymbol) {
+				switch (((ParameterizedConstructorSymbol) sym).getBase()) {
 				case BV_BIG_CONST:
 				case BV_CONST:
 				case FP_BIG_CONST:
@@ -557,11 +554,11 @@ class TermExtractor {
 		@Override
 		public Term visitBinopFormula(BinopFormulaContext ctx) {
 			Term[] args = extractArray(ctx.term());
-			Symbol sym;
+			ConstructorSymbol sym;
 			switch (ctx.op.getType()) {
 			case FormulogParser.FORMULA_EQ:
 			case FormulogParser.IFF:
-				sym = pc.symbolManager().getParameterizedSymbol(BuiltInConstructorSymbolBase.SMT_EQ);
+				sym = (ConstructorSymbol) pc.symbolManager().getParameterizedSymbol(BuiltInConstructorSymbolBase.SMT_EQ);
 				break;
 			case FormulogParser.IMP:
 				sym = BuiltInConstructorSymbol.SMT_IMP;
@@ -575,11 +572,7 @@ class TermExtractor {
 			default:
 				throw new AssertionError();
 			}
-			if (sym instanceof ConstructorSymbol) {
-				return Constructors.make((ConstructorSymbol) sym, args);
-			} else {
-				return PreConstructor.make((ParameterizedConstructorSymbol) sym, args);
-			}
+			return Constructors.make(sym, args);
 		}
 
 		@Override
