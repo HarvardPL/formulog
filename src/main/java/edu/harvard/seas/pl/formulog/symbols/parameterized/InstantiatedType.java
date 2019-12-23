@@ -22,8 +22,9 @@ package edu.harvard.seas.pl.formulog.symbols.parameterized;
 
 import java.util.Map;
 
+import edu.harvard.seas.pl.formulog.types.Types;
+import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
-import edu.harvard.seas.pl.formulog.util.TodoException;
 
 public class InstantiatedType implements PreType {
 
@@ -31,6 +32,9 @@ public class InstantiatedType implements PreType {
 	
 	public InstantiatedType(Type type) {
 		this.type = type;
+		if (Types.containsTypeVarOrOpaqueType(type)) {
+			throw new IllegalArgumentException("Cannot instantiate a parameter with a type containing type variables or opaque types: " + type);
+		}
 	}
 
 	@Override
@@ -51,14 +55,25 @@ public class InstantiatedType implements PreType {
 		case NAT:
 			return false;
 		case PRE_SMT_TYPE:
-			// types.isPreSmtType
+			return Types.isPreSmtType(type);
 		case MODEL_FREE_TYPE:
-			// types.containsModelType
+			return !Types.containsModelType(type);
 		case SMT_VAR:
-			// types.isSmtVarType
+			return Types.isSmtVarType(type);
 		case SMT_VARS:
-			// types.isTupleType
-			throw new TodoException();
+			if (Types.isSmtVarType(type)) {
+				return true;
+			}
+			if (!Types.isTupleType(type)) {
+				return false;
+			}
+			AlgebraicDataType adt = (AlgebraicDataType) type;
+			for (Type typeArg : adt.getTypeArgs()) {
+				if (!Types.isSmtVarType(typeArg)) {
+					return false;
+				}
+			}
+			return true;
 		}
 		throw new AssertionError("impossible");
 	}

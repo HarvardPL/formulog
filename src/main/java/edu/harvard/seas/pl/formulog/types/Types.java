@@ -34,7 +34,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.GlobalSymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
@@ -521,7 +523,7 @@ public final class Types {
 			getTypeVars(t, acc);
 		}
 	}
-	
+
 	public static boolean containsTypeVarOrOpaqueType(Type t) {
 		return t.accept(new TypeVisitor<Void, Boolean>() {
 
@@ -549,8 +551,93 @@ public final class Types {
 			public Boolean visit(TypeIndex typeIndex, Void in) {
 				return false;
 			}
-			
+
 		}, null);
+	}
+
+	public static boolean containsModelType(Type t) {
+		return t.accept(new TypeVisitor<Void, Boolean>() {
+
+			@Override
+			public Boolean visit(TypeVar typeVar, Void in) {
+				return false;
+			}
+
+			@Override
+			public Boolean visit(AlgebraicDataType algebraicType, Void in) {
+				if (algebraicType.getSymbol().equals(BuiltInTypeSymbol.MODEL_TYPE)) {
+					return true;
+				}
+				for (Type typeArg : algebraicType.getTypeArgs()) {
+					if (typeArg.accept(this, in)) {
+						return true;
+					}
+				}
+				return false;
+			}
+
+			@Override
+			public Boolean visit(OpaqueType opaqueType, Void in) {
+				return false;
+			}
+
+			@Override
+			public Boolean visit(TypeIndex typeIndex, Void in) {
+				return false;
+			}
+
+		}, null);
+	}
+
+	public static boolean isPreSmtType(Type t) {
+		return t.accept(new TypeVisitor<Void, Boolean>() {
+
+			@Override
+			public Boolean visit(TypeVar typeVar, Void in) {
+				return false;
+			}
+
+			@Override
+			public Boolean visit(AlgebraicDataType algebraicType, Void in) {
+				TypeSymbol sym = algebraicType.getSymbol();
+				if (sym.equals(BuiltInTypeSymbol.MODEL_TYPE) || sym.equals(BuiltInTypeSymbol.SMT_TYPE)
+						|| sym.equals(BuiltInTypeSymbol.SYM_TYPE)) {
+					return false;
+				}
+				for (Type typeArg : algebraicType.getTypeArgs()) {
+					if (!typeArg.accept(this, in)) {
+						return false;
+					}
+				}
+				return true;
+			}
+
+			@Override
+			public Boolean visit(OpaqueType opaqueType, Void in) {
+				return false;
+			}
+
+			@Override
+			public Boolean visit(TypeIndex typeIndex, Void in) {
+				return true;
+			}
+
+		}, null);
+	}
+
+	public static boolean isTupleType(Type t) {
+		if (!(t instanceof AlgebraicDataType)) {
+			return false;
+		}
+		TypeSymbol sym = ((AlgebraicDataType) t).getSymbol();
+		return sym.equals(GlobalSymbolManager.lookupTupleTypeSymbol(sym.getArity()));
+	}
+
+	public static boolean isSmtVarType(Type t) {
+		if (!(t instanceof AlgebraicDataType)) {
+			return false;
+		}
+		return ((AlgebraicDataType) t).getSymbol().equals(BuiltInTypeSymbol.SYM_TYPE);
 	}
 
 }
