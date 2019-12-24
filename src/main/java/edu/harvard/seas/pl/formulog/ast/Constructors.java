@@ -21,6 +21,7 @@ package edu.harvard.seas.pl.formulog.ast;
  */
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -40,11 +41,13 @@ import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbolType;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.GlobalSymbolManager.TupleSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInConstructorSymbolBase;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.Param;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RecordSymbol;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
+import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
 import edu.harvard.seas.pl.formulog.util.FunctorUtil;
 import edu.harvard.seas.pl.formulog.util.FunctorUtil.Memoizer;
 import edu.harvard.seas.pl.formulog.util.TodoException;
@@ -59,7 +62,7 @@ public final class Constructors {
 	private static final Memoizer<Term> memo = new Memoizer<>();
 
 	public static Term make(ConstructorSymbol sym, Term[] args) {
-		assert sym.getArity() == args.length;
+		assert sym.getArity() == args.length : sym + " " + Arrays.toString(args);
 		if (sym instanceof BuiltInConstructorSymbol) {
 			return lookupOrCreateBuiltInConstructor((BuiltInConstructorSymbol) sym, args);
 		}
@@ -648,13 +651,17 @@ public final class Constructors {
 		throw new AssertionError("impossible");
 	}
 
-	private static Term makeBVConst(ConstructorSymbol sym, Term[] args) {
-		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
+	private static int coerceNatIndex(Param param) {
+		return ((TypeIndex) param.getType()).getIndex();
+	}
+	
+	private static Term makeBVConst(ParameterizedConstructorSymbol psym, Term[] args) {
+		return memo.lookupOrCreate(psym, args, () -> new AbstractConstructor(psym, args) {
 
 			@Override
 			public void toSmtLib(SmtLibShim shim) {
 				I32 arg = (I32) args[0];
-				int width = ((I32) ((Constructor) args[1]).getArgs()[0]).getVal();
+				int width = coerceNatIndex(psym.getArgs().get(0));
 				String s = Integer.toBinaryString(arg.getVal());
 				int len = s.length();
 				if (width > len) {
@@ -672,13 +679,13 @@ public final class Constructors {
 		});
 	}
 
-	private static Term makeBVBigConst(ConstructorSymbol sym, Term[] args) {
-		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
+	private static Term makeBVBigConst(ParameterizedConstructorSymbol psym, Term[] args) {
+		return memo.lookupOrCreate(psym, args, () -> new AbstractConstructor(psym, args) {
 
 			@Override
 			public void toSmtLib(SmtLibShim shim) {
 				I64 arg = (I64) args[0];
-				int width = ((I32) ((Constructor) args[1]).getArgs()[0]).getVal();
+				int width = coerceNatIndex(psym.getArgs().get(0));
 				String s = Long.toBinaryString(arg.getVal());
 				int len = s.length();
 				if (width > len) {

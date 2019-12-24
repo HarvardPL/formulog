@@ -119,12 +119,12 @@ class TypeExtractor {
 				return BuiltInTypes.string;
 			default:
 				String name = ctx.ID().getText();
-				if (!indices.isEmpty()) {
-					throw new TodoException();
-				}
 				Symbol sym = pc.symbolManager().lookupSymbol(name);
 				if (!(sym instanceof TypeSymbol)) {
 					throw new RuntimeException("Not a type symbol: " + sym);
+				}
+				for (Integer index : indices) {
+					params.add(new TypeIndex(index));
 				}
 				return pc.typeManager().lookup((TypeSymbol) sym, params);
 			}

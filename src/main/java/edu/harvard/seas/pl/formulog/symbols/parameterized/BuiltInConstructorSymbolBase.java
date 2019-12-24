@@ -115,7 +115,7 @@ public enum BuiltInConstructorSymbolBase implements FunctorBase {
 	}
 	
 	@Override
-	public String getName() {
+	public String toString() {
 		return name;
 	}
 

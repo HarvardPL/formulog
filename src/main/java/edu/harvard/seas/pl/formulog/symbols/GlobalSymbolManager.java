@@ -132,7 +132,7 @@ public final class GlobalSymbolManager {
 	private static void register(BuiltInConstructorSymbolBase[] bases) {
 		for (BuiltInConstructorSymbolBase base : bases) {
 			ParameterizedConstructorSymbol sym = getParameterizedSymbolInternal(base);
-			Symbol other = memo.putIfAbsent(base.getName(), sym);
+			Symbol other = memo.putIfAbsent(base.toString(), sym);
 			assert other == null;
 		}
 	}

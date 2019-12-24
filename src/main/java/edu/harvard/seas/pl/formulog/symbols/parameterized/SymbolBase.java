@@ -25,9 +25,7 @@ import java.util.List;
 public interface SymbolBase {
 
 	int getArity();
-	
-	String getName();
-	
+
 	List<ParamKind> getParamKinds();
 
 	default int getNumParams() {

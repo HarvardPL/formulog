@@ -31,8 +31,16 @@ public abstract class AbstractParameterizedSymbol<B extends SymbolBase> implemen
 	public AbstractParameterizedSymbol(B base, List<Param> args) {
 		this.base = base;
 		this.args = new ArrayList<>(args);
+		check();
+	}
+
+	private void check() {
+		if (args.isEmpty()) {
+			args.addAll(Param.instantiate(base.getParamKinds()));
+		}
 		if (base.getNumParams() != args.size()) {
-			throw new IllegalArgumentException("Wrong number of parameters for symbol " + base);
+			throw new IllegalArgumentException("Wrong number of parameters for symbol " + base + ", which has arity "
+					+ base.getArity() + " but received parameters " + args);
 		}
 	}
 
@@ -43,7 +51,7 @@ public abstract class AbstractParameterizedSymbol<B extends SymbolBase> implemen
 
 	@Override
 	public String toString() {
-		String s = base.getName();
+		String s = base.toString();
 		s += "<";
 		for (int i = 0; i < args.size(); ++i) {
 			s += args.get(0);
@@ -63,7 +71,7 @@ public abstract class AbstractParameterizedSymbol<B extends SymbolBase> implemen
 	public List<Param> getArgs() {
 		return args;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
