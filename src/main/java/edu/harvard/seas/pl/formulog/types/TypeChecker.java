@@ -282,7 +282,6 @@ public class TypeChecker {
 		private final Deque<Triple<Term, Type, Type>> constraints = new ArrayDeque<>();
 		private final Deque<Triple<Term, Type, Type>> formulaConstraints = new ArrayDeque<>();
 		private final Map<TypeVar, Type> typeVars = new HashMap<>();
-//		private final Deque<Pair<Constructor, Type>> smtEqsToResolve = new ArrayDeque<>();
 		private String error;
 
 		public Term[] typeCheckFact(RelationSymbol sym, Term[] args) throws TypeException {

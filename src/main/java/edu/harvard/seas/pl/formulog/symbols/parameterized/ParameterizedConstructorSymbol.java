@@ -34,7 +34,9 @@ import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.sym;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbolType;
@@ -42,11 +44,15 @@ import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
 import edu.harvard.seas.pl.formulog.types.Types.TypeVar;
+import edu.harvard.seas.pl.formulog.util.Pair;
+import edu.harvard.seas.pl.formulog.util.Util;
 
-public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<BuiltInConstructorSymbolBase> implements ConstructorSymbol {
+public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<BuiltInConstructorSymbolBase>
+		implements ConstructorSymbol {
 
 	private final FunctorType type;
-	
+	private static final Map<Pair<BuiltInConstructorSymbolBase, List<Param>>, ParameterizedConstructorSymbol> memo = new HashMap<>();
+
 	private ParameterizedConstructorSymbol(BuiltInConstructorSymbolBase base, List<Param> args) {
 		super(base, args);
 		this.type = makeType();
@@ -56,29 +62,18 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 		switch (base) {
 		case ARRAY_DEFAULT:
 		case ARRAY_SELECT:
-		case BV_ADD:
-		case BV_AND:
 		case BV_BIG_CONST:
 		case BV_CONST:
-		case BV_MUL:
-		case BV_NEG:
-		case BV_OR:
-		case BV_SDIV:
 		case BV_SGE:
 		case BV_SGT:
 		case BV_SLE:
 		case BV_SLT:
-		case BV_SREM:
-		case BV_SUB:
 		case BV_TO_BV_SIGNED:
 		case BV_TO_BV_UNSIGNED:
-		case BV_UDIV:
 		case BV_UGE:
 		case BV_UGT:
 		case BV_ULE:
 		case BV_ULT:
-		case BV_UREM:
-		case BV_XOR:
 		case SMT_EQ:
 		case SMT_EXISTS:
 		case SMT_EXISTS_PAT:
@@ -86,20 +81,14 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 		case SMT_FORALL_PAT:
 		case SMT_LET:
 			break;
-		case FP_ADD:
 		case FP_BIG_CONST:
 		case FP_CONST:
-		case FP_DIV:
 		case FP_EQ:
 		case FP_GE:
 		case FP_GT:
 		case FP_IS_NAN:
 		case FP_LE:
 		case FP_LT:
-		case FP_MUL:
-		case FP_NEG:
-		case FP_REM:
-		case FP_SUB:
 			if (args.size() == 1) {
 				args = new ArrayList<>(expandAsFpAlias(args.get(0)));
 			}
@@ -126,9 +115,11 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 			}
 			break;
 		}
-		return new ParameterizedConstructorSymbol(base, args);
+		final List<Param> args2 = args;
+		return Util.lookupOrCreate(memo, new Pair<>(base, args2),
+				() -> new ParameterizedConstructorSymbol(base, args2));
 	}
-	
+
 	private static List<Param> expandAsFpAlias(Param param) {
 		if (!param.getKind().equals(ParamKind.NAT) || !param.isGround()) {
 			return Collections.singletonList(param);
@@ -147,7 +138,7 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 			throw new IllegalArgumentException("Illegal floating point width alias: " + nat);
 		}
 	}
-	
+
 	@Override
 	public ParameterizedConstructorSymbol copyWithNewArgs(List<Param> args) {
 		return mk(getBase(), args);
@@ -173,19 +164,19 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 			Type b = TypeVar.fresh();
 			return mkType(array(a, b), a, b);
 		}
-		case BV_ADD:
-		case BV_AND:
-		case BV_MUL:
-		case BV_OR:
-		case BV_SDIV:
-		case BV_UDIV:
-		case BV_UREM:
-		case BV_SREM:
-		case BV_SUB:
-		case BV_XOR: {
-			Type width = types.get(0);
-			return mkType(bv(width), bv(width), bv(width));
-		}
+		// case BV_ADD:
+		// case BV_AND:
+		// case BV_MUL:
+		// case BV_OR:
+		// case BV_SDIV:
+		// case BV_UDIV:
+		// case BV_UREM:
+		// case BV_SREM:
+		// case BV_SUB:
+		// case BV_XOR: {
+		// Type width = types.get(0);
+		// return mkType(bv(width), bv(width), bv(width));
+		// }
 		case BV_BIG_CONST: {
 			Type width = types.get(0);
 			return mkType(i64, bv(width));
@@ -194,10 +185,10 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 			Type width = types.get(0);
 			return mkType(i32, bv(width));
 		}
-		case BV_NEG: {
-			Type width = types.get(0);
-			return mkType(bv(width), bv(width));
-		}
+		// case BV_NEG: {
+		// Type width = types.get(0);
+		// return mkType(bv(width), bv(width));
+		// }
 		case BV_SGE:
 		case BV_SGT:
 		case BV_SLE:
@@ -221,16 +212,16 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 			Type significand = types.get(2);
 			return mkType(bv(width), fp(exponent, significand));
 		}
-		case FP_ADD:
-		case FP_DIV:
-		case FP_MUL:
-		case FP_REM:
-		case FP_SUB: {
-			Type exponent = types.get(0);
-			Type significand = types.get(1);
-			Type fp = fp(exponent, significand);
-			return mkType(fp, fp, fp);
-		}
+		// case FP_ADD:
+		// case FP_DIV:
+		// case FP_MUL:
+		// case FP_REM:
+		// case FP_SUB: {
+		// Type exponent = types.get(0);
+		// Type significand = types.get(1);
+		// Type fp = fp(exponent, significand);
+		// return mkType(fp, fp, fp);
+		// }
 		case FP_BIG_CONST: {
 			Type exponent = types.get(0);
 			Type significand = types.get(1);
@@ -256,12 +247,12 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 			Type significand = types.get(1);
 			return mkType(fp(exponent, significand), bool);
 		}
-		case FP_NEG: {
-			Type exponent = types.get(0);
-			Type significand = types.get(1);
-			Type fp = fp(exponent, significand);
-			return mkType(fp, fp);
-		}
+		// case FP_NEG: {
+		// Type exponent = types.get(0);
+		// Type significand = types.get(1);
+		// Type fp = fp(exponent, significand);
+		// return mkType(fp, fp);
+		// }
 		case FP_TO_BV: {
 			Type exponent = types.get(0);
 			Type significand = types.get(1);
@@ -294,12 +285,12 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 		}
 		throw new AssertionError("impossible");
 	}
-	
+
 	@Override
 	public FunctorType getCompileTimeType() {
 		return type;
 	}
-	
+
 	private static FunctorType mkType(Type... types) {
 		return new FunctorType(types);
 	}

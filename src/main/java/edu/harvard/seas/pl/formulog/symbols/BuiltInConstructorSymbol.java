@@ -28,6 +28,7 @@ import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.b;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.bool;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.bv;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.cmp;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.fp;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.int_;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.list;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.option;
@@ -64,7 +65,7 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 	CMP_EQ("cmp_eq", 0, VANILLA_CONSTRUCTOR),
 	
 	CMP_GT("cmp_gt", 0, VANILLA_CONSTRUCTOR),
-	
+
 	// Constraints
 	
 	SMT_NOT("smt_not", 1, SOLVER_EXPR),
@@ -76,6 +77,45 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 	SMT_IMP("smt_imp", 2, SOLVER_EXPR),
 	
 	SMT_ITE("smt_ite", 3, SOLVER_EXPR),
+	
+	// Bit vectors
+	
+	BV_NEG("bv_neg", 1, SOLVER_EXPR),
+
+	BV_ADD("bv_add", 2, SOLVER_EXPR),
+
+	BV_SUB("bv_sub", 2, SOLVER_EXPR),
+
+	BV_MUL("bv_mul", 2, SOLVER_EXPR),
+
+	BV_SDIV("bv_sdiv", 2, SOLVER_EXPR),
+
+	BV_SREM("bv_srem", 2, SOLVER_EXPR),
+	
+	BV_UDIV("bv_udiv", 2, SOLVER_EXPR),
+
+	BV_UREM("bv_urem", 2, SOLVER_EXPR),
+
+	BV_AND("bv_and", 2, SOLVER_EXPR),
+
+	BV_OR("bv_or", 2, SOLVER_EXPR),
+
+	BV_XOR("bv_xor", 2, SOLVER_EXPR),
+	
+	// Floating point
+	
+
+	FP_NEG("fp_neg", 1, SOLVER_EXPR),
+
+	FP_ADD("fp_add", 2, SOLVER_EXPR),
+
+	FP_SUB("fp_sub", 2, SOLVER_EXPR),
+
+	FP_MUL("fp_mul", 2, SOLVER_EXPR),
+
+	FP_DIV("fp_div", 2, SOLVER_EXPR),
+
+	FP_REM("fp_rem", 2, SOLVER_EXPR),
 	
 	// Arrays
 
@@ -189,19 +229,19 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 			return makeType(option(a));
 		case SOME:
 			return makeType(a, option(a));
-//		case BV_ADD:
-//		case BV_AND:
-//		case BV_MUL:
-//		case BV_OR:
-//		case BV_SDIV:
-//		case BV_SREM:
-//		case BV_UDIV:
-//		case BV_UREM:
-//		case BV_SUB:
-//		case BV_XOR:
-//			return makeType(smt(bv(a)), smt(bv(a)), smt(bv(a)));
-//		case BV_NEG:
-//			return makeType(smt(bv(a)), smt(bv(a)));
+		case BV_ADD:
+		case BV_AND:
+		case BV_MUL:
+		case BV_OR:
+		case BV_SDIV:
+		case BV_SREM:
+		case BV_UDIV:
+		case BV_UREM:
+		case BV_SUB:
+		case BV_XOR:
+			return makeType(smt(bv(a)), smt(bv(a)), smt(bv(a)));
+		case BV_NEG:
+			return makeType(smt(bv(a)), smt(bv(a)));
 //		case BV_SGE:
 //		case BV_SGT:
 //		case BV_SLE:
@@ -211,12 +251,12 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 //		case BV_ULE:
 //		case BV_ULT:
 //			return makeType(smt(bv(a)), smt(bv(a)), smt(bool));
-//		case FP_ADD:
-//		case FP_DIV:
-//		case FP_REM:
-//		case FP_SUB:
-//		case FP_MUL:
-//			return makeType(smt(fp(a, b)), smt(fp(a, b)), smt(fp(a, b)));
+		case FP_ADD:
+		case FP_DIV:
+		case FP_REM:
+		case FP_SUB:
+		case FP_MUL:
+			return makeType(smt(fp(a, b)), smt(fp(a, b)), smt(fp(a, b)));
 //		case FP_EQ:
 //		case FP_GE:
 //		case FP_GT:
@@ -225,8 +265,8 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 //			return makeType(smt(fp(a, b)), smt(fp(a, b)), smt(bool));
 //		case FP_IS_NAN:
 //			return makeType(smt(fp(a, b)), smt(bool));
-//		case FP_NEG:
-//			return makeType(smt(fp(a, b)), smt(fp(a, b)));
+		case FP_NEG:
+			return makeType(smt(fp(a, b)), smt(fp(a, b)));
 //		case ARRAY_SELECT:
 //			return makeType(smt(array(a, b)), smt(a), smt(b));
 		case ARRAY_STORE:

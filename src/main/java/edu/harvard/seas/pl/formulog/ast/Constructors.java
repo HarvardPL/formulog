@@ -137,6 +137,40 @@ public final class Constructors {
 			return makeSolverOp.apply("not");
 		case SMT_OR:
 			return makeOr(args);
+		case BV_ADD:
+			return makeSolverOp.apply("bvadd");
+		case BV_AND:
+			return makeSolverOp.apply("bvand");
+		case BV_MUL:
+			return makeSolverOp.apply("bvmul");
+		case BV_NEG:
+			return makeSolverOp.apply("bvneg");
+		case BV_OR:
+			return makeSolverOp.apply("bvor");
+		case BV_SDIV:
+			return makeSolverOp.apply("bvsdiv");
+		case BV_UDIV:
+			return makeSolverOp.apply("bvudiv");
+		case BV_SREM:
+			return makeSolverOp.apply("bvsrem");
+		case BV_UREM:
+			return makeSolverOp.apply("bvurem");
+		case BV_SUB:
+			return makeSolverOp.apply("bvsub");
+		case BV_XOR:
+			return makeSolverOp.apply("bvxor");
+		case FP_ADD:
+			return makeSolverOp.apply("fp.add");
+		case FP_DIV:
+			return makeSolverOp.apply("fp.div");
+		case FP_MUL:
+			return makeSolverOp.apply("fp.mul");
+		case FP_NEG:
+			return makeSolverOp.apply("fp.neg");
+		case FP_REM:
+			return makeSolverOp.apply("fp.rem");
+		case FP_SUB:
+			return makeSolverOp.apply("fp.sub");
 		case ARRAY_STORE:
 			return makeSolverOp.apply("store");
 		case ARRAY_CONST:
@@ -560,20 +594,6 @@ public final class Constructors {
 			return makeSolverOp.apply("default");
 		case ARRAY_SELECT:
 			return makeSolverOp.apply("select");
-		case BV_ADD:
-			return makeSolverOp.apply("bvadd");
-		case BV_AND:
-			return makeSolverOp.apply("bvand");
-		case BV_MUL:
-			return makeSolverOp.apply("bvmul");
-		case BV_NEG:
-			return makeSolverOp.apply("bvneg");
-		case BV_OR:
-			return makeSolverOp.apply("bvor");
-		case BV_SDIV:
-			return makeSolverOp.apply("bvsdiv");
-		case BV_UDIV:
-			return makeSolverOp.apply("bvudiv");
 		case BV_SGE:
 			return makeSolverOp.apply("bvsge");
 		case BV_SGT:
@@ -590,18 +610,6 @@ public final class Constructors {
 			return makeSolverOp.apply("bvule");
 		case BV_ULT:
 			return makeSolverOp.apply("bvult");
-		case BV_SREM:
-			return makeSolverOp.apply("bvsrem");
-		case BV_UREM:
-			return makeSolverOp.apply("bvurem");
-		case BV_SUB:
-			return makeSolverOp.apply("bvsub");
-		case BV_XOR:
-			return makeSolverOp.apply("bvxor");
-		case FP_ADD:
-			return makeSolverOp.apply("fp.add");
-		case FP_DIV:
-			return makeSolverOp.apply("fp.div");
 		case FP_EQ:
 			return makeSolverOp.apply("fp.eq");
 		case FP_GE:
@@ -614,14 +622,6 @@ public final class Constructors {
 			return makeSolverOp.apply("fp.leq");
 		case FP_LT:
 			return makeSolverOp.apply("fp.lt");
-		case FP_MUL:
-			return makeSolverOp.apply("fp.mul");
-		case FP_NEG:
-			return makeSolverOp.apply("fp.neg");
-		case FP_REM:
-			return makeSolverOp.apply("fp.rem");
-		case FP_SUB:
-			return makeSolverOp.apply("fp.sub");
 		case SMT_EXISTS:
 		case SMT_FORALL:
 		case SMT_EXISTS_PAT:

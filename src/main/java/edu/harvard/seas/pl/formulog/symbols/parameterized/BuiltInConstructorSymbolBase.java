@@ -29,28 +29,6 @@ public enum BuiltInConstructorSymbolBase implements FunctorBase {
 
 	// Bit vectors
 
-	BV_NEG("bv_neg", 1, ParamKind.NAT),
-
-	BV_ADD("bv_add", 2, ParamKind.NAT),
-
-	BV_SUB("bv_sub", 2, ParamKind.NAT),
-
-	BV_MUL("bv_mul", 2, ParamKind.NAT),
-
-	BV_SDIV("bv_sdiv", 2, ParamKind.NAT),
-
-	BV_SREM("bv_srem", 2, ParamKind.NAT),
-	
-	BV_UDIV("bv_udiv", 2, ParamKind.NAT),
-
-	BV_UREM("bv_urem", 2, ParamKind.NAT),
-
-	BV_AND("bv_and", 2, ParamKind.NAT),
-
-	BV_OR("bv_or", 2, ParamKind.NAT),
-
-	BV_XOR("bv_xor", 2, ParamKind.NAT),
-	
 	BV_SLT("bv_slt", 2, ParamKind.NAT),
 
 	BV_SLE("bv_sle", 2, ParamKind.NAT),
@@ -78,18 +56,6 @@ public enum BuiltInConstructorSymbolBase implements FunctorBase {
 	FP_TO_BV("fp_to_bv", 1, ParamKind.NAT, ParamKind.NAT, ParamKind.NAT),
 	
 	// Floating point
-
-	FP_NEG("fp_neg", 1,ParamKind.NAT, ParamKind.NAT),
-
-	FP_ADD("fp_add", 2,ParamKind.NAT, ParamKind.NAT),
-
-	FP_SUB("fp_sub", 2,ParamKind.NAT, ParamKind.NAT),
-
-	FP_MUL("fp_mul", 2, ParamKind.NAT, ParamKind.NAT),
-
-	FP_DIV("fp_div", 2, ParamKind.NAT, ParamKind.NAT),
-
-	FP_REM("fp_rem", 2, ParamKind.NAT, ParamKind.NAT),
 	
 	FP_EQ("fp_eq", 2, ParamKind.NAT, ParamKind.NAT),
 	
