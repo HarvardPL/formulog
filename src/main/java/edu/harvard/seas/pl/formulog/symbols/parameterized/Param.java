@@ -1,8 +1,6 @@
 package edu.harvard.seas.pl.formulog.symbols.parameterized;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -91,25 +89,6 @@ public class Param {
 	
 	public static Param nat(Type type) {
 		return new Param(type, ParamKind.NAT);
-	}
-
-	public List<Param> expandAsFpAlias() {
-		if (!kind.equals(ParamKind.NAT) || !isGround()) {
-			return Collections.singletonList(this);
-		}
-		TypeIndex nat = (TypeIndex) type;
-		switch (nat.getIndex()) {
-		case 16:
-			return Arrays.asList(Param.nat(5), Param.nat(11));
-		case 32:
-			return Arrays.asList(Param.nat(8), Param.nat(24));
-		case 64:
-			return Arrays.asList(Param.nat(11), Param.nat(53));
-		case 128:
-			return Arrays.asList(Param.nat(15), Param.nat(113));
-		default:
-			throw new IllegalArgumentException("Illegal floating point width alias: " + nat);
-		}
 	}
 
 	@Override

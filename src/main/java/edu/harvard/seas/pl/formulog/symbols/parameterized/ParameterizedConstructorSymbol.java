@@ -102,8 +102,10 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 			break;
 		case FP_TO_FP:
 			if (args.size() == 2) {
-				args = new ArrayList<>(expandAsFpAlias(args.get(0)));
-				args.addAll(expandAsFpAlias(args.get(1)));
+				Param fp1 = args.get(0);
+				Param fp2 = args.get(1);
+				args = new ArrayList<>(expandAsFpAlias(fp1));
+				args.addAll(expandAsFpAlias(fp2));
 			}
 			break;
 		case BV_TO_FP:
@@ -115,7 +117,10 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 			}
 			break;
 		}
-		final List<Param> args2 = args;
+		final List<Param> args2 = new ArrayList<>(args);
+		if (args2.isEmpty()) {
+			args2.addAll(Param.instantiate(base.getParamKinds()));
+		}
 		return Util.lookupOrCreate(memo, new Pair<>(base, args2),
 				() -> new ParameterizedConstructorSymbol(base, args2));
 	}

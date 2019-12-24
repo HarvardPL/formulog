@@ -651,8 +651,12 @@ public final class Constructors {
 		throw new AssertionError("impossible");
 	}
 
-	private static int coerceNatIndex(Param param) {
+	private static int nat(Param param) {
 		return ((TypeIndex) param.getType()).getIndex();
+	}
+	
+	private static int nat(ParameterizedConstructorSymbol sym, int idx) {
+		return nat(sym.getArgs().get(idx));
 	}
 	
 	private static Term makeBVConst(ParameterizedConstructorSymbol psym, Term[] args) {
@@ -661,7 +665,7 @@ public final class Constructors {
 			@Override
 			public void toSmtLib(SmtLibShim shim) {
 				I32 arg = (I32) args[0];
-				int width = coerceNatIndex(psym.getArgs().get(0));
+				int width = nat(psym.getArgs().get(0));
 				String s = Integer.toBinaryString(arg.getVal());
 				int len = s.length();
 				if (width > len) {
@@ -685,7 +689,7 @@ public final class Constructors {
 			@Override
 			public void toSmtLib(SmtLibShim shim) {
 				I64 arg = (I64) args[0];
-				int width = coerceNatIndex(psym.getArgs().get(0));
+				int width = nat(psym.getArgs().get(0));
 				String s = Long.toBinaryString(arg.getVal());
 				int len = s.length();
 				if (width > len) {
@@ -714,111 +718,101 @@ public final class Constructors {
 		});
 	}
 
-	private static int idx(Term[] args, int i) {
-		Constructor t = (Constructor) args[i];
-		return ((I32) t.getArgs()[0]).getVal();
+	private static Term makeBvToBvSigned(ParameterizedConstructorSymbol psym, Term[] args) {
+		return memo.lookupOrCreate(psym, args, () -> new AbstractConstructor(psym, args) {
+
+			@Override
+			public void toSmtLib(SmtLibShim shim) {
+				int idx1 = nat(psym, 0);
+				int idx2 = nat(psym, 1);
+				SmtLibTerm t = (SmtLibTerm) args[0];
+				if (idx1 < idx2) {
+					shim.print("(");
+					shim.print("(_ sign_extend " + (idx2 - idx1) + ") ");
+					t.toSmtLib(shim);
+					shim.print(")");
+				} else if (idx1 == idx2) {
+					t.toSmtLib(shim);
+				} else {
+					shim.print("(");
+					shim.print("(_ extract " + (idx2 - 1) + " 0) ");
+					t.toSmtLib(shim);
+					shim.print(")");
+				}
+			}
+
+		});
 	}
 
-	private static Term makeBvToBvSigned(ParameterizedConstructorSymbol sym, Term[] args) {
-		throw new TodoException();
-//		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
-//
-//			@Override
-//			public void toSmtLib(SmtLibShim shim) {
-//				int idx1 = idx(args, 1);
-//				int idx2 = idx(args, 2);
-//				SmtLibTerm t = (SmtLibTerm) args[0];
-//				if (idx1 < idx2) {
-//					shim.print("(");
-//					shim.print("(_ sign_extend " + (idx2 - idx1) + ") ");
-//					t.toSmtLib(shim);
-//					shim.print(")");
-//				} else if (idx1 == idx2) {
-//					t.toSmtLib(shim);
-//				} else {
-//					shim.print("(");
-//					shim.print("(_ extract " + (idx2 - 1) + " 0) ");
-//					t.toSmtLib(shim);
-//					shim.print(")");
-//				}
-//			}
-//
-//		});
-	}
+	private static Term makeBvToBvUnsigned(ParameterizedConstructorSymbol psym, Term[] args) {
+		return memo.lookupOrCreate(psym, args, () -> new AbstractConstructor(psym, args) {
 
-	private static Term makeBvToBvUnsigned(ParameterizedConstructorSymbol sym, Term[] args) {
-		throw new TodoException();
-//		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
-//
-//			@Override
-//			public void toSmtLib(SmtLibShim shim) {
-//				int idx1 = idx(args, 1);
-//				int idx2 = idx(args, 2);
-//				SmtLibTerm t = (SmtLibTerm) args[0];
-//				if (idx1 < idx2) {
-//					shim.print("(");
-//					shim.print("(_ zero_extend " + (idx2 - idx1) + ") ");
-//					t.toSmtLib(shim);
-//					shim.print(")");
-//				} else if (idx1 == idx2) {
-//					t.toSmtLib(shim);
-//				} else {
-//					shim.print("(");
-//					shim.print("(_ extract " + (idx2 - 1) + " 0) ");
-//					t.toSmtLib(shim);
-//					shim.print(")");
-//				}
-//			}
-//
-//		});
+			@Override
+			public void toSmtLib(SmtLibShim shim) {
+				int idx1 = nat(psym, 0);
+				int idx2 = nat(psym, 1);
+				SmtLibTerm t = (SmtLibTerm) args[0];
+				if (idx1 < idx2) {
+					shim.print("(");
+					shim.print("(_ zero_extend " + (idx2 - idx1) + ") ");
+					t.toSmtLib(shim);
+					shim.print(")");
+				} else if (idx1 == idx2) {
+					t.toSmtLib(shim);
+				} else {
+					shim.print("(");
+					shim.print("(_ extract " + (idx2 - 1) + " 0) ");
+					t.toSmtLib(shim);
+					shim.print(")");
+				}
+			}
+
+		});
 
 	}
 
-	private static Term makeBvToFp(ParameterizedConstructorSymbol sym, Term[] args) {
-		throw new TodoException();
-//		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
-//
-//			@Override
-//			public void toSmtLib(SmtLibShim shim) {
-//				int exponent = idx(args, 2);
-//				int significand = idx(args, 3);
-//				shim.print("((_ to_fp " + exponent + " " + significand + ") RNE ");
-//				((SmtLibTerm) args[0]).toSmtLib(shim);
-//				shim.print(")");
-//			}
-//
-//		});
+	private static Term makeBvToFp(ParameterizedConstructorSymbol psym, Term[] args) {
+		return memo.lookupOrCreate(psym, args, () -> new AbstractConstructor(psym, args) {
+
+			@Override
+			public void toSmtLib(SmtLibShim shim) {
+				int exponent = nat(psym, 1);
+				int significand = nat(psym, 2);
+				shim.print("((_ to_fp " + exponent + " " + significand + ") RNE ");
+				((SmtLibTerm) args[0]).toSmtLib(shim);
+				shim.print(")");
+			}
+
+		});
 	}
 
-	private static Term makeFpToFp(ParameterizedConstructorSymbol sym, Term[] args) {
-		throw new TodoException();
-//		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
-//
-//			@Override
-//			public void toSmtLib(SmtLibShim shim) {
-//				int exponent = idx(args, 3);
-//				int significand = idx(args, 4);
-//				shim.print("((_ to_fp " + exponent + " " + significand + ") RNE ");
-//				((SmtLibTerm) args[0]).toSmtLib(shim);
-//				shim.print(")");
-//			}
-//
-//		});
+	private static Term makeFpToFp(ParameterizedConstructorSymbol psym, Term[] args) {
+		return memo.lookupOrCreate(psym, args, () -> new AbstractConstructor(psym, args) {
+
+			@Override
+			public void toSmtLib(SmtLibShim shim) {
+				int exponent = nat(psym, 2);
+				int significand = nat(psym, 3);
+				shim.print("((_ to_fp " + exponent + " " + significand + ") RNE ");
+				((SmtLibTerm) args[0]).toSmtLib(shim);
+				shim.print(")");
+			}
+
+		});
 	}
 
-	private static Term makeFpToBv(ParameterizedConstructorSymbol sym, Term[] args) {
-		throw new TodoException();
-//		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor(sym, args) {
-//
-//			@Override
-//			public void toSmtLib(SmtLibShim shim) {
-//				int width = idx(args, 3);
-//				shim.print("((_ fp.to_sbv " + width + ") RNE ");
-//				((SmtLibTerm) args[0]).toSmtLib(shim);
-//				shim.print(")");
-//			}
-//
-//		});
+	private static Term makeFpToBv(ParameterizedConstructorSymbol psym, Term[] args) {
+		return memo.lookupOrCreate(psym, args, () -> new AbstractConstructor(psym, args) {
+
+			@Override
+			public void toSmtLib(SmtLibShim shim) {
+				int width = nat(psym, 2);
+				shim.print("((_ fp.to_sbv " + width + ") RNE ");
+				((SmtLibTerm) args[0]).toSmtLib(shim);
+				shim.print(")");
+			}
+
+		});
 	}
 
 	private static abstract class AbstractConstructor extends AbstractTerm implements Constructor {

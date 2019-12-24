@@ -75,7 +75,7 @@ public final class GlobalSymbolManager {
 		Symbol sym = memo.get(name);
 		assert sym != null;
 		if (sym instanceof ParameterizedSymbol) {
-			return ((ParameterizedSymbol) sym).copyWithNewArgs(params);
+			sym = ((ParameterizedSymbol) sym).copyWithNewArgs(params);
 		} else if (!params.isEmpty()) {
 			throw new IllegalArgumentException("Cannot supply parameters to non-parameterized symbol: " + sym);
 		}

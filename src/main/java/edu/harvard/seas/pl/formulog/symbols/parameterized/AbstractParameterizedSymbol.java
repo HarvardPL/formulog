@@ -35,9 +35,6 @@ public abstract class AbstractParameterizedSymbol<B extends SymbolBase> implemen
 	}
 
 	private void check() {
-		if (args.isEmpty()) {
-			args.addAll(Param.instantiate(base.getParamKinds()));
-		}
 		if (base.getNumParams() != args.size()) {
 			throw new IllegalArgumentException("Wrong number of parameters for symbol " + base + ", which has arity "
 					+ base.getArity() + " but received parameters " + args);
