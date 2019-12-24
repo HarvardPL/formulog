@@ -1,5 +1,16 @@
 package edu.harvard.seas.pl.formulog.symbols.parameterized;
 
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.array;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.bool;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.bv;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.fp;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.fp32;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.fp64;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.i32;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.i64;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.smt;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.sym;
+
 /*-
  * #%L
  * FormuLog
@@ -30,12 +41,15 @@ import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbolType;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
-import edu.harvard.seas.pl.formulog.util.TodoException;
+import edu.harvard.seas.pl.formulog.types.Types.TypeVar;
 
 public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<BuiltInConstructorSymbolBase> implements ConstructorSymbol {
 
+	private final FunctorType type;
+	
 	private ParameterizedConstructorSymbol(BuiltInConstructorSymbolBase base, List<Param> args) {
 		super(base, args);
+		this.type = makeType();
 	}
 
 	public static ParameterizedConstructorSymbol mk(BuiltInConstructorSymbolBase base, List<Param> args) {
@@ -143,110 +157,147 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 		return ConstructorSymbolType.SOLVER_EXPR;
 	}
 
+	private FunctorType makeType() {
+		List<Type> types = new ArrayList<>();
+		for (Param param : getArgs()) {
+			types.add(param.getType());
+		}
+		switch (getBase()) {
+		case ARRAY_DEFAULT: {
+			Type a = types.get(0);
+			Type b = TypeVar.fresh();
+			return mkType(array(a, b), b);
+		}
+		case ARRAY_SELECT: {
+			Type a = types.get(0);
+			Type b = TypeVar.fresh();
+			return mkType(array(a, b), a, b);
+		}
+		case BV_ADD:
+		case BV_AND:
+		case BV_MUL:
+		case BV_OR:
+		case BV_SDIV:
+		case BV_UDIV:
+		case BV_UREM:
+		case BV_SREM:
+		case BV_SUB:
+		case BV_XOR: {
+			Type width = types.get(0);
+			return mkType(bv(width), bv(width), bv(width));
+		}
+		case BV_BIG_CONST: {
+			Type width = types.get(0);
+			return mkType(i64, bv(width));
+		}
+		case BV_CONST: {
+			Type width = types.get(0);
+			return mkType(i32, bv(width));
+		}
+		case BV_NEG: {
+			Type width = types.get(0);
+			return mkType(bv(width), bv(width));
+		}
+		case BV_SGE:
+		case BV_SGT:
+		case BV_SLE:
+		case BV_SLT:
+		case BV_UGE:
+		case BV_UGT:
+		case BV_ULE:
+		case BV_ULT: {
+			Type width = types.get(0);
+			return mkType(bv(width), bv(width), bool);
+		}
+		case BV_TO_BV_SIGNED:
+		case BV_TO_BV_UNSIGNED: {
+			Type fromWidth = types.get(0);
+			Type toWidth = types.get(1);
+			return mkType(bv(fromWidth), bv(toWidth));
+		}
+		case BV_TO_FP: {
+			Type width = types.get(0);
+			Type exponent = types.get(1);
+			Type significand = types.get(2);
+			return mkType(bv(width), fp(exponent, significand));
+		}
+		case FP_ADD:
+		case FP_DIV:
+		case FP_MUL:
+		case FP_REM:
+		case FP_SUB: {
+			Type exponent = types.get(0);
+			Type significand = types.get(1);
+			Type fp = fp(exponent, significand);
+			return mkType(fp, fp, fp);
+		}
+		case FP_BIG_CONST: {
+			Type exponent = types.get(0);
+			Type significand = types.get(1);
+			return mkType(fp64, fp(exponent, significand));
+		}
+		case FP_CONST: {
+			Type exponent = types.get(0);
+			Type significand = types.get(1);
+			return mkType(fp32, fp(exponent, significand));
+		}
+		case FP_EQ:
+		case FP_GE:
+		case FP_GT:
+		case FP_LE:
+		case FP_LT: {
+			Type exponent = types.get(0);
+			Type significand = types.get(1);
+			Type fp = fp(exponent, significand);
+			return mkType(fp, fp, bool);
+		}
+		case FP_IS_NAN: {
+			Type exponent = types.get(0);
+			Type significand = types.get(1);
+			return mkType(fp(exponent, significand), bool);
+		}
+		case FP_NEG: {
+			Type exponent = types.get(0);
+			Type significand = types.get(1);
+			Type fp = fp(exponent, significand);
+			return mkType(fp, fp);
+		}
+		case FP_TO_BV: {
+			Type exponent = types.get(0);
+			Type significand = types.get(1);
+			Type width = types.get(2);
+			return mkType(fp(exponent, significand), bv(width));
+		}
+		case FP_TO_FP: {
+			Type exp1 = types.get(0);
+			Type sig1 = types.get(1);
+			Type exp2 = types.get(2);
+			Type sig2 = types.get(3);
+			return mkType(fp(exp1, sig1), fp(exp2, sig2));
+		}
+		case SMT_EQ: {
+			Type ty = types.get(0);
+			return mkType(smt(ty), smt(ty), smt(bool));
+		}
+		case SMT_EXISTS:
+		case SMT_FORALL: {
+			return mkType(types.get(0), smt(bool));
+		}
+		case SMT_EXISTS_PAT:
+		case SMT_FORALL_PAT: {
+			return mkType(types.get(0), types.get(1), smt(bool));
+		}
+		case SMT_LET: {
+			Type ty = types.get(0);
+			return mkType(sym(ty), smt(ty), smt(TypeVar.fresh()));
+		}
+		}
+		throw new AssertionError("impossible");
+	}
+	
 	@Override
 	public FunctorType getCompileTimeType() {
-		List<Param> params = getArgs();
-		throw new TodoException();
-//		switch (getBase()) {
-//		case ARRAY_DEFAULT:
-//			break;
-//		case ARRAY_SELECT:
-//			break;
-//		case BV_ADD:
-//			break;
-//		case BV_AND:
-//			break;
-//		case BV_BIG_CONST:
-//			break;
-//		case BV_CONST:
-//			break;
-//		case BV_MUL:
-//			break;
-//		case BV_NEG:
-//			break;
-//		case BV_OR:
-//			break;
-//		case BV_SDIV:
-//			break;
-//		case BV_SGE:
-//			break;
-//		case BV_SGT:
-//			break;
-//		case BV_SLE:
-//			break;
-//		case BV_SLT:
-//			break;
-//		case BV_SREM:
-//			break;
-//		case BV_SUB:
-//			break;
-//		case BV_TO_BV_SIGNED:
-//			break;
-//		case BV_TO_BV_UNSIGNED:
-//			break;
-//		case BV_TO_FP:
-//			break;
-//		case BV_UDIV:
-//			break;
-//		case BV_UGE:
-//			break;
-//		case BV_UGT:
-//			break;
-//		case BV_ULE:
-//			break;
-//		case BV_ULT:
-//			break;
-//		case BV_UREM:
-//			break;
-//		case BV_XOR:
-//			break;
-//		case FP_ADD:
-//			break;
-//		case FP_BIG_CONST:
-//			break;
-//		case FP_CONST:
-//			break;
-//		case FP_DIV:
-//			break;
-//		case FP_EQ:
-//			break;
-//		case FP_GE:
-//			break;
-//		case FP_GT:
-//			break;
-//		case FP_IS_NAN:
-//			break;
-//		case FP_LE:
-//			break;
-//		case FP_LT:
-//			break;
-//		case FP_MUL:
-//			break;
-//		case FP_NEG:
-//			break;
-//		case FP_REM:
-//			break;
-//		case FP_SUB:
-//			break;
-//		case FP_TO_BV:
-//			break;
-//		case FP_TO_FP:
-//			break;
-//		case SMT_EQ:
-//			break;
-//		case SMT_EXISTS:
-//			break;
-//		case SMT_EXISTS_PAT:
-//			break;
-//		case SMT_FORALL:
-//			break;
-//		case SMT_FORALL_PAT:
-//			break;
-//		case SMT_LET:
-//			break;
-//		default:
-//			break;
-//		}
+		return type;
 	}
 	
 	private static FunctorType mkType(Type... types) {
