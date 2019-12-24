@@ -35,7 +35,6 @@ import edu.harvard.seas.pl.formulog.parsing.generated.FormulogVisitor;
 import edu.harvard.seas.pl.formulog.symbols.GlobalSymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
-import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInTypeSymbolBase;
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
@@ -128,21 +127,6 @@ class TypeExtractor {
 					throw new RuntimeException("Not a type symbol: " + sym);
 				}
 				return pc.typeManager().lookup((TypeSymbol) sym, params);
-//				TypeSymbol sym;
-//				if (!indices.isEmpty()) {
-//					Pair<BuiltInPreTypeSymbol, List<Integer>> p = pc.symbolManager().lookupIndexedTypeSymbol(name,
-//							indices);
-//					sym = p.fst();
-//					indices = p.snd();
-//					params.addAll(map(indices, i -> TypeIndex.make(i)));
-//				} else {
-//					Symbol sym2 = pc.symbolManager().lookupSymbol(name);
-//					if (!(sym2 instanceof TypeSymbol)) {
-//						throw new RuntimeException("Not a type symbol: " + sym2);
-//					}
-//					sym = (TypeSymbol) sym2;
-//				}
-//				// XXX Update this to make sure you don't create types with nested smts or syms
 			}
 		}
 

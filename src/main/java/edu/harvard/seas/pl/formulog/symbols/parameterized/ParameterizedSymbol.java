@@ -29,14 +29,12 @@ public interface ParameterizedSymbol extends Symbol {
 
 	SymbolBase getBase();
 	
-	List<ParamElt> getArgs();
+	List<Param> getArgs();
 	
-	ParameterizedSymbol copyWithNewArgs(List<ParamElt> args);
+	ParameterizedSymbol copyWithNewArgs(List<Param> args);
 	
-	default ParameterizedSymbol copyWithNewArgs(ParamElt... args) {
+	default ParameterizedSymbol copyWithNewArgs(Param... args) {
 		return copyWithNewArgs(Arrays.asList(args));
 	}
-	
-	boolean containsParamVars();
 	
 }

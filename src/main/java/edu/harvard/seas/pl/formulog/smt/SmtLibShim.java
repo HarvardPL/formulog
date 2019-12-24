@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.function.Function;
 
 import org.jgrapht.Graph;
 import org.jgrapht.alg.KosarajuStrongConnectivityInspector;
@@ -62,7 +61,6 @@ import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
-import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInTypeSymbolBase;
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
@@ -76,7 +74,6 @@ import edu.harvard.seas.pl.formulog.types.Types.TypeVar;
 import edu.harvard.seas.pl.formulog.types.Types.TypeVisitor;
 import edu.harvard.seas.pl.formulog.util.DedupWorkList;
 import edu.harvard.seas.pl.formulog.util.Pair;
-import edu.harvard.seas.pl.formulog.util.TodoException;
 import edu.harvard.seas.pl.formulog.util.Util;
 
 public class SmtLibShim {
@@ -405,10 +402,8 @@ public class SmtLibShim {
 			@Override
 			public String visit(AlgebraicDataType algebraicType, Void in) {
 				TypeSymbol sym = algebraicType.getSymbol();
-//				if (sym instanceof InstantiatedTypeSymbol) {
-//					return stringifyIndexedSymbol(((InstantiatedTypeSymbol) sym).getPreSymbol(), algebraicType.getTypeArgs());
-//				}
 				if (sym instanceof BuiltInTypeSymbol) {
+					List<Type> typeArgs = algebraicType.getTypeArgs();
 					switch ((BuiltInTypeSymbol) sym) {
 					case BOOL_TYPE:
 						return "Bool";
@@ -416,7 +411,7 @@ public class SmtLibShim {
 						return "String";
 					case ARRAY_TYPE: {
 						String s = "(Array ";
-						for (Type t : algebraicType.getTypeArgs()) {
+						for (Type t : typeArgs) {
 							s += " " + stringifyType(t);
 						}
 						return s + ")";
@@ -427,9 +422,15 @@ public class SmtLibShim {
 					case SYM_TYPE:
 						return stringifyType(algebraicType.getTypeArgs().get(0));
 					case BV:
+						return "(_ BitVec " + ((TypeIndex) typeArgs.get(0)).getIndex() + ")";
 					case FP:
-						throw new TodoException();
-					default:
+						int idx1 = ((TypeIndex) typeArgs.get(0)).getIndex();
+						int idx2 = ((TypeIndex) typeArgs.get(1)).getIndex();
+						return "(_ FloatingPoint " + idx1 + " " + idx2 + ")";
+					case CMP_TYPE:
+					case LIST_TYPE:
+					case MODEL_TYPE:
+					case OPTION_TYPE:
 						break;
 					}
 				}
@@ -442,24 +443,10 @@ public class SmtLibShim {
 				}
 				return s + ")";
 			}
-
+			
 			@Override
 			public String visit(OpaqueType opaqueType, Void in) {
 				throw new AssertionError("impossible");
-			}
-
-			private String stringifyIndexedSymbol(BuiltInTypeSymbolBase sym, List<Type> typeArgs) {
-				Function<Type, Integer> forceIdx = t -> ((TypeIndex) t).getIndex();
-				switch (sym) {
-				case BV:
-					return "(_ BitVec " + forceIdx.apply(typeArgs.get(0)) + ")";
-				case FP:
-					int idx1 = forceIdx.apply(typeArgs.get(0));
-					int idx2 = forceIdx.apply(typeArgs.get(1));
-					return "(_ FloatingPoint " + idx1 + " " + idx2 + ")";
-				default:
-					throw new AssertionError();
-				}
 			}
 
 			@Override

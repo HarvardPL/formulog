@@ -24,8 +24,14 @@ public enum ParamKind {
 
 	NAT,
 	
-	TYPE,
+	ANY_TYPE,
 	
-	FUN;
+	MODEL_FREE_TYPE,
+	
+	SMT_VAR,
+	
+	SMT_VARS,
+	
+	PRE_SMT_TYPE;
 	
 }

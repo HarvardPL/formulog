@@ -21,33 +21,18 @@ package edu.harvard.seas.pl.formulog.symbols.parameterized;
  */
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public abstract class AbstractParameterizedSymbol<B extends SymbolBase> implements ParameterizedSymbol {
 
 	private final B base;
-	private final List<ParamElt> args;
+	private final List<Param> args;
 
-	public AbstractParameterizedSymbol(B base, List<ParamElt> args) {
+	public AbstractParameterizedSymbol(B base, List<Param> args) {
 		this.base = base;
 		this.args = new ArrayList<>(args);
-		checkArgs();
-	}
-
-	private void checkArgs() {
-		if (args.size() != base.getNumParams()) {
+		if (base.getNumParams() != args.size()) {
 			throw new IllegalArgumentException("Wrong number of parameters for symbol " + base);
-		}
-		int i = 0;
-		Iterator<ParamSubKind> kinds = base.getParamSubKinds().iterator();
-		for (ParamElt arg : args) {
-			ParamSubKind paramType = kinds.next();
-			if (!arg.matchesParamKind(paramType.toKind())) {
-				throw new IllegalArgumentException("Parameter kind mismatch for symbol " + base + ": parameter "
-						+ (i + 1) + " should be of kind " + paramType);
-			}
-			i++;
 		}
 	}
 
@@ -67,15 +52,10 @@ public abstract class AbstractParameterizedSymbol<B extends SymbolBase> implemen
 	}
 
 	@Override
-	public List<ParamElt> getArgs() {
+	public List<Param> getArgs() {
 		return args;
 	}
 	
-	@Override
-	public boolean containsParamVars() {
-		return ParamUtil.containsParamVars(args);
-	}
-
 	@Override
 	public int hashCode() {
 		final int prime = 31;

@@ -28,6 +28,6 @@ public interface FinalizedSymbol extends Symbol {
 
 	SymbolBase getBase();
 	
-	List<ParamElt> getArgs();
+	List<Param> getArgs();
 	
 }

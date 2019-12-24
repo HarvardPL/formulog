@@ -30,10 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInConstructorSymbolBase;
-import edu.harvard.seas.pl.formulog.symbols.parameterized.ParamElt;
-import edu.harvard.seas.pl.formulog.symbols.parameterized.ParamSubKind;
-import edu.harvard.seas.pl.formulog.symbols.parameterized.ParamUtil;
-import edu.harvard.seas.pl.formulog.symbols.parameterized.ParamVar;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.Param;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedSymbol;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
@@ -66,11 +63,11 @@ public final class GlobalSymbolManager {
 		return lookup(name, Collections.emptyList());
 	}
 
-	public static Symbol lookup(String name, ParamElt... params) {
+	public static Symbol lookup(String name, Param... params) {
 		return lookup(name, Arrays.asList(params));
 	}
 
-	public static Symbol lookup(String name, List<ParamElt> params) {
+	public static Symbol lookup(String name, List<Param> params) {
 		checkInitialized();
 		if (!hasName(name)) {
 			throw new IllegalArgumentException("Unrecognized name: " + name);
@@ -85,7 +82,7 @@ public final class GlobalSymbolManager {
 		return sym;
 	}
 	
-	public static ParameterizedConstructorSymbol getParameterizedSymbol(BuiltInConstructorSymbolBase base, List<ParamElt> params) {
+	public static ParameterizedConstructorSymbol getParameterizedSymbol(BuiltInConstructorSymbolBase base, List<Param> params) {
 		return getParameterizedSymbol(base).copyWithNewArgs(params);
 	}
 
@@ -95,7 +92,7 @@ public final class GlobalSymbolManager {
 	}
 
 	private static ParameterizedConstructorSymbol getParameterizedSymbolInternal(BuiltInConstructorSymbolBase base) {
-		List<ParamElt> params = ParamVar.fresh(base.getParamSubKinds());
+		List<Param> params = Param.instantiate(base.getParamKinds());
 		return ParameterizedConstructorSymbol.mk(base, params);
 	}
 

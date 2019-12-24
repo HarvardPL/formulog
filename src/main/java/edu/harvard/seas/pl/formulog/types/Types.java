@@ -586,12 +586,12 @@ public final class Types {
 		}, null);
 	}
 
-	public static boolean isPreSmtType(Type t) {
+	public static boolean mayBePreSmtType(Type t) {
 		return t.accept(new TypeVisitor<Void, Boolean>() {
 
 			@Override
 			public Boolean visit(TypeVar typeVar, Void in) {
-				return false;
+				return true;
 			}
 
 			@Override

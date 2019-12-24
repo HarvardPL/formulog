@@ -21,20 +21,24 @@ package edu.harvard.seas.pl.formulog.symbols.parameterized;
  */
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbolType;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
+import edu.harvard.seas.pl.formulog.types.Types.Type;
+import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
 import edu.harvard.seas.pl.formulog.util.TodoException;
 
 public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<BuiltInConstructorSymbolBase> implements ConstructorSymbol {
 
-	private ParameterizedConstructorSymbol(BuiltInConstructorSymbolBase base, List<ParamElt> args) {
+	private ParameterizedConstructorSymbol(BuiltInConstructorSymbolBase base, List<Param> args) {
 		super(base, args);
 	}
 
-	public static ParameterizedConstructorSymbol mk(BuiltInConstructorSymbolBase base, List<ParamElt> args) {
+	public static ParameterizedConstructorSymbol mk(BuiltInConstructorSymbolBase base, List<Param> args) {
 		switch (base) {
 		case ARRAY_DEFAULT:
 		case ARRAY_SELECT:
@@ -82,28 +86,28 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 		case FP_NEG:
 		case FP_REM:
 		case FP_SUB:
-			if (args.size() == 1 && args.get(0) instanceof NatParam) {
-				args = new ArrayList<>(((NatParam) args.get(0)).expandAsFpAlias());
+			if (args.size() == 1) {
+				args = new ArrayList<>(expandAsFpAlias(args.get(0)));
 			}
 			break;
 		case FP_TO_BV:
-			if (args.size() == 2 && args.get(0) instanceof NatParam) {
-				ParamElt bv = args.get(1);
-				args = new ArrayList<>(((NatParam) args.get(0)).expandAsFpAlias());
+			if (args.size() == 2) {
+				Param bv = args.get(1);
+				args = new ArrayList<>(expandAsFpAlias(args.get(0)));
 				args.add(bv);
 			}
 			break;
 		case FP_TO_FP:
-			if (args.size() == 2 && args.get(0) instanceof NatParam && args.get(1) instanceof NatParam) {
-				args = new ArrayList<>(((NatParam) args.get(0)).expandAsFpAlias());
-				args.addAll(((NatParam) args.get(1)).expandAsFpAlias());
+			if (args.size() == 2) {
+				args = new ArrayList<>(expandAsFpAlias(args.get(0)));
+				args.addAll(expandAsFpAlias(args.get(1)));
 			}
 			break;
 		case BV_TO_FP:
-			if (args.size() == 2 && args.get(1) instanceof NatParam) {
-				List<ParamElt> newArgs = new ArrayList<>();
+			if (args.size() == 2) {
+				List<Param> newArgs = new ArrayList<>();
 				newArgs.add(args.get(0));
-				newArgs.addAll(((NatParam) args.get(1)).expandAsFpAlias());
+				newArgs.addAll(expandAsFpAlias(args.get(1)));
 				args = newArgs;
 			}
 			break;
@@ -111,8 +115,27 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 		return new ParameterizedConstructorSymbol(base, args);
 	}
 	
+	private static List<Param> expandAsFpAlias(Param param) {
+		if (!param.getKind().equals(ParamKind.NAT) || !param.isGround()) {
+			return Collections.singletonList(param);
+		}
+		TypeIndex nat = (TypeIndex) param.getType();
+		switch (nat.getIndex()) {
+		case 16:
+			return Arrays.asList(Param.nat(5), Param.nat(11));
+		case 32:
+			return Arrays.asList(Param.nat(8), Param.nat(24));
+		case 64:
+			return Arrays.asList(Param.nat(11), Param.nat(53));
+		case 128:
+			return Arrays.asList(Param.nat(15), Param.nat(113));
+		default:
+			throw new IllegalArgumentException("Illegal floating point width alias: " + nat);
+		}
+	}
+	
 	@Override
-	public ParameterizedConstructorSymbol copyWithNewArgs(List<ParamElt> args) {
+	public ParameterizedConstructorSymbol copyWithNewArgs(List<Param> args) {
 		return mk(getBase(), args);
 	}
 
@@ -122,7 +145,112 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 
 	@Override
 	public FunctorType getCompileTimeType() {
+		List<Param> params = getArgs();
 		throw new TodoException();
+//		switch (getBase()) {
+//		case ARRAY_DEFAULT:
+//			break;
+//		case ARRAY_SELECT:
+//			break;
+//		case BV_ADD:
+//			break;
+//		case BV_AND:
+//			break;
+//		case BV_BIG_CONST:
+//			break;
+//		case BV_CONST:
+//			break;
+//		case BV_MUL:
+//			break;
+//		case BV_NEG:
+//			break;
+//		case BV_OR:
+//			break;
+//		case BV_SDIV:
+//			break;
+//		case BV_SGE:
+//			break;
+//		case BV_SGT:
+//			break;
+//		case BV_SLE:
+//			break;
+//		case BV_SLT:
+//			break;
+//		case BV_SREM:
+//			break;
+//		case BV_SUB:
+//			break;
+//		case BV_TO_BV_SIGNED:
+//			break;
+//		case BV_TO_BV_UNSIGNED:
+//			break;
+//		case BV_TO_FP:
+//			break;
+//		case BV_UDIV:
+//			break;
+//		case BV_UGE:
+//			break;
+//		case BV_UGT:
+//			break;
+//		case BV_ULE:
+//			break;
+//		case BV_ULT:
+//			break;
+//		case BV_UREM:
+//			break;
+//		case BV_XOR:
+//			break;
+//		case FP_ADD:
+//			break;
+//		case FP_BIG_CONST:
+//			break;
+//		case FP_CONST:
+//			break;
+//		case FP_DIV:
+//			break;
+//		case FP_EQ:
+//			break;
+//		case FP_GE:
+//			break;
+//		case FP_GT:
+//			break;
+//		case FP_IS_NAN:
+//			break;
+//		case FP_LE:
+//			break;
+//		case FP_LT:
+//			break;
+//		case FP_MUL:
+//			break;
+//		case FP_NEG:
+//			break;
+//		case FP_REM:
+//			break;
+//		case FP_SUB:
+//			break;
+//		case FP_TO_BV:
+//			break;
+//		case FP_TO_FP:
+//			break;
+//		case SMT_EQ:
+//			break;
+//		case SMT_EXISTS:
+//			break;
+//		case SMT_EXISTS_PAT:
+//			break;
+//		case SMT_FORALL:
+//			break;
+//		case SMT_FORALL_PAT:
+//			break;
+//		case SMT_LET:
+//			break;
+//		default:
+//			break;
+//		}
+	}
+	
+	private static FunctorType mkType(Type... types) {
+		return new FunctorType(types);
 	}
 
 }

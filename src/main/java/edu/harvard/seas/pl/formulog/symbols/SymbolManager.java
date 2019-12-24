@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import edu.harvard.seas.pl.formulog.ast.BindingType;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInConstructorSymbolBase;
-import edu.harvard.seas.pl.formulog.symbols.parameterized.ParamElt;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.Param;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.SymbolBase;
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
@@ -103,7 +103,7 @@ public class SymbolManager {
 		throw new TodoException();
 	}
 	
-	public Symbol lookupSymbol(String name, List<ParamElt> params) {
+	public Symbol lookupSymbol(String name, List<Param> params) {
 		if (GlobalSymbolManager.hasName(name)) {
 			return GlobalSymbolManager.lookup(name, params);
 		}
