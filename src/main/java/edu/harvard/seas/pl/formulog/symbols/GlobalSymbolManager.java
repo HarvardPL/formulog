@@ -125,7 +125,7 @@ public final class GlobalSymbolManager {
 		if (sym instanceof TypeSymbol) {
 			typeSymbols.add((TypeSymbol) sym);
 		}
-		Symbol other = memo.putIfAbsent(sym.getName(), sym);
+		Symbol other = memo.putIfAbsent(sym.toString(), sym);
 		assert other == null;
 	}
 
@@ -292,7 +292,7 @@ public final class GlobalSymbolManager {
 		}
 
 		@Override
-		public String getName() {
+		public String toString() {
 			return "tuple$" + arity;
 		}
 

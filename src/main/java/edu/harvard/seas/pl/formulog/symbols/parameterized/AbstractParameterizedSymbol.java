@@ -42,8 +42,16 @@ public abstract class AbstractParameterizedSymbol<B extends SymbolBase> implemen
 	}
 
 	@Override
-	public String getName() {
-		return base.getName();
+	public String toString() {
+		String s = base.getName();
+		s += "<";
+		for (int i = 0; i < args.size(); ++i) {
+			s += args.get(0);
+			if (i < args.size() - 1) {
+				s += ", ";
+			}
+		}
+		return s + ">";
 	}
 
 	@Override

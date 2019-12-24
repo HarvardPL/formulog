@@ -24,6 +24,4 @@ public interface Symbol {
 	
 	int getArity();
 	
-	String getName();
-	
 }

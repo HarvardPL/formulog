@@ -36,7 +36,7 @@ abstract class AbstractSymbol implements Symbol {
 	}
 
 	@Override
-	public String getName() {
+	public String toString() {
 		return name;
 	}
 

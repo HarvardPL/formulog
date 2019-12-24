@@ -230,7 +230,7 @@ public class SymbolManager {
 		if (sym instanceof TypeSymbol) {
 			typeSymbols.add((TypeSymbol) sym);
 		}
-		Symbol sym2 = memo.putIfAbsent(sym.getName(), sym);
+		Symbol sym2 = memo.putIfAbsent(sym.toString(), sym);
 		if (sym2 != null && !sym2.equals(sym)) {
 			throw new IllegalArgumentException(
 					"Cannot register symbol " + sym + "; a different symbol is already registered with that name.");

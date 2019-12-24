@@ -2,6 +2,7 @@ package edu.harvard.seas.pl.formulog.symbols.parameterized;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import edu.harvard.seas.pl.formulog.types.Types;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
@@ -73,6 +74,14 @@ public class Param {
 		}
 		return params;
 	}
+	
+	public static List<Param> applySubst(Iterable<Param> params, Map<TypeVar, Type> subst) {
+		List<Param> newParams = new ArrayList<>();
+		for (Param param : params) {
+			newParams.add(new Param(param.getType().applySubst(subst), param.getKind()));
+		}
+		return newParams;
+	}
 
 	public static Param nat(int index) {
 		return new Param(new TypeIndex(index), ParamKind.NAT);
@@ -112,7 +121,7 @@ public class Param {
 
 	@Override
 	public String toString() {
-		return "ParamElt [type=" + type + ", kind=" + kind + "]";
+		return type + ":" + kind;
 	}
 	
 }

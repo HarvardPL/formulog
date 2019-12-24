@@ -103,7 +103,7 @@ public class UserPredicate implements ComplexLiteral {
 		if (negated) {
 			sb.append("!");
 		}
-		sb.append(symbol.getName());
+		sb.append(symbol);
 		int arity = args.length;
 		if (arity > 0) {
 			sb.append('(');

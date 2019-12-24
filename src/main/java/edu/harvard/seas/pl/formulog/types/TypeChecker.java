@@ -73,7 +73,9 @@ import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.Param;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedSymbol;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.OpaqueType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
@@ -539,7 +541,10 @@ public class TypeChecker {
 			if (cnstrSym.equals(BuiltInConstructorSymbol.EXIT_FORMULA)) {
 				inFormula = false;
 			}
-			FunctorType cnstrType = cnstrSym.getCompileTimeType().freshen();
+			FunctorType cnstrType = cnstrSym.getCompileTimeType();
+			if (!(cnstrSym instanceof ParameterizedConstructorSymbol)) {
+				cnstrType = cnstrType.freshen();
+			}
 			Term[] args = t.getArgs();
 			List<Type> argTypes = cnstrType.getArgTypes();
 			for (int i = 0; i < args.length; ++i) {
@@ -722,15 +727,7 @@ public class TypeChecker {
 			public Term visit(Constructor c, Substitution subst) throws TypeException {
 				ConstructorSymbol sym = c.getSymbol();
 				if (sym instanceof ParameterizedConstructorSymbol) {
-					throw new TodoException();
-//					if (sym.equals(BuiltInConstructorSymbol.FORMULA_EQ)) {
-//						Pair<Constructor, Type> p = smtEqsToResolve.removeFirst();
-//						Type eltType = simplify(lookupType(p.snd()));
-//						if (Types.containsTypeVarOrOpaqueType(eltType)) {
-//							throw new TypeException("Cannot determine element type in solver equality: " + p.fst());
-//						}
-//						sym = prog.getSymbolManager().lookupSmtEqSymbol(eltType);
-//					}
+					sym = (ConstructorSymbol) handleParameterizedSymbol((ParameterizedConstructorSymbol) sym);
 				}
 				Term[] args = c.getArgs();
 				Term[] newArgs = new Term[args.length];
@@ -755,6 +752,17 @@ public class TypeChecker {
 			}
 
 		};
+		
+		private ParameterizedSymbol handleParameterizedSymbol(ParameterizedSymbol sym) throws TypeException {
+			List<Param> params = sym.getArgs();
+			params = Param.applySubst(params, typeVars);
+			for (Param param : params) {
+				if (Types.containsTypeVarOrOpaqueType(param.getType())) {
+					throw new TypeException("Cannot instantiate parameterized symbol " + sym + " with a parameter that is not ground: " + param);
+				}
+			}
+			return sym.copyWithNewArgs(params);
+		}
 
 		private final Map<FunctionSymbol, FunctionSymbol> topLevelSymbolOfNestedFunction = new HashMap<>();
 		private final Map<FunctionSymbol, List<Var>> capturedVarsOfNestedFunction = new HashMap<>();

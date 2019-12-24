@@ -300,11 +300,6 @@ public final class Constructors {
 				return ConstructorSymbolType.SOLVER_VARIABLE;
 			}
 
-			@Override
-			public String getName() {
-				throw new UnsupportedOperationException();
-			}
-
 		};
 		SmtLibTerm y = (SmtLibTerm) make(newSym, Terms.emptyArray());
 		return (SolverVariable) y;
@@ -957,7 +952,7 @@ public final class Constructors {
 			StringBuilder sb = new StringBuilder("{ ");
 			int i = 0;
 			for (FunctionSymbol label : ((RecordSymbol) sym).getLabels()) {
-				sb.append(label.getName());
+				sb.append(label);
 				sb.append("=");
 				sb.append(args[i]);
 				sb.append("; ");

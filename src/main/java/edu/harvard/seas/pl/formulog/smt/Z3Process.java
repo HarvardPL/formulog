@@ -181,11 +181,6 @@ public class Z3Process {
 				return ConstructorSymbolType.SOLVER_VARIABLE;
 			}
 			
-			@Override
-			public String getName() {
-				throw new UnsupportedOperationException();
-			}
-
 		};
 		return (SolverVariable) Constructors.make(sym, args);
 	}

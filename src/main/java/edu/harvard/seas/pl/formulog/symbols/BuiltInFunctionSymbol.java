@@ -366,7 +366,7 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 	}
 
 	@Override
-	public String getName() {
+	public String toString() {
 		return name;
 	}
 

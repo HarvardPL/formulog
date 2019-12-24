@@ -325,7 +325,7 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 	}
 
 	@Override
-	public String getName() {
+	public String toString() {
 		return name;
 	}
 

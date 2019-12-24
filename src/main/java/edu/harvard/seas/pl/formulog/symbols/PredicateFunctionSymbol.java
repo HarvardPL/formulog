@@ -119,7 +119,7 @@ public class PredicateFunctionSymbol implements FunctionSymbol {
 	}
 
 	@Override
-	public String getName() {
+	public String toString() {
 		String s = predSymbol.toString();
 		if (bindings != null) {
 			if (bindings.length > 0) {

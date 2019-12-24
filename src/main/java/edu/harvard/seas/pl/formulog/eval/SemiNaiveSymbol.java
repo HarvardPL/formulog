@@ -80,7 +80,7 @@ public class SemiNaiveSymbol implements RelationSymbol {
 	}
 	
 	@Override
-	public String getName() {
+	public String toString() {
 		return baseSymbol + "<" + semiNaiveType + ">";
 	}
 
