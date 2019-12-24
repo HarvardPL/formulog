@@ -32,9 +32,11 @@ import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TypeContext
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TypeRefContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TypeVarContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogVisitor;
+import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.GlobalSymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.Param;
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
@@ -82,38 +84,38 @@ class TypeExtractor {
 
 		@Override
 		public Type visitTypeRef(TypeRefContext ctx) {
-			List<Type> params;
+			List<Type> typeArgs;
 			if (ctx.type0() != null) {
-				params = new ArrayList<>();
-				params.add(ctx.type0().accept(this));
+				typeArgs = new ArrayList<>();
+				typeArgs.add(ctx.type0().accept(this));
 			} else {
-				params = map(ctx.type(), t -> t.accept(this));
+				typeArgs = map(ctx.type(), t -> t.accept(this));
 			}
 			String s = ctx.ID().getText();
 			List<Integer> indices = ParsingUtil.extractIndices(ctx.index());
 			switch (s) {
 			case "i32":
-				if (params.size() != 0) {
+				if (typeArgs.size() != 0) {
 					throw new RuntimeException("Built in type i32 does not have any type parameters.");
 				}
 				return BuiltInTypes.i32;
 			case "i64":
-				if (params.size() != 0) {
+				if (typeArgs.size() != 0) {
 					throw new RuntimeException("Built in type i64 does not have any type parameters.");
 				}
 				return BuiltInTypes.i64;
 			case "fp32":
-				if (params.size() != 0) {
+				if (typeArgs.size() != 0) {
 					throw new RuntimeException("Built in type fp32 does not have any type parameters.");
 				}
 				return BuiltInTypes.fp32;
 			case "fp64":
-				if (params.size() != 0) {
+				if (typeArgs.size() != 0) {
 					throw new RuntimeException("Built in type fp64 does not have any type parameters.");
 				}
 				return BuiltInTypes.fp64;
 			case "string":
-				if (params.size() != 0) {
+				if (typeArgs.size() != 0) {
 					throw new RuntimeException("Built in type string does not have any type parameters.");
 				}
 				return BuiltInTypes.string;
@@ -124,9 +126,14 @@ class TypeExtractor {
 					throw new RuntimeException("Not a type symbol: " + sym);
 				}
 				for (Integer index : indices) {
-					params.add(new TypeIndex(index));
+					typeArgs.add(TypeIndex.make(index));
 				}
-				return pc.typeManager().lookup((TypeSymbol) sym, params);
+				if (sym.equals(BuiltInTypeSymbol.FP) && typeArgs.size() == 1 && typeArgs.get(0) instanceof TypeIndex) {
+					List<TypeIndex> expanded = ((TypeIndex) typeArgs.get(0)).expandAsFpIndex();
+					typeArgs.clear();
+					typeArgs.addAll(expanded);
+				}
+				return pc.typeManager().lookup((TypeSymbol) sym, typeArgs);
 			}
 		}
 

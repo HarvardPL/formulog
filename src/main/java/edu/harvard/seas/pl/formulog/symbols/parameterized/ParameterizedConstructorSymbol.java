@@ -125,18 +125,12 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 			return Collections.singletonList(param);
 		}
 		TypeIndex nat = (TypeIndex) param.getType();
-		switch (nat.getIndex()) {
-		case 16:
-			return Arrays.asList(Param.nat(5), Param.nat(11));
-		case 32:
-			return Arrays.asList(Param.nat(8), Param.nat(24));
-		case 64:
-			return Arrays.asList(Param.nat(11), Param.nat(53));
-		case 128:
-			return Arrays.asList(Param.nat(15), Param.nat(113));
-		default:
-			throw new IllegalArgumentException("Illegal floating point width alias: " + nat);
+		List<TypeIndex> indices = nat.expandAsFpIndex();
+		List<Param> params = new ArrayList<>();
+		for (TypeIndex index : indices) {
+			params.add(Param.nat(index.getIndex()));
 		}
+		return params;
 	}
 
 	@Override

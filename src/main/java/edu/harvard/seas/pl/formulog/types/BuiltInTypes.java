@@ -124,7 +124,7 @@ public final class BuiltInTypes {
 	}
 	
 	public static AlgebraicDataType bv(int width) {
-		return bv(new TypeIndex(width));
+		return bv(TypeIndex.make(width));
 	}
 	
 	public static AlgebraicDataType fp(Type a, Type b) {
@@ -132,7 +132,7 @@ public final class BuiltInTypes {
 	}
 
 	public static AlgebraicDataType fp(int exponent, int significand) {
-		return fp(new TypeIndex(exponent), new TypeIndex(significand));
+		return fp(TypeIndex.make(exponent), TypeIndex.make(significand));
 	}
 
 	public static AlgebraicDataType array(Type a, Type b) {

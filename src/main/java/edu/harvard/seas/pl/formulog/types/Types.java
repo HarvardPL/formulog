@@ -40,6 +40,7 @@ import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.GlobalSymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.Param;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
 
@@ -419,7 +420,7 @@ public final class Types {
 
 		private final int index;
 
-		public TypeIndex(int index) {
+		private TypeIndex(int index) {
 			this.index = index;
 		}
 
@@ -471,6 +472,21 @@ public final class Types {
 
 		public int getIndex() {
 			return index;
+		}
+		
+		public List<TypeIndex> expandAsFpIndex() {
+			switch (index) {
+			case 16:
+				return Arrays.asList(make(5), make(11));
+			case 32:
+				return Arrays.asList(make(8), make(24));
+			case 64:
+				return Arrays.asList(make(11), make(53));
+			case 128:
+				return Arrays.asList(make(15), make(113));
+			default:
+				throw new IllegalArgumentException("Illegal floating point width alias: " + index);
+			}
 		}
 
 	}
