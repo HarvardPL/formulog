@@ -166,18 +166,26 @@ public final class Types {
 			this.sym = sym;
 			this.typeArgs = new ArrayList<>(typeArgs);
 			if (sym.getArity() != typeArgs.size()) {
-				throw new IllegalArgumentException(
-						"Arity of symbol " + sym + " does not match number of provided type parameters");
+				throw new IllegalArgumentException("Arity of symbol " + sym + " (" + sym.getArity()
+						+ ") does not match number of provided type parameters: " + typeArgs);
 			}
 			if (sym.isAlias()) {
 				throw new IllegalArgumentException("Cannot create a type with alias symbol " + sym);
 			}
 		}
+		
+		public static AlgebraicDataType makeWithFreshArgs(TypeSymbol sym) {
+			List<Type> typeArgs = new ArrayList<>();
+			for (int i = 0; i < sym.getArity(); ++i) {
+				typeArgs.add(TypeVar.fresh());
+			}
+			return make(sym, typeArgs);
+		}
 
 		public static AlgebraicDataType make(TypeSymbol sym, Type... typeArgs) {
 			return make(sym, Arrays.asList(typeArgs));
 		}
-		
+
 		public static AlgebraicDataType make(TypeSymbol sym, List<Type> typeArgs) {
 			return new AlgebraicDataType(sym, typeArgs);
 		}
@@ -473,7 +481,7 @@ public final class Types {
 		public int getIndex() {
 			return index;
 		}
-		
+
 		public List<TypeIndex> expandAsFpIndex() {
 			switch (index) {
 			case 16:

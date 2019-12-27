@@ -356,7 +356,7 @@ public class SmtLibShim {
 		}
 		print(") (");
 		for (TypeSymbol sym : sorts) {
-			declareAdtSort(AlgebraicDataType.make(sym));
+			declareAdtSort(AlgebraicDataType.makeWithFreshArgs(sym));
 		}
 		println("))");
 	}
@@ -479,7 +479,7 @@ public class SmtLibShim {
 				TypeSymbol sym = w.pop();
 				assert isDeclarableTypeSymbol(sym);
 				g.addVertex(sym);
-				AlgebraicDataType type = AlgebraicDataType.make(sym);
+				AlgebraicDataType type = AlgebraicDataType.makeWithFreshArgs(sym);
 				if (sym.isUninterpretedSort()) {
 					continue;
 				}
