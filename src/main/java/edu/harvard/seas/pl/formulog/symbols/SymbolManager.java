@@ -240,7 +240,7 @@ public class SymbolManager {
 	public Set<TypeSymbol> getTypeSymbols() {
 		Set<TypeSymbol> syms = new HashSet<>(typeSymbols);
 		syms.addAll(GlobalSymbolManager.getTypeSymbols());
-		return Collections.unmodifiableSet(typeSymbols);
+		return Collections.unmodifiableSet(syms);
 	}
 
 }

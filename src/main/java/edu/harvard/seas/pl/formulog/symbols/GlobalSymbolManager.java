@@ -225,7 +225,8 @@ public final class GlobalSymbolManager {
 	}
 
 	public static Set<TypeSymbol> getTypeSymbols() {
-		return typeSymbols;
+		initialize();
+		return Collections.unmodifiableSet(typeSymbols);
 	}
 
 	private static final Map<Integer, TupleSymbol> tupleSymbolMemo = new ConcurrentHashMap<>();
