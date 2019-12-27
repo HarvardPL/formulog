@@ -27,12 +27,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.antlr.v4.runtime.tree.TerminalNode;
-
 import edu.harvard.seas.pl.formulog.ast.Var;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogBaseVisitor;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.FunDefLHSContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.IndexContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.IntParamContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ParameterContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ParameterListContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TypeParamContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.WildCardParamContext;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.Param;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.util.Pair;
@@ -44,12 +48,34 @@ final class ParsingUtil {
 		throw new AssertionError();
 	}
 
-	public static List<Integer> extractIndices(IndexContext ctx) {
-		List<Integer> l = new ArrayList<>();
-		for (TerminalNode nd : ctx.INT()) {
-			l.add(Integer.parseInt(nd.getText()));
+	public static List<Param> extractParams(ParsingContext pc, ParameterListContext ctx) {
+		List<Param> l = new ArrayList<>();
+		for (ParameterContext param : ctx.parameter()) {
+			l.add(extractParam(pc, param));
 		}
 		return l;
+	}
+
+	private static Param extractParam(ParsingContext pc, ParameterContext ctx) {
+		return ctx.accept(new FormulogBaseVisitor<Param>() {
+
+			@Override
+			public Param visitWildCardParam(WildCardParamContext ctx) {
+				return Param.wildCard();
+			}
+			
+			@Override
+			public Param visitTypeParam(TypeParamContext ctx) {
+				TypeExtractor typeExtractor = new TypeExtractor(pc);
+				return Param.wildCard(typeExtractor.extract(ctx.type()));
+			}
+			
+			@Override
+			public Param visitIntParam(IntParamContext ctx) {
+				return Param.nat(Integer.parseInt(ctx.INT().getText()));
+			}
+
+		});
 	}
 
 	public static Pair<FunctionSymbol, List<Var>> extractFunDeclaration(ParsingContext pc, FunDefLHSContext ctx,

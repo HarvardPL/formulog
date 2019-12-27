@@ -42,8 +42,6 @@ import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
 import edu.harvard.seas.pl.formulog.types.Types.TypeVar;
-import edu.harvard.seas.pl.formulog.util.Pair;
-import edu.harvard.seas.pl.formulog.util.TodoException;
 
 class TypeExtractor {
 
@@ -92,7 +90,7 @@ class TypeExtractor {
 				typeArgs = map(ctx.type(), t -> t.accept(this));
 			}
 			String s = ctx.ID().getText();
-			List<Integer> indices = ParsingUtil.extractIndices(ctx.index());
+			List<Param> params = ParsingUtil.extractParams(pc, ctx.parameterList());
 			switch (s) {
 			case "i32":
 				if (typeArgs.size() != 0) {
@@ -125,8 +123,8 @@ class TypeExtractor {
 				if (!(sym instanceof TypeSymbol)) {
 					throw new RuntimeException("Not a type symbol: " + sym);
 				}
-				for (Integer index : indices) {
-					typeArgs.add(TypeIndex.make(index));
+				for (Param param : params) {
+					typeArgs.add(param.getType());
 				}
 				if (sym.equals(BuiltInTypeSymbol.FP) && typeArgs.size() == 1 && typeArgs.get(0) instanceof TypeIndex) {
 					List<TypeIndex> expanded = ((TypeIndex) typeArgs.get(0)).expandAsFpIndex();

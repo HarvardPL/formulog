@@ -29,6 +29,7 @@ public class Param {
 		}
 		switch (kind) {
 		case ANY_TYPE:
+		case WILD_CARD:
 			return true;
 		case MODEL_FREE_TYPE:
 			return !Types.containsModelType(type);
@@ -67,10 +68,10 @@ public class Param {
 		return !Types.containsTypeVarOrOpaqueType(getType());
 	}
 	
-	public static List<Param> instantiate(Iterable<ParamKind> kinds) {
+	public static List<Param> wildCards(int howMany) {
 		List<Param> params = new ArrayList<>();
-		for (ParamKind kind : kinds) {
-			params.add(new Param(TypeVar.fresh(), kind));
+		for (int i = 0; i < howMany; ++i) {
+			params.add(wildCard());
 		}
 		return params;
 	}
@@ -89,6 +90,14 @@ public class Param {
 	
 	public static Param nat(Type type) {
 		return new Param(type, ParamKind.NAT);
+	}
+	
+	public static Param wildCard() {
+		return new Param(TypeVar.fresh(), ParamKind.WILD_CARD);
+	}
+	
+	public static Param wildCard(Type type) {
+		return new Param(type, ParamKind.WILD_CARD);
 	}
 
 	@Override

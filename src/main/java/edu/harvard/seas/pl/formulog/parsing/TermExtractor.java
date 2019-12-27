@@ -54,7 +54,6 @@ import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.BinopFormulaContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.BinopTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ConsTermContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ConstSymFormulaContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.DoubleTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.FloatTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.FoldTermContext;
@@ -65,6 +64,7 @@ import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.I32TermCont
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.I64TermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.IfExprContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.IndexedFunctorContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.IntParamContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.IteTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.LetExprContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.LetFormulaContext;
@@ -74,19 +74,22 @@ import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.MatchClause
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.MatchExprContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.NotFormulaContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.OutermostCtorContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ParameterContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ParameterListContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ParensTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.QuantifiedFormulaContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.RecordEntryContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.RecordTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.RecordUpdateTermContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.SmtEqTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.SpecialFPTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.StringTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TermSymFormulaContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TupleTermContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TypeParamContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.UnopTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.VarTermContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.WildCardParamContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogVisitor;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
@@ -185,12 +188,15 @@ class TermExtractor {
 		@Override
 		public Term visitIndexedFunctor(IndexedFunctorContext ctx) {
 			String name = ctx.id.getText();
-			List<Integer> indices = ParsingUtil.extractIndices(ctx.index());
-			List<Param> params = new ArrayList<>();
-			for (Integer index : indices) {
-				params.add(Param.nat(index));
-			}
+			List<Param> params = ParsingUtil.extractParams(pc, ctx.parameterList());
 			Symbol sym = nestedFunctions.get(name);
+			Term[] args = extractArray(ctx.termArgs().term());
+			if (name.charAt(0) == '#' && args.length == 0) {
+				if (params.size() != 1) {
+					throw new IllegalArgumentException("Expected a single parameter to solver variable: " + name);
+				}
+				return extractSolverSymbol(StringTerm.make(name.substring(1)), params.get(0).getType());
+			}
 			if (sym == null) {
 				sym = pc.symbolManager().lookupSymbol(name);
 			}
@@ -199,23 +205,6 @@ class TermExtractor {
 			} else if (!params.isEmpty()) {
 				throw new RuntimeException("Symbol " + sym + " is not parametric.");
 			}
-			Term[] args = extractArray(ctx.termArgs().term());
-			// Term[] expandedArgs = new Term[args.length + indices.size()];
-			// System.arraycopy(args, 0, expandedArgs, 0, args.length);
-			// Iterator<Integer> it = indices.iterator();
-			// for (int i = args.length; i < expandedArgs.length; ++i) {
-			// Integer idx = it.next();
-			// Term t;
-			// if (idx == null) {
-			// t = Var.fresh();
-			// } else {
-			// ConstructorSymbol csym =
-			// pc.symbolManager().lookupIndexConstructorSymbol(idx);
-			// t = Constructors.make(csym, Terms.singletonArray(I32.make(idx)));
-			// }
-			// expandedArgs[i] = t;
-			// }
-			// Term t = makeFunctor(sym, expandedArgs);
 			Term t = makeFunctor(sym, args);
 			// For a couple constructors, we want to make sure that their arguments are
 			// forced to be non-formula types. For example, the constructor bv_const needs
@@ -253,21 +242,6 @@ class TermExtractor {
 				throw new RuntimeException(
 						"Cannot create a term with non-constructor, non-function symbol " + sym + ".");
 			}
-		}
-
-		@Override
-		public Term visitSmtEqTerm(SmtEqTermContext ctx) {
-			throw new TodoException();
-			// Type type = typeExtractor.extract(ctx.type());
-			// if (isSolverUnfriendlyType(type)) {
-			// throw new RuntimeException(
-			// "Cannot create an smt_eq with a type that contains a type variable, an smt
-			// type, or a sym type: "
-			// + ctx.getText());
-			// }
-			// ConstructorSymbol sym = pc.symbolManager().lookupSmtEqSymbol(type);
-			// Term[] args = extractArray(ctx.termArgs().term());
-			// return Constructors.make(sym, args);
 		}
 
 		@Override
@@ -648,13 +622,6 @@ class TermExtractor {
 			} else {
 				return makeBoolMatch(args[0], args[1], args[2]);
 			}
-		}
-
-		@Override
-		public Term visitConstSymFormula(ConstSymFormulaContext ctx) {
-			Type type = typeExtractor.extract(ctx.type());
-			Term id = StringTerm.make(ctx.id.getText().substring(1));
-			return extractSolverSymbol(id, type);
 		}
 
 		@Override

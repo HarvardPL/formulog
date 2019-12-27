@@ -32,7 +32,6 @@ import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.sym;
  */
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -119,7 +118,7 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 		}
 		final List<Param> args2 = new ArrayList<>(args);
 		if (args2.isEmpty()) {
-			args2.addAll(Param.instantiate(base.getParamKinds()));
+			args2.addAll(Param.wildCards(base.getNumParams()));
 		}
 		return Util.lookupOrCreate(memo, new Pair<>(base, args2),
 				() -> new ParameterizedConstructorSymbol(base, args2));

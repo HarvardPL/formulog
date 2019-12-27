@@ -29,15 +29,16 @@ public abstract class AbstractParameterizedSymbol<B extends SymbolBase> implemen
 	private final List<Param> args;
 
 	public AbstractParameterizedSymbol(B base, List<Param> args) {
-		this.base = base;
-		this.args = new ArrayList<>(args);
-		check();
-	}
-
-	private void check() {
 		if (base.getNumParams() != args.size()) {
-			throw new IllegalArgumentException("Wrong number of parameters for symbol " + base + ", which has arity "
-					+ base.getArity() + " but received parameters " + args);
+			throw new IllegalArgumentException("Wrong number of parameters for symbol " + base
+					+ ", which has parameter arity " + base.getNumParams() + " but received parameters " + args);
+		}
+		this.base = base;
+		this.args = new ArrayList<>();
+		List<ParamKind> kinds = base.getParamKinds();
+		for (int i = 0; i < kinds.size(); ++i) {
+			Param param = new Param(args.get(i).getType(), kinds.get(i));
+			this.args.add(param);
 		}
 	}
 

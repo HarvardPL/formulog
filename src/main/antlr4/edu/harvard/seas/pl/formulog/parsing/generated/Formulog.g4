@@ -79,13 +79,13 @@ type0
 :
 	'(' type ')' # parenType
 	| TYPEVAR # typeVar
-	| type0 ID index # typeRef
+	| type0 ID parameterList # typeRef
 	| (
 		'(' type
 		(
 			',' type
 		)* ')'
-	)? ID index # typeRef
+	)? ID parameterList # typeRef
 ;
 
 type
@@ -96,14 +96,21 @@ type
 	)* # tupleType
 ;
 
-index
+parameterList
 :
-	'[' INT
+	'[' parameter
 	(
-		',' INT
+		',' parameter
 	)* ']'
 	| // can be empty
 
+;
+
+parameter
+:
+	'?' # wildCardParam
+	| type # typeParam
+	| INT # intParam 
 ;
 
 typeDefLHS
@@ -186,7 +193,8 @@ functor
 	(
 		ID
 		| XID
-	) index termArgs # indexedFunctor
+		| XVAR
+	) parameterList termArgs # indexedFunctor
 ;
 
 termArgs
@@ -205,7 +213,6 @@ termArgs
 term
 :
 	HOLE # holeTerm
-	| 'smt_eq' '[' type ']' termArgs # smtEqTerm
 	| 'fold' '[' ID ']' termArgs # foldTerm
 	| functor # functorTerm
 	| list # listTerm
@@ -266,11 +273,6 @@ term
 	| '{' recordEntries '}' # recordTerm
 	| '{' term 'with' recordEntries '}' # recordUpdateTerm
 	| '`' term '`' # formulaTerm
-	| id =
-	(
-		XID
-		| XVAR
-	) '[' type ']' # constSymFormula
 	| '#' '{' term '}' '[' type ']' # termSymFormula
 	| NOT term # notFormula
 	| < assoc = left > term op = FORMULA_EQ term # binopFormula

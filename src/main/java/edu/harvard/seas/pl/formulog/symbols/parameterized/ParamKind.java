@@ -32,6 +32,8 @@ public enum ParamKind {
 	
 	SMT_VARS,
 	
-	PRE_SMT_TYPE;
+	PRE_SMT_TYPE,
+	
+	WILD_CARD;
 	
 }
