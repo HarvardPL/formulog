@@ -200,21 +200,22 @@ class TermExtractor {
 				throw new RuntimeException("Symbol " + sym + " is not parametric.");
 			}
 			Term[] args = extractArray(ctx.termArgs().term());
-//			Term[] expandedArgs = new Term[args.length + indices.size()];
-//			System.arraycopy(args, 0, expandedArgs, 0, args.length);
-//			Iterator<Integer> it = indices.iterator();
-//			for (int i = args.length; i < expandedArgs.length; ++i) {
-//				Integer idx = it.next();
-//				Term t;
-//				if (idx == null) {
-//					t = Var.fresh();
-//				} else {
-//					ConstructorSymbol csym = pc.symbolManager().lookupIndexConstructorSymbol(idx);
-//					t = Constructors.make(csym, Terms.singletonArray(I32.make(idx)));
-//				}
-//				expandedArgs[i] = t;
-//			}
-//			Term t = makeFunctor(sym, expandedArgs);
+			// Term[] expandedArgs = new Term[args.length + indices.size()];
+			// System.arraycopy(args, 0, expandedArgs, 0, args.length);
+			// Iterator<Integer> it = indices.iterator();
+			// for (int i = args.length; i < expandedArgs.length; ++i) {
+			// Integer idx = it.next();
+			// Term t;
+			// if (idx == null) {
+			// t = Var.fresh();
+			// } else {
+			// ConstructorSymbol csym =
+			// pc.symbolManager().lookupIndexConstructorSymbol(idx);
+			// t = Constructors.make(csym, Terms.singletonArray(I32.make(idx)));
+			// }
+			// expandedArgs[i] = t;
+			// }
+			// Term t = makeFunctor(sym, expandedArgs);
 			Term t = makeFunctor(sym, args);
 			// For a couple constructors, we want to make sure that their arguments are
 			// forced to be non-formula types. For example, the constructor bv_const needs
@@ -582,13 +583,12 @@ class TermExtractor {
 
 		@Override
 		public Term visitLetFormula(LetFormulaContext ctx) {
-			throw new TodoException();
-			// Term[] args = extractArray(ctx.term());
-			// args[1] = makeEnterFormula(args[1]);
-			// args[2] = makeEnterFormula(args[2]);
-			// return
-			// makeExitFormula(Constructors.make(BuiltInConstructorSymbol.FORMULA_LET,
-			// args));
+			ConstructorSymbol sym = (ConstructorSymbol) pc.symbolManager()
+					.getParameterizedSymbol(BuiltInConstructorSymbolBase.SMT_LET);
+			Term[] args = extractArray(ctx.term());
+			args[1] = makeEnterFormula(args[1]);
+			args[2] = makeEnterFormula(args[2]);
+			return makeExitFormula(Constructors.make(sym, args));
 		}
 
 		@Override

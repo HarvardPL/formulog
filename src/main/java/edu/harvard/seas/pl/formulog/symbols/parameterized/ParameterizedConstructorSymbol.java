@@ -278,8 +278,9 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 			return mkType(types.get(0), types.get(1), smt(bool));
 		}
 		case SMT_LET: {
-			Type ty = types.get(0);
-			return mkType(sym(ty), smt(ty), smt(TypeVar.fresh()));
+			Type a = types.get(0);
+			Type b = TypeVar.fresh(); 
+			return mkType(sym(a), smt(a), smt(b), smt(b));
 		}
 		}
 		throw new AssertionError("impossible");
