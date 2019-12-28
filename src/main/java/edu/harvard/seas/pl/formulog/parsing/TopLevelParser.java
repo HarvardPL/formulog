@@ -442,12 +442,12 @@ class TopLevelParser {
 
 				@Override
 				public Set<RelationSymbol> getFactSymbols() {
-					return Collections.unmodifiableSet(initialFacts.keySet());
+					return Collections.unmodifiableSet(new HashSet<>(initialFacts.keySet()));
 				}
 
 				@Override
 				public Set<RelationSymbol> getRuleSymbols() {
-					return Collections.unmodifiableSet(rules.keySet());
+					return Collections.unmodifiableSet(new HashSet<>(rules.keySet()));
 				}
 
 				@Override

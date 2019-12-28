@@ -22,6 +22,7 @@ package edu.harvard.seas.pl.formulog.ast.functions;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -66,7 +67,7 @@ public class FunctionDefManager {
 	}
 
 	public Set<FunctionSymbol> getFunctionSymbols() {
-		return Collections.unmodifiableSet(memo.keySet());
+		return Collections.unmodifiableSet(new HashSet<>(memo.keySet()));
 	}
 
 	public void loadBuiltInFunctions(SmtManager smt) {
