@@ -61,7 +61,6 @@ import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
-import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
 import edu.harvard.seas.pl.formulog.types.Types;
@@ -575,11 +574,6 @@ public class SmtLibShim {
 			subst.clear();
 			List<Type> types = inferTypes1(t);
 			unifyConstraints();
-			for (TypeVar x : Types.getTypeVars(types)) {
-				if (TypeChecker.lookupType(x, subst).isVar()) {
-					subst.put(x, BuiltInTypes.bool);
-				}
-			}
 			types = Util.map(types, ty -> TypeChecker.simplify(ty.applySubst(subst)));
 			return types;
 		}
