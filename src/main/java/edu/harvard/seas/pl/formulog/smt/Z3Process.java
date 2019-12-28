@@ -43,10 +43,12 @@ import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.smt.SmtLibShim.Status;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
-import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
-import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbolType;
+import edu.harvard.seas.pl.formulog.symbols.GlobalSymbolManager;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInConstructorSymbolBase;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.Param;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.ParamKind;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedConstructorSymbol;
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
-import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
 public class Z3Process {
@@ -163,25 +165,9 @@ public class Z3Process {
 	}
 	
 	private SolverVariable makeIndicatorVar(SmtLibTerm assertion) {
-		Term[] args = { Terms.makeDummyTerm(nextVarId++) };
-		ConstructorSymbol sym = new ConstructorSymbol() {
-
-			@Override
-			public FunctorType getCompileTimeType() {
-				return new FunctorType(BuiltInTypes.a, BuiltInTypes.sym(BuiltInTypes.bool));
-			}
-
-			@Override
-			public int getArity() {
-				return 1;
-			}
-
-			@Override
-			public ConstructorSymbolType getConstructorSymbolType() {
-				return ConstructorSymbolType.SOLVER_VARIABLE;
-			}
-			
-		};
+		Term[] args = Terms.singletonArray(Terms.makeDummyTerm(nextVarId++));
+		ParameterizedConstructorSymbol sym = GlobalSymbolManager.getParameterizedSymbol(BuiltInConstructorSymbolBase.SMT_VAR);
+		sym = sym.copyWithNewArgs(Param.wildCard(), new Param(BuiltInTypes.bool, ParamKind.PRE_SMT_TYPE));
 		return (SolverVariable) Constructors.make(sym, args);
 	}
 

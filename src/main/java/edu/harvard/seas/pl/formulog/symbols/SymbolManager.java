@@ -34,8 +34,6 @@ import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.SymbolBase;
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
-import edu.harvard.seas.pl.formulog.types.Types;
-import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
 import edu.harvard.seas.pl.formulog.util.TodoException;
 import edu.harvard.seas.pl.formulog.util.Util;
@@ -128,18 +126,6 @@ public class SymbolManager {
 	public PredicateFunctionSymbol createPredicateFunctionSymbolPlaceholder(RelationSymbol sym) {
 		PredicateFunctionSymbol funcSym = PredicateFunctionSymbol.createPlaceholder(sym, this);
 		return funcSym;
-	}
-
-	public ConstructorSymbol lookupSolverSymbol(Type type) {
-		assert Types.getTypeVars(type).isEmpty();
-		String name = "`symbol[" + type + "]";
-		ConstructorSymbol sym = (ConstructorSymbol) memo.get(name);
-		if (sym == null) {
-			sym = createConstructorSymbol(name, 1, ConstructorSymbolType.SOLVER_VARIABLE,
-					new FunctorType(BuiltInTypes.a, BuiltInTypes.sym(type)));
-			registerSymbol(sym);
-		}
-		return sym;
 	}
 
 	public ConstructorSymbol lookupIndexConstructorSymbol(int index) {

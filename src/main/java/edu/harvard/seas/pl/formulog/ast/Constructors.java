@@ -37,7 +37,6 @@ import org.pcollections.PMap;
 import edu.harvard.seas.pl.formulog.smt.SmtLibShim;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
-import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbolType;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.GlobalSymbolManager.TupleSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RecordSymbol;
@@ -66,7 +65,7 @@ public final class Constructors {
 			return lookupOrCreateBuiltInConstructor((BuiltInConstructorSymbol) sym, args);
 		}
 		if (sym instanceof ParameterizedConstructorSymbol) {
-			return lookupOrCreateIndexedConstructor((ParameterizedConstructorSymbol) sym, args);
+			return lookupOrCreateParameterizedConstructor((ParameterizedConstructorSymbol) sym, args);
 		}
 		if (sym instanceof TupleSymbol) {
 			return memo.lookupOrCreate(sym, args, () -> new Tuple((TupleSymbol) sym, args));
@@ -77,8 +76,6 @@ public final class Constructors {
 		switch (sym.getConstructorSymbolType()) {
 		case SOLVER_UNINTERPRETED_FUNCTION:
 			return memo.lookupOrCreate(sym, args, () -> new SolverUninterpretedFunction(sym, args));
-		case SOLVER_VARIABLE:
-			return memo.lookupOrCreate(sym, args, () -> new SolverVariable(sym, args));
 		case SOLVER_CONSTRUCTOR_TESTER:
 			return memo.lookupOrCreate(sym, args, () -> makeConstructorTester(sym, args));
 		case SOLVER_CONSTRUCTOR_GETTER:
@@ -108,9 +105,9 @@ public final class Constructors {
 	}
 
 	private static final Constructor nil = makeZeroAry(BuiltInConstructorSymbol.NIL);
-	
+
 	public static Constructor nil() {
-		return nil; 
+		return nil;
 	}
 
 	private static Constructor lookupOrCreateBuiltInConstructor(BuiltInConstructorSymbol sym, Term[] args) {
@@ -248,32 +245,14 @@ public final class Constructors {
 	}
 
 	// Used for renaming variables to avoid capture.
-	private static Map<PMap<SolverVariable, SmtLibTerm>, SolverVariable> binderMemo = new ConcurrentHashMap<>();
+	private static final Map<PMap<SolverVariable, SmtLibTerm>, SolverVariable> binderMemo = new ConcurrentHashMap<>();
+
+	private static final AtomicInteger cnt = new AtomicInteger();
 
 	private static SolverVariable renameBinder(SolverVariable x) {
-		ConstructorSymbol newSym = new ConstructorSymbol() {
-
-			@Override
-			public int getArity() {
-				return 0;
-			}
-
-			@Override
-			public FunctorType getCompileTimeType() {
-				// Only want return type of other variable, just in case it is a solver symbol
-				// identified by a string argument.
-				FunctorType funTy = x.getSymbol().getCompileTimeType();
-				return new FunctorType(funTy.getRetType());
-			}
-
-			@Override
-			public ConstructorSymbolType getConstructorSymbolType() {
-				return ConstructorSymbolType.SOLVER_VARIABLE;
-			}
-
-		};
-		SmtLibTerm y = (SmtLibTerm) make(newSym, Terms.emptyArray());
-		return (SolverVariable) y;
+		ParameterizedConstructorSymbol sym = x.getSymbol();
+		sym = sym.copyWithNewArgs(Param.wildCard(), sym.getArgs().get(1));
+		return (SolverVariable) make(sym, Terms.singletonArray(Terms.makeDummyTerm(cnt.getAndIncrement())));
 	}
 
 	private static class SolverLet extends AbstractConstructor<ConstructorSymbol> {
@@ -282,11 +261,6 @@ public final class Constructors {
 			return memo.lookupOrCreate(sym, args, () -> {
 				return new SolverLet(sym, args);
 			});
-		}
-
-		@SuppressWarnings("unused")
-		private static boolean meetsInliningThreshold(Term t) {
-			return t instanceof Primitive<?> || t instanceof SolverVariable;
 		}
 
 		private SolverLet(ConstructorSymbol sym, Term[] args) {
@@ -512,7 +486,7 @@ public final class Constructors {
 		});
 	}
 
-	private static Constructor lookupOrCreateIndexedConstructor(ParameterizedConstructorSymbol sym, Term[] args) {
+	private static Constructor lookupOrCreateParameterizedConstructor(ParameterizedConstructorSymbol sym, Term[] args) {
 		Function<String, Constructor> makeSolverOp = op -> memo.lookupOrCreate(sym, args,
 				() -> new SolverOperation(sym, args, op));
 		BuiltInConstructorSymbolBase preSym = sym.getBase();
@@ -573,8 +547,8 @@ public final class Constructors {
 		case SMT_PAT:
 		case SMT_WRAP_VAR:
 			return memo.lookupOrCreate(sym, args, () -> new VanillaConstructor(sym, args));
-		default:
-			break;
+		case SMT_VAR:
+			return memo.lookupOrCreate(sym, args, () -> new SolverVariable(sym, args));
 		}
 		throw new AssertionError("impossible");
 	}
@@ -894,14 +868,10 @@ public final class Constructors {
 
 	}
 
-	public static class SolverVariable extends AbstractConstructor<ConstructorSymbol> {
+	public static class SolverVariable extends AbstractConstructor<ParameterizedConstructorSymbol> {
 
-		private static final AtomicInteger cnt = new AtomicInteger();
-		private static final Map<SolverVariable, Integer> varIds = new ConcurrentHashMap<>();
-
-		public SolverVariable(ConstructorSymbol sym, Term[] args) {
+		public SolverVariable(ParameterizedConstructorSymbol sym, Term[] args) {
 			super(sym, args);
-			varIds.putIfAbsent(this, cnt.getAndIncrement());
 		}
 
 		@Override
@@ -914,7 +884,6 @@ public final class Constructors {
 			Type ty = ((FunctorType) sym.getCompileTimeType()).getRetType();
 			ty = ((AlgebraicDataType) ty).getTypeArgs().get(0);
 			return "#{" + args[0] + "}[" + ty + "]";
-			// return "#x" + varIds.get(this) + "[" + ty + "]";
 		}
 
 		@Override

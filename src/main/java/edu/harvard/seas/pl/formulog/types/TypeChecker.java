@@ -200,7 +200,7 @@ public class TypeChecker {
 		try {
 			return Util.fillMapWithFutures(futures, new HashMap<>());
 		} catch (InterruptedException | ExecutionException e) {
-			throw new TypeException(e);
+			throw new TypeException(e.getMessage());
 		}
 	}
 
@@ -291,24 +291,34 @@ public class TypeChecker {
 				throw new TypeException("Type error in fact: " + UserPredicate.make(sym, args, false) + "\n" + error);
 			}
 			Substitution m = makeIndexSubstitution(subst);
-			return Terms.mapExn(args, t -> t.accept(termRewriter, m));
+			try {
+				return Terms.mapExn(args, t -> t.accept(termRewriter, m));
+			} catch (TypeException e) {
+				throw new TypeException(
+						"Problem with rewriting fact: " + UserPredicate.make(sym, args, false) + "\n" + e.getMessage());
+			}
+
 		}
 
 		private ComplexLiteral rewriteLiteral(ComplexLiteral l, Substitution m) throws TypeException {
-			Term[] args = Terms.mapExn(l.getArgs(), t -> t.accept(termRewriter, m));
-			return l.accept(new ComplexLiteralExnVisitor<Void, ComplexLiteral, TypeException>() {
+			try {
+				Term[] args = Terms.mapExn(l.getArgs(), t -> t.accept(termRewriter, m));
+				return l.accept(new ComplexLiteralExnVisitor<Void, ComplexLiteral, TypeException>() {
 
-				@Override
-				public ComplexLiteral visit(UnificationPredicate pred, Void input) throws TypeException {
-					return UnificationPredicate.make(args[0], args[1], pred.isNegated());
-				}
+					@Override
+					public ComplexLiteral visit(UnificationPredicate pred, Void input) throws TypeException {
+						return UnificationPredicate.make(args[0], args[1], pred.isNegated());
+					}
 
-				@Override
-				public ComplexLiteral visit(UserPredicate pred, Void input) throws TypeException {
-					return UserPredicate.make(pred.getSymbol(), args, pred.isNegated());
-				}
+					@Override
+					public ComplexLiteral visit(UserPredicate pred, Void input) throws TypeException {
+						return UserPredicate.make(pred.getSymbol(), args, pred.isNegated());
+					}
 
-			}, null);
+				}, null);
+			} catch (TypeException e) {
+				throw new TypeException("Problem with rewriting literal: " + l + "\n" + e.getMessage());
+			}
 		}
 
 		public UserPredicate typeCheckQuery(UserPredicate q) throws TypeException {
@@ -318,7 +328,11 @@ public class TypeChecker {
 				throw new TypeException("Type error in query: " + q + "\n" + error);
 			}
 			Substitution m = makeIndexSubstitution(subst);
-			return (UserPredicate) rewriteLiteral(q, m);
+			try {
+				return (UserPredicate) rewriteLiteral(q, m);
+			} catch (TypeException e) {
+				throw new TypeException("Problem with rewriting query: " + q + "\n" + e.getMessage());
+			}
 		}
 
 		public BasicRule typeCheckRule(Rule<UserPredicate, ComplexLiteral> r) throws TypeException {
@@ -333,11 +347,15 @@ public class TypeChecker {
 			}
 			Substitution m = makeIndexSubstitution(subst);
 			UserPredicate newHead = (UserPredicate) rewriteLiteral(r.getHead(), m);
-			List<ComplexLiteral> newBody = new ArrayList<>();
-			for (ComplexLiteral a : r) {
-				newBody.add(rewriteLiteral(a, m));
+			try {
+				List<ComplexLiteral> newBody = new ArrayList<>();
+				for (ComplexLiteral a : r) {
+					newBody.add(rewriteLiteral(a, m));
+				}
+				return BasicRule.make(newHead, newBody);
+			} catch (TypeException e) {
+				throw new TypeException("Problem with rewriting rule:\n" + r + "\n" + e.getMessage());
 			}
-			return BasicRule.make(newHead, newBody);
 		}
 
 		private Substitution makeIndexSubstitution(Map<Var, Type> subst) {
@@ -363,8 +381,13 @@ public class TypeChecker {
 						+ functionDef.getBody() + "\n" + error);
 			}
 			Substitution m = makeIndexSubstitution(subst);
-			return UserFunctionDef.get(functionDef.getSymbol(), functionDef.getParams(),
-					functionDef.getBody().accept(termRewriter, m));
+			try {
+				return UserFunctionDef.get(functionDef.getSymbol(), functionDef.getParams(),
+						functionDef.getBody().accept(termRewriter, m));
+			} catch (TypeException e) {
+				throw new TypeException("Problem with rewriting the function: " + functionDef.getSymbol() + "\n"
+						+ functionDef.getBody() + "\n" + e.getMessage());
+			}
 		}
 
 		private void processAtoms(Iterable<ComplexLiteral> atoms, Map<Var, Type> subst) {
@@ -700,7 +723,11 @@ public class TypeChecker {
 			public Term visit(Constructor c, Substitution subst) throws TypeException {
 				ConstructorSymbol sym = c.getSymbol();
 				if (sym instanceof ParameterizedConstructorSymbol) {
-					sym = (ConstructorSymbol) handleParameterizedSymbol((ParameterizedConstructorSymbol) sym);
+					try {
+						sym = (ConstructorSymbol) handleParameterizedSymbol((ParameterizedConstructorSymbol) sym);
+					} catch (TypeException e) {
+						throw new TypeException("Problem with rewriting term " + c + ":\n" + e.getMessage());
+					}
 				}
 				Term[] args = c.getArgs();
 				Term[] newArgs = new Term[args.length];

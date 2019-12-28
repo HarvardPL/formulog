@@ -188,8 +188,6 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 	
 	IS_FREE("is_free", 2),
 	
-	ID("", 1),
-
 	// Primitive conversion
 
 	i32ToI64("i32_to_i64", 1),
@@ -311,8 +309,6 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 		case I64_SCMP:
 		case I64_UCMP:
 			return new FunctorType(i64, i64, cmp);
-		case ID:
-			return new FunctorType(a, a);
 		case IS_FREE:
 			return new FunctorType(sym(a), smt(b), bool);
 		case IS_SAT:

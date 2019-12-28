@@ -97,11 +97,11 @@ import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInConstructorSymbolBase;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.Param;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.ParamKind;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedSymbol;
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
-import edu.harvard.seas.pl.formulog.types.Types;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.util.Pair;
@@ -502,10 +502,6 @@ class TermExtractor {
 			return Constructors.make(BuiltInConstructorSymbol.ENTER_FORMULA, Terms.singletonArray(t));
 		}
 
-		private Term makeIdFunction(Term t) {
-			return pc.functionCallFactory().make(BuiltInFunctionSymbol.ID, Terms.singletonArray(t));
-		}
-
 		@Override
 		public Term visitFormulaTerm(FormulaTermContext ctx) {
 			assertNotInFormula("Cannot nest a formula within a formula: " + ctx.getText());
@@ -626,11 +622,9 @@ class TermExtractor {
 		}
 
 		private Term extractSolverSymbol(Term id, Type type) {
-			if (!Types.getTypeVars(type).isEmpty()) {
-				throw new RuntimeException("Cannot create solver variable with a parametric type: " + id);
-			}
-			ConstructorSymbol sym = pc.symbolManager().lookupSolverSymbol(type);
-			return makeIdFunction(makeExitFormula(Constructors.make(sym, Terms.singletonArray(id))));
+			ParameterizedConstructorSymbol sym = GlobalSymbolManager.getParameterizedSymbol(BuiltInConstructorSymbolBase.SMT_VAR);
+			sym = sym.copyWithNewArgs(Param.wildCard(), new Param(type, ParamKind.PRE_SMT_TYPE));
+			return makeExitFormula(Constructors.make(sym, Terms.singletonArray(id)));
 		}
 
 		public Term visitOutermostCtor(OutermostCtorContext ctx) {

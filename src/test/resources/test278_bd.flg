@@ -1,4 +1,0 @@
-input foo(bool sym)
-
-output not_ok
-not_ok :- foo(#{X}[bool]), X + 1 = 42.

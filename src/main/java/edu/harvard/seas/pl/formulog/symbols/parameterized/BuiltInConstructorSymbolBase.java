@@ -93,6 +93,10 @@ public enum BuiltInConstructorSymbolBase implements FunctorBase {
 	
 	ARRAY_DEFAULT("array_default", 1, ParamKind.PRE_SMT_TYPE),
 	
+	// Solver variables
+	
+	SMT_VAR("smt_var", 1, ParamKind.ANY_TYPE, ParamKind.PRE_SMT_TYPE),
+	
 	;
 	
 	private final String name;

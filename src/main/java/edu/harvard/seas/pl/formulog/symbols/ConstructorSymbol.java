@@ -30,8 +30,6 @@ public interface ConstructorSymbol extends TypedSymbol {
 		case SOLVER_CONSTRUCTOR_TESTER:
 		case SOLVER_EXPR:
 		case SOLVER_UNINTERPRETED_FUNCTION:
-		case SOLVER_VARIABLE:
-			return true;
 		case INDEX_CONSTRUCTOR:
 		case VANILLA_CONSTRUCTOR:
 			return false;

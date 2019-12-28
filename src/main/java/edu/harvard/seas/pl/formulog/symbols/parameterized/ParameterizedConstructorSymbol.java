@@ -34,6 +34,7 @@ import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.sym;
  */
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -79,6 +80,7 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 		case SMT_LET:
 		case SMT_PAT:
 		case SMT_WRAP_VAR:
+		case SMT_VAR:
 			break;
 		case FP_BIG_CONST:
 		case FP_CONST:
@@ -140,6 +142,11 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 	@Override
 	public ParameterizedConstructorSymbol copyWithNewArgs(List<Param> args) {
 		return mk(getBase(), args);
+	}
+	
+	@Override
+	public ParameterizedConstructorSymbol copyWithNewArgs(Param... args) {
+		return copyWithNewArgs(Arrays.asList(args));
 	}
 
 	public ConstructorSymbolType getConstructorSymbolType() {
@@ -246,8 +253,9 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 		case SMT_WRAP_VAR: {
 			return mkType(sym(types.get(0)), smtWrappedVar);
 		}
-		default:
-			break;
+		case SMT_VAR: {
+			return mkType(types.get(0), sym(types.get(1)));
+		}
 		}
 		throw new AssertionError("impossible");
 	}

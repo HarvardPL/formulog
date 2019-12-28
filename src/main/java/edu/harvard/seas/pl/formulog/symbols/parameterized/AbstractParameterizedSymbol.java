@@ -52,7 +52,7 @@ public abstract class AbstractParameterizedSymbol<B extends SymbolBase> implemen
 		String s = base.toString();
 		s += "<";
 		for (int i = 0; i < args.size(); ++i) {
-			s += args.get(0);
+			s += args.get(i);
 			if (i < args.size() - 1) {
 				s += ", ";
 			}

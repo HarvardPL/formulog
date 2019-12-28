@@ -1,6 +1,5 @@
 package edu.harvard.seas.pl.formulog.symbols.parameterized;
 
-import java.util.Arrays;
 import java.util.List;
 
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
@@ -33,8 +32,6 @@ public interface ParameterizedSymbol extends Symbol {
 	
 	ParameterizedSymbol copyWithNewArgs(List<Param> args);
 	
-	default ParameterizedSymbol copyWithNewArgs(Param... args) {
-		return copyWithNewArgs(Arrays.asList(args));
-	}
+	ParameterizedSymbol copyWithNewArgs(Param... args);
 	
 }
