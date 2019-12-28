@@ -222,12 +222,8 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 		case SMT_OR:
 		case SMT_IMP:
 			return makeType(smt(bool), smt(bool), smt(bool));
-//		case SMT_EQ:
-//			return makeType(smt(a), smt(a), smt(bool));
 		case SMT_ITE:
 			return makeType(smt(bool), smt(a), smt(a), smt(a));
-//		case SMT_LET:
-//			return makeType(sym(a), smt(a), smt(b), smt(b));
 		case SMT_NOT:
 			return makeType(smt(bool), smt(bool));
 		case SMT_EXISTS:
@@ -250,37 +246,16 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 			return makeType(smt(bv(a)), smt(bv(a)), smt(bv(a)));
 		case BV_NEG:
 			return makeType(smt(bv(a)), smt(bv(a)));
-//		case BV_SGE:
-//		case BV_SGT:
-//		case BV_SLE:
-//		case BV_SLT:
-//		case BV_UGE:
-//		case BV_UGT:
-//		case BV_ULE:
-//		case BV_ULT:
-//			return makeType(smt(bv(a)), smt(bv(a)), smt(bool));
 		case FP_ADD:
 		case FP_DIV:
 		case FP_REM:
 		case FP_SUB:
 		case FP_MUL:
 			return makeType(smt(fp(a, b)), smt(fp(a, b)), smt(fp(a, b)));
-//		case FP_EQ:
-//		case FP_GE:
-//		case FP_GT:
-//		case FP_LE:
-//		case FP_LT:
-//			return makeType(smt(fp(a, b)), smt(fp(a, b)), smt(bool));
-//		case FP_IS_NAN:
-//			return makeType(smt(fp(a, b)), smt(bool));
 		case FP_NEG:
 			return makeType(smt(fp(a, b)), smt(fp(a, b)));
-//		case ARRAY_SELECT:
-//			return makeType(smt(array(a, b)), smt(a), smt(b));
 		case ARRAY_STORE:
 			return makeType(smt(array(a, b)), smt(a), smt(b), smt(array(a, b)));
-//		case ARRAY_DEFAULT:
-//			return makeType(smt(array(a, b)), smt(b));
 		case ARRAY_CONST:
 			return makeType(smt(b), smt(array(a, b)));
 		case STR_AT:
