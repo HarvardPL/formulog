@@ -26,7 +26,7 @@ public enum ParamKind {
 	
 	ANY_TYPE,
 	
-	MODEL_FREE_TYPE,
+	SMT_REPRESENTABLE_TYPE,
 	
 	SMT_VAR,
 	

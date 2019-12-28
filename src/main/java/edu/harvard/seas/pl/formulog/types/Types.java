@@ -40,7 +40,6 @@ import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.GlobalSymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
-import edu.harvard.seas.pl.formulog.symbols.parameterized.Param;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
 
@@ -173,7 +172,7 @@ public final class Types {
 				throw new IllegalArgumentException("Cannot create a type with alias symbol " + sym);
 			}
 		}
-		
+
 		public static AlgebraicDataType makeWithFreshArgs(TypeSymbol sym) {
 			List<Type> typeArgs = new ArrayList<>();
 			for (int i = 0; i < sym.getArity(); ++i) {
@@ -576,25 +575,45 @@ public final class Types {
 		}, null);
 	}
 
-	public static boolean containsModelType(Type t) {
+	public static boolean isSmtRepresentable(Type t) {
 		return t.accept(new TypeVisitor<Void, Boolean>() {
 
 			@Override
 			public Boolean visit(TypeVar typeVar, Void in) {
-				return false;
+				return true;
 			}
 
 			@Override
 			public Boolean visit(AlgebraicDataType algebraicType, Void in) {
-				if (algebraicType.getSymbol().equals(BuiltInTypeSymbol.MODEL_TYPE)) {
-					return true;
-				}
-				for (Type typeArg : algebraicType.getTypeArgs()) {
-					if (typeArg.accept(this, in)) {
-						return true;
+				TypeSymbol sym = algebraicType.getSymbol();
+				if (sym instanceof BuiltInTypeSymbol) {
+					switch ((BuiltInTypeSymbol) sym) {
+					case ARRAY_TYPE:
+					case BOOL_TYPE:
+					case BV:
+					case CMP_TYPE:
+					case FP:
+					case INT_TYPE:
+					case LIST_TYPE:
+					case OPTION_TYPE:
+					case SMT_TYPE:
+					case STRING_TYPE:
+					case SYM_TYPE:
+						break;
+					case MODEL_TYPE:
+					case SMT_PATTERN_TYPE:
+					case SMT_WRAPPED_VAR_TYPE:
+						return false;
+					default:
+						throw new AssertionError("impossible");
 					}
 				}
-				return false;
+				for (Type typeArg : algebraicType.getTypeArgs()) {
+					if (!typeArg.accept(this, in)) {
+						return false;
+					}
+				}
+				return true;
 			}
 
 			@Override
@@ -604,7 +623,7 @@ public final class Types {
 
 			@Override
 			public Boolean visit(TypeIndex typeIndex, Void in) {
-				return false;
+				return true;
 			}
 
 		}, null);

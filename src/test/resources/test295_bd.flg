@@ -1,0 +1,7 @@
+fun foo(X: 'a) : 'a smt = `X`
+
+output not_ok
+
+not_ok :-
+  some(M) = get_model(`true`, none),
+  foo(M) = _. 

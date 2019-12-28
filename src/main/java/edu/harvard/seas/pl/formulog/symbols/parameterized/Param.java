@@ -31,8 +31,8 @@ public class Param {
 		case ANY_TYPE:
 		case WILD_CARD:
 			return true;
-		case MODEL_FREE_TYPE:
-			return !Types.containsModelType(type);
+		case SMT_REPRESENTABLE_TYPE:
+			return Types.isSmtRepresentable(type);
 		case NAT:
 			return type instanceof TypeIndex;
 		case PRE_SMT_TYPE:

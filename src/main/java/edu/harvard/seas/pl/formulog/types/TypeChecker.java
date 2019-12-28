@@ -84,8 +84,6 @@ import edu.harvard.seas.pl.formulog.types.Types.TypeVar;
 import edu.harvard.seas.pl.formulog.types.Types.TypeVisitor;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
-import edu.harvard.seas.pl.formulog.util.Pair;
-import edu.harvard.seas.pl.formulog.util.TodoException;
 import edu.harvard.seas.pl.formulog.util.Triple;
 import edu.harvard.seas.pl.formulog.util.Util;
 
@@ -553,7 +551,7 @@ public class TypeChecker {
 			}
 			addConstraint(t, cnstrType.getRetType(), ttype, wasInFormula);
 		}
-		
+
 		private void genConstraintsForFunctionCall(FunctionCall function, Type ttype, Map<Var, Type> subst,
 				boolean inFormula) {
 			FunctorType funType = (FunctorType) function.getSymbol().getCompileTimeType().freshen();
@@ -589,39 +587,14 @@ public class TypeChecker {
 		}
 
 		private boolean checkTypeInFormula(Type ty) {
-			return lookupType(ty).accept(new TypeVisitor<Void, Boolean>() {
-
-				@Override
-				public Boolean visit(TypeVar typeVar, Void in) {
-					// XXX This should probably return false to be conservative.
-					return true;
-				}
-
-				@Override
-				public Boolean visit(AlgebraicDataType algebraicType, Void in) {
-					if (algebraicType.getSymbol().equals(BuiltInTypeSymbol.MODEL_TYPE)) {
-						error = "Models are not allowed in formulae.";
-						return false;
-					}
-					for (Type arg : algebraicType.getTypeArgs()) {
-						if (!arg.accept(this, in)) {
-							return false;
-						}
-					}
-					return true;
-				}
-
-				@Override
-				public Boolean visit(OpaqueType opaqueType, Void in) {
-					return true;
-				}
-
-				@Override
-				public Boolean visit(TypeIndex typeIndex, Void in) {
-					return true;
-				}
-
-			}, null);
+			ty = lookupType(ty);
+			if (!Types.isSmtRepresentable(ty)) {
+				error = "Terms of the following type are not allowed in formulas: " + ty
+						+ "\nThe following types can lead to this error: model, smt_pattern, smt_wrapped_var,"
+						+ " and type variables that are not proven to contain a safe type";
+				return false;
+			}
+			return true;
 		}
 
 		private boolean checkConstraints(boolean inFormulaContext) {
@@ -752,13 +725,14 @@ public class TypeChecker {
 			}
 
 		};
-		
+
 		private ParameterizedSymbol handleParameterizedSymbol(ParameterizedSymbol sym) throws TypeException {
 			List<Param> params = sym.getArgs();
 			params = Param.applySubst(params, typeVars);
 			for (Param param : params) {
 				if (Types.containsTypeVarOrOpaqueType(param.getType())) {
-					throw new TypeException("Cannot instantiate parameterized symbol " + sym + " with a parameter that is not ground: " + param);
+					throw new TypeException("Cannot instantiate parameterized symbol " + sym
+							+ " with a parameter that is not ground: " + param);
 				}
 			}
 			return sym.copyWithNewArgs(params);

@@ -79,9 +79,9 @@ public enum BuiltInConstructorSymbolBase implements FunctorBase {
 	
 	// Logical connectives
 
-	SMT_PAT("smt_pat", 1, ParamKind.MODEL_FREE_TYPE),
+	SMT_PAT("smt_pat", 1, ParamKind.SMT_REPRESENTABLE_TYPE),
 	
-	SMT_WRAP_VAR("smt_wrap_var", 1, ParamKind.MODEL_FREE_TYPE),
+	SMT_WRAP_VAR("smt_wrap_var", 1, ParamKind.SMT_REPRESENTABLE_TYPE),
 	
 	SMT_EQ("smt_eq", 2, ParamKind.PRE_SMT_TYPE),
 	
