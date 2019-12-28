@@ -150,11 +150,6 @@ public class ParsingTest {
 	}
 	
 	@Test
-	public void test270() {
-		test("test270_bd.flg");
-	}
-	
-	@Test
 	public void test271() {
 		test("test271_bd.flg");
 	}
