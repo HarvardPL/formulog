@@ -164,12 +164,49 @@ public final class Types {
 		private AlgebraicDataType(TypeSymbol sym, List<Type> typeArgs) {
 			this.sym = sym;
 			this.typeArgs = new ArrayList<>(typeArgs);
+			check();
+		}
+		
+		private void check() {
 			if (sym.getArity() != typeArgs.size()) {
 				throw new IllegalArgumentException("Arity of symbol " + sym + " (" + sym.getArity()
 						+ ") does not match number of provided type parameters: " + typeArgs);
 			}
 			if (sym.isAlias()) {
 				throw new IllegalArgumentException("Cannot create a type with alias symbol " + sym);
+			}
+			if (sym instanceof BuiltInTypeSymbol) {
+				switch ((BuiltInTypeSymbol) sym) {
+				case ARRAY_TYPE:
+				case BOOL_TYPE:
+				case CMP_TYPE:
+				case INT_TYPE:
+				case LIST_TYPE:
+				case MODEL_TYPE:
+				case OPTION_TYPE:
+				case SMT_PATTERN_TYPE:
+				case SMT_WRAPPED_VAR_TYPE:
+				case STRING_TYPE:
+					break;
+				case BV:
+				case FP:
+					for (Type arg : typeArgs) {
+						if (!arg.isVar() && !(arg instanceof TypeIndex)) {
+							throw new IllegalArgumentException("Cannot instantiate built-in type " + sym + " with type argument " + arg);
+						}
+					}
+					break;
+				case SMT_TYPE:
+				case SYM_TYPE:
+					for (Type arg : typeArgs) {
+						if (!mayBePreSmtType(arg)) {
+							throw new IllegalArgumentException("Cannot instantiate built-in type " + sym + " with type argument " + arg);
+						}
+					}
+					break;
+				default:
+					throw new AssertionError("impossible");
+				}
 			}
 		}
 
@@ -640,9 +677,27 @@ public final class Types {
 			@Override
 			public Boolean visit(AlgebraicDataType algebraicType, Void in) {
 				TypeSymbol sym = algebraicType.getSymbol();
-				if (sym.equals(BuiltInTypeSymbol.MODEL_TYPE) || sym.equals(BuiltInTypeSymbol.SMT_TYPE)
-						|| sym.equals(BuiltInTypeSymbol.SYM_TYPE)) {
-					return false;
+				if (sym instanceof BuiltInTypeSymbol) {
+					switch ((BuiltInTypeSymbol) sym) {
+					case ARRAY_TYPE:
+					case BOOL_TYPE:
+					case BV:
+					case CMP_TYPE:
+					case FP:
+					case INT_TYPE:
+					case LIST_TYPE:
+					case OPTION_TYPE:
+					case STRING_TYPE:
+						break;
+					case MODEL_TYPE:
+					case SMT_PATTERN_TYPE:
+					case SMT_TYPE:
+					case SMT_WRAPPED_VAR_TYPE:
+					case SYM_TYPE:
+						return false;
+					default:
+						throw new AssertionError("impossible");
+					}
 				}
 				for (Type typeArg : algebraicType.getTypeArgs()) {
 					if (!typeArg.accept(this, in)) {

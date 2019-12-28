@@ -90,7 +90,6 @@ import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.VarTermCont
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogVisitor;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
-import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.GlobalSymbolManager;
@@ -102,12 +101,9 @@ import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedConstruct
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedSymbol;
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
+import edu.harvard.seas.pl.formulog.types.Types;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
-import edu.harvard.seas.pl.formulog.types.Types.OpaqueType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
-import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
-import edu.harvard.seas.pl.formulog.types.Types.TypeVar;
-import edu.harvard.seas.pl.formulog.types.Types.TypeVisitor;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.StackMap;
 
@@ -630,48 +626,11 @@ class TermExtractor {
 		}
 
 		private Term extractSolverSymbol(Term id, Type type) {
-			if (isSolverUnfriendlyType(type)) {
-				throw new RuntimeException(
-						"Cannot create solver variable with a type that contains a type variable, an smt type, or a sym type: "
-								+ type);
+			if (!Types.getTypeVars(type).isEmpty()) {
+				throw new RuntimeException("Cannot create solver variable with a parametric type: " + id);
 			}
 			ConstructorSymbol sym = pc.symbolManager().lookupSolverSymbol(type);
 			return makeIdFunction(makeExitFormula(Constructors.make(sym, Terms.singletonArray(id))));
-		}
-
-		private boolean isSolverUnfriendlyType(Type type) {
-			return type.accept(new TypeVisitor<Void, Boolean>() {
-
-				@Override
-				public Boolean visit(TypeVar typeVar, Void in) {
-					return true;
-				}
-
-				@Override
-				public Boolean visit(AlgebraicDataType algebraicType, Void in) {
-					Symbol sym = algebraicType.getSymbol();
-					if (sym.equals(BuiltInTypeSymbol.SMT_TYPE) || sym.equals(BuiltInTypeSymbol.SYM_TYPE)) {
-						return true;
-					}
-					for (Type ty : algebraicType.getTypeArgs()) {
-						if (ty.accept(this, in)) {
-							return true;
-						}
-					}
-					return false;
-				}
-
-				@Override
-				public Boolean visit(OpaqueType opaqueType, Void in) {
-					throw new AssertionError();
-				}
-
-				@Override
-				public Boolean visit(TypeIndex typeIndex, Void in) {
-					return false;
-				}
-
-			}, null);
 		}
 
 		public Term visitOutermostCtor(OutermostCtorContext ctx) {
