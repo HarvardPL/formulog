@@ -36,7 +36,9 @@ import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.INT_TYPE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.LIST_TYPE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.MODEL_TYPE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.OPTION_TYPE;
+import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.SMT_PATTERN_TYPE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.SMT_TYPE;
+import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.SMT_WRAPPED_VAR_TYPE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.STRING_TYPE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.SYM_TYPE;
 
@@ -72,6 +74,8 @@ public final class BuiltInTypes {
 	public static final Type cmp = AlgebraicDataType.make(CMP_TYPE);
 	public static final Type model = AlgebraicDataType.make(MODEL_TYPE);
 	public static final Type int_ = AlgebraicDataType.make(INT_TYPE);
+	public static final Type smtPattern = AlgebraicDataType.make(SMT_PATTERN_TYPE);
+	public static final Type smtWrappedVar = AlgebraicDataType.make(SMT_WRAPPED_VAR_TYPE);
 
 	static {
 		// Only need to set constructors for types that should be interpreted as

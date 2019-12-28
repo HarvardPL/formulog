@@ -131,7 +131,7 @@ public class SmtLibShim {
 			end = System.currentTimeMillis();
 			Configuration.recordSmtSerialTime(end - start);
 		}
-		assert !typeAnnotations.hasNext();
+		assert !typeAnnotations.hasNext() : typeAnnotations.next();
 		out.flush();
 	}
 
@@ -429,9 +429,13 @@ public class SmtLibShim {
 						return "(_ FloatingPoint " + idx1 + " " + idx2 + ")";
 					case CMP_TYPE:
 					case LIST_TYPE:
-					case MODEL_TYPE:
 					case OPTION_TYPE:
 						break;
+					case MODEL_TYPE:
+					case SMT_PATTERN_TYPE:
+					case SMT_WRAPPED_VAR_TYPE:
+					default:
+						return null;
 					}
 				}
 				if (sym.getArity() == 0) {
@@ -545,11 +549,15 @@ public class SmtLibShim {
 				case MODEL_TYPE:
 				case BV:
 				case FP:
+				case SMT_PATTERN_TYPE:
+				case SMT_WRAPPED_VAR_TYPE:
 					return false;
 				case CMP_TYPE:
 				case LIST_TYPE:
 				case OPTION_TYPE:
 					return true;
+				default:
+					throw new AssertionError("impossible");
 				}
 			}
 			return true;
@@ -572,7 +580,8 @@ public class SmtLibShim {
 					subst.put(x, BuiltInTypes.bool);
 				}
 			}
-			return Util.map(types, ty -> TypeChecker.simplify(ty.applySubst(subst)));
+			types = Util.map(types, ty -> TypeChecker.simplify(ty.applySubst(subst)));
+			return types;
 		}
 
 		private List<Type> inferTypes1(Term t) {

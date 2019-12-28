@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.ast;
 
+import java.util.ArrayList;
+
 /*-
  * #%L
  * FormuLog
@@ -21,12 +23,14 @@ package edu.harvard.seas.pl.formulog.ast;
  */
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
+import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.ExceptionalFunction;
 
@@ -208,6 +212,18 @@ public final class Terms {
 		}, null);
 		return vars;
 	}
+	
+	public static List<Term> listTermToList(Term listTerm) {
+		List<Term> l = new ArrayList<>();
+		Constructor c = (Constructor) listTerm;
+		while (c.getSymbol().equals(BuiltInConstructorSymbol.CONS)) {
+			Term[] args = c.getArgs();
+			l.add(args[0]);
+			c = (Constructor) args[1];
+		}
+		assert c.getSymbol().equals(BuiltInConstructorSymbol.NIL);
+		return l;
+	}
 
 	public static interface TermVisitor<I, O> {
 
@@ -288,6 +304,11 @@ public final class Terms {
 		@Override
 		public void updateVarCounts(Map<Var, Integer> counts) {
 			throw new UnsupportedOperationException();
+		}
+		
+		@Override
+		public String toString() {
+			return "DummyTerm(" + id + ")";
 		}
 		
 	}

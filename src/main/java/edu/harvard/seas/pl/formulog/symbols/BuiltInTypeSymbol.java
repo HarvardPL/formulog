@@ -46,6 +46,10 @@ public enum BuiltInTypeSymbol implements TypeSymbol {
 	
 	FP("fp", 2),
 	
+	SMT_PATTERN_TYPE("smt_pattern", 0),
+	
+	SMT_WRAPPED_VAR_TYPE("smt_wrapped_var", 0),
+	
 	;
 
 	private final String name;

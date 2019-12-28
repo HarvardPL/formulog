@@ -324,7 +324,7 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 		case PRINT:
 			return new FunctorType(a, bool);
 		case QUERY_MODEL:
-			return new FunctorType(model, sym(a), option(a));
+			return new FunctorType(sym(a), model, option(a));
 		case STRCAT:
 			return new FunctorType(string, string, string);
 		case STRCMP:

@@ -78,14 +78,10 @@ public enum BuiltInConstructorSymbolBase implements FunctorBase {
 	BV_TO_FP("bv_to_fp", 1, ParamKind.NAT, ParamKind.NAT, ParamKind.NAT),
 	
 	// Logical connectives
+
+	SMT_PAT("smt_pat", 1, ParamKind.MODEL_FREE_TYPE),
 	
-	SMT_FORALL("smt_forall", 2, ParamKind.SMT_VARS),
-	
-	SMT_EXISTS("smt_exists", 2, ParamKind.SMT_VARS),
-	
-	SMT_FORALL_PAT("smt_forall_pat", 3, ParamKind.SMT_VARS, ParamKind.MODEL_FREE_TYPE),
-	
-	SMT_EXISTS_PAT("smt_exists_pat", 3, ParamKind.SMT_VARS, ParamKind.MODEL_FREE_TYPE),
+	SMT_WRAP_VAR("smt_wrap_var", 1, ParamKind.MODEL_FREE_TYPE),
 	
 	SMT_EQ("smt_eq", 2, ParamKind.PRE_SMT_TYPE),
 	

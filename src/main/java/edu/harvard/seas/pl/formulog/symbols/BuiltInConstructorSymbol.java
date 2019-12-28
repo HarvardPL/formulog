@@ -33,6 +33,8 @@ import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.int_;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.list;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.option;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.smt;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.smtPattern;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.smtWrappedVar;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.string;
 
 import edu.harvard.seas.pl.formulog.types.FunctorType;
@@ -78,6 +80,10 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 	
 	SMT_ITE("smt_ite", 3, SOLVER_EXPR),
 	
+	SMT_EXISTS("smt_exists", 3, SOLVER_EXPR),
+	
+	SMT_FORALL("smt_forall", 3, SOLVER_EXPR),
+	
 	// Bit vectors
 	
 	BV_NEG("bv_neg", 1, SOLVER_EXPR),
@@ -103,7 +109,6 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 	BV_XOR("bv_xor", 2, SOLVER_EXPR),
 	
 	// Floating point
-	
 
 	FP_NEG("fp_neg", 1, SOLVER_EXPR),
 
@@ -225,6 +230,9 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 //			return makeType(sym(a), smt(a), smt(b), smt(b));
 		case SMT_NOT:
 			return makeType(smt(bool), smt(bool));
+		case SMT_EXISTS:
+		case SMT_FORALL:
+			return makeType(list(smtWrappedVar), smt(bool), list(list(smtPattern)), smt(bool));
 		case NONE:
 			return makeType(option(a));
 		case SOME:

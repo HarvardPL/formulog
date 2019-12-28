@@ -9,6 +9,8 @@ import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.fp64;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.i32;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.i64;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.smt;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.smtPattern;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.smtWrappedVar;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.sym;
 
 /*-
@@ -74,11 +76,9 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 		case BV_ULE:
 		case BV_ULT:
 		case SMT_EQ:
-		case SMT_EXISTS:
-		case SMT_EXISTS_PAT:
-		case SMT_FORALL:
-		case SMT_FORALL_PAT:
 		case SMT_LET:
+		case SMT_PAT:
+		case SMT_WRAP_VAR:
 			break;
 		case FP_BIG_CONST:
 		case FP_CONST:
@@ -162,19 +162,6 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 			Type b = TypeVar.fresh();
 			return mkType(array(a, b), a, b);
 		}
-		// case BV_ADD:
-		// case BV_AND:
-		// case BV_MUL:
-		// case BV_OR:
-		// case BV_SDIV:
-		// case BV_UDIV:
-		// case BV_UREM:
-		// case BV_SREM:
-		// case BV_SUB:
-		// case BV_XOR: {
-		// Type width = types.get(0);
-		// return mkType(bv(width), bv(width), bv(width));
-		// }
 		case BV_BIG_CONST: {
 			Type width = types.get(0);
 			return mkType(i64, bv(width));
@@ -183,10 +170,6 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 			Type width = types.get(0);
 			return mkType(i32, bv(width));
 		}
-		// case BV_NEG: {
-		// Type width = types.get(0);
-		// return mkType(bv(width), bv(width));
-		// }
 		case BV_SGE:
 		case BV_SGT:
 		case BV_SLE:
@@ -210,16 +193,6 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 			Type significand = types.get(2);
 			return mkType(bv(width), fp(exponent, significand));
 		}
-		// case FP_ADD:
-		// case FP_DIV:
-		// case FP_MUL:
-		// case FP_REM:
-		// case FP_SUB: {
-		// Type exponent = types.get(0);
-		// Type significand = types.get(1);
-		// Type fp = fp(exponent, significand);
-		// return mkType(fp, fp, fp);
-		// }
 		case FP_BIG_CONST: {
 			Type exponent = types.get(0);
 			Type significand = types.get(1);
@@ -245,12 +218,6 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 			Type significand = types.get(1);
 			return mkType(fp(exponent, significand), bool);
 		}
-		// case FP_NEG: {
-		// Type exponent = types.get(0);
-		// Type significand = types.get(1);
-		// Type fp = fp(exponent, significand);
-		// return mkType(fp, fp);
-		// }
 		case FP_TO_BV: {
 			Type exponent = types.get(0);
 			Type significand = types.get(1);
@@ -268,19 +235,19 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 			Type ty = types.get(0);
 			return mkType(smt(ty), smt(ty), smt(bool));
 		}
-		case SMT_EXISTS:
-		case SMT_FORALL: {
-			return mkType(types.get(0), smt(bool));
-		}
-		case SMT_EXISTS_PAT:
-		case SMT_FORALL_PAT: {
-			return mkType(types.get(0), types.get(1), smt(bool));
-		}
 		case SMT_LET: {
 			Type a = types.get(0);
 			Type b = TypeVar.fresh(); 
 			return mkType(sym(a), smt(a), smt(b), smt(b));
 		}
+		case SMT_PAT: {
+			return mkType(types.get(0), smtPattern);
+		}
+		case SMT_WRAP_VAR: {
+			return mkType(sym(types.get(0)), smtWrappedVar);
+		}
+		default:
+			break;
 		}
 		throw new AssertionError("impossible");
 	}

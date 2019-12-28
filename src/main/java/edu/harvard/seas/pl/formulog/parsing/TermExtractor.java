@@ -29,6 +29,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -64,7 +65,6 @@ import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.I32TermCont
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.I64TermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.IfExprContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.IndexedFunctorContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.IntParamContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.IteTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.LetExprContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.LetFormulaContext;
@@ -72,10 +72,9 @@ import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.LetFunExprC
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ListTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.MatchClauseContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.MatchExprContext;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.NonEmptyTermListContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.NotFormulaContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.OutermostCtorContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ParameterContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ParameterListContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ParensTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.QuantifiedFormulaContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.RecordEntryContext;
@@ -86,10 +85,8 @@ import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.StringTermC
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TermSymFormulaContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TupleTermContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.TypeParamContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.UnopTermContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.VarTermContext;
-import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.WildCardParamContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogVisitor;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
@@ -113,7 +110,6 @@ import edu.harvard.seas.pl.formulog.types.Types.TypeVar;
 import edu.harvard.seas.pl.formulog.types.Types.TypeVisitor;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.StackMap;
-import edu.harvard.seas.pl.formulog.util.TodoException;
 
 class TermExtractor {
 
@@ -567,52 +563,54 @@ class TermExtractor {
 
 		@Override
 		public Term visitQuantifiedFormula(QuantifiedFormulaContext ctx) {
-			throw new TodoException();
-			// Term[] args = new Term[3];
-			// args[0] = parseFormulaVarList(ctx.variables);
-			// args[1] = makeEnterFormula(extract(ctx.boundTerm));
-			// if (ctx.pattern != null) {
-			// args[2] = Constructors.make(BuiltInConstructorSymbol.SOME,
-			// Terms.singletonArray(makeEnterFormula(parseHeterogeneousList(ctx.pattern))));
-			// } else {
-			// args[2] = Constructors.makeZeroAry(BuiltInConstructorSymbol.NONE);
-			// }
-			// ConstructorSymbol sym;
-			// switch (ctx.quantifier.getType()) {
-			// case FormulogParser.FORALL:
-			// sym = BuiltInConstructorSymbol.FORMULA_FORALL;
-			// break;
-			// case FormulogParser.EXISTS:
-			// sym = BuiltInConstructorSymbol.FORMULA_EXISTS;
-			// break;
-			// default:
-			// throw new AssertionError();
-			// }
-			// return makeExitFormula(Constructors.make(sym, args));
+			Term[] args = new Term[3];
+			args[0] = parseFormulaVarList(ctx.variables);
+			args[1] = makeEnterFormula(extract(ctx.boundTerm));
+			args[2] = Constructors.nil();
+			if (ctx.pattern != null) {
+				args[2] = Constructors.make(BuiltInConstructorSymbol.CONS,
+						new Term[] { (parsePatternList(ctx.pattern)), args[2] });
+			}
+			ConstructorSymbol sym;
+			switch (ctx.quantifier.getType()) {
+			case FormulogParser.FORALL:
+				sym = BuiltInConstructorSymbol.SMT_FORALL;
+				break;
+			case FormulogParser.EXISTS:
+				sym = BuiltInConstructorSymbol.SMT_EXISTS;
+				break;
+			default:
+				throw new AssertionError("impossible");
+			}
+			return makeExitFormula(Constructors.make(sym, args));
 		}
 
-		// private Term parseFormulaVarList(NonEmptyTermListContext ctx) {
-		// return parseNonEmptyTermList(ctx,
-		// BuiltInConstructorSymbol.FORMULA_VAR_LIST_NIL,
-		// BuiltInConstructorSymbol.FORMULA_VAR_LIST_CONS);
-		// }
-		//
-		// private Term parseHeterogeneousList(NonEmptyTermListContext ctx) {
-		// return parseNonEmptyTermList(ctx,
-		// BuiltInConstructorSymbol.HETEROGENEOUS_LIST_NIL,
-		// BuiltInConstructorSymbol.HETEROGENEOUS_LIST_CONS);
-		// }
-		//
-		// private Term parseNonEmptyTermList(NonEmptyTermListContext ctx,
-		// ConstructorSymbol nil, ConstructorSymbol cons) {
-		// Term t = Constructors.makeZeroAry(nil);
-		// List<TermContext> ctxs = new ArrayList<>(ctx.term());
-		// Collections.reverse(ctxs);
-		// for (TermContext tc : ctxs) {
-		// t = Constructors.make(cons, new Term[] { extract(tc), t });
-		// }
-		// return t;
-		// }
+		private Term parsePatternList(NonEmptyTermListContext ctx) {
+			return parseNonEmptyTermList(ctx, pat -> {
+				ConstructorSymbol sym = (ConstructorSymbol) pc.symbolManager()
+						.getParameterizedSymbol(BuiltInConstructorSymbolBase.SMT_PAT);
+				return Constructors.make(sym, Terms.singletonArray(makeEnterFormula(pat)));
+			});
+		}
+		
+		private Term parseFormulaVarList(NonEmptyTermListContext ctx) {
+			return parseNonEmptyTermList(ctx, var -> {
+				ConstructorSymbol sym = (ConstructorSymbol) pc.symbolManager()
+						.getParameterizedSymbol(BuiltInConstructorSymbolBase.SMT_WRAP_VAR);
+				return Constructors.make(sym, Terms.singletonArray(var));
+			});
+		}
+
+		private Term parseNonEmptyTermList(NonEmptyTermListContext ctx, Function<Term, Term> transformer) {
+			Term acc = Constructors.nil();
+			List<TermContext> ctxs = new ArrayList<>(ctx.term());
+			Collections.reverse(ctxs);
+			for (TermContext tc : ctxs) {
+				Term t = transformer.apply(extract(tc));
+				acc = Constructors.make(BuiltInConstructorSymbol.CONS, new Term[] { t, acc });
+			}
+			return acc;
+		}
 
 		@Override
 		public Term visitIteTerm(IteTermContext ctx) {
