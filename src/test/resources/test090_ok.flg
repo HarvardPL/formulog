@@ -10,8 +10,8 @@ special(a, 5).
 
 output op(foo, i32).
 op(X, Res) :-
-  X not a, 
-  common(X, Res).
+  common(X, Res),
+  X not a.
 op(a, Res) :-
   special(a, Res).
 

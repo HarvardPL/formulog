@@ -62,11 +62,6 @@ public abstract class CommonEvaluationTest extends AbstractEvaluationTest {
 	}
 
 	@Test
-	public void test026() {
-		test("test026_ok.flg");
-	}
-
-	@Test
 	public void test027() {
 		test("test027_ok.flg");
 	}
@@ -754,6 +749,11 @@ public abstract class CommonEvaluationTest extends AbstractEvaluationTest {
 	@Test
 	public void test292() {
 		test("test292_ok.flg");
+	}
+	
+	@Test
+	public void test297() {
+		test("test297_ok.flg");
 	}
 	
 }

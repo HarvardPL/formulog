@@ -1,0 +1,18 @@
+type foo = bar(i32)
+
+input baz(foo smt)
+
+baz(`bar(#x[i32])`).
+baz(`bar(41)`).
+
+input buz(i32)
+
+buz(41).
+buz(42).
+
+output ok
+
+ok :-
+  buz(X),
+  baz(`bar(X)`),
+  X + 1 = 42.

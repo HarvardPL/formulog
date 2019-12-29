@@ -100,7 +100,7 @@ public class SimpleRule extends AbstractRule<SimplePredicate, SimpleLiteral> {
 		public Simplifier(Map<Var, Integer> varCounts) {
 			this.varCounts = varCounts;
 		}
-		
+
 		public Substitution getSubst() {
 			return subst;
 		}
@@ -161,7 +161,8 @@ public class SimpleRule extends AbstractRule<SimplePredicate, SimpleLiteral> {
 						for (int i = 0; i < args1.length; ++i) {
 							cs.add(UnificationPredicate.make(args1[i], args2[i], false));
 						}
-						ValidRule.order(cs, (p, xs) -> 1, new HashSet<>(boundVars), varCounts);
+						// XXX Not reordering because of type soundness issues.
+						// ValidRule.order(cs, (p, xs) -> 1, new HashSet<>(boundVars), varCounts);
 						for (ComplexLiteral c : cs) {
 							todo.add(c);
 						}

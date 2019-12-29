@@ -286,6 +286,9 @@ public final class Types {
 
 		@Override
 		public String toString() {
+			if (sym.equals(BuiltInTypeSymbol.BV) || sym.equals(BuiltInTypeSymbol.FP)) {
+				return toStringBvOrFp();
+			}
 			if (typeArgs.isEmpty()) {
 				return sym.toString();
 			}
@@ -300,6 +303,24 @@ public final class Types {
 			}
 			sb.append(") " + sym);
 			return sb.toString();
+		}
+		
+		private String toStringBvOrFp() {
+			String s = sym.toString();
+			s += "[";
+			for (Iterator<Type> it = typeArgs.iterator(); it.hasNext();) {
+				Type arg = it.next();
+				if (arg instanceof TypeIndex) {
+					s += ((TypeIndex) arg).getIndex();
+				} else {
+					assert arg.isVar();
+					s += arg;
+				}
+				if (it.hasNext()) {
+					s += ", ";
+				}
+			}
+			return s + "]";
 		}
 
 		@Override

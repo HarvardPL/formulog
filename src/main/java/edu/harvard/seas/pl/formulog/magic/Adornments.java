@@ -21,7 +21,6 @@ package edu.harvard.seas.pl.formulog.magic;
  */
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -79,41 +78,69 @@ public final class Adornments {
 			}
 		}
 		Map<Var, Integer> varCounts = BasicRule.make(head, body).countVariables();
-		List<ComplexLiteral> newBody = new ArrayList<>(body);
-		for (int i = 0; i < newBody.size(); i++) {
-			boolean ok = false;
-			for (int j = i; j < newBody.size(); j++) {
-				ComplexLiteral a = newBody.get(j);
-				if (Unification.canBindVars(a, boundVars, varCounts)) {
-					Collections.swap(newBody, i, j);
-					int pos = i;
-					a.accept(new ComplexLiteralVisitor<Void, Void>() {
+		List<ComplexLiteral> newBody = new ArrayList<>();
+		for (ComplexLiteral lit : body) {
+			ComplexLiteral newLit = lit.accept(new ComplexLiteralVisitor<Void, ComplexLiteral>() {
 
-						@Override
-						public Void visit(UnificationPredicate unificationPredicate, Void input) {
-							return null;
-						}
-
-						@Override
-						public Void visit(UserPredicate userPredicate, Void input) {
-							if (userPredicate.getSymbol().isIdbSymbol()) {
-								newBody.set(pos, adorn(userPredicate, boundVars, topDownIsDefault));
-							}
-							return null;
-						}
-
-					}, null);
-					boundVars.addAll(a.varSet());
-					ok = true;
-					break;
+				@Override
+				public ComplexLiteral visit(UnificationPredicate pred, Void input) {
+					return pred;
 				}
-			}
-			if (!ok) {
+
+				@Override
+				public ComplexLiteral visit(UserPredicate pred, Void input) {
+					if (pred.getSymbol().isIdbSymbol()) {
+						pred = adorn(pred, boundVars, topDownIsDefault);
+					}
+					return pred;
+				}
+
+			}, null);
+			if (!Unification.canBindVars(newLit, boundVars, varCounts)) {
 				throw new InvalidProgramException(
-						"Cannot reorder rule to meet well-modeness restrictions: " + BasicRule.make(head, body));
+						"Rule cannot be evaluated given the supplied order.\n" + "The problematic rule is:\n"
+								+ BasicRule.make(head, body) + "\nThe problematic literal is: " + lit);
 			}
+			boundVars.addAll(newLit.varSet());
+			newBody.add(newLit);
 		}
 		return BasicRule.make(head, newBody);
+		// List<ComplexLiteral> newBody = new ArrayList<>(body);
+		// for (int i = 0; i < newBody.size(); i++) {
+		// boolean ok = false;
+		// for (int j = i; j < newBody.size(); j++) {
+		// ComplexLiteral a = newBody.get(j);
+		// if (Unification.canBindVars(a, boundVars, varCounts)) {
+		// Collections.swap(newBody, i, j);
+		// int pos = i;
+		// a.accept(new ComplexLiteralVisitor<Void, Void>() {
+		//
+		// @Override
+		// public Void visit(UnificationPredicate unificationPredicate, Void input) {
+		// return null;
+		// }
+		//
+		// @Override
+		// public Void visit(UserPredicate userPredicate, Void input) {
+		// if (userPredicate.getSymbol().isIdbSymbol()) {
+		// newBody.set(pos, adorn(userPredicate, boundVars, topDownIsDefault));
+		// }
+		// return null;
+		// }
+		//
+		// }, null);
+		// boundVars.addAll(a.varSet());
+		// ok = true;
+		// break;
+		// }
+		// }
+		// if (!ok) {
+		// throw new InvalidProgramException(
+		// "Cannot reorder rule to meet well-modeness restrictions: " +
+		// BasicRule.make(head, body));
+		// }
+		// }
+		// return BasicRule.make(head, newBody);
 	}
 
 }

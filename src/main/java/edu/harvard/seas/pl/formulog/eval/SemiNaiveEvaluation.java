@@ -226,6 +226,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		return s;
 	}
 
+	// XXX These are all ignored because reordering can lead to type soundness issues
 	static BiFunction<ComplexLiteral, Set<Var>, Integer> chooseScoringFunction() {
 		switch (Configuration.optimizationSetting) {
 		case 0:

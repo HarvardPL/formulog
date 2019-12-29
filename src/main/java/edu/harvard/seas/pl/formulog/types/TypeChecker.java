@@ -544,7 +544,13 @@ public class TypeChecker {
 		}
 
 		private void genConstraintsForVar(Var t, Type ttype, Map<Var, Type> subst, boolean inFormula) {
-			Type s = Util.lookupOrCreate(subst, t, () -> TypeVar.fresh());
+			Type s = Util.lookupOrCreate(subst, t, () -> {
+				Type x = TypeVar.fresh();
+				if (inFormula) {
+					x = BuiltInTypes.smt(x);
+				}
+				return x;
+			});
 			addConstraint(t, s, ttype, inFormula);
 		}
 
