@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.eval;
 
+import edu.harvard.seas.pl.formulog.ast.BasicRule;
+import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 
 /*-
@@ -31,5 +33,7 @@ public interface Evaluation {
 	boolean hasQuery();
 	
 	UserPredicate getQuery();
+	
+	Program<UserPredicate, BasicRule> getInputProgram();
 	
 }

@@ -21,5 +21,5 @@ package edu.harvard.seas.pl.formulog;
  */
 
 public enum PrintPreference {
-	EDB, IDB, NONE, ALL, QUERY
+	EDB, IDB, NONE, ALL, QUERY, SOME
 }

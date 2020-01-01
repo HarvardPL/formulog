@@ -93,6 +93,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 	final CountingFJP exec;
 	final Map<IndexedRule, boolean[]> splitPositions = new HashMap<>();
 	final Set<RelationSymbol> trackedRelations;
+	final WellTypedProgram inputProgram;
 
 	static final boolean sequential = System.getProperty("sequential") != null;
 	static final boolean debugRounds = Configuration.debugRounds;
@@ -179,7 +180,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 			exec.shutdown();
 			throw new InvalidProgramException(exec.getFailureCause());
 		}
-		return new SemiNaiveEvaluation(db, deltaDbb, rules, magicProg.getQuery(), strata, exec,
+		return new SemiNaiveEvaluation(prog, db, deltaDbb, rules, magicProg.getQuery(), strata, exec,
 				getTrackedRelations(magicProg.getSymbolManager()));
 	}
 
@@ -226,7 +227,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 		return s;
 	}
 
-	// XXX These are all ignored because reordering can lead to type soundness issues
+	// XXX These are all ignored because reordering can lead to type soundness
+	// issues
 	static BiFunction<ComplexLiteral, Set<Var>, Integer> chooseScoringFunction() {
 		switch (Configuration.optimizationSetting) {
 		case 0:
@@ -341,9 +343,10 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}, null);
 	}
 
-	SemiNaiveEvaluation(SortedIndexedFactDb db, IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb,
-			Map<RelationSymbol, Iterable<IndexedRule>> rules, UserPredicate query, List<Stratum> strata,
-			CountingFJP exec, Set<RelationSymbol> trackedRelations) {
+	SemiNaiveEvaluation(WellTypedProgram inputProgram, SortedIndexedFactDb db,
+			IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb, Map<RelationSymbol, Iterable<IndexedRule>> rules,
+			UserPredicate query, List<Stratum> strata, CountingFJP exec, Set<RelationSymbol> trackedRelations) {
+		this.inputProgram = inputProgram;
 		this.db = db;
 		this.query = query;
 		this.strata = strata;
@@ -352,6 +355,11 @@ public class SemiNaiveEvaluation implements Evaluation {
 		deltaDb = deltaDbb.build();
 		nextDeltaDb = deltaDbb.build();
 		processRules(rules);
+	}
+
+	@Override
+	public WellTypedProgram getInputProgram() {
+		return inputProgram;
 	}
 
 	void processRules(Map<RelationSymbol, Iterable<IndexedRule>> rules) {

@@ -41,6 +41,8 @@ import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
 import edu.harvard.seas.pl.formulog.parsing.ParseException;
 import edu.harvard.seas.pl.formulog.parsing.Parser;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
+import edu.harvard.seas.pl.formulog.symbols.Symbol;
+import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
 import edu.harvard.seas.pl.formulog.types.TypeException;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
@@ -160,6 +162,9 @@ public final class Main {
 		case QUERY:
 			printQueryResults(res, out);
 			break;
+		case SOME:
+			printSelectedResults(res, eval.getInputProgram().getSymbolManager(), out);
+			break;
 		case NONE:
 			break;
 		}
@@ -190,6 +195,25 @@ public final class Main {
 			out.println("[there was no query]");
 		} else {
 			Util.printSortedFacts(res.getQueryAnswer(), out);
+		}
+	}
+	
+	public void printSelectedResults(EvaluationResult res, SymbolManager sm, PrintStream out) {
+		out.println("Selected results:");
+		for (String name : Configuration.getSelectedRelsToPrint()) {
+			if (!sm.hasName(name)) {
+				out.println("[ignoring unrecognized symbol: " + name + "]");
+				continue;
+			}
+			Symbol sym = sm.lookupSymbol(name);
+			if (!(sym instanceof RelationSymbol)) {
+				out.println("[ignoring symbol " + name + " (not a relation symbol)]");
+			}
+		}
+		for (RelationSymbol sym : res.getSymbols()) {
+			if (Configuration.getSelectedRelsToPrint().contains(sym.toString())) {
+				Util.printSortedFacts(res.getAll(sym), out);
+			}
 		}
 	}
 

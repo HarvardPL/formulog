@@ -9,12 +9,16 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Do not require parentheses around tuple types.
+- Do not reorder literals in rules (in order to preserve soundness of
+  flow-sensitive type checking).
 
 ### Fixed
-- Require variables in the "names" (i.e., the arguments) of solver variables
-  to be bound.
 - Made Antlr parser faster by simplifying grammar.
 - Changed precedence of infix cons operator (i.e., `::`).
+- Added parameterized constructor symbols to fix type soundness issues arising
+  from the non-determinate type signatures of some formula constructors.
+- Made type checking flow-sensitive to soundly handle destruction of
+  user-defined constructors in formulas. 
 
 ## [0.2.0] - 2019-11-25
 ### Added

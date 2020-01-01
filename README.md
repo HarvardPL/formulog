@@ -88,8 +88,8 @@ You can set the following system properties (using the `-D` flag, as in
   (defaults to the current directory)
 * `trackedRelations=rel_1,...,rel_n` - print facts from listed relations as
   they are derived (defaults to the empty list)
-* `printResults=(all|none|edb|idb|query)` - restrict which types of facts are
-  printed after evaluation (default is all)
+* `printResults=(all|none|edb|idb|query|some=rel_1,...,rel_n)` - restrict which
+  types of facts are printed after evaluation (default is all)
 
 For example, to run the test program above with SMT debug information and 3
 threads, use

@@ -22,12 +22,15 @@ package edu.harvard.seas.pl.formulog;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
@@ -275,17 +278,21 @@ public final class Configuration {
 			return Collections.emptyList();
 		}
 		List<String> l = new ArrayList<>();
-		int split;
-		while ((split = val.indexOf(',')) != -1) {
-			String sub = val.substring(0, split);
-			l.add(sub);
-			if (split == val.length()) {
-				throw new IllegalArgumentException("Cannot terminate property " + prop + " with a comma");
-			}
-			val = val.substring(split + 1);
-		}
-		l.add(val);
+		breakIntoCollection(val, l);
 		return Collections.unmodifiableList(l);
+	}
+	
+	private static void breakIntoCollection(String s, Collection<String> acc) {
+		int split;
+		while ((split = s.indexOf(',')) != -1) {
+			String sub = s.substring(0, split);
+			acc.add(sub);
+			if (split == s.length()) {
+				return;
+			}
+			s = s.substring(split + 1);
+		}
+		acc.add(s);
 	}
 
 	private static SmtStrategy getSmtStrategy() {
@@ -320,10 +327,22 @@ public final class Configuration {
 		throw new IllegalArgumentException("Unrecognized SMT strategy: " + val);
 	}
 
+	private static Set<String> selectedRelsToPrint;
+	
+	public static Set<String> getSelectedRelsToPrint() {
+		assert printResultsPreference.equals(PrintPreference.SOME);
+		return selectedRelsToPrint;
+	}
+	
 	private static PrintPreference getPrintResultsPreference() {
 		String val = System.getProperty("printResults");
 		if (val == null) {
 			val = "all";
+		}
+		if (val.startsWith("some:")) {
+			selectedRelsToPrint = new HashSet<>();
+			breakIntoCollection(val.substring(5), selectedRelsToPrint);
+			return PrintPreference.SOME;
 		}
 		switch (val) {
 		case "all":
