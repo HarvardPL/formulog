@@ -12,18 +12,8 @@ enum class Symbol {
   boxed_fp32,
   boxed_fp64,
   boxed_string,
+  // >>> INSERT SYMBOLS <<<
 };
-
-size_t symbol_arity(const Symbol& sym) {
-  switch (sym) {
-    case Symbol::boxed_i32:
-    case Symbol::boxed_i64:
-    case Symbol::boxed_fp32:
-    case Symbol::boxed_fp64:
-    case Symbol::boxed_string:
-      std::abort();
-  }
-}
 
 } // namespace flg
 

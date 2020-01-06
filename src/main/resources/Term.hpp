@@ -17,22 +17,24 @@ struct Term {
 };
 
 struct ComplexTerm : public Term {
+  size_t arity;
   std::shared_ptr<Term>* val;
 
-  ComplexTerm(Symbol sym_, std::shared_ptr<Term>* val_) :
-    Term{sym_}, val{val_} {}
+  ComplexTerm(Symbol sym_, size_t arity_, std::shared_ptr<Term>* val_) :
+    Term{sym_}, arity{arity_}, val{val_} {}
 
   ComplexTerm(const ComplexTerm& t) :
-    Term{t.sym}, val{new std::shared_ptr<Term>[symbol_arity(t.sym)]} {
-    std::copy(t.val, t.val + symbol_arity(t.sym), val);
+    Term{t.sym}, arity{t.arity}, val{new std::shared_ptr<Term>[t.arity]} {
+    std::copy(t.val, t.val + t.arity, val);
   }
 
   ComplexTerm& operator=(const ComplexTerm& t) {
     if (this != &t) {
-      std::shared_ptr<Term>* new_val = new std::shared_ptr<Term>[symbol_arity(t.sym)];
-      std::copy(t.val, t.val + symbol_arity(t.sym), new_val);
+      std::shared_ptr<Term>* new_val = new std::shared_ptr<Term>[t.arity];
+      std::copy(t.val, t.val + t.arity, new_val);
       delete[] val;
       sym = t.sym;
+      arity = t.arity;
       val = new_val;
     }
     return *this;
@@ -94,6 +96,9 @@ int Term::compare(const Term* t1, const Term* t2) {
     w.pop();
     t1 = p.first;
     t2 = p.second;
+    if (t1 == t2) {
+      continue;
+    }
     if (t1->sym < t2->sym) {
       return -1;
     }
@@ -149,7 +154,7 @@ int Term::compare(const Term* t1, const Term* t2) {
       default: {
         auto x = reinterpret_cast<const ComplexTerm*>(t1);
         auto y = reinterpret_cast<const ComplexTerm*>(t2);
-        size_t n = symbol_arity(t1->sym);
+        size_t n = x->arity;
         for (size_t i = 0; i < n; ++i) {
           w.emplace(x->val[i].get(), y->val[i].get()); 
         }
