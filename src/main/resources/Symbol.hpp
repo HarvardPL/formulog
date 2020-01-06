@@ -15,7 +15,7 @@ enum class Symbol {
 /* INSERT 0 */
 };
 
-std::ostream& operator<<(std::ostream& out, const Symbol sym) {
+std::ostream& operator<<(std::ostream& out, const Symbol& sym) {
 	switch (sym) {
 	  case Symbol::boxed_i32: return out << "boxed_i32";
 	  case Symbol::boxed_i64: return out << "boxed_i64";
