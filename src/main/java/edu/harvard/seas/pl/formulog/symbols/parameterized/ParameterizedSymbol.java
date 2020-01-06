@@ -34,4 +34,6 @@ public interface ParameterizedSymbol extends Symbol {
 	
 	ParameterizedSymbol copyWithNewArgs(Param... args);
 	
+	boolean isGround();
+	
 }

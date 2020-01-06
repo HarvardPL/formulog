@@ -215,6 +215,8 @@ public class TypeChecker {
 					// program variables (in a fact) or type variables (in a relation type).
 					// Addendum: there can be program variables (in type index positions),
 					// but they should be unique.
+					// XXX Not sure if this is still true, as I don't think
+					// there are index positions any more.
 					TypeCheckerContext ctx = new TypeCheckerContext();
 					Set<Term[]> s = new HashSet<>();
 					for (Term[] args : prog.getFacts(sym)) {

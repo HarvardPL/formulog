@@ -23,6 +23,8 @@ package edu.harvard.seas.pl.formulog.symbols.parameterized;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.harvard.seas.pl.formulog.types.Types;
+
 public abstract class AbstractParameterizedSymbol<B extends SymbolBase> implements ParameterizedSymbol {
 
 	private final B base;
@@ -41,7 +43,7 @@ public abstract class AbstractParameterizedSymbol<B extends SymbolBase> implemen
 			this.args.add(param);
 		}
 	}
-
+	
 	@Override
 	public int getArity() {
 		return base.getArity();
@@ -68,6 +70,16 @@ public abstract class AbstractParameterizedSymbol<B extends SymbolBase> implemen
 	@Override
 	public List<Param> getArgs() {
 		return args;
+	}
+	
+	@Override
+	public boolean isGround() {
+		for (Param arg : args) {
+			if (Types.containsTypeVarOrOpaqueType(arg.getType())) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	@Override
