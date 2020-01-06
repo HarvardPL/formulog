@@ -89,6 +89,47 @@ BaseTerm<std::string> mk_string(std::string val) {
   return BaseTerm<std::string>(Symbol::boxed_string, val);
 }
 
+std::ostream& operator<<(std::ostream& out, const Term& t) {
+	switch (t.sym) {
+	  case Symbol::boxed_i32: {
+      auto x = reinterpret_cast<const BaseTerm<int32_t>&>(t);
+      return out << x.val;
+    }
+	  case Symbol::boxed_i64: {
+      auto x = reinterpret_cast<const BaseTerm<int64_t>&>(t);
+      return out << x.val;
+    }
+	  case Symbol::boxed_fp32: {
+      auto x = reinterpret_cast<const BaseTerm<float>&>(t);
+      return out << x.val;
+    }
+	  case Symbol::boxed_fp64: {
+      auto x = reinterpret_cast<const BaseTerm<double>&>(t);
+      return out << x.val;
+    }
+	  case Symbol::boxed_string: {
+      auto x = reinterpret_cast<const BaseTerm<std::string>&>(t);
+      return out << "\"" << x.val << "\"";
+    }
+    default: {
+      auto x = reinterpret_cast<const ComplexTerm&>(t);
+      out << x.sym;
+      size_t n = x.arity;
+      if (n > 0) {
+        out << "(";
+        for (size_t i = 0; i < n; ++i) {
+          out << x.val[i];
+          if (i < n - 1) {
+            out << ", ";
+          }
+        }
+        out << ")";
+      }
+      return out;
+    }
+	}
+}
+
 int Term::compare(const Term* t1, const Term* t2) {
   std::stack<std::pair<const Term*, const Term*>> w;
   while (!w.empty()) {

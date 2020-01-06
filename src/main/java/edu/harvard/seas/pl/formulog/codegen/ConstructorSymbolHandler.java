@@ -18,10 +18,10 @@ import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType.ConstructorSch
 
 public class ConstructorSymbolHandler {
 
-	private final SymbolContext ctx;
+	private final CodeGenContext ctx;
 	private final Set<ConstructorSymbol> symbols = new TreeSet<>(SymbolComparator.INSTANCE);
 
-	public ConstructorSymbolHandler(SymbolContext ctx) {
+	public ConstructorSymbolHandler(CodeGenContext ctx) {
 		this.ctx = ctx;
 	}
 	

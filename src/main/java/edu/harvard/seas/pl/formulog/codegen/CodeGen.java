@@ -23,7 +23,7 @@ public class CodeGen {
 	}
 
 	public void go() throws IOException {
-		SymbolContext ctx = new SymbolContext();
+		CodeGenContext ctx = new CodeGenContext();
 		ConstructorSymbolHandler csh = new ConstructorSymbolHandler(ctx);
 		csh.getConstructorsFromTypes(eval.getInputProgram().getTypeSymbols());
 		csh.print(outDir);

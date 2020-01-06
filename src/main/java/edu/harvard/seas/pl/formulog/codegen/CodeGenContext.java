@@ -11,7 +11,7 @@ import edu.harvard.seas.pl.formulog.symbols.parameterized.SymbolBase;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
 
-public class SymbolContext implements Iterable<Pair<Symbol, String>> {
+public class CodeGenContext implements Iterable<Pair<Symbol, String>> {
 
 	private final Map<Symbol, String> symToRepr = new ConcurrentHashMap<>();
 	private final Map<String, Symbol> reprToSym = new ConcurrentHashMap<>();
