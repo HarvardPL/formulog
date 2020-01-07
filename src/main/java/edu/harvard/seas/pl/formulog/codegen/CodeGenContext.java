@@ -26,8 +26,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
-import edu.harvard.seas.pl.formulog.eval.SemiNaiveSymbol;
-import edu.harvard.seas.pl.formulog.eval.SemiNaiveSymbolType;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedSymbol;
@@ -54,16 +52,6 @@ public class CodeGenContext implements Iterable<Pair<Symbol, String>> {
 	
 	public CppIndex lookupIndex(RelationSymbol sym, int idx) {
 		return Util.lookupOrCreate(rels, new Pair<>(sym, idx), () -> BTreeIndex.mk(sym, idx, this));
-	}
-
-	public String lookupRelationName(RelationSymbol sym, int idx) {
-		assert idx >= 0;
-		if (sym instanceof SemiNaiveSymbol) {
-			SemiNaiveSymbol sym2 = (SemiNaiveSymbol) sym;
-			assert sym2.getSemiNaiveSymbolType().equals(SemiNaiveSymbolType.DELTA);
-			return lookupRepr(sym2.getBaseSymbol()) + "_delta_" + idx;
-		}
-		return lookupRepr(sym) + "_" + idx;
 	}
 
 	public String lookupRepr(Symbol sym) {

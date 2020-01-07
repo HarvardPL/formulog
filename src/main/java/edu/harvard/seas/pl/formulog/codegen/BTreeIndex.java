@@ -24,8 +24,7 @@ import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.List;
 
-import edu.harvard.seas.pl.formulog.eval.SemiNaiveSymbol;
-import edu.harvard.seas.pl.formulog.eval.SemiNaiveSymbolType;
+import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 
 public class BTreeIndex implements CppIndex {
@@ -33,7 +32,6 @@ public class BTreeIndex implements CppIndex {
 	private final RelationSymbol sym;
 	private final CodeGenContext ctx;
 	private final int idx;
-	private final boolean isDelta;
 	private final String name;
 
 	public static BTreeIndex mk(RelationSymbol sym, int idx, CodeGenContext ctx) {
@@ -41,18 +39,19 @@ public class BTreeIndex implements CppIndex {
 	}
 
 	private BTreeIndex(RelationSymbol sym, int idx, CodeGenContext ctx) {
-		if (sym instanceof SemiNaiveSymbol) {
-			SemiNaiveSymbol sym2 = (SemiNaiveSymbol) sym;
-			assert sym2.getSemiNaiveSymbolType().equals(SemiNaiveSymbolType.DELTA);
-			isDelta = true;
-			this.sym = sym2.getBaseSymbol();
+		String s = "_";
+		if (sym instanceof DeltaSymbol) {
+			this.sym = ((DeltaSymbol) sym).getBaseSymbol();
+			s += "delta_";
+		} else if (sym instanceof NewSymbol) {
+			this.sym = ((NewSymbol) sym).getBaseSymbol();
+			s += "new_";
 		} else {
-			isDelta = false;
 			this.sym = sym;
 		}
 		this.idx = idx;
 		this.ctx = ctx;
-		this.name = this.sym + (isDelta ? "_delta_" : "_") + idx;
+		this.name = this.sym + s + idx;
 	}
 
 	@Override

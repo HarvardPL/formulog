@@ -33,8 +33,7 @@ import java.util.List;
 
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
-import edu.harvard.seas.pl.formulog.eval.SemiNaiveSymbol;
-import edu.harvard.seas.pl.formulog.eval.SemiNaiveSymbolType;
+import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.validating.Stratum;
@@ -91,8 +90,10 @@ public class MainCpp {
 				for (int idx = 0; idx < db.numIndices(sym); ++idx) {
 					defineRelation(sym, idx);
 					if (sym.isIdbSymbol()) {
-						RelationSymbol delta = SemiNaiveSymbol.make(sym, SemiNaiveSymbolType.DELTA);
+						RelationSymbol delta = new DeltaSymbol(sym);
 						defineRelation(delta, idx);
+						RelationSymbol new_ = new NewSymbol(sym);
+						defineRelation(new_, idx);
 					}
 				}
 			}
