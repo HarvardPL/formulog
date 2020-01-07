@@ -76,11 +76,6 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 	}
 
 	@Override
-	public int numIndices(RelationSymbol sym) {
-		return indices.get(sym).size();
-	}
-
-	@Override
 	public int countDuplicates(RelationSymbol sym) {
 		int count = 0;
 		for (IndexedFactSet idx : indices.get(sym)) {
@@ -186,6 +181,36 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 		return s + "}";
 	}
 
+	@Override
+	public int numIndices(RelationSymbol sym) {
+		if (!indices.containsKey(sym)) {
+			throw new IllegalArgumentException("Unrecognized symbol: " + sym);
+		}
+		return indices.get(sym).size();
+	}
+	
+	public List<Integer> getComparatorOrder(RelationSymbol sym, int idx) {
+		if (idx < 0 || idx > numIndices(sym)) {
+			throw new IllegalArgumentException("Unrecognized index for symbol " + sym + ": " + idx);
+		}
+		return Collections.unmodifiableList(indices.get(sym).get(idx).comparatorOrder);
+	}
+	
+	public int getMasterIndex(RelationSymbol sym) {
+		if (!indices.containsKey(sym)) {
+			throw new IllegalArgumentException("Unrecognized symbol: " + sym);
+		}
+		int i = 0;
+		IndexedFactSet master = masterIndex.get(sym);
+		for (IndexedFactSet s : indices.get(sym)) {
+			if (s.equals(master)) {
+				break;
+			}
+			i++;
+		}
+		return i;
+	}
+
 	public static class SortedIndexedFactDbBuilder implements IndexedFactDbBuilder<SortedIndexedFactDb> {
 
 		private final Map<RelationSymbol, Integer> counts = new HashMap<>();
@@ -267,6 +292,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 		private final BindingType[] pat;
 		private final NavigableSet<Term[]> s;
 		private final AtomicInteger cnt = new AtomicInteger();
+		private final List<Integer> comparatorOrder;
 
 		private final static TupleComparatorGenerator gen = new TupleComparatorGenerator();
 
@@ -296,9 +322,9 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			} else {
 				cmp = new TermArrayComparator(a);
 			}
-			return new IndexedFactSet(pat, new ConcurrentSkipListSet<>(cmp));
+			return new IndexedFactSet(pat, new ConcurrentSkipListSet<>(cmp), order);
 		}
-
+		
 		public Iterable<Term[]> getAll() {
 			return s;
 		}
@@ -321,9 +347,10 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			return s.isEmpty();
 		}
 
-		private IndexedFactSet(BindingType[] pat, NavigableSet<Term[]> s) {
+		private IndexedFactSet(BindingType[] pat, NavigableSet<Term[]> s, List<Integer> comparatorOrder) {
 			this.pat = pat;
 			this.s = s;
+			this.comparatorOrder = comparatorOrder;
 		}
 
 		public boolean add(Term[] arr) {

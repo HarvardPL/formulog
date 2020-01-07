@@ -49,11 +49,7 @@ template<typename T>
 struct BaseTerm : public Term {
   T val;
 
-  friend BaseTerm<int32_t> mk_i32(int32_t val);
-  friend BaseTerm<int64_t> mk_i64(int64_t val);
-  friend BaseTerm<float> mk_fp32(float val);
-  friend BaseTerm<double> mk_fp64(double val);
-  friend BaseTerm<std::string> mk_string(std::string val);
+  BaseTerm(Symbol sym_, T val_) : Term{sym_}, val(val_) {}
 
   inline static int compare(BaseTerm<T> t1, BaseTerm<T> t2) {
     if (t1.val < t2.val) {
@@ -64,30 +60,7 @@ struct BaseTerm : public Term {
       return 0;
     }
   }
-
-private:
-  BaseTerm(Symbol sym_, T val_) : Term{sym_}, val(val_) {}
 };
-
-BaseTerm<int32_t> mk_i32(int32_t val) {
-  return BaseTerm<int32_t>(Symbol::boxed_i32, val);
-}
-
-BaseTerm<int64_t> mk_i64(int64_t val) {
-  return BaseTerm<int64_t>(Symbol::boxed_i64, val);
-}
-
-BaseTerm<float> mk_fp32(float val) {
-  return BaseTerm<float>(Symbol::boxed_fp32, val);
-}
-
-BaseTerm<double> mk_fp64(double val) {
-  return BaseTerm<double>(Symbol::boxed_fp64, val);
-}
-
-BaseTerm<std::string> mk_string(std::string val) {
-  return BaseTerm<std::string>(Symbol::boxed_string, val);
-}
 
 std::ostream& operator<<(std::ostream& out, const Term& t) {
 	switch (t.sym) {
@@ -132,6 +105,7 @@ std::ostream& operator<<(std::ostream& out, const Term& t) {
 
 int Term::compare(const Term* t1, const Term* t2) {
   std::stack<std::pair<const Term*, const Term*>> w;
+  w.emplace(t1, t2);
   while (!w.empty()) {
     auto p = w.top();
     w.pop();

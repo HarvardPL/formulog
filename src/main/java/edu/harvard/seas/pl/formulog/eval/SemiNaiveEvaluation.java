@@ -924,5 +924,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 		System.err.println("[END] Updating DBs");
 		System.err.println("Time: " + watch.getTime() + "ms");
 	}
+	
+	public SortedIndexedFactDb getDb() {
+		return db;
+	}
 
 }
