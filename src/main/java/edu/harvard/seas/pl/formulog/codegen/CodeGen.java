@@ -50,8 +50,8 @@ public class CodeGen {
 		copy("Term.hpp");
 		CodeGenContext ctx = new CodeGenContext(eval);
 		ConstructorSymbolHandler csh = new ConstructorSymbolHandler(ctx);
-		RelationHandler rh = new RelationHandler(ctx);
-		rh.print(outDir);
+		MainCpp rh = new MainCpp(ctx);
+		rh.gen(outDir);
 		csh.getConstructorsFromTypes(eval.getInputProgram().getTypeSymbols());
 		csh.print(outDir);
 	}

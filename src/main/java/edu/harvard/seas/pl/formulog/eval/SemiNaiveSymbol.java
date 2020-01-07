@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
@@ -46,7 +45,7 @@ public class SemiNaiveSymbol implements RelationSymbol {
 		this.semiNaiveType = semiNaiveType;
 	}
 
-	public Symbol getBaseSymbol() {
+	public RelationSymbol getBaseSymbol() {
 		return baseSymbol;
 	}
 	

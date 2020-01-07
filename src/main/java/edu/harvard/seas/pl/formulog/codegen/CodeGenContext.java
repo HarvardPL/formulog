@@ -26,6 +26,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
+import edu.harvard.seas.pl.formulog.eval.SemiNaiveSymbol;
+import edu.harvard.seas.pl.formulog.eval.SemiNaiveSymbolType;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedSymbol;
@@ -38,22 +40,27 @@ public class CodeGenContext implements Iterable<Pair<Symbol, String>> {
 	private final Map<Symbol, String> symToRepr = new ConcurrentHashMap<>();
 	private final Map<String, Symbol> reprToSym = new ConcurrentHashMap<>();
 	private final Map<SymbolBase, AtomicInteger> cnts = new ConcurrentHashMap<>();
-	
+
 	private final SemiNaiveEvaluation eval;
-	
+
 	public CodeGenContext(SemiNaiveEvaluation eval) {
 		this.eval = eval;
 	}
-	
+
 	public SemiNaiveEvaluation getEval() {
 		return eval;
 	}
 
 	public String lookupRelationName(RelationSymbol sym, int idx) {
 		assert idx >= 0;
+		if (sym instanceof SemiNaiveSymbol) {
+			SemiNaiveSymbol sym2 = (SemiNaiveSymbol) sym;
+			assert sym2.getSemiNaiveSymbolType().equals(SemiNaiveSymbolType.DELTA);
+			return lookupRepr(sym2.getBaseSymbol()) + "_delta_" + idx;
+		}
 		return lookupRepr(sym) + "_" + idx;
 	}
-	
+
 	public String lookupRepr(Symbol sym) {
 		String repr = symToRepr.get(sym);
 		if (repr == null) {
