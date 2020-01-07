@@ -29,7 +29,7 @@ ostream& operator<<(ostream& out, const Tuple<N>& tup)
   return out;
 }
 
-// Adapted from souffle/CompiledIndexUtils.h
+// Inspired by the comparator in souffle/CompiledIndexUtils.h
 template <unsigned... Columns>
 struct Comparator;
 
@@ -74,19 +74,25 @@ struct Comparator<> {
   }
 };
 
-// Declare relations
 /* INSERT 0 */
 
 void loadEdbs() {
 /* INSERT 1 */
 }
 
-void printResults() {
 /* INSERT 2 */
+
+void evaluate() {
+/* INSERT 3 */
+}
+
+void printResults() {
+/* INSERT 4 */
 }
 
 int main() {
   loadEdbs();
+  evaluate();
   printResults();
   return 0;
 }

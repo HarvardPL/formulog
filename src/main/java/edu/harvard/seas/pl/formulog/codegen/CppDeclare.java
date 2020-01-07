@@ -21,33 +21,29 @@ package edu.harvard.seas.pl.formulog.codegen;
  */
 
 import java.io.PrintWriter;
-import java.util.Iterator;
 
-public final class CodeGenUtil {
+public class CppDeclare implements CppStmt {
 
-	private CodeGenUtil() {
-		throw new AssertionError("impossible");
-	}
+	private final String var;
+	private final CppExpr val;
 
-	public static void printIndent(PrintWriter out, int indent) {
-		for (int i = 0; i < indent; ++i) {
-			out.print("  ");
-		}
+	private CppDeclare(String var, CppExpr val) {
+		this.var = var;
+		this.val = val;
 	}
 	
-	public static void print(Iterable<CppStmt> stmts, PrintWriter out, int indent) {
-		for (CppStmt stmt : stmts) {
-			stmt.println(out, indent);
-		}
+	public static CppDeclare mk(String var, CppExpr val) {
+		return new CppDeclare(var, val);
 	}
-	
-	public static void printSeparated(Iterable<CppExpr> exprs, String sep, PrintWriter out) {
-		for (Iterator<CppExpr> it = exprs.iterator(); it.hasNext();) {
-			it.next().print(out);
-			if (it.hasNext()) {
-				out.print(sep);
-			}
-		}
+
+	@Override
+	public void println(PrintWriter out, int indent) {
+		CodeGenUtil.printIndent(out, indent);
+		out.print("auto ");
+		out.print(var);
+		out.print(" = ");
+		val.print(out);
+		out.println(";");
 	}
-	
+
 }

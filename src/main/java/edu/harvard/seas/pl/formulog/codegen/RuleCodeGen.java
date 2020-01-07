@@ -20,34 +20,22 @@ package edu.harvard.seas.pl.formulog.codegen;
  * #L%
  */
 
-import java.io.PrintWriter;
-import java.util.Iterator;
+import java.util.Collections;
+import java.util.List;
 
-public final class CodeGenUtil {
+import edu.harvard.seas.pl.formulog.eval.IndexedRule;
+import edu.harvard.seas.pl.formulog.util.Pair;
 
-	private CodeGenUtil() {
-		throw new AssertionError("impossible");
-	}
+public class RuleCodeGen {
 
-	public static void printIndent(PrintWriter out, int indent) {
-		for (int i = 0; i < indent; ++i) {
-			out.print("  ");
-		}
+	private final CodeGenContext ctx;
+	
+	public RuleCodeGen(CodeGenContext ctx) {
+		this.ctx = ctx;
 	}
 	
-	public static void print(Iterable<CppStmt> stmts, PrintWriter out, int indent) {
-		for (CppStmt stmt : stmts) {
-			stmt.println(out, indent);
-		}
+	public Pair<List<CppStmt>, CppExpr> gen(IndexedRule rule) {
+		return new Pair<>(Collections.emptyList(), CppConst.mkFalse());
 	}
-	
-	public static void printSeparated(Iterable<CppExpr> exprs, String sep, PrintWriter out) {
-		for (Iterator<CppExpr> it = exprs.iterator(); it.hasNext();) {
-			it.next().print(out);
-			if (it.hasNext()) {
-				out.print(sep);
-			}
-		}
-	}
-	
+
 }

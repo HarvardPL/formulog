@@ -21,33 +21,36 @@ package edu.harvard.seas.pl.formulog.codegen;
  */
 
 import java.io.PrintWriter;
-import java.util.Iterator;
 
-public final class CodeGenUtil {
+public class CppBinop implements CppExpr {
 
-	private CodeGenUtil() {
-		throw new AssertionError("impossible");
-	}
-
-	public static void printIndent(PrintWriter out, int indent) {
-		for (int i = 0; i < indent; ++i) {
-			out.print("  ");
-		}
+	private final CppExpr lhs;
+	private final String op;
+	private final CppExpr rhs;
+	
+	private CppBinop(CppExpr lhs, String op, CppExpr rhs) {
+		this.lhs = lhs;
+		this.op = op;
+		this.rhs = rhs;
 	}
 	
-	public static void print(Iterable<CppStmt> stmts, PrintWriter out, int indent) {
-		for (CppStmt stmt : stmts) {
-			stmt.println(out, indent);
-		}
+	private static CppBinop mk(CppExpr lhs, String op, CppExpr rhs) {
+		return new CppBinop(lhs, op, rhs);
 	}
 	
-	public static void printSeparated(Iterable<CppExpr> exprs, String sep, PrintWriter out) {
-		for (Iterator<CppExpr> it = exprs.iterator(); it.hasNext();) {
-			it.next().print(out);
-			if (it.hasNext()) {
-				out.print(sep);
-			}
-		}
+	public static CppBinop mkOrEq(CppExpr lhs, CppExpr rhs) {
+		return mk(lhs, "|=", rhs);
 	}
-	
+
+	@Override
+	public void print(PrintWriter out) {
+		out.print("(");
+		lhs.print(out);
+		out.print(" ");
+		out.print(op);
+		out.print(" ");
+		rhs.print(out);
+		out.print(")");
+	}
+
 }

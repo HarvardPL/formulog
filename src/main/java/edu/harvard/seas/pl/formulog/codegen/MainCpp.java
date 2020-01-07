@@ -28,9 +28,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
@@ -38,6 +37,7 @@ import edu.harvard.seas.pl.formulog.eval.SemiNaiveSymbol;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveSymbolType;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
+import edu.harvard.seas.pl.formulog.validating.Stratum;
 
 public class MainCpp {
 
@@ -55,40 +55,37 @@ public class MainCpp {
 				BufferedReader br = new BufferedReader(isr);
 				PrintWriter out = new PrintWriter(outDir.toPath().resolve("main.cpp").toFile())) {
 			Worker pr = new Worker(out);
-			String line;
-			while (!(line = br.readLine()).equals("/* INSERT 0 */")) {
-				out.println(line);
-			}
+			copyOver(br, out, 0);
 			pr.defineRelations();
-			while (!(line = br.readLine()).equals("/* INSERT 1 */")) {
-				out.println(line);
-			}
+			copyOver(br, out, 1);
 			pr.loadEdbs();
-			while (!(line = br.readLine()).equals("/* INSERT 2 */")) {
-				out.println(line);
-			}
+			copyOver(br, out, 2);
+			pr.printStratumFuncs();
+			copyOver(br, out, 3);
+			pr.evaluate();
+			copyOver(br, out, 4);
 			pr.printResults();
-			while ((line = br.readLine()) != null) {
-				out.println(line);
-			}
+			copyOver(br, out, -1);
 			out.flush();
 		}
 	}
-	
+
+	private void copyOver(BufferedReader in, PrintWriter out, int stopAt) throws IOException {
+		String line;
+		while ((line = in.readLine()) != null && !line.equals("/* INSERT " + stopAt + " */")) {
+			out.println(line);
+		}
+	}
+
 	private class Worker {
 
 		private final SortedIndexedFactDb db = ctx.getEval().getDb();
 		private final PrintWriter out;
-		private final Map<Pair<RelationSymbol, Integer>, CppIndex> rels = new HashMap<>();
 
 		public Worker(PrintWriter out) {
 			this.out = out;
 		}
 
-		private CppIndex lookup(RelationSymbol sym, Integer idx) {
-			return rels.get(new Pair<>(sym, idx));
-		}
-		
 		public void defineRelations() {
 			for (RelationSymbol sym : db.getSymbols()) {
 				for (int idx = 0; idx < db.numIndices(sym); ++idx) {
@@ -100,17 +97,19 @@ public class MainCpp {
 				}
 			}
 		}
-		
+
 		public void defineRelation(RelationSymbol sym, int idx) {
-			CppIndex index = BTreeIndex.mk(sym, idx, ctx);
-			index.mkDecl().print(out, 0);
-			rels.put(new Pair<>(sym, idx), index);
+			CppIndex index = ctx.lookupIndex(sym, idx);
+			index.mkDecl().println(out, 0);
 		}
 
 		public void loadEdbs() {
 			for (RelationSymbol sym : db.getSymbols()) {
 				if (sym.isEdbSymbol()) {
 					for (int idx = 0; idx < db.numIndices(sym); ++idx) {
+						// XXX Should probably change this so that we explicitly
+						// load up only the master index, and then add the
+						// master index to all the other ones.
 						loadEdb(sym, idx);
 					}
 				}
@@ -118,11 +117,35 @@ public class MainCpp {
 		}
 
 		public void loadEdb(RelationSymbol sym, int idx) {
-			CppIndex index = lookup(sym, idx);
+			CppIndex index = ctx.lookupIndex(sym, idx);
 			for (Term[] tup : db.getAll(sym)) {
 				Pair<List<CppStmt>, List<CppExpr>> p = tcg.gen(Arrays.asList(tup), Collections.emptyMap());
 				assert p.fst().isEmpty();
-				index.mkInsert(index.mkTuple(p.snd())).toStmt().print(out, 1);
+				index.mkInsert(index.mkTuple(p.snd())).toStmt().println(out, 1);
+			}
+		}
+		
+		public void printStratumFuncs() {
+			StratumCodeGen scg = new StratumCodeGen(ctx);
+			List<Stratum> strata = ctx.getEval().getStrata();
+			for (Iterator<Stratum> it = strata.iterator(); it.hasNext();) {
+				printStratumFunc(it.next(), scg);
+				if (it.hasNext()) {
+					out.println();
+				}	
+			}
+		}
+		
+		public void printStratumFunc(Stratum stratum, StratumCodeGen sgc) {
+			out.println("void stratum_" + stratum.getRank() + "() {");
+			CodeGenUtil.print(sgc.gen(stratum), out, 1);
+			out.println("}");
+		}
+
+		public void evaluate() {
+			int n = ctx.getEval().getStrata().size();
+			for (int i = 0; i < n; ++i) {
+				CppFuncCall.mk("stratum_" + i, Collections.emptyList()).toStmt().println(out, 1);
 			}
 		}
 
@@ -132,7 +155,7 @@ public class MainCpp {
 				out.print(sym);
 				out.println("\" << endl;");
 				int idx = db.getMasterIndex(sym);
-				lookup(sym, idx).mkPrint().print(out, 1);
+				ctx.lookupIndex(sym, idx).mkPrint().println(out, 1);
 			}
 		}
 

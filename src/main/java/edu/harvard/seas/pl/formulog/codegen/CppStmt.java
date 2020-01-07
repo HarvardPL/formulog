@@ -24,6 +24,6 @@ import java.io.PrintWriter;
 
 public interface CppStmt {
 
-	void print(PrintWriter out, int indent);
+	void println(PrintWriter out, int indent);
 	
 }

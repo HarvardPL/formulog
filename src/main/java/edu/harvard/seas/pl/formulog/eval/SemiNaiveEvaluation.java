@@ -361,6 +361,18 @@ public class SemiNaiveEvaluation implements Evaluation {
 	public WellTypedProgram getInputProgram() {
 		return inputProgram;
 	}
+	
+	public List<Stratum> getStrata() {
+		return strata;
+	}
+	
+	public Set<IndexedRule> getFirstRoundRules(RelationSymbol sym) {
+		return firstRoundRules.get(sym);
+	}
+	
+	public Map<RelationSymbol, Set<IndexedRule>> getLaterRoundRules(RelationSymbol sym) {
+		return laterRoundRules.get(sym);
+	}
 
 	void processRules(Map<RelationSymbol, Iterable<IndexedRule>> rules) {
 		SmtCallFinder scf = new SmtCallFinder();

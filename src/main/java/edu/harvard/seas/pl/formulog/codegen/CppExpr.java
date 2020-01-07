@@ -30,7 +30,7 @@ public interface CppExpr {
 		return new CppStmt() {
 
 			@Override
-			public void print(PrintWriter out, int indent) {
+			public void println(PrintWriter out, int indent) {
 				CodeGenUtil.printIndent(out, indent);
 				CppExpr.this.print(out);
 				out.println(";");

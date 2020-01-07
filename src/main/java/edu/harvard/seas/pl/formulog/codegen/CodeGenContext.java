@@ -40,6 +40,7 @@ public class CodeGenContext implements Iterable<Pair<Symbol, String>> {
 	private final Map<Symbol, String> symToRepr = new ConcurrentHashMap<>();
 	private final Map<String, Symbol> reprToSym = new ConcurrentHashMap<>();
 	private final Map<SymbolBase, AtomicInteger> cnts = new ConcurrentHashMap<>();
+	private final Map<Pair<RelationSymbol, Integer>, CppIndex> rels = new ConcurrentHashMap<>();
 
 	private final SemiNaiveEvaluation eval;
 
@@ -49,6 +50,10 @@ public class CodeGenContext implements Iterable<Pair<Symbol, String>> {
 
 	public SemiNaiveEvaluation getEval() {
 		return eval;
+	}
+	
+	public CppIndex lookupIndex(RelationSymbol sym, int idx) {
+		return Util.lookupOrCreate(rels, new Pair<>(sym, idx), () -> BTreeIndex.mk(sym, idx, this));
 	}
 
 	public String lookupRelationName(RelationSymbol sym, int idx) {

@@ -21,33 +21,26 @@ package edu.harvard.seas.pl.formulog.codegen;
  */
 
 import java.io.PrintWriter;
-import java.util.Iterator;
 
-public final class CodeGenUtil {
+public class CppConst<T> implements CppExpr {
 
-	private CodeGenUtil() {
-		throw new AssertionError("impossible");
-	}
-
-	public static void printIndent(PrintWriter out, int indent) {
-		for (int i = 0; i < indent; ++i) {
-			out.print("  ");
-		}
+	private final T val;
+	
+	private CppConst(T val) {
+		this.val = val;
 	}
 	
-	public static void print(Iterable<CppStmt> stmts, PrintWriter out, int indent) {
-		for (CppStmt stmt : stmts) {
-			stmt.println(out, indent);
-		}
+	public static CppConst<Boolean> mkTrue() {
+		return new CppConst<>(true);
 	}
 	
-	public static void printSeparated(Iterable<CppExpr> exprs, String sep, PrintWriter out) {
-		for (Iterator<CppExpr> it = exprs.iterator(); it.hasNext();) {
-			it.next().print(out);
-			if (it.hasNext()) {
-				out.print(sep);
-			}
-		}
+	public static CppConst<Boolean> mkFalse() {
+		return new CppConst<>(false);
 	}
-	
+
+	@Override
+	public void print(PrintWriter out) {
+		out.print(val);
+	}
+
 }

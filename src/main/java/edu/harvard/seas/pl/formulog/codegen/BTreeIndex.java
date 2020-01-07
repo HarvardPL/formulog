@@ -60,8 +60,10 @@ public class BTreeIndex implements CppIndex {
 		return new CppStmt() {
 
 			@Override
-			public void print(PrintWriter out, int indent) {
-				out.print("souffle::btree_set<Tuple<");
+			public void println(PrintWriter out, int indent) {
+				out.print("auto ");
+				out.print(name);
+				out.print(" = make_unique<souffle::btree_set<Tuple<");
 				out.print(sym.getArity());
 				out.print(">, Comparator<");
 				List<Integer> order = ctx.getEval().getDb().getComparatorOrder(sym, idx);
@@ -71,9 +73,7 @@ public class BTreeIndex implements CppIndex {
 						out.print(", ");
 					}
 				}
-				out.print(">> ");
-				out.print(name);
-				out.println(";");
+				out.println(">>>();");
 			}
 
 		};
@@ -86,7 +86,7 @@ public class BTreeIndex implements CppIndex {
 			@Override
 			public void print(PrintWriter out) {
 				out.print(name);
-				out.print(".insert(");
+				out.print("->insert(");
 				expr.print(out);
 				out.print(")");
 			}
@@ -101,7 +101,7 @@ public class BTreeIndex implements CppIndex {
 			@Override
 			public void print(PrintWriter out) {
 				out.print(name);
-				out.print(".empty();");
+				out.print("->empty();");
 			}
 
 		};
@@ -117,7 +117,7 @@ public class BTreeIndex implements CppIndex {
 				out.print("Tuple<");
 				out.print(sym.getArity());
 				out.print(">{");
-				CodeGenUtil.printSeparated(out, exprs, ", ");
+				CodeGenUtil.printSeparated(exprs, ", ", out);
 				out.print("}");
 			}
 
@@ -129,10 +129,10 @@ public class BTreeIndex implements CppIndex {
 		return new CppStmt() {
 
 			@Override
-			public void print(PrintWriter out, int indent) {
+			public void println(PrintWriter out, int indent) {
 				CodeGenUtil.printIndent(out, indent);
 				out.print(name);
-				out.println(".printTree();");
+				out.println("->printTree();");
 			}
 
 		};
@@ -142,48 +142,5 @@ public class BTreeIndex implements CppIndex {
 	public void print(PrintWriter out) {
 		out.print(name);
 	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((ctx == null) ? 0 : ctx.hashCode());
-		result = prime * result + idx;
-		result = prime * result + (isDelta ? 1231 : 1237);
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result + ((sym == null) ? 0 : sym.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		BTreeIndex other = (BTreeIndex) obj;
-		if (ctx == null) {
-			if (other.ctx != null)
-				return false;
-		} else if (!ctx.equals(other.ctx))
-			return false;
-		if (idx != other.idx)
-			return false;
-		if (isDelta != other.isDelta)
-			return false;
-		if (name == null) {
-			if (other.name != null)
-				return false;
-		} else if (!name.equals(other.name))
-			return false;
-		if (sym == null) {
-			if (other.sym != null)
-				return false;
-		} else if (!sym.equals(other.sym))
-			return false;
-		return true;
-	}
-
+	
 }
