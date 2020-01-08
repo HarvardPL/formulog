@@ -22,6 +22,7 @@ package edu.harvard.seas.pl.formulog.codegen;
 
 import java.io.PrintWriter;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class CppSeq implements CppStmt {
@@ -33,12 +34,21 @@ public class CppSeq implements CppStmt {
 	}
 	
 	public static CppSeq mk(List<CppStmt> stmts) {
+		if (stmts.isEmpty()) {
+			return skip;
+		}
 		return new CppSeq(stmts);
 	}
 	
 	public static CppSeq mk(CppStmt... stmts) {
-		return new CppSeq(Arrays.asList(stmts));
+		return mk(Arrays.asList(stmts));
 	}
+	
+	public static CppSeq skip() {
+		return skip;
+	}
+	
+	private static final CppSeq skip = new CppSeq(Collections.emptyList());
 
 	@Override
 	public void println(PrintWriter out, int indent) {

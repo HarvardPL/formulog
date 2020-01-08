@@ -1,6 +1,7 @@
 package edu.harvard.seas.pl.formulog.codegen;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /*-
  * #%L
@@ -34,6 +35,7 @@ import edu.harvard.seas.pl.formulog.ast.BindingType;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.eval.IndexedRule;
+import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.TodoException;
@@ -48,17 +50,18 @@ import edu.harvard.seas.pl.formulog.validating.ast.SimplePredicate;
 public class RuleCodeGen {
 
 	private final CodeGenContext ctx;
+	private final TermCodeGen tcg;
 
 	public RuleCodeGen(CodeGenContext ctx) {
 		this.ctx = ctx;
+		this.tcg = new TermCodeGen(ctx);
 	}
 
 	public Pair<CppStmt, CppExpr> gen(IndexedRule rule, boolean isFirstRound) {
 		Function<CppStmt, CppStmt> outerIf = mkOuterIf(rule);
-		Function<CppStmt, CppStmt> evalCode = new Worker(rule).go();
-		Pair<CppStmt, CppExpr> p = mkDbUpdate(rule, isFirstRound);
-		CppStmt code = outerIf.apply(evalCode.apply(p.fst()));
-		return new Pair<>(code, p.snd());
+		Pair<CppStmt, CppExpr> evalCode = new Worker(rule, isFirstRound).go();
+		CppStmt code = outerIf.apply(evalCode.fst());
+		return new Pair<>(code, evalCode.snd());
 	}
 
 	private Function<CppStmt, CppStmt> mkOuterIf(IndexedRule rule) {
@@ -79,21 +82,19 @@ public class RuleCodeGen {
 		return body -> CppIf.mk(guard2, body);
 	}
 
-	private Pair<CppStmt, CppExpr> mkDbUpdate(IndexedRule rule, boolean isFirstRound) {
-		return new Pair<>(CppSkip.SKIP, CppConst.mkFalse());
-	};
-
 	private class Worker {
 
 		private final IndexedRule rule;
+		private final boolean isFirstRound;
 		private boolean hasReachedSplit;
 		private final Map<Var, CppExpr> env = new HashMap<>();
 
-		public Worker(IndexedRule rule) {
+		public Worker(IndexedRule rule, boolean isFirstRound) {
 			this.rule = rule;
+			this.isFirstRound = isFirstRound;
 		}
 
-		private Function<CppStmt, CppStmt> go() {
+		private Function<CppStmt, CppStmt> makeEvalCode() {
 			Function<CppStmt, CppStmt> continuation = x -> x;
 			int pos = 0;
 			for (SimpleLiteral l : rule) {
@@ -103,6 +104,21 @@ public class RuleCodeGen {
 				pos++;
 			}
 			return continuation;
+		}
+		
+		public Pair<CppStmt, CppExpr> go() {
+			Function<CppStmt, CppStmt> evalCode = makeEvalCode();
+			Pair<CppStmt, CppExpr> update = mkDbUpdate();
+			return new Pair<>(evalCode.apply(update.fst()), update.snd());
+		}
+		
+		private Pair<CppStmt, CppExpr> mkDbUpdate() {
+			SimplePredicate head = rule.getHead();
+			Pair<CppStmt, List<CppExpr>> p = tcg.gen(Arrays.asList(head.getArgs()), env);
+			RelationSymbol sym = isFirstRound ? head.getSymbol() : new DeltaSymbol(head.getSymbol());
+			
+//			CppIndex index = ctx.lookupIndex(sym, idx)
+			return new Pair<>(CppSeq.skip(), CppConst.mkFalse());
 		}
 
 		private final SimpleLiteralVisitor<Integer, Function<CppStmt, CppStmt>> visitor = new SimpleLiteralVisitor<Integer, Function<CppStmt, CppStmt>>() {

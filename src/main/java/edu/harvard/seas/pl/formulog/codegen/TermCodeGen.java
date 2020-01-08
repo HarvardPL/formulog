@@ -41,19 +41,19 @@ public class TermCodeGen {
 		this.ctx = ctx;
 	}
 
-	public Pair<List<CppStmt>, CppExpr> gen(Term t, Map<Var, CppExpr> env) {
+	public Pair<CppStmt, CppExpr> gen(Term t, Map<Var, CppExpr> env) {
 		return new Worker(new HashMap<>(env)).go(t);
 	}
 	
-	public Pair<List<CppStmt>, List<CppExpr>> gen(List<Term> ts, Map<Var, CppExpr> env) {
+	public Pair<CppStmt, List<CppExpr>> gen(List<Term> ts, Map<Var, CppExpr> env) {
 		List<CppStmt> stmts = new ArrayList<>();
 		List<CppExpr> exprs = new ArrayList<>();
 		for (Term t : ts) {
-			Pair<List<CppStmt>, CppExpr> p = gen(t, env);
-			stmts.addAll(p.fst());
+			Pair<CppStmt, CppExpr> p = gen(t, env);
+			stmts.add(p.fst());
 			exprs.add(p.snd());
 		}
-		return new Pair<>(stmts, exprs);
+		return new Pair<>(CppSeq.mk(stmts), exprs);
 	}
 	
 	private class Worker {
@@ -65,15 +65,17 @@ public class TermCodeGen {
 			this.env = env;
 		}
 		
-		public Pair<List<CppStmt>, CppExpr> go(Term t) {
-			return new Pair<>(acc, t.accept(visitor, null));
+		public Pair<CppStmt, CppExpr> go(Term t) {
+			CppExpr expr = t.accept(visitor, null);
+			return new Pair<>(CppSeq.mk(acc), expr);
 		}
 	
 		private final TermVisitor<Void, CppExpr> visitor = new TermVisitor<Void, CppExpr>() {
 
 			@Override
 			public CppExpr visit(Var x, Void in) {
-				throw new UnsupportedOperationException();
+				assert env.containsKey(x);
+				return env.get(x);
 			}
 
 			@Override

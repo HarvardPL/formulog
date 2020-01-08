@@ -26,14 +26,20 @@ public class CppIf implements CppStmt {
 
 	private final CppExpr guard;
 	private final CppStmt thenBranch;
-	
-	private CppIf(CppExpr guard, CppStmt thenBranch) {
+	private final CppStmt elseBranch;
+
+	private CppIf(CppExpr guard, CppStmt thenBranch, CppStmt elseBranch) {
 		this.guard = guard;
 		this.thenBranch = thenBranch;
+		this.elseBranch = elseBranch;
+	}
+
+	public static CppIf mk(CppExpr guard, CppStmt thenBranch) {
+		return mk(guard, thenBranch, null);
 	}
 	
-	public static CppIf mk(CppExpr guard, CppStmt thenBranch) {
-		return new CppIf(guard, thenBranch);
+	public static CppIf mk(CppExpr guard, CppStmt thenBranch, CppStmt elseBranch) {
+		return new CppIf(guard, thenBranch, elseBranch);
 	}
 
 	@Override
@@ -43,6 +49,13 @@ public class CppIf implements CppStmt {
 		guard.print(out);
 		out.println(") {");
 		thenBranch.println(out, indent + 1);
+		CodeGenUtil.printIndent(out, indent);
+		if (elseBranch == null) {
+			out.println("}");
+			return;
+		}
+		out.println("} else {");
+		elseBranch.println(out, indent + 1);
 		CodeGenUtil.printIndent(out, indent);
 		out.println("}");
 	}

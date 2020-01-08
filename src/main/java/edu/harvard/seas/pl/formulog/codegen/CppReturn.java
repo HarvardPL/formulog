@@ -22,13 +22,24 @@ package edu.harvard.seas.pl.formulog.codegen;
 
 import java.io.PrintWriter;
 
-public enum CppSkip implements CppStmt {
+public class CppReturn implements CppStmt {
 
-	SKIP;
+	private final CppExpr val;
 	
+	private CppReturn(CppExpr val) {
+		this.val = val;
+	}
+	
+	public static CppReturn mk(CppExpr val) {
+		return new CppReturn(val);
+	}
+
 	@Override
 	public void println(PrintWriter out, int indent) {
-		// do nothing
+		CodeGenUtil.printIndent(out, indent);
+		out.print("return ");
+		val.print(out);
+		out.println(";");
 	}
 
 }

@@ -940,5 +940,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 	public SortedIndexedFactDb getDb() {
 		return db;
 	}
+	
+	public SortedIndexedFactDb getDeltaDb() {
+		return deltaDb;
+	}
 
 }

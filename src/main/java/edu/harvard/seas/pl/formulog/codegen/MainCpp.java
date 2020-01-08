@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
@@ -79,6 +80,7 @@ public class MainCpp {
 	private class Worker {
 
 		private final SortedIndexedFactDb db = ctx.getEval().getDb();
+		private final SortedIndexedFactDb deltaDb = ctx.getEval().getDeltaDb();
 		private final PrintWriter out;
 
 		public Worker(PrintWriter out) {
@@ -86,17 +88,44 @@ public class MainCpp {
 		}
 
 		public void defineRelations() {
-			for (RelationSymbol sym : db.getSymbols()) {
-				for (int idx = 0; idx < db.numIndices(sym); ++idx) {
-					defineRelation(sym, idx);
-					if (sym.isIdbSymbol()) {
-						RelationSymbol delta = new DeltaSymbol(sym);
-						defineRelation(delta, idx);
-						RelationSymbol new_ = new NewSymbol(sym);
-						defineRelation(new_, idx);
-					}
+			defineRelations(db);
+			out.println();
+			defineRelations(deltaDb);
+		}
+
+		private void defineRelations(SortedIndexedFactDb db) {
+			for (Iterator<RelationSymbol> it = db.getSymbols().iterator(); it.hasNext();) {
+				defineRelation(db, it.next());
+				if (it.hasNext()) {
+					out.println();
 				}
 			}
+		}
+
+		private void defineRelation(SortedIndexedFactDb db, RelationSymbol sym) {
+			RelationStruct struct = new BTreeRelationStruct(sym.getArity(), db.getMasterIndex(sym),
+					aggregateComparators(sym, db));
+			struct.declare(out);
+			if (db == deltaDb) {
+				declareRelation(struct, new DeltaSymbol(sym));
+				declareRelation(struct, new NewSymbol(sym));
+			} else {
+				declareRelation(struct, sym);
+			}
+		}
+		
+		private void declareRelation(RelationStruct struct, RelationSymbol sym) {
+			CppIndex rel = struct.mkRelation(sym);
+			rel.mkDecl().println(out, 0);
+		}
+
+		private List<List<Integer>> aggregateComparators(RelationSymbol sym, SortedIndexedFactDb db) {
+			List<List<Integer>> acc = new ArrayList<>();
+			int n = db.numIndices(sym);
+			for (int i = 0; i < n; ++i) {
+				acc.add(db.getComparatorOrder(sym, i));
+			}
+			return acc;
 		}
 
 		public void defineRelation(RelationSymbol sym, int idx) {
@@ -120,12 +149,12 @@ public class MainCpp {
 		public void loadEdb(RelationSymbol sym, int idx) {
 			CppIndex index = ctx.lookupIndex(sym, idx);
 			for (Term[] tup : db.getAll(sym)) {
-				Pair<List<CppStmt>, List<CppExpr>> p = tcg.gen(Arrays.asList(tup), Collections.emptyMap());
-				assert p.fst().isEmpty();
+				Pair<CppStmt, List<CppExpr>> p = tcg.gen(Arrays.asList(tup), Collections.emptyMap());
+				p.fst().println(out, 1);
 				index.mkInsert(index.mkTuple(p.snd())).toStmt().println(out, 1);
 			}
 		}
-		
+
 		public void printStratumFuncs() {
 			StratumCodeGen scg = new StratumCodeGen(ctx);
 			List<Stratum> strata = ctx.getEval().getStrata();
@@ -133,10 +162,10 @@ public class MainCpp {
 				printStratumFunc(it.next(), scg);
 				if (it.hasNext()) {
 					out.println();
-				}	
+				}
 			}
 		}
-		
+
 		public void printStratumFunc(Stratum stratum, StratumCodeGen sgc) {
 			out.println("void stratum_" + stratum.getRank() + "() {");
 			sgc.gen(stratum).println(out, 1);
