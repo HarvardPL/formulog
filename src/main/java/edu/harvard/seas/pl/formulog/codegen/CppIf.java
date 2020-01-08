@@ -21,19 +21,18 @@ package edu.harvard.seas.pl.formulog.codegen;
  */
 
 import java.io.PrintWriter;
-import java.util.List;
 
 public class CppIf implements CppStmt {
 
 	private final CppExpr guard;
-	private final List<CppStmt> thenBranch;
+	private final CppStmt thenBranch;
 	
-	private CppIf(CppExpr guard, List<CppStmt> thenBranch) {
+	private CppIf(CppExpr guard, CppStmt thenBranch) {
 		this.guard = guard;
 		this.thenBranch = thenBranch;
 	}
 	
-	public static CppIf mk(CppExpr guard, List<CppStmt> thenBranch) {
+	public static CppIf mk(CppExpr guard, CppStmt thenBranch) {
 		return new CppIf(guard, thenBranch);
 	}
 
@@ -43,7 +42,7 @@ public class CppIf implements CppStmt {
 		out.print("if (");
 		guard.print(out);
 		out.println(") {");
-		CodeGenUtil.print(thenBranch, out, indent + 1);
+		thenBranch.println(out, indent + 1);
 		CodeGenUtil.printIndent(out, indent);
 		out.println("}");
 	}

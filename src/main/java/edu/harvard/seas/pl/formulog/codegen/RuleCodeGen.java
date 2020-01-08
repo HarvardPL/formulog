@@ -23,10 +23,16 @@ import java.util.ArrayList;
  */
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
+import edu.harvard.seas.pl.formulog.ast.BindingType;
+import edu.harvard.seas.pl.formulog.ast.Term;
+import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.eval.IndexedRule;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
@@ -47,96 +53,153 @@ public class RuleCodeGen {
 		this.ctx = ctx;
 	}
 
-	public Pair<List<CppStmt>, CppExpr> gen(IndexedRule rule) {
-		return new Worker(rule).go();
+	public Pair<CppStmt, CppExpr> gen(IndexedRule rule, boolean isFirstRound) {
+		Function<CppStmt, CppStmt> outerIf = mkOuterIf(rule);
+		Function<CppStmt, CppStmt> evalCode = new Worker(rule).go();
+		Pair<CppStmt, CppExpr> p = mkDbUpdate(rule, isFirstRound);
+		CppStmt code = outerIf.apply(evalCode.apply(p.fst()));
+		return new Pair<>(code, p.snd());
 	}
+
+	private Function<CppStmt, CppStmt> mkOuterIf(IndexedRule rule) {
+		CppExpr guard = CppConst.mkTrue();
+		int i = 0;
+		for (SimpleLiteral l : rule) {
+			if (l.getTag() == SimpleLiteralTag.PREDICATE) {
+				SimplePredicate pred = (SimplePredicate) l;
+				if (!pred.isNegated()) {
+					CppIndex index = ctx.lookupIndex(pred.getSymbol(), rule.getDbIndex(i));
+					CppExpr notEmpty = CppUnop.mkNot(index.mkIsEmpty());
+					guard = CppBinop.mkLogAnd(guard, notEmpty);
+				}
+			}
+			i++;
+		}
+		final CppExpr guard2 = guard;
+		return body -> CppIf.mk(guard2, body);
+	}
+
+	private Pair<CppStmt, CppExpr> mkDbUpdate(IndexedRule rule, boolean isFirstRound) {
+		return new Pair<>(CppSkip.SKIP, CppConst.mkFalse());
+	};
 
 	private class Worker {
 
 		private final IndexedRule rule;
-		private int pos;
+		private boolean hasReachedSplit;
+		private final Map<Var, CppExpr> env = new HashMap<>();
 
 		public Worker(IndexedRule rule) {
 			this.rule = rule;
 		}
 
-		private Pair<List<CppStmt>, CppExpr> go() {
-			List<CppStmt> l = Collections.singletonList(mkOuterIf(mkIfBody()));
-			return new Pair<>(l, CppConst.mkFalse());
+		private Function<CppStmt, CppStmt> go() {
+			Function<CppStmt, CppStmt> continuation = x -> x;
+			int pos = 0;
+			for (SimpleLiteral l : rule) {
+				Function<CppStmt, CppStmt> k = l.accept(visitor, pos);
+				final Function<CppStmt, CppStmt> k2 = continuation;
+				continuation = s -> k2.apply(k.apply(s));
+				pos++;
+			}
+			return continuation;
 		}
 
-		private CppStmt mkOuterIf(List<CppStmt> body) {
-			CppExpr guard = CppConst.mkTrue();
+		private final SimpleLiteralVisitor<Integer, Function<CppStmt, CppStmt>> visitor = new SimpleLiteralVisitor<Integer, Function<CppStmt, CppStmt>>() {
+
+			@Override
+			public Function<CppStmt, CppStmt> visit(Assignment assignment, Integer pos) {
+				return handleAssignment(assignment);
+			}
+
+			@Override
+			public Function<CppStmt, CppStmt> visit(Check check, Integer pos) {
+				return handleCheck(check);
+			}
+
+			@Override
+			public Function<CppStmt, CppStmt> visit(Destructor destructor, Integer pos) {
+				return handleDestructor(destructor);
+			}
+
+			@Override
+			public Function<CppStmt, CppStmt> visit(SimplePredicate pred, Integer pos) {
+				if (pred.isNegated()) {
+					return handleNegativePred(pred, pos);
+				} else {
+					return handlePositivePred(pred, pos);
+				}
+			}
+
+		};
+
+		private Function<CppStmt, CppStmt> handleAssignment(Assignment assignment) {
+			throw new TodoException();
+		}
+
+		private Function<CppStmt, CppStmt> handleCheck(Check check) {
+			throw new TodoException();
+		}
+
+		private Function<CppStmt, CppStmt> handleDestructor(Destructor destructor) {
+			throw new TodoException();
+		}
+
+		private Function<CppStmt, CppStmt> handleNegativePred(SimplePredicate pred, int pos) {
+			throw new TodoException();
+		}
+
+		private Function<CppStmt, CppStmt> handlePositivePred(SimplePredicate pred, int pos) {
+			Pair<Function<CppStmt, CppStmt>, CppExpr> p = genTupleIterator(pred, pos);
+			Function<CppStmt, CppStmt> loop = genLoop(pred, pos, p.snd());
+			return s -> p.fst().apply(loop.apply(s));
+		}
+
+		private Pair<Function<CppStmt, CppStmt>, CppExpr> genTupleIterator(SimplePredicate pred, int pos) {
+			if (!hasReachedSplit) {
+				hasReachedSplit = true;
+				return genParallelLoop(pred, pos);
+			}
+			throw new TodoException();
+		}
+
+		private Pair<Function<CppStmt, CppStmt>, CppExpr> genParallelLoop(SimplePredicate pred, int pos) {
+			BindingType[] pat = pred.getBindingPattern();
+			for (BindingType binding : pat) {
+				if (binding != BindingType.FREE) {
+					throw new TodoException();
+				}
+			}
+			CppStmt assign = CppDecl.mk("part", lookupIndex(pred, pos).mkPartition());
+			CppVar it = CppVar.mk("it");
+			CppExpr init = CppMethodCall.mk(CppVar.mk("part"), "begin");
+			CppExpr guard = CppBinop.mkLt(it, CppMethodCall.mk(CppVar.mk("part"), "end"));
+			CppExpr update = CppUnop.mkPreIncr(it);
+			Function<CppStmt, CppStmt> forLoop = body -> CppFor.mk("it", init, guard, update, body);
+			return new Pair<>(body -> CppSeq.mk(assign, forLoop.apply(body)), CppUnop.mkDeref(it));
+		}
+
+		private Function<CppStmt, CppStmt> genLoop(SimplePredicate pred, int pos, CppExpr it) {
+			CppIndex index = lookupIndex(pred, pos);
+			String tup = ctx.newId("tup");
+			List<CppStmt> assignments = new ArrayList<>();
+			BindingType[] pat = pred.getBindingPattern();
 			int i = 0;
-			for (SimpleLiteral l : rule) {
-				if (l.getTag() == SimpleLiteralTag.PREDICATE) {
-					SimplePredicate pred = (SimplePredicate) l;
-					if (!pred.isNegated()) {
-						CppIndex index = ctx.lookupIndex(pred.getSymbol(), rule.getDbIndex(i));
-						CppExpr notEmpty = CppUnop.mkNot(index.mkIsEmpty());
-						guard = CppBinop.mkLogAnd(guard, notEmpty);
-					}
+			for (Term t : pred.getArgs()) {
+				if (pat[i] == BindingType.FREE) {
+					String id = ctx.newId("x");
+					CppExpr access = index.mkTupleAccess(CppVar.mk(tup), CppConst.mkInt(i));
+					assignments.add(CppDecl.mkRef(id, access));
+					env.put((Var) t, CppVar.mk(id));
 				}
 				i++;
 			}
-			return CppIf.mk(guard, body);
+			CppStmt all = CppSeq.mk(assignments);
+			return s -> CppForEach.mk(tup, it, CppSeq.mk(all, s));
 		}
-		
-		private List<CppStmt> mkIfBody() {
-			List<CppStmt> stmts = mkRulePrefix();
-			if (pos > rule.getBodySize()) {
-				throw new TodoException();
-			}
-			SimplePredicate pred = (SimplePredicate) rule.getBody(pos);
-			assert !pred.isNegated();
-			CppIndex index = ctx.lookupIndex(pred.getSymbol(), rule.getDbIndex(pos));
-			stmts.add(CppDeclare.mk("part", index.mkPartition()));
-			stmts.add(mkOuterLoop());
-			return stmts;
-		}
-		
-		private CppStmt mkOuterLoop() {
-			CppExpr init = CppMethodCall.mk(CppVar.mk("part"), "begin");
-			CppExpr guard = CppBinop.mkLt(CppVar.mk("it"), CppMethodCall.mk(CppVar.mk("part"), "end"));
-			CppExpr update = CppUnop.mkPreIncr(CppVar.mk("it"));
-			return CppFor.mk("it", init, guard, update, Collections.emptyList());
-		}
-		
-		private List<CppStmt> mkRulePrefix() {
-			List<CppStmt> acc = new ArrayList<>();
-			SimpleLiteralVisitor<Void, Boolean> visitor = new SimpleLiteralVisitor<Void, Boolean>() {
 
-				@Override
-				public Boolean visit(Assignment assignment, Void input) {
-					throw new TodoException();
-				}
-
-				@Override
-				public Boolean visit(Check check, Void input) {
-					throw new TodoException();
-				}
-
-				@Override
-				public Boolean visit(Destructor destructor, Void input) {
-					throw new TodoException();
-				}
-
-				@Override
-				public Boolean visit(SimplePredicate predicate, Void input) {
-					if (!predicate.isNegated()) {
-						return false;
-					}
-					throw new TodoException();
-				}
-				
-			};
-			for (SimpleLiteral l : rule) {
-				if (!l.accept(visitor, null)) {
-					break;
-				}
-				pos++;
-			}
-			return acc;
+		private CppIndex lookupIndex(SimplePredicate pred, int pos) {
+			return ctx.lookupIndex(pred.getSymbol(), rule.getDbIndex(pos));
 		}
 
 	}

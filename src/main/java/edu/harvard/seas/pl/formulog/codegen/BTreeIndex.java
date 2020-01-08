@@ -171,5 +171,20 @@ public class BTreeIndex implements CppIndex {
 			
 		};
 	}
+
+	@Override
+	public CppExpr mkTupleAccess(CppExpr tup, CppExpr idx) {
+		return new CppExpr() {
+
+			@Override
+			public void print(PrintWriter out) {
+				tup.print(out);
+				out.print("[");
+				idx.print(out);
+				out.print("]");
+			}
+			
+		};
+	}
 	
 }

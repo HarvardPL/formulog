@@ -22,29 +22,33 @@ package edu.harvard.seas.pl.formulog.codegen;
 
 import java.io.PrintWriter;
 
-public class CppConst<T> implements CppExpr {
+public class CppForEach implements CppStmt {
 
-	private final T val;
+	private final String var;
+	private final CppExpr val;
+	private final CppStmt body;
 	
-	private CppConst(T val) {
+	private CppForEach(String var, CppExpr val, CppStmt body) {
+		this.var = var;
 		this.val = val;
+		this.body = body;
 	}
 	
-	public static CppConst<Boolean> mkTrue() {
-		return new CppConst<>(true);
-	}
-	
-	public static CppConst<Boolean> mkFalse() {
-		return new CppConst<>(false);
-	}
-	
-	public static CppConst<Integer> mkInt(int i) {
-		return new CppConst<>(i);
+	public static CppForEach mk(String var, CppExpr val, CppStmt body) {
+		return new CppForEach(var, val, body);
 	}
 
 	@Override
-	public void print(PrintWriter out) {
-		out.print(val);
+	public void println(PrintWriter out, int indent) {
+		CodeGenUtil.printIndent(out, indent);
+		out.print("for (const auto& ");
+		out.print(var);
+		out.print(" : ");
+		val.print(out);
+		out.println(") {");
+		body.println(out, indent + 1);
+		CodeGenUtil.printIndent(out, indent);
+		out.println("}");
 	}
 
 }

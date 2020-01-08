@@ -21,30 +21,28 @@ package edu.harvard.seas.pl.formulog.codegen;
  */
 
 import java.io.PrintWriter;
+import java.util.Arrays;
+import java.util.List;
 
-public class CppConst<T> implements CppExpr {
+public class CppSeq implements CppStmt {
 
-	private final T val;
+	private final List<CppStmt> stmts;
 	
-	private CppConst(T val) {
-		this.val = val;
+	private CppSeq(List<CppStmt> stmts) {
+		this.stmts = stmts;
 	}
 	
-	public static CppConst<Boolean> mkTrue() {
-		return new CppConst<>(true);
+	public static CppSeq mk(List<CppStmt> stmts) {
+		return new CppSeq(stmts);
 	}
 	
-	public static CppConst<Boolean> mkFalse() {
-		return new CppConst<>(false);
-	}
-	
-	public static CppConst<Integer> mkInt(int i) {
-		return new CppConst<>(i);
+	public static CppSeq mk(CppStmt... stmts) {
+		return new CppSeq(Arrays.asList(stmts));
 	}
 
 	@Override
-	public void print(PrintWriter out) {
-		out.print(val);
+	public void println(PrintWriter out, int indent) {
+		CodeGenUtil.print(stmts, out, indent);
 	}
 
 }

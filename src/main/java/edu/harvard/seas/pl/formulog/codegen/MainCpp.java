@@ -139,7 +139,7 @@ public class MainCpp {
 		
 		public void printStratumFunc(Stratum stratum, StratumCodeGen sgc) {
 			out.println("void stratum_" + stratum.getRank() + "() {");
-			CodeGenUtil.print(sgc.gen(stratum), out, 1);
+			sgc.gen(stratum).println(out, 1);
 			out.println("}");
 		}
 

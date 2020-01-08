@@ -36,24 +36,24 @@ public class StratumCodeGen {
 		this.ctx = ctx;
 	}
 	
-	public List<CppStmt> gen(Stratum stratum) {
+	public CppStmt gen(Stratum stratum) {
 		List<CppStmt> stmts = new ArrayList<>();
-		stmts.add(CppDeclare.mk("changed", CppConst.mkFalse()));
+		stmts.add(CppDecl.mk("changed", CppConst.mkFalse()));
 		RuleCodeGen rcg = new RuleCodeGen(ctx);
 		for (RelationSymbol sym : stratum.getPredicateSyms()) {
-			stmts.addAll(genFirstRound(sym, rcg));
+			stmts.add(genFirstRound(sym, rcg));
 		}
-		return stmts;
+		return CppSeq.mk(stmts);
 	}
 	
-	public List<CppStmt> genFirstRound(RelationSymbol sym, RuleCodeGen rcg) {
+	public CppStmt genFirstRound(RelationSymbol sym, RuleCodeGen rcg) {
 		List<CppStmt> stmts = new ArrayList<>();
 		for (IndexedRule r : ctx.getEval().getFirstRoundRules(sym)) {
-			Pair<List<CppStmt>, CppExpr> p = rcg.gen(r);
-			stmts.addAll(p.fst());
+			Pair<CppStmt, CppExpr> p = rcg.gen(r, true);
+			stmts.add(p.fst());
 			stmts.add(CppBinop.mkOrUpdate(CppVar.mk("changed"), p.snd()).toStmt());
 		}
-		return stmts;
+		return CppSeq.mk(stmts);
 	}
 
 }

@@ -22,29 +22,13 @@ package edu.harvard.seas.pl.formulog.codegen;
 
 import java.io.PrintWriter;
 
-public class CppConst<T> implements CppExpr {
+public enum CppSkip implements CppStmt {
 
-	private final T val;
+	SKIP;
 	
-	private CppConst(T val) {
-		this.val = val;
-	}
-	
-	public static CppConst<Boolean> mkTrue() {
-		return new CppConst<>(true);
-	}
-	
-	public static CppConst<Boolean> mkFalse() {
-		return new CppConst<>(false);
-	}
-	
-	public static CppConst<Integer> mkInt(int i) {
-		return new CppConst<>(i);
-	}
-
 	@Override
-	public void print(PrintWriter out) {
-		out.print(val);
+	public void println(PrintWriter out, int indent) {
+		// do nothing
 	}
 
 }

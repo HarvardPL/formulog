@@ -21,7 +21,6 @@ package edu.harvard.seas.pl.formulog.codegen;
  */
 
 import java.io.PrintWriter;
-import java.util.List;
 
 public class CppFor implements CppStmt {
 
@@ -29,9 +28,9 @@ public class CppFor implements CppStmt {
 	private final CppExpr init;
 	private final CppExpr guard;
 	private final CppExpr update;
-	private final List<CppStmt> body;
+	private final CppStmt body;
 	
-	private CppFor(String var, CppExpr init, CppExpr guard, CppExpr update, List<CppStmt> body) {
+	private CppFor(String var, CppExpr init, CppExpr guard, CppExpr update, CppStmt body) {
 		this.var = var;
 		this.init = init;
 		this.guard = guard;
@@ -39,7 +38,7 @@ public class CppFor implements CppStmt {
 		this.body = body;
 	}
 	
-	public static CppFor mk(String var, CppExpr init, CppExpr guard, CppExpr update, List<CppStmt> body) {
+	public static CppFor mk(String var, CppExpr init, CppExpr guard, CppExpr update, CppStmt body) {
 		return new CppFor(var, init, guard, update, body);
 	}
 
@@ -55,7 +54,7 @@ public class CppFor implements CppStmt {
 		out.print("; ");
 		update.print(out);
 		out.println(") {");
-		CodeGenUtil.print(body, out, indent + 1);
+		body.println(out, indent + 1);
 		CodeGenUtil.printIndent(out, indent);
 		out.println("}");
 	}

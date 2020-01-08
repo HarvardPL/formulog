@@ -39,6 +39,7 @@ public class CodeGenContext implements Iterable<Pair<Symbol, String>> {
 	private final Map<String, Symbol> reprToSym = new ConcurrentHashMap<>();
 	private final Map<SymbolBase, AtomicInteger> cnts = new ConcurrentHashMap<>();
 	private final Map<Pair<RelationSymbol, Integer>, CppIndex> rels = new ConcurrentHashMap<>();
+	private final AtomicInteger id = new AtomicInteger();
 
 	private final SemiNaiveEvaluation eval;
 
@@ -98,6 +99,10 @@ public class CodeGenContext implements Iterable<Pair<Symbol, String>> {
 			}
 
 		};
+	}
+
+	public String newId(String prefix) {
+		return prefix + id.getAndIncrement(); 
 	}
 
 }

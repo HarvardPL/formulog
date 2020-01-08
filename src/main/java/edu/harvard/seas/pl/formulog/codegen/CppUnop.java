@@ -43,6 +43,10 @@ public class CppUnop implements CppExpr {
 	public static CppUnop mkPreIncr(CppExpr expr) {
 		return mk("++", expr);
 	}
+	
+	public static CppUnop mkDeref(CppExpr expr) {
+		return mk("*", expr);
+	}
 
 	@Override
 	public void print(PrintWriter out) {

@@ -32,6 +32,8 @@ public interface CppIndex extends CppExpr {
 	
 	CppExpr mkTuple(List<CppExpr> exprs);
 	
+	CppExpr mkTupleAccess(CppExpr tup, CppExpr idx);
+	
 	CppStmt mkPrint();
 	
 	CppExpr mkPartition();

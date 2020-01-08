@@ -22,24 +22,31 @@ package edu.harvard.seas.pl.formulog.codegen;
 
 import java.io.PrintWriter;
 
-public class CppDeclare implements CppStmt {
+public class CppDecl implements CppStmt {
 
+	private final String type;
 	private final String var;
 	private final CppExpr val;
 
-	private CppDeclare(String var, CppExpr val) {
+	private CppDecl(String type, String var, CppExpr val) {
+		this.type = type;
 		this.var = var;
 		this.val = val;
 	}
 	
-	public static CppDeclare mk(String var, CppExpr val) {
-		return new CppDeclare(var, val);
+	public static CppDecl mk(String var, CppExpr val) {
+		return new CppDecl("auto", var, val);
+	}
+	
+	public static CppDecl mkRef(String var, CppExpr val) {
+		return new CppDecl("auto&", var, val);
 	}
 
 	@Override
 	public void println(PrintWriter out, int indent) {
 		CodeGenUtil.printIndent(out, indent);
-		out.print("auto ");
+		out.print(type);
+		out.print(" ");
 		out.print(var);
 		out.print(" = ");
 		val.print(out);
