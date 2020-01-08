@@ -100,7 +100,7 @@ public class BTreeIndex implements CppIndex {
 			@Override
 			public void print(PrintWriter out) {
 				out.print(name);
-				out.print("->empty();");
+				out.print("->empty()");
 			}
 
 		};
@@ -139,7 +139,37 @@ public class BTreeIndex implements CppIndex {
 
 	@Override
 	public void print(PrintWriter out) {
+		out.print("*");
 		out.print(name);
+	}
+
+	@Override
+	public CppExpr mkPartition() {
+		return new CppExpr() {
+
+			@Override
+			public void print(PrintWriter out) {
+				out.print(name);
+				out.print("->");
+				out.print("getChunks(400)");
+			}
+			
+		};
+	}
+
+	@Override
+	public CppStmt mkClear() {
+		return new CppStmt() {
+
+			@Override
+			public void println(PrintWriter out, int indent) {
+				CodeGenUtil.printIndent(out, indent);
+				out.print(name);
+				out.print("->");
+				out.println("clear();");
+			}
+			
+		};
 	}
 	
 }

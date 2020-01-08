@@ -22,56 +22,37 @@ package edu.harvard.seas.pl.formulog.codegen;
 
 import java.io.PrintWriter;
 
-public class CppBinop implements CppExpr {
+public class CppUnop implements CppExpr {
 
-	private final CppExpr lhs;
 	private final String op;
-	private final CppExpr rhs;
+	private final CppExpr expr;
 	
-	private CppBinop(CppExpr lhs, String op, CppExpr rhs) {
-		this.lhs = lhs;
+	private CppUnop(String op, CppExpr expr) {
 		this.op = op;
-		this.rhs = rhs;
-	}
-	
-	private static CppBinop mk(CppExpr lhs, String op, CppExpr rhs) {
-		return new CppBinop(lhs, op, rhs);
-	}
-	
-	public static CppBinop mkOrUpdate(CppExpr lhs, CppExpr rhs) {
-		return mk(lhs, "|=", rhs);
+		this.expr = expr;
 	}
 
-	public static CppBinop mkLogAnd(CppExpr lhs, CppExpr rhs) {
-		return mk(lhs, "&&", rhs);
+	private static CppUnop mk(String op, CppExpr expr) {
+		return new CppUnop(op, expr);
 	}
 	
-	public static CppBinop mkNotEq(CppExpr lhs, CppExpr rhs) {
-		return mk(lhs, "!=", rhs);
+	public static CppUnop mkNot(CppExpr expr) {
+		return mk("!", expr);
 	}
 	
-	public static CppBinop mkLt(CppExpr lhs, CppExpr rhs) {
-		return mk(lhs, "<", rhs);
+	public static CppUnop mkPreIncr(CppExpr expr) {
+		return mk("++", expr);
 	}
-	
+
 	@Override
 	public void print(PrintWriter out) {
-		if (lhs instanceof CppBinop) {
-			out.print("(");
-			lhs.print(out);
-			out.print(")");
-		} else {
-			lhs.print(out);
-		}
-		out.print(" ");
 		out.print(op);
-		out.print(" ");
-		if (rhs instanceof CppBinop) {
+		if (expr instanceof CppBinop) {
 			out.print("(");
-			rhs.print(out);
+			expr.print(out);
 			out.print(")");
 		} else {
-			rhs.print(out);
+			expr.print(out);
 		}
 	}
 

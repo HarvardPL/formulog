@@ -96,7 +96,7 @@ public class IndexedRule implements Rule<SimplePredicate, SimpleLiteral> {
 		return body.get(idx);
 	}
 
-	public Integer getDBIndex(int idx) {
+	public Integer getDbIndex(int idx) {
 		return idxs.get(idx);
 	}
 

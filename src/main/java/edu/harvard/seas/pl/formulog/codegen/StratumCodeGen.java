@@ -51,7 +51,7 @@ public class StratumCodeGen {
 		for (IndexedRule r : ctx.getEval().getFirstRoundRules(sym)) {
 			Pair<List<CppStmt>, CppExpr> p = rcg.gen(r);
 			stmts.addAll(p.fst());
-			stmts.add(CppBinop.mkOrEq(CppVar.mk("changed"), p.snd()).toStmt());
+			stmts.add(CppBinop.mkOrUpdate(CppVar.mk("changed"), p.snd()).toStmt());
 		}
 		return stmts;
 	}

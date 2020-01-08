@@ -20,22 +20,32 @@ package edu.harvard.seas.pl.formulog.codegen;
  * #L%
  */
 
+import java.io.PrintWriter;
 import java.util.List;
 
-public interface CppIndex extends CppExpr {
+public class CppIf implements CppStmt {
 
-	CppStmt mkDecl();
+	private final CppExpr guard;
+	private final List<CppStmt> thenBranch;
 	
-	CppExpr mkInsert(CppExpr expr);
+	private CppIf(CppExpr guard, List<CppStmt> thenBranch) {
+		this.guard = guard;
+		this.thenBranch = thenBranch;
+	}
 	
-	CppExpr mkIsEmpty();
-	
-	CppExpr mkTuple(List<CppExpr> exprs);
-	
-	CppStmt mkPrint();
-	
-	CppExpr mkPartition();
-	
-	CppStmt mkClear();
-	
+	public static CppIf mk(CppExpr guard, List<CppStmt> thenBranch) {
+		return new CppIf(guard, thenBranch);
+	}
+
+	@Override
+	public void println(PrintWriter out, int indent) {
+		CodeGenUtil.printIndent(out, indent);
+		out.print("if (");
+		guard.print(out);
+		out.println(") {");
+		CodeGenUtil.print(thenBranch, out, indent + 1);
+		CodeGenUtil.printIndent(out, indent);
+		out.println("}");
+	}
+
 }

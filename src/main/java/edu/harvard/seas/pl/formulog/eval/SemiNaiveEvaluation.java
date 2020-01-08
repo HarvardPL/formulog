@@ -558,7 +558,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 
 	Iterable<Iterable<Term[]>> lookup(IndexedRule r, int pos, OverwriteSubstitution s) throws EvaluationException {
 		SimplePredicate predicate = (SimplePredicate) r.getBody(pos);
-		int idx = r.getDBIndex(pos);
+		int idx = r.getDbIndex(pos);
 		Term[] args = predicate.getArgs();
 		Term[] key = new Term[args.length];
 		BindingType[] pat = predicate.getBindingPattern();
