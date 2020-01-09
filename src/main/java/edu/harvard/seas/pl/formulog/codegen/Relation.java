@@ -22,7 +22,7 @@ package edu.harvard.seas.pl.formulog.codegen;
 
 import java.util.List;
 
-public interface CppIndex extends CppExpr {
+public interface Relation extends CppExpr {
 
 	CppStmt mkDecl();
 	
@@ -38,6 +38,6 @@ public interface CppIndex extends CppExpr {
 	
 	CppExpr mkPartition();
 	
-	CppStmt mkClear();
+	CppStmt mkPurge();
 	
 }

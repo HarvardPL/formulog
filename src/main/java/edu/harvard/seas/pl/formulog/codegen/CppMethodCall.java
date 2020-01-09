@@ -29,25 +29,39 @@ public class CppMethodCall implements CppExpr {
 	private final String func;
 	private final CppExpr rec;
 	private final List<CppExpr> args;
-	
-	private CppMethodCall(CppExpr rec, String func, List<CppExpr> args) {
+	private final boolean thruPtr;
+
+	private CppMethodCall(CppExpr rec, String func, List<CppExpr> args, boolean thruPtr) {
 		this.func = func;
 		this.rec = rec;
 		this.args = args;
+		this.thruPtr = thruPtr;
 	}
-	
+
 	public static CppMethodCall mk(CppExpr rec, String func, List<CppExpr> args) {
-		return new CppMethodCall(rec, func, args);
+		return new CppMethodCall(rec, func, args, false);
 	}
-	
+
 	public static CppMethodCall mk(CppExpr rec, String func, CppExpr... args) {
-		return new CppMethodCall(rec, func, Arrays.asList(args));
+		return new CppMethodCall(rec, func, Arrays.asList(args), false);
+	}
+
+	public static CppMethodCall mkThruPtr(CppExpr rec, String func, List<CppExpr> args) {
+		return new CppMethodCall(rec, func, args, true);
+	}
+
+	public static CppMethodCall mkThruPtr(CppExpr rec, String func, CppExpr... args) {
+		return new CppMethodCall(rec, func, Arrays.asList(args), true);
 	}
 
 	@Override
 	public void print(PrintWriter out) {
 		rec.print(out);
-		out.print(".");
+		if (thruPtr) {
+			out.print("->");
+		} else {
+			out.print(".");
+		}
 		out.print(func);
 		out.print("(");
 		CodeGenUtil.printSeparated(args, ", ", out);

@@ -60,24 +60,25 @@ public class BTreeRelationStruct implements RelationStruct {
 	}
 
 	private void declarePrint(PrintWriter out) {
-		out.println("  void print() {");
-		out.print("    " + mkIndexName(masterIndex));
-		out.println(".printTree();");
+		out.println("  void print() const {");
+		CppVar m = CppVar.mk(mkIndexName(masterIndex));
+		CppMethodCall.mk(m, "printTree").toStmt().println(out, 2);
 		out.println("  }");
 	}
 
 	private void declarePurge(PrintWriter out) {
 		out.println("  void purge() {");
 		for (int i = 0; i < comparators.size(); ++i) {
-			out.print("    " + mkIndexName(i));
-			out.println(".clear();");
+			CppMethodCall.mk(CppVar.mk(mkIndexName(i)), "clear").toStmt().println(out, 2);
 		}
 		out.println("  }");
 	}
 
 	private void declareEmpty(PrintWriter out) {
-		// TODO Auto-generated method stub
-
+		out.println("  bool empty() const {");
+		CppExpr call = CppMethodCall.mk(CppVar.mk(mkIndexName(masterIndex)), "empty");
+		CppReturn.mk(call).println(out, 2);
+		out.println("  }");
 	}
 
 	private void declareInsert(PrintWriter out) {
@@ -99,11 +100,17 @@ public class BTreeRelationStruct implements RelationStruct {
 	private void declareIndices(PrintWriter out) {
 		int index = 0;
 		for (List<Integer> order : comparators) {
-			out.print("  souffle::btree_set<" + mkTupleName() + ", ");
-			out.print(mkComparator(order));
-			out.println("> " + mkIndexName(index) + ";");
+			String type = mkIndexType(index);
+			out.print("  using " + type + " = souffle::btree_set<");
+			out.println(mkTupleName() + ", " + mkComparator(order) + ">;");
+			out.println("  " + type + " " + mkIndexName(index) + ";");
 			index++;
 		}
+		out.println("  using iterator = " + mkIndexType(masterIndex) + "::iterator;");
+	}
+
+	private String mkIndexType(int index) {
+		return mkIndexName(index) + "_t";
 	}
 
 	private String mkIndexName(int index) {
@@ -126,15 +133,19 @@ public class BTreeRelationStruct implements RelationStruct {
 	}
 
 	private void declarePartition(PrintWriter out) {
-
+		out.println("  vector<souffle::range<iterator>> partition() const {");
+		CppVar m = CppVar.mk(mkIndexName(masterIndex));
+		CppExpr call = CppMethodCall.mk(m, "getChunks", CppConst.mkInt(400));
+		CppReturn.mk(call).println(out, 2);
+		out.println("  }");
 	}
 
 	@Override
-	public CppIndex mkRelation(RelationSymbol sym) {
+	public Relation mkRelation(RelationSymbol sym) {
 		return new RelationImpl(sym);
 	}
 
-	private class RelationImpl implements CppIndex {
+	private class RelationImpl implements Relation {
 
 		private final String name;
 
@@ -147,7 +158,7 @@ public class BTreeRelationStruct implements RelationStruct {
 				sym = ((NewSymbol) sym).getBaseSymbol();
 				s += "_new";
 			}
-			name =  sym + s + "__";
+			name = sym + s + "__";
 		}
 
 		@Override
@@ -171,44 +182,48 @@ public class BTreeRelationStruct implements RelationStruct {
 
 		@Override
 		public CppExpr mkInsert(CppExpr expr) {
-			// TODO Auto-generated method stub
-			return null;
+			return CppMethodCall.mkThruPtr(CppVar.mk(name), "insert", expr);
 		}
 
 		@Override
 		public CppExpr mkIsEmpty() {
-			// TODO Auto-generated method stub
-			return null;
+			return CppMethodCall.mkThruPtr(CppVar.mk(name), "empty");
 		}
 
 		@Override
 		public CppExpr mkTuple(List<CppExpr> exprs) {
-			// TODO Auto-generated method stub
-			return null;
+			assert exprs.size() == arity;
+			return new CppExpr() {
+
+				@Override
+				public void print(PrintWriter out) {
+					out.print(mkTupleName());
+					out.print("{");
+					CodeGenUtil.printSeparated(exprs, ", ", out);
+					out.print("}");
+				}
+
+			};
 		}
 
 		@Override
 		public CppExpr mkTupleAccess(CppExpr tup, CppExpr idx) {
-			// TODO Auto-generated method stub
-			return null;
+			return CppSubscript.mk(tup, idx);
 		}
 
 		@Override
 		public CppStmt mkPrint() {
-			// TODO Auto-generated method stub
-			return null;
+			return CppMethodCall.mkThruPtr(CppVar.mk(name), "print").toStmt();
 		}
 
 		@Override
 		public CppExpr mkPartition() {
-			// TODO Auto-generated method stub
-			return null;
+			return CppMethodCall.mkThruPtr(CppVar.mk(name), "partition");
 		}
 
 		@Override
-		public CppStmt mkClear() {
-			// TODO Auto-generated method stub
-			return null;
+		public CppStmt mkPurge() {
+			return CppMethodCall.mkThruPtr(CppVar.mk(name), "purge").toStmt();
 		}
 
 	}

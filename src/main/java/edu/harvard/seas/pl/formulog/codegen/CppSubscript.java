@@ -22,12 +22,26 @@ package edu.harvard.seas.pl.formulog.codegen;
 
 import java.io.PrintWriter;
 
-import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
+public class CppSubscript implements CppExpr {
 
-public interface RelationStruct {
+	private final CppExpr val;
+	private final CppExpr idx;
+	
+	private CppSubscript(CppExpr val, CppExpr idx) {
+		this.val = val;
+		this.idx = idx;
+	}
+	
+	public static CppSubscript mk(CppExpr val, CppExpr idx) {
+		return new CppSubscript(val, idx);
+	}
 
-	void declare(PrintWriter out);
-	
-	Relation mkRelation(RelationSymbol sym);
-	
+	@Override
+	public void print(PrintWriter out) {
+		val.print(out);
+		out.print("[");
+		idx.print(out);
+		out.print("]");
+	}
+
 }

@@ -65,18 +65,20 @@ public class RuleCodeGen {
 	}
 
 	private Function<CppStmt, CppStmt> mkOuterIf(IndexedRule rule) {
-		CppExpr guard = CppConst.mkTrue();
-		int i = 0;
+		Set<RelationSymbol> syms = new HashSet<>();
 		for (SimpleLiteral l : rule) {
 			if (l.getTag() == SimpleLiteralTag.PREDICATE) {
 				SimplePredicate pred = (SimplePredicate) l;
 				if (!pred.isNegated()) {
-					CppIndex index = ctx.lookupIndex(pred.getSymbol(), rule.getDbIndex(i));
-					CppExpr notEmpty = CppUnop.mkNot(index.mkIsEmpty());
-					guard = CppBinop.mkLogAnd(guard, notEmpty);
+					syms.add(pred.getSymbol());
 				}
 			}
-			i++;
+		}
+		CppExpr guard = CppConst.mkTrue();
+		for (RelationSymbol sym : syms) {
+			Relation rel = ctx.lookupRelation(sym);
+			CppExpr notEmpty = CppUnop.mkNot(rel.mkIsEmpty());
+			guard = CppBinop.mkLogAnd(guard, notEmpty);
 		}
 		final CppExpr guard2 = guard;
 		return body -> CppIf.mk(guard2, body);
@@ -116,8 +118,6 @@ public class RuleCodeGen {
 			SimplePredicate head = rule.getHead();
 			Pair<CppStmt, List<CppExpr>> p = tcg.gen(Arrays.asList(head.getArgs()), env);
 			RelationSymbol sym = isFirstRound ? head.getSymbol() : new DeltaSymbol(head.getSymbol());
-			
-//			CppIndex index = ctx.lookupIndex(sym, idx)
 			return new Pair<>(CppSeq.skip(), CppConst.mkFalse());
 		}
 
@@ -186,7 +186,7 @@ public class RuleCodeGen {
 					throw new TodoException();
 				}
 			}
-			CppStmt assign = CppDecl.mk("part", lookupIndex(pred, pos).mkPartition());
+			CppStmt assign = CppDecl.mk("part", lookupRelation(pred).mkPartition());
 			CppVar it = CppVar.mk("it");
 			CppExpr init = CppMethodCall.mk(CppVar.mk("part"), "begin");
 			CppExpr guard = CppBinop.mkLt(it, CppMethodCall.mk(CppVar.mk("part"), "end"));
@@ -196,7 +196,7 @@ public class RuleCodeGen {
 		}
 
 		private Function<CppStmt, CppStmt> genLoop(SimplePredicate pred, int pos, CppExpr it) {
-			CppIndex index = lookupIndex(pred, pos);
+			Relation rel = lookupRelation(pred);
 			String tup = ctx.newId("tup");
 			List<CppStmt> assignments = new ArrayList<>();
 			BindingType[] pat = pred.getBindingPattern();
@@ -204,7 +204,7 @@ public class RuleCodeGen {
 			for (Term t : pred.getArgs()) {
 				if (pat[i] == BindingType.FREE) {
 					String id = ctx.newId("x");
-					CppExpr access = index.mkTupleAccess(CppVar.mk(tup), CppConst.mkInt(i));
+					CppExpr access = rel.mkTupleAccess(CppVar.mk(tup), CppConst.mkInt(i));
 					assignments.add(CppDecl.mkRef(id, access));
 					env.put((Var) t, CppVar.mk(id));
 				}
@@ -214,8 +214,8 @@ public class RuleCodeGen {
 			return s -> CppForEach.mk(tup, it, CppSeq.mk(all, s));
 		}
 
-		private CppIndex lookupIndex(SimplePredicate pred, int pos) {
-			return ctx.lookupIndex(pred.getSymbol(), rule.getDbIndex(pos));
+		private Relation lookupRelation(SimplePredicate pred) {
+			return ctx.lookupRelation(pred.getSymbol());
 		}
 
 	}

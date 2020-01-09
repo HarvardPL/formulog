@@ -113,10 +113,11 @@ public class MainCpp {
 				declareRelation(struct, sym);
 			}
 		}
-		
+
 		private void declareRelation(RelationStruct struct, RelationSymbol sym) {
-			CppIndex rel = struct.mkRelation(sym);
+			Relation rel = struct.mkRelation(sym);
 			rel.mkDecl().println(out, 0);
+			ctx.registerRelation(sym, rel);
 		}
 
 		private List<List<Integer>> aggregateComparators(RelationSymbol sym, SortedIndexedFactDb db) {
@@ -128,30 +129,23 @@ public class MainCpp {
 			return acc;
 		}
 
-		public void defineRelation(RelationSymbol sym, int idx) {
-			CppIndex index = ctx.lookupIndex(sym, idx);
-			index.mkDecl().println(out, 0);
-		}
-
 		public void loadEdbs() {
 			for (RelationSymbol sym : db.getSymbols()) {
 				if (sym.isEdbSymbol()) {
-					for (int idx = 0; idx < db.numIndices(sym); ++idx) {
-						// XXX Should probably change this so that we explicitly
-						// load up only the master index, and then add the
-						// master index to all the other ones.
-						loadEdb(sym, idx);
-					}
+					// XXX Should probably change this so that we explicitly
+					// load up only the master index, and then add the
+					// master index to all the other ones.
+					loadEdb(sym);
 				}
 			}
 		}
 
-		public void loadEdb(RelationSymbol sym, int idx) {
-			CppIndex index = ctx.lookupIndex(sym, idx);
+		public void loadEdb(RelationSymbol sym) {
+			Relation rel = ctx.lookupRelation(sym);
 			for (Term[] tup : db.getAll(sym)) {
 				Pair<CppStmt, List<CppExpr>> p = tcg.gen(Arrays.asList(tup), Collections.emptyMap());
 				p.fst().println(out, 1);
-				index.mkInsert(index.mkTuple(p.snd())).toStmt().println(out, 1);
+				rel.mkInsert(rel.mkTuple(p.snd())).toStmt().println(out, 1);
 			}
 		}
 
@@ -184,8 +178,7 @@ public class MainCpp {
 				out.print("  cout << \"");
 				out.print(sym);
 				out.println("\" << endl;");
-				int idx = db.getMasterIndex(sym);
-				ctx.lookupIndex(sym, idx).mkPrint().println(out, 1);
+				ctx.lookupRelation(sym).mkPrint().println(out, 1);
 			}
 		}
 
