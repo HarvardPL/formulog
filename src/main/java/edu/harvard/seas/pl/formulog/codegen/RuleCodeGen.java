@@ -99,7 +99,7 @@ public class RuleCodeGen {
 			int pos = 0;
 			Set<Var> boundVars = new HashSet<>();
 			for (SimpleLiteral l : rule) {
-				Function<CppStmt, CppStmt> k; 
+				Function<CppStmt, CppStmt> k;
 				if (!hasCheckedForNovelty && boundVars.containsAll(rule.getHead().varSet())) {
 					final Function<CppStmt, CppStmt> k2 = l.accept(visitor, pos);
 					k = s -> mkCheckIfNew().apply(k2.apply(s));
@@ -114,13 +114,13 @@ public class RuleCodeGen {
 			}
 			return continuation;
 		}
-		
+
 		public Pair<CppStmt, CppExpr> go() {
 			Function<CppStmt, CppStmt> evalCode = makeEvalCode();
 			Pair<CppStmt, CppExpr> update = mkDbUpdate();
 			return new Pair<>(evalCode.apply(update.fst()), update.snd());
 		}
-		
+
 		private Pair<CppStmt, CppExpr> mkDbUpdate() {
 			Relation rel = getTargetRel();
 			CppStmt stmt = rel.mkInsert(CppVar.mk("tuple")).toStmt();
@@ -131,20 +131,20 @@ public class RuleCodeGen {
 			}
 			return new Pair<>(stmt, CppUnop.mkNot(rel.mkIsEmpty()));
 		}
-		
+
 		private Function<CppStmt, CppStmt> mkCheckIfNew() {
 			Relation rel = ctx.lookupRelation(rule.getHead().getSymbol());
 			CppExpr guard = CppUnop.mkNot(rel.mkContains(CppVar.mk("tuple")));
 			return s -> CppSeq.mk(declTuple(), CppIf.mk(guard, s));
 		}
-		
+
 		private CppStmt declTuple() {
 			Relation rel = getTargetRel();
 			Pair<CppStmt, List<CppExpr>> p = tcg.gen(Arrays.asList(rule.getHead().getArgs()), env);
 			CppStmt declTuple = rel.mkDeclTuple("tuple", p.snd());
 			return CppSeq.mk(p.fst(), declTuple);
 		}
-		
+
 		private Relation getTargetRel() {
 			SimplePredicate head = rule.getHead();
 			RelationSymbol sym = isFirstRound ? head.getSymbol() : new NewSymbol(head.getSymbol());
@@ -196,9 +196,33 @@ public class RuleCodeGen {
 		}
 
 		private Function<CppStmt, CppStmt> handlePositivePred(SimplePredicate pred, int pos) {
-			Pair<Function<CppStmt, CppStmt>, CppExpr> p = genTupleIterator(pred, pos);
-			Function<CppStmt, CppStmt> loop = genLoop(pred, pos, p.snd());
-			return s -> p.fst().apply(loop.apply(s));
+			if (!hasFreeArgs(pred)) {
+				return mkContains(pred, pos, false);
+			} else {
+				Pair<Function<CppStmt, CppStmt>, CppExpr> p = genTupleIterator(pred, pos);
+				Function<CppStmt, CppStmt> loop = genLoop(pred, pos, p.snd());
+				return s -> p.fst().apply(loop.apply(s));
+			}
+		}
+		
+		private Function<CppStmt, CppStmt> mkContains(SimplePredicate pred, int pos, boolean isNegated) {
+			Pair<CppStmt, CppExpr> key = genKey(pred);
+			Relation rel = ctx.lookupRelation(pred.getSymbol());
+			CppExpr guard = rel.mkContains(rule.getDbIndex(pos), key.snd());
+			if (isNegated) {
+				guard = CppUnop.mkNot(guard);
+			}
+			final CppExpr guard2 = guard;
+			return s -> CppSeq.mk(key.fst(), CppIf.mk(guard2, s));
+		}
+
+		private boolean hasFreeArgs(SimplePredicate pred) {
+			for (BindingType ty : pred.getBindingPattern()) {
+				if (ty == BindingType.FREE) {
+					return true;
+				}
+			}
+			return false;
 		}
 
 		private Pair<Function<CppStmt, CppStmt>, CppExpr> genTupleIterator(SimplePredicate pred, int pos) {
@@ -225,8 +249,8 @@ public class RuleCodeGen {
 			Function<CppStmt, CppStmt> forLoop = body -> CppFor.mk("it", init, guard, update, body);
 			return new Pair<>(body -> CppSeq.mk(assign, forLoop.apply(body)), CppUnop.mkDeref(it));
 		}
-		
-		private Pair<Function<CppStmt, CppStmt>, CppExpr> genNormalLookup(SimplePredicate pred, int pos) {
+
+		private Pair<CppStmt, CppExpr> genKey(SimplePredicate pred) {
 			List<CppStmt> stmts = new ArrayList<>();
 			String tupName = ctx.newId("key");
 			CppVar tup = CppVar.mk(tupName);
@@ -243,9 +267,14 @@ public class RuleCodeGen {
 				}
 				i++;
 			}
-			CppExpr call = rel.mkLookup(rule.getDbIndex(pos), Arrays.asList(pred.getBindingPattern()), tup);
-			CppStmt all = CppSeq.mk(stmts);
-			return new Pair<>(s -> CppSeq.mk(all, s), call);
+			return new Pair<>(CppSeq.mk(stmts), tup);
+		}
+
+		private Pair<Function<CppStmt, CppStmt>, CppExpr> genNormalLookup(SimplePredicate pred, int pos) {
+			Pair<CppStmt, CppExpr> p = genKey(pred);
+			Relation rel = ctx.lookupRelation(pred.getSymbol());
+			CppExpr call = rel.mkLookup(rule.getDbIndex(pos), Arrays.asList(pred.getBindingPattern()), p.snd());
+			return new Pair<>(s -> CppSeq.mk(p.fst(), s), call);
 		}
 
 		private Function<CppStmt, CppStmt> genLoop(SimplePredicate pred, int pos, CppExpr it) {

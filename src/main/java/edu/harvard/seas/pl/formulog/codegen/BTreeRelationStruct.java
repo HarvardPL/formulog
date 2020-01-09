@@ -87,8 +87,14 @@ public class BTreeRelationStruct implements RelationStruct {
 	}
 
 	private void declareContains(PrintWriter out) {
-		out.println("  bool contains(const " + mkTupleType() + "& tup) const {");
-		CppExpr call = CppMethodCall.mk(CppVar.mk(mkIndexName(masterIndex)), "contains", CppVar.mk("tup"));
+		for (int i = 0; i < indexInfo.size(); ++i) {
+			declareContains(out, i);
+		}
+	}
+	
+	private void declareContains(PrintWriter out, int idx) {
+		out.println("  bool " + mkContainsName(idx) + "(const " + mkTupleType() + "& tup) const {");
+		CppExpr call = CppMethodCall.mk(CppVar.mk(mkIndexName(idx)), "contains", CppVar.mk("tup"));
 		CppReturn.mk(call).println(out, 2);
 		out.println("  }");
 	}
@@ -240,6 +246,10 @@ public class BTreeRelationStruct implements RelationStruct {
 	private String mkLookupName(int index, List<BindingType> pat) {
 		return "lookup_" + index + "_" + Util.lookupOrCreate(pats, pat, () -> patCnt.getAndIncrement());
 	}
+	
+	private String mkContainsName(int index) {
+		return "contains_" + index;
+	}
 
 	private String mkComparator(List<Integer> order) {
 		String s = "Comparator<";
@@ -304,7 +314,12 @@ public class BTreeRelationStruct implements RelationStruct {
 
 		@Override
 		public CppExpr mkContains(CppExpr expr) {
-			return CppMethodCall.mkThruPtr(nameVar, "contains", expr);
+			return CppMethodCall.mkThruPtr(nameVar, mkContainsName(masterIndex), expr);
+		}
+		
+		@Override
+		public CppExpr mkContains(int idx, CppExpr expr) {
+			return CppMethodCall.mkThruPtr(nameVar, mkContainsName(idx), expr);
 		}
 
 		@Override

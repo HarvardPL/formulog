@@ -30,6 +30,8 @@ public interface Relation extends CppExpr {
 
 	CppExpr mkContains(CppExpr expr);
 	
+	CppExpr mkContains(int idx, CppExpr expr);
+	
 	CppExpr mkInsert(CppExpr expr);
 	
 	CppExpr mkInsertAll(CppExpr expr);
