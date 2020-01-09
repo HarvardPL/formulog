@@ -22,32 +22,29 @@ package edu.harvard.seas.pl.formulog.codegen;
 
 import java.io.PrintWriter;
 
-public class CppReturn implements CppStmt {
+public class CppWhile implements CppStmt {
 
-	private final CppExpr val;
+	private final CppExpr guard;
+	private final CppStmt body;
 	
-	private CppReturn(CppExpr val) {
-		this.val = val;
+	private CppWhile(CppExpr guard, CppStmt body) {
+		this.guard = guard;
+		this.body = body;
 	}
 	
-	public static CppReturn mk(CppExpr val) {
-		return new CppReturn(val);
-	}
-	
-	public static CppReturn mk() {
-		return new CppReturn(null);
+	public static CppWhile mk(CppExpr guard, CppStmt body) {
+		return new CppWhile(guard, body);
 	}
 
 	@Override
 	public void println(PrintWriter out, int indent) {
 		CodeGenUtil.printIndent(out, indent);
-		if (val == null) {
-			out.println("return;");
-			return;
-		}
-		out.print("return ");
-		val.print(out);
-		out.println(";");
+		out.print("while (");
+		guard.print(out);
+		out.println(") {");
+		body.println(out, indent + 1);
+		CodeGenUtil.printIndent(out, indent);
+		out.println("}");
 	}
 
 }

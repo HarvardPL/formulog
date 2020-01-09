@@ -31,6 +31,7 @@ import edu.harvard.seas.pl.formulog.validating.Stratum;
 public class StratumCodeGen {
 
 	private final CodeGenContext ctx;
+	private static final CppVar changed = CppVar.mk("changed");
 	
 	public StratumCodeGen(CodeGenContext ctx) {
 		this.ctx = ctx;
@@ -40,20 +41,39 @@ public class StratumCodeGen {
 		List<CppStmt> stmts = new ArrayList<>();
 		stmts.add(CppDecl.mk("changed", CppConst.mkFalse()));
 		RuleCodeGen rcg = new RuleCodeGen(ctx);
+		stmts.add(genFirstRound(stratum, rcg));
+		stmts.add(genLoop(stratum, rcg));
+		return CppSeq.mk(stmts);
+	}
+
+	private CppStmt genFirstRound(Stratum stratum, RuleCodeGen rcg) {
+		List<CppStmt> stmts = new ArrayList<>();
 		for (RelationSymbol sym : stratum.getPredicateSyms()) {
 			stmts.add(genFirstRound(sym, rcg));
+		}
+		return CppSeq.mk(stmts); 
+	}
+	
+	private CppStmt genFirstRound(RelationSymbol sym, RuleCodeGen rcg) {
+		List<CppStmt> stmts = new ArrayList<>();
+		for (IndexedRule r : ctx.getEval().getFirstRoundRules(sym)) {
+			stmts.add(genRule(r, rcg, true));
 		}
 		return CppSeq.mk(stmts);
 	}
 	
-	public CppStmt genFirstRound(RelationSymbol sym, RuleCodeGen rcg) {
-		List<CppStmt> stmts = new ArrayList<>();
-		for (IndexedRule r : ctx.getEval().getFirstRoundRules(sym)) {
-			Pair<CppStmt, CppExpr> p = rcg.gen(r, true);
-			stmts.add(p.fst());
-			stmts.add(CppBinop.mkOrUpdate(CppVar.mk("changed"), p.snd()).toStmt());
-		}
-		return CppSeq.mk(stmts);
+	private CppStmt genRule(IndexedRule r, RuleCodeGen rcg, boolean firstRound) {
+		Pair<CppStmt, CppExpr> p = rcg.gen(r, firstRound);
+		return CppSeq.mk(p.fst(), CppBinop.mkOrUpdate(changed, p.snd()).toStmt());
+	}
+	
+	private CppStmt genLoop(Stratum stratum, RuleCodeGen rcg) {
+		CppStmt setFalse = CppBinop.mkAssign(changed, CppConst.mkFalse()).toStmt();
+		return CppWhile.mk(changed, CppSeq.mk(setFalse, genLaterRounds(stratum, rcg)));
+	}
+	
+	private CppStmt genLaterRounds(Stratum stratum, RuleCodeGen rcg) {
+		return CppSeq.skip();
 	}
 
 }

@@ -52,6 +52,7 @@ public class BTreeRelationStruct implements RelationStruct {
 		out.println(" {");
 		declareIndices(out);
 		declareInsert(out);
+		declareInsertAll(out);
 		declareEmpty(out);
 		declarePurge(out);
 		declarePrint(out);
@@ -94,6 +95,18 @@ public class BTreeRelationStruct implements RelationStruct {
 		CppStmt body = CppSeq.mk(inserts);
 		CppExpr guard = CppMethodCall.mk(CppVar.mk(mkIndexName(masterIndex)), "insert", tup);
 		CppIf.mk(guard, body, CppReturn.mk(CppConst.mkFalse())).println(out, 2);
+		out.println("  }");
+	}
+
+	private void declareInsertAll(PrintWriter out) {
+		out.println("  void insertAll(const " + name + "& other) {");
+		CppVar other = CppVar.mk("other");
+		for (int i = 0; i < comparators.size(); ++i) {
+			String indexName = mkIndexName(i);
+			CppExpr otherIndex = CppAccess.mk(other, indexName);
+			CppExpr call = CppMethodCall.mk(CppVar.mk(indexName), "insertAll", otherIndex);
+			call.toStmt().println(out, 2);
+		}
 		out.println("  }");
 	}
 
@@ -158,7 +171,7 @@ public class BTreeRelationStruct implements RelationStruct {
 				sym = ((NewSymbol) sym).getBaseSymbol();
 				s += "_new";
 			}
-			name = sym + s + "__";
+			name = "__" + sym + s;
 		}
 
 		@Override

@@ -22,32 +22,31 @@ package edu.harvard.seas.pl.formulog.codegen;
 
 import java.io.PrintWriter;
 
-public class CppReturn implements CppStmt {
+public class CppAccess implements CppExpr {
 
 	private final CppExpr val;
+	private final String field;
+	private final boolean thruPtr;
 	
-	private CppReturn(CppExpr val) {
+	private CppAccess(CppExpr val, String field, boolean thruPtr) {
 		this.val = val;
+		this.field = field;
+		this.thruPtr = thruPtr;
 	}
 	
-	public static CppReturn mk(CppExpr val) {
-		return new CppReturn(val);
+	public static CppAccess mk(CppExpr val, String field) {
+		return new CppAccess(val, field, false);
 	}
 	
-	public static CppReturn mk() {
-		return new CppReturn(null);
+	public static CppAccess mkThruPtr(CppExpr val, String field) {
+		return new CppAccess(val, field, true);
 	}
 
 	@Override
-	public void println(PrintWriter out, int indent) {
-		CodeGenUtil.printIndent(out, indent);
-		if (val == null) {
-			out.println("return;");
-			return;
-		}
-		out.print("return ");
+	public void print(PrintWriter out) {
 		val.print(out);
-		out.println(";");
+		out.print(thruPtr ? "->" : ".");
+		out.print(field);
 	}
 
 }

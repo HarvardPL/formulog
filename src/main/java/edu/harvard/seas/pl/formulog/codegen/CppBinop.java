@@ -53,6 +53,10 @@ public class CppBinop implements CppExpr {
 	public static CppBinop mkLt(CppExpr lhs, CppExpr rhs) {
 		return mk(lhs, "<", rhs);
 	}
+	
+	public static CppBinop mkAssign(CppExpr lhs, CppExpr rhs) {
+		return mk(lhs, "=", rhs);
+	}
 
 	@Override
 	public void print(PrintWriter out) {

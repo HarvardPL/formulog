@@ -24,6 +24,7 @@ std::ostream& operator<<(std::ostream& out, const Symbol& sym) {
 	  case Symbol::boxed_string: return out << "boxed_string";
 /* INSERT 1 */
 	}
+  __builtin_unreachable();
 }
 
 } // namespace flg

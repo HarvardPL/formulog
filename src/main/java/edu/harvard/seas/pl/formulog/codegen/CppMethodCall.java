@@ -57,11 +57,7 @@ public class CppMethodCall implements CppExpr {
 	@Override
 	public void print(PrintWriter out) {
 		rec.print(out);
-		if (thruPtr) {
-			out.print("->");
-		} else {
-			out.print(".");
-		}
+		out.print(thruPtr ? "->" : ".");
 		out.print(func);
 		out.print("(");
 		CodeGenUtil.printSeparated(args, ", ", out);
