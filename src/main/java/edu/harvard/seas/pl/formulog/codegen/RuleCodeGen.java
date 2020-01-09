@@ -118,7 +118,9 @@ public class RuleCodeGen {
 			SimplePredicate head = rule.getHead();
 			Pair<CppStmt, List<CppExpr>> p = tcg.gen(Arrays.asList(head.getArgs()), env);
 			RelationSymbol sym = isFirstRound ? head.getSymbol() : new DeltaSymbol(head.getSymbol());
-			return new Pair<>(CppSeq.skip(), CppConst.mkFalse());
+			Relation rel = ctx.lookupRelation(sym);
+			CppStmt insert = rel.mkInsert(rel.mkTuple(p.snd())).toStmt();
+			return new Pair<>(CppSeq.mk(p.fst(), insert), CppUnop.mkNot(rel.mkIsEmpty()));
 		}
 
 		private final SimpleLiteralVisitor<Integer, Function<CppStmt, CppStmt>> visitor = new SimpleLiteralVisitor<Integer, Function<CppStmt, CppStmt>>() {
