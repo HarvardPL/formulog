@@ -13,8 +13,13 @@ namespace flg {
 struct Term {
   Symbol sym;
 
+  Term(Symbol sym_) : sym{sym_} {}
+
   static int compare(const Term* t1, const Term* t2);
 };
+
+auto min_term = std::make_shared<Term>(Symbol::min_term);
+auto max_term = std::make_shared<Term>(Symbol::max_term);
 
 struct ComplexTerm : public Term {
   size_t arity;

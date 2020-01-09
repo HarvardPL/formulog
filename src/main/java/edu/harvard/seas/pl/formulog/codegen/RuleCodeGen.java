@@ -1,8 +1,5 @@
 package edu.harvard.seas.pl.formulog.codegen;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-
 /*-
  * #%L
  * FormuLog
@@ -23,7 +20,8 @@ import java.util.Arrays;
  * #L%
  */
 
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -35,7 +33,6 @@ import edu.harvard.seas.pl.formulog.ast.BindingType;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.eval.IndexedRule;
-import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.TodoException;
@@ -89,6 +86,7 @@ public class RuleCodeGen {
 		private final IndexedRule rule;
 		private final boolean isFirstRound;
 		private boolean hasReachedSplit;
+		private boolean hasCheckedForNovelty;
 		private final Map<Var, CppExpr> env = new HashMap<>();
 
 		public Worker(IndexedRule rule, boolean isFirstRound) {
@@ -115,12 +113,33 @@ public class RuleCodeGen {
 		}
 		
 		private Pair<CppStmt, CppExpr> mkDbUpdate() {
+			Relation rel = getTargetRel();
+			CppStmt stmt = rel.mkInsert(CppVar.mk("tuple")).toStmt();
+			if (!hasCheckedForNovelty && !isFirstRound) {
+				stmt = mkCheckIfNew().apply(stmt);
+			} else {
+				stmt = CppSeq.mk(declTuple(), stmt);
+			}
+			return new Pair<>(stmt, CppUnop.mkNot(rel.mkIsEmpty()));
+		}
+		
+		private Function<CppStmt, CppStmt> mkCheckIfNew() {
+			Relation rel = ctx.lookupRelation(rule.getHead().getSymbol());
+			CppExpr guard = CppUnop.mkNot(rel.mkContains(CppVar.mk("tuple")));
+			return s -> CppSeq.mk(declTuple(), CppIf.mk(guard, s));
+		}
+		
+		private CppStmt declTuple() {
+			Relation rel = getTargetRel();
+			Pair<CppStmt, List<CppExpr>> p = tcg.gen(Arrays.asList(rule.getHead().getArgs()), env);
+			CppStmt declTuple = rel.mkDeclTuple("tuple", p.snd());
+			return CppSeq.mk(p.fst(), declTuple);
+		}
+		
+		private Relation getTargetRel() {
 			SimplePredicate head = rule.getHead();
-			Pair<CppStmt, List<CppExpr>> p = tcg.gen(Arrays.asList(head.getArgs()), env);
-			RelationSymbol sym = isFirstRound ? head.getSymbol() : new DeltaSymbol(head.getSymbol());
-			Relation rel = ctx.lookupRelation(sym);
-			CppStmt insert = rel.mkInsert(rel.mkTuple(p.snd())).toStmt();
-			return new Pair<>(CppSeq.mk(p.fst(), insert), CppUnop.mkNot(rel.mkIsEmpty()));
+			RelationSymbol sym = isFirstRound ? head.getSymbol() : new NewSymbol(head.getSymbol());
+			return ctx.lookupRelation(sym);
 		}
 
 		private final SimpleLiteralVisitor<Integer, Function<CppStmt, CppStmt>> visitor = new SimpleLiteralVisitor<Integer, Function<CppStmt, CppStmt>>() {
@@ -176,12 +195,13 @@ public class RuleCodeGen {
 		private Pair<Function<CppStmt, CppStmt>, CppExpr> genTupleIterator(SimplePredicate pred, int pos) {
 			if (!hasReachedSplit) {
 				hasReachedSplit = true;
-				return genParallelLoop(pred, pos);
+				return genParallelLoop(pred);
+			} else {
+				return genNormalLookup(pred, pos);
 			}
-			throw new TodoException();
 		}
 
-		private Pair<Function<CppStmt, CppStmt>, CppExpr> genParallelLoop(SimplePredicate pred, int pos) {
+		private Pair<Function<CppStmt, CppStmt>, CppExpr> genParallelLoop(SimplePredicate pred) {
 			BindingType[] pat = pred.getBindingPattern();
 			for (BindingType binding : pat) {
 				if (binding != BindingType.FREE) {
@@ -195,6 +215,27 @@ public class RuleCodeGen {
 			CppExpr update = CppUnop.mkPreIncr(it);
 			Function<CppStmt, CppStmt> forLoop = body -> CppFor.mk("it", init, guard, update, body);
 			return new Pair<>(body -> CppSeq.mk(assign, forLoop.apply(body)), CppUnop.mkDeref(it));
+		}
+		
+		private Pair<Function<CppStmt, CppStmt>, CppExpr> genNormalLookup(SimplePredicate pred, int pos) {
+			List<CppStmt> stmts = new ArrayList<>();
+			String tupName = ctx.newId("key");
+			CppVar tup = CppVar.mk(tupName);
+			Relation rel = ctx.lookupRelation(pred.getSymbol());
+			stmts.add(rel.mkDeclTuple(tupName));
+			Term[] args = pred.getArgs();
+			int i = 0;
+			for (BindingType ty : pred.getBindingPattern()) {
+				if (ty == BindingType.BOUND) {
+					Pair<CppStmt, CppExpr> p = tcg.gen(args[i], env);
+					stmts.add(p.fst());
+					CppExpr idx = CppConst.mkInt(i);
+					stmts.add(CppBinop.mkAssign(CppSubscript.mk(tup, idx), p.snd()).toStmt());
+				}
+			}
+			CppExpr call = rel.mkLookup(rule.getDbIndex(pos), Arrays.asList(pred.getBindingPattern()), tup);
+			CppStmt all = CppSeq.mk(stmts);
+			return new Pair<>(s -> CppSeq.mk(all, s), call);
 		}
 
 		private Function<CppStmt, CppStmt> genLoop(SimplePredicate pred, int pos, CppExpr it) {

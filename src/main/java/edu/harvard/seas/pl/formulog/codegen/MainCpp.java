@@ -26,14 +26,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
+import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb.IndexInfo;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
@@ -104,7 +106,7 @@ public class MainCpp {
 
 		private void defineRelation(SortedIndexedFactDb db, RelationSymbol sym) {
 			RelationStruct struct = new BTreeRelationStruct(sym.getArity(), db.getMasterIndex(sym),
-					aggregateComparators(sym, db));
+					mkIndexInfo(sym, db));
 			struct.declare(out);
 			if (db == deltaDb) {
 				declareRelation(struct, new DeltaSymbol(sym));
@@ -120,13 +122,13 @@ public class MainCpp {
 			ctx.registerRelation(sym, rel);
 		}
 
-		private List<List<Integer>> aggregateComparators(RelationSymbol sym, SortedIndexedFactDb db) {
-			List<List<Integer>> acc = new ArrayList<>();
+		private Map<Integer, IndexInfo> mkIndexInfo(RelationSymbol sym, SortedIndexedFactDb db) {
+			Map<Integer, IndexInfo> m = new HashMap<>();
 			int n = db.numIndices(sym);
 			for (int i = 0; i < n; ++i) {
-				acc.add(db.getComparatorOrder(sym, i));
+				m.put(i, db.getIndexInfo(sym, i));
 			}
-			return acc;
+			return m;
 		}
 
 		public void loadEdbs() {

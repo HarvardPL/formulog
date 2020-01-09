@@ -189,11 +189,12 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 		return indices.get(sym).size();
 	}
 	
-	public List<Integer> getComparatorOrder(RelationSymbol sym, int idx) {
+	public IndexInfo getIndexInfo(RelationSymbol sym, int idx) {
 		if (idx < 0 || idx > numIndices(sym)) {
 			throw new IllegalArgumentException("Unrecognized index for symbol " + sym + ": " + idx);
 		}
-		return Collections.unmodifiableList(indices.get(sym).get(idx).comparatorOrder);
+		IndexedFactSet index = indices.get(sym).get(idx);
+		return new IndexInfo(index.comparatorOrder, Collections.singleton(Arrays.asList(index.pat)));
 	}
 	
 	public int getMasterIndex(RelationSymbol sym) {
@@ -210,7 +211,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 		}
 		return i;
 	}
-
+	
 	public static class SortedIndexedFactDbBuilder implements IndexedFactDbBuilder<SortedIndexedFactDb> {
 
 		private final Map<RelationSymbol, Integer> counts = new HashMap<>();
@@ -435,6 +436,26 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			return 0;
 		}
 
+	}
+	
+	public class IndexInfo {
+		
+		private final List<Integer> comparatorOrder;
+		private final Set<List<BindingType>> bindingPatterns;
+		
+		private IndexInfo(List<Integer> comparatorOrder, Set<List<BindingType>> bindingPatterns) {
+			this.comparatorOrder = Collections.unmodifiableList(comparatorOrder);
+			this.bindingPatterns = Collections.unmodifiableSet(bindingPatterns);
+		}
+
+		public List<Integer> getComparatorOrder() {
+			return comparatorOrder;
+		}
+
+		public Set<List<BindingType>> getBindingPatterns() {
+			return bindingPatterns;
+		}
+		
 	}
 
 }

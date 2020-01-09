@@ -22,8 +22,10 @@ package edu.harvard.seas.pl.formulog.codegen;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.eval.IndexedRule;
+import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.validating.Stratum;
@@ -51,6 +53,11 @@ public class StratumCodeGen {
 		for (RelationSymbol sym : stratum.getPredicateSyms()) {
 			stmts.add(genFirstRound(sym, rcg));
 		}
+		for (RelationSymbol sym : stratum.getPredicateSyms()) {
+			Relation rel = ctx.lookupRelation(sym);
+			Relation delta = ctx.lookupRelation(new DeltaSymbol(sym));
+			stmts.add(delta.mkInsertAll(CppUnop.mkDeref(rel)).toStmt());
+		}
 		return CppSeq.mk(stmts); 
 	}
 	
@@ -69,11 +76,40 @@ public class StratumCodeGen {
 	
 	private CppStmt genLoop(Stratum stratum, RuleCodeGen rcg) {
 		CppStmt setFalse = CppBinop.mkAssign(changed, CppConst.mkFalse()).toStmt();
-		return CppWhile.mk(changed, CppSeq.mk(setFalse, genLaterRounds(stratum, rcg)));
+		CppStmt evalCode = genLaterRounds(stratum, rcg);
+		CppStmt updateCode = genUpdateCode(stratum);
+		return CppWhile.mk(changed, CppSeq.mk(setFalse, evalCode, updateCode));
 	}
 	
 	private CppStmt genLaterRounds(Stratum stratum, RuleCodeGen rcg) {
-		return CppSeq.skip();
+		List<CppStmt> stmts = new ArrayList<>();
+		for (RelationSymbol sym : stratum.getPredicateSyms()) {
+			stmts.add(genLaterRounds(sym, rcg));
+		}
+		return CppSeq.mk(stmts);
+	}
+	
+	private CppStmt genLaterRounds(RelationSymbol sym, RuleCodeGen rcg) {
+		List<CppStmt> stmts = new ArrayList<>();
+		for (Set<IndexedRule> s : ctx.getEval().getLaterRoundRules(sym).values()) {
+			for (IndexedRule r : s) {
+				stmts.add(genRule(r, rcg, false));
+			}
+		}
+		return CppSeq.mk(stmts);
+	}
+
+	private CppStmt genUpdateCode(Stratum stratum) {
+		List<CppStmt> stmts = new ArrayList<>();
+		for (RelationSymbol sym : stratum.getPredicateSyms()) {
+			Relation rel = ctx.lookupRelation(sym);
+			Relation delta = ctx.lookupRelation(new DeltaSymbol(sym));
+			Relation newRel = ctx.lookupRelation(new NewSymbol(sym));
+			stmts.add(rel.mkInsertAll(CppUnop.mkDeref(newRel)).toStmt());
+			stmts.add(delta.mkPurge());
+			stmts.add(CppFuncCall.mk("swap", delta, newRel).toStmt());
+		}
+		return CppSeq.mk(stmts);
 	}
 
 }

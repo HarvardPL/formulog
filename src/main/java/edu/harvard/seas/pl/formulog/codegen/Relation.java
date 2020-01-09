@@ -22,13 +22,23 @@ package edu.harvard.seas.pl.formulog.codegen;
 
 import java.util.List;
 
+import edu.harvard.seas.pl.formulog.ast.BindingType;
+
 public interface Relation extends CppExpr {
 
 	CppStmt mkDecl();
+
+	CppExpr mkContains(CppExpr expr);
 	
 	CppExpr mkInsert(CppExpr expr);
 	
+	CppExpr mkInsertAll(CppExpr expr);
+	
 	CppExpr mkIsEmpty();
+	
+	CppStmt mkDeclTuple(String name);
+	
+	CppStmt mkDeclTuple(String name, List<CppExpr> exprs);
 	
 	CppExpr mkTuple(List<CppExpr> exprs);
 	
@@ -39,5 +49,7 @@ public interface Relation extends CppExpr {
 	CppExpr mkPartition();
 	
 	CppStmt mkPurge();
+	
+	CppExpr mkLookup(int idx, List<BindingType> pat, CppExpr key);
 	
 }

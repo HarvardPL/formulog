@@ -21,6 +21,7 @@ package edu.harvard.seas.pl.formulog.codegen;
  */
 
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.List;
 
 public class CppFuncCall implements CppExpr {
@@ -35,6 +36,10 @@ public class CppFuncCall implements CppExpr {
 	
 	public static CppFuncCall mk(String func, List<CppExpr> args) {
 		return new CppFuncCall(func, args);
+	}
+	
+	public static CppFuncCall mk(String func, CppExpr... args) {
+		return mk(func, Arrays.asList(args));
 	}
 
 	@Override

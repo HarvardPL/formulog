@@ -12,6 +12,10 @@ struct Tuple {
   const shared_ptr<Term>& operator[](int idx) const {
     return val[idx];
   }
+
+  shared_ptr<Term>& operator[](int idx) {
+    return val[idx];
+  }
 };
 
 
