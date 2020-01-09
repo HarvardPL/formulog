@@ -97,10 +97,19 @@ public class RuleCodeGen {
 		private Function<CppStmt, CppStmt> makeEvalCode() {
 			Function<CppStmt, CppStmt> continuation = x -> x;
 			int pos = 0;
+			Set<Var> boundVars = new HashSet<>();
 			for (SimpleLiteral l : rule) {
-				Function<CppStmt, CppStmt> k = l.accept(visitor, pos);
+				Function<CppStmt, CppStmt> k; 
+				if (!hasCheckedForNovelty && boundVars.containsAll(rule.getHead().varSet())) {
+					final Function<CppStmt, CppStmt> k2 = l.accept(visitor, pos);
+					k = s -> mkCheckIfNew().apply(k2.apply(s));
+					hasCheckedForNovelty = true;
+				} else {
+					k = l.accept(visitor, pos);
+				}
 				final Function<CppStmt, CppStmt> k2 = continuation;
 				continuation = s -> k2.apply(k.apply(s));
+				boundVars.addAll(l.varSet());
 				pos++;
 			}
 			return continuation;
@@ -117,7 +126,7 @@ public class RuleCodeGen {
 			CppStmt stmt = rel.mkInsert(CppVar.mk("tuple")).toStmt();
 			if (!hasCheckedForNovelty && !isFirstRound) {
 				stmt = mkCheckIfNew().apply(stmt);
-			} else {
+			} else if (!hasCheckedForNovelty) {
 				stmt = CppSeq.mk(declTuple(), stmt);
 			}
 			return new Pair<>(stmt, CppUnop.mkNot(rel.mkIsEmpty()));
@@ -232,6 +241,7 @@ public class RuleCodeGen {
 					CppExpr idx = CppConst.mkInt(i);
 					stmts.add(CppBinop.mkAssign(CppSubscript.mk(tup, idx), p.snd()).toStmt());
 				}
+				i++;
 			}
 			CppExpr call = rel.mkLookup(rule.getDbIndex(pos), Arrays.asList(pred.getBindingPattern()), tup);
 			CppStmt all = CppSeq.mk(stmts);
