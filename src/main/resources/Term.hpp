@@ -96,7 +96,7 @@ std::ostream& operator<<(std::ostream& out, const Term& t) {
       if (n > 0) {
         out << "(";
         for (size_t i = 0; i < n; ++i) {
-          out << x.val[i];
+          out << *x.val[i].get();
           if (i < n - 1) {
             out << ", ";
           }

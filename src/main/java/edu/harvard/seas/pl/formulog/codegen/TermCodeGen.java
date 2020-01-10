@@ -31,12 +31,13 @@ import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.Var;
+import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
 public class TermCodeGen {
 
 	private final CodeGenContext ctx;
-	
+
 	public TermCodeGen(CodeGenContext ctx) {
 		this.ctx = ctx;
 	}
@@ -44,7 +45,7 @@ public class TermCodeGen {
 	public Pair<CppStmt, CppExpr> gen(Term t, Map<Var, CppExpr> env) {
 		return new Worker(new HashMap<>(env)).go(t);
 	}
-	
+
 	public Pair<CppStmt, List<CppExpr>> gen(List<Term> ts, Map<Var, CppExpr> env) {
 		List<CppStmt> stmts = new ArrayList<>();
 		List<CppExpr> exprs = new ArrayList<>();
@@ -55,21 +56,21 @@ public class TermCodeGen {
 		}
 		return new Pair<>(CppSeq.mk(stmts), exprs);
 	}
-	
+
 	private class Worker {
-		
+
 		private final Map<Var, CppExpr> env;
 		private final List<CppStmt> acc = new ArrayList<>();
-		
+
 		public Worker(Map<Var, CppExpr> env) {
 			this.env = env;
 		}
-		
+
 		public Pair<CppStmt, CppExpr> go(Term t) {
 			CppExpr expr = t.accept(visitor, null);
 			return new Pair<>(CppSeq.mk(acc), expr);
 		}
-	
+
 		private final TermVisitor<Void, CppExpr> visitor = new TermVisitor<Void, CppExpr>() {
 
 			@Override
@@ -80,7 +81,27 @@ public class TermCodeGen {
 
 			@Override
 			public CppExpr visit(Constructor c, Void in) {
-				throw new UnsupportedOperationException();
+				ConstructorSymbol sym = c.getSymbol();
+				int arity = sym.getArity();
+				CppExpr size = CppConst.mkInt(arity);
+				String arrId = ctx.newId("a");
+				CppExpr arr = CppVar.mk(arrId);
+				Term[] args = c.getArgs();
+				List<CppExpr> cppArgs = new ArrayList<>();
+				for (Term arg : args) {
+					cppArgs.add(arg.accept(this, in));
+				}
+				acc.add(CppDecl.mk(arrId, CppNewArray.mk("shared_ptr<Term>", size)));
+				int i = 0;
+				for (CppExpr arg : cppArgs) {
+					CppExpr lhs = CppSubscript.mk(arr, CppConst.mkInt(i));
+					acc.add(CppBinop.mkAssign(lhs, arg).toStmt());
+					i++;
+				}
+				CppExpr symbol = CppVar.mk("Symbol::" + ctx.lookupRepr(sym));
+				String tId = ctx.newId("t");
+				acc.add(CppDecl.mk(tId, CppFuncCall.mk("make_shared<ComplexTerm>", symbol, size, arr)));
+				return CppVar.mk(tId);
 			}
 
 			@Override
@@ -92,9 +113,9 @@ public class TermCodeGen {
 			public CppExpr visit(Expr e, Void in) {
 				throw new UnsupportedOperationException();
 			}
-			
+
 		};
-		
+
 	}
 
 }
