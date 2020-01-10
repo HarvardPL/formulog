@@ -27,12 +27,18 @@ import java.util.Map;
 
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Expr;
+import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
+import edu.harvard.seas.pl.formulog.ast.Fold;
+import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
+import edu.harvard.seas.pl.formulog.ast.LetFunExpr;
+import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
+import edu.harvard.seas.pl.formulog.util.TodoException;
 
 public class TermCodeGen {
 
@@ -67,11 +73,11 @@ public class TermCodeGen {
 		}
 
 		public Pair<CppStmt, CppExpr> go(Term t) {
-			CppExpr expr = t.accept(visitor, null);
+			CppExpr expr = t.accept(tv, null);
 			return new Pair<>(CppSeq.mk(acc), expr);
 		}
 
-		private final TermVisitor<Void, CppExpr> visitor = new TermVisitor<Void, CppExpr>() {
+		private final TermVisitor<Void, CppExpr> tv = new TermVisitor<Void, CppExpr>() {
 
 			@Override
 			public CppExpr visit(Var x, Void in) {
@@ -111,9 +117,37 @@ public class TermCodeGen {
 
 			@Override
 			public CppExpr visit(Expr e, Void in) {
-				throw new UnsupportedOperationException();
+				return e.accept(ev, in);
 			}
 
+		};
+		
+		private final ExprVisitor<Void, CppExpr> ev = new ExprVisitor<Void, CppExpr>() {
+
+			@Override
+			public CppExpr visit(MatchExpr matchExpr, Void in) {
+				throw new TodoException();
+			}
+
+			@Override
+			public CppExpr visit(FunctionCall funcCall, Void in) {
+				List<CppExpr> args = new ArrayList<>();
+				for (Term arg : funcCall.getArgs()) {
+					args.add(arg.accept(tv, in));
+				}
+				return CppFuncCall.mk(ctx.lookupRepr(funcCall.getSymbol()), args);
+			}
+
+			@Override
+			public CppExpr visit(LetFunExpr funcDefs, Void in) {
+				throw new AssertionError("impossible");
+			}
+
+			@Override
+			public CppExpr visit(Fold fold, Void in) {
+				throw new UnsupportedOperationException("Not supporting codegen for fold");
+			}
+			
 		};
 
 	}
