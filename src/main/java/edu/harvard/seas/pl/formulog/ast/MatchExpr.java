@@ -21,6 +21,7 @@ package edu.harvard.seas.pl.formulog.ast;
  */
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -63,6 +64,10 @@ public class MatchExpr extends AbstractTerm implements Expr, Iterable<MatchClaus
 
 	public Term getMatchee() {
 		return matchee;
+	}
+	
+	public List<MatchClause> getClauses() {
+		return Collections.unmodifiableList(match);
 	}
 
 	@Override
