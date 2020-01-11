@@ -34,8 +34,6 @@ import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Expr;
-import edu.harvard.seas.pl.formulog.ast.MatchClause;
-import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
@@ -44,13 +42,13 @@ import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
 
-public class PatternMatchingTree {
+public class PatternMatchTree {
 
 	private final Map<Node, Map<Edge<?>, Node>> m = new HashMap<>();
 	private final Node root;
 
-	public PatternMatchingTree(MatchExpr match) {
-		Continuation k = Continuation.mk(match.getClauses());
+	public PatternMatchTree(List<Pair<Term, Term>> clauses) {
+		Continuation k = Continuation.mk(clauses);
 		root = build(k);
 	}
 
@@ -64,7 +62,11 @@ public class PatternMatchingTree {
 
 	@Override
 	public String toString() {
-		return "PatternMatchingTree [m=" + m + ", root=" + root + "]";
+		String s = "{\n\troot=" + root + "\n";
+		for (Map.Entry<Node, ?> e : m.entrySet()) {
+			s += "\t" + e.getKey() + " -> " + e.getValue() + "\n";
+		}
+		return s + "}\n";
 	}
 
 	private Node build(Continuation k) {
@@ -87,6 +89,11 @@ public class PatternMatchingTree {
 	public static enum BaseSymbolicTerm implements SymbolicTerm {
 
 		INSTANCE;
+		
+		@Override
+		public String toString() {
+			return "BaseSymbolicTerm";
+		}
 
 	}
 
@@ -107,6 +114,11 @@ public class PatternMatchingTree {
 		public int getIndex() {
 			return index;
 		}
+		
+		@Override
+		public String toString() {
+			return "DerivedSymbolicTerm(" + base + ", " + index + ")";
+		}
 
 	}
 
@@ -120,14 +132,14 @@ public class PatternMatchingTree {
 			this.continuation = continuation;
 		}
 
-		public static Continuation mk(List<MatchClause> match) {
+		public static Continuation mk(List<Pair<Term, Term>> clauses) {
 			Deque<SymbolicTerm> schema = new ArrayDeque<>();
 			schema.add(BaseSymbolicTerm.INSTANCE);
 			List<Pair<Deque<Term>, Term>> continuation = new ArrayList<>();
-			for (MatchClause clause : match) {
+			for (Pair<Term, Term> clause : clauses) {
 				ArrayDeque<Term> k = new ArrayDeque<>();
-				k.add(clause.getLhs());
-				continuation.add(new Pair<>(k, clause.getRhs()));
+				k.add(clause.fst());
+				continuation.add(new Pair<>(k, clause.snd()));
 			}
 			return new Continuation(schema, continuation);
 		}
@@ -243,7 +255,7 @@ public class PatternMatchingTree {
 
 		@Override
 		public String toString() {
-			return "InternalNode [symbolicTerm=" + symbolicTerm + "]";
+			return "InternalNode(" + symbolicTerm + ")";
 		}
 
 	}
@@ -267,7 +279,7 @@ public class PatternMatchingTree {
 
 		@Override
 		public String toString() {
-			return "Leaf [term=" + term + "]";
+			return "Leaf(" + term + ")";
 		}
 
 	}
@@ -344,7 +356,7 @@ public class PatternMatchingTree {
 
 		@Override
 		public String toString() {
-			return "VarEdge [label=" + label + "]";
+			return "VarEdge(" + label + ")";
 		}
 
 	}
@@ -362,7 +374,7 @@ public class PatternMatchingTree {
 
 		@Override
 		public String toString() {
-			return "PrimEdge [label=" + label + "]";
+			return "PrimEdge(" + label + ")";
 		}
 
 	}
@@ -380,7 +392,7 @@ public class PatternMatchingTree {
 
 		@Override
 		public String toString() {
-			return "CtorEdge [label=" + label + "]";
+			return "CtorEdge(" + label + ")";
 		}
 
 	}

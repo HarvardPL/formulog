@@ -38,7 +38,6 @@ import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
-import edu.harvard.seas.pl.formulog.util.TodoException;
 
 public class TermCodeGen {
 
@@ -67,6 +66,7 @@ public class TermCodeGen {
 
 		private final Map<Var, CppExpr> env;
 		private final List<CppStmt> acc = new ArrayList<>();
+		private final MatchCodeGen mcg = new MatchCodeGen(ctx);
 
 		public Worker(Map<Var, CppExpr> env) {
 			this.env = env;
@@ -126,7 +126,9 @@ public class TermCodeGen {
 
 			@Override
 			public CppExpr visit(MatchExpr matchExpr, Void in) {
-				throw new TodoException();
+				Pair<CppStmt, CppExpr> p = mcg.gen(matchExpr, env);
+				acc.add(p.fst());
+				return p.snd();
 			}
 
 			@Override
