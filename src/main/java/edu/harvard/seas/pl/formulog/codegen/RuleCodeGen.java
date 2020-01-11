@@ -184,7 +184,18 @@ public class RuleCodeGen {
 		}
 
 		private Function<CppStmt, CppStmt> handleCheck(Check check) {
-			throw new TodoException();
+			Term lhs = check.getArgs()[0];
+			Term rhs = check.getArgs()[1];
+			Pair<CppStmt, CppExpr> p1 = tcg.gen(lhs, env);
+			Pair<CppStmt, CppExpr> p2 = tcg.gen(rhs, env);
+			CppExpr term1 = CppMethodCall.mk(p1.snd(), "get");
+			CppExpr term2 = CppMethodCall.mk(p2.snd(), "get");
+			CppExpr guard = CppFuncCall.mk("Term::compare", term1, term2);
+			if (!check.isNegated()) {
+				guard = CppUnop.mkNot(guard);
+			}
+			final CppExpr guard2 = guard;
+			return s -> CppSeq.mk(p1.fst(), p2.fst(), CppIf.mk(guard2, s));
 		}
 
 		private Function<CppStmt, CppStmt> handleDestructor(Destructor destructor) {

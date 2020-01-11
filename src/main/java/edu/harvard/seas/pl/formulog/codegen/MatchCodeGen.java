@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.codegen;
 
+import java.io.PrintWriter;
+
 /*-
  * #%L
  * FormuLog
@@ -83,7 +85,21 @@ public class MatchCodeGen {
 			List<Pair<Term, Term>> clauses = renameVariables(match.getClauses());
 			PatternMatchTree tree = new PatternMatchTree(clauses);
 			acc.add(processTree(scrutinee, tree));
-			// XXX Add error here (no match)
+			acc.add(new CppStmt() {
+
+				@Override
+				public void println(PrintWriter out, int indent) {
+					CodeGenUtil.printIndent(out, indent);
+					out.print("cerr << \"No matching case for term: \" << ");
+					CppUnop.mkDeref(scrutinee).print(out);
+					out.println(" << endl;");
+					CodeGenUtil.printIndent(out, indent);
+					out.println("cerr << ");
+					out.println("R\"_(" + match + ")_\" << endl;");
+					CppFuncCall.mk("abort").toStmt().println(out, indent);
+				}
+				
+			});
 			acc.add(CppLabel.mk(end));
 			return new Pair<>(CppSeq.mk(acc), CppVar.mk(res));
 		}
@@ -172,10 +188,11 @@ public class MatchCodeGen {
 							DerivedSymbolicTerm dst = (DerivedSymbolicTerm) symTerm;
 							CppExpr base = symMap.get(dst.getBase());
 							assert base != null;
-							// XXX have to use a cast to complex term here
-							CppExpr access = CppSubscript.mk(CppAccess.mkThruPtr(base, "val"), CppConst.mkInt(dst.getIndex()));
+							CppExpr cast = CppCast.mkReinterpret("ComplexTerm&", CppUnop.mkDeref(base));
+							CppExpr access = CppAccess.mk(cast, "val");
+							CppExpr subscript = CppSubscript.mk(access, CppConst.mkInt(dst.getIndex()));
 							String id = ctx.newId("s");
-							stmts.add(CppDecl.mk(id, access));
+							stmts.add(CppDecl.mk(id, subscript));
 							expr = CppVar.mk(id);
 						}
 						assert !(symMap.containsKey(symTerm));

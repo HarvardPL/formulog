@@ -177,7 +177,7 @@ public class MatchExpr extends AbstractTerm implements Expr, Iterable<MatchClaus
 	public void updateVarCounts(Map<Var, Integer> counts) {
 		matchee.updateVarCounts(counts);
 		for (MatchClause match : this) {
-			Map<Var, Integer> counts2 = new HashMap<>(counts);
+			Map<Var, Integer> counts2 = new HashMap<>();
 			match.getRhs().updateVarCounts(counts2);
 			Set<Var> boundVars = match.getLhs().varSet();
 			for (Map.Entry<Var, Integer> e : counts2.entrySet()) {

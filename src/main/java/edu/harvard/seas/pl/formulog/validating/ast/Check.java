@@ -44,6 +44,10 @@ public class Check implements SimpleLiteral {
 		this.negated = negated;
 	}
 	
+	public boolean isNegated() {
+		return negated;
+	}
+	
 	public boolean check(Substitution subst) throws EvaluationException {
 		Term lhs = this.lhs.normalize(subst);
 		Term rhs = this.rhs.normalize(subst);
