@@ -98,7 +98,7 @@ public class MatchCodeGen {
 					out.println("R\"_(" + match + ")_\" << endl;");
 					CppFuncCall.mk("abort").toStmt().println(out, indent);
 				}
-				
+
 			});
 			acc.add(CppLabel.mk(end));
 			return new Pair<>(CppSeq.mk(acc), CppVar.mk(res));
@@ -188,11 +188,8 @@ public class MatchCodeGen {
 							DerivedSymbolicTerm dst = (DerivedSymbolicTerm) symTerm;
 							CppExpr base = symMap.get(dst.getBase());
 							assert base != null;
-							CppExpr cast = CppCast.mkReinterpret("ComplexTerm&", CppUnop.mkDeref(base));
-							CppExpr access = CppAccess.mk(cast, "val");
-							CppExpr subscript = CppSubscript.mk(access, CppConst.mkInt(dst.getIndex()));
 							String id = ctx.newId("s");
-							stmts.add(CppDecl.mk(id, subscript));
+							stmts.add(CppDecl.mkRef(id, CodeGenUtil.mkComplexTermLookup(base, dst.getIndex())));
 							expr = CppVar.mk(id);
 						}
 						assert !(symMap.containsKey(symTerm));
@@ -210,7 +207,7 @@ public class MatchCodeGen {
 						CppStmt jump = CppGoto.mk(end);
 						return CppSeq.mk(p.fst(), assign, jump);
 					}
-					
+
 				}, null);
 			}
 
@@ -241,7 +238,7 @@ public class MatchCodeGen {
 						CppStmt body = go(dest);
 						return CppIf.mk(guard, body);
 					}
-					
+
 				}, null);
 			}
 

@@ -55,6 +55,7 @@ public class SimplePredicate implements SimpleLiteral {
 		return symbol;
 	}
 
+	@Override
 	public Term[] getArgs() {
 		return args;
 	}

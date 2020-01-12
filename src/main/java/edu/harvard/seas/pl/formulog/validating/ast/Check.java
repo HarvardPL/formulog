@@ -48,6 +48,14 @@ public class Check implements SimpleLiteral {
 		return negated;
 	}
 	
+	public Term getLhs() {
+		return lhs;
+	}
+	
+	public Term getRhs() {
+		return rhs;
+	}
+	
 	public boolean check(Substitution subst) throws EvaluationException {
 		Term lhs = this.lhs.normalize(subst);
 		Term rhs = this.rhs.normalize(subst);

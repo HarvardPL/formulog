@@ -78,5 +78,13 @@ public class Assignment implements SimpleLiteral {
 	public Term[] getArgs() {
 		return new Term[] { var, rhs };
 	}
+	
+	public Var getDef() {
+		return var;
+	}
+	
+	public Term getVal() {
+		return rhs;
+	}
 
 }

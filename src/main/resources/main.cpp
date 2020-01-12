@@ -18,7 +18,6 @@ struct Tuple {
   }
 };
 
-
 template <size_t N>
 ostream& operator<<(ostream& out, const Tuple<N>& tup)
 {

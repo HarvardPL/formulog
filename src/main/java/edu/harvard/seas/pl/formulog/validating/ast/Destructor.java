@@ -60,6 +60,18 @@ public class Destructor implements SimpleLiteral {
 		this.symbol = symbol;
 		this.bindings = vars;
 	}
+	
+	public Term getScrutinee() {
+		return x;
+	}
+	
+	public ConstructorSymbol getSymbol() {
+		return symbol;
+	}
+	
+	public Var[] getBindings() {
+		return bindings;
+	}
 
 	public boolean destruct(Substitution subst) throws EvaluationException {
 		Constructor ctor = (Constructor) x.normalize(subst);

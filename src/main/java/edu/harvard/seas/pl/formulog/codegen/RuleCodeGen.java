@@ -180,12 +180,19 @@ public class RuleCodeGen {
 		};
 
 		private Function<CppStmt, CppStmt> handleAssignment(Assignment assignment) {
-			throw new TodoException();
+			Var x = assignment.getDef();
+			Term val = assignment.getVal();
+			Pair<CppStmt, CppExpr> p = tcg.gen(val, env);
+			String id = ctx.newId("x");
+			CppStmt def = CppDecl.mk(id, p.snd());
+			CppVar var = CppVar.mk(id);
+			env.put(x, var);
+			return s -> CppSeq.mk(p.fst(), def, s);
 		}
 
 		private Function<CppStmt, CppStmt> handleCheck(Check check) {
-			Term lhs = check.getArgs()[0];
-			Term rhs = check.getArgs()[1];
+			Term lhs = check.getLhs();
+			Term rhs = check.getRhs();
 			Pair<CppStmt, CppExpr> p1 = tcg.gen(lhs, env);
 			Pair<CppStmt, CppExpr> p2 = tcg.gen(rhs, env);
 			CppExpr term1 = CppMethodCall.mk(p1.snd(), "get");
@@ -199,11 +206,24 @@ public class RuleCodeGen {
 		}
 
 		private Function<CppStmt, CppStmt> handleDestructor(Destructor destructor) {
-			throw new TodoException();
+			Pair<CppStmt, CppExpr> p = tcg.gen(destructor.getScrutinee(), env);
+			CppExpr base = p.snd();
+			CppVar sym = CppVar.mk("Symbol::" + ctx.lookupRepr(destructor.getSymbol()));
+			CppExpr guard = CppBinop.mkEq(CppAccess.mkThruPtr(base, "sym"), sym);
+			List<CppStmt> stmts = new ArrayList<>();
+			int i = 0;
+			for (Var x : destructor.getBindings()) {
+				String id = ctx.newId("x");
+				stmts.add(CppDecl.mkRef(id, CodeGenUtil.mkComplexTermLookup(base, i)));
+				env.put(x, CppVar.mk(id));
+				i++;
+			}
+			CppStmt assignments = CppSeq.mk(stmts);
+			return s -> CppSeq.mk(p.fst(), CppIf.mk(guard, CppSeq.mk(assignments, s)));
 		}
 
 		private Function<CppStmt, CppStmt> handleNegativePred(SimplePredicate pred, int pos) {
-			throw new TodoException();
+			return mkContains(pred, pos, true);
 		}
 
 		private Function<CppStmt, CppStmt> handlePositivePred(SimplePredicate pred, int pos) {
