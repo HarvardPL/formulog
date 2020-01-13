@@ -4,6 +4,7 @@
 #include "Term.hpp"
 
 namespace flg {
+
 namespace funcs {
 
 using namespace std;
@@ -64,10 +65,14 @@ term_ptr bitwise_xor(const term_ptr& t1, const term_ptr& t2) {
   return Term::make(x->val ^ y->val);
 }
 
+template <typename T>
+term_ptr neg(const term_ptr& t1) {
+  auto x = reinterpret_cast<BaseTerm<T>*>(t1.get());
+  return Term::make(-x->val);
+}
 /* INSERT 0 */
 
 } // namespace funcs
-
 /* INSERT 1 */
 
 } // namespace flg

@@ -82,7 +82,7 @@ public class CodeGenContext {
 	public String lookupRepr(FunctionSymbol sym) {
 		String repr = funcSymToRepr.get(sym);
 		assert repr != null : sym;
-		return repr;
+		return "funcs::" + repr;
 	}
 	
 	public void register(FunctionSymbol sym, String repr) {
