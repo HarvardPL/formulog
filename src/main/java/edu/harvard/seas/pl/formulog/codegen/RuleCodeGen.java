@@ -35,7 +35,6 @@ import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.eval.IndexedRule;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
-import edu.harvard.seas.pl.formulog.util.TodoException;
 import edu.harvard.seas.pl.formulog.validating.ast.Assignment;
 import edu.harvard.seas.pl.formulog.validating.ast.Check;
 import edu.harvard.seas.pl.formulog.validating.ast.Destructor;
@@ -235,7 +234,7 @@ public class RuleCodeGen {
 				return s -> p.fst().apply(loop.apply(s));
 			}
 		}
-		
+
 		private Function<CppStmt, CppStmt> mkContains(SimplePredicate pred, int pos, boolean isNegated) {
 			Pair<CppStmt, CppExpr> key = genKey(pred);
 			Relation rel = ctx.lookupRelation(pred.getSymbol());
@@ -259,26 +258,41 @@ public class RuleCodeGen {
 		private Pair<Function<CppStmt, CppStmt>, CppExpr> genTupleIterator(SimplePredicate pred, int pos) {
 			if (!hasReachedSplit) {
 				hasReachedSplit = true;
-				return genParallelLoop(pred);
+				return genParallelLoop(pred, pos);
 			} else {
 				return genNormalLookup(pred, pos);
 			}
 		}
 
-		private Pair<Function<CppStmt, CppStmt>, CppExpr> genParallelLoop(SimplePredicate pred) {
-			BindingType[] pat = pred.getBindingPattern();
-			for (BindingType binding : pat) {
-				if (binding != BindingType.FREE) {
-					throw new TodoException();
-				}
-			}
-			CppStmt assign = CppDecl.mk("part", lookupRelation(pred).mkPartition());
+		private Pair<Function<CppStmt, CppStmt>, CppExpr> genParallelLoop(SimplePredicate pred, int pos) {
+			Pair<Function<CppStmt, CppStmt>, CppVar> p = genPartition(pred, pos);
+			CppVar part = p.snd();
 			CppVar it = CppVar.mk("it");
-			CppExpr init = CppMethodCall.mk(CppVar.mk("part"), "begin");
-			CppExpr guard = CppBinop.mkLt(it, CppMethodCall.mk(CppVar.mk("part"), "end"));
+			CppExpr init = CppMethodCall.mk(part, "begin");
+			CppExpr guard = CppBinop.mkLt(it, CppMethodCall.mk(part, "end"));
 			CppExpr update = CppUnop.mkPreIncr(it);
 			Function<CppStmt, CppStmt> forLoop = body -> CppFor.mk("it", init, guard, update, body);
-			return new Pair<>(body -> CppSeq.mk(assign, forLoop.apply(body)), CppUnop.mkDeref(it));
+			return new Pair<>(body -> p.fst().apply(forLoop.apply(body)), CppUnop.mkDeref(it));
+		}
+
+		private Pair<Function<CppStmt, CppStmt>, CppVar> genPartition(SimplePredicate pred, int pos) {
+			if (!containsBoundPosition(pred.getBindingPattern())) {
+				CppStmt assign = CppDecl.mk("part", lookupRelation(pred).mkPartition());
+				return new Pair<>(s -> CppSeq.mk(assign, s), CppVar.mk("part"));
+			} else {
+				Pair<Function<CppStmt, CppStmt>, CppExpr> p = genNormalLookup(pred, pos);
+				CppStmt assign = CppDecl.mk("part", CppMethodCall.mk(p.snd(), "partition"));
+				return new Pair<>(s -> p.fst().apply(CppSeq.mk(assign, s)), CppVar.mk("part"));
+			}
+		}
+
+		private boolean containsBoundPosition(BindingType[] pat) {
+			for (BindingType binding : pat) {
+				if (binding == BindingType.BOUND) {
+					return true;
+				}
+			}
+			return false;
 		}
 
 		private Pair<CppStmt, CppExpr> genKey(SimplePredicate pred) {
