@@ -10,32 +10,40 @@
 
 namespace flg {
 
+struct Term;
+
+typedef std::shared_ptr<Term> term_ptr;
+
 struct Term {
   Symbol sym;
 
   Term(Symbol sym_) : sym{sym_} {}
 
   static int compare(const Term* t1, const Term* t2);
-};
 
-auto min_term = std::make_shared<Term>(Symbol::min_term);
-auto max_term = std::make_shared<Term>(Symbol::max_term);
+  inline static term_ptr make(int32_t val);
+  inline static term_ptr make(int64_t val);
+  inline static term_ptr make(float val);
+  inline static term_ptr make(double val);
+  inline static term_ptr make(std::string val);
+  inline static term_ptr make(Symbol sym, size_t arity, term_ptr* val);
+};
 
 struct ComplexTerm : public Term {
   size_t arity;
-  std::shared_ptr<Term>* val;
+  term_ptr* val;
 
-  ComplexTerm(Symbol sym_, size_t arity_, std::shared_ptr<Term>* val_) :
+  ComplexTerm(Symbol sym_, size_t arity_, term_ptr* val_) :
     Term{sym_}, arity{arity_}, val{val_} {}
 
   ComplexTerm(const ComplexTerm& t) :
-    Term{t.sym}, arity{t.arity}, val{new std::shared_ptr<Term>[t.arity]} {
+    Term{t.sym}, arity{t.arity}, val{new term_ptr[t.arity]} {
     std::copy(t.val, t.val + t.arity, val);
   }
 
   ComplexTerm& operator=(const ComplexTerm& t) {
     if (this != &t) {
-      std::shared_ptr<Term>* new_val = new std::shared_ptr<Term>[t.arity];
+      term_ptr* new_val = new term_ptr[t.arity];
       std::copy(t.val, t.val + t.arity, new_val);
       delete[] val;
       sym = t.sym;
@@ -67,6 +75,7 @@ struct BaseTerm : public Term {
   }
 };
 
+// XXX Need to print special float values correctly
 std::ostream& operator<<(std::ostream& out, const Term& t) {
 	switch (t.sym) {
 	  case Symbol::boxed_i32: {
@@ -75,11 +84,11 @@ std::ostream& operator<<(std::ostream& out, const Term& t) {
     }
 	  case Symbol::boxed_i64: {
       auto x = reinterpret_cast<const BaseTerm<int64_t>&>(t);
-      return out << x.val;
+      return out << x.val << "L";
     }
 	  case Symbol::boxed_fp32: {
       auto x = reinterpret_cast<const BaseTerm<float>&>(t);
-      return out << x.val;
+      return out << x.val << "F";
     }
 	  case Symbol::boxed_fp64: {
       auto x = reinterpret_cast<const BaseTerm<double>&>(t);
@@ -182,6 +191,33 @@ int Term::compare(const Term* t1, const Term* t2) {
     }
   }
   return 0;
+}
+
+term_ptr min_term = std::make_shared<Term>(Symbol::min_term);
+term_ptr max_term = std::make_shared<Term>(Symbol::max_term);
+
+term_ptr Term::make(int32_t val) {
+  return std::make_shared<BaseTerm<int32_t>>(Symbol::boxed_i32, val);
+}
+
+term_ptr Term::make(int64_t val) {
+  return std::make_shared<BaseTerm<int64_t>>(Symbol::boxed_i64, val);
+}
+
+term_ptr Term::make(float val) {
+  return std::make_shared<BaseTerm<float>>(Symbol::boxed_fp32, val);
+}
+
+term_ptr Term::make(double val) {
+  return std::make_shared<BaseTerm<double>>(Symbol::boxed_fp64, val);
+}
+
+term_ptr Term::make(std::string val) {
+  return std::make_shared<BaseTerm<std::string>>(Symbol::boxed_string, val);
+}
+
+term_ptr Term::make(Symbol sym, size_t arity, term_ptr* val) {
+  return std::make_shared<ComplexTerm>(sym, arity, val);
 }
 
 } // namespace flg

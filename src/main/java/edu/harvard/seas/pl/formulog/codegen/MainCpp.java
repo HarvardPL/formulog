@@ -57,25 +57,18 @@ public class MainCpp {
 				BufferedReader br = new BufferedReader(isr);
 				PrintWriter out = new PrintWriter(outDir.toPath().resolve("main.cpp").toFile())) {
 			Worker pr = new Worker(out);
-			copyOver(br, out, 0);
+			CodeGenUtil.copyOver(br, out, 0);
 			pr.defineRelations();
-			copyOver(br, out, 1);
+			CodeGenUtil.copyOver(br, out, 1);
 			pr.loadEdbs();
-			copyOver(br, out, 2);
+			CodeGenUtil.copyOver(br, out, 2);
 			pr.printStratumFuncs();
-			copyOver(br, out, 3);
+			CodeGenUtil.copyOver(br, out, 3);
 			pr.evaluate();
-			copyOver(br, out, 4);
+			CodeGenUtil.copyOver(br, out, 4);
 			pr.printResults();
-			copyOver(br, out, -1);
+			CodeGenUtil.copyOver(br, out, -1);
 			out.flush();
-		}
-	}
-
-	private void copyOver(BufferedReader in, PrintWriter out, int stopAt) throws IOException {
-		String line;
-		while ((line = in.readLine()) != null && !line.equals("/* INSERT " + stopAt + " */")) {
-			out.println(line);
 		}
 	}
 

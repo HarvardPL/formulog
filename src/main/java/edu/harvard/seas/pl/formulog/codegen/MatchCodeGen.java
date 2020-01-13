@@ -78,7 +78,7 @@ public class MatchCodeGen {
 		}
 
 		public Pair<CppStmt, CppExpr> go(MatchExpr match) {
-			acc.add(CppCtor.mk("shared_ptr<Term>", res));
+			acc.add(CppCtor.mk("term_ptr", res));
 			Pair<CppStmt, CppExpr> p = tcg.gen(match.getMatchee(), env);
 			acc.add(p.fst());
 			CppExpr scrutinee = p.snd();
@@ -117,7 +117,7 @@ public class MatchCodeGen {
 				String id = ctx.newId("y");
 				CppVar cppX = CppVar.mk(id);
 				env.put(x, cppX);
-				acc.add(CppCtor.mk("shared_ptr<Term>", id));
+				acc.add(CppCtor.mk("term_ptr", id));
 			}
 			return l;
 		}

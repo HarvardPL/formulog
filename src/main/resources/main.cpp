@@ -1,3 +1,4 @@
+#include "funcs.hpp"
 #include "Term.hpp"
 #include "souffle/CompiledSouffle.h"
 #include "Symbol.hpp"
@@ -7,13 +8,13 @@ using namespace std;
 
 template <size_t N>
 struct Tuple {
-  array<shared_ptr<Term>, N> val;
+  array<term_ptr, N> val;
 
-  const shared_ptr<Term>& operator[](int idx) const {
+  const term_ptr& operator[](int idx) const {
     return val[idx];
   }
 
-  shared_ptr<Term>& operator[](int idx) {
+  term_ptr& operator[](int idx) {
     return val[idx];
   }
 };

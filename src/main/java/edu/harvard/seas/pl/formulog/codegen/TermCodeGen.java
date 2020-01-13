@@ -97,7 +97,7 @@ public class TermCodeGen {
 				for (Term arg : args) {
 					cppArgs.add(arg.accept(this, in));
 				}
-				acc.add(CppDecl.mk(arrId, CppNewArray.mk("shared_ptr<Term>", size)));
+				acc.add(CppDecl.mk(arrId, CppNewArray.mk("term_ptr", size)));
 				int i = 0;
 				for (CppExpr arg : cppArgs) {
 					CppExpr lhs = CppSubscript.mk(arr, CppConst.mkInt(i));
@@ -106,7 +106,7 @@ public class TermCodeGen {
 				}
 				CppExpr symbol = CppVar.mk("Symbol::" + ctx.lookupRepr(sym));
 				String tId = ctx.newId("t");
-				acc.add(CppDecl.mk(tId, CppFuncCall.mk("make_shared<ComplexTerm>", symbol, size, arr)));
+				acc.add(CppDecl.mk(tId, CppFuncCall.mk("Term::make", symbol, size, arr)));
 				return CppVar.mk(tId);
 			}
 

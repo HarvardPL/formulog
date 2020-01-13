@@ -20,23 +20,22 @@ package edu.harvard.seas.pl.formulog.codegen;
  * #L%
  */
 
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
+import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.SymbolBase;
-import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
 
-public class CodeGenContext implements Iterable<Pair<Symbol, String>> {
+public class CodeGenContext {
 
-	private final Map<Symbol, String> symToRepr = new ConcurrentHashMap<>();
-	private final Map<String, Symbol> reprToSym = new ConcurrentHashMap<>();
+	private final Map<ConstructorSymbol, String> ctorSymToRepr = new ConcurrentHashMap<>();
+	private final Map<FunctionSymbol, String> funcSymToRepr = new ConcurrentHashMap<>();
 	private final Map<SymbolBase, AtomicInteger> cnts = new ConcurrentHashMap<>();
 	private final Map<RelationSymbol, Relation> rels = new ConcurrentHashMap<>();
 	private final AtomicInteger id = new AtomicInteger();
@@ -62,8 +61,8 @@ public class CodeGenContext implements Iterable<Pair<Symbol, String>> {
 		return rel;
 	}
 	
-	public String lookupRepr(Symbol sym) {
-		String repr = symToRepr.get(sym);
+	public String lookupRepr(ConstructorSymbol sym) {
+		String repr = ctorSymToRepr.get(sym);
 		if (repr == null) {
 			repr = sym.toString();
 			if (sym instanceof ParameterizedSymbol) {
@@ -72,40 +71,23 @@ public class CodeGenContext implements Iterable<Pair<Symbol, String>> {
 				int n = Util.lookupOrCreate(cnts, base, () -> new AtomicInteger()).getAndIncrement();
 				repr = base + "_" + n;
 			}
-			String repr2 = symToRepr.putIfAbsent(sym, repr);
+			String repr2 = ctorSymToRepr.putIfAbsent(sym, repr);
 			if (repr2 != null) {
 				repr = repr2;
-			} else {
-				reprToSym.put(repr, sym);
 			}
 		}
 		return repr;
 	}
-
-	public Symbol lookupSymbol(String repr) {
-		Symbol sym = reprToSym.get(repr);
-		assert sym != null : repr;
-		return sym;
+	
+	public String lookupRepr(FunctionSymbol sym) {
+		String repr = funcSymToRepr.get(sym);
+		assert repr != null : sym;
+		return repr;
 	}
-
-	@Override
-	public Iterator<Pair<Symbol, String>> iterator() {
-		return new Iterator<Pair<Symbol, String>>() {
-
-			private final Iterator<Map.Entry<Symbol, String>> it = symToRepr.entrySet().iterator();
-
-			@Override
-			public boolean hasNext() {
-				return it.hasNext();
-			}
-
-			@Override
-			public Pair<Symbol, String> next() {
-				Map.Entry<Symbol, String> e = it.next();
-				return new Pair<>(e.getKey(), e.getValue());
-			}
-
-		};
+	
+	public void register(FunctionSymbol sym, String repr) {
+		String repr2 = funcSymToRepr.put(sym, repr);
+		assert repr2 == null || repr2.equals(repr);
 	}
 
 	public String newId(String prefix) {

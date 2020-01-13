@@ -50,8 +50,8 @@ public class CodeGen {
 		copy("Term.hpp");
 		CodeGenContext ctx = new CodeGenContext(eval);
 		ConstructorSymbolHandler csh = new ConstructorSymbolHandler(ctx);
-		MainCpp rh = new MainCpp(ctx);
-		rh.gen(outDir);
+		new MainCpp(ctx).gen(outDir);
+		new FuncsHpp(ctx).gen(outDir);
 		csh.getConstructorsFromTypes(eval.getInputProgram().getTypeSymbols());
 		csh.print(outDir);
 	}

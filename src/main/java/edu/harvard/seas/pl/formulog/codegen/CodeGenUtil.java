@@ -1,5 +1,8 @@
 package edu.harvard.seas.pl.formulog.codegen;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+
 /*-
  * #%L
  * FormuLog
@@ -54,6 +57,13 @@ public final class CodeGenUtil {
 		CppExpr cast = CppCast.mkReinterpret("ComplexTerm&", CppUnop.mkDeref(base));
 		CppExpr access = CppAccess.mk(cast, "val");
 		return CppSubscript.mk(access, CppConst.mkInt(offset));
+	}
+	
+	public static void copyOver(BufferedReader in, PrintWriter out, int stopAt) throws IOException {
+		String line;
+		while ((line = in.readLine()) != null && !line.equals("/* INSERT " + stopAt + " */")) {
+			out.println(line);
+		}
 	}
 	
 }
