@@ -1,0 +1,6 @@
+output ok
+
+ok :-
+  string_concat("", "hello") = "hello",
+  string_concat("hel", "lo") = "hello",
+  string_concat("", "hello") = "hello".

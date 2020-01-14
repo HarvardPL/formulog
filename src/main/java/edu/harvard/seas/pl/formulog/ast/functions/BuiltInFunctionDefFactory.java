@@ -1179,6 +1179,10 @@ public final class BuiltInFunctionDefFactory {
 
 		@Override
 		public Term evaluate(Term[] args) throws EvaluationException {
+			Term arg = args[0];
+			if (arg instanceof StringTerm) {
+				return arg;
+			}
 			return StringTerm.make(args[0].toString());
 		}
 

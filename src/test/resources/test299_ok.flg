@@ -1,0 +1,6 @@
+output ok
+
+ok :-
+  string_cmp("a", "bc") = cmp_lt,
+  string_cmp("abc", "abc") = cmp_eq,
+  string_cmp("bc", "a") = cmp_gt.

@@ -1,0 +1,6 @@
+output ok
+
+ok :-
+  to_string(0) = "0",
+  to_string("0") = "0",
+  to_string(some(0)) = "some(0)".

@@ -6,11 +6,15 @@ All notable changes to this project will be documented in this file.
 - Support for `fold` terms.
 - Options to restrict which results are printed after evaluation. 
 - Nested, variable-capturing functions (i.e., `let fun` expressions).
+- Added generic serialization function `to_string`.
 
 ### Changed
 - Do not require parentheses around tuple types.
 - Do not reorder literals in rules (in order to preserve soundness of
   flow-sensitive type checking).
+- Changed the names of some string-related built-in functions (`strcat` is now
+  `string_concat` and `strcmp` is now `string_cmp`).
+- Removed built-in function `string_of_i32`.
 
 ### Fixed
 - Made Antlr parser faster by simplifying grammar.
