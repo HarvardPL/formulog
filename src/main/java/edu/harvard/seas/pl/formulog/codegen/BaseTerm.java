@@ -45,22 +45,23 @@ public class BaseTerm implements CppExpr {
 	@Override
 	public void print(PrintWriter out) {
 		// XXX Need to handle special float values correctly
-		out.print("Term::make(");
+		out.print("Term::make<");
 		if (p instanceof I32) {
-			out.print("(int32_t) ");
+			out.print("int32_t");
 		} else if (p instanceof I64) {
-			out.print("(int64_t) ");
+			out.print("int64_t");
 		} else if (p instanceof FP32) {
-			out.print("(float) ");
+			out.print("float");
 		} else if (p instanceof FP64) {
-			out.print("(double) ");
+			out.print("double");
 		} else if (p instanceof BoolTerm) {
-			out.print("(bool) ");
+			out.print("bool");
 		} else if (p instanceof StringTerm) {
-			// do nothing
+			out.print("string");
 		} else {
 			throw new UnsupportedOperationException("Unsupported primitive: " + p);
 		}
+		out.print(">(");
 		out.print(p);
 		out.print(")");
 	}

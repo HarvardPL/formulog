@@ -21,12 +21,15 @@ struct Term {
 
   static int compare(const Term* t1, const Term* t2);
 
+  template<typename T> inline static term_ptr make(T val);
+  /*
   inline static term_ptr make(bool val);
   inline static term_ptr make(int32_t val);
   inline static term_ptr make(int64_t val);
   inline static term_ptr make(float val);
   inline static term_ptr make(double val);
   inline static term_ptr make(std::string val);
+  */
   inline static term_ptr make(Symbol sym, size_t arity, term_ptr* val);
 };
 
@@ -201,27 +204,33 @@ int Term::compare(const Term* t1, const Term* t2) {
 term_ptr min_term = std::make_shared<Term>(Symbol::min_term);
 term_ptr max_term = std::make_shared<Term>(Symbol::max_term);
 
-term_ptr Term::make(bool val) {
+template<>
+term_ptr Term::make<bool>(bool val) {
   return std::make_shared<BaseTerm<bool>>(Symbol::boxed_bool, val);
 }
 
-term_ptr Term::make(int32_t val) {
+template<>
+term_ptr Term::make<int32_t>(int32_t val) {
   return std::make_shared<BaseTerm<int32_t>>(Symbol::boxed_i32, val);
 }
 
-term_ptr Term::make(int64_t val) {
+template<>
+term_ptr Term::make<int64_t>(int64_t val) {
   return std::make_shared<BaseTerm<int64_t>>(Symbol::boxed_i64, val);
 }
 
-term_ptr Term::make(float val) {
+template<>
+term_ptr Term::make<float>(float val) {
   return std::make_shared<BaseTerm<float>>(Symbol::boxed_fp32, val);
 }
 
-term_ptr Term::make(double val) {
+template<>
+term_ptr Term::make<double>(double val) {
   return std::make_shared<BaseTerm<double>>(Symbol::boxed_fp64, val);
 }
 
-term_ptr Term::make(std::string val) {
+template<>
+term_ptr Term::make<std::string>(std::string val) {
   return std::make_shared<BaseTerm<std::string>>(Symbol::boxed_string, val);
 }
 
