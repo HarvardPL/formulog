@@ -44,6 +44,7 @@ import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.DummyFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDefManager;
+import edu.harvard.seas.pl.formulog.ast.functions.PredicateFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.UserFunctionDef;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDb;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDbBuilder;
@@ -191,7 +192,7 @@ public class PredicateFunctionSetter {
 
 	private FunctionDef makePredicate(PredicateFunctionSymbol funcSym, Term[] paddedArgs, int idx) {
 		RelationSymbol predSym = funcSym.getPredicateSymbol();
-		return new FunctionDef() {
+		return new PredicateFunctionDef() {
 
 			@Override
 			public FunctionSymbol getSymbol() {
@@ -203,6 +204,11 @@ public class PredicateFunctionSetter {
 				args = fillInPaddedArgs(funcSym, paddedArgs, args);
 				boolean b = db.get(predSym, args, idx).iterator().hasNext();
 				return BoolTerm.mk(b);
+			}
+
+			@Override
+			public int getIndex() {
+				return idx;
 			}
 
 		};
@@ -219,7 +225,7 @@ public class PredicateFunctionSetter {
 		}
 		final int arity2 = arity;
 		ConstructorSymbol tupSym = (arity > 1) ? GlobalSymbolManager.lookupTupleSymbol(arity) : null;
-		return new FunctionDef() {
+		return new PredicateFunctionDef() {
 
 			@Override
 			public FunctionSymbol getSymbol() {
@@ -243,6 +249,11 @@ public class PredicateFunctionSetter {
 					tail = Constructors.make(BuiltInConstructorSymbol.CONS, new Term[] { elt, tail });
 				}
 				return tail;
+			}
+
+			@Override
+			public int getIndex() {
+				return idx;
 			}
 
 		};

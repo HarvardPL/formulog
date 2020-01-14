@@ -32,13 +32,20 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import edu.harvard.seas.pl.formulog.ast.BindingType;
+import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Var;
+import edu.harvard.seas.pl.formulog.ast.functions.DummyFunctionDef;
+import edu.harvard.seas.pl.formulog.ast.functions.PredicateFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.UserFunctionDef;
+import edu.harvard.seas.pl.formulog.codegen.LiteralCodeGen.Result;
+import edu.harvard.seas.pl.formulog.codegen.LiteralCodeGen.ResultType;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbol;
+import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
-import edu.harvard.seas.pl.formulog.util.TodoException;
+import edu.harvard.seas.pl.formulog.validating.ast.SimplePredicate;
 
 public class FuncsHpp {
 
@@ -67,7 +74,9 @@ public class FuncsHpp {
 		
 		private final PrintWriter out;
 		private final Set<FunctionSymbol> userDefinedFunctions = new HashSet<>();
+		private final Set<PredicateFunctionSymbol> predFunctions = new HashSet<>();
 		private final TermCodeGen tcg = new TermCodeGen(ctx);
+		private final LiteralCodeGen lcg = new LiteralCodeGen(ctx);
 		
 		public Worker(PrintWriter out) {
 			this.out = out;
@@ -78,17 +87,18 @@ public class FuncsHpp {
 				if (sym instanceof BuiltInFunctionSymbol) {
 					registerBuiltInFunction((BuiltInFunctionSymbol) sym);
 				} else if (sym instanceof PredicateFunctionSymbol) {
-					throw new TodoException();
+					predFunctions.add((PredicateFunctionSymbol) sym);
+					declareFunction(sym);
 				} else {
-					declareUserDefinedFunction(sym);
+					userDefinedFunctions.add(sym);
+					declareFunction(sym);
 				}
 			}
 		}
 		
-		private void declareUserDefinedFunction(FunctionSymbol sym) {
-			String name = mkName(sym);
+		private void declareFunction(FunctionSymbol sym) {
+			String name = CodeGenUtil.mkName(sym);
 			ctx.register(sym, name);
-			userDefinedFunctions.add(sym);
 			out.println();
 			out.print("term_ptr " + name + "(");
 			int n = sym.getArity();
@@ -99,10 +109,6 @@ public class FuncsHpp {
 				}
 			}
 			out.println(");");
-		}
-		
-		private String mkName(FunctionSymbol sym) {
-			return sym.toString().replaceAll("[^A-Za-z0-9_]", "__");
 		}
 		
 		private void registerBuiltInFunction(BuiltInFunctionSymbol sym) {
@@ -349,8 +355,11 @@ public class FuncsHpp {
 			for (FunctionSymbol sym : userDefinedFunctions) {
 				makeDefinitionForUserDefinedFunc(sym);
 			}
+			for (PredicateFunctionSymbol funcSym : predFunctions) {
+				makeDefinitionForPredFunc(funcSym);
+			}
 		}
-		
+
 		private void makeDefinitionForUserDefinedFunc(FunctionSymbol sym) {
 			UserFunctionDef def = (UserFunctionDef) ctx.getEval().getInputProgram().getDef(sym);
 			out.println();
@@ -373,6 +382,60 @@ public class FuncsHpp {
 			CppStmt ret = CppReturn.mk(p.snd());
 			CppSeq.mk(p.fst(), ret).println(out, 1);
 			out.println("}");
+		}
+		
+		private void makeDefinitionForPredFunc(PredicateFunctionSymbol funcSym) {
+			out.println();
+			out.print("term_ptr " + ctx.lookupRepr(funcSym) + "(");
+			RelationSymbol predSym = funcSym.getPredicateSymbol();
+			int n = predSym.getArity();
+			Term[] args = new Term[n];
+			BindingType[] bindings = funcSym.getBindings();
+			int j = 0;
+			int nbound = nbound(bindings);
+			Map<Var, CppExpr> env = new HashMap<>();
+			for (int i = 0; i < n; ++i) {
+				Var x = Var.fresh();
+				args[i] = x;
+				if (bindings[i].isBound()) {
+					out.print("const term_ptr& ");
+					String id = ctx.newId("x");
+					CppVar var = CppVar.mk(id);
+					env.put(x, var);
+					out.print("const term_ptr& ");
+					var.print(out);
+					if (j < nbound - 1) {
+						out.print(", ");
+					}
+					j++;
+				}
+			}
+			out.println(") {");
+			SimplePredicate pred = SimplePredicate.make(predSym, args, funcSym.getBindings(), false);
+			int index = getDef(funcSym).getIndex();
+			handleLookup(lcg.gen(pred, index, false, env));
+			out.println("}");
+		}
+		
+		private PredicateFunctionDef getDef(PredicateFunctionSymbol sym) {
+			DummyFunctionDef dummy = (DummyFunctionDef) ctx.getEval().getInputProgram().getDef(sym);
+			return (PredicateFunctionDef) dummy.getDef();
+		}
+		
+		private void handleLookup(Result res) {
+			assert res.getResType() == ResultType.LOOKUP;
+			CppStmt ifTrue = res.getK().apply(CppReturn.mk(CppConst.mkTrue()));
+			CppSeq.mk(ifTrue, CppReturn.mk(CppConst.mkFalse())).println(out, 1);
+		}
+		
+		private int nbound(BindingType[] bindings) {
+			int n = 0;
+			for (BindingType binding : bindings) {
+				if (binding.isBound()) {
+					n++;
+				}
+			}
+			return n;
 		}
 		
 	}

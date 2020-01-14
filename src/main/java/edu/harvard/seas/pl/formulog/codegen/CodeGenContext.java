@@ -57,7 +57,7 @@ public class CodeGenContext {
 	
 	public Relation lookupRelation(RelationSymbol sym) {
 		Relation rel = rels.get(sym);
-		assert rel != null;
+		assert rel != null : sym;
 		return rel;
 	}
 	

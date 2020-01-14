@@ -26,6 +26,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Iterator;
 
+import edu.harvard.seas.pl.formulog.symbols.Symbol;
+
 public final class CodeGenUtil {
 
 	private CodeGenUtil() {
@@ -64,6 +66,10 @@ public final class CodeGenUtil {
 		while ((line = in.readLine()) != null && !line.equals("/* INSERT " + stopAt + " */")) {
 			out.println(line);
 		}
+	}
+	
+	public static String mkName(Symbol sym) {
+		return sym.toString().replaceAll("[^A-Za-z0-9_]", "__");
 	}
 	
 }
