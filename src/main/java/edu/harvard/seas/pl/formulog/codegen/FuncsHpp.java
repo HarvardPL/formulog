@@ -108,10 +108,13 @@ public class FuncsHpp {
 		private void registerBuiltInFunction(BuiltInFunctionSymbol sym) {
 			switch (sym) {
 			case BEQ:
+				ctx.register(sym, "beq");
 				break;
 			case BNEQ:
+				ctx.register(sym, "bneq");
 				break;
 			case BNOT:
+				ctx.register(sym, "bnot");
 				break;
 			case FP32_ADD:
 				break;

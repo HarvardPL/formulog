@@ -9,6 +9,19 @@ namespace funcs {
 
 using namespace std;
 
+term_ptr beq(const term_ptr& t1, const term_ptr& t2) {
+  return Term::make<bool>(!Term::compare(t1.get(), t2.get()));
+}
+
+term_ptr bneq(const term_ptr& t1, const term_ptr& t2) {
+  return Term::make<bool>(Term::compare(t1.get(), t2.get()));
+}
+
+term_ptr bnot(const term_ptr& t1) {
+  auto x = reinterpret_cast<BaseTerm<bool>*>(t1.get());
+  return Term::make<bool>(!x->val);
+}
+
 template <typename T>
 term_ptr add(const term_ptr& t1, const term_ptr& t2) {
   auto x = reinterpret_cast<BaseTerm<T>*>(t1.get());

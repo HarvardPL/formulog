@@ -22,14 +22,6 @@ struct Term {
   static int compare(const Term* t1, const Term* t2);
 
   template<typename T> inline static term_ptr make(T val);
-  /*
-  inline static term_ptr make(bool val);
-  inline static term_ptr make(int32_t val);
-  inline static term_ptr make(int64_t val);
-  inline static term_ptr make(float val);
-  inline static term_ptr make(double val);
-  inline static term_ptr make(std::string val);
-  */
   inline static term_ptr make(Symbol sym, size_t arity, term_ptr* val);
 };
 
@@ -143,6 +135,15 @@ int Term::compare(const Term* t1, const Term* t2) {
       return 1;
     }
     switch (t1->sym) {
+      case Symbol::boxed_bool: {
+        auto x = reinterpret_cast<const BaseTerm<bool>*>(t1);
+        auto y = reinterpret_cast<const BaseTerm<bool>*>(t2);
+        int cmp = BaseTerm<bool>::compare(*x, *y);
+        if (cmp != 0) {
+          return cmp;
+        }
+        break;
+      }
       case Symbol::boxed_i32: {
         auto x = reinterpret_cast<const BaseTerm<int32_t>*>(t1);
         auto y = reinterpret_cast<const BaseTerm<int32_t>*>(t2);
