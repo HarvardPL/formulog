@@ -117,162 +117,162 @@ public class FuncsHpp {
 				ctx.register(sym, "bnot");
 				break;
 			case FP32_ADD:
-				ctx.register(sym, "add<float>");
+				ctx.register(sym, "__add<float>");
 				break;
 			case FP32_DIV:
-				ctx.register(sym, "div<float>");
+				ctx.register(sym, "__div<float>");
 				break;
 			case FP32_EQ:
-				ctx.register(sym, "eq<float>");
+				ctx.register(sym, "__eq<float>");
 				break;
 			case FP32_GE:
-				ctx.register(sym, "ge<float>");
+				ctx.register(sym, "__ge<float>");
 				break;
 			case FP32_GT:
-				ctx.register(sym, "gt<float>");
+				ctx.register(sym, "__gt<float>");
 				break;
 			case FP32_LE:
-				ctx.register(sym, "le<float>");
+				ctx.register(sym, "__le<float>");
 				break;
 			case FP32_LT:
-				ctx.register(sym, "lt<float>");
+				ctx.register(sym, "__lt<float>");
 				break;
 			case FP32_MUL:
-				ctx.register(sym, "mul<float>");
+				ctx.register(sym, "__mul<float>");
 				break;
 			case FP32_NEG:
-				ctx.register(sym, "neg<float>");
+				ctx.register(sym, "__neg<float>");
 				break;
 			case FP32_REM:
-				ctx.register(sym, "rem<float>");
+				ctx.register(sym, "__rem<float>");
 				break;
 			case FP32_SUB:
-				ctx.register(sym, "sub<float>");
+				ctx.register(sym, "__sub<float>");
 				break;
 			case FP64_ADD:
-				ctx.register(sym, "add<double>");
+				ctx.register(sym, "__add<double>");
 				break;
 			case FP64_DIV:
-				ctx.register(sym, "div<double>");
+				ctx.register(sym, "__div<double>");
 				break;
 			case FP64_EQ:
-				ctx.register(sym, "eq<double>");
+				ctx.register(sym, "__eq<double>");
 				break;
 			case FP64_GE:
-				ctx.register(sym, "ge<double>");
+				ctx.register(sym, "__ge<double>");
 				break;
 			case FP64_GT:
-				ctx.register(sym, "gt<double>");
+				ctx.register(sym, "__gt<double>");
 				break;
 			case FP64_LE:
-				ctx.register(sym, "le<double>");
+				ctx.register(sym, "__le<double>");
 				break;
 			case FP64_LT:
-				ctx.register(sym, "lt<double>");
+				ctx.register(sym, "__lt<double>");
 				break;
 			case FP64_MUL:
-				ctx.register(sym, "mul<double>");
+				ctx.register(sym, "__mul<double>");
 				break;
 			case FP64_NEG:
-				ctx.register(sym, "neg<double>");
+				ctx.register(sym, "__neg<double>");
 				break;
 			case FP64_REM:
-				ctx.register(sym, "rem<double>");
+				ctx.register(sym, "__rem<double>");
 				break;
 			case FP64_SUB:
-				ctx.register(sym, "sub<double>");
+				ctx.register(sym, "__sub<double>");
 				break;
 			case GET_MODEL:
 				break;
 			case I32_ADD:
-				ctx.register(sym, "add<int32_t>");
+				ctx.register(sym, "__add<int32_t>");
 				break;
 			case I32_AND:
-				ctx.register(sym, "bitwise_and<int32_t>");
+				ctx.register(sym, "__bitwise_and<int32_t>");
 				break;
 			case I32_DIV:
-				ctx.register(sym, "div<int32_t>");
+				ctx.register(sym, "__div<int32_t>");
 				break;
 			case I32_GE:
-				ctx.register(sym, "ge<int32_t>");
+				ctx.register(sym, "__ge<int32_t>");
 				break;
 			case I32_GT:
-				ctx.register(sym, "gt<int32_t>");
+				ctx.register(sym, "__gt<int32_t>");
 				break;
 			case I32_LE:
-				ctx.register(sym, "le<int32_t>");
+				ctx.register(sym, "__le<int32_t>");
 				break;
 			case I32_LT:
-				ctx.register(sym, "lt<int32_t>");
+				ctx.register(sym, "__lt<int32_t>");
 				break;
 			case I32_MUL:
-				ctx.register(sym, "mul<int32_t>");
+				ctx.register(sym, "__mul<int32_t>");
 				break;
 			case I32_NEG:
-				ctx.register(sym, "neg<int32_t>");
+				ctx.register(sym, "__neg<int32_t>");
 				break;
 			case I32_OR:
-				ctx.register(sym, "bitwise_or<int32_t>");
+				ctx.register(sym, "__bitwise_or<int32_t>");
 				break;
 			case I32_REM:
-				ctx.register(sym, "rem<int32_t>");
+				ctx.register(sym, "__rem<int32_t>");
 				break;
 			case I32_SCMP:
-				ctx.register(sym, "cmp<int32_t>");
+				ctx.register(sym, "__cmp<int32_t>");
 				break;
 			case I32_SUB:
-				ctx.register(sym, "sub<int32_t>");
+				ctx.register(sym, "__sub<int32_t>");
 				break;
 			case I32_UCMP:
-				ctx.register(sym, "cmp<uint32_t>");
+				ctx.register(sym, "__cmp<uint32_t>");
 				break;
 			case I32_XOR:
-				ctx.register(sym, "bitwise_xor<int32_t>");
+				ctx.register(sym, "__bitwise_xor<int32_t>");
 				break;
 			case I64_ADD:
-				ctx.register(sym, "add<int64_t>");
+				ctx.register(sym, "__add<int64_t>");
 				break;
 			case I64_AND:
-				ctx.register(sym, "bitwise_and<int64_t>");
+				ctx.register(sym, "__bitwise_and<int64_t>");
 				break;
 			case I64_DIV:
-				ctx.register(sym, "div<int64_t>");
+				ctx.register(sym, "__div<int64_t>");
 				break;
 			case I64_GE:
-				ctx.register(sym, "ge<int64_t>");
+				ctx.register(sym, "__ge<int64_t>");
 				break;
 			case I64_GT:
-				ctx.register(sym, "gt<int64_t>");
+				ctx.register(sym, "__gt<int64_t>");
 				break;
 			case I64_LE:
-				ctx.register(sym, "le<int64_t>");
+				ctx.register(sym, "__le<int64_t>");
 				break;
 			case I64_LT:
-				ctx.register(sym, "lt<int64_t>");
+				ctx.register(sym, "__lt<int64_t>");
 				break;
 			case I64_MUL:
-				ctx.register(sym, "mul<int64_t>");
+				ctx.register(sym, "__mul<int64_t>");
 				break;
 			case I64_NEG:
-				ctx.register(sym, "neg<int64_t>");
+				ctx.register(sym, "__neg<int64_t>");
 				break;
 			case I64_OR:
-				ctx.register(sym, "bitwise_or<int64_t>");
+				ctx.register(sym, "__bitwise_or<int64_t>");
 				break;
 			case I64_REM:
-				ctx.register(sym, "rem<int64_t>");
+				ctx.register(sym, "__rem<int64_t>");
 				break;
 			case I64_SCMP:
-				ctx.register(sym, "cmp<int64_t>");
+				ctx.register(sym, "__cmp<int64_t>");
 				break;
 			case I64_SUB:
-				ctx.register(sym, "sub<int64_t>");
+				ctx.register(sym, "__sub<int64_t>");
 				break;
 			case I64_UCMP:
-				ctx.register(sym, "cmp<uint64_t>");
+				ctx.register(sym, "__cmp<uint64_t>");
 				break;
 			case I64_XOR:
-				ctx.register(sym, "bitwise_xor<int64_t>");
+				ctx.register(sym, "__bitwise_xor<int64_t>");
 				break;
 			case IS_FREE:
 				break;
@@ -293,7 +293,7 @@ public class FuncsHpp {
 				ctx.register(sym, "string_concat");
 				break;
 			case STRING_CMP:
-				ctx.register(sym, "cmp<string>");
+				ctx.register(sym, "__cmp<string>");
 				break;
 			case STRING_MATCHES:
 				ctx.register(sym, "string_matches");
@@ -307,28 +307,40 @@ public class FuncsHpp {
 			case SUBSTITUTE:
 				break;
 			case fp32ToFp64:
+				ctx.register(sym, "__conv<float, double>");
 				break;
 			case fp32ToI32:
+				ctx.register(sym, "__conv<float, int32_t>");
 				break;
 			case fp32ToI64:
+				ctx.register(sym, "__conv<float, int64_t>");
 				break;
 			case fp64ToFp32:
+				ctx.register(sym, "__conv<double, float>");
 				break;
 			case fp64ToI32:
+				ctx.register(sym, "__conv<double, int32_t>");
 				break;
 			case fp64ToI64:
+				ctx.register(sym, "__conv<double, int64_t>");
 				break;
 			case i32ToFp32:
+				ctx.register(sym, "__conv<int32_t, float>");
 				break;
 			case i32ToFp64:
+				ctx.register(sym, "__conv<int32_t, double>");
 				break;
 			case i32ToI64:
+				ctx.register(sym, "__conv<int32_t, int64_t>");
 				break;
 			case i64ToFp32:
+				ctx.register(sym, "__conv<int64_t, float>");
 				break;
 			case i64ToFp64:
+				ctx.register(sym, "__conv<int64_t, double>");
 				break;
 			case i64ToI32:
+				ctx.register(sym, "__conv<int64_t, int32_t>");
 				break;
 			}
 		}
