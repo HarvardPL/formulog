@@ -33,6 +33,7 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import edu.harvard.seas.pl.formulog.ast.BoolTerm;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
 import edu.harvard.seas.pl.formulog.ast.FP32;
@@ -180,6 +181,9 @@ class TermExtractor {
 		@Override
 		public Term visitIndexedFunctor(IndexedFunctorContext ctx) {
 			String name = ctx.id.getText();
+			if (name.equals("true") || name.equals("false")) {
+				return parseBool(ctx);
+			}
 			List<Param> params = ParsingUtil.extractParams(pc, ctx.parameterList());
 			Symbol sym = nestedFunctions.get(name);
 			Term[] args = extractArray(ctx.termArgs().term());
@@ -213,6 +217,19 @@ class TermExtractor {
 				}
 			}
 			return t;
+		}
+		
+		private Term parseBool(IndexedFunctorContext ctx) {
+			String name = ctx.id.getText();
+			assert name.equals("true") || name.equals("false");
+			boolean val = name.equals("true");
+			if (!ctx.parameterList().parameter().isEmpty()) {
+				throw new RuntimeException("Boolean value " + val + " cannot be parameterized");
+			}
+			if (!ctx.termArgs().term().isEmpty()) {
+				throw new RuntimeException("Boolean value " + val + " cannot be applied to arguments");
+			}
+			return BoolTerm.mk(val);
 		}
 
 		private Term makeFunctor(Symbol sym, Term[] args) {
@@ -403,8 +420,8 @@ class TermExtractor {
 		}
 
 		private Term makeBoolMatch(Term matchee, Term ifTrue, Term ifFalse) {
-			MatchClause matchTrue = MatchClause.make(Constructors.trueTerm(), ifTrue);
-			MatchClause matchFalse = MatchClause.make(Constructors.falseTerm(), ifFalse);
+			MatchClause matchTrue = MatchClause.make(BoolTerm.mkTrue(), ifTrue);
+			MatchClause matchFalse = MatchClause.make(BoolTerm.mkFalse(), ifFalse);
 			return MatchExpr.make(matchee, Arrays.asList(matchTrue, matchFalse));
 		}
 
@@ -453,9 +470,9 @@ class TermExtractor {
 		private Term makeNonFunctionBinop(int tokenType, Term lhs, Term rhs) {
 			switch (tokenType) {
 			case FormulogParser.AMPAMP:
-				return makeBoolMatch(lhs, rhs, Constructors.falseTerm());
+				return makeBoolMatch(lhs, rhs, BoolTerm.mkFalse());
 			case FormulogParser.BARBAR:
-				return makeBoolMatch(lhs, Constructors.trueTerm(), rhs);
+				return makeBoolMatch(lhs, BoolTerm.mkTrue(), rhs);
 			default:
 				return null;
 			}
@@ -657,9 +674,9 @@ class TermExtractor {
 					public Term evaluate(Term[] args) throws EvaluationException {
 						Constructor c = (Constructor) args[0];
 						if (c.getSymbol().equals(ctor)) {
-							return Constructors.falseTerm();
+							return BoolTerm.mkFalse();
 						}
-						return Constructors.trueTerm();
+						return BoolTerm.mkTrue();
 					}
 
 				});
@@ -738,8 +755,8 @@ class TermExtractor {
 			Term thenExpr = ctx.thenExpr.accept(this);
 			Term elseExpr = ctx.elseExpr.accept(this);
 			List<MatchClause> branches = new ArrayList<>();
-			branches.add(MatchClause.make(Constructors.trueTerm(), thenExpr));
-			branches.add(MatchClause.make(Constructors.falseTerm(), elseExpr));
+			branches.add(MatchClause.make(BoolTerm.mkTrue(), thenExpr));
+			branches.add(MatchClause.make(BoolTerm.mkFalse(), elseExpr));
 			return MatchExpr.make(guard, branches);
 		}
 

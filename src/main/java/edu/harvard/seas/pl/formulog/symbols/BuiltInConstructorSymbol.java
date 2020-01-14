@@ -54,11 +54,11 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 	
 	SOME("some", 1, VANILLA_CONSTRUCTOR),
 
-	// Bools
-	
-	TRUE("true", 0, VANILLA_CONSTRUCTOR),
-	
-	FALSE("false", 0, VANILLA_CONSTRUCTOR),
+//	// Bools
+//	
+//	TRUE("true", 0, VANILLA_CONSTRUCTOR),
+//	
+//	FALSE("false", 0, VANILLA_CONSTRUCTOR),
 	
 	// Comparisons
 	
@@ -215,9 +215,6 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 			return makeType(list(a));
 		case CONS:
 			return makeType(a, list(a), list(a));
-		case FALSE:
-		case TRUE:
-			return makeType(bool);
 		case SMT_AND:
 		case SMT_OR:
 		case SMT_IMP:

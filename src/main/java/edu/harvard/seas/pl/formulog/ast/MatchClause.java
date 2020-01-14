@@ -73,7 +73,7 @@ public class MatchClause {
 
 		@Override
 		public Boolean visit(Primitive<?> p, Set<Var> in) {
-			return null;
+			return true;
 		}
 
 		@Override

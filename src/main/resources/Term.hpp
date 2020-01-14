@@ -21,6 +21,7 @@ struct Term {
 
   static int compare(const Term* t1, const Term* t2);
 
+  inline static term_ptr make(bool val);
   inline static term_ptr make(int32_t val);
   inline static term_ptr make(int64_t val);
   inline static term_ptr make(float val);
@@ -78,6 +79,10 @@ struct BaseTerm : public Term {
 // XXX Need to print special float values correctly
 std::ostream& operator<<(std::ostream& out, const Term& t) {
 	switch (t.sym) {
+	  case Symbol::boxed_bool: {
+      auto x = reinterpret_cast<const BaseTerm<bool>&>(t);
+      return out << std::boolalpha << x.val << std::noboolalpha;
+    }
 	  case Symbol::boxed_i32: {
       auto x = reinterpret_cast<const BaseTerm<int32_t>&>(t);
       return out << x.val;
@@ -195,6 +200,10 @@ int Term::compare(const Term* t1, const Term* t2) {
 
 term_ptr min_term = std::make_shared<Term>(Symbol::min_term);
 term_ptr max_term = std::make_shared<Term>(Symbol::max_term);
+
+term_ptr Term::make(bool val) {
+  return std::make_shared<BaseTerm<bool>>(Symbol::boxed_bool, val);
+}
 
 term_ptr Term::make(int32_t val) {
   return std::make_shared<BaseTerm<int32_t>>(Symbol::boxed_i32, val);

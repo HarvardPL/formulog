@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.harvard.seas.pl.formulog.ast.BoolTerm;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.FP32;
@@ -397,6 +398,12 @@ public class SmtLibParser {
 				skipRestOfSExp(t);
 				return term;
 			}
+		}
+		if (id.equals("true")) {
+			return BoolTerm.mkTrue();
+		}
+		if (id.equals("false")) {
+			return BoolTerm.mkFalse();
 		}
 		ConstructorSymbol sym = (ConstructorSymbol) symbolManager.lookupSymbol(id);
 		Term[] args = Terms.emptyArray();

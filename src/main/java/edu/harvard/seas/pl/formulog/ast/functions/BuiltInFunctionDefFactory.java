@@ -32,6 +32,7 @@ import java.util.function.BiFunction;
 import org.pcollections.HashTreePMap;
 
 import edu.harvard.seas.pl.formulog.Configuration;
+import edu.harvard.seas.pl.formulog.ast.BoolTerm;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
@@ -1559,8 +1560,8 @@ public final class BuiltInFunctionDefFactory {
 		return Constructors.make(BuiltInConstructorSymbol.SOME, Terms.singletonArray(arg));
 	}
 
-	private static final Term trueTerm = Constructors.trueTerm();
-	private static final Term falseTerm = Constructors.falseTerm();
+	private static final Term trueTerm = BoolTerm.mkTrue();
+	private static final Term falseTerm = BoolTerm.mkFalse();
 
 	private static Term boolToBoolTerm(boolean b) {
 		if (b) {

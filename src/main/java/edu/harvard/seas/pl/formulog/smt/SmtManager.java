@@ -39,43 +39,48 @@ import edu.harvard.seas.pl.formulog.util.Pair;
 
 public abstract class SmtManager {
 
-	public abstract Pair<Status, Map<SolverVariable, Term>> check(SmtLibTerm assertion, int timeout) throws EvaluationException;
+	public abstract Pair<Status, Map<SolverVariable, Term>> check(SmtLibTerm assertion, int timeout)
+			throws EvaluationException;
 
 	protected List<SmtLibTerm> breakIntoConjuncts(SmtLibTerm assertion) {
 		List<SmtLibTerm> l = new ArrayList<>();
 		breakIntoConjuncts(assertion, l);
 		return l;
 	}
-	
+
 	private void breakIntoConjuncts(SmtLibTerm assertion, List<SmtLibTerm> acc) {
-		Constructor c = (Constructor) assertion;
-		ConstructorSymbol sym = c.getSymbol();
-		Term[] args = c.getArgs();
-		if (sym.equals(BuiltInConstructorSymbol.SMT_AND)) {
-			breakIntoConjuncts((SmtLibTerm) args[0], acc);
-			breakIntoConjuncts((SmtLibTerm) args[1], acc);
-			return;
-		}
-		if (sym.equals(BuiltInConstructorSymbol.SMT_NOT)) {
-			c = (Constructor) args[0];
-			sym = c.getSymbol();
-			args = c.getArgs();
-			if (sym.equals(BuiltInConstructorSymbol.SMT_IMP)) {
-				// Turn ~(A => B) into A /\ ~B
+		if (assertion instanceof Constructor) {
+			Constructor c = (Constructor) assertion;
+			ConstructorSymbol sym = c.getSymbol();
+			Term[] args = c.getArgs();
+			if (sym.equals(BuiltInConstructorSymbol.SMT_AND)) {
 				breakIntoConjuncts((SmtLibTerm) args[0], acc);
-				breakIntoConjuncts(negate(args[1]), acc);
+				breakIntoConjuncts((SmtLibTerm) args[1], acc);
 				return;
 			}
-			if (sym.equals(BuiltInConstructorSymbol.SMT_OR)) {
-				// Turn ~(A \/ B) to ~A /\ ~B
-				breakIntoConjuncts(negate(args[0]), acc);
-				breakIntoConjuncts(negate(args[1]), acc);
-				return;
+			if (sym.equals(BuiltInConstructorSymbol.SMT_NOT)) {
+				if (args[0] instanceof Constructor) {
+					c = (Constructor) args[0];
+					sym = c.getSymbol();
+					args = c.getArgs();
+					if (sym.equals(BuiltInConstructorSymbol.SMT_IMP)) {
+						// Turn ~(A => B) into A /\ ~B
+						breakIntoConjuncts((SmtLibTerm) args[0], acc);
+						breakIntoConjuncts(negate(args[1]), acc);
+						return;
+					}
+					if (sym.equals(BuiltInConstructorSymbol.SMT_OR)) {
+						// Turn ~(A \/ B) to ~A /\ ~B
+						breakIntoConjuncts(negate(args[0]), acc);
+						breakIntoConjuncts(negate(args[1]), acc);
+						return;
+					}
+				}
 			}
 		}
 		acc.add(assertion);
 	}
-	
+
 	private SmtLibTerm negate(Term t) {
 		return (SmtLibTerm) Constructors.make(BuiltInConstructorSymbol.SMT_NOT, Terms.singletonArray(t));
 	}

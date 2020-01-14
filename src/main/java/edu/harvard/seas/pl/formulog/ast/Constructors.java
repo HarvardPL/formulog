@@ -92,18 +92,6 @@ public final class Constructors {
 		return make(sym, Terms.emptyArray());
 	}
 
-	private static final Constructor trueTerm = makeZeroAry(BuiltInConstructorSymbol.TRUE);
-
-	public static Constructor trueTerm() {
-		return trueTerm;
-	}
-
-	private static final Constructor falseTerm = makeZeroAry(BuiltInConstructorSymbol.FALSE);
-
-	public static Constructor falseTerm() {
-		return falseTerm;
-	}
-
 	private static final Constructor nil = makeZeroAry(BuiltInConstructorSymbol.NIL);
 
 	public static Constructor nil() {
@@ -114,10 +102,6 @@ public final class Constructors {
 		Function<String, Constructor> makeSolverOp = op -> memo.lookupOrCreate(sym, args,
 				() -> new SolverOperation(sym, args, op));
 		switch (sym) {
-		case FALSE:
-			return makeSolverOp.apply("false");
-		case TRUE:
-			return makeSolverOp.apply("true");
 		case NIL:
 			return makeNil(sym, args);
 		case CONS:

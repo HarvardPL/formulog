@@ -27,11 +27,11 @@ public final class ComplexLiterals {
 	}
 	
 	public static UnificationPredicate unifyWithBool(Term t, boolean bool) {
-		return UnificationPredicate.make(t, bool ? Constructors.trueTerm() : Constructors.falseTerm(), false);
+		return UnificationPredicate.make(t, bool ? BoolTerm.mkTrue() : BoolTerm.mkFalse(), false);
 	}
 	
 	public static UnificationPredicate trueAtom() {
-		return unifyWithBool(Constructors.trueTerm(), true);
+		return unifyWithBool(BoolTerm.mkTrue(), true);
 	}
 	
 	public static interface ComplexLiteralVisitor<I, O> {

@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.BindingType;
+import edu.harvard.seas.pl.formulog.ast.BoolTerm;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
@@ -200,11 +201,8 @@ public class PredicateFunctionSetter {
 			@Override
 			public Term evaluate(Term[] args) throws EvaluationException {
 				args = fillInPaddedArgs(funcSym, paddedArgs, args);
-				if (db.get(predSym, args, idx).iterator().hasNext()) {
-					return Constructors.trueTerm();
-				} else {
-					return Constructors.falseTerm();
-				}
+				boolean b = db.get(predSym, args, idx).iterator().hasNext();
+				return BoolTerm.mk(b);
 			}
 
 		};

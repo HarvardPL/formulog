@@ -22,6 +22,7 @@ package edu.harvard.seas.pl.formulog.codegen;
 
 import java.io.PrintWriter;
 
+import edu.harvard.seas.pl.formulog.ast.BoolTerm;
 import edu.harvard.seas.pl.formulog.ast.FP32;
 import edu.harvard.seas.pl.formulog.ast.FP64;
 import edu.harvard.seas.pl.formulog.ast.I32;
@@ -53,6 +54,8 @@ public class BaseTerm implements CppExpr {
 			out.print("(float) ");
 		} else if (p instanceof FP64) {
 			out.print("(double) ");
+		} else if (p instanceof BoolTerm) {
+			out.print("(bool) ");
 		} else if (p instanceof StringTerm) {
 			// do nothing
 		} else {
