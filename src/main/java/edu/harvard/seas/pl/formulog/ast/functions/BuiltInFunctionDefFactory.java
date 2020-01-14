@@ -166,10 +166,10 @@ public final class BuiltInFunctionDefFactory {
 			return Bneq.INSTANCE;
 		case BNOT:
 			return bnot;
-		case STRING_OF_I32:
-			return StringOfI32.INSTANCE;
-		case STRCMP:
-			return Strcmp.INSTANCE;
+		case TO_STRING:
+			return ToString.INSTANCE;
+		case STRING_CMP:
+			return StringCmp.INSTANCE;
 		case I32_SCMP:
 			return I32Scmp.INSTANCE;
 		case I32_UCMP:
@@ -178,8 +178,8 @@ public final class BuiltInFunctionDefFactory {
 			return I64Scmp.INSTANCE;
 		case I64_UCMP:
 			return I64Ucmp.INSTANCE;
-		case STRCAT:
-			return Strcat.INSTANCE;
+		case STRING_CONCAT:
+			return StringConcat.INSTANCE;
 		case STRING_MATCHES:
 			return stringMatches;
 		case STRING_STARTS_WITH:
@@ -1168,30 +1168,29 @@ public final class BuiltInFunctionDefFactory {
 		
 	};
 
-	private enum StringOfI32 implements FunctionDef {
+	private enum ToString implements FunctionDef {
 
 		INSTANCE;
 
 		@Override
 		public FunctionSymbol getSymbol() {
-			return BuiltInFunctionSymbol.STRING_OF_I32;
+			return BuiltInFunctionSymbol.TO_STRING;
 		}
 
 		@Override
 		public Term evaluate(Term[] args) throws EvaluationException {
-			I32 x = (I32) args[0];
-			return StringTerm.make(Integer.toString(x.getVal()));
+			return StringTerm.make(args[0].toString());
 		}
 
 	}
 
-	private enum Strcmp implements FunctionDef {
+	private enum StringCmp implements FunctionDef {
 
 		INSTANCE;
 
 		@Override
 		public FunctionSymbol getSymbol() {
-			return BuiltInFunctionSymbol.STRCMP;
+			return BuiltInFunctionSymbol.STRING_CMP;
 		}
 
 		@Override
@@ -1275,13 +1274,13 @@ public final class BuiltInFunctionDefFactory {
 
 	}
 
-	private enum Strcat implements FunctionDef {
+	private enum StringConcat implements FunctionDef {
 
 		INSTANCE;
 
 		@Override
 		public FunctionSymbol getSymbol() {
-			return BuiltInFunctionSymbol.STRCAT;
+			return BuiltInFunctionSymbol.STRING_CONCAT;
 		}
 
 		@Override

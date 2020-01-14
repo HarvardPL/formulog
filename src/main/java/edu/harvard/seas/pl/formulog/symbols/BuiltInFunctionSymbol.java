@@ -160,15 +160,15 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 	
 	// String operations
 
-	STRING_OF_I32("string_of_i32", 1),
+	STRING_CMP("string_cmp", 2),
 
-	STRCMP("strcmp", 2),
-
-	STRCAT("strcat", 2),
+	STRING_CONCAT("string_concat", 2),
 	
 	STRING_MATCHES("string_matches", 2),
 	
 	STRING_STARTS_WITH("string_starts_with", 2),
+	
+	TO_STRING("to_string", 1),
 
 	// Constraint solving
 
@@ -321,14 +321,14 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 			return new FunctorType(a, bool);
 		case QUERY_MODEL:
 			return new FunctorType(sym(a), model, option(a));
-		case STRCAT:
+		case STRING_CONCAT:
 			return new FunctorType(string, string, string);
-		case STRCMP:
+		case STRING_CMP:
 			return new FunctorType(string, string, cmp);
 		case STRING_MATCHES:
 			return new FunctorType(string, string, bool);
-		case STRING_OF_I32:
-			return new FunctorType(i32, string);
+		case TO_STRING:
+			return new FunctorType(a, string);
 		case STRING_STARTS_WITH:
 			return new FunctorType(string, string, bool);
 		case SUBSTITUTE:
