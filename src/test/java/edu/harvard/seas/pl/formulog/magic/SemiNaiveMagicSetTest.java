@@ -29,6 +29,4 @@ public class SemiNaiveMagicSetTest extends CommonMagicSetTest<SemiNaiveEvaluatio
 		super(new InterpretedSemiNaiveTester());
 	}
 
-
-
 }
