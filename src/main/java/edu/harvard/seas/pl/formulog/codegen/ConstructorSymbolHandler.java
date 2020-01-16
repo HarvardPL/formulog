@@ -76,17 +76,16 @@ public class ConstructorSymbolHandler {
 			}
 			for (ConstructorSymbol sym : symbols) {
 				out.print("  ");
-				out.println(ctx.lookupRepr(sym) + ",");
+				out.println(ctx.lookupUnqualifiedRepr(sym) + ",");
 			}
 			while (!(line = br.readLine()).equals("/* INSERT 1 */")) {
 				out.println(line);
 			}
 			for (ConstructorSymbol sym : symbols) {
-				out.print("    case Symbol::");
-				String repr = ctx.lookupRepr(sym);
-				out.print(repr);
+				out.print("    case ");
+				out.print(ctx.lookupRepr(sym));
 				out.print(": return out << \"");
-				out.print(repr);
+				out.print(ctx.lookupUnqualifiedRepr(sym));
 				out.println("\";");
 			}
 			while ((line = br.readLine()) != null) {

@@ -142,7 +142,7 @@ public class LiteralCodeGen {
 		private Function<CppStmt, CppStmt> handleDestructor(Destructor destructor) {
 			Pair<CppStmt, CppExpr> p = tcg.gen(destructor.getScrutinee(), env);
 			CppExpr base = p.snd();
-			CppVar sym = CppVar.mk("Symbol::" + ctx.lookupRepr(destructor.getSymbol()));
+			CppVar sym = CppVar.mk(ctx.lookupRepr(destructor.getSymbol()));
 			CppExpr guard = CppBinop.mkEq(CppAccess.mkThruPtr(base, "sym"), sym);
 			List<CppStmt> stmts = new ArrayList<>();
 			int i = 0;

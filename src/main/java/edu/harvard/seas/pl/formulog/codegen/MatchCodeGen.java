@@ -233,7 +233,7 @@ public class MatchCodeGen {
 
 					@Override
 					public CppStmt visit(CtorEdge e, Void in) {
-						CppExpr symbol = CppVar.mk("Symbol::" + ctx.lookupRepr(e.getLabel()));
+						CppExpr symbol = CppVar.mk(ctx.lookupRepr(e.getLabel()));
 						CppExpr guard = CppBinop.mkEq(CppAccess.mkThruPtr(expr, "sym"), symbol);
 						CppStmt body = go(dest);
 						return CppIf.mk(guard, body);

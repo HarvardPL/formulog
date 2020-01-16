@@ -78,10 +78,10 @@ public class CodeGenContext {
 		return Collections.unmodifiableSet(ctorSymToRepr.keySet());
 	}
 	
-	public synchronized String lookupRepr(ConstructorSymbol sym) {
+	public synchronized String lookupUnqualifiedRepr(ConstructorSymbol sym) {
 		String repr = ctorSymToRepr.get(sym);
 		if (repr == null) {
-			repr = sym.toString();
+			repr = CodeGenUtil.mkName(sym);
 			if (sym instanceof ParameterizedSymbol) {
 				assert ((ParameterizedSymbol) sym).isGround();
 				SymbolBase base = ((ParameterizedSymbol) sym).getBase();
@@ -92,6 +92,10 @@ public class CodeGenContext {
 			assert repr2 == null;
 		}
 		return repr;
+	}
+	
+	public synchronized String lookupRepr(ConstructorSymbol sym) {
+		return "Symbol::" + lookupUnqualifiedRepr(sym);
 	}
 	
 	public synchronized String lookupRepr(FunctionSymbol sym) {

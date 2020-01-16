@@ -26,9 +26,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -40,8 +42,11 @@ import edu.harvard.seas.pl.formulog.ast.functions.PredicateFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.UserFunctionDef;
 import edu.harvard.seas.pl.formulog.codegen.LiteralCodeGen.Result;
 import edu.harvard.seas.pl.formulog.codegen.LiteralCodeGen.ResultType;
+import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
+import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
+import edu.harvard.seas.pl.formulog.symbols.GlobalSymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.PredicateFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
@@ -412,7 +417,12 @@ public class FuncsHpp {
 			out.println(") {");
 			SimplePredicate pred = SimplePredicate.make(predSym, args, funcSym.getBindings(), false);
 			int index = getDef(funcSym).getIndex();
-			handleLookup(lcg.gen(pred, index, false, env));
+			Result res = lcg.gen(pred, index, false, env);
+			if (res.getResType() == ResultType.LOOKUP) {
+				genLookup(res).println(out, 1);
+			} else {
+				genLoop(pred, res).println(out, 1);
+			}
 			out.println("}");
 		}
 		
@@ -421,10 +431,45 @@ public class FuncsHpp {
 			return (PredicateFunctionDef) dummy.getDef();
 		}
 		
-		private void handleLookup(Result res) {
+		private CppStmt genLookup(Result res) {
 			assert res.getResType() == ResultType.LOOKUP;
 			CppStmt ifTrue = res.getK().apply(CppReturn.mk(CppFuncCall.mk("Term::make<bool>", CppConst.mkTrue())));
-			CppSeq.mk(ifTrue, CppReturn.mk(CppFuncCall.mk("Term::make<bool>", CppConst.mkFalse()))).println(out, 1);
+			return CppSeq.mk(ifTrue, CppReturn.mk(CppFuncCall.mk("Term::make<bool>", CppConst.mkFalse())));
+		}
+		
+		private CppStmt genLoop(SimplePredicate pred, Result res) {
+			assert res.getResType() == ResultType.LOOP;
+			List<CppStmt> acc = new ArrayList<>();
+			String listId = ctx.newId("list");
+			CppExpr nil = tcg.mkComplex(acc, BuiltInConstructorSymbol.NIL);
+			acc.add(CppDecl.mk(listId, nil));
+			CppVar list = CppVar.mk(listId);
+			CppStmt loopBody = genLoopBody(pred, res, list);
+			acc.add(res.getK().apply(CppSeq.mk(loopBody)));
+			acc.add(CppReturn.mk(list));
+			return CppSeq.mk(acc);
+		}
+		
+		private CppStmt genLoopBody(SimplePredicate pred, Result res, CppVar list) {
+			List<CppStmt> body = new ArrayList<>();
+			List<CppExpr> cols = tcg.gen(body, getFreeArgs(pred), res.getNewEnv());
+			CppExpr tuple = genTuple(cols, body);
+			CppExpr cons = tcg.mkComplex(body, BuiltInConstructorSymbol.CONS, tuple, list);
+			body.add(CppBinop.mkAssign(list, cons).toStmt());
+			return CppSeq.mk(body);
+		}
+		
+		private CppExpr genTuple(List<CppExpr> args, List<CppStmt> acc) {
+			int n = args.size();
+			if (n == 1) {
+				return args.get(0);
+			} else {
+				ConstructorSymbol sym = GlobalSymbolManager.lookupTupleSymbol(n);
+				CppExpr tuple = tcg.mkComplex(acc, sym, args);
+				String id = ctx.newId("t");
+				acc.add(CppDecl.mk(id, tuple));
+				return CppVar.mk(id); 
+			}
 		}
 		
 		private int nbound(BindingType[] bindings) {
@@ -435,6 +480,19 @@ public class FuncsHpp {
 				}
 			}
 			return n;
+		}
+		
+		private List<Term> getFreeArgs(SimplePredicate pred) {
+			Term[] args = pred.getArgs();
+			List<Term> freeArgs = new ArrayList<>();
+			int i = 0;
+			for (BindingType binding : pred.getBindingPattern()) {
+				if (binding.isFree()) {
+					freeArgs.add(args[i]);
+				}
+				i++;
+			}
+			return freeArgs;
 		}
 		
 	}

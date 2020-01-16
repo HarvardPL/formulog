@@ -21,7 +21,7 @@ package edu.harvard.seas.pl.formulog.codegen;
  */
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -46,35 +46,80 @@ public class TermCodeGen {
 	public TermCodeGen(CodeGenContext ctx) {
 		this.ctx = ctx;
 	}
-
-	public Pair<CppStmt, CppExpr> gen(Term t, Map<Var, CppExpr> env) {
-		return new Worker(new HashMap<>(env)).go(t);
+	
+	public CppExpr mkBool(CppExpr bool) {
+		return CppFuncCall.mk("Term::make<bool>", bool);
+	}
+	
+	public Pair<CppStmt, CppExpr> mkComplex(ConstructorSymbol sym, List<CppExpr> args) {
+		List<CppStmt> acc = new ArrayList<>();
+		CppExpr val = mkComplex(acc, sym, args);
+		return new Pair<>(CppSeq.mk(acc), val);
+	}
+	
+	public Pair<CppStmt, CppExpr> mkComplex(ConstructorSymbol sym, CppExpr... args) {
+		return mkComplex(sym, Arrays.asList(args));
+	}
+	
+	public CppExpr mkComplex(List<CppStmt> acc, ConstructorSymbol sym, List<CppExpr> args) {
+		assert sym.getArity() == args.size();
+		CppVar symbol = CppVar.mk(ctx.lookupRepr(sym));
+		CppExpr size = CppConst.mkInt(sym.getArity());
+		String arrId = ctx.newId("a");
+		CppExpr arr = CppVar.mk(arrId);
+		acc.add(CppDecl.mk(arrId, CppNewArray.mk("term_ptr", size)));
+		int i = 0;
+		for (CppExpr arg : args) {
+			CppExpr lhs = CppSubscript.mk(arr, CppConst.mkInt(i));
+			acc.add(CppBinop.mkAssign(lhs, arg).toStmt());
+			i++;
+		}
+		return CppFuncCall.mk("Term::make", symbol, size, arr);
+	}
+	
+	public CppExpr mkComplex(List<CppStmt> acc, ConstructorSymbol sym, CppExpr... args) {
+		Pair<CppStmt, CppExpr> p = mkComplex(sym, args);
+		acc.add(p.fst());
+		return p.snd();
 	}
 
-	public Pair<CppStmt, List<CppExpr>> gen(List<Term> ts, Map<Var, CppExpr> env) {
-		List<CppStmt> stmts = new ArrayList<>();
+	public Pair<CppStmt, CppExpr> gen(Term t, Map<Var, CppExpr> env) {
+		List<CppStmt> acc = new ArrayList<>();
+		CppExpr e = gen(acc, t, env);
+		return new Pair<>(CppSeq.mk(acc), e);
+	}
+	
+	public CppExpr gen(List<CppStmt> acc, Term t, Map<Var, CppExpr> env) {
+		return new Worker(acc, env).go(t);
+	}
+
+	public List<CppExpr> gen(List<CppStmt> acc, List<Term> ts, Map<Var, CppExpr> env) {
 		List<CppExpr> exprs = new ArrayList<>();
 		for (Term t : ts) {
-			Pair<CppStmt, CppExpr> p = gen(t, env);
-			stmts.add(p.fst());
-			exprs.add(p.snd());
+			exprs.add(gen(acc, t, env));
 		}
-		return new Pair<>(CppSeq.mk(stmts), exprs);
+		return exprs;
+	}
+	
+	public Pair<CppStmt, List<CppExpr>> gen(List<Term> ts, Map<Var, CppExpr> env) {
+		List<CppStmt> acc = new ArrayList<>();
+		List<CppExpr> es = gen(acc, ts, env);
+		return new Pair<>(CppSeq.mk(acc), es);
 	}
 
 	private class Worker {
 
 		private final Map<Var, CppExpr> env;
-		private final List<CppStmt> acc = new ArrayList<>();
+		private final List<CppStmt> acc;
 		private final MatchCodeGen mcg = new MatchCodeGen(ctx);
 
-		public Worker(Map<Var, CppExpr> env) {
+		public Worker(List<CppStmt> acc, Map<Var, CppExpr> env) {
+			this.acc = acc;
 			this.env = env;
 		}
 
-		public Pair<CppStmt, CppExpr> go(Term t) {
-			CppExpr expr = t.accept(tv, null);
-			return new Pair<>(CppSeq.mk(acc), expr);
+		public CppExpr go(Term t) {
+			return t.accept(tv, null);
 		}
 
 		private final TermVisitor<Void, CppExpr> tv = new TermVisitor<Void, CppExpr>() {
@@ -88,25 +133,14 @@ public class TermCodeGen {
 			@Override
 			public CppExpr visit(Constructor c, Void in) {
 				ConstructorSymbol sym = c.getSymbol();
-				int arity = sym.getArity();
-				CppExpr size = CppConst.mkInt(arity);
-				String arrId = ctx.newId("a");
-				CppExpr arr = CppVar.mk(arrId);
 				Term[] args = c.getArgs();
 				List<CppExpr> cppArgs = new ArrayList<>();
 				for (Term arg : args) {
 					cppArgs.add(arg.accept(this, in));
 				}
-				acc.add(CppDecl.mk(arrId, CppNewArray.mk("term_ptr", size)));
-				int i = 0;
-				for (CppExpr arg : cppArgs) {
-					CppExpr lhs = CppSubscript.mk(arr, CppConst.mkInt(i));
-					acc.add(CppBinop.mkAssign(lhs, arg).toStmt());
-					i++;
-				}
-				CppExpr symbol = CppVar.mk("Symbol::" + ctx.lookupRepr(sym));
+				CppExpr term = mkComplex(acc, sym, cppArgs);
 				String tId = ctx.newId("t");
-				acc.add(CppDecl.mk(tId, CppFuncCall.mk("Term::make", symbol, size, arr)));
+				acc.add(CppDecl.mk(tId, term));
 				return CppVar.mk(tId);
 			}
 
