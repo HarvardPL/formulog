@@ -123,7 +123,9 @@ public class MainCpp {
 			for (RelationSymbol sym : db.getSymbols()) {
 				out.print("  cout << \"");
 				out.print(sym);
-				out.println("\" << endl;");
+				out.print(": \" << ");
+				ctx.lookupRelation(sym).mkSize().print(out);
+				out.println(" << endl;");
 				ctx.lookupRelation(sym).mkPrint().println(out, 1);
 			}
 		}

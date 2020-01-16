@@ -54,4 +54,6 @@ public interface Relation extends CppExpr {
 	
 	CppExpr mkLookup(int idx, List<BindingType> pat, CppExpr key);
 	
+	CppExpr mkSize();
+	
 }

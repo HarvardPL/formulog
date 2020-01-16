@@ -68,6 +68,7 @@ public class BTreeRelationStruct implements RelationStruct {
 		declarePartition(out);
 		declareBegin(out);
 		declareEnd(out);
+		declareSize(out);
 		out.println("};");
 	}
 
@@ -214,6 +215,13 @@ public class BTreeRelationStruct implements RelationStruct {
 	private void declareEnd(PrintWriter out) {
 		out.println("  iterator end() const {");
 		CppExpr call = CppMethodCall.mk(CppVar.mk(mkIndexName(masterIndex)), "end");
+		CppReturn.mk(call).println(out, 2);
+		out.println("  }");
+	}
+	
+	private void declareSize(PrintWriter out) {
+		out.println("  size_t size() const {");
+		CppExpr call = CppMethodCall.mk(CppVar.mk(mkIndexName(masterIndex)), "size");
 		CppReturn.mk(call).println(out, 2);
 		out.println("  }");
 	}
@@ -386,6 +394,11 @@ public class BTreeRelationStruct implements RelationStruct {
 		@Override
 		public CppExpr mkLookup(int idx, List<BindingType> pat, CppExpr key) {
 			return CppMethodCall.mkThruPtr(nameVar, mkLookupName(idx, pat), key);
+		}
+
+		@Override
+		public CppExpr mkSize() {
+			return CppMethodCall.mkThruPtr(nameVar, "size");
 		}
 
 	}
