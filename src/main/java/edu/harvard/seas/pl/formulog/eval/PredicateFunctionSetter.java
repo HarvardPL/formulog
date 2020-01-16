@@ -171,6 +171,20 @@ public class PredicateFunctionSetter {
 		PredicateFunctionSymbol sym = (PredicateFunctionSymbol) def.getSymbol();
 		BindingType[] bindings = sym.getBindings();
 		assert bindings != null;
+		BindingType[] bindingsForIndex = turnIgnoredToFree(bindings);
+		int idx = dbb.makeIndex(sym.getPredicateSymbol(), bindingsForIndex);
+		FunctorType type = sym.getCompileTimeType();
+		Term[] paddedArgs = padArgs(sym);
+		FunctionDef innerDef;
+		if (type.getRetType().equals(BuiltInTypes.bool)) {
+			innerDef = makePredicate(sym, paddedArgs, idx);
+		} else {
+			innerDef = makeAggregate(sym, paddedArgs, idx, bindingsForIndex);
+		}
+		def.setDef(innerDef);
+	}
+	
+	private static BindingType[] turnIgnoredToFree(BindingType[] bindings) {
 		BindingType[] bindings2 = new BindingType[bindings.length];
 		for (int i = 0; i < bindings.length; ++i) {
 			bindings2[i] = bindings[i];
@@ -178,16 +192,7 @@ public class PredicateFunctionSetter {
 				bindings2[i] = BindingType.FREE;
 			}
 		}
-		int idx = dbb.makeIndex(sym.getPredicateSymbol(), bindings2);
-		FunctorType type = sym.getCompileTimeType();
-		Term[] paddedArgs = padArgs(sym);
-		FunctionDef innerDef;
-		if (type.getRetType().equals(BuiltInTypes.bool)) {
-			innerDef = makePredicate(sym, paddedArgs, idx);
-		} else {
-			innerDef = makeAggregate(sym, paddedArgs, idx);
-		}
-		def.setDef(innerDef);
+		return bindings2;
 	}
 
 	private FunctionDef makePredicate(PredicateFunctionSymbol funcSym, Term[] paddedArgs, int idx) {
@@ -211,10 +216,15 @@ public class PredicateFunctionSetter {
 				return idx;
 			}
 
+			@Override
+			public BindingType[] getBindingsForIndex() {
+				return funcSym.getBindings();
+			}
+
 		};
 	}
 
-	private FunctionDef makeAggregate(PredicateFunctionSymbol funcSym, Term[] paddedArgs, int idx) {
+	private FunctionDef makeAggregate(PredicateFunctionSymbol funcSym, Term[] paddedArgs, int idx, BindingType[] bindingsUsedForIndex) {
 		RelationSymbol predSym = funcSym.getPredicateSymbol();
 		int arity = 0;
 		BindingType[] bindings = funcSym.getBindings();
@@ -254,6 +264,11 @@ public class PredicateFunctionSetter {
 			@Override
 			public int getIndex() {
 				return idx;
+			}
+
+			@Override
+			public BindingType[] getBindingsForIndex() {
+				return bindingsUsedForIndex;
 			}
 
 		};

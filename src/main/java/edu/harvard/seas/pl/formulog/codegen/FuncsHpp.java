@@ -415,12 +415,15 @@ public class FuncsHpp {
 				}
 			}
 			out.println(") {");
-			SimplePredicate pred = SimplePredicate.make(predSym, args, funcSym.getBindings(), false);
-			int index = getDef(funcSym).getIndex();
+			PredicateFunctionDef def = getDef(funcSym);
+			BindingType[] bindingsForIndex = def.getBindingsForIndex();
+			SimplePredicate pred = SimplePredicate.make(predSym, args, bindingsForIndex, false);
+			int index = def.getIndex();
 			Result res = lcg.gen(pred, index, false, env);
 			if (res.getResType() == ResultType.LOOKUP) {
 				genLookup(res).println(out, 1);
 			} else {
+				pred = SimplePredicate.make(predSym, args, funcSym.getBindings(), false);
 				genLoop(pred, res).println(out, 1);
 			}
 			out.println("}");

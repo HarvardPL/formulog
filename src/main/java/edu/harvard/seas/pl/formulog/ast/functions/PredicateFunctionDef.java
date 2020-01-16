@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.ast.functions;
 
+import edu.harvard.seas.pl.formulog.ast.BindingType;
+
 /*-
  * #%L
  * FormuLog
@@ -23,5 +25,7 @@ package edu.harvard.seas.pl.formulog.ast.functions;
 public interface PredicateFunctionDef extends FunctionDef {
 
 	int getIndex();
+	
+	BindingType[] getBindingsForIndex();
 	
 }
