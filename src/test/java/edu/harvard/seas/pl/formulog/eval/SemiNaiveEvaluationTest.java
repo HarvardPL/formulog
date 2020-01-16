@@ -4,7 +4,7 @@ package edu.harvard.seas.pl.formulog.eval;
  * #%L
  * FormuLog
  * %%
- * Copyright (C) 2018 - 2019 President and Fellows of Harvard College
+ * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,10 @@ package edu.harvard.seas.pl.formulog.eval;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
-import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
+public class SemiNaiveEvaluationTest extends CommonEvaluationTest<SemiNaiveEvaluation> {
 
-public class SemiNaiveEvaluationTest extends CommonEvaluationTest {
-
-	@Override
-	protected Evaluation setup(WellTypedProgram prog) throws InvalidProgramException, EvaluationException {
-		return SemiNaiveEvaluation.setup(prog, 2);
+	public SemiNaiveEvaluationTest() {
+		super(new InterpretedSemiNaiveTester());
 	}
 
 }

@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.magic;
+package edu.harvard.seas.pl.formulog.eval;
 
 /*-
  * #%L
@@ -20,15 +20,10 @@ package edu.harvard.seas.pl.formulog.magic;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.eval.InterpretedSemiNaiveTester;
-import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
+import java.util.List;
 
-public class SemiNaiveMagicSetTest extends CommonMagicSetTest<SemiNaiveEvaluation> {
-
-	public SemiNaiveMagicSetTest() {
-		super(new InterpretedSemiNaiveTester());
-	}
-
-
+public interface Tester<T extends Evaluation> {
+	
+	void test(String file, List<String> inputDirs);
 
 }

@@ -24,7 +24,11 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
-public abstract class CommonEvaluationTest extends AbstractEvaluationTest {
+public abstract class CommonEvaluationTest<T extends Evaluation> extends AbstractEvaluationTest<T> {
+	
+	public CommonEvaluationTest(Tester<T> tester) {
+		super(tester);
+	}
 	
 	@Test
 	public void test018() {

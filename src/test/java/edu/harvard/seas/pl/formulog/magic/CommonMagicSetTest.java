@@ -23,8 +23,14 @@ package edu.harvard.seas.pl.formulog.magic;
 import org.junit.Test;
 
 import edu.harvard.seas.pl.formulog.eval.AbstractEvaluationTest;
+import edu.harvard.seas.pl.formulog.eval.Evaluation;
+import edu.harvard.seas.pl.formulog.eval.Tester;
 
-public abstract class CommonMagicSetTest extends AbstractEvaluationTest {
+public abstract class CommonMagicSetTest<T extends Evaluation> extends AbstractEvaluationTest<T> {
+
+	public CommonMagicSetTest(Tester<T> tester) {
+		super(tester);
+	}
 
 	@Test
 	public void test140() {
