@@ -49,12 +49,10 @@ public class CodeGen {
 	public void go() throws IOException, URISyntaxException {
 		copy("Term.hpp");
 		CodeGenContext ctx = new CodeGenContext(eval);
-		ConstructorSymbolHandler csh = new ConstructorSymbolHandler(ctx);
 		new RelsHpp(ctx).gen(outDir);
 		new FuncsHpp(ctx).gen(outDir);
 		new MainCpp(ctx).gen(outDir);
-		csh.getConstructorsFromTypes(eval.getInputProgram().getTypeSymbols());
-		csh.print(outDir);
+		new SymbolHpp(ctx).print(outDir);
 	}
 	
 	public void copy(String file) throws IOException, URISyntaxException {

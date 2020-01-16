@@ -27,42 +27,15 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.Set;
-import java.util.TreeSet;
 
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
-import edu.harvard.seas.pl.formulog.symbols.SymbolComparator;
-import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
-import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedSymbol;
-import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
-import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType.ConstructorScheme;
 
-public class ConstructorSymbolHandler {
+public class SymbolHpp {
 
 	private final CodeGenContext ctx;
-	private final Set<ConstructorSymbol> symbols = new TreeSet<>(SymbolComparator.INSTANCE);
 
-	public ConstructorSymbolHandler(CodeGenContext ctx) {
+	public SymbolHpp(CodeGenContext ctx) {
 		this.ctx = ctx;
-	}
-	
-	public void getConstructorsFromTypes(Set<TypeSymbol> syms) {
-		for (TypeSymbol sym : syms) {
-			if (!sym.isAlias()) {
-				getConstructorsFromType(AlgebraicDataType.makeWithFreshArgs(sym));
-			}
-		}
-	}
-
-	private void getConstructorsFromType(AlgebraicDataType type) {
-		if (type.hasConstructors()) {
-			for (ConstructorScheme cs : type.getConstructors()) {
-				ConstructorSymbol sym = cs.getSymbol();
-				assert !(sym instanceof ParameterizedSymbol);
-				ctx.lookupRepr(sym);
-				symbols.add(sym);
-				// XXX Need to do getters and checkers
-			}
-		}
 	}
 
 	public void print(File outDir) throws IOException {
@@ -74,6 +47,7 @@ public class ConstructorSymbolHandler {
 			while (!(line = br.readLine()).equals("/* INSERT 0 */")) {
 				out.println(line);
 			}
+			Set<ConstructorSymbol> symbols = ctx.getConstructorSymbols();
 			for (ConstructorSymbol sym : symbols) {
 				out.print("  ");
 				out.println(ctx.lookupUnqualifiedRepr(sym) + ",");

@@ -36,8 +36,11 @@ import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
+import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.SymbolBase;
+import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
+import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType.ConstructorScheme;
 import edu.harvard.seas.pl.formulog.util.Util;
 
 public class CodeGenContext {
@@ -126,6 +129,7 @@ public class CodeGenContext {
 		public void go() {
 			processRelations(db);
 			processRelations(deltaDb);
+			processTypes(eval.getInputProgram().getTypeSymbols());
 		}
 		
 		private void processRelations(SortedIndexedFactDb db) {
@@ -158,6 +162,21 @@ public class CodeGenContext {
 				m.put(i, db.getIndexInfo(sym, i));
 			}
 			return m;
+		}
+		
+		private void processTypes(Set<TypeSymbol> typeSymbols) {
+			for (TypeSymbol sym : typeSymbols) {
+				processType(AlgebraicDataType.makeWithFreshArgs(sym));
+			}
+		}
+		
+		private void processType(AlgebraicDataType type) {
+			if (type.hasConstructors()) {
+				for (ConstructorScheme cs : type.getConstructors()) {
+					ConstructorSymbol sym = cs.getSymbol();
+					lookupRepr(sym);
+				}
+			}
 		}
 		
 	}
