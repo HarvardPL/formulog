@@ -6,6 +6,7 @@
 #include <regex>
 
 #include "Term.hpp"
+#include "rels.hpp"
 
 namespace flg {
 

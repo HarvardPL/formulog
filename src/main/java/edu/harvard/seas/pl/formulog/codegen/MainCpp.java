@@ -28,15 +28,11 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
-import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb.IndexInfo;
-import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.validating.Stratum;
@@ -58,14 +54,12 @@ public class MainCpp {
 				PrintWriter out = new PrintWriter(outDir.toPath().resolve("main.cpp").toFile())) {
 			Worker pr = new Worker(out);
 			CodeGenUtil.copyOver(br, out, 0);
-			pr.defineRelations();
-			CodeGenUtil.copyOver(br, out, 1);
 			pr.loadEdbs();
-			CodeGenUtil.copyOver(br, out, 2);
+			CodeGenUtil.copyOver(br, out, 1);
 			pr.printStratumFuncs();
-			CodeGenUtil.copyOver(br, out, 3);
+			CodeGenUtil.copyOver(br, out, 2);
 			pr.evaluate();
-			CodeGenUtil.copyOver(br, out, 4);
+			CodeGenUtil.copyOver(br, out, 3);
 			pr.printResults();
 			CodeGenUtil.copyOver(br, out, -1);
 			out.flush();
@@ -75,53 +69,10 @@ public class MainCpp {
 	private class Worker {
 
 		private final SortedIndexedFactDb db = ctx.getEval().getDb();
-		private final SortedIndexedFactDb deltaDb = ctx.getEval().getDeltaDb();
 		private final PrintWriter out;
 
 		public Worker(PrintWriter out) {
 			this.out = out;
-		}
-
-		public void defineRelations() {
-			defineRelations(db);
-			out.println();
-			defineRelations(deltaDb);
-		}
-
-		private void defineRelations(SortedIndexedFactDb db) {
-			for (Iterator<RelationSymbol> it = db.getSymbols().iterator(); it.hasNext();) {
-				defineRelation(db, it.next());
-				if (it.hasNext()) {
-					out.println();
-				}
-			}
-		}
-
-		private void defineRelation(SortedIndexedFactDb db, RelationSymbol sym) {
-			RelationStruct struct = new BTreeRelationStruct(sym.getArity(), db.getMasterIndex(sym),
-					mkIndexInfo(sym, db));
-			struct.declare(out);
-			if (db == deltaDb) {
-				declareRelation(struct, new DeltaSymbol(sym));
-				declareRelation(struct, new NewSymbol(sym));
-			} else {
-				declareRelation(struct, sym);
-			}
-		}
-
-		private void declareRelation(RelationStruct struct, RelationSymbol sym) {
-			Relation rel = struct.mkRelation(sym);
-			rel.mkDecl().println(out, 0);
-			ctx.registerRelation(sym, rel);
-		}
-
-		private Map<Integer, IndexInfo> mkIndexInfo(RelationSymbol sym, SortedIndexedFactDb db) {
-			Map<Integer, IndexInfo> m = new HashMap<>();
-			int n = db.numIndices(sym);
-			for (int i = 0; i < n; ++i) {
-				m.put(i, db.getIndexInfo(sym, i));
-			}
-			return m;
 		}
 
 		public void loadEdbs() {

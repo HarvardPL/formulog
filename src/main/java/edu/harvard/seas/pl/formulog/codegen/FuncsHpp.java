@@ -398,7 +398,6 @@ public class FuncsHpp {
 				Var x = Var.fresh();
 				args[i] = x;
 				if (bindings[i].isBound()) {
-					out.print("const term_ptr& ");
 					String id = ctx.newId("x");
 					CppVar var = CppVar.mk(id);
 					env.put(x, var);
@@ -424,8 +423,8 @@ public class FuncsHpp {
 		
 		private void handleLookup(Result res) {
 			assert res.getResType() == ResultType.LOOKUP;
-			CppStmt ifTrue = res.getK().apply(CppReturn.mk(CppConst.mkTrue()));
-			CppSeq.mk(ifTrue, CppReturn.mk(CppConst.mkFalse())).println(out, 1);
+			CppStmt ifTrue = res.getK().apply(CppReturn.mk(CppFuncCall.mk("Term::make<bool>", CppConst.mkTrue())));
+			CppSeq.mk(ifTrue, CppReturn.mk(CppFuncCall.mk("Term::make<bool>", CppConst.mkFalse()))).println(out, 1);
 		}
 		
 		private int nbound(BindingType[] bindings) {

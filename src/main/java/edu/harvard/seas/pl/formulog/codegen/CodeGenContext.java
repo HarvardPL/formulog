@@ -1,5 +1,10 @@
 package edu.harvard.seas.pl.formulog.codegen;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+
 /*-
  * #%L
  * FormuLog
@@ -21,10 +26,13 @@ package edu.harvard.seas.pl.formulog.codegen;
  */
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
+import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb.IndexInfo;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
+import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
@@ -34,25 +42,22 @@ import edu.harvard.seas.pl.formulog.util.Util;
 
 public class CodeGenContext {
 
-	private final Map<ConstructorSymbol, String> ctorSymToRepr = new ConcurrentHashMap<>();
-	private final Map<FunctionSymbol, String> funcSymToRepr = new ConcurrentHashMap<>();
-	private final Map<SymbolBase, AtomicInteger> cnts = new ConcurrentHashMap<>();
-	private final Map<RelationSymbol, Relation> rels = new ConcurrentHashMap<>();
+	private final Map<ConstructorSymbol, String> ctorSymToRepr = new HashMap<>();
+	private final Map<FunctionSymbol, String> funcSymToRepr = new HashMap<>();
+	private final Map<SymbolBase, AtomicInteger> cnts = new HashMap<>();
+	private final Map<RelationSymbol, Relation> rels = new HashMap<>();
+	private final Set<RelationStruct> relStructs = new HashSet<>();
 	private final AtomicInteger id = new AtomicInteger();
 
 	private final SemiNaiveEvaluation eval;
 
 	public CodeGenContext(SemiNaiveEvaluation eval) {
 		this.eval = eval;
+		new Worker().go();
 	}
 
 	public SemiNaiveEvaluation getEval() {
 		return eval;
-	}
-	
-	public void registerRelation(RelationSymbol sym, Relation rel) {
-		Relation rel2 = rels.put(sym, rel);
-		assert rel2 == null;
 	}
 	
 	public Relation lookupRelation(RelationSymbol sym) {
@@ -61,7 +66,19 @@ public class CodeGenContext {
 		return rel;
 	}
 	
-	public String lookupRepr(ConstructorSymbol sym) {
+	public Set<RelationStruct> getRelationStructs() {
+		return Collections.unmodifiableSet(relStructs);
+	}
+	
+	public Set<RelationSymbol> getRelationSymbols() {
+		return Collections.unmodifiableSet(rels.keySet());
+	}
+	
+	public Set<ConstructorSymbol> getConstructorSymbols() {
+		return Collections.unmodifiableSet(ctorSymToRepr.keySet());
+	}
+	
+	public synchronized String lookupRepr(ConstructorSymbol sym) {
 		String repr = ctorSymToRepr.get(sym);
 		if (repr == null) {
 			repr = sym.toString();
@@ -72,26 +89,73 @@ public class CodeGenContext {
 				repr = base + "_" + n;
 			}
 			String repr2 = ctorSymToRepr.putIfAbsent(sym, repr);
-			if (repr2 != null) {
-				repr = repr2;
-			}
+			assert repr2 == null;
 		}
 		return repr;
 	}
 	
-	public String lookupRepr(FunctionSymbol sym) {
+	public synchronized String lookupRepr(FunctionSymbol sym) {
 		String repr = funcSymToRepr.get(sym);
 		assert repr != null : sym;
 		return "funcs::" + repr;
 	}
 	
-	public void register(FunctionSymbol sym, String repr) {
+	public synchronized void register(FunctionSymbol sym, String repr) {
 		String repr2 = funcSymToRepr.put(sym, repr);
 		assert repr2 == null || repr2.equals(repr);
 	}
 
 	public String newId(String prefix) {
 		return prefix + id.getAndIncrement(); 
+	}
+	
+	private class Worker {
+		
+		private final SortedIndexedFactDb db;
+		private final SortedIndexedFactDb deltaDb;
+		
+		public Worker() {
+			this.db = eval.getDb();
+			this.deltaDb = eval.getDeltaDb();
+		}
+		
+		public void go() {
+			processRelations(db);
+			processRelations(deltaDb);
+		}
+		
+		private void processRelations(SortedIndexedFactDb db) {
+			for (Iterator<RelationSymbol> it = db.getSymbols().iterator(); it.hasNext();) {
+				processRelation(db, it.next());
+			}
+		}		
+	
+		private void processRelation(SortedIndexedFactDb db, RelationSymbol sym) {
+			RelationStruct struct = new BTreeRelationStruct(sym.getArity(), db.getMasterIndex(sym),
+					mkIndexInfo(sym, db));
+			relStructs.add(struct);
+			if (db == deltaDb) {
+				registerRelation(struct, new DeltaSymbol(sym));
+				registerRelation(struct, new NewSymbol(sym));
+			} else {
+				registerRelation(struct, sym);
+			}
+		}
+
+		private void registerRelation(RelationStruct struct, RelationSymbol sym) {
+			Relation rel = struct.mkRelation(sym);
+			rels.put(sym, rel);
+		}
+
+		private Map<Integer, IndexInfo> mkIndexInfo(RelationSymbol sym, SortedIndexedFactDb db) {
+			Map<Integer, IndexInfo> m = new HashMap<>();
+			int n = db.numIndices(sym);
+			for (int i = 0; i < n; ++i) {
+				m.put(i, db.getIndexInfo(sym, i));
+			}
+			return m;
+		}
+		
 	}
 
 }
