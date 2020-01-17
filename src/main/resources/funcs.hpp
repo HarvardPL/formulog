@@ -1,10 +1,12 @@
 #pragma once
 
 #include <algorithm>
+#include <cstdlib>
 #include <sstream>
 #include <regex>
 
 #include "Term.hpp"
+#include "smt.hpp"
 #include "rels.hpp"
 
 namespace flg {
@@ -177,6 +179,15 @@ template <typename S, typename T>
 term_ptr __conv(const term_ptr& t1) {
   auto x = reinterpret_cast<BaseTerm<S>*>(t1.get());
   return Term::make<T>(x->val);
+}
+
+term_ptr is_sat(const term_ptr& t1) {
+  switch (smt_shim.is_sat(t1)) {
+    case SmtStatus::sat: return Term::make<bool>(true);
+    case SmtStatus::unsat: return Term::make<bool>(false);
+    case SmtStatus::unknown: abort();
+  }
+  __builtin_unreachable();
 }
 /* INSERT 0 */
 

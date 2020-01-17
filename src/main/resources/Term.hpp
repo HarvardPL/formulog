@@ -5,6 +5,7 @@
 #include <memory>
 #include <stack>
 #include <utility>
+
 #include "Symbol.hpp"
 
 namespace flg {

@@ -1,6 +1,7 @@
 #pragma once
 
-#include "souffle/CompiledSouffle.h"
+#include <souffle/CompiledSouffle.h>
+
 #include "Term.hpp"
 
 namespace flg {
