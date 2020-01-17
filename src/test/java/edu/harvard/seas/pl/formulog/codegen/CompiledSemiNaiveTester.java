@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.codegen;
 
+import java.io.BufferedReader;
+
 /*-
  * #%L
  * FormuLog
@@ -21,6 +23,8 @@ package edu.harvard.seas.pl.formulog.codegen;
  */
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -44,14 +48,38 @@ public class CompiledSemiNaiveTester extends AbstractTester<SemiNaiveEvaluation>
 		CodeGen cg = new CodeGen(eval, outDir.toFile());
 		try {
 			cg.go();
-		} catch (IOException | URISyntaxException e) {
+			Process proc = Runtime.getRuntime().exec("g++ -std=c++11 -I /home/aaron/souffle/include/ -o "
+					+ outDir.resolve("flg") + " " + outDir.resolve("main.cpp"));
+			if (proc.waitFor() != 0) {
+				System.err.println("Could not compile test");
+				printToStdErr(proc.getErrorStream());
+				return false;
+			}
+			proc = Runtime.getRuntime().exec(outDir.resolve("flg").toString());
+			if (proc.waitFor() != 0) {
+				System.err.println("Evaluation error");
+				printToStdErr(proc.getErrorStream());
+				return false;
+			}
+			BufferedReader br = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+			String line;
+			while ((line = br.readLine()) != null) {
+				if (line.equals("ok: 1")) {
+					return true;
+				}
+			}
+			return false;
+		} catch (IOException | URISyntaxException | InterruptedException e) {
 			throw new EvaluationException(e);
 		}
-		// Create process to run g++
-		// Create process to run executable
-		// Check output for `ok: 1` line
-		return false;
 	}
 
+	private static void printToStdErr(InputStream is) throws IOException {
+		BufferedReader br = new BufferedReader(new InputStreamReader(is));
+		String line;
+		while ((line = br.readLine()) != null) {
+			System.err.println(line);
+		}
+	}
 
 }

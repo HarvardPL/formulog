@@ -47,6 +47,8 @@ public class CodeGen {
 	}
 
 	public void go() throws IOException, URISyntaxException {
+		clean(outDir);
+		outDir.mkdirs();
 		copy("Term.hpp");
 		CodeGenContext ctx = new CodeGenContext(eval);
 		new RelsHpp(ctx).gen(outDir);
@@ -80,8 +82,6 @@ public class CodeGen {
 		WellTypedProgram wtp = new TypeChecker(prog).typeCheck();
 		SemiNaiveEvaluation eval = SemiNaiveEvaluation.setup(wtp, 4);
 		File dir = new File("codegen");
-		clean(dir);
-		dir.mkdirs();
 		new CodeGen(eval, dir).go();
 	}
 

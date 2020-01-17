@@ -62,25 +62,25 @@ public class CodeGenContext {
 	public SemiNaiveEvaluation getEval() {
 		return eval;
 	}
-	
+
 	public Relation lookupRelation(RelationSymbol sym) {
 		Relation rel = rels.get(sym);
 		assert rel != null : sym;
 		return rel;
 	}
-	
+
 	public Set<RelationStruct> getRelationStructs() {
 		return Collections.unmodifiableSet(relStructs);
 	}
-	
+
 	public Set<RelationSymbol> getRelationSymbols() {
 		return Collections.unmodifiableSet(rels.keySet());
 	}
-	
+
 	public Set<ConstructorSymbol> getConstructorSymbols() {
 		return Collections.unmodifiableSet(ctorSymToRepr.keySet());
 	}
-	
+
 	public synchronized String lookupUnqualifiedRepr(ConstructorSymbol sym) {
 		String repr = ctorSymToRepr.get(sym);
 		if (repr == null) {
@@ -96,48 +96,48 @@ public class CodeGenContext {
 		}
 		return repr;
 	}
-	
+
 	public synchronized String lookupRepr(ConstructorSymbol sym) {
 		return "Symbol::" + lookupUnqualifiedRepr(sym);
 	}
-	
+
 	public synchronized String lookupRepr(FunctionSymbol sym) {
 		String repr = funcSymToRepr.get(sym);
 		assert repr != null : sym;
 		return "funcs::" + repr;
 	}
-	
+
 	public synchronized void register(FunctionSymbol sym, String repr) {
 		String repr2 = funcSymToRepr.put(sym, repr);
 		assert repr2 == null || repr2.equals(repr);
 	}
 
 	public String newId(String prefix) {
-		return prefix + id.getAndIncrement(); 
+		return prefix + id.getAndIncrement();
 	}
-	
+
 	private class Worker {
-		
+
 		private final SortedIndexedFactDb db;
 		private final SortedIndexedFactDb deltaDb;
-		
+
 		public Worker() {
 			this.db = eval.getDb();
 			this.deltaDb = eval.getDeltaDb();
 		}
-		
+
 		public void go() {
 			processRelations(db);
 			processRelations(deltaDb);
 			processTypes(eval.getInputProgram().getTypeSymbols());
 		}
-		
+
 		private void processRelations(SortedIndexedFactDb db) {
 			for (Iterator<RelationSymbol> it = db.getSymbols().iterator(); it.hasNext();) {
 				processRelation(db, it.next());
 			}
-		}		
-	
+		}
+
 		private void processRelation(SortedIndexedFactDb db, RelationSymbol sym) {
 			RelationStruct struct = new BTreeRelationStruct(sym.getArity(), db.getMasterIndex(sym),
 					mkIndexInfo(sym, db));
@@ -163,13 +163,15 @@ public class CodeGenContext {
 			}
 			return m;
 		}
-		
+
 		private void processTypes(Set<TypeSymbol> typeSymbols) {
 			for (TypeSymbol sym : typeSymbols) {
-				processType(AlgebraicDataType.makeWithFreshArgs(sym));
+				if (!sym.isAlias()) {
+					processType(AlgebraicDataType.makeWithFreshArgs(sym));
+				}
 			}
 		}
-		
+
 		private void processType(AlgebraicDataType type) {
 			if (type.hasConstructors()) {
 				for (ConstructorScheme cs : type.getConstructors()) {
@@ -178,7 +180,7 @@ public class CodeGenContext {
 				}
 			}
 		}
-		
+
 	}
 
 }
