@@ -1,6 +1,7 @@
 package edu.harvard.seas.pl.formulog.codegen;
 
 import java.io.BufferedReader;
+import java.io.File;
 
 /*-
  * #%L
@@ -33,6 +34,7 @@ import edu.harvard.seas.pl.formulog.eval.AbstractTester;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
+import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 
 public class CompiledSemiNaiveTester extends AbstractTester<SemiNaiveEvaluation> {
@@ -44,18 +46,21 @@ public class CompiledSemiNaiveTester extends AbstractTester<SemiNaiveEvaluation>
 
 	@Override
 	protected boolean evaluate(SemiNaiveEvaluation eval) throws EvaluationException {
-		Path outDir = Paths.get("codegen");
-		CodeGen cg = new CodeGen(eval, outDir.toFile());
+		File dir = new File("codegen");
+		Util.clean(dir);
+		dir.mkdirs();
+		Path path = dir.toPath();
+		CodeGen cg = new CodeGen(eval, dir);
 		try {
 			cg.go();
 			Process proc = Runtime.getRuntime().exec("g++ -std=c++11 -I /home/aaron/souffle/include/ -o "
-					+ outDir.resolve("flg") + " " + outDir.resolve("main.cpp"));
+					+ path.resolve("flg") + " " + path.resolve("main.cpp"));
 			if (proc.waitFor() != 0) {
 				System.err.println("Could not compile test");
 				printToStdErr(proc.getErrorStream());
 				return false;
 			}
-			proc = Runtime.getRuntime().exec(outDir.resolve("flg").toString());
+			proc = Runtime.getRuntime().exec(path.resolve("flg").toString());
 			if (proc.waitFor() != 0) {
 				System.err.println("Evaluation error");
 				printToStdErr(proc.getErrorStream());

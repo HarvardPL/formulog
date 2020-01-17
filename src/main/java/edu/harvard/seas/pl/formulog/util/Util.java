@@ -1,6 +1,7 @@
 package edu.harvard.seas.pl.formulog.util;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.PrintStream;
 
 /*-
@@ -161,4 +162,13 @@ public final class Util {
 		return new IterableOfIterables<>(iterable, segmentSize);
 	}
 
+	public static void clean(File f) {
+		if (f.isDirectory()) {
+			for (File ff : f.listFiles()) {
+				clean(ff);
+			}
+		}
+		f.delete();
+	}
+	
 }

@@ -35,6 +35,7 @@ import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
 import edu.harvard.seas.pl.formulog.parsing.Parser;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
+import edu.harvard.seas.pl.formulog.util.Util;
 
 public class CodeGen {
 
@@ -47,8 +48,6 @@ public class CodeGen {
 	}
 
 	public void go() throws IOException, URISyntaxException {
-		clean(outDir);
-		outDir.mkdirs();
 		copy("Term.hpp");
 		CodeGenContext ctx = new CodeGenContext(eval);
 		new RelsHpp(ctx).gen(outDir);
@@ -62,15 +61,6 @@ public class CodeGen {
 		Files.copy(Paths.get(url.toURI()), outDir.toPath().resolve(file));
 	}
 
-	private static void clean(File f) {
-		if (f.isDirectory()) {
-			for (File ff : f.listFiles()) {
-				clean(ff);
-			}
-		}
-		f.delete();
-	}
-	
 	public static void main(String[] args) throws Exception {
 		if (args.length != 1) {
 			throw new IllegalArgumentException("Expected a single argument (the Formulog source file)");
@@ -82,6 +72,8 @@ public class CodeGen {
 		WellTypedProgram wtp = new TypeChecker(prog).typeCheck();
 		SemiNaiveEvaluation eval = SemiNaiveEvaluation.setup(wtp, 4);
 		File dir = new File("codegen");
+		Util.clean(dir);
+		dir.mkdirs();
 		new CodeGen(eval, dir).go();
 	}
 
