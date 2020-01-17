@@ -52,8 +52,10 @@ public class CompiledSemiNaiveTester extends AbstractTester<SemiNaiveEvaluation>
 		CodeGen cg = new CodeGen(eval, dir);
 		try {
 			cg.go();
-			Process proc = Runtime.getRuntime().exec("g++ -std=c++11 -I /home/aaron/souffle/include/ -o "
-					+ path.resolve("flg") + " " + path.resolve("main.cpp"));
+			Process proc = Runtime.getRuntime()
+					.exec("g++ -std=c++11 -I /home/aaron/souffle/include/ -I /home/aaron/boost_1_72_0/ -o "
+							+ path.resolve("flg") + " " + path.resolve("main.cpp")
+							+ " -L/home/aaron/boost_1_72_0/stage/lib/ -lpthread -lboost_filesystem -lboost_system");
 			if (proc.waitFor() != 0) {
 				System.err.println("Could not compile test");
 				printToStdErr(proc.getErrorStream());
