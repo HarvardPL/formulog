@@ -33,22 +33,30 @@ struct SmtShim {
 SmtShim::SmtShim() :
   z3("z3 -in", bp::std_in < z3_in, (bp::std_out & bp::std_err) > z3_out) {
   z3_in << declarations << endl;
+  z3_in << "(push)" << endl;
   z3_in.flush();
 }
 
 SmtStatus SmtShim::is_sat(const term_ptr& assertion) {
+  z3_in << "(pop)";
+  z3_in << "(push)";
   z3_in << "(assert ";
   serialize(assertion.get(), z3_in);
+  //serialize(assertion.get(), cout);
+  //cout << endl;
   z3_in << ")" << endl;
   z3_in << "(check-sat)" << endl;
   z3_in.flush();
   string line;
   getline(z3_out, line);
   if (line == "sat") { 
+    //cout << "sat" << endl;
     return SmtStatus::sat; 
   } else if (line == "unsat") {
+    //cout << "unsat" << endl;
     return SmtStatus::unsat;
   } else if (line == "unknown") {
+    //cout << "unknown" << endl;
     return SmtStatus::unknown;
   } else {
     cerr << "Unexpected Z3 response:" << endl;
@@ -61,7 +69,7 @@ SmtStatus SmtShim::is_sat(const term_ptr& assertion) {
 void SmtShim::serialize(const Term* t, ostream& out) {
   switch (t->sym) {
     case Symbol::boxed_bool: {
-      out << *t << endl;
+      out << *t;
       break;
     }
     case Symbol::smt_not : {
