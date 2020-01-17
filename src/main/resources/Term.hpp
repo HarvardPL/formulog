@@ -1,5 +1,4 @@
-#ifndef _TERM_HPP__
-#define _TERM_HPP__
+#pragma once
 
 #include <cstdint>
 #include <algorithm>
@@ -240,5 +239,3 @@ term_ptr Term::make(Symbol sym, size_t arity, term_ptr* val) {
 }
 
 } // namespace flg
-
-#endif

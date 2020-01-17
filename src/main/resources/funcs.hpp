@@ -1,5 +1,4 @@
-#ifndef FUNCTIONS_HPP__
-#define FUNCTIONS_HPP__
+#pragma once
 
 #include <algorithm>
 #include <sstream>
@@ -185,5 +184,3 @@ term_ptr __conv(const term_ptr& t1) {
 /* INSERT 1 */
 
 } // namespace flg
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef _SYMBOL_HPP__
-#define _SYMBOL_HPP__
+#pragma once
 
 #include <cstdlib>
 #include <iostream>
@@ -34,5 +33,3 @@ std::ostream& operator<<(std::ostream& out, const Symbol& sym) {
 }
 
 } // namespace flg
-
-#endif

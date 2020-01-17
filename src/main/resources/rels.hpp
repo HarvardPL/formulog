@@ -1,5 +1,4 @@
-#ifndef RELS_HPP__
-#define RELS_HPP__
+#pragma once
 
 #include "souffle/CompiledSouffle.h"
 #include "Term.hpp"
@@ -87,5 +86,3 @@ namespace rels {
 } // namespace rels
 
 } // namespace flg
-
-#endif

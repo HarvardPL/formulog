@@ -288,6 +288,7 @@ public class FuncsHpp {
 			case IS_FREE:
 				break;
 			case IS_SAT:
+				ctx.register(sym, "is_sat");
 				break;
 			case IS_SAT_OPT:
 				break;
