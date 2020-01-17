@@ -51,9 +51,9 @@ public class CodeGen {
 		copy("Term.hpp");
 		CodeGenContext ctx = new CodeGenContext(eval);
 		new RelsHpp(ctx).gen(outDir);
-		new SmtHpp(ctx).gen(outDir);
 		new FuncsHpp(ctx).gen(outDir);
 		new MainCpp(ctx).gen(outDir);
+		new SmtHpp(ctx).gen(outDir);
 		new SymbolHpp(ctx).print(outDir);
 	}
 	

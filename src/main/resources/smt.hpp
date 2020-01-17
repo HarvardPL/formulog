@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <boost/format.hpp>
 #include <boost/process.hpp>
 
 #include "Term.hpp"
@@ -72,26 +73,15 @@ void SmtShim::serialize(const Term* t, ostream& out) {
       out << *t;
       break;
     }
-    case Symbol::smt_not : {
-      serialize("not", t->as_complex(), out);
+    case Symbol::boxed_i32: {
+      out << "#x" << boost::format{"%08x"} % t->as_base<int32_t>().val;
       break;
     }
-    case Symbol::smt_and : {
-      serialize("and", t->as_complex(), out);
+    case Symbol::boxed_i64: {
+      out << "#x" << boost::format{"%016x"} % t->as_base<int64_t>().val;
       break;
     }
-    case Symbol::smt_or : {
-      serialize("or", t->as_complex(), out);
-      break;
-    }
-    case Symbol::smt_imp : {
-      serialize("=>", t->as_complex(), out);
-      break;
-    }
-    case Symbol::smt_ite : {
-      serialize("ite", t->as_complex(), out);
-      break;
-    }
+/* INSERT 1 */
   }
 }
 
