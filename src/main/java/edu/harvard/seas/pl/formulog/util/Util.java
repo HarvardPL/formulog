@@ -162,13 +162,15 @@ public final class Util {
 		return new IterableOfIterables<>(iterable, segmentSize);
 	}
 
-	public static void clean(File f) {
+	public static void clean(File f, boolean deleteTopLevel) {
 		if (f.isDirectory()) {
 			for (File ff : f.listFiles()) {
-				clean(ff);
+				clean(ff, true);
 			}
 		}
-		f.delete();
+		if (deleteTopLevel) {
+			f.delete();
+		}
 	}
 	
 }

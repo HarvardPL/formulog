@@ -26,7 +26,8 @@ struct SmtShim {
   bp::ipstream z3_out;
   bp::child z3;
 
-	void serialize(const term_ptr& assertion, ostream& out);
+	void serialize(const Term* assertion, ostream& out);
+  void serialize(const std::string& op, const ComplexTerm& t, ostream& out);
 };
 
 SmtShim::SmtShim() :
@@ -37,7 +38,7 @@ SmtShim::SmtShim() :
 
 SmtStatus SmtShim::is_sat(const term_ptr& assertion) {
   z3_in << "(assert ";
-  serialize(assertion, z3_in);
+  serialize(assertion.get(), z3_in);
   z3_in << ")" << endl;
   z3_in << "(check-sat)" << endl;
   z3_in.flush();
@@ -57,8 +58,48 @@ SmtStatus SmtShim::is_sat(const term_ptr& assertion) {
   __builtin_unreachable();
 }
 
-void SmtShim::serialize(const term_ptr& assertion, ostream& out) {
-  out << "true" << endl;	
+void SmtShim::serialize(const Term* t, ostream& out) {
+  switch (t->sym) {
+    case Symbol::boxed_bool: {
+      out << *t << endl;
+      break;
+    }
+    case Symbol::smt_not : {
+      serialize("not", t->as_complex(), out);
+      break;
+    }
+    case Symbol::smt_and : {
+      serialize("and", t->as_complex(), out);
+      break;
+    }
+    case Symbol::smt_or : {
+      serialize("or", t->as_complex(), out);
+      break;
+    }
+    case Symbol::smt_imp : {
+      serialize("=>", t->as_complex(), out);
+      break;
+    }
+    case Symbol::smt_ite : {
+      serialize("ite", t->as_complex(), out);
+      break;
+    }
+  }
+}
+
+void SmtShim::serialize(const std::string& op, const ComplexTerm& t, ostream& out) {
+  size_t n = t.arity;
+  if (n > 0) {
+    out << "(";
+  }
+  out << op;
+  for (size_t i = 0; i < n; ++i) {
+    out << " ";
+    serialize(t.val[i].get(), out);
+  }
+  if (n > 0) {
+    out << ")";
+  }
 }
 
 thread_local SmtShim smt_shim;

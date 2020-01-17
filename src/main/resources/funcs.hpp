@@ -24,111 +24,83 @@ term_ptr bneq(const term_ptr& t1, const term_ptr& t2) {
 }
 
 term_ptr bnot(const term_ptr& t1) {
-  auto x = reinterpret_cast<BaseTerm<bool>*>(t1.get());
-  return Term::make<bool>(!x->val);
+  return Term::make<bool>(!t1->as_base<bool>().val);
 }
 
 template <typename T>
 term_ptr __add(const term_ptr& t1, const term_ptr& t2) {
-  auto x = reinterpret_cast<BaseTerm<T>*>(t1.get());
-  auto y = reinterpret_cast<BaseTerm<T>*>(t2.get());
-  return Term::make(x->val + y->val);
+  return Term::make(t1->as_base<T>().val + t2->as_base<T>().val);
 }
 
 template <typename T>
 term_ptr __sub(const term_ptr& t1, const term_ptr& t2) {
-  auto x = reinterpret_cast<BaseTerm<T>*>(t1.get());
-  auto y = reinterpret_cast<BaseTerm<T>*>(t2.get());
-  return Term::make(x->val - y->val);
+  return Term::make(t1->as_base<T>().val - t2->as_base<T>().val);
 }
 
 template <typename T>
 term_ptr __mul(const term_ptr& t1, const term_ptr& t2) {
-  auto x = reinterpret_cast<BaseTerm<T>*>(t1.get());
-  auto y = reinterpret_cast<BaseTerm<T>*>(t2.get());
-  return Term::make(x->val * y->val);
+  return Term::make(t1->as_base<T>().val * t2->as_base<T>().val);
 }
 
 template <typename T>
 term_ptr __div(const term_ptr& t1, const term_ptr& t2) {
-  auto x = reinterpret_cast<BaseTerm<T>*>(t1.get());
-  auto y = reinterpret_cast<BaseTerm<T>*>(t2.get());
-  return Term::make(x->val / y->val);
+  return Term::make(t1->as_base<T>().val / t2->as_base<T>().val);
 }
 
 template <typename T>
 term_ptr __rem(const term_ptr& t1, const term_ptr& t2) {
-  auto x = reinterpret_cast<BaseTerm<T>*>(t1.get());
-  auto y = reinterpret_cast<BaseTerm<T>*>(t2.get());
-  return Term::make(x->val % y->val);
+  return Term::make(t1->as_base<T>().val % t2->as_base<T>().val);
 }
 
 template <typename T>
 term_ptr __bitwise_and(const term_ptr& t1, const term_ptr& t2) {
-  auto x = reinterpret_cast<BaseTerm<T>*>(t1.get());
-  auto y = reinterpret_cast<BaseTerm<T>*>(t2.get());
-  return Term::make(x->val & y->val);
+  return Term::make(t1->as_base<T>().val & t2->as_base<T>().val);
 }
 
 template <typename T>
 term_ptr __bitwise_or(const term_ptr& t1, const term_ptr& t2) {
-  auto x = reinterpret_cast<BaseTerm<T>*>(t1.get());
-  auto y = reinterpret_cast<BaseTerm<T>*>(t2.get());
-  return Term::make(x->val | y->val);
+  return Term::make(t1->as_base<T>().val | t2->as_base<T>().val);
 }
 
 template <typename T>
 term_ptr __bitwise_xor(const term_ptr& t1, const term_ptr& t2) {
-  auto x = reinterpret_cast<BaseTerm<T>*>(t1.get());
-  auto y = reinterpret_cast<BaseTerm<T>*>(t2.get());
-  return Term::make(x->val ^ y->val);
+  return Term::make(t1->as_base<T>().val ^ t2->as_base<T>().val);
 }
 
 template <typename T>
 term_ptr __neg(const term_ptr& t1) {
-  auto x = reinterpret_cast<BaseTerm<T>*>(t1.get());
-  return Term::make(-x->val);
+  return Term::make(-t1->as_base<T>().val);
 }
 
 template <typename T>
 term_ptr __eq(const term_ptr& t1, const term_ptr& t2) {
-  auto x = reinterpret_cast<BaseTerm<T>*>(t1.get());
-  auto y = reinterpret_cast<BaseTerm<T>*>(t2.get());
-  return Term::make<bool>(x->val == y->val);
+  return Term::make<bool>(t1->as_base<T>().val == t2->as_base<T>().val);
 }
 
 template <typename T>
 term_ptr __lt(const term_ptr& t1, const term_ptr& t2) {
-  auto x = reinterpret_cast<BaseTerm<T>*>(t1.get());
-  auto y = reinterpret_cast<BaseTerm<T>*>(t2.get());
-  return Term::make(x->val < y->val);
+  return Term::make(t1->as_base<T>().val < t2->as_base<T>().val);
 }
 
 template <typename T>
 term_ptr __le(const term_ptr& t1, const term_ptr& t2) {
-  auto x = reinterpret_cast<BaseTerm<T>*>(t1.get());
-  auto y = reinterpret_cast<BaseTerm<T>*>(t2.get());
-  return Term::make(x->val <= y->val);
+  return Term::make(t1->as_base<T>().val <= t2->as_base<T>().val);
 }
 
 template <typename T>
 term_ptr __gt(const term_ptr& t1, const term_ptr& t2) {
-  auto x = reinterpret_cast<BaseTerm<T>*>(t1.get());
-  auto y = reinterpret_cast<BaseTerm<T>*>(t2.get());
-  return Term::make(x->val > y->val);
+  return Term::make(t1->as_base<T>().val > t2->as_base<T>().val);
 }
 
 template <typename T>
 term_ptr __ge(const term_ptr& t1, const term_ptr& t2) {
-  auto x = reinterpret_cast<BaseTerm<T>*>(t1.get());
-  auto y = reinterpret_cast<BaseTerm<T>*>(t2.get());
-  return Term::make(x->val >= y->val);
+  return Term::make(t1->as_base<T>().val >= t2->as_base<T>().val);
 }
 
 template <typename T>
 term_ptr __cmp(const term_ptr& t1, const term_ptr& t2) {
-  auto xval = reinterpret_cast<BaseTerm<T>*>(t1.get())->val;
-  auto yval = reinterpret_cast<BaseTerm<T>*>(t2.get())->val;
+  auto xval = t1->as_base<T>().val;
+  auto yval = t2->as_base<T>().val;
   Symbol sym{Symbol::cmp_eq};
   if (xval < yval) {
     sym = Symbol::cmp_lt;
@@ -144,21 +116,17 @@ term_ptr print(const term_ptr& t1) {
 }
 
 term_ptr string_concat(const term_ptr& t1, const term_ptr& t2) {
-  auto x = reinterpret_cast<BaseTerm<string>*>(t1.get());
-  auto y = reinterpret_cast<BaseTerm<string>*>(t2.get());
-  return Term::make(x->val + y->val);
+  return Term::make(t1->as_base<string>().val + t2->as_base<string>().val);
 }
 
 term_ptr string_matches(const term_ptr& t1, const term_ptr& t2) {
-  auto x = reinterpret_cast<BaseTerm<string>*>(t1.get());
-  auto y = reinterpret_cast<BaseTerm<string>*>(t2.get());
-  regex re(y->val);
-  return Term::make<bool>(regex_match(x->val, re));
+  regex re(t2->as_base<string>().val);
+  return Term::make<bool>(regex_match(t1->as_base<string>().val, re));
 }
 
 term_ptr string_starts_with(const term_ptr& t1, const term_ptr& t2) {
-  auto str = reinterpret_cast<BaseTerm<string>*>(t1.get())->val;
-  auto pre = reinterpret_cast<BaseTerm<string>*>(t2.get())->val;
+  auto str = t1->as_base<string>().val;
+  auto pre = t2->as_base<string>().val;
   if (pre.size() > str.size()) {
     return Term::make<bool>(false);
   }

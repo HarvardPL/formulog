@@ -46,7 +46,7 @@ public class CompiledSemiNaiveTester extends AbstractTester<SemiNaiveEvaluation>
 	@Override
 	protected boolean evaluate(SemiNaiveEvaluation eval) throws EvaluationException {
 		File dir = new File("codegen");
-		Util.clean(dir);
+		Util.clean(dir, false);
 		dir.mkdirs();
 		Path path = dir.toPath();
 		CodeGen cg = new CodeGen(eval, dir);

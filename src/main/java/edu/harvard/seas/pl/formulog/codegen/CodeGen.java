@@ -73,7 +73,7 @@ public class CodeGen {
 		WellTypedProgram wtp = new TypeChecker(prog).typeCheck();
 		SemiNaiveEvaluation eval = SemiNaiveEvaluation.setup(wtp, 4);
 		File dir = new File("codegen");
-		Util.clean(dir);
+		Util.clean(dir, false);
 		dir.mkdirs();
 		new CodeGen(eval, dir).go();
 	}

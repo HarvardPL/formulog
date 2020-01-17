@@ -14,13 +14,18 @@ struct Term;
 
 typedef std::shared_ptr<Term> term_ptr;
 
+template <typename T> struct BaseTerm;
+struct ComplexTerm;
+
 struct Term {
   Symbol sym;
 
   Term(Symbol sym_) : sym{sym_} {}
 
-  static int compare(const Term* t1, const Term* t2);
+  template<typename T> inline const BaseTerm<T>& as_base() const;
+  inline const ComplexTerm& as_complex() const;
 
+  static int compare(const Term* t1, const Term* t2);
   template<typename T> inline static term_ptr make(T val);
   inline static term_ptr make(Symbol sym, size_t arity, term_ptr* val);
 };
@@ -75,31 +80,25 @@ struct BaseTerm : public Term {
 std::ostream& operator<<(std::ostream& out, const Term& t) {
 	switch (t.sym) {
 	  case Symbol::boxed_bool: {
-      auto x = reinterpret_cast<const BaseTerm<bool>&>(t);
-      return out << std::boolalpha << x.val << std::noboolalpha;
+      return out << std::boolalpha << t.as_base<bool>().val << std::noboolalpha;
     }
 	  case Symbol::boxed_i32: {
-      auto x = reinterpret_cast<const BaseTerm<int32_t>&>(t);
-      return out << x.val;
+      return out << t.as_base<int32_t>().val;
     }
 	  case Symbol::boxed_i64: {
-      auto x = reinterpret_cast<const BaseTerm<int64_t>&>(t);
-      return out << x.val << "L";
+      return out << t.as_base<int64_t>().val << "L";
     }
 	  case Symbol::boxed_fp32: {
-      auto x = reinterpret_cast<const BaseTerm<float>&>(t);
-      return out << x.val << "F";
+      return out << t.as_base<float>().val << "F";
     }
 	  case Symbol::boxed_fp64: {
-      auto x = reinterpret_cast<const BaseTerm<double>&>(t);
-      return out << x.val;
+      return out << t.as_base<double>().val;
     }
 	  case Symbol::boxed_string: {
-      auto x = reinterpret_cast<const BaseTerm<std::string>&>(t);
-      return out << "\"" << x.val << "\"";
+      return out << "\"" << t.as_base<std::string>().val << "\"";
     }
     default: {
-      auto x = reinterpret_cast<const ComplexTerm&>(t);
+      auto x = t.as_complex();
       out << x.sym;
       size_t n = x.arity;
       if (n > 0) {
@@ -136,65 +135,65 @@ int Term::compare(const Term* t1, const Term* t2) {
     }
     switch (t1->sym) {
       case Symbol::boxed_bool: {
-        auto x = reinterpret_cast<const BaseTerm<bool>*>(t1);
-        auto y = reinterpret_cast<const BaseTerm<bool>*>(t2);
-        int cmp = BaseTerm<bool>::compare(*x, *y);
+        auto x = t1->as_base<bool>();
+        auto y = t2->as_base<bool>();
+        int cmp = BaseTerm<bool>::compare(x, y);
         if (cmp != 0) {
           return cmp;
         }
         break;
       }
       case Symbol::boxed_i32: {
-        auto x = reinterpret_cast<const BaseTerm<int32_t>*>(t1);
-        auto y = reinterpret_cast<const BaseTerm<int32_t>*>(t2);
-        int cmp = BaseTerm<int32_t>::compare(*x, *y);
+        auto x = t1->as_base<int32_t>();
+        auto y = t2->as_base<int32_t>();
+        int cmp = BaseTerm<int32_t>::compare(x, y);
         if (cmp != 0) {
           return cmp;
         }
         break;
       }
       case Symbol::boxed_i64: {
-        auto x = reinterpret_cast<const BaseTerm<int64_t>*>(t1);
-        auto y = reinterpret_cast<const BaseTerm<int64_t>*>(t2);
-        int cmp = BaseTerm<int64_t>::compare(*x, *y);
+        auto x = t1->as_base<int64_t>();
+        auto y = t2->as_base<int64_t>();
+        int cmp = BaseTerm<int64_t>::compare(x, y);
         if (cmp != 0) {
           return cmp;
         }
         break;
       }
       case Symbol::boxed_fp32: {
-        auto x = reinterpret_cast<const BaseTerm<float>*>(t1);
-        auto y = reinterpret_cast<const BaseTerm<float>*>(t2);
-        int cmp = BaseTerm<float>::compare(*x, *y);
+        auto x = t1->as_base<float>();
+        auto y = t2->as_base<float>();
+        int cmp = BaseTerm<float>::compare(x, y);
         if (cmp != 0) {
           return cmp;
         }
         break;
       }
       case Symbol::boxed_fp64: {
-        auto x = reinterpret_cast<const BaseTerm<double>*>(t1);
-        auto y = reinterpret_cast<const BaseTerm<double>*>(t2);
-        int cmp = BaseTerm<double>::compare(*x, *y);
+        auto x = t1->as_base<double>();
+        auto y = t2->as_base<double>();
+        int cmp = BaseTerm<double>::compare(x, y);
         if (cmp != 0) {
           return cmp;
         }
         break;
       }
       case Symbol::boxed_string: {
-        auto x = reinterpret_cast<const BaseTerm<std::string>*>(t1);
-        auto y = reinterpret_cast<const BaseTerm<std::string>*>(t2);
-        int cmp = BaseTerm<std::string>::compare(*x, *y);
+        auto x = t1->as_base<std::string>();
+        auto y = t2->as_base<std::string>();
+        int cmp = BaseTerm<std::string>::compare(x, y);
         if (cmp != 0) {
           return cmp;
         }
         break;
       }
       default: {
-        auto x = reinterpret_cast<const ComplexTerm*>(t1);
-        auto y = reinterpret_cast<const ComplexTerm*>(t2);
-        size_t n = x->arity;
+        auto x = t1->as_complex();
+        auto y = t2->as_complex();
+        size_t n = x.arity;
         for (size_t i = 0; i < n; ++i) {
-          w.emplace(x->val[i].get(), y->val[i].get()); 
+          w.emplace(x.val[i].get(), y.val[i].get()); 
         }
       }
     }
@@ -237,6 +236,15 @@ term_ptr Term::make<std::string>(std::string val) {
 
 term_ptr Term::make(Symbol sym, size_t arity, term_ptr* val) {
   return std::make_shared<ComplexTerm>(sym, arity, val);
+}
+
+template<typename T>
+const BaseTerm<T>& Term::as_base() const {
+  return reinterpret_cast<const BaseTerm<T>&>(*this);
+}
+
+const ComplexTerm& Term::as_complex() const {
+  return reinterpret_cast<const ComplexTerm&>(*this);
 }
 
 } // namespace flg
