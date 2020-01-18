@@ -247,4 +247,10 @@ const ComplexTerm& Term::as_complex() const {
   return reinterpret_cast<const ComplexTerm&>(*this);
 }
 
+struct TermCompare {
+  bool operator()(const Term* const& lhs, const Term* const& rhs) {
+    return Term::compare(lhs, rhs) < 0;
+  }
+};
+
 } // namespace flg

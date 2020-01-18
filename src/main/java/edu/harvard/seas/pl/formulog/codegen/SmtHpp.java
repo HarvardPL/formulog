@@ -26,10 +26,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.util.HashSet;
+import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.smt.SmtLibShim;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInConstructorSymbolBase;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedConstructorSymbol;
 
 public class SmtHpp {
@@ -49,6 +52,8 @@ public class SmtHpp {
 			CodeGenUtil.copyOver(br, out, 0);
 			pr.copyDeclarations();
 			CodeGenUtil.copyOver(br, out, 1);
+			pr.genVisitingCases();
+			CodeGenUtil.copyOver(br, out, 2);
 			pr.genSerializationCases();
 			CodeGenUtil.copyOver(br, out, -1);
 			out.flush();
@@ -58,15 +63,31 @@ public class SmtHpp {
 	private class Worker {
 
 		private final PrintWriter out;
+		private final Set<ConstructorSymbol> varSymbols = new HashSet<>();
 
 		public Worker(PrintWriter out) {
 			this.out = out;
+			for (ConstructorSymbol sym : ctx.getConstructorSymbols()) {
+				if (isVarSymbol(sym)) {
+					varSymbols.add(sym);
+				}
+			}
+		}
+
+		private boolean isVarSymbol(ConstructorSymbol sym) {
+			return sym instanceof ParameterizedConstructorSymbol
+					&& ((ParameterizedConstructorSymbol) sym).getBase() == BuiltInConstructorSymbolBase.SMT_VAR;
 		}
 
 		public void copyDeclarations() {
 			new SmtLibShim(null, out, ctx.getEval().getInputProgram());
 		}
-		
+
+		public void genVisitingCases() {
+			// TODO Auto-generated method stub
+
+		}
+
 		public void genSerializationCases() {
 			for (ConstructorSymbol sym : ctx.getConstructorSymbols()) {
 				genSerializationCase(sym);
@@ -93,7 +114,7 @@ public class SmtHpp {
 			}
 			return null;
 		}
-		
+
 		private CppStmt genBuiltInConstructorSymbolCase(BuiltInConstructorSymbol sym) {
 			switch (sym) {
 			case ARRAY_CONST:
@@ -212,7 +233,7 @@ public class SmtHpp {
 			}
 			return null;
 		}
-		
+
 		private CppStmt genParameterizedConstructorSymbolCase(ParameterizedConstructorSymbol sym) {
 			switch (sym.getBase()) {
 			case ARRAY_DEFAULT:
@@ -278,14 +299,14 @@ public class SmtHpp {
 			}
 			return null;
 		}
-		
+
 		private CppStmt genOp(String op) {
 			CppExpr s = CppConst.mkString(op);
 			CppExpr t = CppMethodCall.mkThruPtr(CppVar.mk("t"), "as_complex");
 			CppExpr o = CppVar.mk("out");
 			return CppFuncCall.mk("serialize", s, t, o).toStmt();
 		}
-		
+
 	}
 
 }

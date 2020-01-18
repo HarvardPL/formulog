@@ -54,6 +54,7 @@ public class CodeGen {
 		new FuncsHpp(ctx).gen(outDir);
 		new MainCpp(ctx).gen(outDir);
 		new SmtHpp(ctx).gen(outDir);
+		new TypeHpp(ctx).gen(outDir);
 		new SymbolHpp(ctx).print(outDir);
 	}
 	

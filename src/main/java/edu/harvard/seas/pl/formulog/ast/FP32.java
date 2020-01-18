@@ -66,7 +66,6 @@ public class FP32 extends AbstractTerm implements Primitive<Float>, SmtLibTerm {
 		return Float.toString(val) + "F";
 	}
 
-
 	@Override
 	public SmtLibTerm substSolverTerms(PMap<SolverVariable, SmtLibTerm> subst) {
 		return this;
