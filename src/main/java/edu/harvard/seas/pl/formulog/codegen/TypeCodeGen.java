@@ -44,14 +44,28 @@ public class TypeCodeGen {
 		this.ctx = ctx;
 	}
 
-	public Pair<CppStmt, CppExpr> gen(AlgebraicDataType type) {
+	public Pair<CppStmt, CppExpr> gen(Type type) {
 		List<CppStmt> acc = new ArrayList<>();
 		CppExpr e = gen(acc, type);
 		return new Pair<>(CppSeq.mk(acc), e);
 	}
 
-	public CppExpr gen(List<CppStmt> acc, AlgebraicDataType type) {
+	public CppExpr gen(List<CppStmt> acc, Type type) {
 		return new Worker(acc, new HashMap<>()).go(type);
+	}
+	
+	public List<CppExpr> gen(List<CppStmt> acc, List<Type> types) {
+		List<CppExpr> es = new ArrayList<>();
+		for (Type ty : types) {
+			gen(acc, ty);
+		}
+		return es;
+	}
+	
+	public Pair<CppStmt, List<CppExpr>> gen(List<Type> types) {
+		List<CppStmt> acc = new ArrayList<>();
+		List<CppExpr> es = gen(acc, types);
+		return new Pair<>(CppSeq.mk(acc), es);
 	}
 
 	private class Worker {
@@ -138,7 +152,7 @@ public class TypeCodeGen {
 			case SMT_TYPE:
 			case SMT_WRAPPED_VAR_TYPE:
 			case SYM_TYPE:
-				throw new AssertionError("impossible");
+				throw new AssertionError("impossible: " + type);
 			}
 			return null;
 		}

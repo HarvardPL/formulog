@@ -26,6 +26,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
+
+import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
+import edu.harvard.seas.pl.formulog.types.FunctorType;
+import edu.harvard.seas.pl.formulog.types.TypeChecker;
+import edu.harvard.seas.pl.formulog.types.Types.Type;
 
 public class TypeHpp {
 
@@ -41,6 +48,8 @@ public class TypeHpp {
 				BufferedReader br = new BufferedReader(isr);
 				PrintWriter out = new PrintWriter(outDir.toPath().resolve("Type.hpp").toFile())) {
 			Worker pr = new Worker(out);
+			CodeGenUtil.copyOver(br, out, 0);
+			pr.defineSymbolTypes();
 			CodeGenUtil.copyOver(br, out, -1);
 			out.flush();
 		}
@@ -49,9 +58,41 @@ public class TypeHpp {
 	private class Worker {
 
 		private final PrintWriter out;
+		private final TypeCodeGen tcg = new TypeCodeGen(ctx);
 
 		public Worker(PrintWriter out) {
 			this.out = out;
+		}
+		
+		public void defineSymbolTypes() {
+			for (ConstructorSymbol sym : ctx.getConstructorSymbols()) {
+				defineSymbolType(sym);
+			}
+		}
+
+		private void defineSymbolType(ConstructorSymbol sym) {
+			out.println("    case " + ctx.lookupRepr(sym) + ": {");
+			genCaseBody(sym).println(out, 3);
+			out.println("    }");
+		}
+		
+		private CppStmt genCaseBody(ConstructorSymbol sym) {
+			List<CppStmt> acc = new ArrayList<>();
+			FunctorType ft = simplify(sym.getCompileTimeType());
+			List<CppExpr> argTypes = tcg.gen(acc, ft.getArgTypes());
+			CppExpr retType = tcg.gen(acc, ft.getRetType());
+			String vId = ctx.newId("v");
+			acc.add(CppCtor.mkInitializer("vector<Type>", vId, argTypes));
+			acc.add(CppReturn.mk(CppFuncCall.mk("make_pair", CppVar.mk(vId), retType)));
+			return CppSeq.mk(acc);
+		}
+		
+		private FunctorType simplify(FunctorType ft) {
+			List<Type> args = new ArrayList<>();
+			for (Type ty : ft.getArgTypes()) {
+				args.add(TypeChecker.simplify(ty));
+			}
+			return new FunctorType(args, TypeChecker.simplify(ft.getRetType()));
 		}
 
 	}

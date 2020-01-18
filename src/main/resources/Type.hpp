@@ -63,7 +63,7 @@ functor_type Type::lookup(const Symbol& sym) {
     case Symbol::boxed_fp32: return fp32_type;
     case Symbol::boxed_fp64: return fp64_type;
     case Symbol::boxed_string: return string_type;
-/* INSERT */
+/* INSERT 0 */
   }
 }
 
