@@ -55,7 +55,7 @@ SmtStatus SmtShim::is_sat(const term_ptr& assertion) {
   preprocess(t);
   z3_in << "(assert ";
   serialize(t, z3_in);
-  //serialize(assertion.get(), cout);
+  //serialize(t, cout);
   //cout << endl;
   z3_in << ")" << endl;
   z3_in << "(check-sat)" << endl;

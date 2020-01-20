@@ -1,0 +1,7 @@
+output ok
+
+ok :-
+  X = #x[bool],
+  Y = #y[bool],
+  is_sat(`some(X) #= some(Y)`),
+  is_sat(`~(some(X) #= some(Y))`).

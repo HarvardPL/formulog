@@ -308,6 +308,7 @@ public final class Constructors {
 			shim.print("(");
 			shim.print(quantifier);
 			for (Term t : getBoundVars()) {
+				shim.getTypeAnnotation(BuiltInConstructorSymbol.CONS);
 				SolverVariable x = (SolverVariable) t;
 				shim.print("(");
 				x.toSmtLib(shim);
@@ -317,8 +318,8 @@ public final class Constructors {
 				shim.print(")");
 			}
 			shim.print(") ");
-			// Consume type annotation for variable list
-			shim.getTypeAnnotation(Constructors.nil());
+			// Consume final type annotation for variable list
+			shim.getTypeAnnotation(BuiltInConstructorSymbol.NIL);
 			List<List<Term>> pats = getPatterns();
 			// XXX Need to check if pattern is valid!
 			if (!pats.isEmpty()) {
@@ -328,7 +329,9 @@ public final class Constructors {
 			if (!pats.isEmpty()) {
 				for (List<Term> pat : pats) {
 					shim.print(" :pattern (");
+					shim.getTypeAnnotation(BuiltInConstructorSymbol.CONS);
 					for (Iterator<Term> it = pat.iterator(); it.hasNext();) {
+						shim.getTypeAnnotation(BuiltInConstructorSymbol.CONS);
 						Constructor wrappedPat = (Constructor) it.next();
 						SmtLibTerm t = (SmtLibTerm) wrappedPat.getArgs()[0];
 						t.toSmtLib(shim);
@@ -337,13 +340,13 @@ public final class Constructors {
 						}
 					}
 					shim.print(")");
+					// Consume final type annotation for pattern list
+					shim.getTypeAnnotation(BuiltInConstructorSymbol.NIL);
 				}
 				shim.print(")");
-				// Consume type annotation for pattern list
-				shim.getTypeAnnotation(Constructors.nil());
 			}
-			// Consume type annotation for pattern list
-			shim.getTypeAnnotation(Constructors.nil());
+			// Consume final type annotation for pattern list list
+			shim.getTypeAnnotation(BuiltInConstructorSymbol.NIL);
 			shim.print(")");
 		}
 
@@ -995,7 +998,7 @@ public final class Constructors {
 		if (sym.getArity() > 0) {
 			shim.print("(");
 		}
-		String typeAnnotation = shim.getTypeAnnotation(c);
+		String typeAnnotation = shim.getTypeAnnotation(sym);
 		if (typeAnnotation != null) {
 			shim.print("(as ");
 			shim.print(repr);

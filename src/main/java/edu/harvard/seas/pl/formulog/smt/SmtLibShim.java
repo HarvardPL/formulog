@@ -58,9 +58,11 @@ import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.smt.SmtLibParser.SmtLibParseException;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbolType;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedConstructorSymbol;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
 import edu.harvard.seas.pl.formulog.types.Types;
@@ -73,7 +75,6 @@ import edu.harvard.seas.pl.formulog.types.Types.TypeVar;
 import edu.harvard.seas.pl.formulog.types.Types.TypeVisitor;
 import edu.harvard.seas.pl.formulog.util.DedupWorkList;
 import edu.harvard.seas.pl.formulog.util.Pair;
-import edu.harvard.seas.pl.formulog.util.Util;
 
 public class SmtLibShim {
 
@@ -90,7 +91,7 @@ public class SmtLibShim {
 	private final Deque<Set<SolverVariable>> symbolsByStackPos = new ArrayDeque<>();
 	private final Map<String, SolverVariable> symbolLookup = new HashMap<>();
 	private final SymbolManager symbolManager;
-	private Iterator<Type> typeAnnotations;
+	private Iterator<Pair<ConstructorSymbol, Type>> typeAnnotations;
 	private int cnt;
 
 	public SmtLibShim(Reader in, Writer out, Program<?, ?> prog) {
@@ -240,11 +241,11 @@ public class SmtLibShim {
 		print(stringifyType(type));
 	}
 
-	public String getTypeAnnotation(Constructor c) {
-		ConstructorSymbol sym = c.getSymbol();
-		FunctorType ft = sym.getCompileTimeType();
-		if (needsTypeAnnotation(sym, ft.getArgTypes(), ft.getRetType())) {
-			return stringifyType(typeAnnotations.next());
+	public String getTypeAnnotation(ConstructorSymbol sym) {
+		if (needsTypeAnnotation(sym)) {
+			Pair<ConstructorSymbol, Type> p = typeAnnotations.next();
+			assert p.fst().equals(sym);
+			return stringifyType(p.snd());
 		}
 		return null;
 	}
@@ -446,7 +447,7 @@ public class SmtLibShim {
 				}
 				return s + ")";
 			}
-			
+
 			@Override
 			public String visit(OpaqueType opaqueType, Void in) {
 				throw new AssertionError("impossible");
@@ -533,35 +534,6 @@ public class SmtLibShim {
 			return syms;
 		}
 
-		private boolean isDeclarableTypeSymbol(TypeSymbol sym) {
-			if (sym.isAlias()) {
-				return false;
-			}
-			if (sym instanceof BuiltInTypeSymbol) {
-				switch ((BuiltInTypeSymbol) sym) {
-				case SMT_TYPE:
-				case SYM_TYPE:
-				case BOOL_TYPE:
-				case STRING_TYPE:
-				case ARRAY_TYPE:
-				case INT_TYPE:
-				case MODEL_TYPE:
-				case BV:
-				case FP:
-				case SMT_PATTERN_TYPE:
-				case SMT_WRAPPED_VAR_TYPE:
-					return false;
-				case CMP_TYPE:
-				case LIST_TYPE:
-				case OPTION_TYPE:
-					return true;
-				default:
-					throw new AssertionError("impossible");
-				}
-			}
-			return true;
-		}
-
 	}
 
 	private class MiniTypeInferer {
@@ -569,17 +541,20 @@ public class SmtLibShim {
 		private final Deque<Pair<Type, Type>> constraints = new ArrayDeque<>();
 		private final Map<TypeVar, Type> subst = new HashMap<>();
 
-		public List<Type> inferTypes(Term t) {
+		public List<Pair<ConstructorSymbol, Type>> inferTypes(Term t) {
 			constraints.clear();
 			subst.clear();
-			List<Type> types = inferTypes1(t);
+			List<Pair<ConstructorSymbol, Type>> types = inferTypes1(t);
 			unifyConstraints();
-			types = Util.map(types, ty -> TypeChecker.simplify(ty.applySubst(subst)));
-			return types;
+			List<Pair<ConstructorSymbol, Type>> types2 = new ArrayList<>();
+			for (Pair<ConstructorSymbol, Type> p : types) {
+				types2.add(new Pair<>(p.fst(), TypeChecker.simplify(p.snd().applySubst(subst))));
+			}
+			return types2;
 		}
 
-		private List<Type> inferTypes1(Term t) {
-			List<Type> types = new ArrayList<>();
+		private List<Pair<ConstructorSymbol, Type>> inferTypes1(Term t) {
+			List<Pair<ConstructorSymbol, Type>> types = new ArrayList<>();
 			t.accept(new TermVisitor<Void, Type>() {
 
 				@Override
@@ -593,8 +568,8 @@ public class SmtLibShim {
 					FunctorType ft = sym.getCompileTimeType().freshen();
 					Type ty = ft.getRetType();
 					List<Type> args = ft.getArgTypes();
-					if (needsTypeAnnotation(sym, args, ty)) {
-						types.add(ty);
+					if (needsTypeAnnotation(sym)) {
+						types.add(new Pair<>(sym, ty));
 					}
 					if (!(c instanceof SolverVariable)) {
 						Iterator<Type> it = args.iterator();
@@ -679,8 +654,46 @@ public class SmtLibShim {
 
 	}
 
-	private static boolean needsTypeAnnotation(Symbol constructorSymbol, List<Type> argTypes, Type retType) {
-		return !Types.getTypeVars(argTypes).containsAll(Types.getTypeVars(retType));
+	private static boolean needsTypeAnnotation(ConstructorSymbol sym) {
+		if (sym instanceof ParameterizedConstructorSymbol) {
+			return false;
+		}
+		if (sym.getConstructorSymbolType().equals(ConstructorSymbolType.VANILLA_CONSTRUCTOR)) {
+			return true;
+		}
+		FunctorType ft = sym.getCompileTimeType();
+		List<Type> args = ft.getArgTypes();
+		Type ret = sym.getCompileTimeType().getRetType();
+		return !Types.getTypeVars(args).containsAll(Types.getTypeVars(ret));
+	}
+
+	private static boolean isDeclarableTypeSymbol(TypeSymbol sym) {
+		if (sym.isAlias()) {
+			return false;
+		}
+		if (sym instanceof BuiltInTypeSymbol) {
+			switch ((BuiltInTypeSymbol) sym) {
+			case SMT_TYPE:
+			case SYM_TYPE:
+			case BOOL_TYPE:
+			case STRING_TYPE:
+			case ARRAY_TYPE:
+			case INT_TYPE:
+			case MODEL_TYPE:
+			case BV:
+			case FP:
+			case SMT_PATTERN_TYPE:
+			case SMT_WRAPPED_VAR_TYPE:
+				return false;
+			case CMP_TYPE:
+			case LIST_TYPE:
+			case OPTION_TYPE:
+				return true;
+			default:
+				throw new AssertionError("impossible");
+			}
+		}
+		return true;
 	}
 
 }
