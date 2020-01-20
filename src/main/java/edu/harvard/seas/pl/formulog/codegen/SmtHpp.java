@@ -84,8 +84,14 @@ public class SmtHpp {
 		}
 
 		public void genVisitingCases() {
-			// TODO Auto-generated method stub
-
+			if (varSymbols.isEmpty()) {
+				return;
+			}
+			for (ConstructorSymbol sym : varSymbols) {
+				out.println("    case " + ctx.lookupRepr(sym) + ":");
+			}
+			CppFuncCall.mk("SmtShim::record_var", CppVar.mk("t")).toStmt().println(out, 3);
+			out.println("      break;");
 		}
 
 		public void genSerializationCases() {
@@ -293,7 +299,7 @@ public class SmtHpp {
 			case SMT_PAT:
 				break;
 			case SMT_VAR:
-				break;
+				return CppBinop.mkShiftLeft(CppVar.mk("out"), CppFuncCall.mk("lookup_var", CppVar.mk("t"))).toStmt();
 			case SMT_WRAP_VAR:
 				break;
 			}

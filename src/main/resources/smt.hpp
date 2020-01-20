@@ -36,6 +36,7 @@ struct SmtShim {
   void visit(const Term* assertion);
   void record_var(const Term* var);
   void declare_vars(ostream& out);
+  string lookup_var(const Term* var);
 	void serialize(const Term* assertion, ostream& out);
   void serialize(const std::string& op, const ComplexTerm& t, ostream& out);
 };
@@ -86,7 +87,7 @@ void SmtShim::visit(const Term* t) {
     case Symbol::boxed_fp32:
     case Symbol::boxed_fp64:
     case Symbol::boxed_string:
-      return;
+      break;
 /* INSERT 1 */
     default:
       auto x = t->as_complex();
@@ -98,11 +99,8 @@ void SmtShim::visit(const Term* t) {
 
 void SmtShim::record_var(const Term* t) {
   auto v = z3_vars.find(t);
-  string name;
-  if (v != z3_vars.end()) {
-    name = v->second;
-  } else {
-    name = "x" + cnt++;
+  if (v == z3_vars.end()) {
+    string name = "x" + to_string(cnt++);
     z3_vars.emplace(t, name);
   }
 }
@@ -120,6 +118,10 @@ void SmtShim::declare_vars(ostream& out) {
     out << "(declare-const " << it->second << " " <<
       Type::lookup(it->first->sym).second << ")" << endl;
   }
+}
+
+string SmtShim::lookup_var(const Term* t) {
+  return z3_vars.find(t)->second;
 }
 
 void SmtShim::serialize(const Term* t, ostream& out) {
