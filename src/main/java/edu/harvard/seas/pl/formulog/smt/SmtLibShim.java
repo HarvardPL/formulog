@@ -62,7 +62,6 @@ import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbolType;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
-import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedConstructorSymbol;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
 import edu.harvard.seas.pl.formulog.types.Types;
@@ -655,9 +654,6 @@ public class SmtLibShim {
 	}
 
 	private static boolean needsTypeAnnotation(ConstructorSymbol sym) {
-		if (sym instanceof ParameterizedConstructorSymbol) {
-			return false;
-		}
 		if (sym.getConstructorSymbolType().equals(ConstructorSymbolType.VANILLA_CONSTRUCTOR)) {
 			return true;
 		}
