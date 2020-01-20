@@ -79,11 +79,8 @@ public class TypeHpp {
 		private CppStmt genCaseBody(ConstructorSymbol sym) {
 			List<CppStmt> acc = new ArrayList<>();
 			FunctorType ft = simplify(sym.getCompileTimeType());
-			List<CppExpr> argTypes = tcg.gen(acc, ft.getArgTypes());
-			CppExpr retType = tcg.gen(acc, ft.getRetType());
-			String vId = ctx.newId("v");
-			acc.add(CppCtor.mkInitializer("vector<Type>", vId, argTypes));
-			acc.add(CppReturn.mk(CppFuncCall.mk("make_pair", CppVar.mk(vId), retType)));
+			CppExpr typeCode = tcg.gen(acc, ft);
+			acc.add(CppReturn.mk(typeCode));
 			return CppSeq.mk(acc);
 		}
 		

@@ -2,6 +2,7 @@
 
 #include <boost/format.hpp>
 #include <boost/process.hpp>
+#include <cmath>
 #include <cstdlib>
 #include <iostream>
 #include <map>
@@ -123,7 +124,11 @@ void SmtShim::declare_vars(ostream& out) {
 
 void SmtShim::serialize(const Term* t, ostream& out) {
   switch (t->sym) {
-    case Symbol::boxed_bool: {
+    case Symbol::min_term:
+    case Symbol::max_term:
+      abort();
+    case Symbol::boxed_bool:
+    case Symbol::boxed_string: {
       out << *t;
       break;
     }
@@ -135,7 +140,50 @@ void SmtShim::serialize(const Term* t, ostream& out) {
       out << "#x" << boost::format{"%016x"} % t->as_base<int64_t>().val;
       break;
     }
+    case Symbol::boxed_fp32: {
+      auto val = t->as_base<float>().val;
+      if (isnan(val)) {
+        out << "(_ NaN 8 24)";
+      } else if (isinf(val)) {
+        if (val > 0) {
+          out << "(_ +oo 8 24)";
+        } else {
+          out << "(_ -oo 8 24)";
+        }
+      } else {
+        out << "((_ to_fp 8 24) RNE " << val << ")";
+      }
+      break;
+    }
+    case Symbol::boxed_fp64: {
+      auto val = t->as_base<double>().val;
+      if (isnan(val)) {
+        out << "(_ NaN 11 53)";
+      } else if (isinf(val)) {
+        if (val > 0) {
+          out << "(_ +oo 11 53)";
+        } else {
+          out << "(_ -oo 11 53)";
+        }
+      } else {
+        out << "((_ to_fp 11 53) RNE " << val << ")";
+      }
+      break;
+    }
 /* INSERT 2 */
+    default:
+      auto x = t->as_complex();
+      if (x.arity > 0) {
+        out << "(";
+      }
+      out << "|" << x.sym << "|";
+      for (size_t i = 0; i < x.arity; ++i) {
+        out << " ";
+        serialize(x.val[i].get(), out); 
+      }
+      if (x.arity > 0) {
+        out << ")";
+      }
   }
 }
 

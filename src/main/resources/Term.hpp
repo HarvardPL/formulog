@@ -1,7 +1,8 @@
 #pragma once
 
-#include <cstdint>
 #include <algorithm>
+#include <cmath>
+#include <cstdint>
 #include <memory>
 #include <stack>
 #include <utility>
@@ -10,9 +11,11 @@
 
 namespace flg {
 
+using namespace std;
+
 struct Term;
 
-typedef std::shared_ptr<Term> term_ptr;
+typedef shared_ptr<Term> term_ptr;
 
 template <typename T> struct BaseTerm;
 struct ComplexTerm;
@@ -39,13 +42,13 @@ struct ComplexTerm : public Term {
 
   ComplexTerm(const ComplexTerm& t) :
     Term{t.sym}, arity{t.arity}, val{new term_ptr[t.arity]} {
-    std::copy(t.val, t.val + t.arity, val);
+    copy(t.val, t.val + t.arity, val);
   }
 
   ComplexTerm& operator=(const ComplexTerm& t) {
     if (this != &t) {
       term_ptr* new_val = new term_ptr[t.arity];
-      std::copy(t.val, t.val + t.arity, new_val);
+      copy(t.val, t.val + t.arity, new_val);
       delete[] val;
       sym = t.sym;
       arity = t.arity;
@@ -76,11 +79,10 @@ struct BaseTerm : public Term {
   }
 };
 
-// XXX Need to print special float values correctly
-std::ostream& operator<<(std::ostream& out, const Term& t) {
+ostream& operator<<(ostream& out, const Term& t) {
 	switch (t.sym) {
 	  case Symbol::boxed_bool: {
-      return out << std::boolalpha << t.as_base<bool>().val << std::noboolalpha;
+      return out << boolalpha << t.as_base<bool>().val << noboolalpha;
     }
 	  case Symbol::boxed_i32: {
       return out << t.as_base<int32_t>().val;
@@ -89,13 +91,37 @@ std::ostream& operator<<(std::ostream& out, const Term& t) {
       return out << t.as_base<int64_t>().val << "L";
     }
 	  case Symbol::boxed_fp32: {
-      return out << t.as_base<float>().val << "F";
+      auto val = t.as_base<float>().val;
+      if (isnan(val)) {
+        out << "fp32_nan";
+      } else if (isinf(val)) {
+        if (val > 0) {
+          out << "fp32_pos_infinity";
+        } else {
+          out << "fp32_neg_infinity";
+        }
+      } else {
+        out << val << "F";
+      }
+      return out;
     }
 	  case Symbol::boxed_fp64: {
-      return out << t.as_base<double>().val;
+      auto val = t.as_base<double>().val;
+      if (isnan(val)) {
+        out << "fp64_nan";
+      } else if (isinf(val)) {
+        if (val > 0) {
+          out << "fp64_pos_infinity";
+        } else {
+          out << "fp64_neg_infinity";
+        }
+      } else {
+        out << val << "F";
+      }
+      return out;
     }
 	  case Symbol::boxed_string: {
-      return out << "\"" << t.as_base<std::string>().val << "\"";
+      return out << "\"" << t.as_base<string>().val << "\"";
     }
     default: {
       auto x = t.as_complex();
@@ -117,7 +143,7 @@ std::ostream& operator<<(std::ostream& out, const Term& t) {
 }
 
 int Term::compare(const Term* t1, const Term* t2) {
-  std::stack<std::pair<const Term*, const Term*>> w;
+  stack<pair<const Term*, const Term*>> w;
   w.emplace(t1, t2);
   while (!w.empty()) {
     auto p = w.top();
@@ -180,9 +206,9 @@ int Term::compare(const Term* t1, const Term* t2) {
         break;
       }
       case Symbol::boxed_string: {
-        auto x = t1->as_base<std::string>();
-        auto y = t2->as_base<std::string>();
-        int cmp = BaseTerm<std::string>::compare(x, y);
+        auto x = t1->as_base<string>();
+        auto y = t2->as_base<string>();
+        int cmp = BaseTerm<string>::compare(x, y);
         if (cmp != 0) {
           return cmp;
         }
@@ -201,41 +227,41 @@ int Term::compare(const Term* t1, const Term* t2) {
   return 0;
 }
 
-term_ptr min_term = std::make_shared<Term>(Symbol::min_term);
-term_ptr max_term = std::make_shared<Term>(Symbol::max_term);
+term_ptr min_term = make_shared<Term>(Symbol::min_term);
+term_ptr max_term = make_shared<Term>(Symbol::max_term);
 
 template<>
 term_ptr Term::make<bool>(bool val) {
-  return std::make_shared<BaseTerm<bool>>(Symbol::boxed_bool, val);
+  return make_shared<BaseTerm<bool>>(Symbol::boxed_bool, val);
 }
 
 template<>
 term_ptr Term::make<int32_t>(int32_t val) {
-  return std::make_shared<BaseTerm<int32_t>>(Symbol::boxed_i32, val);
+  return make_shared<BaseTerm<int32_t>>(Symbol::boxed_i32, val);
 }
 
 template<>
 term_ptr Term::make<int64_t>(int64_t val) {
-  return std::make_shared<BaseTerm<int64_t>>(Symbol::boxed_i64, val);
+  return make_shared<BaseTerm<int64_t>>(Symbol::boxed_i64, val);
 }
 
 template<>
 term_ptr Term::make<float>(float val) {
-  return std::make_shared<BaseTerm<float>>(Symbol::boxed_fp32, val);
+  return make_shared<BaseTerm<float>>(Symbol::boxed_fp32, val);
 }
 
 template<>
 term_ptr Term::make<double>(double val) {
-  return std::make_shared<BaseTerm<double>>(Symbol::boxed_fp64, val);
+  return make_shared<BaseTerm<double>>(Symbol::boxed_fp64, val);
 }
 
 template<>
-term_ptr Term::make<std::string>(std::string val) {
-  return std::make_shared<BaseTerm<std::string>>(Symbol::boxed_string, val);
+term_ptr Term::make<string>(string val) {
+  return make_shared<BaseTerm<string>>(Symbol::boxed_string, val);
 }
 
 term_ptr Term::make(Symbol sym, size_t arity, term_ptr* val) {
-  return std::make_shared<ComplexTerm>(sym, arity, val);
+  return make_shared<ComplexTerm>(sym, arity, val);
 }
 
 template<typename T>

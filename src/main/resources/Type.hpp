@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <cstdlib>
 #include <utility>
 #include <vector>
 
@@ -49,7 +50,7 @@ functor_type fp32_type = make_pair(vector<Type>(), Type{"(_ FloatingPoint 8 24)"
 functor_type fp64_type = make_pair(vector<Type>(), Type{"(_ FloatingPoint 11 53)", false, {}});
 functor_type string_type = make_pair(vector<Type>(), Type{"String", false, {}}); 
 
-atomize_size_t Type::cnt;
+atomic_size_t Type::cnt;
 
 Type Type::new_var() {
   return Type{"x" + cnt++, true, {}};
@@ -57,6 +58,9 @@ Type Type::new_var() {
 
 functor_type Type::lookup(const Symbol& sym) {
   switch (sym) {
+    case Symbol::min_term:
+    case Symbol::max_term:
+      abort();
     case Symbol::boxed_bool: return bool_type;
     case Symbol::boxed_i32: return i32_type;
     case Symbol::boxed_i64: return i64_type;
@@ -65,6 +69,7 @@ functor_type Type::lookup(const Symbol& sym) {
     case Symbol::boxed_string: return string_type;
 /* INSERT 0 */
   }
+  __builtin_unreachable();
 }
 
 } // namespace flg

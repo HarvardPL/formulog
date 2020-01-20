@@ -28,6 +28,7 @@ import java.util.Map;
 
 import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
+import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.OpaqueType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
@@ -44,25 +45,26 @@ public class TypeCodeGen {
 		this.ctx = ctx;
 	}
 
-	public Pair<CppStmt, CppExpr> gen(Type type) {
+	// XXX These should be replaced with code that takes a functor type
+	public Pair<CppStmt, CppExpr> gen(FunctorType type) {
 		List<CppStmt> acc = new ArrayList<>();
 		CppExpr e = gen(acc, type);
 		return new Pair<>(CppSeq.mk(acc), e);
 	}
 
-	public CppExpr gen(List<CppStmt> acc, Type type) {
+	public CppExpr gen(List<CppStmt> acc, FunctorType type) {
 		return new Worker(acc, new HashMap<>()).go(type);
 	}
 	
-	public List<CppExpr> gen(List<CppStmt> acc, List<Type> types) {
+	public List<CppExpr> gen(List<CppStmt> acc, List<FunctorType> types) {
 		List<CppExpr> es = new ArrayList<>();
-		for (Type ty : types) {
+		for (FunctorType ty : types) {
 			gen(acc, ty);
 		}
 		return es;
 	}
 	
-	public Pair<CppStmt, List<CppExpr>> gen(List<Type> types) {
+	public Pair<CppStmt, List<CppExpr>> gen(List<FunctorType> types) {
 		List<CppStmt> acc = new ArrayList<>();
 		List<CppExpr> es = gen(acc, types);
 		return new Pair<>(CppSeq.mk(acc), es);
@@ -79,7 +81,15 @@ public class TypeCodeGen {
 		}
 
 		public CppExpr go(Type type) {
+			if (type instanceof FunctorType) {
+				return go1((FunctorType) type);
+			}
 			return type.accept(visitor, null);
+		}
+		
+		public CppExpr go1(FunctorType type) {
+			CppExpr ret = go(type.getRetType());
+			return CppFuncCall.mk("make_pair", mkVec(type.getArgTypes()), ret);
 		}
 
 		TypeVisitor<Void, CppExpr> visitor = new TypeVisitor<Void, CppExpr>() {
@@ -171,11 +181,16 @@ public class TypeCodeGen {
 		
 		private CppExpr mkType(String name, List<Type> args) {
 			CppExpr cppName = CppConst.mkString(name);
+			CppExpr vec = mkVec(args);
+			String tyId = ctx.newId("ty");
+			acc.add(CppCtor.mkInitializer("Type", tyId, cppName, CppConst.mkFalse(), vec));
+			return CppVar.mk(tyId);
+		}
+		
+		private CppExpr mkVec(List<Type> args) {
 			String vId = ctx.newId("v");
 			acc.add(CppCtor.mkInitializer("vector<Type>", vId, go(args)));
-			String tyId = ctx.newId("ty");
-			acc.add(CppCtor.mkInitializer("Type", tyId, cppName, CppConst.mkFalse(), CppVar.mk(vId)));
-			return CppVar.mk(tyId);
+			return CppVar.mk(vId);
 		}
 
 	}
