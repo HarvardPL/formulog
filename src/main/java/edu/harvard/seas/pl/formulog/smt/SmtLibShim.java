@@ -532,6 +532,35 @@ public class SmtLibShim {
 			}, null);
 			return syms;
 		}
+		
+		private boolean isDeclarableTypeSymbol(TypeSymbol sym) {
+			if (sym.isAlias()) {
+				return false;
+			}
+			if (sym instanceof BuiltInTypeSymbol) {
+				switch ((BuiltInTypeSymbol) sym) {
+				case SMT_TYPE:
+				case SYM_TYPE:
+				case BOOL_TYPE:
+				case STRING_TYPE:
+				case ARRAY_TYPE:
+				case INT_TYPE:
+				case MODEL_TYPE:
+				case BV:
+				case FP:
+				case SMT_PATTERN_TYPE:
+				case SMT_WRAPPED_VAR_TYPE:
+					return false;
+				case CMP_TYPE:
+				case LIST_TYPE:
+				case OPTION_TYPE:
+					return true;
+				default:
+					throw new AssertionError("impossible");
+				}
+			}
+			return true;
+		}
 
 	}
 
@@ -653,7 +682,7 @@ public class SmtLibShim {
 
 	}
 
-	private static boolean needsTypeAnnotation(ConstructorSymbol sym) {
+	public static boolean needsTypeAnnotation(ConstructorSymbol sym) {
 		if (sym.getConstructorSymbolType().equals(ConstructorSymbolType.VANILLA_CONSTRUCTOR)) {
 			return true;
 		}
@@ -661,35 +690,6 @@ public class SmtLibShim {
 		List<Type> args = ft.getArgTypes();
 		Type ret = sym.getCompileTimeType().getRetType();
 		return !Types.getTypeVars(args).containsAll(Types.getTypeVars(ret));
-	}
-
-	private static boolean isDeclarableTypeSymbol(TypeSymbol sym) {
-		if (sym.isAlias()) {
-			return false;
-		}
-		if (sym instanceof BuiltInTypeSymbol) {
-			switch ((BuiltInTypeSymbol) sym) {
-			case SMT_TYPE:
-			case SYM_TYPE:
-			case BOOL_TYPE:
-			case STRING_TYPE:
-			case ARRAY_TYPE:
-			case INT_TYPE:
-			case MODEL_TYPE:
-			case BV:
-			case FP:
-			case SMT_PATTERN_TYPE:
-			case SMT_WRAPPED_VAR_TYPE:
-				return false;
-			case CMP_TYPE:
-			case LIST_TYPE:
-			case OPTION_TYPE:
-				return true;
-			default:
-				throw new AssertionError("impossible");
-			}
-		}
-		return true;
 	}
 
 }

@@ -39,6 +39,17 @@ struct SmtShim {
   string lookup_var(const Term* var);
 	void serialize(const Term* assertion, ostream& out);
   void serialize(const std::string& op, const ComplexTerm& t, ostream& out);
+  static bool needs_type_annotation(const Symbol& sym);
+};
+
+struct TypeInferer {
+  vector<Type> inferType(const Term* t);
+
+  private:
+  vector<pair<Type, Type>> constraints;
+  TypeSubst subst;
+
+  vector<Type> inferType1(const Term* t);
 };
 
 SmtShim::SmtShim() :
@@ -201,6 +212,14 @@ void SmtShim::serialize(const std::string& op, const ComplexTerm& t, ostream& ou
   }
   if (n > 0) {
     out << ")";
+  }
+}
+
+bool SmtShim::needs_type_annotation(const Symbol& sym) {
+  switch (sym) {
+/* INSERT 3 */
+    default:
+      return false;
   }
 }
 

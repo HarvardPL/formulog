@@ -55,6 +55,8 @@ public class SmtHpp {
 			pr.genVisitingCases();
 			CodeGenUtil.copyOver(br, out, 2);
 			pr.genSerializationCases();
+			CodeGenUtil.copyOver(br, out, 3);
+			pr.genNeedsTypeAnnotationCases();
 			CodeGenUtil.copyOver(br, out, -1);
 			out.flush();
 		}
@@ -311,6 +313,19 @@ public class SmtHpp {
 			CppExpr t = CppMethodCall.mkThruPtr(CppVar.mk("t"), "as_complex");
 			CppExpr o = CppVar.mk("out");
 			return CppFuncCall.mk("serialize", s, t, o).toStmt();
+		}
+
+		public void genNeedsTypeAnnotationCases() {
+			boolean foundOne = false;
+			for (ConstructorSymbol sym : ctx.getConstructorSymbols()) {
+				if (SmtLibShim.needsTypeAnnotation(sym)) {
+					out.println("    case " + ctx.lookupRepr(sym) + ":");
+					foundOne = true;
+				}
+			}
+			if (foundOne) {
+				CppReturn.mk(CppConst.mkTrue()).println(out, 3);
+			}
 		}
 
 	}

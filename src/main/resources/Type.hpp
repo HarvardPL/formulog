@@ -1,7 +1,9 @@
 #pragma once
 
 #include <atomic>
+#include <cassert>
 #include <cstdlib>
+#include <map>
 #include <utility>
 #include <vector>
 
@@ -12,6 +14,7 @@ namespace flg {
 using namespace std;
 
 struct Type;
+struct TypeSubst;
 
 typedef pair<vector<Type>, Type> functor_type;
 
@@ -26,6 +29,47 @@ struct Type {
   static Type new_var();
   static atomic_size_t cnt;
 };
+
+inline bool operator<(const Type& lhs, const Type& rhs) {
+  return lhs.name < rhs.name;
+}
+
+struct TypeSubst {
+  void put(const Type var, const Type other);
+  Type apply(const Type& type);
+
+  private:
+  map<Type, Type> m;
+};
+
+void TypeSubst::put(const Type var, const Type other) {
+  assert(var.is_var);
+  if (other.is_var) {
+    if (var < other) {
+      m.emplace(var, other);
+    } else if (other < var) {
+      m.emplace(other, var);
+    }
+  } else {
+    m.emplace(var, other);
+  }
+}
+
+Type TypeSubst::apply(const Type& ty) {
+  if (ty.is_var) {
+    auto v = m.find(ty);
+    if (v == m.end()) {
+      return ty;
+    } else {
+      return apply(v->second);
+    }
+  }
+  vector<Type> newArgs;
+  for (auto it = ty.args.begin(); it != ty.args.end(); it++) {
+    newArgs.push_back(apply(*it));
+  }
+  return Type{ty.name, ty.is_var, newArgs};
+}
 
 ostream& operator<<(ostream& out, const Type& type) {
   auto args = type.args;
