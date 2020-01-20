@@ -52,7 +52,7 @@ public class SmtHpp {
 			CodeGenUtil.copyOver(br, out, 0);
 			pr.copyDeclarations();
 			CodeGenUtil.copyOver(br, out, 1);
-			pr.genVisitingCases();
+			pr.genSolverVarCases();
 			CodeGenUtil.copyOver(br, out, 2);
 			pr.genSerializationCases();
 			CodeGenUtil.copyOver(br, out, 3);
@@ -85,15 +85,14 @@ public class SmtHpp {
 			new SmtLibShim(null, out, ctx.getEval().getInputProgram());
 		}
 
-		public void genVisitingCases() {
+		public void genSolverVarCases() {
 			if (varSymbols.isEmpty()) {
 				return;
 			}
 			for (ConstructorSymbol sym : varSymbols) {
 				out.println("    case " + ctx.lookupRepr(sym) + ":");
 			}
-			CppFuncCall.mk("SmtShim::record_var", CppVar.mk("t")).toStmt().println(out, 3);
-			out.println("      break;");
+			CppReturn.mk(CppConst.mkTrue()).println(out, 3);
 		}
 
 		public void genSerializationCases() {

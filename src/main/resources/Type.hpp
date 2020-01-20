@@ -37,6 +37,7 @@ inline bool operator<(const Type& lhs, const Type& rhs) {
 struct TypeSubst {
   void put(const Type var, const Type other);
   Type apply(const Type& type);
+  void clear();
 
   private:
   map<Type, Type> m;
@@ -65,10 +66,14 @@ Type TypeSubst::apply(const Type& ty) {
     }
   }
   vector<Type> newArgs;
-  for (auto it = ty.args.begin(); it != ty.args.end(); it++) {
-    newArgs.push_back(apply(*it));
+  for (auto& arg : ty.args) {
+    newArgs.push_back(apply(arg));
   }
   return Type{ty.name, ty.is_var, newArgs};
+}
+
+void TypeSubst::clear() {
+  m.clear();
 }
 
 ostream& operator<<(ostream& out, const Type& type) {
@@ -77,9 +82,8 @@ ostream& operator<<(ostream& out, const Type& type) {
     out << "(";
   }
   out << type.name;
-  for (auto it = args.begin(); it != args.end(); it++) {
-    out << " ";
-    out << *it;
+  for (auto& arg : args) {
+    out << " " << arg;
   }
   if (!args.empty()) {
     out << ")";

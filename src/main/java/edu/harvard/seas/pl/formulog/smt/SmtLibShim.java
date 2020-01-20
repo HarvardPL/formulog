@@ -595,12 +595,11 @@ public class SmtLibShim {
 					ConstructorSymbol sym = c.getSymbol();
 					FunctorType ft = sym.getCompileTimeType().freshen();
 					Type ty = ft.getRetType();
-					List<Type> args = ft.getArgTypes();
 					if (needsTypeAnnotation(sym)) {
 						types.add(new Pair<>(sym, ty));
 					}
 					if (!(c instanceof SolverVariable)) {
-						Iterator<Type> it = args.iterator();
+						Iterator<Type> it = ft.getArgTypes().iterator();
 						for (Term tt : c.getArgs()) {
 							constraints.add(new Pair<>(tt.accept(this, in), it.next()));
 						}

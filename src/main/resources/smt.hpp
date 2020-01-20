@@ -25,12 +25,16 @@ struct SmtShim {
   SmtShim();
   SmtStatus is_sat(const term_ptr& assertion);
 
+  static bool needs_type_annotation(const Symbol& sym);
+  static bool is_solver_var(const Term* t);
+
   private:
   bp::opstream z3_in;
   bp::ipstream z3_out;
   bp::child z3;
   map<const Term*, string, TermCompare> z3_vars;
   size_t cnt;
+  vector<Type>::iterator annotations;
 
   void preprocess(const Term* assertion);
   void visit(const Term* assertion);
@@ -39,18 +43,74 @@ struct SmtShim {
   string lookup_var(const Term* var);
 	void serialize(const Term* assertion, ostream& out);
   void serialize(const std::string& op, const ComplexTerm& t, ostream& out);
-  static bool needs_type_annotation(const Symbol& sym);
 };
 
 struct TypeInferer {
-  vector<Type> inferType(const Term* t);
+  vector<Type> go(const Term* t);
 
   private:
+  vector<Type> annotations;
   vector<pair<Type, Type>> constraints;
   TypeSubst subst;
 
-  vector<Type> inferType1(const Term* t);
+  Type visit(const Term* t);
+  void unify_constraints();
+  void unify(const Type& ty1, const Type& ty2);
 };
+
+vector<Type> TypeInferer::go(const Term* t) {
+  constraints.clear();
+  subst.clear();
+  annotations.clear();
+  visit(t);
+  unify_constraints();
+  for (auto& type : annotations) {
+    type = subst.apply(type);
+  }
+  return annotations;
+}
+
+Type TypeInferer::visit(const Term* t) {
+  vector<Type> types;
+  functor_type ft = Type::lookup(t->sym);
+  if (SmtShim::needs_type_annotation(t->sym)) {
+    annotations.push_back(ft.second);
+  }
+  if (!ft.first.empty()) {
+    auto x = t->as_complex();
+    if (!SmtShim::is_solver_var(t)) {
+      for (size_t i = 0; i < x.arity; ++i) {
+        constraints.push_back(make_pair(visit(x.val[i].get()), ft.first[i]));
+      }
+    }
+  }
+  return ft.second;
+}
+
+void TypeInferer::unify_constraints() {
+  while (!constraints.empty()) {
+    auto constraint = constraints.back();
+    constraints.pop_back();
+    auto ty1 = subst.apply(constraint.first);
+    auto ty2 = subst.apply(constraint.second);
+    if (ty1.is_var) {
+      subst.put(ty1, ty2);
+    } else if (ty2.is_var) {
+      subst.put(ty2, ty1);
+    } else {
+      unify(ty1, ty2);
+    }
+  }
+}
+
+void TypeInferer::unify(const Type& ty1, const Type& ty2) {
+  auto args1 = ty1.args;
+  auto args2 = ty2.args;
+  for (auto it1 = args1.begin(), it2 = args2.begin();
+      it1 != args1.end(); it1++, it2++) {
+    constraints.push_back(make_pair(*it1, *it2));
+  }
+}
 
 SmtShim::SmtShim() :
   z3("z3 -in", bp::std_in < z3_in, (bp::std_out & bp::std_err) > z3_out) {
@@ -65,7 +125,12 @@ SmtStatus SmtShim::is_sat(const term_ptr& assertion) {
   auto t = assertion.get();
   preprocess(t);
   z3_in << "(assert ";
+  TypeInferer ti;
+  auto types = ti.go(t);
+  annotations = types.begin();
   serialize(t, z3_in);
+  assert(annotations == types.end()); 
+  //annotations = types.begin();
   //serialize(t, cout);
   //cout << endl;
   z3_in << ")" << endl;
@@ -90,7 +155,19 @@ SmtStatus SmtShim::is_sat(const term_ptr& assertion) {
   __builtin_unreachable();
 }
 
+bool SmtShim::is_solver_var(const Term* t) {
+  switch (t->sym) {
+/* INSERT 1 */
+    default:
+      return false;
+  }
+}
+
 void SmtShim::visit(const Term* t) {
+  if (is_solver_var(t)) {
+    record_var(t);
+    return;
+  }
   switch (t->sym) {
     case Symbol::boxed_bool:
     case Symbol::boxed_i32:
@@ -99,7 +176,6 @@ void SmtShim::visit(const Term* t) {
     case Symbol::boxed_fp64:
     case Symbol::boxed_string:
       break;
-/* INSERT 1 */
     default:
       auto x = t->as_complex();
       for (size_t i = 0; i < x.arity; ++i) {
@@ -121,13 +197,13 @@ void SmtShim::preprocess(const Term* t) {
   cnt = 0;
   visit(t);
   declare_vars(z3_in);
-  declare_vars(cout);
+  //declare_vars(cout);
 }
 
 void SmtShim::declare_vars(ostream& out) {
-  for (auto it = z3_vars.begin(); it != z3_vars.end(); it++) {
-    out << "(declare-const " << it->second << " " <<
-      Type::lookup(it->first->sym).second << ")" << endl;
+  for (auto& e : z3_vars) {
+    out << "(declare-const " << e.second << " " <<
+      Type::lookup(e.first->sym).second << ")" << endl;
   }
 }
 
@@ -186,26 +262,22 @@ void SmtShim::serialize(const Term* t, ostream& out) {
 /* INSERT 2 */
     default:
       auto x = t->as_complex();
-      if (x.arity > 0) {
-        out << "(";
-      }
-      out << "|" << x.sym << "|";
-      for (size_t i = 0; i < x.arity; ++i) {
-        out << " ";
-        serialize(x.val[i].get(), out); 
-      }
-      if (x.arity > 0) {
-        out << ")";
-      }
+      stringstream ss;
+      ss << "|" << x.sym << "|";
+      serialize(ss.str(), x, out);
   }
 }
 
-void SmtShim::serialize(const std::string& op, const ComplexTerm& t, ostream& out) {
+void SmtShim::serialize(const std::string& repr, const ComplexTerm& t, ostream& out) {
   size_t n = t.arity;
   if (n > 0) {
     out << "(";
   }
-  out << op;
+  if (needs_type_annotation(t.sym)) {
+    out << "(as " << repr << " " << *(annotations++) << ")";
+  } else {
+    out << repr;
+  }
   for (size_t i = 0; i < n; ++i) {
     out << " ";
     serialize(t.val[i].get(), out);
