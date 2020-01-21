@@ -56,7 +56,7 @@ struct SmtShim {
     template<typename T, size_t N>
       void serialize_bit_string(const Term* t);
     template<size_t From, size_t To, bool Signed>
-      void serialize_bv_conv(const Term* t);
+      void serialize_bv_to_bv(const Term* t);
     template <size_t E, size_t S>
       void serialize_bv_to_fp(const Term* t);
     template <typename T, size_t E, size_t S>
@@ -295,7 +295,7 @@ void SmtShim::Serializer::serialize_bit_string(const Term* t) {
 }
 
 template <size_t From, size_t To, bool Signed>
-void SmtShim::Serializer::serialize_bv_conv(const Term* t) {
+void SmtShim::Serializer::serialize_bv_to_bv(const Term* t) {
   auto arg = arg0(t);
   if (From < To) {
     out << "((_ " << (Signed ? "sign" : "zero") << "_extend "

@@ -94,7 +94,8 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 				args = new ArrayList<>(expandAsFpAlias(args.get(0)));
 			}
 			break;
-		case FP_TO_BV:
+		case FP_TO_SBV:
+		case FP_TO_UBV:
 			if (args.size() == 2) {
 				Param bv = args.get(1);
 				args = new ArrayList<>(expandAsFpAlias(args.get(0)));
@@ -225,7 +226,8 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 			Type significand = types.get(1);
 			return mkType(fp(exponent, significand), bool);
 		}
-		case FP_TO_BV: {
+		case FP_TO_SBV:
+		case FP_TO_UBV: {
 			Type exponent = types.get(0);
 			Type significand = types.get(1);
 			Type width = types.get(2);

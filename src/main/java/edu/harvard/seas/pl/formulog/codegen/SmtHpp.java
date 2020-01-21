@@ -304,7 +304,9 @@ public class SmtHpp {
 				return genSerializeOp("fp.leq");
 			case FP_LT:
 				return genSerializeOp("fp.lt");
-			case FP_TO_BV:
+			case FP_TO_SBV:
+				break;
+			case FP_TO_UBV:
 				break;
 			case FP_TO_FP:
 				break;
@@ -337,7 +339,7 @@ public class SmtHpp {
 		}
 		
 		private CppStmt genSerializeBvConv(int from, int to, boolean signed) {
-			String func = "serialize_bv_conv<" + from + ", " + to + ", " + signed + ">";
+			String func = "serialize_bv_to_bv<" + from + ", " + to + ", " + signed + ">";
 			return CppFuncCall.mk(func, CppVar.mk("t")).toStmt();
 		}
 		

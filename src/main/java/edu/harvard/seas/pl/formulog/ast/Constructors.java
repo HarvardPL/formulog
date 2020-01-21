@@ -522,8 +522,10 @@ public final class Constructors {
 			return makeFpToFp(sym, args);
 		case BV_TO_FP:
 			return makeBvToFp(sym, args);
-		case FP_TO_BV:
-			return makeFpToBv(sym, args);
+		case FP_TO_SBV:
+			return makeFpToBv(sym, args, true);
+		case FP_TO_UBV:
+			return makeFpToBv(sym, args, false);
 		case BV_CONST:
 			return makeBVConst(sym, args);
 		case BV_BIG_CONST:
@@ -690,13 +692,14 @@ public final class Constructors {
 		});
 	}
 
-	private static Constructor makeFpToBv(ParameterizedConstructorSymbol sym, Term[] args) {
+	private static Constructor makeFpToBv(ParameterizedConstructorSymbol sym, Term[] args, boolean signed) {
+		String s = signed ? "fp.to_sbv" : "fp.to_ubv";
 		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor<ParameterizedConstructorSymbol>(sym, args) {
 
 			@Override
 			public void toSmtLib(SmtLibShim shim) {
 				int width = nat(sym, 2);
-				shim.print("((_ fp.to_sbv " + width + ") RNE ");
+				shim.print("((_ " + s + " " + width + ") RNE ");
 				((SmtLibTerm) args[0]).toSmtLib(shim);
 				shim.print(")");
 			}
