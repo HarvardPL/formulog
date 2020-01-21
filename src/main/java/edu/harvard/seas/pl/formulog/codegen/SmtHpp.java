@@ -299,8 +299,10 @@ public class SmtHpp {
 				break;
 			case SMT_PAT:
 				break;
-			case SMT_VAR:
-				return CppBinop.mkShiftLeft(CppVar.mk("out"), CppFuncCall.mk("lookup_var", CppVar.mk("t"))).toStmt();
+			case SMT_VAR: {
+				CppExpr call = CppMethodCall.mk(CppVar.mk("shim"), "lookup_var", CppVar.mk("t"));
+				return CppBinop.mkShiftLeft(CppVar.mk("out"), call).toStmt();
+			}
 			case SMT_WRAP_VAR:
 				break;
 			}
@@ -310,8 +312,7 @@ public class SmtHpp {
 		private CppStmt genOp(String op) {
 			CppExpr s = CppConst.mkString(op);
 			CppExpr t = CppMethodCall.mkThruPtr(CppVar.mk("t"), "as_complex");
-			CppExpr o = CppVar.mk("out");
-			return CppFuncCall.mk("serialize", s, t, o).toStmt();
+			return CppFuncCall.mk("serialize", s, t).toStmt();
 		}
 
 		public void genNeedsTypeAnnotationCases() {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <bitset>
 #include <boost/format.hpp>
 #include <boost/process.hpp>
 #include <cmath>
@@ -41,8 +42,19 @@ struct SmtShim {
   void record_var(const Term* var);
   void declare_vars(ostream& out);
   string lookup_var(const Term* var);
-	void serialize(const Term* assertion, ostream& out);
-  void serialize(const std::string& op, const ComplexTerm& t, ostream& out);
+
+  struct Serializer {
+    Serializer(SmtShim& shim_, ostream& out_) : shim{shim_}, out{out_} {}
+    void serialize(const Term* assertion);
+
+    private:
+    SmtShim& shim;
+    ostream& out;
+
+    void serialize(const std::string& repr, const ComplexTerm& t);
+    template<size_t N> void serialize_bit_string(const int64_t val);
+  };
+
 };
 
 struct TypeInferer {
@@ -128,10 +140,10 @@ SmtStatus SmtShim::is_sat(const term_ptr& assertion) {
   TypeInferer ti;
   auto types = ti.go(t);
   annotations = types.begin();
-  serialize(t, z3_in);
+  Serializer{*this, z3_in}.serialize(t);
   assert(annotations == types.end()); 
   //annotations = types.begin();
-  //serialize(t, cout);
+  //Serializer{*this, cout}.serialize(t);
   //cout << endl;
   z3_in << ")" << endl;
   z3_in << "(check-sat)" << endl;
@@ -211,7 +223,7 @@ string SmtShim::lookup_var(const Term* t) {
   return z3_vars.find(t)->second;
 }
 
-void SmtShim::serialize(const Term* t, ostream& out) {
+void SmtShim::Serializer::serialize(const Term* t) {
   switch (t->sym) {
     case Symbol::min_term:
     case Symbol::max_term:
@@ -264,27 +276,32 @@ void SmtShim::serialize(const Term* t, ostream& out) {
       auto x = t->as_complex();
       stringstream ss;
       ss << "|" << x.sym << "|";
-      serialize(ss.str(), x, out);
+      serialize(ss.str(), x);
   }
 }
 
-void SmtShim::serialize(const std::string& repr, const ComplexTerm& t, ostream& out) {
+void SmtShim::Serializer::serialize(const std::string& repr, const ComplexTerm& t) {
   size_t n = t.arity;
   if (n > 0) {
     out << "(";
   }
   if (needs_type_annotation(t.sym)) {
-    out << "(as " << repr << " " << *(annotations++) << ")";
+    out << "(as " << repr << " " << *(shim.annotations++) << ")";
   } else {
     out << repr;
   }
   for (size_t i = 0; i < n; ++i) {
     out << " ";
-    serialize(t.val[i].get(), out);
+    serialize(t.val[i].get());
   }
   if (n > 0) {
     out << ")";
   }
+}
+
+template<size_t N>
+void SmtShim::Serializer::serialize_bit_string(const int64_t val) {
+  out << bitset<N>(val).to_string;
 }
 
 bool SmtShim::needs_type_annotation(const Symbol& sym) {
