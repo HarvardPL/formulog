@@ -282,22 +282,28 @@ public class SmtHpp {
 				return genSerializeOp("bvule");
 			case BV_ULT:
 				return genSerializeOp("bvult");
-			case FP_BIG_CONST:
-				break;
-			case FP_CONST:
-				break;
+			case FP_BIG_CONST: {
+				int exp = index(sym, 0);
+				int sig = index(sym, 1);
+				return genSerializeFp(exp, sig, true);
+			}
+			case FP_CONST: {
+				int exp = index(sym, 0);
+				int sig = index(sym, 1);
+				return genSerializeFp(exp, sig, false);
+			}
 			case FP_EQ:
-				break;
+				return genSerializeOp("fp.eq");
 			case FP_GE:
-				break;
+				return genSerializeOp("fp.geq");
 			case FP_GT:
-				break;
+				return genSerializeOp("fp.gt");
 			case FP_IS_NAN:
-				break;
+				return genSerializeOp("fp.isNaN");
 			case FP_LE:
-				break;
+				return genSerializeOp("fp.leq");
 			case FP_LT:
-				break;
+				return genSerializeOp("fp.lt");
 			case FP_TO_BV:
 				break;
 			case FP_TO_FP:
@@ -333,6 +339,13 @@ public class SmtHpp {
 		private CppStmt genSerializeBvConv(int from, int to, boolean signed) {
 			String func = "serialize_bv_conv<" + from + ", " + to + ", " + signed + ">";
 			return CppFuncCall.mk(func, CppVar.mk("t")).toStmt();
+		}
+		
+		private CppStmt genSerializeFp(int e, int s, boolean big) {
+			String type = big ? "double" : "float";
+			String func = "serialize_fp<" + type + ", " + e + ", " + s + ">";
+			CppExpr arg = CppFuncCall.mk("arg0", CppVar.mk("t"));
+			return CppFuncCall.mk(func, arg).toStmt();
 		}
 
 		public void genNeedsTypeAnnotationCases() {

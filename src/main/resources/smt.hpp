@@ -51,6 +51,7 @@ struct SmtShim {
     SmtShim& shim;
     ostream& out;
 
+    static Term* arg0(const Term* t);
     void serialize(const std::string& repr, const ComplexTerm& t);
     template<typename T, size_t N>
       void serialize_bit_string(const Term* t);
@@ -58,6 +59,8 @@ struct SmtShim {
       void serialize_bv_conv(const Term* t);
     template <size_t E, size_t S>
       void serialize_bv_to_fp(const Term* t);
+    template <typename T, size_t E, size_t S>
+      void serialize_fp(const Term* t);
   };
 
 };
@@ -228,6 +231,10 @@ string SmtShim::lookup_var(const Term* t) {
   return z3_vars.find(t)->second;
 }
 
+Term* SmtShim::Serializer::arg0(const Term* t) {
+  return t->as_complex().val[0].get();
+}
+
 void SmtShim::Serializer::serialize(const Term* t) {
   switch (t->sym) {
     case Symbol::min_term:
@@ -247,33 +254,11 @@ void SmtShim::Serializer::serialize(const Term* t) {
       break;
     }
     case Symbol::boxed_fp32: {
-      auto val = t->as_base<float>().val;
-      if (isnan(val)) {
-        out << "(_ NaN 8 24)";
-      } else if (isinf(val)) {
-        if (val > 0) {
-          out << "(_ +oo 8 24)";
-        } else {
-          out << "(_ -oo 8 24)";
-        }
-      } else {
-        out << "((_ to_fp 8 24) RNE " << val << ")";
-      }
+      serialize_fp<float, 8, 24>(t);
       break;
     }
     case Symbol::boxed_fp64: {
-      auto val = t->as_base<double>().val;
-      if (isnan(val)) {
-        out << "(_ NaN 11 53)";
-      } else if (isinf(val)) {
-        if (val > 0) {
-          out << "(_ +oo 11 53)";
-        } else {
-          out << "(_ -oo 11 53)";
-        }
-      } else {
-        out << "((_ to_fp 11 53) RNE " << val << ")";
-      }
+      serialize_fp<double, 11, 53>(t);
       break;
     }
 /* INSERT 2 */
@@ -311,7 +296,7 @@ void SmtShim::Serializer::serialize_bit_string(const Term* t) {
 
 template <size_t From, size_t To, bool Signed>
 void SmtShim::Serializer::serialize_bv_conv(const Term* t) {
-  auto arg = t->as_complex().val[0].get();
+  auto arg = arg0(t);
   if (From < To) {
     out << "((_ " << (Signed ? "sign" : "zero") << "_extend "
       << (To - From) << ") ";
@@ -329,8 +314,27 @@ void SmtShim::Serializer::serialize_bv_conv(const Term* t) {
 template <size_t E, size_t S>
 void SmtShim::Serializer::serialize_bv_to_fp(const Term* t) {
   out << "((_ to_fp " << E << " " << S << ") RNE ";
-  serialize(t->as_complex().val[0].get());
+  serialize(arg0(t));
   out << ")";
+}
+
+template <typename T, size_t E, size_t S>
+void SmtShim::Serializer::serialize_fp(const Term* t) {
+  auto val = t->as_base<T>().val;
+  stringstream ss;
+  ss << E << " " << S;
+  auto s = ss.str();
+  if (isnan(val)) {
+    out << "(_ NaN " << s << ")";
+  } else if (isinf(val)) {
+    if (val > 0) {
+      out << "(_ +oo " << s << ")";
+    } else {
+      out << "(_ -oo " << s << ")";
+    }
+  } else {
+    out << "((_ to_fp " << s << ") RNE " << val << ")";
+  }
 }
 
 bool SmtShim::needs_type_annotation(const Symbol& sym) {
