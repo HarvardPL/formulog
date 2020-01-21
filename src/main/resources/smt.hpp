@@ -61,6 +61,10 @@ struct SmtShim {
       void serialize_bv_to_fp(const Term* t);
     template <typename T, size_t E, size_t S>
       void serialize_fp(const Term* t);
+    template <size_t N, bool Signed>
+      void serialize_fp_to_bv(const Term* t);
+    template <size_t S, size_t E>
+      void serialize_fp_to_fp(const Term* t);
   };
 
 };
@@ -335,6 +339,20 @@ void SmtShim::Serializer::serialize_fp(const Term* t) {
   } else {
     out << "((_ to_fp " << s << ") RNE " << val << ")";
   }
+}
+
+template <size_t N, bool Signed>
+void SmtShim::Serializer::serialize_fp_to_bv(const Term* t) {
+  out << "((_ " << (Signed ? "fp.to_sbv" : "fp.to_ubv") << " " << N << ") RNE ";
+  serialize(arg0(t));
+  out << ")";
+}
+
+template <size_t E, size_t S>
+void SmtShim::Serializer::serialize_fp_to_fp(const Term* t) {
+  out << "((_ to_fp " << E << " " << S << ") RNE ";
+  serialize(arg0(t));
+  out << ")";
 }
 
 bool SmtShim::needs_type_annotation(const Symbol& sym) {

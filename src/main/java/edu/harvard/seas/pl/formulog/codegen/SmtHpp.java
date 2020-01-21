@@ -246,6 +246,10 @@ public class SmtHpp {
 			return ((TypeIndex) sym.getArgs().get(i).getType()).getIndex();
 		}
 		
+		private CppStmt mkCall(String func) {
+			return CppFuncCall.mk(func, CppVar.mk("t")).toStmt();
+		}
+		
 		private CppStmt genParameterizedConstructorSymbolCase(ParameterizedConstructorSymbol sym) {
 			switch (sym.getBase()) {
 			case ARRAY_DEFAULT:
@@ -265,14 +269,14 @@ public class SmtHpp {
 			case BV_SLT:
 				return genSerializeOp("bvslt");
 			case BV_TO_BV_SIGNED:
-				return genSerializeBvConv(index(sym, 0), index(sym, 1), true);
+				return genSerializeBvToBv(index(sym, 0), index(sym, 1), true);
 			case BV_TO_BV_UNSIGNED:
-				return genSerializeBvConv(index(sym, 0), index(sym, 1), false);
+				return genSerializeBvToBv(index(sym, 0), index(sym, 1), false);
 			case BV_TO_FP: {
 				int exp = index(sym, 1);
 				int sig = index(sym, 2);
 				String func = "serialize_bv_to_fp<" + exp + ", " + sig + ">";
-				return CppFuncCall.mk(func, CppVar.mk("t")).toStmt();
+				return mkCall(func);
 			}
 			case BV_UGE:
 				return genSerializeOp("bvuge");
@@ -305,17 +309,21 @@ public class SmtHpp {
 			case FP_LT:
 				return genSerializeOp("fp.lt");
 			case FP_TO_SBV:
-				break;
+				return genSerializeFpToBv(index(sym, 2), true);
 			case FP_TO_UBV:
-				break;
-			case FP_TO_FP:
-				break;
+				return genSerializeFpToBv(index(sym, 2), false);
+			case FP_TO_FP: {
+				int exp = index(sym, 2);
+				int sig = index(sym, 3);
+				String func = "serialize_fp_to_fp<" + exp + ", " + sig + ">";
+				return mkCall(func);
+			}
 			case SMT_EQ:
 				return genSerializeOp("=");
 			case SMT_LET:
 				break;
 			case SMT_PAT:
-				break;
+				return CppFuncCall.mk("abort").toStmt();
 			case SMT_VAR: {
 				CppExpr call = CppMethodCall.mk(CppVar.mk("shim"), "lookup_var", CppVar.mk("t"));
 				return CppBinop.mkShiftLeft(CppVar.mk("out"), call).toStmt();
@@ -335,12 +343,17 @@ public class SmtHpp {
 		private CppStmt genSerializeBitString(int n, boolean big) {
 			String type = big ? "int64_t" : "int32_t";
 			String func = "serialize_bit_string<" + type + ", " + n + ">";
-			return CppFuncCall.mk(func, CppVar.mk("t")).toStmt();
+			return mkCall(func);
 		}
 		
-		private CppStmt genSerializeBvConv(int from, int to, boolean signed) {
+		private CppStmt genSerializeBvToBv(int from, int to, boolean signed) {
 			String func = "serialize_bv_to_bv<" + from + ", " + to + ", " + signed + ">";
-			return CppFuncCall.mk(func, CppVar.mk("t")).toStmt();
+			return mkCall(func);
+		}
+		
+		private CppStmt genSerializeFpToBv(int width, boolean signed) {
+			String func = "serialize_fp_to_bv<" + width + ", " + signed + ">";
+			return mkCall(func);
 		}
 		
 		private CppStmt genSerializeFp(int e, int s, boolean big) {
