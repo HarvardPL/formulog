@@ -52,7 +52,12 @@ struct SmtShim {
     ostream& out;
 
     void serialize(const std::string& repr, const ComplexTerm& t);
-    template<size_t N> void serialize_bit_string(const int64_t val);
+    template<typename T, size_t N>
+      void serialize_bit_string(const Term* t);
+    template<size_t From, size_t To, bool Signed>
+      void serialize_bv_conv(const Term* t);
+    template <size_t E, size_t S>
+      void serialize_bv_to_fp(const Term* t);
   };
 
 };
@@ -299,9 +304,33 @@ void SmtShim::Serializer::serialize(const std::string& repr, const ComplexTerm& 
   }
 }
 
-template<size_t N>
-void SmtShim::Serializer::serialize_bit_string(const int64_t val) {
-  out << bitset<N>(val).to_string;
+template <typename T, size_t N>
+void SmtShim::Serializer::serialize_bit_string(const Term* t) {
+  out << "#b" << bitset<N>(t->as_base<T>().val).to_string();
+}
+
+template <size_t From, size_t To, bool Signed>
+void SmtShim::Serializer::serialize_bv_conv(const Term* t) {
+  auto arg = t->as_complex().val[0].get();
+  if (From < To) {
+    out << "((_ " << (Signed ? "sign" : "zero") << "_extend "
+      << (To - From) << ") ";
+    serialize(arg);
+    out << ")";
+  } else if (From > To) {
+    out << "((_ extract " << (To - 1) << " 0) ";
+    serialize(arg);
+    out << ")";
+  } else {
+    serialize(arg);
+  }
+}
+
+template <size_t E, size_t S>
+void SmtShim::Serializer::serialize_bv_to_fp(const Term* t) {
+  out << "((_ to_fp " << E << " " << S << ") RNE ";
+  serialize(t->as_complex().val[0].get());
+  out << ")";
 }
 
 bool SmtShim::needs_type_annotation(const Symbol& sym) {

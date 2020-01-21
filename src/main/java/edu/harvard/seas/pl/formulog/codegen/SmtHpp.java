@@ -34,6 +34,7 @@ import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInConstructorSymbolBase;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedConstructorSymbol;
+import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
 
 public class SmtHpp {
 
@@ -204,19 +205,19 @@ public class SmtHpp {
 			case NONE:
 				break;
 			case SMT_AND:
-				return genOp("and");
+				return genSerializeOp("and");
 			case SMT_EXISTS:
 				break;
 			case SMT_FORALL:
 				break;
 			case SMT_IMP:
-				return genOp("=>");
+				return genSerializeOp("=>");
 			case SMT_ITE:
-				return genOp("ite");
+				return genSerializeOp("ite");
 			case SMT_NOT:
-				return genOp("not");
+				return genSerializeOp("not");
 			case SMT_OR:
-				return genOp("or");
+				return genSerializeOp("or");
 			case SOME:
 				break;
 			case STR_AT:
@@ -241,38 +242,46 @@ public class SmtHpp {
 			return null;
 		}
 
+		private int index(ParameterizedConstructorSymbol sym, int i) {
+			return ((TypeIndex) sym.getArgs().get(i).getType()).getIndex();
+		}
+		
 		private CppStmt genParameterizedConstructorSymbolCase(ParameterizedConstructorSymbol sym) {
 			switch (sym.getBase()) {
 			case ARRAY_DEFAULT:
-				break;
+				return genSerializeOp("default");
 			case ARRAY_SELECT:
-				break;
+				return genSerializeOp("select");
 			case BV_BIG_CONST:
-				break;
+				return genSerializeBitString(index(sym, 0), true);
 			case BV_CONST:
-				break;
+				return genSerializeBitString(index(sym, 0), false);
 			case BV_SGE:
-				break;
+				return genSerializeOp("bvsge");
 			case BV_SGT:
-				break;
+				return genSerializeOp("bvsgt");
 			case BV_SLE:
-				break;
+				return genSerializeOp("bvsle");
 			case BV_SLT:
-				break;
+				return genSerializeOp("bvslt");
 			case BV_TO_BV_SIGNED:
-				break;
+				return genSerializeBvConv(index(sym, 0), index(sym, 1), true);
 			case BV_TO_BV_UNSIGNED:
-				break;
-			case BV_TO_FP:
-				break;
+				return genSerializeBvConv(index(sym, 0), index(sym, 1), false);
+			case BV_TO_FP: {
+				int exp = index(sym, 1);
+				int sig = index(sym, 2);
+				String func = "serialize_bv_to_fp<" + exp + ", " + sig + ">";
+				return CppFuncCall.mk(func, CppVar.mk("t")).toStmt();
+			}
 			case BV_UGE:
-				break;
+				return genSerializeOp("bvuge");
 			case BV_UGT:
-				break;
+				return genSerializeOp("bvugt");
 			case BV_ULE:
-				break;
+				return genSerializeOp("bvule");
 			case BV_ULT:
-				break;
+				return genSerializeOp("bvult");
 			case FP_BIG_CONST:
 				break;
 			case FP_CONST:
@@ -294,7 +303,7 @@ public class SmtHpp {
 			case FP_TO_FP:
 				break;
 			case SMT_EQ:
-				return genOp("=");
+				return genSerializeOp("=");
 			case SMT_LET:
 				break;
 			case SMT_PAT:
@@ -309,10 +318,21 @@ public class SmtHpp {
 			return null;
 		}
 
-		private CppStmt genOp(String op) {
+		private CppStmt genSerializeOp(String op) {
 			CppExpr s = CppConst.mkString(op);
 			CppExpr t = CppMethodCall.mkThruPtr(CppVar.mk("t"), "as_complex");
 			return CppFuncCall.mk("serialize", s, t).toStmt();
+		}
+		
+		private CppStmt genSerializeBitString(int n, boolean big) {
+			String type = big ? "int64_t" : "int32_t";
+			String func = "serialize_bit_string<" + type + ", " + n + ">";
+			return CppFuncCall.mk(func, CppVar.mk("t")).toStmt();
+		}
+		
+		private CppStmt genSerializeBvConv(int from, int to, boolean signed) {
+			String func = "serialize_bv_conv<" + from + ", " + to + ", " + signed + ">";
+			return CppFuncCall.mk(func, CppVar.mk("t")).toStmt();
 		}
 
 		public void genNeedsTypeAnnotationCases() {
