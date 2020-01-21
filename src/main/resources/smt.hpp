@@ -65,6 +65,7 @@ struct SmtShim {
       void serialize_fp_to_bv(const Term* t);
     template <size_t S, size_t E>
       void serialize_fp_to_fp(const Term* t);
+    void serialize_let(const Term* t);
   };
 
 };
@@ -352,6 +353,17 @@ template <size_t E, size_t S>
 void SmtShim::Serializer::serialize_fp_to_fp(const Term* t) {
   out << "((_ to_fp " << E << " " << S << ") RNE ";
   serialize(arg0(t));
+  out << ")";
+}
+
+void SmtShim::Serializer::serialize_let(const Term* t) {
+  auto x = t->as_complex();
+  out << "(let ((";
+  serialize(x.val[0].get());
+  out << " ";
+  serialize(x.val[1].get());
+  out << ")) ";
+  serialize(x.val[2].get());
   out << ")";
 }
 

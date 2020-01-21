@@ -321,7 +321,7 @@ public class SmtHpp {
 			case SMT_EQ:
 				return genSerializeOp("=");
 			case SMT_LET:
-				break;
+				return mkCall("serialize_let");
 			case SMT_PAT:
 				return CppFuncCall.mk("abort").toStmt();
 			case SMT_VAR: {
