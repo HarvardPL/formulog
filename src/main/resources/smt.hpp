@@ -66,6 +66,8 @@ struct SmtShim {
     template <size_t S, size_t E>
       void serialize_fp_to_fp(const Term* t);
     void serialize_let(const Term* t);
+    template <typename T>
+      void serialize_int(const Term* t);
   };
 
 };
@@ -365,6 +367,11 @@ void SmtShim::Serializer::serialize_let(const Term* t) {
   out << ")) ";
   serialize(x.val[2].get());
   out << ")";
+}
+
+template <typename T>
+void SmtShim::Serializer::serialize_int(const Term* t) {
+  out << arg0(t)->as_base<T>().val;
 }
 
 bool SmtShim::needs_type_annotation(const Symbol& sym) {

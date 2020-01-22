@@ -126,84 +126,80 @@ public class SmtHpp {
 		private CppStmt genBuiltInConstructorSymbolCase(BuiltInConstructorSymbol sym) {
 			switch (sym) {
 			case ARRAY_CONST:
-				break;
+				return genSerializeOp("const");
 			case ARRAY_STORE:
-				break;
+				return genSerializeOp("store");
 			case BV_ADD:
-				break;
+				return genSerializeOp("bvadd");
 			case BV_AND:
-				break;
+				return genSerializeOp("bvand");
 			case BV_MUL:
-				break;
+				return genSerializeOp("bvmul");
 			case BV_NEG:
-				break;
+				return genSerializeOp("bvneg");
 			case BV_OR:
-				break;
+				return genSerializeOp("bvor");
 			case BV_SDIV:
-				break;
+				return genSerializeOp("bvsdiv");
 			case BV_SREM:
-				break;
+				return genSerializeOp("bvsrem");
 			case BV_SUB:
-				break;
+				return genSerializeOp("bvsub");
 			case BV_UDIV:
-				break;
+				return genSerializeOp("bvudiv");
 			case BV_UREM:
-				break;
+				return genSerializeOp("bvurem");
 			case BV_XOR:
-				break;
+				return genSerializeOp("bvxor");
+			// Normal constructors don't need special treatment
 			case CMP_EQ:
-				break;
 			case CMP_GT:
-				break;
 			case CMP_LT:
-				break;
 			case CONS:
+			case NIL:
+			case NONE:
+			case SOME:
 				break;
 			case ENTER_FORMULA:
 			case EXIT_FORMULA:
-				throw new AssertionError("impossible");
+				return CppFuncCall.mk("abort").toStmt();
 			case FP_ADD:
-				break;
+				return genSerializeOp("fp.add");
 			case FP_DIV:
-				break;
+				return genSerializeOp("fp.div");
 			case FP_MUL:
-				break;
+				return genSerializeOp("fp.mul");
 			case FP_NEG:
-				break;
+				return genSerializeOp("fp.neg");
 			case FP_REM:
-				break;
+				return genSerializeOp("fp.rem");
 			case FP_SUB:
-				break;
+				return genSerializeOp("fp.sub");
 			case INT_ABS:
-				break;
+				return genSerializeOp("abs");
 			case INT_ADD:
-				break;
+				return genSerializeOp("+");
 			case INT_BIG_CONST:
-				break;
+				return genSerializeInt(true);
 			case INT_CONST:
-				break;
+				return genSerializeInt(false);
 			case INT_DIV:
-				break;
+				return genSerializeOp("div");
 			case INT_GE:
-				break;
+				return genSerializeOp(">=");
 			case INT_GT:
-				break;
+				return genSerializeOp(">");
 			case INT_LE:
-				break;
+				return genSerializeOp("<=");
 			case INT_LT:
-				break;
+				return genSerializeOp("<");
 			case INT_MOD:
-				break;
+				return genSerializeOp("mod");
 			case INT_MUL:
-				break;
+				return genSerializeOp("*");
 			case INT_NEG:
-				break;
 			case INT_SUB:
-				break;
-			case NIL:
-				break;
-			case NONE:
-				break;
+				return genSerializeOp("-");
 			case SMT_AND:
 				return genSerializeOp("and");
 			case SMT_EXISTS:
@@ -218,26 +214,24 @@ public class SmtHpp {
 				return genSerializeOp("not");
 			case SMT_OR:
 				return genSerializeOp("or");
-			case SOME:
-				break;
 			case STR_AT:
-				break;
+				return genSerializeOp("str.at");
 			case STR_CONCAT:
-				break;
+				return genSerializeOp("str.++");
 			case STR_CONTAINS:
-				break;
+				return genSerializeOp("str.contains");
 			case STR_INDEXOF:
-				break;
+				return genSerializeOp("str.indexof");
 			case STR_LEN:
-				break;
+				return genSerializeOp("str.len");
 			case STR_PREFIXOF:
-				break;
+				return genSerializeOp("str.prefixof");
 			case STR_REPLACE:
-				break;
+				return genSerializeOp("str.replace");
 			case STR_SUBSTR:
-				break;
+				return genSerializeOp("str.substr");
 			case STR_SUFFIXOF:
-				break;
+				return genSerializeOp("str.suffixof");
 			}
 			return null;
 		}
@@ -322,14 +316,13 @@ public class SmtHpp {
 				return genSerializeOp("=");
 			case SMT_LET:
 				return mkCall("serialize_let");
-			case SMT_PAT:
-				return CppFuncCall.mk("abort").toStmt();
 			case SMT_VAR: {
 				CppExpr call = CppMethodCall.mk(CppVar.mk("shim"), "lookup_var", CppVar.mk("t"));
 				return CppBinop.mkShiftLeft(CppVar.mk("out"), call).toStmt();
 			}
+			case SMT_PAT:
 			case SMT_WRAP_VAR:
-				break;
+				return CppFuncCall.mk("abort").toStmt();
 			}
 			return null;
 		}
@@ -361,6 +354,12 @@ public class SmtHpp {
 			String func = "serialize_fp<" + type + ", " + e + ", " + s + ">";
 			CppExpr arg = CppFuncCall.mk("arg0", CppVar.mk("t"));
 			return CppFuncCall.mk(func, arg).toStmt();
+		}
+		
+		private CppStmt genSerializeInt(boolean big) {
+			String type = big ? "int64_t": "int32_t";
+			String func = "serialize_int<" + type + ">";
+			return mkCall(func);
 		}
 
 		public void genNeedsTypeAnnotationCases() {
