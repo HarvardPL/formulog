@@ -156,17 +156,18 @@ public class SmtLibShim {
 			symbolLookup.remove(s);
 		}
 	}
-
-	public Status checkSat(int timeout) throws EvaluationException {
-		return checkSatAssuming(Collections.emptyList(), Collections.emptyList(), timeout);
+	
+	public void setTimeout(int timeout) {
+		assert timeout >= 0;
+		println("(set-option :timeout " + timeout + ")");
 	}
 
-	public Status checkSatAssuming(List<SolverVariable> onVars, List<SolverVariable> offVars, int timeout)
-			throws EvaluationException {
-		if (timeout >= 0) {
-			println("(set-option :timeout " + timeout + ")");
+	public Status checkSat() throws EvaluationException {
+		return checkSatAssuming(Collections.emptyList(), Collections.emptyList());
+	}
 
-		}
+	public Status checkSatAssuming(List<SolverVariable> onVars, List<SolverVariable> offVars)
+			throws EvaluationException {
 		print("(check-sat-assuming (");
 		for (SolverVariable x : onVars) {
 			print(x);
