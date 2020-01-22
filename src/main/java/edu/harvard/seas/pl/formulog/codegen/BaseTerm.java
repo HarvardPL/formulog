@@ -44,26 +44,58 @@ public class BaseTerm implements CppExpr {
 
 	@Override
 	public void print(PrintWriter out) {
-		// XXX Need to handle special float values correctly
-		out.print("Term::make<");
+		String type;
+		String val = p.toString();
 		if (p instanceof I32) {
-			out.print("int32_t");
+			type = "int32_t";
 		} else if (p instanceof I64) {
-			out.print("int64_t");
+			type = "int64_t";
 		} else if (p instanceof FP32) {
-			out.print("float");
+			type = "float";
+			val = handleFloat(((FP32) p).getVal());
 		} else if (p instanceof FP64) {
-			out.print("double");
+			type = "double";
+			val = handleDouble(((FP64) p).getVal());
 		} else if (p instanceof BoolTerm) {
-			out.print("bool");
+			type = "bool";
 		} else if (p instanceof StringTerm) {
-			out.print("string");
+			type = "string";
 		} else {
 			throw new UnsupportedOperationException("Unsupported primitive: " + p);
 		}
+		printMakeTerm(type, val, out);
+	}
+	
+	void printMakeTerm(String type, String val, PrintWriter out) {
+		out.print("Term::make<");
+		out.print(type);
 		out.print(">(");
-		out.print(p);
+		out.print(val);
 		out.print(")");
+	}
+	
+	public static String handleDouble(double d) {
+		if (d == Double.NEGATIVE_INFINITY) {
+			return "-numeric_limits<double>::infinity()";
+		} else if (d == Double.POSITIVE_INFINITY) {
+			return "numeric_limits<double>::infinity()";
+		} else if (Double.isNaN(d)) {
+			return "nan(\"\")";
+		} else {
+			return Double.toString(d);
+		}
+	}
+	
+	public static String handleFloat(float d) {
+		if (d == Float.NEGATIVE_INFINITY) {
+			return "-numeric_limits<float>::infinity()";
+		} else if (d == Float.POSITIVE_INFINITY) {
+			return "numeric_limits<float>::infinity()";
+		} else if (Float.isNaN(d)) {
+			return "nan(\"\")";
+		} else {
+			return Float.toString(d);
+		}
 	}
 
 }
