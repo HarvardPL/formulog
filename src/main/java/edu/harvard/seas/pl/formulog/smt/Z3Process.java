@@ -183,11 +183,7 @@ public class Z3Process {
 		if (debug || Configuration.timeSmt) {
 			start = System.currentTimeMillis();
 		}
-		if (timeout >= 0) {
-			shim.push();
-			shim.setTimeout(timeout);
-		}
-		Status status = shim.checkSatAssuming(p.fst(), p.snd());
+		Status status = shim.checkSatAssuming(p.fst(), p.snd(), timeout);
 		if (debug) {
 			double time = (System.currentTimeMillis() - start) / 1000.0;
 			System.err.println("\nRES Z3 JOB #" + id + ": " + status + " (" + time + "s)");
@@ -199,9 +195,6 @@ public class Z3Process {
 		Map<SolverVariable, Term> m = null;
 		if (status.equals(Status.SATISFIABLE)) {
 			m = shim.getModel();
-		}
-		if (timeout >= 0) {
-			shim.pop();
 		}
 		if (indicatorVars.size() > Configuration.smtCacheSize) {
 			clearCache();

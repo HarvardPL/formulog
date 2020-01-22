@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
+#include <limits>
 #include <map>
 
 #include "Term.hpp"
@@ -24,7 +25,7 @@ enum class SmtStatus { sat, unsat, unknown };
 
 struct SmtShim {
   SmtShim();
-  SmtStatus is_sat(const term_ptr& assertion);
+  SmtStatus check(const term_ptr& assertion, int timeout);
 
   static bool needs_type_annotation(const Symbol& sym);
   static bool is_solver_var(const Term* t);
@@ -148,9 +149,14 @@ SmtShim::SmtShim() :
   z3_in.flush();
 }
 
-SmtStatus SmtShim::is_sat(const term_ptr& assertion) {
-  z3_in << "(pop)";
-  z3_in << "(push)";
+SmtStatus SmtShim::check(const term_ptr& assertion, int timeout) {
+  z3_in << "(pop)" << endl;
+  z3_in << "(push)" << endl;
+  if (timeout < 0) {
+    cerr << "Warning: negative timeout provided to Z3 - ignored" << endl;
+    timeout = numeric_limits<int>::max();
+  }
+  z3_in << "(set-option :timeout " << timeout << ")" << endl;
   auto t = assertion.get();
   preprocess(t);
   z3_in << "(assert ";
@@ -167,21 +173,22 @@ SmtStatus SmtShim::is_sat(const term_ptr& assertion) {
   z3_in.flush();
   string line;
   getline(z3_out, line);
+  SmtStatus res;
   if (line == "sat") { 
     //cout << "sat" << endl;
-    return SmtStatus::sat; 
+    res = SmtStatus::sat; 
   } else if (line == "unsat") {
     //cout << "unsat" << endl;
-    return SmtStatus::unsat;
+    res = SmtStatus::unsat;
   } else if (line == "unknown") {
     //cout << "unknown" << endl;
-    return SmtStatus::unknown;
+    res = SmtStatus::unknown;
   } else {
     cerr << "Unexpected Z3 response:" << endl;
     cerr << line << endl;
     abort();
   }
-  __builtin_unreachable();
+  return res;
 }
 
 bool SmtShim::is_solver_var(const Term* t) {

@@ -33,6 +33,7 @@ import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb.IndexInfo;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
+import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
@@ -130,6 +131,9 @@ public class CodeGenContext {
 			processRelations(db);
 			processRelations(deltaDb);
 			processTypes(eval.getInputProgram().getTypeSymbols());
+			for (ConstructorSymbol sym : BuiltInConstructorSymbol.values()) {
+				lookupRepr(sym);
+			}
 		}
 
 		private void processRelations(SortedIndexedFactDb db) {

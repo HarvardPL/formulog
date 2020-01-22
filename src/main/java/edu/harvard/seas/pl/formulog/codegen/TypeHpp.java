@@ -63,7 +63,7 @@ public class TypeHpp {
 		public Worker(PrintWriter out) {
 			this.out = out;
 		}
-		
+
 		public void defineSymbolTypes() {
 			for (ConstructorSymbol sym : ctx.getConstructorSymbols()) {
 				defineSymbolType(sym);
@@ -75,7 +75,7 @@ public class TypeHpp {
 			genCaseBody(sym).println(out, 3);
 			out.println("    }");
 		}
-		
+
 		private CppStmt genCaseBody(ConstructorSymbol sym) {
 			List<CppStmt> acc = new ArrayList<>();
 			FunctorType ft = simplify(sym.getCompileTimeType());
@@ -83,7 +83,7 @@ public class TypeHpp {
 			acc.add(CppReturn.mk(typeCode));
 			return CppSeq.mk(acc);
 		}
-		
+
 		private FunctorType simplify(FunctorType ft) {
 			List<Type> args = new ArrayList<>();
 			for (Type ty : ft.getArgTypes()) {

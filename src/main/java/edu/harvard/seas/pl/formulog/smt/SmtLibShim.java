@@ -157,17 +157,17 @@ public class SmtLibShim {
 		}
 	}
 	
-	public void setTimeout(int timeout) {
-		assert timeout >= 0;
-		println("(set-option :timeout " + timeout + ")");
+	public Status checkSat(int timeout) throws EvaluationException {
+		return checkSatAssuming(Collections.emptyList(), Collections.emptyList(), timeout);
 	}
 
-	public Status checkSat() throws EvaluationException {
-		return checkSatAssuming(Collections.emptyList(), Collections.emptyList());
-	}
-
-	public Status checkSatAssuming(List<SolverVariable> onVars, List<SolverVariable> offVars)
+	public Status checkSatAssuming(List<SolverVariable> onVars, List<SolverVariable> offVars, int timeout)
 			throws EvaluationException {
+		if (timeout < 0) {
+			System.err.println("Warning: negative timeout provided to Z3 - ignored");
+			timeout = Integer.MAX_VALUE;
+		}
+		print("(set-option :timeout " + timeout + ")");
 		print("(check-sat-assuming (");
 		for (SolverVariable x : onVars) {
 			print(x);

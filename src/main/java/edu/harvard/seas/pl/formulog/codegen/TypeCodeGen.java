@@ -127,7 +127,7 @@ public class TypeCodeGen {
 
 			@Override
 			public CppExpr visit(TypeIndex typeIndex, Void in) {
-				throw new AssertionError("impossible");
+				return mkType(Integer.toString(typeIndex.getIndex()));
 			}
 
 		};
@@ -140,17 +140,12 @@ public class TypeCodeGen {
 				return mkType("Array", args);
 			case BOOL_TYPE:
 				return mkType("Bool", args);
-			case BV: {
-				int w = ((TypeIndex) args.get(0)).getIndex();
-				return mkType("(_ BitVec " + w + ")");
-			}
+			case BV:
+				return mkType("_ BitVec", args);
 			case STRING_TYPE:
 				return mkType("String", args);
-			case FP: {
-				int e = ((TypeIndex) args.get(0)).getIndex();
-				int s = ((TypeIndex) args.get(1)).getIndex();
-				return mkType("(_ FloatingPoint " + e + " " + s + ")");
-			}
+			case FP:
+				return mkType("_ FloatingPoint", args);
 			case INT_TYPE:
 				return mkType("Int", args);
 			case LIST_TYPE:

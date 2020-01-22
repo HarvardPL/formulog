@@ -1371,6 +1371,10 @@ public final class BuiltInFunctionDefFactory {
 
 	private final Map<Term, Map<Integer, Future<Optional<Model>>>> smtMemo = new ConcurrentHashMap<>();
 
+	private Optional<Model> querySmt(SmtLibTerm formula) throws EvaluationException {
+		return querySmt(formula, Integer.MAX_VALUE);
+	}
+	
 	private Optional<Model> querySmt(SmtLibTerm formula, int timeout) throws EvaluationException {
 		Map<Integer, Future<Optional<Model>>> byTimeout = Util.lookupOrCreate(smtMemo, formula,
 				() -> new ConcurrentHashMap<>());
@@ -1424,7 +1428,7 @@ public final class BuiltInFunctionDefFactory {
 		@Override
 		public Term evaluate(Term[] args) throws EvaluationException {
 			SmtLibTerm formula = (SmtLibTerm) args[0];
-			Optional<Model> m = querySmt(formula, -1);
+			Optional<Model> m = querySmt(formula);
 			if (m == null) {
 				throw new EvaluationException("Z3 returned \"unknown\"");
 			}
@@ -1500,7 +1504,7 @@ public final class BuiltInFunctionDefFactory {
 		public Term evaluate(Term[] args) throws EvaluationException {
 			SmtLibTerm formula = (SmtLibTerm) args[0];
 			formula = (SmtLibTerm) Constructors.make(BuiltInConstructorSymbol.SMT_NOT, args);
-			Optional<Model> m = querySmt(formula, -1);
+			Optional<Model> m = querySmt(formula);
 			if (m == null) {
 				throw new EvaluationException("Z3 returned \"unknown\"");
 			}
@@ -1517,7 +1521,7 @@ public final class BuiltInFunctionDefFactory {
 		if (opt.getSymbol().equals(BuiltInConstructorSymbol.SOME)) {
 			return ((I32) opt.getArgs()[0]).getVal();
 		}
-		return -1;
+		return Integer.MAX_VALUE;
 	}
 
 	private final FunctionDef getModel = new FunctionDef() {

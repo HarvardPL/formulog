@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <limits>
 #include <sstream>
 #include <regex>
 
@@ -150,10 +151,60 @@ term_ptr __conv(const term_ptr& t1) {
 }
 
 term_ptr is_sat(const term_ptr& t1) {
-  switch (smt_shim.is_sat(t1)) {
+  switch (smt_shim.check(t1, numeric_limits<int>::max())) {
     case SmtStatus::sat: return Term::make<bool>(true);
     case SmtStatus::unsat: return Term::make<bool>(false);
     case SmtStatus::unknown: abort();
+  }
+  __builtin_unreachable();
+}
+
+term_ptr _make_smt_not(const term_ptr& t) {
+  return Term::make(Symbol::smt_not, 1, new term_ptr[1] { t }); 
+}
+
+term_ptr is_valid(const term_ptr& t1) {
+  switch (smt_shim.check(_make_smt_not(t1), numeric_limits<int>::max())) {
+    case SmtStatus::sat: return Term::make<bool>(false);
+    case SmtStatus::unsat: return Term::make<bool>(true);
+    case SmtStatus::unknown: abort();
+  }
+  __builtin_unreachable();
+}
+
+term_ptr _make_some(const term_ptr& t) {
+  return Term::make(Symbol::some, 1, new term_ptr[1] { t }); 
+}
+
+term_ptr _make_none() {
+  return Term::make(Symbol::none, 0, new term_ptr[0]);
+}
+
+int _extract_timeout_from_option(const term_ptr& o) {
+  int timeout{numeric_limits<int>::max()};
+  if (o->sym == Symbol::some) {
+    auto x = o->as_complex();
+    timeout = x.val[0]->as_base<int32_t>().val;
+  }
+  return timeout;
+}
+
+term_ptr is_sat_opt(const term_ptr& t1, const term_ptr& t2) {
+  int timeout = _extract_timeout_from_option(t2);
+  switch (smt_shim.check(t1, timeout)) {
+    case SmtStatus::sat: return _make_some(Term::make<bool>(true));
+    case SmtStatus::unsat: return _make_some(Term::make<bool>(false));
+    case SmtStatus::unknown: return _make_none();
+  }
+  __builtin_unreachable();
+}
+
+term_ptr is_valid_opt(const term_ptr& t1, const term_ptr& t2) {
+  int timeout = _extract_timeout_from_option(t2);
+  switch (smt_shim.check(_make_smt_not(t1), timeout)) {
+    case SmtStatus::sat: return _make_some(Term::make<bool>(false));
+    case SmtStatus::unsat: return _make_some(Term::make<bool>(true));
+    case SmtStatus::unknown: return _make_none();
   }
   __builtin_unreachable();
 }
