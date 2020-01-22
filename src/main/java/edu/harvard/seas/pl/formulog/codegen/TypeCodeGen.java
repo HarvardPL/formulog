@@ -156,13 +156,12 @@ public class TypeCodeGen {
 			case LIST_TYPE:
 			case OPTION_TYPE:
 			case CMP_TYPE:
-				break;
 			case MODEL_TYPE:
 			case SMT_PATTERN_TYPE:
 			case SMT_TYPE:
 			case SMT_WRAPPED_VAR_TYPE:
 			case SYM_TYPE:
-				throw new AssertionError("impossible: " + type);
+				break;
 			}
 			return null;
 		}

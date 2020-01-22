@@ -1,11 +1,13 @@
 #pragma once
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <cstdint>
 #include <memory>
 #include <stack>
 #include <utility>
+#include <vector>
 
 #include "Symbol.hpp"
 
@@ -31,6 +33,7 @@ struct Term {
   static int compare(const Term* t1, const Term* t2);
   template<typename T> inline static term_ptr make(T val);
   inline static term_ptr make(Symbol sym, size_t arity, term_ptr* val);
+  static vector<term_ptr> vectorizeListTerm(const Term *t);
 };
 
 struct ComplexTerm : public Term {
@@ -278,5 +281,16 @@ struct TermCompare {
     return Term::compare(lhs, rhs) < 0;
   }
 };
+
+vector<term_ptr> Term::vectorizeListTerm(const Term *t) {
+  vector<term_ptr> v;
+  while (t->sym == Symbol::cons) {
+    auto x = t->as_complex();
+    v.push_back(x.val[0]);
+    t = x.val[1].get();
+  }
+  assert(t->sym == Symbol::nil);
+  return v;
+}
 
 } // namespace flg

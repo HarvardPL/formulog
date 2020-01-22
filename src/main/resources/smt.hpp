@@ -68,6 +68,8 @@ struct SmtShim {
     void serialize_let(const Term* t);
     template <typename T>
       void serialize_int(const Term* t);
+    template <bool Exists>
+      void serialize_quantifier(const Term* t);
   };
 
 };
@@ -372,6 +374,52 @@ void SmtShim::Serializer::serialize_let(const Term* t) {
 template <typename T>
 void SmtShim::Serializer::serialize_int(const Term* t) {
   out << arg0(t)->as_base<T>().val;
+}
+
+template <bool Exists>
+void SmtShim::Serializer::serialize_quantifier(const Term* t) {
+  auto x = t->as_complex();
+  out << "(" << (Exists ? "exists (" : "forall (");
+  for (auto& v : Term::vectorizeListTerm(x.val[0].get())) {
+    // Consume annotation for cons
+    shim.annotations++;
+    auto var = arg0(v.get());
+    out << "(";
+    serialize(var);
+    out << " " << Type::lookup(var->sym).second << ")";
+  }
+  out << ") ";
+  // Consume annotation for nil
+  shim.annotations++;
+  auto pats = Term::vectorizeListTerm(x.val[2].get());
+  if (!pats.empty()) {
+    out << "(! ";
+  }
+  serialize(x.val[1].get());
+  if (!pats.empty()) {
+    for (auto& pat : pats) {
+      out << " :pattern (";
+      // Consume annotation for cons
+      shim.annotations++;
+      bool first{true};
+      for (auto& sub : Term::vectorizeListTerm(pat.get())) {
+        if (!first) {
+          out << " ";
+        }
+        first = false;
+        // Consume annotation for cons
+        shim.annotations++;
+        serialize(arg0(sub.get()));
+      }
+      out << ")";
+      // Consume annotation for nil
+      shim.annotations++;
+    }
+    out << ")";
+  }
+  // Consume annotation for nil
+  shim.annotations++;
+  out << ")";
 }
 
 bool SmtShim::needs_type_annotation(const Symbol& sym) {

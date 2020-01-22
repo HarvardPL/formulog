@@ -203,9 +203,9 @@ public class SmtHpp {
 			case SMT_AND:
 				return genSerializeOp("and");
 			case SMT_EXISTS:
-				break;
+				return genSerializeQuantifier(true);
 			case SMT_FORALL:
-				break;
+				return genSerializeQuantifier(false);
 			case SMT_IMP:
 				return genSerializeOp("=>");
 			case SMT_ITE:
@@ -359,6 +359,11 @@ public class SmtHpp {
 		private CppStmt genSerializeInt(boolean big) {
 			String type = big ? "int64_t": "int32_t";
 			String func = "serialize_int<" + type + ">";
+			return mkCall(func);
+		}
+		
+		private CppStmt genSerializeQuantifier(boolean exists) {
+			String func = "serialize_quantifier<" + exists + ">";
 			return mkCall(func);
 		}
 
