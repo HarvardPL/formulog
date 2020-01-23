@@ -444,7 +444,9 @@ public class FuncsHpp {
 
 		private PredicateFunctionDef getDef(PredicateFunctionSymbol sym) {
 			DummyFunctionDef dummy = (DummyFunctionDef) ctx.getEval().getInputProgram().getDef(sym);
-			return (PredicateFunctionDef) dummy.getDef();
+			PredicateFunctionDef def = (PredicateFunctionDef) dummy.getDef();
+			assert def != null : sym;
+			return def;
 		}
 
 		private CppStmt genLookup(Result res) {

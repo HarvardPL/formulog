@@ -87,6 +87,8 @@ public final class Configuration {
 	public static final boolean debugMst = propIsSet("debugMst");
 
 	public static final PrintPreference printResultsPreference = getPrintResultsPreference();
+	
+	public static final boolean testCodeGen = propIsSet("testCodeGen");
 
 	public static final int memoizeThreshold() {
 		return getIntProp("memoizeThreshold", 0);

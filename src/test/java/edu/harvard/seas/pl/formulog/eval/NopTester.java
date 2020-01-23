@@ -1,7 +1,4 @@
-package edu.harvard.seas.pl.formulog.codegen;
-
-import edu.harvard.seas.pl.formulog.Configuration;
-import edu.harvard.seas.pl.formulog.eval.NopTester;
+package edu.harvard.seas.pl.formulog.eval;
 
 /*-
  * #%L
@@ -23,19 +20,13 @@ import edu.harvard.seas.pl.formulog.eval.NopTester;
  * #L%
  */
 
-import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
-import edu.harvard.seas.pl.formulog.magic.CommonMagicSetTest;
+import java.util.List;
 
-public class CompiledSemiNaiveMagicSetTest extends CommonMagicSetTest<SemiNaiveEvaluation> {
+public class NopTester<T extends Evaluation> implements Tester<T> {
 
-	static {
-		if (!Configuration.testCodeGen) {
-			System.err.println("WARNING: skipping CompiledSemiNaiveMagicSetTest; enable with flag");
-		}
-	}
-	
-	public CompiledSemiNaiveMagicSetTest() {
-		super(Configuration.testCodeGen ? new CompiledSemiNaiveTester() : new NopTester<>());
+	@Override
+	public void test(String file, List<String> inputDirs) {
+		// do nothing
 	}
 
 }

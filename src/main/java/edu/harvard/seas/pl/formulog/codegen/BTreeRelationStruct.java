@@ -297,7 +297,7 @@ public class BTreeRelationStruct implements RelationStruct {
 				sym = ((NewSymbol) sym).getBaseSymbol();
 				s += "_new";
 			}
-			name = sym + s;
+			name = CodeGenUtil.mkName(sym) + s;
 			nameVar = CppVar.mk("rels::" + name);
 		}
 

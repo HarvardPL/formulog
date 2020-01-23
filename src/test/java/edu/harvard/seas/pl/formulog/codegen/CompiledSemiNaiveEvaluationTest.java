@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.codegen;
 
+import edu.harvard.seas.pl.formulog.Configuration;
+
 /*-
  * #%L
  * FormuLog
@@ -21,12 +23,19 @@ package edu.harvard.seas.pl.formulog.codegen;
  */
 
 import edu.harvard.seas.pl.formulog.eval.CommonEvaluationTest;
+import edu.harvard.seas.pl.formulog.eval.NopTester;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
 
 public class CompiledSemiNaiveEvaluationTest extends CommonEvaluationTest<SemiNaiveEvaluation> {
 
+	static {
+		if (!Configuration.testCodeGen) {
+			System.err.println("WARNING: skipping CompiledSemiNaiveEvaluationTest; enable with flag");
+		}
+	}
+	
 	public CompiledSemiNaiveEvaluationTest() {
-		super(new CompiledSemiNaiveTester());
+		super(Configuration.testCodeGen ? new CompiledSemiNaiveTester() : new NopTester<>());
 	}
 	
 	@Override

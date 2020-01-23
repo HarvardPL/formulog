@@ -68,6 +68,12 @@ public class PredicateFunctionSetter {
 	public PredicateFunctionSetter(FunctionDefManager funcs, IndexedFactDbBuilder<?> dbb) {
 		this.defs = funcs;
 		this.dbb = dbb;
+		for (FunctionSymbol sym : funcs.getFunctionSymbols()) {
+			FunctionDef def = funcs.lookup(sym);
+			if (def instanceof UserFunctionDef) {
+				preprocess(((UserFunctionDef) def).getBody());
+			}
+		}
 	}
 	
 	public void setDb(IndexedFactDb db) {
