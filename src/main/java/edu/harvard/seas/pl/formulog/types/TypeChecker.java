@@ -114,7 +114,7 @@ public class TypeChecker {
 
 			@Override
 			public Set<FunctionSymbol> getFunctionSymbols() {
-				return newFuncs.keySet();
+				return dm.getFunctionSymbols();
 			}
 
 			@Override
@@ -129,7 +129,7 @@ public class TypeChecker {
 
 			@Override
 			public FunctionDef getDef(FunctionSymbol sym) {
-				return newFuncs.get(sym);
+				return dm.lookup(sym);
 			}
 
 			@Override

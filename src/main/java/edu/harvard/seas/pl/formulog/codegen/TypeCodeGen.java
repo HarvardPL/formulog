@@ -45,7 +45,6 @@ public class TypeCodeGen {
 		this.ctx = ctx;
 	}
 
-	// XXX These should be replaced with code that takes a functor type
 	public Pair<CppStmt, CppExpr> gen(FunctorType type) {
 		List<CppStmt> acc = new ArrayList<>();
 		CppExpr e = gen(acc, type);
