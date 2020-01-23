@@ -38,7 +38,9 @@ import edu.harvard.seas.pl.formulog.ast.BindingType;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.DummyFunctionDef;
+import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.ast.functions.PredicateFunctionDef;
+import edu.harvard.seas.pl.formulog.ast.functions.RecordAccessor;
 import edu.harvard.seas.pl.formulog.ast.functions.UserFunctionDef;
 import edu.harvard.seas.pl.formulog.codegen.LiteralCodeGen.Result;
 import edu.harvard.seas.pl.formulog.codegen.LiteralCodeGen.ResultType;
@@ -55,11 +57,11 @@ import edu.harvard.seas.pl.formulog.validating.ast.SimplePredicate;
 public class FuncsHpp {
 
 	private final CodeGenContext ctx;
-	
+
 	public FuncsHpp(CodeGenContext ctx) {
 		this.ctx = ctx;
 	}
-	
+
 	public void gen(File outDir) throws IOException {
 		try (InputStream is = getClass().getClassLoader().getResourceAsStream("funcs.hpp");
 				InputStreamReader isr = new InputStreamReader(is);
@@ -72,21 +74,21 @@ public class FuncsHpp {
 			pr.makeDefinitions();
 			CodeGenUtil.copyOver(br, out, -1);
 			out.flush();
-		}		
+		}
 	}
-	
+
 	private class Worker {
-		
+
 		private final PrintWriter out;
 		private final Set<FunctionSymbol> userDefinedFunctions = new HashSet<>();
 		private final Set<PredicateFunctionSymbol> predFunctions = new HashSet<>();
 		private final TermCodeGen tcg = new TermCodeGen(ctx);
 		private final LiteralCodeGen lcg = new LiteralCodeGen(ctx);
-		
+
 		public Worker(PrintWriter out) {
 			this.out = out;
 		}
-		
+
 		private void makeDeclarations() {
 			for (FunctionSymbol sym : ctx.getEval().getInputProgram().getFunctionSymbols()) {
 				if (sym instanceof BuiltInFunctionSymbol) {
@@ -95,12 +97,19 @@ public class FuncsHpp {
 					predFunctions.add((PredicateFunctionSymbol) sym);
 					declareFunction(sym);
 				} else {
-					userDefinedFunctions.add(sym);
-					declareFunction(sym);
+					FunctionDef def = ctx.getEval().getInputProgram().getDef(sym);
+					if (def instanceof UserFunctionDef) {
+						userDefinedFunctions.add(sym);
+						declareFunction(sym);
+					} else if (def instanceof RecordAccessor) {
+						ctx.register(sym, "__access<" + ((RecordAccessor) def).getIndex() + ">");
+					} else {
+						throw new AssertionError("Unexpected function def: " + sym + " " + def.getClass());
+					}
 				}
 			}
 		}
-		
+
 		private void declareFunction(FunctionSymbol sym) {
 			String name = CodeGenUtil.mkName(sym);
 			ctx.register(sym, name);
@@ -115,7 +124,7 @@ public class FuncsHpp {
 			}
 			out.println(");");
 		}
-		
+
 		private void registerBuiltInFunction(BuiltInFunctionSymbol sym) {
 			switch (sym) {
 			case BEQ:
@@ -359,7 +368,7 @@ public class FuncsHpp {
 				break;
 			}
 		}
-		
+
 		private void makeDefinitions() {
 			for (FunctionSymbol sym : userDefinedFunctions) {
 				makeDefinitionForUserDefinedFunc(sym);
@@ -392,7 +401,7 @@ public class FuncsHpp {
 			CppSeq.mk(p.fst(), ret).println(out, 1);
 			out.println("}");
 		}
-		
+
 		private void makeDefinitionForPredFunc(PredicateFunctionSymbol funcSym) {
 			out.println();
 			out.print("term_ptr " + ctx.lookupRepr(funcSym) + "(");
@@ -432,18 +441,18 @@ public class FuncsHpp {
 			}
 			out.println("}");
 		}
-		
+
 		private PredicateFunctionDef getDef(PredicateFunctionSymbol sym) {
 			DummyFunctionDef dummy = (DummyFunctionDef) ctx.getEval().getInputProgram().getDef(sym);
 			return (PredicateFunctionDef) dummy.getDef();
 		}
-		
+
 		private CppStmt genLookup(Result res) {
 			assert res.getResType() == ResultType.LOOKUP;
 			CppStmt ifTrue = res.getK().apply(CppReturn.mk(CppFuncCall.mk("Term::make<bool>", CppConst.mkTrue())));
 			return CppSeq.mk(ifTrue, CppReturn.mk(CppFuncCall.mk("Term::make<bool>", CppConst.mkFalse())));
 		}
-		
+
 		private CppStmt genLoop(SimplePredicate pred, Result res) {
 			assert res.getResType() == ResultType.LOOP;
 			List<CppStmt> acc = new ArrayList<>();
@@ -456,7 +465,7 @@ public class FuncsHpp {
 			acc.add(CppReturn.mk(list));
 			return CppSeq.mk(acc);
 		}
-		
+
 		private CppStmt genLoopBody(SimplePredicate pred, Result res, CppVar list) {
 			List<CppStmt> body = new ArrayList<>();
 			List<CppExpr> cols = tcg.gen(body, getFreeArgs(pred), res.getNewEnv());
@@ -465,7 +474,7 @@ public class FuncsHpp {
 			body.add(CppBinop.mkAssign(list, cons).toStmt());
 			return CppSeq.mk(body);
 		}
-		
+
 		private CppExpr genTuple(List<CppExpr> args, List<CppStmt> acc) {
 			int n = args.size();
 			if (n == 1) {
@@ -475,10 +484,10 @@ public class FuncsHpp {
 				CppExpr tuple = tcg.mkComplex(acc, sym, args);
 				String id = ctx.newId("t");
 				acc.add(CppDecl.mk(id, tuple));
-				return CppVar.mk(id); 
+				return CppVar.mk(id);
 			}
 		}
-		
+
 		private int nbound(BindingType[] bindings) {
 			int n = 0;
 			for (BindingType binding : bindings) {
@@ -488,7 +497,7 @@ public class FuncsHpp {
 			}
 			return n;
 		}
-		
+
 		private List<Term> getFreeArgs(SimplePredicate pred) {
 			Term[] args = pred.getArgs();
 			List<Term> freeArgs = new ArrayList<>();
@@ -501,7 +510,7 @@ public class FuncsHpp {
 			}
 			return freeArgs;
 		}
-		
+
 	}
 
 }

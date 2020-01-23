@@ -16,6 +16,11 @@ namespace funcs {
 
 using namespace std;
 
+template<size_t N>
+term_ptr __access(const term_ptr& t1) {
+  return t1->as_complex().val[N];
+}
+
 term_ptr beq(const term_ptr& t1, const term_ptr& t2) {
   return Term::make<bool>(!Term::compare(t1.get(), t2.get()));
 }

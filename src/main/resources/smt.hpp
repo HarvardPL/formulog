@@ -3,6 +3,7 @@
 #include <bitset>
 #include <boost/format.hpp>
 #include <boost/process.hpp>
+#include <cassert>
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
@@ -71,6 +72,8 @@ struct SmtShim {
       void serialize_int(const Term* t);
     template <bool Exists>
       void serialize_quantifier(const Term* t);
+    string serialize_sym(const Symbol& sym);
+    string serialize_tester(const Symbol& sym);
   };
 
 };
@@ -134,6 +137,7 @@ void TypeInferer::unify_constraints() {
 }
 
 void TypeInferer::unify(const Type& ty1, const Type& ty2) {
+  assert(ty1.name == ty2.name);
   auto args1 = ty1.args;
   auto args2 = ty2.args;
   for (auto it1 = args1.begin(), it2 = args2.begin();
@@ -281,8 +285,7 @@ void SmtShim::Serializer::serialize(const Term* t) {
     default:
       auto x = t->as_complex();
       stringstream ss;
-      ss << "|" << x.sym << "|";
-      serialize(ss.str(), x);
+      serialize(serialize_sym(x.sym), x);
   }
 }
 
@@ -435,6 +438,23 @@ bool SmtShim::needs_type_annotation(const Symbol& sym) {
     default:
       return false;
   }
+}
+
+string SmtShim::Serializer::serialize_sym(const Symbol& sym) {
+  switch (sym) {
+/* INSERT 4 */
+    default:
+      stringstream ss;
+      ss << "|" << sym << "|";
+      return ss.str();
+  }
+}
+
+string SmtShim::Serializer::serialize_tester(const Symbol& sym) {
+  stringstream ss;
+  ss << sym;
+  string s = ss.str().substr(4, string::npos);
+  return "|is-" + s + "|";
 }
 
 thread_local SmtShim smt_shim;

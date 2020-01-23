@@ -32,6 +32,7 @@ import java.util.Set;
 import edu.harvard.seas.pl.formulog.smt.SmtLibShim;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbolType;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInConstructorSymbolBase;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedConstructorSymbol;
 import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
@@ -58,6 +59,8 @@ public class SmtHpp {
 			pr.genSerializationCases();
 			CodeGenUtil.copyOver(br, out, 3);
 			pr.genNeedsTypeAnnotationCases();
+			CodeGenUtil.copyOver(br, out, 4);
+			pr.genSymbolSerializationCases();
 			CodeGenUtil.copyOver(br, out, -1);
 			out.flush();
 		}
@@ -239,11 +242,11 @@ public class SmtHpp {
 		private int index(ParameterizedConstructorSymbol sym, int i) {
 			return ((TypeIndex) sym.getArgs().get(i).getType()).getIndex();
 		}
-		
+
 		private CppStmt mkCall(String func) {
 			return CppFuncCall.mk(func, CppVar.mk("t")).toStmt();
 		}
-		
+
 		private CppStmt genParameterizedConstructorSymbolCase(ParameterizedConstructorSymbol sym) {
 			switch (sym.getBase()) {
 			case ARRAY_DEFAULT:
@@ -332,36 +335,36 @@ public class SmtHpp {
 			CppExpr t = CppMethodCall.mkThruPtr(CppVar.mk("t"), "as_complex");
 			return CppFuncCall.mk("serialize", s, t).toStmt();
 		}
-		
+
 		private CppStmt genSerializeBitString(int n, boolean big) {
 			String type = big ? "int64_t" : "int32_t";
 			String func = "serialize_bit_string<" + type + ", " + n + ">";
 			return mkCall(func);
 		}
-		
+
 		private CppStmt genSerializeBvToBv(int from, int to, boolean signed) {
 			String func = "serialize_bv_to_bv<" + from + ", " + to + ", " + signed + ">";
 			return mkCall(func);
 		}
-		
+
 		private CppStmt genSerializeFpToBv(int width, boolean signed) {
 			String func = "serialize_fp_to_bv<" + width + ", " + signed + ">";
 			return mkCall(func);
 		}
-		
+
 		private CppStmt genSerializeFp(int e, int s, boolean big) {
 			String type = big ? "double" : "float";
 			String func = "serialize_fp<" + type + ", " + e + ", " + s + ">";
 			CppExpr arg = CppFuncCall.mk("arg0", CppVar.mk("t"));
 			return CppFuncCall.mk(func, arg).toStmt();
 		}
-		
+
 		private CppStmt genSerializeInt(boolean big) {
-			String type = big ? "int64_t": "int32_t";
+			String type = big ? "int64_t" : "int32_t";
 			String func = "serialize_int<" + type + ">";
 			return mkCall(func);
 		}
-		
+
 		private CppStmt genSerializeQuantifier(boolean exists) {
 			String func = "serialize_quantifier<" + exists + ">";
 			return mkCall(func);
@@ -377,6 +380,20 @@ public class SmtHpp {
 			}
 			if (foundOne) {
 				CppReturn.mk(CppConst.mkTrue()).println(out, 3);
+			}
+		}
+
+		public void genSymbolSerializationCases() {
+			boolean foundOne = false;
+			for (ConstructorSymbol sym : ctx.getConstructorSymbols()) {
+				if (sym.getConstructorSymbolType().equals(ConstructorSymbolType.SOLVER_CONSTRUCTOR_TESTER)) {
+					out.println("    case " + ctx.lookupRepr(sym) + ":");
+					foundOne = true;
+				}
+			}
+			if (foundOne) {
+				CppExpr call = CppFuncCall.mk("serialize_tester", CppVar.mk("sym"));
+				CppReturn.mk(call).println(out, 3);
 			}
 		}
 

@@ -34,7 +34,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import edu.harvard.seas.pl.formulog.ast.BoolTerm;
-import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
 import edu.harvard.seas.pl.formulog.ast.FP32;
 import edu.harvard.seas.pl.formulog.ast.FP64;
@@ -49,8 +48,6 @@ import edu.harvard.seas.pl.formulog.ast.StringTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
-import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogBaseVisitor;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.BinopFormulaContext;
@@ -101,8 +98,6 @@ import edu.harvard.seas.pl.formulog.symbols.parameterized.Param;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParamKind;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedSymbol;
-import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
-import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.util.Pair;
@@ -645,45 +640,21 @@ class TermExtractor {
 		}
 
 		public Term visitOutermostCtor(OutermostCtorContext ctx) {
-			Symbol ctor = pc.symbolManager().lookupSymbol(ctx.ID().getText());
-			if (!(ctor instanceof ConstructorSymbol)) {
-				throw new RuntimeException("Cannot use non-constructor symbol " + ctor + " in a `not` term.");
+			Symbol sym = pc.symbolManager().lookupSymbol(ctx.ID().getText());
+			if (!(sym instanceof ConstructorSymbol)) {
+				throw new RuntimeException("Cannot use non-constructor symbol " + sym + " in a `not` term.");
 			}
 
-			// we'll call a fixed function name
-			FunctorType ctorType = ((ConstructorSymbol) ctor).getCompileTimeType();
-			String name = "not%" + ctor;
-			FunctionSymbol isNotFun;
-			if (pc.symbolManager().hasName(name)) {
-				isNotFun = (FunctionSymbol) pc.symbolManager().lookupSymbol(name);
-			} else {
-				isNotFun = pc.symbolManager().createFunctionSymbol("not%" + ctor, 1,
-						new FunctorType(ctorType.getRetType(), BuiltInTypes.bool));
+			Term[] vars = new Term[sym.getArity()];
+			for (int i = 0; i < vars.length; ++i) {
+				vars[i] = Var.fresh();
 			}
-
-			// generate the function if needed
-			if (!pc.functionDefManager().hasDefinition(isNotFun)) {
-				pc.functionDefManager().register(new FunctionDef() {
-
-					@Override
-					public FunctionSymbol getSymbol() {
-						return isNotFun;
-					}
-
-					@Override
-					public Term evaluate(Term[] args) throws EvaluationException {
-						Constructor c = (Constructor) args[0];
-						if (c.getSymbol().equals(ctor)) {
-							return BoolTerm.mkFalse();
-						}
-						return BoolTerm.mkTrue();
-					}
-
-				});
-			}
-
+			Term pat = Constructors.make((ConstructorSymbol) sym, vars);
+			List<MatchClause> clauses = new ArrayList<>();
+			clauses.add(MatchClause.make(pat, BoolTerm.mkFalse()));
+			clauses.add(MatchClause.make(Var.fresh(), BoolTerm.mkTrue()));
 			Term arg = extract(ctx.term());
-			return pc.functionCallFactory().make(isNotFun, Terms.singletonArray(arg));
+			return MatchExpr.make(arg, clauses);
 		}
 
 		@Override

@@ -35,7 +35,6 @@ import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiterals;
-import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.Term;
@@ -43,8 +42,8 @@ import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
+import edu.harvard.seas.pl.formulog.ast.functions.RecordAccessor;
 import edu.harvard.seas.pl.formulog.ast.functions.UserFunctionDef;
-import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogBaseVisitor;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogLexer;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.AdtDefContext;
@@ -242,20 +241,7 @@ class TopLevelParser {
 				FunctionSymbol label = pc.symbolManager().createFunctionSymbol(entry.ID().getText(), 1, labelType);
 				labels.add(label);
 				final int j = i;
-				pc.functionDefManager().register(new FunctionDef() {
-
-					@Override
-					public FunctionSymbol getSymbol() {
-						return label;
-					}
-
-					@Override
-					public Term evaluate(Term[] args) throws EvaluationException {
-						Constructor ctor = (Constructor) args[0];
-						return ctor.getArgs()[j];
-					}
-
-				});
+				pc.functionDefManager().register(new RecordAccessor(label, j));
 				ConstructorSymbol getter = pc.symbolManager().createConstructorSymbol("#" + label, 1,
 						ConstructorSymbolType.SOLVER_CONSTRUCTOR_GETTER, labelType);
 				getterSyms.add(getter);

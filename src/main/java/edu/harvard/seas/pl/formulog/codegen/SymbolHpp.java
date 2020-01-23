@@ -59,7 +59,7 @@ public class SymbolHpp {
 				out.print("    case ");
 				out.print(ctx.lookupRepr(sym));
 				out.print(": return out << \"");
-				out.print(ctx.lookupUnqualifiedRepr(sym));
+				out.print(sym);
 				out.println("\";");
 			}
 			while ((line = br.readLine()) != null) {

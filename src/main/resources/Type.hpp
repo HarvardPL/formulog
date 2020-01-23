@@ -25,7 +25,17 @@ struct Type {
 
   static functor_type lookup(const Symbol& sym); 
 
+  static functor_type i32;
+  static functor_type i64;
+  static functor_type fp32;
+  static functor_type fp64;
+  static functor_type string_;
+  static functor_type bool_;
+
   private:
+  static functor_type make_prim(const string& name);
+  static functor_type make_prim(const string& name, const vector<Type>& args);
+  static Type make_index(const string& name);
   static Type new_var();
   static atomic_size_t cnt;
 };
@@ -91,17 +101,29 @@ ostream& operator<<(ostream& out, const Type& type) {
   return out;
 }
 
-functor_type bool_type = make_pair(vector<Type>(), Type{"Bool", false, {}});
-functor_type i32_type = make_pair(vector<Type>(), Type{"(_ BitVec 32)", false, {}});
-functor_type i64_type = make_pair(vector<Type>(), Type{"(_ BitVec 64)", false, {}});
-functor_type fp32_type = make_pair(vector<Type>(), Type{"(_ FloatingPoint 8 24)", false, {}});
-functor_type fp64_type = make_pair(vector<Type>(), Type{"(_ FloatingPoint 11 53)", false, {}});
-functor_type string_type = make_pair(vector<Type>(), Type{"String", false, {}}); 
+functor_type Type::make_prim(const string& name, const vector<Type>& args) {
+  return make_pair(vector<Type>(), Type{name, false, args});
+}
+
+functor_type Type::make_prim(const string& name) {
+  return make_prim(name, {});
+}
+
+Type Type::make_index(const string& name) {
+  return Type{name, false, {}};
+}
+
+functor_type Type::bool_ = make_prim("Bool");
+functor_type Type::i32 = make_prim("_ BitVec", { make_index("32") });
+functor_type Type::i64 = make_prim("_ BitVec", { make_index("64") });
+functor_type Type::fp32 = make_prim("_ FloatingPoint", { make_index("8"), make_index("24") });
+functor_type Type::fp64 = make_prim("_ FloatingPoint", { make_index("11"), make_index("53") });
+functor_type Type::string_ = make_prim("String"); 
 
 atomic_size_t Type::cnt;
 
 Type Type::new_var() {
-  return Type{"x" + cnt++, true, {}};
+  return Type{"x" + to_string(cnt++), true, {}};
 }
 
 functor_type Type::lookup(const Symbol& sym) {
@@ -109,12 +131,12 @@ functor_type Type::lookup(const Symbol& sym) {
     case Symbol::min_term:
     case Symbol::max_term:
       abort();
-    case Symbol::boxed_bool: return bool_type;
-    case Symbol::boxed_i32: return i32_type;
-    case Symbol::boxed_i64: return i64_type;
-    case Symbol::boxed_fp32: return fp32_type;
-    case Symbol::boxed_fp64: return fp64_type;
-    case Symbol::boxed_string: return string_type;
+    case Symbol::boxed_bool: return bool_;
+    case Symbol::boxed_i32: return i32;
+    case Symbol::boxed_i64: return i64;
+    case Symbol::boxed_fp32: return fp32;
+    case Symbol::boxed_fp64: return fp64;
+    case Symbol::boxed_string: return string_;
 /* INSERT 0 */
   }
   __builtin_unreachable();
