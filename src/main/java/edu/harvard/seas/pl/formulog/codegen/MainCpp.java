@@ -53,13 +53,13 @@ public class MainCpp {
 				BufferedReader br = new BufferedReader(isr);
 				PrintWriter out = new PrintWriter(outDir.toPath().resolve("main.cpp").toFile())) {
 			Worker pr = new Worker(out);
-			CodeGenUtil.copyOver(br, out, 0);
-			pr.loadEdbs();
 			CodeGenUtil.copyOver(br, out, 1);
-			pr.printStratumFuncs();
+			pr.loadEdbs();
 			CodeGenUtil.copyOver(br, out, 2);
-			pr.evaluate();
+			pr.printStratumFuncs();
 			CodeGenUtil.copyOver(br, out, 3);
+			pr.evaluate();
+			CodeGenUtil.copyOver(br, out, 4);
 			pr.printResults();
 			CodeGenUtil.copyOver(br, out, -1);
 			out.flush();
