@@ -33,12 +33,13 @@ void ExternalEdbLoader::loadEdbs(const string& dir) {
 
 template <typename T>
 void ExternalEdbLoader::loadEdbs(const string& dir, const string& file, T& rel) {
+  boost::filesystem::path path{dir};
+  path /= file;
+  auto s = path.string();
   boost::asio::post(pool,
-      [&]() {
-        boost::filesystem::path path{dir};
-        path /= file;
+      [s, &rel]() {
         FactParser<T> parser;
-        parser.parse(path.string(), rel);
+        parser.parse(s, rel);
       });
 }
 

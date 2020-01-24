@@ -30,4 +30,6 @@ public interface RelationStruct {
 	
 	Relation mkRelation(RelationSymbol sym);
 	
+	String getName();
+	
 }

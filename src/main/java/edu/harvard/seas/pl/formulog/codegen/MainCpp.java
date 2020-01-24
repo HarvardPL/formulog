@@ -53,6 +53,8 @@ public class MainCpp {
 				BufferedReader br = new BufferedReader(isr);
 				PrintWriter out = new PrintWriter(outDir.toPath().resolve("main.cpp").toFile())) {
 			Worker pr = new Worker(out);
+			CodeGenUtil.copyOver(br, out, 0);
+			pr.loadExternalEdbs();
 			CodeGenUtil.copyOver(br, out, 1);
 			pr.loadEdbs();
 			CodeGenUtil.copyOver(br, out, 2);
@@ -75,6 +77,22 @@ public class MainCpp {
 			this.out = out;
 		}
 
+		public void loadExternalEdbs() {
+			for (RelationSymbol sym : db.getSymbols()) {
+				if (sym.isEdbSymbol()) {
+					loadExternalEdbs(sym);
+				}
+			}
+		}
+		
+		public void loadExternalEdbs(RelationSymbol sym) {
+			Relation rel = ctx.lookupRelation(sym);
+			String func = "loadEdbs<" + rel.getStruct().getName() + ">";
+			CppExpr file = CppConst.mkString(sym + ".csv");
+			CppExpr call = CppFuncCall.mk(func, CppVar.mk("dir"), file, CppUnop.mkDeref(rel));
+			call.toStmt().println(out, 1);
+		}
+		
 		public void loadEdbs() {
 			for (RelationSymbol sym : db.getSymbols()) {
 				if (sym.isEdbSymbol()) {

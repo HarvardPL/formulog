@@ -56,4 +56,6 @@ public interface Relation extends CppExpr {
 	
 	CppExpr mkSize();
 	
+	RelationStruct getStruct();
+	
 }
