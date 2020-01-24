@@ -57,6 +57,7 @@ public class BTreeRelationStruct implements RelationStruct {
 		out.print("struct ");
 		out.print(name);
 		out.println(" {");
+		declareArity(out);
 		declareIndices(out);
 		declareContains(out);
 		declareInsert(out);
@@ -72,6 +73,10 @@ public class BTreeRelationStruct implements RelationStruct {
 		out.println("};");
 	}
 
+	private void declareArity(PrintWriter out) {
+		out.println("  enum { arity = " + arity + " };");
+	}
+	
 	private void declarePrint(PrintWriter out) {
 		out.println("  void print() const {");
 		CppVar m = CppVar.mk(mkIndexName(masterIndex));
