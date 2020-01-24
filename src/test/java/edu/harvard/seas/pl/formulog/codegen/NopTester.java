@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.eval;
+package edu.harvard.seas.pl.formulog.codegen;
 
 /*-
  * #%L
@@ -21,6 +21,9 @@ package edu.harvard.seas.pl.formulog.eval;
  */
 
 import java.util.List;
+
+import edu.harvard.seas.pl.formulog.eval.Evaluation;
+import edu.harvard.seas.pl.formulog.eval.Tester;
 
 public class NopTester<T extends Evaluation> implements Tester<T> {
 

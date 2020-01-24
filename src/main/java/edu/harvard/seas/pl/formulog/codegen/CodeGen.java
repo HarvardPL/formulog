@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
@@ -49,6 +50,9 @@ public class CodeGen {
 
 	public void go() throws IOException, URISyntaxException {
 		copy("Term.hpp");
+		copy("FactParser.hpp");
+		copy("parsing");
+		copy("compile.sh");
 		CodeGenContext ctx = new CodeGenContext(eval);
 		new RelsHpp(ctx).gen(outDir);
 		new FuncsHpp(ctx).gen(outDir);
@@ -58,9 +62,24 @@ public class CodeGen {
 		new SymbolHpp(ctx).print(outDir);
 	}
 	
-	public void copy(String file) throws IOException, URISyntaxException {
+	private void copy(String file) throws IOException, URISyntaxException {
 		URL url = getClass().getClassLoader().getResource(file);
-		Files.copy(Paths.get(url.toURI()), outDir.toPath().resolve(file));
+		copy(Paths.get(url.toURI()).toFile(), outDir.toPath());
+	}
+	
+	private void copy(File fileToCopy, Path outDir) throws IOException {
+		String name = fileToCopy.getName();
+		Path dest = outDir.resolve(name);
+		Files.copy(fileToCopy.toPath(), dest);
+		String ext = name.substring(name.lastIndexOf('.') + 1);
+		if (ext.equals("sh")) {
+			dest.toFile().setExecutable(true);
+		}
+		if (fileToCopy.isDirectory()) {
+			for (File child : fileToCopy.listFiles()) {
+				copy(child, dest);
+			}
+		}
 	}
 
 	public static void main(String[] args) throws Exception {

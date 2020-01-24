@@ -1,4 +1,7 @@
 #include "funcs.hpp"
+// FactParser.hpp needs to be included *after* everything else. It pulls in
+// some Antlr headers that unset the EOF macro, which Souffle depends on.
+#include "FactParser.hpp"
 
 using namespace flg;
 using namespace std;

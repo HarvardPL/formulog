@@ -23,7 +23,6 @@ import edu.harvard.seas.pl.formulog.Configuration;
  */
 
 import edu.harvard.seas.pl.formulog.eval.CommonEvaluationTest;
-import edu.harvard.seas.pl.formulog.eval.NopTester;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
 
 public class CompiledSemiNaiveEvaluationTest extends CommonEvaluationTest<SemiNaiveEvaluation> {

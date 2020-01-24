@@ -1,7 +1,6 @@
 package edu.harvard.seas.pl.formulog.codegen;
 
 import edu.harvard.seas.pl.formulog.Configuration;
-import edu.harvard.seas.pl.formulog.eval.NopTester;
 
 /*-
  * #%L
