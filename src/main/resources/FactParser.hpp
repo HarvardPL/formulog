@@ -9,6 +9,7 @@
 
 #include "parsing/FormulogParser.h"
 #include "parsing/FormulogLexer.h"
+#include "parsing/FormulogBaseVisitor.h"
 
 #include "Term.hpp"
 #include "rels.hpp"
@@ -18,9 +19,52 @@ namespace flg {
 using namespace std;
 using namespace antlr4;
 
-struct TermParser {
+class TermParser : private FormulogBaseVisitor {
+  public:
   term_ptr parse(FormulogParser::TermContext* ctx);
+
+  private:
+  term_ptr* parse(vector<FormulogParser::TermContext*> ctxs);
+
+  antlrcpp::Any visitHoleTerm(FormulogParser::HoleTermContext *ctx) override;
+  antlrcpp::Any visitVarTerm(FormulogParser::VarTermContext *ctx) override;
+  antlrcpp::Any visitStringTerm(FormulogParser::StringTermContext *ctx) override;
+  antlrcpp::Any visitConsTerm(FormulogParser::ConsTermContext *ctx) override;
+
+  static antlrcpp::Any die(const string& feature);
 };
+
+term_ptr* TermParser::parse(vector<FormulogParser::TermContext*> ctxs) {
+  term_ptr* a = new term_ptr[ctxs.size()];
+  size_t i{0};
+  for (auto& ctx : ctxs) {
+		const auto& t = parse(ctx);
+    a[i++] = reinterpret_cast<const term_ptr&>(t);
+  }
+  return a;
+}
+
+antlrcpp::Any TermParser::visitHoleTerm(FormulogParser::HoleTermContext *ctx) {
+  return die("hole terms");
+}
+
+antlrcpp::Any TermParser::visitVarTerm(FormulogParser::VarTermContext *ctx) {
+  return die("variables");
+}
+
+antlrcpp::Any TermParser::visitStringTerm(FormulogParser::StringTermContext *ctx) {
+  return Term::make<string>(ctx->QSTRING()->getText());
+}
+
+antlrcpp::Any TermParser::visitConsTerm(FormulogParser::ConsTermContext *ctx) {
+  return Term::make(Symbol::cons, 2, parse(ctx->term()));
+}
+
+antlrcpp::Any TermParser::die(const string& feature) {
+  cerr << "Feature unsupported in external EDBs: " << feature << endl;
+  abort();
+  return nullptr;
+}
 
 template <typename T>
 struct FactParser {
