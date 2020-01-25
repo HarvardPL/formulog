@@ -92,7 +92,7 @@ public class BaseTerm implements CppExpr {
 		} else if (d == Float.POSITIVE_INFINITY) {
 			return "numeric_limits<float>::infinity()";
 		} else if (Float.isNaN(d)) {
-			return "nan(\"\")";
+			return "nanf(\"\")";
 		} else {
 			return Float.toString(d);
 		}

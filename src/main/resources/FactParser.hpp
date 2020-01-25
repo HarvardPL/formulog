@@ -1,6 +1,9 @@
 #pragma once
 
+#include <cmath>
 #include <iostream>
+#include <limits>
+#include <string>
 
 // The Souffle header is here just to make sure that it is pulled in before the
 // Antlr one, since the latter unsets the EOF macro it depends on.
@@ -33,6 +36,11 @@ class TermParser : private FormulogBaseVisitor {
   antlrcpp::Any visitIndexedFunctor(FormulogParser::IndexedFunctorContext* ctx) override;
   antlrcpp::Any visitFoldTerm(FormulogParser::FoldTermContext* ctx) override;
   antlrcpp::Any visitTupleTerm(FormulogParser::TupleTermContext* ctx) override;
+  antlrcpp::Any visitI32Term(FormulogParser::I32TermContext* ctx) override;
+  antlrcpp::Any visitI64Term(FormulogParser::I64TermContext* ctx) override;
+  antlrcpp::Any visitFloatTerm(FormulogParser::FloatTermContext* ctx) override;
+  antlrcpp::Any visitDoubleTerm(FormulogParser::DoubleTermContext* ctx) override;
+  antlrcpp::Any visitSpecialFPTerm(FormulogParser::SpecialFPTermContext* ctx) override;
 
   static antlrcpp::Any die(const string& feature);
 };
@@ -90,6 +98,40 @@ antlrcpp::Any TermParser::visitTupleTerm(FormulogParser::TupleTermContext* ctx) 
   auto sym = lookup_tuple_symbol(arity);
   auto args = parse(terms);
   return Term::make(sym, arity, args);
+}
+
+antlrcpp::Any TermParser::visitI32Term(FormulogParser::I32TermContext* ctx) {
+  return Term::make<int32_t>(stoi(ctx->val->getText(), nullptr, 0));
+}
+
+antlrcpp::Any TermParser::visitI64Term(FormulogParser::I64TermContext* ctx) {
+  return Term::make<int64_t>(stoll(ctx->val->getText(), nullptr, 0));
+}
+
+antlrcpp::Any TermParser::visitFloatTerm(FormulogParser::FloatTermContext* ctx) {
+  return Term::make<float>(stof(ctx->val->getText()));
+}
+
+antlrcpp::Any TermParser::visitDoubleTerm(FormulogParser::DoubleTermContext* ctx) {
+  return Term::make<double>(stod(ctx->val->getText()));
+}
+
+antlrcpp::Any TermParser::visitSpecialFPTerm(FormulogParser::SpecialFPTermContext* ctx) {
+  switch (ctx->val->getType()) {
+    case FormulogParser::FP32_NAN:
+      return Term::make<float>(nanf(""));
+    case FormulogParser::FP32_POS_INFINITY:
+      return Term::make<float>(numeric_limits<float>::infinity());
+    case FormulogParser::FP32_NEG_INFINITY:
+      return Term::make<float>(-numeric_limits<float>::infinity());
+    case FormulogParser::FP64_NAN:
+      return Term::make<double>(nan(""));
+    case FormulogParser::FP64_POS_INFINITY:
+      return Term::make<double>(numeric_limits<double>::infinity());
+    case FormulogParser::FP64_NEG_INFINITY:
+      return Term::make<double>(-numeric_limits<double>::infinity());
+  }
+  __builtin_unreachable();
 }
 
 antlrcpp::Any TermParser::die(const string& feature) {
