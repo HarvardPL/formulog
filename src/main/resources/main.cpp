@@ -62,6 +62,7 @@ void printResults() {
 }
 
 int main() {
+  initialize_symbols();
   loadEdbs({}, 1);
   evaluate();
   printResults();

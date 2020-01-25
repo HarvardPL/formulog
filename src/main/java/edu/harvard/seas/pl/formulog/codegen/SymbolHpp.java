@@ -43,18 +43,38 @@ public class SymbolHpp {
 				InputStreamReader isr = new InputStreamReader(is);
 				BufferedReader br = new BufferedReader(isr);
 				PrintWriter out = new PrintWriter(outDir.toPath().resolve("Symbol.hpp").toFile())) {
-			String line;
-			while (!(line = br.readLine()).equals("/* INSERT 0 */")) {
-				out.println(line);
-			}
-			Set<ConstructorSymbol> symbols = ctx.getConstructorSymbols();
+			Worker w = new Worker(out);
+			CodeGenUtil.copyOver(br, out, 0);
+			w.declareSymbols();
+			CodeGenUtil.copyOver(br, out, 1);
+			w.defineSerialization();
+			CodeGenUtil.copyOver(br, out, 2);
+			w.initializeSymbolTable();
+			CodeGenUtil.copyOver(br, out, 3);
+			w.defineArity();
+			CodeGenUtil.copyOver(br, out, -1);
+			out.flush();
+		}
+		
+	}
+
+	private class Worker {
+	
+		private final Set<ConstructorSymbol> symbols = ctx.getConstructorSymbols();
+		private final PrintWriter out;
+		
+		public Worker(PrintWriter out) {
+			this.out = out;
+		}
+		
+		void declareSymbols() {
 			for (ConstructorSymbol sym : symbols) {
 				out.print("  ");
 				out.println(ctx.lookupUnqualifiedRepr(sym) + ",");
 			}
-			while (!(line = br.readLine()).equals("/* INSERT 1 */")) {
-				out.println(line);
-			}
+		}
+		
+		void defineSerialization() {
 			for (ConstructorSymbol sym : symbols) {
 				out.print("    case ");
 				out.print(ctx.lookupRepr(sym));
@@ -62,10 +82,22 @@ public class SymbolHpp {
 				out.print(sym);
 				out.println("\";");
 			}
-			while ((line = br.readLine()) != null) {
-				out.println(line);
+		}
+		
+		void initializeSymbolTable() {
+			for (ConstructorSymbol sym : symbols) {
+				CppExpr access = CppSubscript.mk(CppVar.mk("symbol_table"), CppConst.mkString(sym.toString()));
+				CppExpr assign = CppBinop.mkAssign(access, CppVar.mk(ctx.lookupRepr(sym)));
+				assign.toStmt().println(out, 1);
 			}
-			out.flush();
+		}
+		
+		void defineArity() {
+			for (ConstructorSymbol sym : symbols) {
+				out.print("    case ");
+				out.print(ctx.lookupRepr(sym));
+				out.println(": return " + sym.getArity() + ";");
+			}
 		}
 		
 	}

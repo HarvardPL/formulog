@@ -26,10 +26,11 @@ class TermParser : private FormulogBaseVisitor {
   private:
   term_ptr* parse(vector<FormulogParser::TermContext*> ctxs);
 
-  antlrcpp::Any visitHoleTerm(FormulogParser::HoleTermContext *ctx) override;
-  antlrcpp::Any visitVarTerm(FormulogParser::VarTermContext *ctx) override;
-  antlrcpp::Any visitStringTerm(FormulogParser::StringTermContext *ctx) override;
-  antlrcpp::Any visitConsTerm(FormulogParser::ConsTermContext *ctx) override;
+  antlrcpp::Any visitHoleTerm(FormulogParser::HoleTermContext* ctx) override;
+  antlrcpp::Any visitVarTerm(FormulogParser::VarTermContext* ctx) override;
+  antlrcpp::Any visitStringTerm(FormulogParser::StringTermContext* ctx) override;
+  antlrcpp::Any visitConsTerm(FormulogParser::ConsTermContext* ctx) override;
+  antlrcpp::Any visitIndexedFunctor(FormulogParser::IndexedFunctorContext* ctx) override;
 
   static antlrcpp::Any die(const string& feature);
 };
@@ -44,20 +45,37 @@ term_ptr* TermParser::parse(vector<FormulogParser::TermContext*> ctxs) {
   return a;
 }
 
-antlrcpp::Any TermParser::visitHoleTerm(FormulogParser::HoleTermContext *ctx) {
+antlrcpp::Any TermParser::visitHoleTerm(FormulogParser::HoleTermContext* ctx) {
   return die("hole terms");
 }
 
-antlrcpp::Any TermParser::visitVarTerm(FormulogParser::VarTermContext *ctx) {
+antlrcpp::Any TermParser::visitVarTerm(FormulogParser::VarTermContext* ctx) {
   return die("variables");
 }
 
-antlrcpp::Any TermParser::visitStringTerm(FormulogParser::StringTermContext *ctx) {
+antlrcpp::Any TermParser::visitStringTerm(FormulogParser::StringTermContext* ctx) {
   return Term::make<string>(ctx->QSTRING()->getText());
 }
 
-antlrcpp::Any TermParser::visitConsTerm(FormulogParser::ConsTermContext *ctx) {
+antlrcpp::Any TermParser::visitConsTerm(FormulogParser::ConsTermContext* ctx) {
   return Term::make(Symbol::cons, 2, parse(ctx->term()));
+}
+
+antlrcpp::Any TermParser::visitIndexedFunctor(FormulogParser::IndexedFunctorContext* ctx) {
+  if (!ctx->parameterList()->parameter().empty()) {
+    die("parameterized terms");
+  }
+  string name = ctx->id->getText();
+  if (name == "true") {
+    return Term::make<bool>(true);
+  }
+  if (name == "false") {
+    return Term::make<bool>(false);
+  }
+  auto sym = lookup_symbol(name);
+  auto arity = symbol_arity(sym);
+  auto args = parse(ctx->termArgs()->term());
+  return Term::make(sym, arity, args); 
 }
 
 antlrcpp::Any TermParser::die(const string& feature) {
