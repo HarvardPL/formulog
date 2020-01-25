@@ -79,7 +79,7 @@ public class MainCpp {
 
 		public void loadExternalEdbs() {
 			for (RelationSymbol sym : db.getSymbols()) {
-				if (sym.isEdbSymbol()) {
+				if (sym.isExternal()) {
 					loadExternalEdbs(sym);
 				}
 			}

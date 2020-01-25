@@ -173,6 +173,7 @@ public class SymbolManager {
 		private final boolean idb;
 		private boolean bottomUp;
 		private boolean topDown;
+		private boolean external;
 
 		public RelationSymbolImpl(String name, int arity, boolean isIdb, FunctorType type) {
 			super(name, arity, type);
@@ -182,6 +183,11 @@ public class SymbolManager {
 		@Override
 		public boolean isIdbSymbol() {
 			return idb;
+		}
+		
+		@Override
+		public boolean isExternal() {
+			return external;
 		}
 
 		@Override
@@ -208,6 +214,12 @@ public class SymbolManager {
 				throw new IllegalStateException("Relation cannot be both top-down and bottom-up");
 			}
 			bottomUp = true;
+		}
+		
+		@Override
+		public synchronized void setExternal() {
+			assert !idb;
+			external = true;
 		}
 
 	}

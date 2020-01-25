@@ -83,6 +83,11 @@ class AdornedSymbol implements WrappedRelationSymbol<RelationSymbol> {
 	}
 
 	@Override
+	public boolean isExternal() {
+		return false;
+	}
+
+	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
@@ -109,6 +114,5 @@ class AdornedSymbol implements WrappedRelationSymbol<RelationSymbol> {
 			return false;
 		return true;
 	}
-
 
 }

@@ -1,5 +1,6 @@
 #include <boost/asio.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/program_options.hpp>
 
 #include "FactParser.hpp"
 #include "funcs.hpp"
@@ -61,9 +62,29 @@ void printResults() {
 /* INSERT 4 */
 }
 
-int main() {
+int main(int argc, char** argv) {
+  namespace po = boost::program_options;
+  po::options_description desc("Allowed options");
+  string cwd = boost::filesystem::current_path().string(); 
+  desc.add_options()
+    ("help", "produce help message")
+    ("parallelism,j", po::value<size_t>()->default_value(1),
+     "number of threads to use")
+    ("fact-dir", po::value<vector<string>>()->default_value({ cwd }),
+     "input directory with external EDBs (can be set multiple times)");
+
+  po::variables_map vm;
+  po::store(po::parse_command_line(argc, argv, desc), vm);
+  po::notify(vm);
+
+  if (vm.count("help")) {
+    cout << desc << endl;
+    return 1;
+  }
+
   initialize_symbols();
-  loadEdbs({}, 1);
+  size_t parallelism = vm["parallelism"].as<size_t>();
+  loadEdbs(vm["fact-dir"].as<vector<string>>(), parallelism);
   evaluate();
   printResults();
   return 0;

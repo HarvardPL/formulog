@@ -83,4 +83,9 @@ public class SemiNaiveSymbol implements RelationSymbol {
 		return baseSymbol + "<" + semiNaiveType + ">";
 	}
 
+	@Override
+	public boolean isExternal() {
+		return false;
+	}
+
 }

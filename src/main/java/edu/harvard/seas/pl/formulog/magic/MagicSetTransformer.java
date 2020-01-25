@@ -165,6 +165,11 @@ public class MagicSetTransformer {
 			public boolean isTopDown() {
 				return false;
 			}
+			
+			@Override
+			public boolean isExternal() {
+				return false;
+			}
 
 			@Override
 			public String toString() {
@@ -584,6 +589,11 @@ public class MagicSetTransformer {
 		@Override
 		public boolean isIdbSymbol() {
 			return true;
+		}
+		
+		@Override
+		public boolean isExternal() {
+			return false;
 		}
 
 		@Override

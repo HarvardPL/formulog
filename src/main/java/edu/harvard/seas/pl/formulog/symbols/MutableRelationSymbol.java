@@ -26,4 +26,6 @@ public interface MutableRelationSymbol extends RelationSymbol {
 	
 	void setBottomUp();
 	
+	void setExternal();
+	
 }

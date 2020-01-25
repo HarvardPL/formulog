@@ -61,6 +61,11 @@ public abstract class AbstractWrappedRelationSymbol<R extends RelationSymbol> im
 	}
 	
 	@Override
+	public boolean isExternal() {
+		return false;
+	}
+	
+	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
