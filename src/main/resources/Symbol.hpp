@@ -51,9 +51,19 @@ Symbol lookup_symbol(const string& name) {
   __builtin_unreachable();
 }
 
+Symbol lookup_tuple_symbol(size_t arity) {
+  switch (arity) {
+/* INSERT 3 */
+    default:
+    cerr << "Unrecognized tuple arity: " << arity << endl;
+    abort();
+  }
+  __builtin_unreachable();
+}
+
 size_t symbol_arity(const Symbol& sym) {
   switch (sym) {
-/* INSERT 3 */
+/* INSERT 4 */
     default: abort();
   }
   __builtin_unreachable();

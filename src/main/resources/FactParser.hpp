@@ -31,6 +31,8 @@ class TermParser : private FormulogBaseVisitor {
   antlrcpp::Any visitStringTerm(FormulogParser::StringTermContext* ctx) override;
   antlrcpp::Any visitConsTerm(FormulogParser::ConsTermContext* ctx) override;
   antlrcpp::Any visitIndexedFunctor(FormulogParser::IndexedFunctorContext* ctx) override;
+  antlrcpp::Any visitFoldTerm(FormulogParser::FoldTermContext* ctx) override;
+  antlrcpp::Any visitTupleTerm(FormulogParser::TupleTermContext* ctx) override;
 
   static antlrcpp::Any die(const string& feature);
 };
@@ -76,6 +78,18 @@ antlrcpp::Any TermParser::visitIndexedFunctor(FormulogParser::IndexedFunctorCont
   auto arity = symbol_arity(sym);
   auto args = parse(ctx->termArgs()->term());
   return Term::make(sym, arity, args); 
+}
+
+antlrcpp::Any TermParser::visitFoldTerm(FormulogParser::FoldTermContext* ctx) {
+  return die("fold");
+}
+
+antlrcpp::Any TermParser::visitTupleTerm(FormulogParser::TupleTermContext* ctx) {
+  auto terms = ctx->tuple()->term();
+  auto arity = terms.size();
+  auto sym = lookup_tuple_symbol(arity);
+  auto args = parse(terms);
+  return Term::make(sym, arity, args);
 }
 
 antlrcpp::Any TermParser::die(const string& feature) {

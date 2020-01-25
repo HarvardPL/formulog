@@ -29,6 +29,7 @@ import java.io.PrintWriter;
 import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.GlobalSymbolManager.TupleSymbol;
 
 public class SymbolHpp {
 
@@ -51,6 +52,8 @@ public class SymbolHpp {
 			CodeGenUtil.copyOver(br, out, 2);
 			w.initializeSymbolTable();
 			CodeGenUtil.copyOver(br, out, 3);
+			w.defineTupleLookup();
+			CodeGenUtil.copyOver(br, out, 4);
 			w.defineArity();
 			CodeGenUtil.copyOver(br, out, -1);
 			out.flush();
@@ -89,6 +92,16 @@ public class SymbolHpp {
 				CppExpr access = CppSubscript.mk(CppVar.mk("symbol_table"), CppConst.mkString(sym.toString()));
 				CppExpr assign = CppBinop.mkAssign(access, CppVar.mk(ctx.lookupRepr(sym)));
 				assign.toStmt().println(out, 1);
+			}
+		}
+	
+		void defineTupleLookup() {
+			for (ConstructorSymbol sym : symbols) {
+				if (sym instanceof TupleSymbol) {
+					out.print("    case " + sym.getArity() + ": return ");
+					out.print(ctx.lookupRepr(sym));
+					out.println(";");
+				}
 			}
 		}
 		
