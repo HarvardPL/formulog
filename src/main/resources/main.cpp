@@ -1,6 +1,7 @@
 #include <boost/asio.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
+#include <omp.h>
 
 #include "FactParser.hpp"
 #include "funcs.hpp"
@@ -82,8 +83,14 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  initialize_symbols();
   size_t parallelism = vm["parallelism"].as<size_t>();
+  if (parallelism == 0) {
+    cout << "Cannot use 0 threads" << endl;
+    return 1;
+  }
+
+  initialize_symbols();
+  omp_set_num_threads(parallelism);
   loadEdbs(vm["fact-dir"].as<vector<string>>(), parallelism);
   evaluate();
   printResults();

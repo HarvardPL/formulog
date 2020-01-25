@@ -42,7 +42,7 @@ import edu.harvard.seas.pl.formulog.validating.ast.SimplePredicate;
 public class LiteralCodeGen {
 
 	private final CodeGenContext ctx;
-	
+
 	public LiteralCodeGen(CodeGenContext ctx) {
 		this.ctx = ctx;
 	}
@@ -50,30 +50,30 @@ public class LiteralCodeGen {
 	public Result gen(SimplePredicate l, int index, boolean parallelize, Map<Var, CppExpr> env) {
 		return gen1(l, index, parallelize, env);
 	}
-	
+
 	public Result gen(Assignment l, Map<Var, CppExpr> env) {
 		return gen1(l, -1, false, env);
 	}
-	
+
 	public Result gen(Destructor l, Map<Var, CppExpr> env) {
 		return gen1(l, -1, false, env);
 	}
-	
+
 	public Result gen(Check l, Map<Var, CppExpr> env) {
 		return gen1(l, -1, false, env);
 	}
-	
+
 	private Result gen1(SimpleLiteral l, int index, boolean parallelize, Map<Var, CppExpr> env) {
 		return new Worker(index, parallelize, new HashMap<>(env)).go(l);
 	}
-	
+
 	private class Worker {
-		
+
 		private final Map<Var, CppExpr> env;
 		private final TermCodeGen tcg = new TermCodeGen(ctx);
 		private final int index;
 		private final boolean parallelize;
-		
+
 		public Worker(int index, boolean parallelize, Map<Var, CppExpr> env) {
 			this.index = index;
 			this.env = env;
@@ -201,24 +201,26 @@ public class LiteralCodeGen {
 		}
 
 		private Pair<Function<CppStmt, CppStmt>, CppExpr> genParallelLoop(SimplePredicate pred) {
-			Pair<Function<CppStmt, CppStmt>, CppVar> p = genPartition(pred);
-			CppVar part = p.snd();
+			Pair<Function<CppStmt, CppStmt>, String> p = genPartition(pred);
+			String part = p.snd();
 			CppVar it = CppVar.mk("it");
-			CppExpr init = CppMethodCall.mk(part, "begin");
-			CppExpr guard = CppBinop.mkLt(it, CppMethodCall.mk(part, "end"));
-			CppExpr update = CppUnop.mkPreIncr(it);
-			Function<CppStmt, CppStmt> forLoop = body -> CppFor.mk("it", init, guard, update, body);
+			// The for loop needs to follow a particular form to be picked up by OpenMP
+			CppExpr init = ExprFromString.mk(part + ".begin()");
+			CppExpr guard = ExprFromString.mk("it < " + part + ".end()");
+			CppExpr update = ExprFromString.mk("++it");
+			Function<CppStmt, CppStmt> forLoop = body -> CppSeq.mk(CppVar.mk("PARALLEL_START").toStmt(),
+					CppFor.mkParallel("it", init, guard, update, body), CppVar.mk("PARALLEL_END").toStmt());
 			return new Pair<>(body -> p.fst().apply(forLoop.apply(body)), CppUnop.mkDeref(it));
 		}
 
-		private Pair<Function<CppStmt, CppStmt>, CppVar> genPartition(SimplePredicate pred) {
+		private Pair<Function<CppStmt, CppStmt>, String> genPartition(SimplePredicate pred) {
 			if (!containsBoundPosition(pred.getBindingPattern())) {
 				CppStmt assign = CppDecl.mk("part", lookupRelation(pred).mkPartition());
-				return new Pair<>(s -> CppSeq.mk(assign, s), CppVar.mk("part"));
+				return new Pair<>(s -> CppSeq.mk(assign, s), "part");
 			} else {
 				Pair<Function<CppStmt, CppStmt>, CppExpr> p = genNormalLookup(pred);
 				CppStmt assign = CppDecl.mk("part", CppMethodCall.mk(p.snd(), "partition"));
-				return new Pair<>(s -> p.fst().apply(CppSeq.mk(assign, s)), CppVar.mk("part"));
+				return new Pair<>(s -> p.fst().apply(CppSeq.mk(assign, s)), "part");
 			}
 		}
 
@@ -280,19 +282,19 @@ public class LiteralCodeGen {
 		private Relation lookupRelation(SimplePredicate pred) {
 			return ctx.lookupRelation(pred.getSymbol());
 		}
-		
+
 	}
 
 	public static enum ResultType {
 		LOOKUP, LOOP, PARALLEL_LOOP, OTHER;
 	}
-	
+
 	public static class Result {
-		
+
 		private final Function<CppStmt, CppStmt> k;
 		private final Map<Var, CppExpr> newEnv;
 		private final ResultType resType;
-		
+
 		private Result(Function<CppStmt, CppStmt> k, Map<Var, CppExpr> newEnv, ResultType resType) {
 			this.k = k;
 			this.newEnv = newEnv;
@@ -310,7 +312,7 @@ public class LiteralCodeGen {
 		public ResultType getResType() {
 			return resType;
 		}
-		
+
 	}
 
 }
