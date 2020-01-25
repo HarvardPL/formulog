@@ -47,6 +47,17 @@ class TermParser : private FormulogBaseVisitor {
   antlrcpp::Any visitBinopTerm(FormulogParser::BinopTermContext* ctx) override;
   antlrcpp::Any visitListTerm(FormulogParser::ListTermContext* ctx) override;
   antlrcpp::Any visitParensTerm(FormulogParser::ParensTermContext* ctx) override;
+  antlrcpp::Any visitFormulaTerm(FormulogParser::FormulaTermContext* ctx) override;
+  antlrcpp::Any visitNotFormula(FormulogParser::NotFormulaContext* ctx) override;
+  antlrcpp::Any visitBinopFormula(FormulogParser::BinopFormulaContext* ctx) override;
+  antlrcpp::Any visitLetFormula(FormulogParser::LetFormulaContext* ctx) override;
+  antlrcpp::Any visitQuantifiedFormula(FormulogParser::QuantifiedFormulaContext* ctx) override;
+  antlrcpp::Any visitIteTerm(FormulogParser::IteTermContext* ctx) override;
+  antlrcpp::Any visitTermSymFormula(FormulogParser::TermSymFormulaContext* ctx) override;
+  antlrcpp::Any visitMatchExpr(FormulogParser::MatchExprContext* ctx) override;
+  antlrcpp::Any visitLetExpr(FormulogParser::LetExprContext* ctx) override;
+  antlrcpp::Any visitLetFunExpr(FormulogParser::LetFunExprContext* ctx) override;
+  antlrcpp::Any visitIfExpr(FormulogParser::IfExprContext* ctx) override;
 
   static antlrcpp::Any die(const string& feature);
 };
@@ -167,6 +178,50 @@ antlrcpp::Any TermParser::visitListTerm(FormulogParser::ListTermContext* ctx) {
 
 antlrcpp::Any TermParser::visitParensTerm(FormulogParser::ParensTermContext* ctx) {
   return parse(ctx->term());
+}
+
+antlrcpp::Any TermParser::visitFormulaTerm(FormulogParser::FormulaTermContext* ctx) {
+  return die("formulas");
+}
+
+antlrcpp::Any TermParser::visitNotFormula(FormulogParser::NotFormulaContext* ctx) {
+  return die("formulas");
+}
+
+antlrcpp::Any TermParser::visitBinopFormula(FormulogParser::BinopFormulaContext* ctx) {
+  return die("formulas");
+}
+
+antlrcpp::Any TermParser::visitLetFormula(FormulogParser::LetFormulaContext* ctx) {
+  return die("formulas");
+}
+
+antlrcpp::Any TermParser::visitQuantifiedFormula(FormulogParser::QuantifiedFormulaContext* ctx) {
+  return die("formulas");
+}
+
+antlrcpp::Any TermParser::visitIteTerm(FormulogParser::IteTermContext* ctx) {
+  return die("formulas");
+}
+
+antlrcpp::Any TermParser::visitTermSymFormula(FormulogParser::TermSymFormulaContext* ctx) {
+  return die("formula variables");
+}
+
+antlrcpp::Any TermParser::visitMatchExpr(FormulogParser::MatchExprContext* ctx) {
+  return die("match expressions");
+}
+
+antlrcpp::Any TermParser::visitLetExpr(FormulogParser::LetExprContext* ctx) {
+  return die("let expressions");
+}
+
+antlrcpp::Any TermParser::visitLetFunExpr(FormulogParser::LetFunExprContext* ctx) {
+  return die("let fun expressions");
+}
+
+antlrcpp::Any TermParser::visitIfExpr(FormulogParser::IfExprContext* ctx) {
+  return die("if expressions");
 }
 
 antlrcpp::Any TermParser::die(const string& feature) {
