@@ -41,6 +41,12 @@ class TermParser : private FormulogBaseVisitor {
   antlrcpp::Any visitFloatTerm(FormulogParser::FloatTermContext* ctx) override;
   antlrcpp::Any visitDoubleTerm(FormulogParser::DoubleTermContext* ctx) override;
   antlrcpp::Any visitSpecialFPTerm(FormulogParser::SpecialFPTermContext* ctx) override;
+  antlrcpp::Any visitRecordTerm(FormulogParser::RecordTermContext* ctx) override;
+  antlrcpp::Any visitRecordUpdateTerm(FormulogParser::RecordUpdateTermContext* ctx) override;
+  antlrcpp::Any visitUnopTerm(FormulogParser::UnopTermContext* ctx) override;
+  antlrcpp::Any visitBinopTerm(FormulogParser::BinopTermContext* ctx) override;
+  antlrcpp::Any visitListTerm(FormulogParser::ListTermContext* ctx) override;
+  antlrcpp::Any visitParensTerm(FormulogParser::ParensTermContext* ctx) override;
 
   static antlrcpp::Any die(const string& feature);
 };
@@ -132,6 +138,35 @@ antlrcpp::Any TermParser::visitSpecialFPTerm(FormulogParser::SpecialFPTermContex
       return Term::make<double>(-numeric_limits<double>::infinity());
   }
   __builtin_unreachable();
+}
+antlrcpp::Any TermParser::visitRecordTerm(FormulogParser::RecordTermContext* ctx) {
+  return die("records");
+}
+
+antlrcpp::Any TermParser::visitRecordUpdateTerm(FormulogParser::RecordUpdateTermContext* ctx) {
+  return die("record updates");
+}
+
+antlrcpp::Any TermParser::visitUnopTerm(FormulogParser::UnopTermContext* ctx) {
+  return die("unops");
+}
+
+antlrcpp::Any TermParser::visitBinopTerm(FormulogParser::BinopTermContext* ctx) {
+  return die("binops");
+}
+
+antlrcpp::Any TermParser::visitListTerm(FormulogParser::ListTermContext* ctx) {
+  auto l = Term::make(Symbol::nil, 0, new term_ptr[0]);
+  auto terms = ctx->list()->term();
+  for (auto it = terms.rbegin(); it != terms.rend(); ++it) {
+    auto val = parse(*it);
+    l = Term::make(Symbol::cons, 2, new term_ptr[2] { val, l });
+  }
+  return l;
+}
+
+antlrcpp::Any TermParser::visitParensTerm(FormulogParser::ParensTermContext* ctx) {
+  return parse(ctx->term());
 }
 
 antlrcpp::Any TermParser::die(const string& feature) {
