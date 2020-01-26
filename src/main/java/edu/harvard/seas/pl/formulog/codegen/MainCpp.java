@@ -109,7 +109,7 @@ public class MainCpp {
 			for (Term[] tup : db.getAll(sym)) {
 				Pair<CppStmt, List<CppExpr>> p = tcg.gen(Arrays.asList(tup), Collections.emptyMap());
 				p.fst().println(out, 1);
-				rel.mkInsert(rel.mkTuple(p.snd())).toStmt().println(out, 1);
+				rel.mkInsert(rel.mkTuple(p.snd()), false).toStmt().println(out, 1);
 			}
 		}
 

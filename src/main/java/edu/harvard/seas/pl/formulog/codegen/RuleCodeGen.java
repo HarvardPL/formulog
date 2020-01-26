@@ -91,6 +91,23 @@ public class RuleCodeGen {
 			this.rule = rule;
 			this.isFirstRound = isFirstRound;
 		}
+		
+		private Set<Relation> makeHints(int pos) {
+			Set<Relation> s = new HashSet<>();
+			s.add(getTargetRel());
+			if (!hasCheckedForNovelty) {
+				s.add(ctx.lookupRelation(rule.getHead().getSymbol()));
+			}
+			int stop = hasReachedSplit ? pos : pos + 1;
+			for (int i = rule.getBodySize() - 1; i >= stop; --i) {
+				SimpleLiteral l = rule.getBody(i);
+				if (l instanceof SimplePredicate) {
+					RelationSymbol sym = ((SimplePredicate) l).getSymbol();
+					s.add(ctx.lookupRelation(sym));
+				}
+			}
+			return s;
+		}
 
 		private Function<CppStmt, CppStmt> makeEvalCode() {
 			Function<CppStmt, CppStmt> continuation = x -> x;
@@ -98,9 +115,14 @@ public class RuleCodeGen {
 			Set<Var> boundVars = new HashSet<>();
 			for (SimpleLiteral l : rule) {
 				Function<CppStmt, CppStmt> k;
+				lcg.setHints(makeHints(pos));
+				if (hasReachedSplit) {
+					lcg.enableHints();
+				}
 				Result res = l.accept(visitor, pos);
 				if (!hasCheckedForNovelty && boundVars.containsAll(rule.getHead().varSet())) {
-					k = s -> mkCheckIfNew().apply(res.getK().apply(s));
+					boolean b = hasReachedSplit;
+					k = s -> mkCheckIfNew(b).apply(res.getK().apply(s));
 					hasCheckedForNovelty = true;
 				} else {
 					k = res.getK();
@@ -147,18 +169,18 @@ public class RuleCodeGen {
 
 		private Pair<CppStmt, CppExpr> mkDbUpdate() {
 			Relation rel = getTargetRel();
-			CppStmt stmt = rel.mkInsert(CppVar.mk("tuple")).toStmt();
+			CppStmt stmt = rel.mkInsert(CppVar.mk("tuple"), hasReachedSplit).toStmt();
 			if (!hasCheckedForNovelty && !isFirstRound) {
-				stmt = mkCheckIfNew().apply(stmt);
+				stmt = mkCheckIfNew(hasReachedSplit).apply(stmt);
 			} else if (!hasCheckedForNovelty) {
 				stmt = CppSeq.mk(declTuple(), stmt);
 			}
 			return new Pair<>(stmt, CppUnop.mkNot(rel.mkIsEmpty()));
 		}
 
-		private Function<CppStmt, CppStmt> mkCheckIfNew() {
+		private Function<CppStmt, CppStmt> mkCheckIfNew(boolean hasReachedSplit) {
 			Relation rel = ctx.lookupRelation(rule.getHead().getSymbol());
-			CppExpr guard = CppUnop.mkNot(rel.mkContains(CppVar.mk("tuple")));
+			CppExpr guard = CppUnop.mkNot(rel.mkContains(CppVar.mk("tuple"), hasReachedSplit));
 			return s -> CppSeq.mk(declTuple(), CppIf.mk(guard, s));
 		}
 

@@ -64,6 +64,8 @@ public class BTreeRelationStruct implements RelationStruct {
 		out.println(" {");
 		declareArity(out);
 		declareIndices(out);
+		declareContextStruct(out);
+		declareCreateContext(out);
 		declareContains(out);
 		declareInsert(out);
 		declareInsertAll(out);
@@ -80,6 +82,35 @@ public class BTreeRelationStruct implements RelationStruct {
 
 	private void declareArity(PrintWriter out) {
 		out.println("  enum { arity = " + arity + " };");
+	}
+
+	private void declareIndices(PrintWriter out) {
+		for (Map.Entry<Integer, IndexInfo> e : indexInfo.entrySet()) {
+			int index = e.getKey();
+			String type = mkIndexType(index);
+			out.print("  using " + type + " = souffle::btree_set<");
+			String cmp = mkComparator(e.getValue().getComparatorOrder());
+			out.println(mkTupleType() + ", " + cmp + ">;");
+			out.println("  " + type + " " + mkIndexName(index) + ";");
+			index++;
+		}
+		out.println("  using iterator = " + mkIndexType(masterIndex) + "::iterator;");
+	}
+
+	private void declareContextStruct(PrintWriter out) {
+		out.println("  struct context {");
+		for (int index : indexInfo.keySet()) {
+			out.println("    " + mkIndexType(index) + "::operation_hints " + mkHintName(index) + ";");
+		}
+		out.println("  };");
+	}
+
+	private void declareCreateContext(PrintWriter out) {
+		out.println("  context create_context() const { return context(); }");
+	}
+
+	private String mkHintName(int index) {
+		return mkIndexName(index) + "_hints";
 	}
 
 	private void declarePrint(PrintWriter out) {
@@ -104,8 +135,26 @@ public class BTreeRelationStruct implements RelationStruct {
 	}
 
 	private void declareContains(PrintWriter out, int idx) {
-		out.println("  bool " + mkContainsName(idx) + "(const " + mkTupleType() + "& tup) const {");
-		CppExpr call = CppMethodCall.mk(CppVar.mk(mkIndexName(idx)), "contains", CppVar.mk("tup"));
+		declareContainsHint(out, idx);
+		declareContainsNoHint(out, idx);
+	}
+
+	private CppExpr mkHint(int idx) {
+		return CppAccess.mk(CppVar.mk("h"), mkHintName(idx));
+	}
+
+	private void declareContainsHint(PrintWriter out, int idx) {
+		out.println("  bool " + mkContainsName(idx) + "(const " + mkTupleType() + "& tup, context& h) const {");
+		CppExpr call = CppMethodCall.mk(CppVar.mk(mkIndexName(idx)), "contains", CppVar.mk("tup"), mkHint(idx));
+		CppReturn.mk(call).println(out, 2);
+		out.println("  }");
+	}
+
+	private void declareContainsNoHint(PrintWriter out, int idx) {
+		String name = mkContainsName(idx);
+		out.println("  bool " + name + "(const " + mkTupleType() + "& tup) const {");
+		CppCtor.mk("context", "h").println(out, 2);
+		CppExpr call = CppFuncCall.mk(name, CppVar.mk("tup"), CppVar.mk("h"));
 		CppReturn.mk(call).println(out, 2);
 		out.println("  }");
 	}
@@ -118,18 +167,31 @@ public class BTreeRelationStruct implements RelationStruct {
 	}
 
 	private void declareInsert(PrintWriter out) {
-		out.println("  bool insert(const " + mkTupleType() + "& tup) {");
+		declareInsertHint(out);
+		declareInsertNoHint(out);
+	}
+
+	private void declareInsertHint(PrintWriter out) {
+		out.println("  bool insert(const " + mkTupleType() + "& tup, context& h) {");
 		CppVar tup = CppVar.mk("tup");
 		List<CppStmt> inserts = new ArrayList<>();
 		for (int i = 0; i < indexInfo.size(); ++i) {
 			if (i != masterIndex) {
-				inserts.add(CppMethodCall.mk(CppVar.mk(mkIndexName(i)), "insert", tup).toStmt());
+				inserts.add(CppMethodCall.mk(CppVar.mk(mkIndexName(i)), "insert", tup, mkHint(i)).toStmt());
 			}
 		}
 		inserts.add(CppReturn.mk(CppConst.mkTrue()));
 		CppStmt body = CppSeq.mk(inserts);
-		CppExpr guard = CppMethodCall.mk(CppVar.mk(mkIndexName(masterIndex)), "insert", tup);
+		CppExpr guard = CppMethodCall.mk(CppVar.mk(mkIndexName(masterIndex)), "insert", tup, mkHint(masterIndex));
 		CppIf.mk(guard, body, CppReturn.mk(CppConst.mkFalse())).println(out, 2);
+		out.println("  }");
+	}
+
+	private void declareInsertNoHint(PrintWriter out) {
+		out.println("  bool insert(const " + mkTupleType() + "& tup) {");
+		CppCtor.mk("context", "h").println(out, 2);
+		CppExpr call = CppFuncCall.mk("insert", CppVar.mk("tup"), CppVar.mk("h"));
+		CppReturn.mk(call).println(out, 2);
 		out.println("  }");
 	}
 
@@ -160,14 +222,16 @@ public class BTreeRelationStruct implements RelationStruct {
 	private void declareLookup(PrintWriter out) {
 		for (Map.Entry<Integer, IndexInfo> e : indexInfo.entrySet()) {
 			for (List<BindingType> pat : e.getValue().getBindingPatterns()) {
-				declareLookup(out, e.getKey(), pat);
+				int idx = e.getKey();
+				declareLookupHint(out, idx, pat);
+				declareLookupNoHint(out, idx, pat);
 			}
 		}
 	}
 
-	private void declareLookup(PrintWriter out, int idx, List<BindingType> pat) {
+	private void declareLookupHint(PrintWriter out, int idx, List<BindingType> pat) {
 		out.print("  souffle::range<" + mkIndexType(idx) + "::iterator> ");
-		out.println(mkLookupName(idx, pat) + "(const " + mkTupleType() + "& key) const {");
+		out.println(mkLookupName(idx, pat) + "(const " + mkTupleType() + "& key, context& h) const {");
 		List<Integer> emptyArgs = new ArrayList<>();
 		int i = 0;
 		for (BindingType ty : pat) {
@@ -180,22 +244,33 @@ public class BTreeRelationStruct implements RelationStruct {
 			}
 			i++;
 		}
-		CppVar index = CppVar.mk(mkIndexName(idx));
 		if (emptyArgs.size() == pat.size()) {
-			mkLookupAll(index).println(out, 2);
+			mkLookupAll(idx).println(out, 2);
 		} else {
-			mkLookupSome(index, emptyArgs).println(out, 2);
+			mkLookupSome(idx, emptyArgs).println(out, 2);
 		}
 		out.println("  }");
 	}
 
-	private CppStmt mkLookupAll(CppVar index) {
+	private void declareLookupNoHint(PrintWriter out, int idx, List<BindingType> pat) {
+		String name = mkLookupName(idx, pat);
+		out.print("  souffle::range<" + mkIndexType(idx) + "::iterator> ");
+		out.println(name + "(const " + mkTupleType() + "& key) const {");
+		CppCtor.mk("context", "h").println(out, 2);
+		CppExpr call = CppFuncCall.mk(name, CppVar.mk("key"), CppVar.mk("h"));
+		CppReturn.mk(call).println(out, 2);
+		out.println("  }");
+	}
+
+	private CppStmt mkLookupAll(int idx) {
+		CppVar index = CppVar.mk(mkIndexName(idx));
 		CppExpr begin = CppMethodCall.mk(index, "begin");
 		CppExpr end = CppMethodCall.mk(index, "end");
 		return CppReturn.mk(CppFuncCall.mk("souffle::make_range", begin, end));
 	}
 
-	private CppStmt mkLookupSome(CppVar index, List<Integer> emptyArgs) {
+	private CppStmt mkLookupSome(int idx, List<Integer> emptyArgs) {
+		CppVar index = CppVar.mk(mkIndexName(idx));
 		List<CppStmt> stmts = new ArrayList<>();
 		stmts.add(CppCtor.mk(mkTupleType(), "lo", CppVar.mk("key")));
 		stmts.add(CppCtor.mk(mkTupleType(), "hi", CppVar.mk("key")));
@@ -204,12 +279,12 @@ public class BTreeRelationStruct implements RelationStruct {
 		CppVar minTerm = CppVar.mk("min_term");
 		CppVar maxTerm = CppVar.mk("max_term");
 		for (int i : emptyArgs) {
-			CppExpr idx = CppConst.mkInt(i);
-			stmts.add(CppBinop.mkAssign(CppSubscript.mk(lo, idx), minTerm).toStmt());
-			stmts.add(CppBinop.mkAssign(CppSubscript.mk(hi, idx), maxTerm).toStmt());
+			CppExpr subscript = CppConst.mkInt(i);
+			stmts.add(CppBinop.mkAssign(CppSubscript.mk(lo, subscript), minTerm).toStmt());
+			stmts.add(CppBinop.mkAssign(CppSubscript.mk(hi, subscript), maxTerm).toStmt());
 		}
-		CppExpr getLower = CppMethodCall.mk(index, "lower_bound", lo);
-		CppExpr getUpper = CppMethodCall.mk(index, "upper_bound", hi);
+		CppExpr getLower = CppMethodCall.mk(index, "lower_bound", lo, mkHint(idx));
+		CppExpr getUpper = CppMethodCall.mk(index, "upper_bound", hi, mkHint(idx));
 		CppExpr call = CppFuncCall.mk("souffle::make_range", getLower, getUpper);
 		stmts.add(CppReturn.mk(call));
 		return CppSeq.mk(stmts);
@@ -234,19 +309,6 @@ public class BTreeRelationStruct implements RelationStruct {
 		CppExpr call = CppMethodCall.mk(CppVar.mk(mkIndexName(masterIndex)), "size");
 		CppReturn.mk(call).println(out, 2);
 		out.println("  }");
-	}
-
-	private void declareIndices(PrintWriter out) {
-		for (Map.Entry<Integer, IndexInfo> e : indexInfo.entrySet()) {
-			int index = e.getKey();
-			String type = mkIndexType(index);
-			out.print("  using " + type + " = souffle::btree_set<");
-			String cmp = mkComparator(e.getValue().getComparatorOrder());
-			out.println(mkTupleType() + ", " + cmp + ">;");
-			out.println("  " + type + " " + mkIndexName(index) + ";");
-			index++;
-		}
-		out.println("  using iterator = " + mkIndexType(masterIndex) + "::iterator;");
 	}
 
 	private String mkIndexType(int index) {
@@ -331,18 +393,28 @@ public class BTreeRelationStruct implements RelationStruct {
 		}
 
 		@Override
-		public CppExpr mkContains(CppExpr expr) {
-			return CppMethodCall.mkThruPtr(nameVar, mkContainsName(masterIndex), expr);
+		public CppExpr mkContains(CppExpr expr, boolean useHints) {
+			return mkContains(masterIndex, expr, useHints);
 		}
 
 		@Override
-		public CppExpr mkContains(int idx, CppExpr expr) {
-			return CppMethodCall.mkThruPtr(nameVar, mkContainsName(idx), expr);
+		public CppExpr mkContains(int idx, CppExpr expr, boolean useHints) {
+			List<CppExpr> args = new ArrayList<>();
+			args.add(expr);
+			if (useHints) {
+				args.add(CppVar.mk(mkContextName()));
+			}
+			return CppMethodCall.mkThruPtr(nameVar, mkContainsName(idx), args);
 		}
 
 		@Override
-		public CppExpr mkInsert(CppExpr expr) {
-			return CppMethodCall.mkThruPtr(nameVar, "insert", expr);
+		public CppExpr mkInsert(CppExpr expr, boolean useHints) {
+			List<CppExpr> args = new ArrayList<>();
+			args.add(expr);
+			if (useHints) {
+				args.add(CppVar.mk(mkContextName()));
+			}
+			return CppMethodCall.mkThruPtr(nameVar, "insert", args);
 		}
 
 		@Override
@@ -402,8 +474,13 @@ public class BTreeRelationStruct implements RelationStruct {
 		}
 
 		@Override
-		public CppExpr mkLookup(int idx, List<BindingType> pat, CppExpr key) {
-			return CppMethodCall.mkThruPtr(nameVar, mkLookupName(idx, pat), key);
+		public CppExpr mkLookup(int idx, List<BindingType> pat, CppExpr key, boolean useHints) {
+			List<CppExpr> args = new ArrayList<>();
+			args.add(key);
+			if (useHints) {
+				args.add(CppVar.mk(mkContextName()));
+			}
+			return CppMethodCall.mkThruPtr(nameVar, mkLookupName(idx, pat), args);
 		}
 
 		@Override
@@ -414,6 +491,15 @@ public class BTreeRelationStruct implements RelationStruct {
 		@Override
 		public RelationStruct getStruct() {
 			return BTreeRelationStruct.this;
+		}
+
+		private String mkContextName() {
+			return "_" + name + "_context";
+		}
+
+		@Override
+		public CppStmt mkDeclContext() {
+			return CppDecl.mk(mkContextName(), CppMethodCall.mkThruPtr(nameVar, "create_context"));
 		}
 
 	}

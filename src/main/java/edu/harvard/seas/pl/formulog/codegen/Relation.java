@@ -28,11 +28,11 @@ public interface Relation extends CppExpr {
 
 	CppStmt mkDecl();
 
-	CppExpr mkContains(CppExpr expr);
+	CppExpr mkContains(CppExpr expr, boolean useHints);
 	
-	CppExpr mkContains(int idx, CppExpr expr);
+	CppExpr mkContains(int idx, CppExpr expr, boolean useHints);
 	
-	CppExpr mkInsert(CppExpr expr);
+	CppExpr mkInsert(CppExpr expr, boolean useHints);
 	
 	CppExpr mkInsertAll(CppExpr expr);
 	
@@ -52,10 +52,12 @@ public interface Relation extends CppExpr {
 	
 	CppStmt mkPurge();
 	
-	CppExpr mkLookup(int idx, List<BindingType> pat, CppExpr key);
+	CppExpr mkLookup(int idx, List<BindingType> pat, CppExpr key, boolean useHints);
 	
 	CppExpr mkSize();
 	
 	RelationStruct getStruct();
+	
+	CppStmt mkDeclContext();
 	
 }

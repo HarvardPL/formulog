@@ -23,8 +23,10 @@ package edu.harvard.seas.pl.formulog.codegen;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 import edu.harvard.seas.pl.formulog.ast.BindingType;
@@ -45,6 +47,18 @@ public class LiteralCodeGen {
 
 	public LiteralCodeGen(CodeGenContext ctx) {
 		this.ctx = ctx;
+	}
+
+	private final Set<Relation> hints = new HashSet<>();
+	private boolean hintsEnabled;
+
+	public void setHints(Set<Relation> hints) {
+		this.hints.clear();
+		this.hints.addAll(hints);
+	}
+
+	public void enableHints() {
+		hintsEnabled = true;
 	}
 
 	public Result gen(SimplePredicate l, int index, boolean parallelize, Map<Var, CppExpr> env) {
@@ -170,10 +184,14 @@ public class LiteralCodeGen {
 			}
 		}
 
+		private boolean useHint(Relation rel) {
+			return hintsEnabled && hints.contains(rel);
+		}
+
 		private Function<CppStmt, CppStmt> mkContains(SimplePredicate pred, boolean isNegated) {
 			Pair<CppStmt, CppExpr> key = genKey(pred);
 			Relation rel = ctx.lookupRelation(pred.getSymbol());
-			CppExpr guard = rel.mkContains(index, key.snd());
+			CppExpr guard = rel.mkContains(index, key.snd(), useHint(rel));
 			if (isNegated) {
 				guard = CppUnop.mkNot(guard);
 			}
@@ -209,8 +227,17 @@ public class LiteralCodeGen {
 			CppExpr guard = ExprFromString.mk("it < " + part + ".end()");
 			CppExpr update = ExprFromString.mk("++it");
 			Function<CppStmt, CppStmt> forLoop = body -> CppSeq.mk(CppVar.mk("PARALLEL_START").toStmt(),
-					CppFor.mkParallel("it", init, guard, update, body), CppVar.mk("PARALLEL_END").toStmt());
+					mkContextDeclarations(), CppFor.mkParallel("it", init, guard, update, body),
+					CppVar.mk("PARALLEL_END").toStmt());
 			return new Pair<>(body -> p.fst().apply(forLoop.apply(body)), CppUnop.mkDeref(it));
+		}
+
+		private CppStmt mkContextDeclarations() {
+			List<CppStmt> stmts = new ArrayList<>();
+			for (Relation rel : hints) {
+				stmts.add(rel.mkDeclContext());
+			}
+			return CppSeq.mk(stmts);
 		}
 
 		private Pair<Function<CppStmt, CppStmt>, String> genPartition(SimplePredicate pred) {
@@ -256,7 +283,7 @@ public class LiteralCodeGen {
 		private Pair<Function<CppStmt, CppStmt>, CppExpr> genNormalLookup(SimplePredicate pred) {
 			Pair<CppStmt, CppExpr> p = genKey(pred);
 			Relation rel = ctx.lookupRelation(pred.getSymbol());
-			CppExpr call = rel.mkLookup(index, Arrays.asList(pred.getBindingPattern()), p.snd());
+			CppExpr call = rel.mkLookup(index, Arrays.asList(pred.getBindingPattern()), p.snd(), useHint(rel));
 			return new Pair<>(s -> CppSeq.mk(p.fst(), s), call);
 		}
 
