@@ -58,7 +58,6 @@ public class SymbolHpp {
 			CodeGenUtil.copyOver(br, out, -1);
 			out.flush();
 		}
-		
 	}
 
 	private class Worker {

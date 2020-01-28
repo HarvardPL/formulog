@@ -501,6 +501,11 @@ public class BTreeRelationStruct implements RelationStruct {
 		public CppStmt mkDeclContext() {
 			return CppDecl.mk(mkContextName(), CppMethodCall.mkThruPtr(nameVar, "create_context"));
 		}
+		
+		@Override
+		public String toString() {
+			return "<" + name + ">";
+		}
 
 	}
 

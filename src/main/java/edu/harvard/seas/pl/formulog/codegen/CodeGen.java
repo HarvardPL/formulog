@@ -52,7 +52,6 @@ public class CodeGen {
 		copy("Term.hpp");
 		copy("FactParser.hpp");
 		copy("parsing");
-		copy("compile.sh");
 		CodeGenContext ctx = new CodeGenContext(eval);
 		new RelsHpp(ctx).gen(outDir);
 		new FuncsHpp(ctx).gen(outDir);
@@ -60,6 +59,7 @@ public class CodeGen {
 		new SmtHpp(ctx).gen(outDir);
 		new TypeHpp(ctx).gen(outDir);
 		new SymbolHpp(ctx).print(outDir);
+		new CompileSh().print(outDir);
 	}
 	
 	private void copy(String file) throws IOException, URISyntaxException {

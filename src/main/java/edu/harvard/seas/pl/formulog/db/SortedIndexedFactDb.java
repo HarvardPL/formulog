@@ -314,7 +314,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 				a[i] = order.get(i);
 			}
 			Comparator<Term[]> cmp;
-			if (Configuration.codegen) {
+			if (Configuration.genComparators) {
 				try {
 					cmp = gen.generate(a);
 				} catch (InstantiationException | IllegalAccessException e) {

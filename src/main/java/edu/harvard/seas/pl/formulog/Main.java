@@ -34,6 +34,7 @@ import org.apache.commons.lang3.time.StopWatch;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
+import edu.harvard.seas.pl.formulog.codegen.CodeGen;
 import edu.harvard.seas.pl.formulog.eval.Evaluation;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.eval.EvaluationResult;
@@ -217,11 +218,15 @@ public final class Main {
 		}
 	}
 
-	public static void main(String[] args) throws FileNotFoundException {
-		if (args.length != 1) {
-			throw new IllegalArgumentException("Excepted a single Formulog file as an argument.");
+	public static void main(String[] args) throws Exception {
+		if (Configuration.codeGen) {
+			CodeGen.main(args);
+		} else {
+			if (args.length != 1) {
+				throw new IllegalArgumentException("Excepted a single Formulog file as an argument.");
+			}
+			new Main(args[0]).go();
 		}
-		new Main(args[0]).go();
 	}
 
 	private static void handleException(String msg, Exception e, boolean die) {

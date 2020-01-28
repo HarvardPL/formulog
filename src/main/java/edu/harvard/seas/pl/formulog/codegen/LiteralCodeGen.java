@@ -226,9 +226,9 @@ public class LiteralCodeGen {
 			CppExpr init = ExprFromString.mk(part + ".begin()");
 			CppExpr guard = ExprFromString.mk("it < " + part + ".end()");
 			CppExpr update = ExprFromString.mk("++it");
-			Function<CppStmt, CppStmt> forLoop = body -> CppSeq.mk(CppVar.mk("PARALLEL_START").toStmt(),
-					mkContextDeclarations(), CppFor.mkParallel("it", init, guard, update, body),
-					CppVar.mk("PARALLEL_END").toStmt());
+			CppStmt decls = mkContextDeclarations();
+			Function<CppStmt, CppStmt> forLoop = body -> CppSeq.mk(CppVar.mk("PARALLEL_START").toStmt(), decls,
+					CppFor.mkParallel("it", init, guard, update, body), CppVar.mk("PARALLEL_END").toStmt());
 			return new Pair<>(body -> p.fst().apply(forLoop.apply(body)), CppUnop.mkDeref(it));
 		}
 

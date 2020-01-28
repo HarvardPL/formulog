@@ -24,7 +24,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -63,7 +62,7 @@ public class Parser {
 	}
 
 	public BasicProgram parse(Reader r) throws ParseException {
-		return parse(r, Collections.singletonList(Paths.get("")));
+		return parse(r, Collections.emptyList());
 	}
 
 	public BasicProgram parse(Reader r, List<Path> inputDirs) throws ParseException {

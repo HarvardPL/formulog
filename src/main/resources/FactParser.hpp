@@ -66,8 +66,8 @@ term_ptr* TermParser::parse(vector<FormulogParser::TermContext*> ctxs) {
   term_ptr* a = new term_ptr[ctxs.size()];
   size_t i{0};
   for (auto& ctx : ctxs) {
-		const auto& t = parse(ctx);
-    a[i++] = reinterpret_cast<const term_ptr&>(t);
+		const term_ptr& t = parse(ctx);
+    a[i++] = t;
   }
   return a;
 }
@@ -81,7 +81,9 @@ antlrcpp::Any TermParser::visitVarTerm(FormulogParser::VarTermContext* ctx) {
 }
 
 antlrcpp::Any TermParser::visitStringTerm(FormulogParser::StringTermContext* ctx) {
-  return Term::make<string>(ctx->QSTRING()->getText());
+  string s = ctx->QSTRING()->getText();
+  s = s.substr(1, s.length() - 2);
+  return Term::make<string>(s);
 }
 
 antlrcpp::Any TermParser::visitConsTerm(FormulogParser::ConsTermContext* ctx) {
@@ -230,6 +232,11 @@ antlrcpp::Any TermParser::die(const string& feature) {
   return nullptr;
 }
 
+term_ptr TermParser::parse(FormulogParser::TermContext* ctx) {
+  term_ptr res = ctx->accept(this);
+  return res;
+}
+
 template <typename T>
 struct FactParser {
   void parse(const string& file, T& rel);
@@ -264,15 +271,11 @@ void FactParser<T>::parse(FormulogParser::TabSeparatedTermLineContext* line, T& 
     cerr << "Wrong number of terms" << endl;
     abort();
   }
-  size_t i;
+  size_t i{0};
   for (auto& term_ctx : terms) {
     tup[i++] = term_parser.parse(term_ctx);
   }
   rel.insert(tup);
-}
-
-term_ptr TermParser::parse(FormulogParser::TermContext* ctx) {
-  return shared_ptr<Term>(nullptr);
 }
 
 } // namespace flg

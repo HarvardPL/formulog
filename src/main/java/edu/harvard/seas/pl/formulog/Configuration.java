@@ -87,8 +87,15 @@ public final class Configuration {
 	public static final boolean debugMst = propIsSet("debugMst");
 
 	public static final PrintPreference printResultsPreference = getPrintResultsPreference();
-	
+
+	public static final boolean codeGen = propIsSet("codeGen");
 	public static final boolean testCodeGen = propIsSet("testCodeGen");
+	
+	public static final String souffleInclude = System.getProperty("souffleInclude");
+	public static final String boostInclude = System.getProperty("boostInclude");
+	public static final String antlrInclude = System.getProperty("antlrInclude");
+	public static final String boostLib = System.getProperty("boostLib");
+	public static final String outputExec = System.getProperty("outputExec");
 
 	public static final int memoizeThreshold() {
 		return getIntProp("memoizeThreshold", 0);
@@ -97,8 +104,8 @@ public final class Configuration {
 	public static boolean noModel() {
 		return propIsSet("noModel");
 	}
-
-	public static final boolean codegen = propIsSet("codegen", true);
+	
+	public static final boolean genComparators = propIsSet("genComparators", true);
 
 	public static final boolean inlineInRules = propIsSet("inlineInRules", true);
 

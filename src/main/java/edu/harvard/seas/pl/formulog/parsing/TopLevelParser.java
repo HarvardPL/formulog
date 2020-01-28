@@ -161,6 +161,7 @@ class TopLevelParser {
 						throw new RuntimeException("Annotation @external cannot be used for non-EDB predicate " + sym);
 					}
 					externalEdbs.add(sym);
+					sym.setExternal();
 					break;
 				default:
 					throw new RuntimeException("Unrecognized annotation for predicate " + sym + ": " + actx.getText());

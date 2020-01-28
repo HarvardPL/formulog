@@ -28,6 +28,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.List;
 
 import edu.harvard.seas.pl.formulog.eval.AbstractTester;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
@@ -38,6 +41,14 @@ import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 
 public class CompiledSemiNaiveTester extends AbstractTester<SemiNaiveEvaluation> {
 
+	private List<String> inputDirs = Collections.emptyList();
+
+	@Override
+	public void test(String file, List<String> inputDirs) {
+		this.inputDirs = inputDirs;
+		super.test(file, Collections.emptyList());
+	}
+	
 	@Override
 	protected SemiNaiveEvaluation setup(WellTypedProgram prog) throws InvalidProgramException, EvaluationException {
 		return SemiNaiveEvaluation.setup(prog, 2);
@@ -52,16 +63,18 @@ public class CompiledSemiNaiveTester extends AbstractTester<SemiNaiveEvaluation>
 		CodeGen cg = new CodeGen(eval, dir);
 		try {
 			cg.go();
-			Process proc = Runtime.getRuntime()
-					.exec("g++ -std=c++11 -I /home/aaron/souffle/include/ -I /home/aaron/boost_1_72_0/ -o "
-							+ path.resolve("flg") + " " + path.resolve("main.cpp")
-							+ " -L/home/aaron/boost_1_72_0/stage/lib/ -lpthread -lboost_filesystem -lboost_system");
+			Process proc = Runtime.getRuntime().exec(path.resolve("compile.sh").toString());
 			if (proc.waitFor() != 0) {
 				System.err.println("Could not compile test");
 				printToStdErr(proc.getErrorStream());
 				return false;
 			}
-			proc = Runtime.getRuntime().exec(path.resolve("flg").toString());
+			String cmd = path.resolve("flg").toString();
+			for (String inputDir : inputDirs) {
+				Path p = Paths.get(getClass().getClassLoader().getResource(inputDir).toURI());
+				cmd += " --fact-dir " + p;
+			}
+			proc = Runtime.getRuntime().exec(cmd);
 			if (proc.waitFor() != 0) {
 				System.err.println("Evaluation error");
 				printToStdErr(proc.getErrorStream());
