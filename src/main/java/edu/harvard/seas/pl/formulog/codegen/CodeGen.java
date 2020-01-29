@@ -22,12 +22,18 @@ package edu.harvard.seas.pl.formulog.codegen;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Program;
@@ -51,7 +57,7 @@ public class CodeGen {
 	public void go() throws IOException, URISyntaxException {
 		copy("Term.hpp");
 		copy("FactParser.hpp");
-		copy("parsing");
+		copy("parsing.zip");
 		CodeGenContext ctx = new CodeGenContext(eval);
 		new RelsHpp(ctx).gen(outDir);
 		new FuncsHpp(ctx).gen(outDir);
@@ -61,23 +67,31 @@ public class CodeGen {
 		new SymbolHpp(ctx).print(outDir);
 		new CompileSh().print(outDir);
 	}
-	
-	private void copy(String file) throws IOException, URISyntaxException {
-		URL url = getClass().getClassLoader().getResource(file);
-		copy(Paths.get(url.toURI()).toFile(), outDir.toPath());
-	}
-	
-	private void copy(File fileToCopy, Path outDir) throws IOException {
-		String name = fileToCopy.getName();
-		Path dest = outDir.resolve(name);
-		Files.copy(fileToCopy.toPath(), dest);
+
+	private void copy(String name) throws IOException {
 		String ext = name.substring(name.lastIndexOf('.') + 1);
-		if (ext.equals("sh")) {
-			dest.toFile().setExecutable(true);
+		if (ext.equals("zip")) {
+			copyZip(name);
+			return;
 		}
-		if (fileToCopy.isDirectory()) {
-			for (File child : fileToCopy.listFiles()) {
-				copy(child, dest);
+		try (InputStream is = getClass().getClassLoader().getResourceAsStream(name)) {
+			Files.copy(is, outDir.toPath().resolve(name));
+		}
+	}
+
+	private void copyZip(String name) throws IOException {
+		try (InputStream is = getClass().getClassLoader().getResourceAsStream(name);
+				ZipInputStream zis = new ZipInputStream(is)) {
+			ZipEntry entry;
+			while ((entry = zis.getNextEntry()) != null) {
+				String fileName = entry.getName();
+				Path dest = outDir.toPath().resolve(fileName);
+				if (entry.isDirectory()) {
+					dest.toFile().mkdirs();
+				} else {
+					Files.copy(zis, dest);
+				}
+				zis.closeEntry();
 			}
 		}
 	}
