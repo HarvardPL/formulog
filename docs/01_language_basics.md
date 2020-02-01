@@ -240,8 +240,8 @@ However, you will find Formulog's syntax to be less flexible than most ML
 implementations; for example, `some(X)` is okay but `some X` is not.
 
 Despite the fact that we do not support higher-order functions, we do support
-nested functions that can locally capture variables (these functions are lifted
-to top-level functions), and we also support a special parameterized term `fold`:
+nested functions that can locally capture variables and we also support a
+special parameterized term `fold`:
 
 ```
 fold[f] : ['a -> 'b list] -> 'a
@@ -251,9 +251,9 @@ where `f` is the name of a function of type `['a, 'b] -> 'a`. Here's an example
 using both nested functions and `fold`:
 
 ```
-fun incr_by_delta(Xs: i32 list, Delta: i32) : i32 list =
-  let fun incr(Acc: i32 list, X: i32) : i32 = X + Delta :: Acc in
-  fold[incr]([], Xs) 
+fun rev(Xs: 'a list) : 'a list =
+  let fun cons_wrapper(Xs: 'a list, X: 'a) : 'a list = X :: Xs in
+  fold[cons_wrapper]([], Xs)
 ```
 
 ### Lifted predicates and aggregation 

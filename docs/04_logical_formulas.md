@@ -72,21 +72,27 @@ variables within formula; otherwise they are ground terms. Formula variables
 can be created using a special syntax: a pound sign, followed by a term `t`
 of arbitrary type within curly braces, followed by a type τ within square
 brackets, as in
+
 ```
 #{t}[τ]
 ```
+
 τ cannot have any type variables and cannot contain any formula types (like
 `sym` or `smt`). The term `t` is the "name" of the formula variable.
 
 A formula variable will unify with another formula variable only if they have
 the same "name" and type. For example,
+
 ```
 #{42}[bool] = #{"hello"}[bool]
 ```
+
 never holds, although the formula
+
 ```
 `#{42}[bool] #= #{"hello"}[bool]`
 ```
+
 is satisfiable (where `#=` is the notation for formula equality). **Note:** A
 formula variable `#{t}[τ]` is guaranteed to not unify with any subterm of `t`;
 that is, it is fresh for `t`.
@@ -115,20 +121,25 @@ infer the correct type without an explicit annotation. If you leave out the
 square brackets, Formulog will try to infer every parameter for that term;
 alternatively, select parameters can be inferred by using the wildcard parameter
 `?`. For example, these formulas all say the same thing:
+
 ```
 `smt_eq[bv[32]](bv_const[32](42), 0)`
 `smt_eq[?](bv_const[?](42), 0)`
 `smt_eq(bv_const(42), 0)`
 ```
+
 Formulog can infer that this is a comparison of 32-bit bit vectors from the fact
 that the second operand is the constant `0`, which has type `bv[32]`. However,
 the following formulas are unacceptable, since Formulog cannot infer the widths
 of the bit vectors in the comparisons:
+
 ```
 `smt_eq[?](bv_const[?](42), bv_const[?](0))`
 `smt_eq(bv_const(42), bv_const(0))`
 ```
+
 In this case, one annotation is enough to clarify things:
+
 ```
 `smt_eq[bv[16]](bv_const(42), bv_const(0))`
 `smt_eq(bv_const[16](42), bv_const(0))`
@@ -137,6 +148,7 @@ In this case, one annotation is enough to clarify things:
 #### Logical connectives
 
 Formulog has the standard first-order logic connectives:
+
 ```
 smt_not    : bool smt -> bool smt
 smt_eq[τ]  : [τ smt, τ smt] -> bool smt
@@ -152,20 +164,24 @@ smt_forall : [smt_wrapped_var list, bool smt, smt_pattern list list] -> bool smt
 The quantifiers deserve some explanation. The first argument is a list of
 "wrapped" formula variables bound by the quantifier; the type `smt_wrapped_var`
 has a single constructor:
+
 ```
 smt_wrap_var[τ] : τ sym -> smt_wrapped_var
+
 ```
 The second argument is the body of the quantifier. The third and final argument
 represents a list of patterns to supply for trigger-based quantifier
 instantiation. Each member of the outermost list represents a single pattern,
 possibly consisting of multiple terms. The type `smt_pattern` has a single
 constructor:
+
 ```
 smt_pat[τ] : τ -> smt_pattern
 ```
 
 However, it is unlikely that you will have to use these constructors directly,
 as we supply notation that should cover most situations:
+
 ```
 ~ ...                     : bool smt -> bool smt
 ... #= ...                : ['a smt, 'a smt] -> bool smt
@@ -176,25 +192,32 @@ as we supply notation that should cover most situations:
 #if ... then ... else ... : [bool smt, 'a smt, 'a smt] -> 'a smt
 #let ... = ... in ...     : ['a sym, 'a smt, 'b smt] -> 'b smt
 ```
+
 The binary operators are listed above in order of precedence (so `#=`
 binds the most tightly, and `<==>` the least tightly). They all associate
 to the right, except for `#=`, which associates to the left.
 
 There is also notation for the quantifiers `forall` and `exists`, as in this
 example:
+
 ```
   `forall #x[bool]. exists #y[bool]. #x[bool] #= ~#y[bool]`
 ```
+
 The notation supports binding multiple variables:
+
 ```
   `exists #x[bool], #y[bool]. #x[bool] #= ~#y[bool]`
 ```
+
 You can also specify patterns for trigger-based instantiation. For example, say
 that `f` is an uninterpreted function from bools to bools. This formula says
 that `f(x) = x` for all `x`, using `f(x)` as a trigger:
+
 ```
   `forall #x[bool] : f(#x[bool]). f(#x[bool]) #= #x[bool]`
 ```
+
 The notation supports patterns with multiple terms (they should be separated by
 commas); however, it does not support multiple patterns, in which case you need
 to use the explicit constructor described above.
@@ -202,6 +225,7 @@ to use the explicit constructor described above.
 #### Bit vectors
 
 We have bit vectors, where `bv[k] smt` is a `k`-bit symbolic bit vector:
+
 ```
 bv_const[k]            : bv[32] -> bv[k] smt
 bv_big_const[k]        : bv[64] -> bv[k] smt
@@ -222,6 +246,7 @@ bv_lt[k]               : [bv[k] smt, bv[k] smt] -> bool smt
 bv_le[k]               : [bv[k] smt, bv[k] smt] -> bool smt
 bv_gt[k]               : [bv[k] smt, bv[k] smt] -> bool smt
 bv_ge[k]               : [bv[k] smt, bv[k] smt] -> bool smt
+
 ```
 Note that in some cases the bit vector width is a parameter to the constructor;
 as noted previously, parameters can often be inferred.
@@ -230,6 +255,7 @@ as noted previously, parameters can often be inferred.
 
 And we have floating point, where `fp[j,k] smt` is a symbolic floating point
 number with exponent length `j` and signficand length `k`:
+
 ```
 fp_const[j,k]     : fp[32] -> fp[j,k] smt
 fp_big_const[j,k] : fp[64] -> fp[j,k] smt
@@ -248,10 +274,12 @@ fp_ge[j,k]        : [fp[j,k] smt, fp[j,k] smt] -> bool smt
 fp_is_nan[j,k]    : fp[j,k] smt -> bool smt
 fp_eq[j,k]        : [fp[j,k] smt, fp[j,k] smt] -> bool smt
 ```
+
 To make it syntactically more pleasant to deal with common floating point types,
 instead of supplying both the exponent and significand length, users can supply
 a single parameter which is expanding into the appropriate exponent and
 significand:
+
 * the parameter `16` is expanded to `5,11`;
 * the parameter `32` is expanded to `8,24`;
 * the parameter `64` is expanded to `11,53`; and
@@ -263,6 +291,7 @@ For example, the term `fp_const[32](...)` is equivalent to
 #### Integers
 
 Mathematical integers are represented by the type `int smt`:
+
 ```
 int_abs       : int smt -> int smt
 int_neg       : int smt -> int smt
@@ -282,6 +311,7 @@ int_div       : [int smt, int smt] -> int smt
 #### Arrays
 
 Arrays from `'a` to `'b` are represented by the type `('a, 'b) array smt`:
+
 ```
 array_select[τ]  : [(τ, 'a) array smt, τ smt] -> 'a smt 
 array_store      : [('a, 'b) array smt, 'a smt, 'b smt] -> ('a, 'b) array smt
@@ -292,6 +322,7 @@ array_const      : 'b smt -> ('a, 'b) array smt
 #### Strings
 
 Symbolic strings are represented by the type `string smt`:
+
 ```
 str_at       : string smt, int smt -> string smt
 str_concat   : string smt, string smt -> string smt
@@ -311,20 +342,24 @@ These operations follow the theory of strings supported by Z3 and CVC4.
 Terms constructed from user-defined algebraic data types can also be used in
 formulas, where they are interpreted under the theory of algebraic data types.
 Say we define this type:
+
 ```
 type 'a my_list =
   | my_nil
   | my_cons('a, 'a my_list)
 ```
+
 In addition to being able to use the constructors `my_nil` and `my_cons` within
 a formula, one can also use constructors that are automatically generated by
 Formulog and that make it easier to state formula about `my_list` terms:
+
 ```
 #is_my_nil  : 'a my_list smt -> bool smt
 #is_my_cons : 'a my_list smt -> bool smt
 #my_cons_1  : 'a my_list smt -> 'a smt
 #my_cons_2  : 'a my_list smt -> 'a my_list smt
 ```
+
 These automatically generated constructors fall into two categories: testers,
 which are identified by the prefix `#is_` followed by the name of the
 constructor and are used to test the outermost constructor of a (possibly
@@ -339,9 +374,11 @@ the relevant label prefixed with `#`.
 ### Uninterpreted functions
 
 Formulog also provides a way to declare uninterpreted functions, as here:
+
 ```
 uninterpreted fun foo(bv[32] smt) : bool smt
 ```
+
 This effectively defines a new constructor for `bool smt` that expects a
 single argument of type `bv[32] smt`. Uninterpreted functions can only be used
 within formulas.
@@ -350,6 +387,7 @@ within formulas.
 
 Formulog currently provides these functions for reasoning about/manipulating
 formulas:
+
 ```
 is_sat       : bool smt -> bool
 is_sat_opt   : [bool smt, i32 option] -> bool option
