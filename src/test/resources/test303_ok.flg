@@ -1,0 +1,4 @@
+output ok
+
+ok :-
+  is_valid(`#x[?] ==> #{"x"}[?]`).

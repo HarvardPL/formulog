@@ -56,7 +56,7 @@ final class ParsingUtil {
 		return l;
 	}
 
-	private static Param extractParam(ParsingContext pc, ParameterContext ctx) {
+	public static Param extractParam(ParsingContext pc, ParameterContext ctx) {
 		return ctx.accept(new FormulogBaseVisitor<Param>() {
 
 			@Override

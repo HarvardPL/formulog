@@ -273,7 +273,7 @@ term
 	| '{' recordEntries '}' # recordTerm
 	| '{' term 'with' recordEntries '}' # recordUpdateTerm
 	| '`' term '`' # formulaTerm
-	| '#' '{' term '}' '[' type ']' # termSymFormula
+	| '#' '{' term '}' '[' parameter ']' # termSymFormula
 	| NOT term # notFormula
 	| < assoc = left > term op = FORMULA_EQ term # binopFormula
 	| < assoc = right > term op = AND term # binopFormula

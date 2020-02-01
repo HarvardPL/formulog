@@ -49,12 +49,13 @@ public class Param {
 		}
 		switch (kind) {
 		case ANY_TYPE:
+			return !type.isIndex();
 		case WILD_CARD:
 			return true;
 		case SMT_REPRESENTABLE_TYPE:
 			return Types.isSmtRepresentable(type);
 		case NAT:
-			return type instanceof TypeIndex;
+			return type.isIndex();
 		case PRE_SMT_TYPE:
 			return Types.mayBePreSmtType(type);
 		case SMT_VAR:

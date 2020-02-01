@@ -106,11 +106,9 @@ import edu.harvard.seas.pl.formulog.util.StackMap;
 class TermExtractor {
 
 	private final ParsingContext pc;
-	private final TypeExtractor typeExtractor;
 
 	public TermExtractor(ParsingContext parsingContext) {
 		pc = parsingContext;
-		typeExtractor = new TypeExtractor(pc);
 	}
 
 	public synchronized Term extract(TermContext ctx) {
@@ -186,7 +184,8 @@ class TermExtractor {
 				if (params.size() != 1) {
 					throw new IllegalArgumentException("Expected a single parameter to solver variable: " + name);
 				}
-				return extractSolverSymbol(StringTerm.make(name.substring(1)), params.get(0).getType());
+				Type ty = params.get(0).getType();
+				return extractSolverSymbol(StringTerm.make(name.substring(1)), ty);
 			}
 			if (sym == null) {
 				sym = pc.symbolManager().lookupSymbol(name);
@@ -628,7 +627,7 @@ class TermExtractor {
 
 		@Override
 		public Term visitTermSymFormula(TermSymFormulaContext ctx) {
-			Type type = typeExtractor.extract(ctx.type());
+			Type type = ParsingUtil.extractParam(pc, ctx.parameter()).getType();
 			Term id = extract(ctx.term());
 			return extractSolverSymbol(id, type);
 		}

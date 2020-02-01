@@ -1,0 +1,6 @@
+output not_ok
+
+not_ok :-
+  X = #x[4],
+  Y = #x[4],
+  X = Y.

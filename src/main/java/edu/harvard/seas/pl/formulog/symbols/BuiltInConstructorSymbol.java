@@ -54,12 +54,6 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 	
 	SOME("some", 1, VANILLA_CONSTRUCTOR),
 
-//	// Bools
-//	
-//	TRUE("true", 0, VANILLA_CONSTRUCTOR),
-//	
-//	FALSE("false", 0, VANILLA_CONSTRUCTOR),
-	
 	// Comparisons
 	
 	CMP_LT("cmp_lt", 0, VANILLA_CONSTRUCTOR),

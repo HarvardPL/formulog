@@ -60,6 +60,10 @@ public final class Types {
 		default boolean isVar() {
 			return false;
 		}
+		
+		default boolean isIndex() {
+			return false;
+		}
 
 	}
 
@@ -534,6 +538,11 @@ public final class Types {
 		public String toString() {
 			return "[" + index + "]";
 		}
+		
+		@Override
+		public boolean isIndex() {
+			return true;
+		}
 
 		public int getIndex() {
 			return index;
@@ -634,7 +643,7 @@ public final class Types {
 	}
 
 	public static boolean isSmtRepresentable(Type t) {
-		return t.accept(new TypeVisitor<Void, Boolean>() {
+		return !t.isIndex() && t.accept(new TypeVisitor<Void, Boolean>() {
 
 			@Override
 			public Boolean visit(TypeVar typeVar, Void in) {
@@ -688,7 +697,7 @@ public final class Types {
 	}
 
 	public static boolean mayBePreSmtType(Type t) {
-		return t.accept(new TypeVisitor<Void, Boolean>() {
+		return !t.isIndex() && t.accept(new TypeVisitor<Void, Boolean>() {
 
 			@Override
 			public Boolean visit(TypeVar typeVar, Void in) {
