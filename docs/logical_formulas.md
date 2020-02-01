@@ -25,7 +25,7 @@ type 'a my_list =
   | my_nil
   | my_cons('a, 'a my_list)
 
-output ok3.
+output ok3
 ok3 :-
   Xs = #xs[bool my_list],
   Ys = #ys[bool my_list],
@@ -54,7 +54,7 @@ Formulog also supports uninterpreted sorts that can be used within formulas.
 For instance, you can declare a polymorphic uninterpreted sort like this:
 
 ```
-uninterpreted sort ('a, 'b) foo.
+uninterpreted sort ('a, 'b) foo
 ```
 
 ## Representing formulas
@@ -98,23 +98,23 @@ thing as `#{"x"}[bool]`.
 ### Built-in formula terms
 
 Formulog provides built-in terms that are used to construct formulas that
-should be interpreted under a particular theory.
+should be interpreted under a particular theory. The formulas generally reflect
+SMT-LIB terms.
 
 #### Parameterized terms
 
 You will see that many formula terms are parameterized with a type or natural
 number. For example, the constructor for formula equality, `smt_eq[τ]`, is
-parameterized with the type of the operands of the equality, and the constructor
-for a bit vector constant, `bv_const[k]`, is parameterized with the width of the
-bit vector. These parameters are necessary either because the type information
-is important to have at runtime (when serializing formulas into SMT-LIB), or for
-type safety reasons (issues arise if the types of the arguments of a term cannot
-be determined from the type of that term, which is the case for some formula
-constructors). However, Formulog can often infer the correct type without an
-explicit annotation. If you leave out the square brackets, Formulog will try to
-infer every parameter for that term; alternatively, select parameters can be
-inferred by using the wildcard parameter `?`. For example, these formulas all
-say the same thing:
+parameterized with the type τ of the operands of the equality, and the constructor
+for a bit vector constant, `bv_const[k]`, is parameterized with the width `k` of
+the bit vector. These parameters are necessary either because the type
+information is important to have at runtime (when serializing formulas into
+SMT-LIB), or for type safety reasons (issues arise if the type of the term does
+not uniquely determine the types of its arguments). However, Formulog can often
+infer the correct type without an explicit annotation. If you leave out the
+square brackets, Formulog will try to infer every parameter for that term;
+alternatively, select parameters can be inferred by using the wildcard parameter
+`?`. For example, these formulas all say the same thing:
 ```
 `smt_eq[bv[32]](bv_const[32](42), 0)`
 `smt_eq[?](bv_const[?](42), 0)`
@@ -122,8 +122,8 @@ say the same thing:
 ```
 Formulog can infer that this is a comparison of 32-bit bit vectors from the fact
 that the second operand is the constant `0`, which has type `bv[32]`. However,
-these formulas are unacceptable, since the types in the comparison (i.e., the
-width of the bit vectors) is ambiguous:
+the following formulas are unacceptable, since Formulog cannot infer the widths
+of the bit vectors in the comparisons:
 ```
 `smt_eq[?](bv_const[?](42), bv_const[?](0))`
 `smt_eq(bv_const(42), bv_const(0))`
@@ -256,6 +256,7 @@ significand:
 * the parameter `32` is expanded to `8,24`;
 * the parameter `64` is expanded to `11,53`; and
 * the parameter `128` is expanded to `15,113`.
+
 For example, the term `fp_const[32](...)` is equivalent to
 `fp_const[8,24](...)`.
 
@@ -280,7 +281,7 @@ int_div       : [int smt, int smt] -> int smt
 
 #### Arrays
 
-Arrays from `'a` to `'b` are represented by the type `('a, 'b) smt`:
+Arrays from `'a` to `'b` are represented by the type `('a, 'b) array smt`:
 ```
 array_select[τ]  : [(τ, 'a) array smt, τ smt] -> 'a smt 
 array_store      : [('a, 'b) array smt, 'a smt, 'b smt] -> ('a, 'b) array smt
@@ -302,6 +303,8 @@ str_replace  : string smt, string smt, string smt -> string smt
 str_substr   : string smt, int smt, int smt -> string smt
 str_suffixof : string smt, string smt -> bool smt
 ```
+
+These operations follow the theory of strings supported by Z3 and CVC4.
 
 ### Using algebraic data types and records in formulas
 
