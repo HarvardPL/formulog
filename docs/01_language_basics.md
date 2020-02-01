@@ -35,9 +35,9 @@ type 'a list =
 
 Like types, constructors must begin with a lowercase letter.
 
-Formulog also has support for tuple types, such as the type `i32 * string list`,
-and users can also define type aliases, such as this one that defines a map to
-be an association list:
+Formulog also has support for tuple types, such as the type `i32 * string`, and
+users can also define type aliases, such as this one that defines a map to be
+an association list:
 
 ```
 type ('k, 'v) map = ('k * 'v) list
@@ -65,11 +65,11 @@ Mutually recursive types are written using `and`:
 
 ```
 type foo =
-  | foo1(...)
-  | foo2(...)
+  | foo1
+  | foo2(bar)
 and bar =
-  | bar1(...)
-  | bar2(...)
+  | bar1(foo)
+  | bar2(bar, bar)
 ```
 
 You can also define records, as here:
@@ -149,11 +149,11 @@ output ok
 ok :- X = "hello", X != "goodbye".
 ```
 
-The first of these predicate is true when its arguments can be unified, and the
-second is true when its arguments cannot be unified.
+The first of these predicate is true when its arguments unify to the same term,
+and the second is true when its arguments cannot be unified.
 
-Finally, any Formulog term of type bool can be used in place of an atom in the
-rule body, as here:
+Finally, any Formulog term of type `bool` can be used in place of an atom in
+the rule body, as here:
 
 ```
 input foo(bool)
@@ -199,9 +199,9 @@ The latter might look like:
 "aloha"
 ```
 
-You can specify alternate directories to look in using the `factDirs` command
-line option. Every fact directory must have a CSV file for _every_ external
-input relation (the file can be empty).
+You can specify alternate directories to look in using the
+`-DfactDirs=dir_1,...,dir_N` command line option. Every fact directory must
+have a CSV file for _every_ external input relation (the file can be empty).
 
 ## Functions
 
@@ -264,7 +264,7 @@ function. For instance, we can write code like this:
 
 ```
 output bar(i32)
-...
+
 fun foo(N:i32) : bool = bar(N + 1)
 ```
 
@@ -324,5 +324,5 @@ second argument, which can be a regular expression. The function
 `string_starts_with` returns `true` when its second argument is a prefix of its
 first argument.
 
-Finally, for the purposes of debugging, Formulog supplies a `print` function (of
-type `'a -> bool`; it always evaluates to `true`).
+Finally, for the purposes of debugging, Formulog supplies a `print` function of
+type `'a -> bool`; it always evaluates to `true`.
