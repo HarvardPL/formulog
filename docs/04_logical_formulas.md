@@ -309,9 +309,9 @@ fp_is_nan[j,k]    : fp[j,k] smt -> bool smt
 fp_eq[j,k]        : [fp[j,k] smt, fp[j,k] smt] -> bool smt
 ```
 
-To make it syntactically more pleasant to deal with common floating point types,
-instead of supplying both the exponent and significand length, users can supply
-a single parameter which is expanding into the appropriate exponent and
+To make it syntactically more pleasant to deal with common floating point
+types, instead of supplying both the exponent and significand length, users can
+supply a single parameter that is expanded into the appropriate exponent and
 significand:
 
 * the parameter `16` is expanded to `5,11`;
