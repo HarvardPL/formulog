@@ -201,8 +201,8 @@ has a single constructor:
 
 ```
 smt_wrap_var[τ] : τ sym -> smt_wrapped_var
-
 ```
+
 The second argument is the body of the quantifier. The third and final argument
 represents a list of patterns to supply for trigger-based quantifier
 instantiation. Each member of the outermost list represents a single pattern,
@@ -280,8 +280,8 @@ bv_lt[k]               : [bv[k] smt, bv[k] smt] -> bool smt
 bv_le[k]               : [bv[k] smt, bv[k] smt] -> bool smt
 bv_gt[k]               : [bv[k] smt, bv[k] smt] -> bool smt
 bv_ge[k]               : [bv[k] smt, bv[k] smt] -> bool smt
-
 ```
+
 Note that in some cases the bit vector width is a parameter to the constructor;
 as noted previously, parameters can often be inferred.
 

@@ -36,9 +36,9 @@ function. A variable is bound when:
   
 Furthemore, the ML fragment of Formulog is evaluated using call-by-value
 semantics, which means that the arguments to a function need to be normalized
-and ground (i.e., variable-free) before a call site can be evaluated. This means
-that every variable occurring as an argument to a function must be bound going
-into the call site.
+and ground (i.e., variable-free) before a call site can be evaluated.
+Consequently, every variable occurring as an argument to a function must be
+bound going into the call site.
 
 To check whether these variable binding conditions are met, the Formulog runtime
 currently performs a single pass over the rule, going from left to right across
