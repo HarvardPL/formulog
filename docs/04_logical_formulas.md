@@ -44,14 +44,48 @@ represents a τ-valued formula. The second is `τ sym`, which represents a
 τ-valued formula variable (it is sometimes helpful to distinguish between these
 two types).
 
-Outside of logical formulas, the types τ, `τ smt`, and `τ sym` are treated as
-being distinct. However, within a formula, they are treated as being all the
-same type. This bimodal type checking makes it easy to write expressive
-formulas, while making sure that evaluation outside of formulas does not get
-stuck.
+You will often see formulas quoted with backticks, as in
 
-Formulog also supports uninterpreted sorts that can be used within formulas.
-For instance, you can declare a polymorphic uninterpreted sort like this:
+```
+`#x[bool] #= true`
+```
+
+Quoted terms are type checked differently than terms outside of quotations.
+Outside of quotations, the types τ, `τ smt`, and `τ sym` are treated as being
+distinct. However, in quoted terms, they are treated as being all the same type.
+This bimodal type checking makes it easy to write expressive formulas, while
+making sure that evaluation outside of formulas does not get stuck, which might
+happen if a boolean formula were passed to a function expecting a concrete
+boolean argument.
+
+The Formulog type sensitive is flow-sensitive, in that the order of the atoms
+and terms in a rule affect whether that rule is considered well typed or not.
+For example, it rejects the first rule in this program and not the second, even
+though they are logically equivalent:
+
+```
+input p(bool smt)
+input q(bool)
+output not_ok
+output ok
+
+not_ok :- p(`X`), q(X).
+ok     :- q(X), p(`X`).
+```
+
+It rejects the first rule because, given a left-to-right reading of the rule,
+`X` is bound in a position that has type `bool smt`, and so there is no
+guarantee it is a concrete `bool` (which would be required for it to be a member
+of `q`). The second rule is fine since `X` is bound in a position that has type
+`bool`, which becomes a `bool smt` when it is quoted as an argument to `p`. The
+type checker currently uses the order that the rule was originally written; in
+the future, the type checker could try to reorder rules to make them well typed.
+
+### Uninterpreted sorts
+
+Formulog allows users to define uninterpreted sorts that can be used within
+formulas. For instance, you can declare a polymorphic uninterpreted sort like
+this:
 
 ```
 uninterpreted sort ('a, 'b) foo
@@ -183,14 +217,14 @@ However, it is unlikely that you will have to use these constructors directly,
 as we supply notation that should cover most situations:
 
 ```
-~ ...                     : bool smt -> bool smt
-... #= ...                : ['a smt, 'a smt] -> bool smt
-... /\ ...                : [bool smt, bool smt] -> bool smt
-... \/ ...                : [bool smt, bool smt] -> bool smt
-... ==> ...               : [bool smt, bool smt] -> bool smt
-... <==> ...              : [bool smt, bool smt] -> bool smt
-#if ... then ... else ... : [bool smt, 'a smt, 'a smt] -> 'a smt
-#let ... = ... in ...     : ['a sym, 'a smt, 'b smt] -> 'b smt
+~ ...                     (* negation *) 
+... #= ...                (* equality *)
+... /\ ...                (* conjunction *) 
+... \/ ...                (* disjunction *)
+... ==> ...               (* implication *)
+... <==> ...              (* iff *)
+#if ... then ... else ...
+#let ... = ... in ... 
 ```
 
 The binary operators are listed above in order of precedence (so `#=`
