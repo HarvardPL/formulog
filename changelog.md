@@ -1,12 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.3.0] - 2020-02-03
 ### Added
 - Support for `fold` terms.
 - Options to restrict which results are printed after evaluation. 
 - Nested, variable-capturing functions (i.e., `let fun` expressions).
 - Added generic serialization function `to_string`.
+- Preliminary (and undocumented) option to compile Formulog program to C++
+  instead of interpreting it.
 
 ### Changed
 - Do not require parentheses around tuple types.
