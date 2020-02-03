@@ -3,19 +3,23 @@ Datalog with support for SMT queries.
 
 ## Setup
 
+Dependencies:
+
+* JRE 1.8+
+* The SMT solver Z3 (in particular, you need to have the `z3` binary on your
+  path)
+
 ### Prepackaged JAR
 
 You can find a prepackaged JAR file in the Releases section of the GitHub
-repository. You will need to separately install the SMT solver Z3 so that the
-executable `z3` is on your path.
+repository.
 
 ### Building from source
 
-Dependencies:
+Additional dependencies:
 
-* Maven
 * JDK 1.8+
-* Z3 (in particular, you need to have the `z3` binary on your path)
+* Maven
 
 To build an executable JAR, run the command `mvn package` from the project
 directory. This will create an executable JAR with a name like 
