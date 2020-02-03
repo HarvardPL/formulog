@@ -244,7 +244,7 @@ nested functions that can locally capture variables and we also support a
 special parameterized term `fold`:
 
 ```
-fold[f] : ['a -> 'b list] -> 'a
+fold[f] : ['a, 'b list] -> 'a
 ```
 
 where `f` is the name of a function of type `['a, 'b] -> 'a`. Here's an example
