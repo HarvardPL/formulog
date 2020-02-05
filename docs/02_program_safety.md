@@ -30,9 +30,10 @@ function. A variable is bound when:
   `(X, 0) = (42, Y)`);
 * it is an anonymous variable that occurs as a top-level argument to a negated
   atom (e.g., `_X` is considered bound in `!p(_X)`); or
-* it occurs in the argument to a positive atom, and that occurrence is not also
-  the argument to a function call. For example, the occurrence of `X` in the
-  atom `p(c(X))` is bound, but it is not bound in the atom `p(f(X))`.
+* it occurs in the argument to a positive atom in the rule body, and that
+  occurrence is not also the argument to a function call. For example, the
+  occurrence of `X` in the atom `p(c(X))` is bound, but it is not bound in the
+  atom `p(f(X))`.
   
 Furthemore, the ML fragment of Formulog is evaluated using call-by-value
 semantics, which means that the arguments to a function need to be normalized
