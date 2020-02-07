@@ -109,7 +109,7 @@ public final class Configuration {
 
 	public static final boolean inlineInRules = propIsSet("inlineInRules", true);
 	
-	public static final boolean eagerSemiNaive = propIsSet("eagerSemiNaive", true);
+	public static final boolean eagerSemiNaive = propIsSet("eagerSemiNaive", false);
 
 	static {
 		if (recordFuncDiagnostics) {

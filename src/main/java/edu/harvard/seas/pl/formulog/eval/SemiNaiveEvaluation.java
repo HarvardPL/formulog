@@ -171,8 +171,12 @@ public class SemiNaiveEvaluation implements Evaluation {
 		return new SemiNaiveEvaluation(prog, db, deltaDbb, rules, magicProg.getQuery(), strata, exec,
 				getTrackedRelations(magicProg.getSymbolManager()), eagerEval);
 	}
-	
-	private static BasicRule tweakRule(Rule<UserPredicate, ComplexLiteral> r, boolean eagerEval) {
+
+	private static Rule<UserPredicate, ComplexLiteral> tweakRule(Rule<UserPredicate, ComplexLiteral> r,
+			boolean eagerEval) {
+		if (!eagerEval) {
+			return r;
+		}
 		List<ComplexLiteral> newBody = new ArrayList<>();
 		for (ComplexLiteral l : r) {
 			l.accept(new ComplexLiteralVisitor<Void, Void>() {
@@ -186,9 +190,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 				@Override
 				public Void visit(UserPredicate userPredicate, Void input) {
 					RelationSymbol sym = userPredicate.getSymbol();
-					if (!(sym instanceof DeltaSymbol)) {
-						newBody.add(userPredicate);
-					} else {
+					if (sym instanceof DeltaSymbol) {
 						Term[] args = userPredicate.getArgs();
 						Term[] newArgs = new Term[args.length];
 						for (int i = 0; i < args.length; ++i) {
@@ -201,15 +203,17 @@ public class SemiNaiveEvaluation implements Evaluation {
 							newArgs[i] = arg;
 						}
 						newBody.add(UserPredicate.make(sym, newArgs, false));
+					} else {
+						newBody.add(userPredicate);
 					}
 					return null;
 				}
-				
+
 			}, null);
 		}
 		return BasicRule.make(r.getHead(), newBody);
 	}
-	
+
 	private static void checkRule(ValidRule r, boolean eagerEval) throws InvalidProgramException {
 		if (!eagerEval) {
 			return;
