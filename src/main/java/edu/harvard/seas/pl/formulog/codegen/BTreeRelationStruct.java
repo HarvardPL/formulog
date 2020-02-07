@@ -197,27 +197,29 @@ public class BTreeRelationStruct implements RelationStruct {
 
 	private void declareInsertAll(PrintWriter out) {
 		declareGenericInsertAll(out);
-		declareSpecializedInsertAll(out);
+//		declareSpecializedInsertAll(out);
 	}
 
 	private void declareGenericInsertAll(PrintWriter out) {
 		out.println("  template<typename T> void insertAll(T& other) {");
-		CppExpr call = CppFuncCall.mk("insert", CppVar.mk("cur"));
+		CppCtor.mk("context", "h").println(out, 2);
+		CppExpr call = CppFuncCall.mk("insert", CppVar.mk("cur"), CppVar.mk("h"));
 		CppForEach.mk("cur", CppVar.mk("other"), call.toStmt()).println(out, 2);
 		out.println("  }");
 	}
 
-	private void declareSpecializedInsertAll(PrintWriter out) {
-		out.println("  void insertAll(const " + name + "& other) {");
-		CppVar other = CppVar.mk("other");
-		for (int i = 0; i < indexInfo.size(); ++i) {
-			String indexName = mkIndexName(i);
-			CppExpr otherIndex = CppAccess.mk(other, indexName);
-			CppExpr call = CppMethodCall.mk(CppVar.mk(indexName), "insertAll", otherIndex);
-			call.toStmt().println(out, 2);
-		}
-		out.println("  }");
-	}
+	// Seems like Souffle got rid of insertAll method
+//	private void declareSpecializedInsertAll(PrintWriter out) {
+//		out.println("  void insertAll(const " + name + "& other) {");
+//		CppVar other = CppVar.mk("other");
+//		for (int i = 0; i < indexInfo.size(); ++i) {
+//			String indexName = mkIndexName(i);
+//			CppExpr otherIndex = CppAccess.mk(other, indexName);
+//			CppExpr call = CppMethodCall.mk(CppVar.mk(indexName), "insertAll", otherIndex);
+//			call.toStmt().println(out, 2);
+//		}
+//		out.println("  }");
+//	}
 
 	private void declareLookup(PrintWriter out) {
 		for (Map.Entry<Integer, IndexInfo> e : indexInfo.entrySet()) {

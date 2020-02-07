@@ -22,8 +22,8 @@ package edu.harvard.seas.pl.formulog.codegen;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
+import edu.harvard.seas.pl.formulog.eval.EvalUtil;
 import edu.harvard.seas.pl.formulog.eval.IndexedRule;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
@@ -34,69 +34,60 @@ public class StratumCodeGen {
 
 	private final CodeGenContext ctx;
 	private static final CppVar changed = CppVar.mk("changed");
-	
+
 	public StratumCodeGen(CodeGenContext ctx) {
 		this.ctx = ctx;
 	}
-	
+
 	public CppStmt gen(Stratum stratum) {
 		List<CppStmt> stmts = new ArrayList<>();
 		stmts.add(CppDecl.mk("changed", CppConst.mkFalse()));
 		RuleCodeGen rcg = new RuleCodeGen(ctx);
-		stmts.add(genFirstRound(stratum, rcg));
-		stmts.add(genLoop(stratum, rcg));
+		List<IndexedRule> firstRoundRules = new ArrayList<>();
+		List<IndexedRule> laterRoundRules = new ArrayList<>();
+		for (RelationSymbol sym : stratum.getPredicateSyms()) {
+			for (IndexedRule r : ctx.getEval().getRules(sym)) {
+				if (EvalUtil.findDelta(r) != null) {
+					laterRoundRules.add(r);
+				} else {
+					firstRoundRules.add(r);
+				}
+			}
+		}
+		stmts.add(genFirstRound(stratum, firstRoundRules, rcg));
+		stmts.add(genLoop(stratum, laterRoundRules, rcg));
 		return CppSeq.mk(stmts);
 	}
 
-	private CppStmt genFirstRound(Stratum stratum, RuleCodeGen rcg) {
+	private CppStmt genFirstRound(Stratum stratum, Iterable<IndexedRule> rules, RuleCodeGen rcg) {
 		List<CppStmt> stmts = new ArrayList<>();
-		for (RelationSymbol sym : stratum.getPredicateSyms()) {
-			stmts.add(genFirstRound(sym, rcg));
-		}
+		stmts.add(genRules(rules, rcg, true));
 		for (RelationSymbol sym : stratum.getPredicateSyms()) {
 			Relation rel = ctx.lookupRelation(sym);
 			Relation delta = ctx.lookupRelation(new DeltaSymbol(sym));
 			stmts.add(delta.mkInsertAll(CppUnop.mkDeref(rel)).toStmt());
 		}
-		return CppSeq.mk(stmts); 
+		return CppSeq.mk(stmts);
 	}
-	
-	private CppStmt genFirstRound(RelationSymbol sym, RuleCodeGen rcg) {
+
+	private CppStmt genRules(Iterable<IndexedRule> rules, RuleCodeGen rcg, boolean isFirstRound) {
 		List<CppStmt> stmts = new ArrayList<>();
-		for (IndexedRule r : ctx.getEval().getFirstRoundRules(sym)) {
-			stmts.add(genRule(r, rcg, true));
+		for (IndexedRule r : rules) {
+			stmts.add(genRule(r, rcg, isFirstRound));
 		}
 		return CppSeq.mk(stmts);
 	}
-	
+
 	private CppStmt genRule(IndexedRule r, RuleCodeGen rcg, boolean firstRound) {
 		Pair<CppStmt, CppExpr> p = rcg.gen(r, firstRound);
 		return CppSeq.mk(p.fst(), CppBinop.mkOrUpdate(changed, p.snd()).toStmt());
 	}
-	
-	private CppStmt genLoop(Stratum stratum, RuleCodeGen rcg) {
+
+	private CppStmt genLoop(Stratum stratum, Iterable<IndexedRule> rules, RuleCodeGen rcg) {
 		CppStmt setFalse = CppBinop.mkAssign(changed, CppConst.mkFalse()).toStmt();
-		CppStmt evalCode = genLaterRounds(stratum, rcg);
+		CppStmt evalCode = genRules(rules, rcg, false);
 		CppStmt updateCode = genUpdateCode(stratum);
 		return CppWhile.mk(changed, CppSeq.mk(setFalse, evalCode, updateCode));
-	}
-	
-	private CppStmt genLaterRounds(Stratum stratum, RuleCodeGen rcg) {
-		List<CppStmt> stmts = new ArrayList<>();
-		for (RelationSymbol sym : stratum.getPredicateSyms()) {
-			stmts.add(genLaterRounds(sym, rcg));
-		}
-		return CppSeq.mk(stmts);
-	}
-	
-	private CppStmt genLaterRounds(RelationSymbol sym, RuleCodeGen rcg) {
-		List<CppStmt> stmts = new ArrayList<>();
-		for (Set<IndexedRule> s : ctx.getEval().getLaterRoundRules(sym).values()) {
-			for (IndexedRule r : s) {
-				stmts.add(genRule(r, rcg, false));
-			}
-		}
-		return CppSeq.mk(stmts);
 	}
 
 	private CppStmt genUpdateCode(Stratum stratum) {

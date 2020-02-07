@@ -278,7 +278,7 @@ const ComplexTerm& Term::as_complex() const {
 }
 
 struct TermCompare {
-  bool operator()(const Term* const& lhs, const Term* const& rhs) {
+  bool operator()(const Term* const& lhs, const Term* const& rhs) const {
     return Term::compare(lhs, rhs) < 0;
   }
 };

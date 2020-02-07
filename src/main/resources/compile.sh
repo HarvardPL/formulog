@@ -29,6 +29,6 @@ fi
 
 OUTPUT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd $OUTPUT_DIR
-g++ -fopenmp -I $SOUFFLE_INCLUDE -I $BOOST_INCLUDE -I $ANTLR_INCLUDE -Wall -Wno-trigraphs -std=c++11 \
+g++ -fopenmp -I $SOUFFLE_INCLUDE -I $BOOST_INCLUDE -I $ANTLR_INCLUDE -Wall -Wno-trigraphs -std=c++17 \
   -o $OUTPUT_EXEC main.cpp parsing/FormulogParser.cpp parsing/FormulogLexer.cpp \
   -L$BOOST_LIB -lpthread -lboost_filesystem -lboost_system -lboost_program_options -lantlr4-runtime
