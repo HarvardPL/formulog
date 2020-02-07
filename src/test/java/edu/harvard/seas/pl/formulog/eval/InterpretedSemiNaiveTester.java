@@ -25,10 +25,16 @@ import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 
 public class InterpretedSemiNaiveTester extends AbstractTester<SemiNaiveEvaluation> {
+	
+	private final boolean eagerEval;
+	
+	public InterpretedSemiNaiveTester(boolean eagerEval) {
+		this.eagerEval = eagerEval;
+	}
 
 	@Override
 	protected SemiNaiveEvaluation setup(WellTypedProgram prog) throws InvalidProgramException, EvaluationException {
-		return SemiNaiveEvaluation.setup(prog, 2);
+		return SemiNaiveEvaluation.setup(prog, 2, eagerEval);
 	}
 
 	@Override

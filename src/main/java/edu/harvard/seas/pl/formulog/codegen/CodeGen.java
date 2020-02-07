@@ -100,7 +100,7 @@ public class CodeGen {
 			prog = new Parser().parse(fr);
 		}
 		WellTypedProgram wtp = new TypeChecker(prog).typeCheck();
-		SemiNaiveEvaluation eval = SemiNaiveEvaluation.setup(wtp, 4);
+		SemiNaiveEvaluation eval = SemiNaiveEvaluation.setup(wtp, 4, false);
 		File dir = new File("codegen");
 		Util.clean(dir, false);
 		dir.mkdirs();

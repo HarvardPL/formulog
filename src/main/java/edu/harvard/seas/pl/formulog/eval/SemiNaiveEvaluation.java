@@ -36,6 +36,7 @@ import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralVisitor;
 import edu.harvard.seas.pl.formulog.ast.Program;
+import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
@@ -78,12 +79,14 @@ public class SemiNaiveEvaluation implements Evaluation {
 	private final Set<RelationSymbol> trackedRelations;
 	private final WellTypedProgram inputProgram;
 	private final Map<RelationSymbol, Set<IndexedRule>> rules;
+	private final boolean eagerEval;
 
 	static final boolean sequential = System.getProperty("sequential") != null;
 	static final boolean debugRounds = Configuration.debugRounds;
 
 	@SuppressWarnings("serial")
-	public static SemiNaiveEvaluation setup(WellTypedProgram prog, int parallelism) throws InvalidProgramException {
+	public static SemiNaiveEvaluation setup(WellTypedProgram prog, int parallelism, boolean eagerEval)
+			throws InvalidProgramException {
 		FunctionDefValidation.validate(prog);
 		MagicSetTransformer mst = new MagicSetTransformer(prog);
 		BasicProgram magicProg = mst.transform(Configuration.useDemandTransformation, true);
@@ -105,8 +108,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 				Set<IndexedRule> rs = new HashSet<>();
 				for (BasicRule br : magicProg.getRules(sym)) {
 					for (SemiNaiveRule snr : SemiNaiveRule.make(br, stratumSymbols)) {
-						BiFunction<ComplexLiteral, Set<Var>, Integer> score = chooseScoringFunction();
-						ValidRule vr = ValidRule.make(snr, score);
+						BiFunction<ComplexLiteral, Set<Var>, Integer> score = chooseScoringFunction(eagerEval);
+						ValidRule vr = ValidRule.make(tweakRule(snr, eagerEval), score);
+						checkRule(vr, eagerEval);
 						predFuncs.preprocess(vr);
 						SimpleRule sr = SimpleRule.make(vr);
 						IndexedRule ir = IndexedRule.make(sr, p -> {
@@ -165,10 +169,64 @@ public class SemiNaiveEvaluation implements Evaluation {
 			throw new InvalidProgramException(exec.getFailureCause());
 		}
 		return new SemiNaiveEvaluation(prog, db, deltaDbb, rules, magicProg.getQuery(), strata, exec,
-				getTrackedRelations(magicProg.getSymbolManager()));
+				getTrackedRelations(magicProg.getSymbolManager()), eagerEval);
+	}
+	
+	private static BasicRule tweakRule(Rule<UserPredicate, ComplexLiteral> r, boolean eagerEval) {
+		List<ComplexLiteral> newBody = new ArrayList<>();
+		for (ComplexLiteral l : r) {
+			l.accept(new ComplexLiteralVisitor<Void, Void>() {
+
+				@Override
+				public Void visit(UnificationPredicate unificationPredicate, Void input) {
+					newBody.add(unificationPredicate);
+					return null;
+				}
+
+				@Override
+				public Void visit(UserPredicate userPredicate, Void input) {
+					RelationSymbol sym = userPredicate.getSymbol();
+					if (!(sym instanceof DeltaSymbol)) {
+						newBody.add(userPredicate);
+					} else {
+						Term[] args = userPredicate.getArgs();
+						Term[] newArgs = new Term[args.length];
+						for (int i = 0; i < args.length; ++i) {
+							Term arg = args[i];
+							if (arg.containsUnevaluatedTerm()) {
+								Var x = Var.fresh();
+								newBody.add(UnificationPredicate.make(x, arg, false));
+								arg = x;
+							}
+							newArgs[i] = arg;
+						}
+						newBody.add(UserPredicate.make(sym, newArgs, false));
+					}
+					return null;
+				}
+				
+			}, null);
+		}
+		return BasicRule.make(r.getHead(), newBody);
+	}
+	
+	private static void checkRule(ValidRule r, boolean eagerEval) throws InvalidProgramException {
+		if (!eagerEval) {
+			return;
+		}
+		boolean seenUserPred = false;
+		for (ComplexLiteral l : r) {
+			if (l instanceof UserPredicate) {
+				UserPredicate pred = (UserPredicate) l;
+				if (seenUserPred && pred.getSymbol() instanceof DeltaSymbol) {
+					throw new InvalidProgramException("Delta symbol could not be placed first:\n" + r);
+				}
+				seenUserPred = true;
+			}
+		}
 	}
 
-	static SmtManager getSmtManager(Program<UserPredicate, BasicRule> prog) {
+	private static SmtManager getSmtManager(Program<UserPredicate, BasicRule> prog) {
 		SmtStrategy strategy = Configuration.smtStrategy;
 		switch (strategy.getTag()) {
 		case QUEUE: {
@@ -210,9 +268,10 @@ public class SemiNaiveEvaluation implements Evaluation {
 		return s;
 	}
 
-	// XXX These are all ignored because reordering can lead to type soundness
-	// issues
-	static BiFunction<ComplexLiteral, Set<Var>, Integer> chooseScoringFunction() {
+	static BiFunction<ComplexLiteral, Set<Var>, Integer> chooseScoringFunction(boolean eagerEval) {
+		if (eagerEval) {
+			return SemiNaiveEvaluation::score4;
+		}
 		switch (Configuration.optimizationSetting) {
 		case 0:
 			return SemiNaiveEvaluation::score0;
@@ -222,6 +281,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 			return SemiNaiveEvaluation::score2;
 		case 3:
 			return SemiNaiveEvaluation::score3;
+		case 4:
+			return SemiNaiveEvaluation::score4;
 		default:
 			throw new IllegalArgumentException(
 					"Unrecognized optimization setting: " + Configuration.optimizationSetting);
@@ -326,9 +387,29 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}, null);
 	}
 
+	static int score4(ComplexLiteral l, Set<Var> boundVars) {
+		return l.accept(new ComplexLiteralVisitor<Void, Integer>() {
+
+			@Override
+			public Integer visit(UnificationPredicate unificationPredicate, Void input) {
+				return Integer.MAX_VALUE;
+			}
+
+			@Override
+			public Integer visit(UserPredicate pred, Void input) {
+				if (pred.isNegated() || pred.getSymbol() instanceof DeltaSymbol) {
+					return Integer.MAX_VALUE;
+				}
+				return 0;
+			}
+
+		}, null);
+	}
+
 	SemiNaiveEvaluation(WellTypedProgram inputProgram, SortedIndexedFactDb db,
 			IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb, Map<RelationSymbol, Set<IndexedRule>> rules,
-			UserPredicate query, List<Stratum> strata, CountingFJP exec, Set<RelationSymbol> trackedRelations) {
+			UserPredicate query, List<Stratum> strata, CountingFJP exec, Set<RelationSymbol> trackedRelations,
+			boolean eagerEval) {
 		this.inputProgram = inputProgram;
 		this.db = db;
 		this.query = query;
@@ -337,6 +418,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		this.trackedRelations = trackedRelations;
 		this.deltaDbb = deltaDbb;
 		this.rules = rules;
+		this.eagerEval = eagerEval;
 	}
 
 	@Override
@@ -370,9 +452,13 @@ public class SemiNaiveEvaluation implements Evaluation {
 		for (RelationSymbol sym : stratum.getPredicateSyms()) {
 			l.addAll(rules.get(sym));
 		}
-		new RoundBasedStratumEvaluator(stratum.getRank(), db, deltaDbb, l, exec, trackedRelations).evaluate();
+		if (eagerEval) {
+			new EagerStratumEvaluator(stratum.getRank(), db, l, exec, trackedRelations).evaluate();
+		} else {
+			new RoundBasedStratumEvaluator(stratum.getRank(), db, deltaDbb, l, exec, trackedRelations).evaluate();
+		}
 	}
-	
+
 	public Set<IndexedRule> getRules(RelationSymbol sym) {
 		return Collections.unmodifiableSet(rules.get(sym));
 	}

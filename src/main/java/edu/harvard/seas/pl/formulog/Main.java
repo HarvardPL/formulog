@@ -122,7 +122,7 @@ public final class Main {
 		clock.reset();
 		clock.start();
 		try {
-			Evaluation eval = SemiNaiveEvaluation.setup(prog, Configuration.parallelism);
+			Evaluation eval = SemiNaiveEvaluation.setup(prog, Configuration.parallelism, Configuration.eagerSemiNaive);
 			clock.stop();
 			System.out.println("Finished rewriting and validating (" + clock.getTime() / 1000.0 + "s)");
 			return eval;
@@ -198,7 +198,7 @@ public final class Main {
 			Util.printSortedFacts(res.getQueryAnswer(), out);
 		}
 	}
-	
+
 	public void printSelectedResults(EvaluationResult res, SymbolManager sm, PrintStream out) {
 		out.println("Selected results:");
 		for (String name : Configuration.getSelectedRelsToPrint()) {

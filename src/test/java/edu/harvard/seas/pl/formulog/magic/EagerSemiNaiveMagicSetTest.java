@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.eval;
+package edu.harvard.seas.pl.formulog.magic;
 
 /*-
  * #%L
@@ -20,10 +20,13 @@ package edu.harvard.seas.pl.formulog.eval;
  * #L%
  */
 
-public class SemiNaiveEvaluationTest extends CommonEvaluationTest<SemiNaiveEvaluation> {
+import edu.harvard.seas.pl.formulog.eval.InterpretedSemiNaiveTester;
+import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
 
-	public SemiNaiveEvaluationTest() {
-		super(new InterpretedSemiNaiveTester(false));
+public class EagerSemiNaiveMagicSetTest extends CommonMagicSetTest<SemiNaiveEvaluation> {
+
+	public EagerSemiNaiveMagicSetTest() {
+		super(new InterpretedSemiNaiveTester(true));
 	}
 
 }

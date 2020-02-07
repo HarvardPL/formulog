@@ -42,10 +42,10 @@ public class ValidRule extends AbstractRule<UserPredicate, ComplexLiteral> {
 			BiFunction<ComplexLiteral, Set<Var>, Integer> score) throws InvalidProgramException {
 		try {
 			List<ComplexLiteral> body = Util.iterableToList(rule);
-			// XXX Not reordering because of type soundness issues.
-			// Set<Var> vars = new HashSet<>();
-			// order(body, score, vars, rule.countVariables());
-			Set<Var> vars = checkBody(rule);
+			Set<Var> vars = new HashSet<>();
+			// Reordering is currently unsound... also need to type check.
+			order(body, score, vars, rule.countVariables());
+			// Set<Var> vars = checkBody(rule);
 			UserPredicate head = rule.getHead();
 			if (!head.getSymbol().isIdbSymbol()) {
 				throw new InvalidProgramException("Cannot create a rule for non-IDB symbol " + head.getSymbol());
@@ -98,9 +98,8 @@ public class ValidRule extends AbstractRule<UserPredicate, ComplexLiteral> {
 		Map<Var, Integer> varCounts = rule.countVariables();
 		for (ComplexLiteral lit : rule) {
 			if (!Unification.canBindVars(lit, boundVars, varCounts)) {
-				throw new InvalidProgramException(
-						"Rule cannot be evaluated given the supplied order.\n" + "The problematic rule is:\n"
-								+ rule + "\nThe problematic literal is: " + lit);
+				throw new InvalidProgramException("Rule cannot be evaluated given the supplied order.\n"
+						+ "The problematic rule is:\n" + rule + "\nThe problematic literal is: " + lit);
 			}
 			boundVars.addAll(lit.varSet());
 		}

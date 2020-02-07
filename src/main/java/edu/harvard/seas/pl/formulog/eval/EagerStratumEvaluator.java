@@ -20,18 +20,14 @@ package edu.harvard.seas.pl.formulog.eval;
  * #L%
  */
 
-import java.time.LocalDateTime;
 import java.util.Iterator;
 import java.util.Set;
-
-import org.apache.commons.lang3.time.StopWatch;
 
 import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.BindingType;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.db.IndexedFactDbBuilder;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
@@ -46,61 +42,33 @@ import edu.harvard.seas.pl.formulog.validating.ast.Destructor;
 import edu.harvard.seas.pl.formulog.validating.ast.SimpleLiteral;
 import edu.harvard.seas.pl.formulog.validating.ast.SimplePredicate;
 
-public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
+public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 
 	final int stratumNum;
 	final SortedIndexedFactDb db;
-	SortedIndexedFactDb deltaDb;
-	SortedIndexedFactDb nextDeltaDb;
 	final CountingFJP exec;
 	final Set<RelationSymbol> trackedRelations;
-	volatile boolean changed;
 
 	static final int taskSize = Configuration.taskSize;
-	static final int smtTaskSize = Configuration.smtTaskSize;
+	static final int smtTaskSize = 1;
 
-	public RoundBasedStratumEvaluator(int stratumNum, SortedIndexedFactDb db,
-			IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb, Iterable<IndexedRule> rules, CountingFJP exec,
+	public EagerStratumEvaluator(int stratumNum, SortedIndexedFactDb db, Iterable<IndexedRule> rules, CountingFJP exec,
 			Set<RelationSymbol> trackedRelations) {
 		super(rules);
 		this.stratumNum = stratumNum;
 		this.db = db;
-		this.deltaDb = deltaDbb.build();
-		this.nextDeltaDb = deltaDbb.build();
 		this.exec = exec;
 		this.trackedRelations = trackedRelations;
 	}
 
 	@Override
 	public void evaluate() throws EvaluationException {
-		int round = 0;
-		StopWatch watch = recordRoundStart(round);
 		for (IndexedRule r : firstRoundRules) {
-			exec.externallyAddTask(new RulePrefixEvaluator(r));
+			exec.externallyAddTask(new RulePrefixEvaluator(r, null));
 		}
 		exec.blockUntilFinished();
 		if (exec.hasFailed()) {
 			throw exec.getFailureCause();
-		}
-		recordRoundEnd(round, watch);
-		updateDbs();
-		while (changed) {
-			round++;
-			watch = recordRoundStart(round);
-			changed = false;
-			for (RelationSymbol delta : laterRoundRules.keySet()) {
-				if (!deltaDb.isEmpty(delta)) {
-					for (IndexedRule r : laterRoundRules.get(delta)) {
-						exec.externallyAddTask(new RulePrefixEvaluator(r));
-					}
-				}
-			}
-			exec.blockUntilFinished();
-			if (exec.hasFailed()) {
-				throw exec.getFailureCause();
-			}
-			recordRoundEnd(round, watch);
-			updateDbs();
 		}
 	}
 
@@ -109,52 +77,17 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 		for (int i = 0; i < args.length; ++i) {
 			newArgs[i] = args[i].normalize(s);
 		}
-		if (!db.hasFact(sym, newArgs) && nextDeltaDb.add(sym, newArgs)) {
-			changed = true;
+		if (db.add(sym, newArgs)) {
+			Set<IndexedRule> rs = laterRoundRules.get(sym);
+			if (rs != null) {
+				for (IndexedRule r : rs) {
+					exec.recursivelyAddTask(new RulePrefixEvaluator(r, newArgs));
+				}
+			}
 			if (trackedRelations.contains(sym)) {
 				System.err.println("[TRACKED] " + UserPredicate.make(sym, newArgs, false));
 			}
 		}
-	}
-	
-	void updateDbs() {
-		StopWatch watch = recordDbUpdateStart();
-		for (RelationSymbol sym : nextDeltaDb.getSymbols()) {
-			if (nextDeltaDb.isEmpty(sym)) {
-				continue;
-			}
-			Iterable<Iterable<Term[]>> answers = Util.splitIterable(nextDeltaDb.getAll(sym), taskSize);
-			exec.externallyAddTask(new UpdateDbTask(sym, answers.iterator()));
-		}
-		exec.blockUntilFinished();
-		SortedIndexedFactDb tmp = deltaDb;
-		deltaDb = nextDeltaDb;
-		nextDeltaDb = tmp;
-		nextDeltaDb.clear();
-		recordDbUpdateEnd(watch);
-	}
-
-	@SuppressWarnings("serial")
-	class UpdateDbTask extends AbstractFJPTask {
-
-		final RelationSymbol sym;
-		final Iterator<Iterable<Term[]>> it;
-
-		protected UpdateDbTask(RelationSymbol sym, Iterator<Iterable<Term[]>> it) {
-			super(exec);
-			this.sym = sym;
-			this.it = it;
-		}
-
-		@Override
-		public void doTask() throws EvaluationException {
-			Iterable<Term[]> tups = it.next();
-			if (it.hasNext()) {
-				exec.recursivelyAddTask(new UpdateDbTask(sym, it));
-			}
-			db.addAll(sym, tups);
-		}
-
 	}
 
 	Iterable<Iterable<Term[]>> lookup(IndexedRule r, int pos, OverwriteSubstitution s) throws EvaluationException {
@@ -171,12 +104,8 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 			}
 		}
 		RelationSymbol sym = predicate.getSymbol();
-		Iterable<Term[]> ans;
-		if (sym instanceof DeltaSymbol) {
-			ans = deltaDb.get(((DeltaSymbol) sym).getBaseSymbol(), key, idx);
-		} else {
-			ans = db.get(sym, key, idx);
-		}
+		assert !(sym instanceof DeltaSymbol);
+		Iterable<Term[]> ans = db.get(sym, key, idx);
 		boolean shouldSplit = splitPositions.get(r)[pos];
 		int targetSize = shouldSplit ? smtTaskSize : taskSize;
 		return Util.splitIterable(ans, targetSize);
@@ -344,10 +273,31 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 	class RulePrefixEvaluator extends AbstractFJPTask {
 
 		final IndexedRule rule;
+		final Term[] deltaArgs;
 
-		protected RulePrefixEvaluator(IndexedRule rule) {
+		protected RulePrefixEvaluator(IndexedRule rule, Term[] deltaArgs) {
 			super(exec);
 			this.rule = rule;
+			this.deltaArgs = deltaArgs;
+		}
+
+		private boolean handleDelta(SimplePredicate pred, Substitution s) throws EvaluationException {
+			BindingType[] bindings = pred.getBindingPattern();
+			Term[] args = pred.getArgs();
+			int i = 0;
+			for (BindingType b : bindings) {
+				Term arg = args[i];
+				if (b.isFree()) {
+					assert arg instanceof Var;
+					s.put((Var) arg, deltaArgs[i]);
+				} else if (b.isBound()) {
+					if (!arg.normalize(s).equals(deltaArgs[i])) {
+						return false;
+					}
+				}
+				++i;
+			}
+			return true;
 		}
 
 		@Override
@@ -384,8 +334,13 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 									return;
 								}
 							} else {
-								// Stop on the first positive user predicate.
-								break loop;
+								RelationSymbol sym = p.getSymbol();
+								if (!(sym instanceof DeltaSymbol)) {
+									break loop;
+								}
+								if (!handleDelta(p, s)) {
+									return;
+								}
 							}
 							break;
 						}
@@ -418,50 +373,6 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 			}
 		}
 
-	}
-	
-	StopWatch recordRoundStart(int round) {
-		if (!Configuration.debugRounds) {
-			return null;
-		}
-		System.err.println("#####");
-		System.err.println("[START] Stratum " + stratumNum + ", round " + round);
-		LocalDateTime now = LocalDateTime.now();
-		System.err.println("Start: " + now);
-		StopWatch watch = new StopWatch();
-		watch.start();
-		return watch;
-	}
-
-	void recordRoundEnd(int round, StopWatch watch) {
-		if (watch == null) {
-			return;
-		}
-		watch.stop();
-		System.err.println("[END] Stratum " + stratumNum + ", round " + round);
-		System.err.println("Time: " + watch.getTime() + "ms");
-	}
-
-	StopWatch recordDbUpdateStart() {
-		if (!Configuration.debugRounds) {
-			return null;
-		}
-		System.err.println("[START] Updating DBs");
-		LocalDateTime now = LocalDateTime.now();
-		System.err.println("Start: " + now);
-		StopWatch watch = new StopWatch();
-		watch.start();
-		return watch;
-	}
-
-	void recordDbUpdateEnd(StopWatch watch) {
-		if (watch == null) {
-			return;
-		}
-		watch.stop();
-		Configuration.printRelSizes(System.err, "DELTA SIZE", deltaDb, false);
-		System.err.println("[END] Updating DBs");
-		System.err.println("Time: " + watch.getTime() + "ms");
 	}
 
 }

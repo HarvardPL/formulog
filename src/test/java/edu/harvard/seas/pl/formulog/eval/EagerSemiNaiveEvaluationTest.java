@@ -4,7 +4,7 @@ package edu.harvard.seas.pl.formulog.eval;
  * #%L
  * FormuLog
  * %%
- * Copyright (C) 2018 - 2019 President and Fellows of Harvard College
+ * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,10 @@ package edu.harvard.seas.pl.formulog.eval;
  * #L%
  */
 
-public enum SemiNaiveSymbolType {
+public class EagerSemiNaiveEvaluationTest extends CommonEvaluationTest<SemiNaiveEvaluation> {
 
-	DELTA, NEW, CURRENT, PREVIOUS, DELTA_LOWER;
-	
+	public EagerSemiNaiveEvaluationTest() {
+		super(new InterpretedSemiNaiveTester(true));
+	}
+
 }
