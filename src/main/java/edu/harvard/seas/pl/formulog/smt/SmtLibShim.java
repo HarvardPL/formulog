@@ -78,7 +78,6 @@ import edu.harvard.seas.pl.formulog.util.Pair;
 public class SmtLibShim {
 
 	private static final boolean recordTime = Configuration.timeSmt;
-	private static final boolean noModel = Configuration.noModel();
 
 	public static enum Status {
 		SATISFIABLE, UNSATISFIABLE, UNKNOWN
@@ -198,9 +197,6 @@ public class SmtLibShim {
 	}
 
 	public Map<SolverVariable, Term> getModel() throws EvaluationException {
-		if (noModel) {
-			return Collections.emptyMap();
-		}
 		println("(get-model)");
 		out.flush();
 		try {

@@ -35,8 +35,8 @@ import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.smt.SmtLibShim.Status;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
-public class QueueSmtManager extends SmtManager {
-	
+public class QueueSmtManager extends AbstractSmtManager {
+
 	private final ArrayBlockingQueue<Z3Process> processes;
 
 	public QueueSmtManager(Program<UserPredicate, BasicRule> prog, int size) {
@@ -49,15 +49,15 @@ public class QueueSmtManager extends SmtManager {
 	}
 
 	@Override
-	public Pair<Status, Map<SolverVariable, Term>> check(SmtLibTerm assertion, int timeout) throws EvaluationException {
+	public Pair<Status, Map<SolverVariable, Term>> check(List<SmtLibTerm> conjuncts, boolean getModel, int timeout)
+			throws EvaluationException {
 		Z3Process proc;
 		try {
 			proc = processes.take();
 		} catch (InterruptedException e) {
 			throw new EvaluationException(e);
 		}
-		List<SmtLibTerm> conjuncts = breakIntoConjuncts(assertion);
-		Pair<Status, Map<SolverVariable, Term>> res = proc.check(conjuncts, timeout);
+		Pair<Status, Map<SolverVariable, Term>> res = proc.check(conjuncts, getModel, timeout);
 		processes.add(proc);
 		return res;
 	}

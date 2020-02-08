@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.smt;
 
+import java.util.List;
+
 /*-
  * #%L
  * FormuLog
@@ -30,24 +32,25 @@ import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.smt.SmtLibShim.Status;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
-public class PerThreadSmtManager extends SmtManager {
+public class PerThreadSmtManager extends AbstractSmtManager {
 
-	private final ThreadLocal<SmtManager> subManager;
-	
-	public PerThreadSmtManager(Supplier<SmtManager> managerMaker) {
-		subManager = new ThreadLocal<SmtManager>() {
-		
+	private final ThreadLocal<AbstractSmtManager> subManager;
+
+	public PerThreadSmtManager(Supplier<AbstractSmtManager> managerMaker) {
+		subManager = new ThreadLocal<AbstractSmtManager>() {
+
 			@Override
-			protected SmtManager initialValue() {
+			protected AbstractSmtManager initialValue() {
 				return managerMaker.get();
 			}
-			
+
 		};
 	}
-	
+
 	@Override
-	public Pair<Status, Map<SolverVariable, Term>> check(SmtLibTerm assertion, int timeout) throws EvaluationException {
-		return subManager.get().check(assertion, timeout);
+	public Pair<Status, Map<SolverVariable, Term>> check(List<SmtLibTerm> conjuncts, boolean getModel, int timeout)
+			throws EvaluationException {
+		return subManager.get().check(conjuncts, getModel, timeout);
 	}
 
 }

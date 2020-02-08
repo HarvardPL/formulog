@@ -1,7 +1,6 @@
 package edu.harvard.seas.pl.formulog.ast.functions;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,7 +51,7 @@ import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
-import edu.harvard.seas.pl.formulog.util.Util;
+import edu.harvard.seas.pl.formulog.util.Triple;
 
 public final class BuiltInFunctionDefFactory {
 
@@ -1149,7 +1148,7 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 	}
-	
+
 	private static final FunctionDef bnot = new FunctionDef() {
 
 		@Override
@@ -1165,7 +1164,7 @@ public final class BuiltInFunctionDefFactory {
 			}
 			return trueTerm;
 		}
-		
+
 	};
 
 	private enum ToString implements FunctionDef {
@@ -1205,7 +1204,7 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 	}
-	
+
 	private enum I32Scmp implements FunctionDef {
 
 		INSTANCE;
@@ -1223,7 +1222,7 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 	}
-	
+
 	private enum I32Ucmp implements FunctionDef {
 
 		INSTANCE;
@@ -1241,7 +1240,7 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 	}
-	
+
 	private enum I64Scmp implements FunctionDef {
 
 		INSTANCE;
@@ -1259,7 +1258,7 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 	}
-	
+
 	private enum I64Ucmp implements FunctionDef {
 
 		INSTANCE;
@@ -1295,7 +1294,7 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 	}
-	
+
 	private static final FunctionDef stringMatches = new FunctionDef() {
 
 		@Override
@@ -1309,9 +1308,9 @@ public final class BuiltInFunctionDefFactory {
 			String re = ((StringTerm) args[1]).getVal();
 			return boolToBoolTerm(str.matches(re));
 		}
-		
+
 	};
-	
+
 	private static final FunctionDef stringStartsWith = new FunctionDef() {
 
 		@Override
@@ -1325,7 +1324,7 @@ public final class BuiltInFunctionDefFactory {
 			String pre = ((StringTerm) args[1]).getVal();
 			return boolToBoolTerm(str.startsWith(pre));
 		}
-		
+
 	};
 
 	private enum Substitute implements FunctionDef {
@@ -1369,37 +1368,27 @@ public final class BuiltInFunctionDefFactory {
 
 	}
 
-	private final Map<Term, Map<Integer, Future<Optional<Model>>>> smtMemo = new ConcurrentHashMap<>();
+	private final Map<Triple<SmtLibTerm, Boolean, Integer>, Future<Pair<Status, Model>>> smtMemo = new ConcurrentHashMap<>();
 
-	private Optional<Model> querySmt(SmtLibTerm formula) throws EvaluationException {
-		return querySmt(formula, Integer.MAX_VALUE);
+	private Pair<Status, Model> querySmt(SmtLibTerm assertion, boolean getModel) throws EvaluationException {
+		return querySmt(assertion, getModel, Integer.MAX_VALUE);
 	}
-	
-	private Optional<Model> querySmt(SmtLibTerm formula, int timeout) throws EvaluationException {
-		Map<Integer, Future<Optional<Model>>> byTimeout = Util.lookupOrCreate(smtMemo, formula,
-				() -> new ConcurrentHashMap<>());
-		Future<Optional<Model>> m = byTimeout.get(timeout);
-		if (m == null) {
-			CompletableFuture<Optional<Model>> future = new CompletableFuture<>();
-			m = future;
-			Future<Optional<Model>> m2 = byTimeout.putIfAbsent(timeout, m);
-			if (m2 != null) {
-				m = m2;
+
+	private Pair<Status, Model> querySmt(SmtLibTerm assertion, boolean getModel, int timeout)
+			throws EvaluationException {
+		Triple<SmtLibTerm, Boolean, Integer> key = new Triple<>(assertion, getModel, timeout < 0 ? -1 : timeout);
+		Future<Pair<Status, Model>> fut = smtMemo.get(key);
+		if (fut == null) {
+			CompletableFuture<Pair<Status, Model>> completableFut = new CompletableFuture<>();
+			fut = completableFut;
+			Future<Pair<Status, Model>> fut2 = smtMemo.putIfAbsent(key, fut);
+			if (fut2 != null) {
+				fut = fut2;
 			} else {
-				Pair<Status, Map<SolverVariable, Term>> p = smt.check(formula, timeout);
-				switch (p.fst()) {
-				case SATISFIABLE:
-					future.complete(Optional.of(Model.make(p.snd())));
-					break;
-				case UNKNOWN:
-					future.complete(null);
-					break;
-				case UNSATISFIABLE:
-					future.complete(Optional.empty());
-					break;
-				default:
-					throw new AssertionError("impossible");
-				}
+				Pair<Status, Map<SolverVariable, Term>> p = smt.check(assertion, getModel, timeout);
+				Map<SolverVariable, Term> m = p.snd();
+				Model model = m == null ? null : Model.make(m);
+				completableFut.complete(new Pair<>(p.fst(), model));
 			}
 		}
 		try {
@@ -1407,17 +1396,17 @@ public final class BuiltInFunctionDefFactory {
 			if (Configuration.timeSmt) {
 				start = System.currentTimeMillis();
 			}
-			Optional<Model> model = m.get();
+			Pair<Status, Model> p = fut.get();
 			if (Configuration.timeSmt) {
 				long end = System.currentTimeMillis();
 				Configuration.recordSmtWaitTime(end - start);
 			}
-			return model;
+			return p;
 		} catch (InterruptedException | ExecutionException e) {
 			throw new EvaluationException(e);
-		}
+		}	
 	}
-
+	
 	private final FunctionDef isSat = new FunctionDef() {
 
 		@Override
@@ -1428,15 +1417,16 @@ public final class BuiltInFunctionDefFactory {
 		@Override
 		public Term evaluate(Term[] args) throws EvaluationException {
 			SmtLibTerm formula = (SmtLibTerm) args[0];
-			Optional<Model> m = querySmt(formula);
-			if (m == null) {
-				throw new EvaluationException("Z3 returned \"unknown\"");
-			}
-			if (m.isPresent()) {
+			Pair<Status, Model> p = querySmt(formula, false);
+			switch (p.fst()) {
+			case SATISFIABLE:
 				return trueTerm;
-			} else {
+			case UNKNOWN:
+				throw new EvaluationException("Z3 returned \"unknown\"");
+			case UNSATISFIABLE:
 				return falseTerm;
 			}
+			throw new AssertionError("impossible");
 		}
 
 	};
@@ -1453,15 +1443,16 @@ public final class BuiltInFunctionDefFactory {
 			SmtLibTerm formula = (SmtLibTerm) args[0];
 			Constructor timeoutOpt = (Constructor) args[1];
 			Integer timeout = extractOptionalTimeout(timeoutOpt);
-			Optional<Model> m = querySmt(formula, timeout);
-			if (m == null) {
-				return none;
-			}
-			if (m.isPresent()) {
+			Pair<Status, Model> p = querySmt(formula, false, timeout);
+			switch (p.fst()) {
+			case SATISFIABLE:
 				return some(trueTerm);
-			} else {
+			case UNKNOWN:
+				return none;
+			case UNSATISFIABLE:
 				return some(falseTerm);
 			}
+			throw new AssertionError("impossible");
 		}
 
 	};
@@ -1476,19 +1467,19 @@ public final class BuiltInFunctionDefFactory {
 		@Override
 		public Term evaluate(Term[] args) throws EvaluationException {
 			SmtLibTerm formula = (SmtLibTerm) args[0];
-			formula = (SmtLibTerm) Constructors.make(BuiltInConstructorSymbol.SMT_NOT,
-					Terms.singletonArray(formula));
+			formula = (SmtLibTerm) Constructors.make(BuiltInConstructorSymbol.SMT_NOT, Terms.singletonArray(formula));
 			Constructor timeoutOpt = (Constructor) args[1];
 			Integer timeout = extractOptionalTimeout(timeoutOpt);
-			Optional<Model> m = querySmt(formula, timeout);
-			if (m == null) {
-				return none;
-			}
-			if (m.isPresent()) {
+			Pair<Status, Model> p = querySmt(formula, false, timeout);
+			switch (p.fst()) {
+			case SATISFIABLE:
 				return some(falseTerm);
-			} else {
+			case UNKNOWN:
+				return none;
+			case UNSATISFIABLE:
 				return some(trueTerm);
 			}
+			throw new AssertionError("impossible");
 		}
 
 	};
@@ -1504,15 +1495,16 @@ public final class BuiltInFunctionDefFactory {
 		public Term evaluate(Term[] args) throws EvaluationException {
 			SmtLibTerm formula = (SmtLibTerm) args[0];
 			formula = (SmtLibTerm) Constructors.make(BuiltInConstructorSymbol.SMT_NOT, args);
-			Optional<Model> m = querySmt(formula);
-			if (m == null) {
-				throw new EvaluationException("Z3 returned \"unknown\"");
-			}
-			if (m.isPresent()) {
+			Pair<Status, Model> p = querySmt(formula, false);
+			switch (p.fst()) {
+			case SATISFIABLE:
 				return falseTerm;
-			} else {
+			case UNKNOWN:
+				throw new EvaluationException("Z3 returned \"unknown\"");
+			case UNSATISFIABLE:
 				return trueTerm;
 			}
+			throw new AssertionError("impossible");
 		}
 
 	};
@@ -1536,8 +1528,9 @@ public final class BuiltInFunctionDefFactory {
 			SmtLibTerm formula = (SmtLibTerm) args[0];
 			Constructor timeoutOpt = (Constructor) args[1];
 			Integer timeout = extractOptionalTimeout(timeoutOpt);
-			Optional<Model> m = querySmt(formula, timeout);
-			return m == null || !m.isPresent() ? none : some(m.get());
+			Pair<Status, Model> p = querySmt(formula, true, timeout);
+			Model model = p.snd();
+			return model == null ? none : some(model);
 		}
 
 	};
@@ -1604,5 +1597,5 @@ public final class BuiltInFunctionDefFactory {
 		}
 		return Constructors.makeZeroAry(BuiltInConstructorSymbol.CMP_EQ);
 	}
-	
+
 }

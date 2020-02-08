@@ -36,7 +36,7 @@ import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.smt.SmtLibShim.Status;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
-public class BestMatchSmtManager extends SmtManager {
+public class BestMatchSmtManager extends AbstractSmtManager {
 
 	private final Z3Process[] processes;
 	private final AtomicIntegerArray statuses;
@@ -53,8 +53,8 @@ public class BestMatchSmtManager extends SmtManager {
 	}
 
 	@Override
-	public Pair<Status, Map<SolverVariable, Term>> check(SmtLibTerm assertion, int timeout) throws EvaluationException {
-		List<SmtLibTerm> conjuncts = breakIntoConjuncts(assertion);
+	public Pair<Status, Map<SolverVariable, Term>> check(List<SmtLibTerm> conjuncts, boolean getModel, int timeout)
+			throws EvaluationException {
 		while (true) {
 			PriorityQueue<Pair<Integer, Double>> q = new PriorityQueue<>(processes.length, cmp);
 			for (int i = 0; i < processes.length; ++i) {
@@ -65,7 +65,7 @@ public class BestMatchSmtManager extends SmtManager {
 				int i = q.remove().fst();
 				if (statuses.compareAndSet(i, 0, 1)) {
 					try {
-						return processes[i].check(conjuncts, timeout);
+						return processes[i].check(conjuncts, getModel, timeout);
 					} finally {
 						statuses.set(i, 0);
 					}

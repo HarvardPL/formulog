@@ -171,7 +171,7 @@ public class Z3Process {
 		return (SolverVariable) Constructors.make(sym, args);
 	}
 
-	public synchronized Pair<Status, Map<SolverVariable, Term>> check(List<SmtLibTerm> t, Integer timeout)
+	public synchronized Pair<Status, Map<SolverVariable, Term>> check(List<SmtLibTerm> t, boolean getModel, Integer timeout)
 			throws EvaluationException {
 		boolean debug = debugShim != null;
 		int id = 0;
@@ -193,7 +193,7 @@ public class Z3Process {
 			Configuration.recordSmtEvalTime(time);
 		}
 		Map<SolverVariable, Term> m = null;
-		if (status.equals(Status.SATISFIABLE)) {
+		if (status.equals(Status.SATISFIABLE) && getModel) {
 			m = shim.getModel();
 		}
 		if (indicatorVars.size() > Configuration.smtCacheSize) {

@@ -100,16 +100,12 @@ public final class Configuration {
 	public static final int memoizeThreshold() {
 		return getIntProp("memoizeThreshold", 0);
 	}
-
-	public static boolean noModel() {
-		return propIsSet("noModel");
-	}
 	
 	public static final boolean genComparators = propIsSet("genComparators", true);
 
 	public static final boolean inlineInRules = propIsSet("inlineInRules", true);
 	
-	public static final boolean eagerSemiNaive = propIsSet("eagerSemiNaive", false);
+	public static final boolean eagerSemiNaive = propIsSet("eagerSemiNaive");
 
 	static {
 		if (recordFuncDiagnostics) {
