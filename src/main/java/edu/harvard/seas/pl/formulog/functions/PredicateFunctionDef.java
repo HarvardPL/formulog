@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.ast.functions;
+package edu.harvard.seas.pl.formulog.functions;
 
 import edu.harvard.seas.pl.formulog.ast.BindingType;
 

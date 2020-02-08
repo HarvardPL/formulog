@@ -1,5 +1,6 @@
-package edu.harvard.seas.pl.formulog.ast.functions;
+package edu.harvard.seas.pl.formulog.functions;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -1368,15 +1369,19 @@ public final class BuiltInFunctionDefFactory {
 
 	}
 
-	private final Map<Triple<SmtLibTerm, Boolean, Integer>, Future<Pair<Status, Model>>> smtMemo = new ConcurrentHashMap<>();
+	private final Map<Triple<Object, Boolean, Integer>, Future<Pair<Status, Model>>> smtMemo = new ConcurrentHashMap<>();
 
-	private Pair<Status, Model> querySmt(SmtLibTerm assertion, boolean getModel) throws EvaluationException {
-		return querySmt(assertion, getModel, Integer.MAX_VALUE);
+	private Pair<Status, Model> querySmt(Object assertions, boolean getModel) throws EvaluationException {
+		return querySmt(assertions, getModel, Integer.MAX_VALUE);
 	}
 
-	private Pair<Status, Model> querySmt(SmtLibTerm assertion, boolean getModel, int timeout)
+	@SuppressWarnings("unchecked")
+	private Pair<Status, Model> querySmt(Object assertions, boolean getModel, int timeout)
 			throws EvaluationException {
-		Triple<SmtLibTerm, Boolean, Integer> key = new Triple<>(assertion, getModel, timeout < 0 ? -1 : timeout);
+		if (timeout < 0) {
+			timeout = -1;
+		}
+		Triple<Object, Boolean, Integer> key = new Triple<>(assertions, getModel, timeout);
 		Future<Pair<Status, Model>> fut = smtMemo.get(key);
 		if (fut == null) {
 			CompletableFuture<Pair<Status, Model>> completableFut = new CompletableFuture<>();
@@ -1385,7 +1390,13 @@ public final class BuiltInFunctionDefFactory {
 			if (fut2 != null) {
 				fut = fut2;
 			} else {
-				Pair<Status, Map<SolverVariable, Term>> p = smt.check(assertion, getModel, timeout);
+				Pair<Status, Map<SolverVariable, Term>> p;
+				if (assertions instanceof SmtLibTerm) {
+					p = smt.check((SmtLibTerm) assertions, getModel, timeout);
+				} else {
+					assert assertions instanceof List<?>;
+					p = smt.check((List<SmtLibTerm>) assertions, getModel, timeout);
+				}
 				Map<SolverVariable, Term> m = p.snd();
 				Model model = m == null ? null : Model.make(m);
 				completableFut.complete(new Pair<>(p.fst(), model));

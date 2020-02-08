@@ -35,9 +35,9 @@ import edu.harvard.seas.pl.formulog.ast.MatchExpr;
 import edu.harvard.seas.pl.formulog.ast.Primitive;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
+import edu.harvard.seas.pl.formulog.functions.FunctionDef;
+import edu.harvard.seas.pl.formulog.functions.UserFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
-import edu.harvard.seas.pl.formulog.ast.functions.UserFunctionDef;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 

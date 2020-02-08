@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory;
-import edu.harvard.seas.pl.formulog.ast.functions.FunctionDefManager;
+import edu.harvard.seas.pl.formulog.functions.FunctionDefManager;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;

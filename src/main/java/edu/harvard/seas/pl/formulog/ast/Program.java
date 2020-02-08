@@ -22,7 +22,7 @@ package edu.harvard.seas.pl.formulog.ast;
 
 import java.util.Set;
 
-import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
+import edu.harvard.seas.pl.formulog.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;

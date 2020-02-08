@@ -27,8 +27,8 @@ import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.ast.functions.UserFunctionDef;
-import edu.harvard.seas.pl.formulog.ast.functions.FunctionDef;
+import edu.harvard.seas.pl.formulog.functions.FunctionDef;
+import edu.harvard.seas.pl.formulog.functions.UserFunctionDef;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 
 public class FunctionDefValidation {

@@ -1,10 +1,10 @@
-package edu.harvard.seas.pl.formulog.ast.functions;
+package edu.harvard.seas.pl.formulog.functions;
 
 /*-
  * #%L
  * FormuLog
  * %%
- * Copyright (C) 2018 - 2019 President and Fellows of Harvard College
+ * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,34 @@ package edu.harvard.seas.pl.formulog.ast.functions;
  * #L%
  */
 
+import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 
-public interface FunctionDef {
+public class RecordAccessor implements FunctionDef {
 
-	FunctionSymbol getSymbol();
+	private final FunctionSymbol sym;
+	private final int index; 
 	
-	Term evaluate(Term[] args) throws EvaluationException;
+	public RecordAccessor(FunctionSymbol sym, int index) {
+		this.sym = sym;
+		this.index = index;
+	}
+
+	@Override
+	public FunctionSymbol getSymbol() {
+		return sym;
+	}
 	
+	public int getIndex() {
+		return index;
+	}
+
+	@Override
+	public Term evaluate(Term[] args) throws EvaluationException {
+		Constructor ctor = (Constructor) args[0];
+		return ctor.getArgs()[index];
+	}
+
 }

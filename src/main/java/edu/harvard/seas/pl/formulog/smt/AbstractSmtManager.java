@@ -39,6 +39,7 @@ import edu.harvard.seas.pl.formulog.util.Pair;
 
 public abstract class AbstractSmtManager implements SmtManager {
 
+	@Override
 	public Pair<Status, Map<SolverVariable, Term>> check(SmtLibTerm assertion, boolean getModel, int timeout)
 			throws EvaluationException {
 		return check(breakIntoConjuncts(assertion), getModel, timeout);
