@@ -203,6 +203,7 @@ public class FuncsHpp {
 				ctx.register(sym, "__sub<double>");
 				break;
 			case GET_MODEL:
+				// XXX
 				break;
 			case I32_ADD:
 				ctx.register(sym, "__add<int32_t>");
@@ -295,12 +296,16 @@ public class FuncsHpp {
 				ctx.register(sym, "__bitwise_xor<int64_t>");
 				break;
 			case IS_FREE:
+				// XXX
 				break;
 			case IS_SAT:
 				ctx.register(sym, "is_sat");
 				break;
 			case IS_SAT_OPT:
 				ctx.register(sym, "is_sat_opt");
+				break;
+			case IS_SATS:
+				// XXX
 				break;
 			case IS_VALID:
 				ctx.register(sym, "is_valid");
@@ -312,6 +317,7 @@ public class FuncsHpp {
 				ctx.register(sym, "print");
 				break;
 			case QUERY_MODEL:
+				// XXX
 				break;
 			case STRING_CONCAT:
 				ctx.register(sym, "string_concat");
@@ -329,6 +335,7 @@ public class FuncsHpp {
 				ctx.register(sym, "to_string");
 				break;
 			case SUBSTITUTE:
+				// XXX
 				break;
 			case fp32ToFp64:
 				ctx.register(sym, "__conv<float, double>");

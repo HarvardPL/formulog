@@ -1,6 +1,7 @@
 package edu.harvard.seas.pl.formulog.ast;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 /*-
  * #%L
@@ -73,77 +74,6 @@ public final class Terms {
 		}
 		return newTs;
 	}
-
-//	private static final ExprVisitor<Set<Var>, Void> exprVarExtractor = new ExprVisitor<Set<Var>, Void>() {
-//
-//		@Override
-//		public Void visit(MatchExpr matchExpr, Set<Var> in) {
-//			varSetOfTerm(matchExpr.getMatchee(), in);
-//			for (MatchClause cl : matchExpr.getClauses()) {
-//				Set<Var> patternVars = varSet(cl.getLhs());
-//				Set<Var> rhsVars = varSet(cl.getRhs());
-//				rhsVars.removeAll(patternVars);
-//				in.addAll(rhsVars);
-//			}
-//			return null;
-//		}
-//
-//		@Override
-//		public Void visit(FunctionCall funcCall, Set<Var> in) {
-//			for (Term arg : funcCall.getArgs()) {
-//				varSetOfTerm(arg, in);
-//			}
-//			return null;
-//		}
-//
-//	};
-//
-//	private static final TermVisitor<Set<Var>, Void> termVarExtractor = new TermVisitor<Set<Var>, Void>() {
-//
-//		@Override
-//		public Void visit(Var t, Set<Var> in) {
-//			in.add(t);
-//			return null;
-//		}
-//
-//		@Override
-//		public Void visit(Constructor c, Set<Var> in) {
-//			for (Term arg : c.getArgs()) {
-//				varSetOfTerm(arg, in);
-//			}
-//			return null;
-//		}
-//
-//		@Override
-//		public Void visit(Primitive<?> p, Set<Var> in) {
-//			return null;
-//		}
-//
-//		@Override
-//		public Void visit(Expr e, Set<Var> in) {
-//			varSetOfExpr(e, in);
-//			return null;
-//		}
-//
-//	};
-
-//	private static void varSetOfExpr(Expr e, Set<Var> vars) {
-//		if (!e.isGround()) {
-//			e.visit(exprVarExtractor, vars);
-//		}
-//	}
-//
-//	private static void varSetOfTerm(Term t, Set<Var> vars) {
-//		if (!t.isGround()) {
-//			t.visit(termVarExtractor, vars);
-//		}
-//	}
-//
-//	public static Set<Var> varSet(Term t) {
-//		Set<Var> vars = new HashSet<>();
-//		varSetOfTerm(t, vars);
-//		return vars;
-//	}
 
 	public static boolean isGround(Term t, Set<Var> boundVars) {
 		return boundVars.containsAll(t.varSet());
@@ -321,6 +251,20 @@ public final class Terms {
 	
 	public static int nextId() {
 		return idCnt.incrementAndGet();
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static <T extends Term> List<T> termToTermList(Term t) {
+		List<T> xs = new ArrayList<>();
+		Constructor c = (Constructor) t;
+		while (c.getSymbol() == BuiltInConstructorSymbol.CONS) {
+			Term[] args = c.getArgs();
+			xs.add((T) args[0]);
+			c = (Constructor) args[1];
+		}
+		assert c.getSymbol() == BuiltInConstructorSymbol.NIL;
+		Collections.reverse(xs);
+		return xs;
 	}
 	
 }

@@ -188,6 +188,8 @@ public final class BuiltInFunctionDefFactory {
 			return isSat;
 		case IS_SAT_OPT:
 			return isSatOpt;
+		case IS_SATS:
+			return isSats;
 		case IS_VALID_OPT:
 			return isValidOpt;
 		case IS_VALID:
@@ -1455,6 +1457,33 @@ public final class BuiltInFunctionDefFactory {
 			Constructor timeoutOpt = (Constructor) args[1];
 			Integer timeout = extractOptionalTimeout(timeoutOpt);
 			Pair<Status, Model> p = querySmt(formula, false, timeout);
+			switch (p.fst()) {
+			case SATISFIABLE:
+				return some(trueTerm);
+			case UNKNOWN:
+				return none;
+			case UNSATISFIABLE:
+				return some(falseTerm);
+			}
+			throw new AssertionError("impossible");
+		}
+
+	};
+	
+	private final FunctionDef isSats = new FunctionDef() {
+
+		@Override
+		public FunctionSymbol getSymbol() {
+			return BuiltInFunctionSymbol.IS_SATS;
+		}
+
+		@Override
+		public Term evaluate(Term[] args) throws EvaluationException {
+			SmtLibTerm formula = (SmtLibTerm) args[0];
+			List<SmtLibTerm> assertions = Terms.termToTermList(formula);
+			Constructor timeoutOpt = (Constructor) args[1];
+			Integer timeout = extractOptionalTimeout(timeoutOpt);
+			Pair<Status, Model> p = querySmt(assertions, false, timeout);
 			switch (p.fst()) {
 			case SATISFIABLE:
 				return some(trueTerm);

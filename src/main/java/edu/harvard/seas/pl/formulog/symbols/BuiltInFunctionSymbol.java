@@ -28,6 +28,7 @@ import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.fp32;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.fp64;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.i32;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.i64;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.list;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.model;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.option;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.smt;
@@ -180,6 +181,8 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 	
 	IS_VALID_OPT("is_valid_opt", 2),
 	
+	IS_SATS("is_sats", 2),
+	
 	GET_MODEL("get_model", 2),
 	
 	QUERY_MODEL("query_model", 2),
@@ -317,6 +320,8 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 		case IS_SAT_OPT:
 		case IS_VALID_OPT:
 			return new FunctorType(smt(bool), option(i32), option(bool));
+		case IS_SATS:
+			return new FunctorType(list(smt(bool)), option(i32), option(bool));
 		case PRINT:
 			return new FunctorType(a, bool);
 		case QUERY_MODEL:
