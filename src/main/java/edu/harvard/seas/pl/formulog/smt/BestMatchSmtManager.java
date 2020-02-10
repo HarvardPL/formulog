@@ -33,7 +33,7 @@ import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.smt.SmtLibShim.Status;
+import edu.harvard.seas.pl.formulog.smt.SmtLibShim.SmtStatus;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
 public class BestMatchSmtManager extends AbstractSmtManager {
@@ -53,7 +53,7 @@ public class BestMatchSmtManager extends AbstractSmtManager {
 	}
 
 	@Override
-	public Pair<Status, Map<SolverVariable, Term>> check(List<SmtLibTerm> conjuncts, boolean getModel, int timeout)
+	public Pair<SmtStatus, Map<SolverVariable, Term>> check(List<SmtLibTerm> conjuncts, boolean getModel, int timeout)
 			throws EvaluationException {
 		while (true) {
 			PriorityQueue<Pair<Integer, Double>> q = new PriorityQueue<>(solvers.length, cmp);

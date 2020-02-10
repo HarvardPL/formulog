@@ -32,7 +32,7 @@ import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.smt.SmtLibShim.Status;
+import edu.harvard.seas.pl.formulog.smt.SmtLibShim.SmtStatus;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
@@ -40,7 +40,7 @@ import edu.harvard.seas.pl.formulog.util.Pair;
 public abstract class AbstractSmtManager implements SmtManager {
 
 	@Override
-	public Pair<Status, Map<SolverVariable, Term>> check(SmtLibTerm assertion, boolean getModel, int timeout)
+	public Pair<SmtStatus, Map<SolverVariable, Term>> check(SmtLibTerm assertion, boolean getModel, int timeout)
 			throws EvaluationException {
 		return check(breakIntoConjuncts(assertion), getModel, timeout);
 	}

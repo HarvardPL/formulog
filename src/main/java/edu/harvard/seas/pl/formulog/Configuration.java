@@ -307,6 +307,9 @@ public final class Configuration {
 		if (val == null) {
 			val = "queue-1";
 		}
+		if (val.equals("perThreadPushPop")) {
+			return new SmtStrategy(SmtStrategy.Tag.PER_THREAD_PUSH_POP, null);
+		}
 		Pattern p = Pattern.compile("queue-(\\d+)");
 		Matcher m = p.matcher(val);
 		if (m.matches()) {

@@ -23,7 +23,7 @@ package edu.harvard.seas.pl.formulog.smt;
 public class SmtStrategy {
 
 	public enum Tag {
-		QUEUE, BEST_MATCH, PER_THREAD_QUEUE, PER_THREAD_BEST_MATCH;
+		QUEUE, BEST_MATCH, PER_THREAD_QUEUE, PER_THREAD_BEST_MATCH, PER_THREAD_PUSH_POP;
 	}
 
 	private final Tag tag;

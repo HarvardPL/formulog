@@ -1,12 +1,10 @@
 package edu.harvard.seas.pl.formulog.smt;
 
-import java.util.List;
-
 /*-
  * #%L
  * FormuLog
  * %%
- * Copyright (C) 2018 - 2019 President and Fellows of Harvard College
+ * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +20,11 @@ import java.util.List;
  * #L%
  */
 
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
 
-import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
+import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
@@ -35,31 +33,18 @@ import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.smt.SmtLibShim.SmtStatus;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
-public class QueueSmtManager extends AbstractSmtManager {
+public class PushPopSmtManager extends AbstractSmtManager {
 
-	private final ArrayBlockingQueue<SmtLibSolver> solvers;
-
-	public QueueSmtManager(Program<UserPredicate, BasicRule> prog, int size) {
-		solvers = new ArrayBlockingQueue<>(size);
-		for (int i = 0; i < size; ++i) {
-			CheckSatAssumingSolver solver = new CheckSatAssumingSolver();
-			solver.start(prog);
-			solvers.add(solver);
-		}
+	private final PushPopSolver solver = new PushPopSolver();
+	
+	public PushPopSmtManager(Program<UserPredicate, BasicRule> prog) {
+		solver.start(prog);
 	}
-
+	
 	@Override
-	public Pair<SmtStatus, Map<SolverVariable, Term>> check(List<SmtLibTerm> conjuncts, boolean getModel, int timeout)
+	public Pair<SmtStatus, Map<SolverVariable, Term>> check(List<SmtLibTerm> assertions, boolean getModel, int timeout)
 			throws EvaluationException {
-		SmtLibSolver solver;
-		try {
-			solver = solvers.take();
-		} catch (InterruptedException e) {
-			throw new EvaluationException(e);
-		}
-		Pair<SmtStatus, Map<SolverVariable, Term>> res = solver.check(conjuncts, getModel, timeout);
-		solvers.add(solver);
-		return res;
+		return solver.check(assertions, getModel, timeout);
 	}
 
 }

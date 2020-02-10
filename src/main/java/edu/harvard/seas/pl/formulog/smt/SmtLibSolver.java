@@ -27,12 +27,12 @@ import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.smt.SmtLibShim.Status;
+import edu.harvard.seas.pl.formulog.smt.SmtLibShim.SmtStatus;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
 public interface SmtLibSolver {
 
-	Pair<Status, Map<SolverVariable, Term>> check(List<SmtLibTerm> t, boolean getModel, int timeout)
+	Pair<SmtStatus, Map<SolverVariable, Term>> check(List<SmtLibTerm> t, boolean getModel, int timeout)
 			throws EvaluationException;
 
 }

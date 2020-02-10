@@ -79,7 +79,7 @@ public class SmtLibShim {
 
 	private static final boolean recordTime = Configuration.timeSmt;
 
-	public static enum Status {
+	public static enum SmtStatus {
 		SATISFIABLE, UNSATISFIABLE, UNKNOWN
 	}
 
@@ -156,11 +156,11 @@ public class SmtLibShim {
 		}
 	}
 	
-	public Status checkSat(int timeout) throws EvaluationException {
+	public SmtStatus checkSat(int timeout) throws EvaluationException {
 		return checkSatAssuming(Collections.emptyList(), Collections.emptyList(), timeout);
 	}
 
-	public Status checkSatAssuming(List<SolverVariable> onVars, List<SolverVariable> offVars, int timeout)
+	public SmtStatus checkSatAssuming(List<SolverVariable> onVars, List<SolverVariable> offVars, int timeout)
 			throws EvaluationException {
 		if (timeout < 0) {
 			System.err.println("Warning: negative timeout provided to Z3 - ignored");
@@ -183,11 +183,11 @@ public class SmtLibShim {
 		try {
 			result = in.readLine();
 			if (result.equals("sat")) {
-				return Status.SATISFIABLE;
+				return SmtStatus.SATISFIABLE;
 			} else if (result.equals("unsat")) {
-				return Status.UNSATISFIABLE;
+				return SmtStatus.UNSATISFIABLE;
 			} else if (result.equals("unknown")) {
-				return Status.UNKNOWN;
+				return SmtStatus.UNKNOWN;
 			} else {
 				throw new EvaluationException("Problem with evaluating Z3! Unexpected result: " + result);
 			}

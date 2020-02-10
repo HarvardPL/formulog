@@ -27,15 +27,15 @@ import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
-import edu.harvard.seas.pl.formulog.smt.SmtLibShim.Status;
+import edu.harvard.seas.pl.formulog.smt.SmtLibShim.SmtStatus;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
 public interface SmtManager {
 
-	Pair<Status, Map<SolverVariable, Term>> check(SmtLibTerm assertion, boolean getModel, int timeout)
+	Pair<SmtStatus, Map<SolverVariable, Term>> check(SmtLibTerm assertion, boolean getModel, int timeout)
 			throws EvaluationException;
 
-	Pair<Status, Map<SolverVariable, Term>> check(List<SmtLibTerm> assertions, boolean getModel, int timeout)
+	Pair<SmtStatus, Map<SolverVariable, Term>> check(List<SmtLibTerm> assertions, boolean getModel, int timeout)
 			throws EvaluationException;
 
 }

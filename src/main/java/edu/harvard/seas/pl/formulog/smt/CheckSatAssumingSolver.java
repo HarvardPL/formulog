@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
@@ -36,8 +35,6 @@ import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
-import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.smt.SmtLibShim.Status;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.GlobalSymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInConstructorSymbolBase;
@@ -49,7 +46,6 @@ import edu.harvard.seas.pl.formulog.util.Pair;
 
 public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 
-	private static final AtomicInteger cnt = new AtomicInteger();
 	private final Map<SmtLibTerm, SolverVariable> indicatorVars = new ConcurrentHashMap<>();
 	private int nextVarId;
 
@@ -63,7 +59,8 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 		return indicatorVars.keySet();
 	}
 
-	private Pair<List<SolverVariable>, List<SolverVariable>> makeAssertion(List<SmtLibTerm> formula, Integer id) {
+	@Override
+	protected Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(List<SmtLibTerm> formula, int id) {
 		ByteArrayOutputStream baos = null;
 		if (debugShim != null) {
 			baos = new ByteArrayOutputStream();
@@ -115,35 +112,10 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 	}
 
 	@Override
-	public synchronized Pair<Status, Map<SolverVariable, Term>> check(List<SmtLibTerm> t, boolean getModel, int timeout)
-			throws EvaluationException {
-		boolean debug = debugShim != null;
-		int id = 0;
-		if (debug) {
-			id = cnt.getAndIncrement();
-		}
-		Pair<List<SolverVariable>, List<SolverVariable>> p = makeAssertion(t, id);
-		long start = 0;
-		if (debug || Configuration.timeSmt) {
-			start = System.currentTimeMillis();
-		}
-		Status status = shim.checkSatAssuming(p.fst(), p.snd(), timeout);
-		if (debug) {
-			double time = (System.currentTimeMillis() - start) / 1000.0;
-			System.err.println("\nRES SMT JOB #" + id + ": " + status + " (" + time + "s)");
-		}
-		if (Configuration.timeSmt) {
-			long time = System.currentTimeMillis() - start;
-			Configuration.recordSmtEvalTime(time);
-		}
-		Map<SolverVariable, Term> m = null;
-		if (status.equals(Status.SATISFIABLE) && getModel) {
-			m = shim.getModel();
-		}
+	protected void cleanup() {
 		if (indicatorVars.size() > Configuration.smtCacheSize) {
 			clearCache();
 		}
-		return new Pair<>(status, m);
 	}
 
 }
