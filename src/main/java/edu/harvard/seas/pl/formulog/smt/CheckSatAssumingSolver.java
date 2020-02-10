@@ -4,7 +4,7 @@ package edu.harvard.seas.pl.formulog.smt;
  * #%L
  * FormuLog
  * %%
- * Copyright (C) 2018 - 2019 President and Fellows of Harvard College
+ * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,7 @@ package edu.harvard.seas.pl.formulog.smt;
  * #L%
  */
 
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -36,7 +33,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
-import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
@@ -51,76 +47,22 @@ import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedConstruct
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
-public class Z3Process {
-
-	static {
-		String os = System.getProperty("os.name");
-		String cmd = "";
-		if (os.startsWith("Windows")) {
-			cmd += "where";
-		} else {
-			cmd += "which";
-		}
-		cmd += " z3";
-		try {
-			Process p = Runtime.getRuntime().exec(cmd);
-			if (p.waitFor() != 0) {
-				throw new AssertionError(
-						"Cannot find z3 executable on path (`" + cmd + "` returned a non-zero exit code).");
-			}
-		} catch (IOException | InterruptedException e) {
-			throw new AssertionError("Command checking for presence of z3 executable failed: " + cmd);
-		}
-	}
+public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 
 	private static final AtomicInteger cnt = new AtomicInteger();
-	private SmtLibShim debugShim;
-	private SmtLibShim shim;
-	private Process z3;
 	private final Map<SmtLibTerm, SolverVariable> indicatorVars = new ConcurrentHashMap<>();
 	private int nextVarId;
-
-	public synchronized void start(Program<?, ?> prog) {
-		assert z3 == null;
-		try {
-			z3 = Runtime.getRuntime().exec("z3 -in -smt2");
-			BufferedReader reader = new BufferedReader(new InputStreamReader(z3.getInputStream()));
-			PrintWriter writer = new PrintWriter(z3.getOutputStream());
-			shim = new SmtLibShim(reader, writer, prog);
-			shim.push();
-			if (Configuration.debugSmt) {
-				setupDebugShim(prog);
-			}
-		} catch (IOException e) {
-			throw new RuntimeException("Could not run Z3:\n" + e);
-		}
-	}
-
-	private void setupDebugShim(Program<?, ?> prog) {
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		debugShim = new SmtLibShim(null, new PrintWriter(baos), prog);
-		String msg = "\nBEGIN Z3 DECLARATIONS (Z3Process " + hashCode() + "):\n";
-		msg += baos.toString();
-		msg += "END Z3 DECLARATIONS (Z3Process " + hashCode() + ")";
-		System.err.println(msg);
-	}
-
-	public synchronized void destroy() {
-		assert z3 != null;
-		z3.destroy();
-		z3 = null;
-	}
 
 	private void clearCache() {
 		indicatorVars.clear();
 		shim.pop();
 		shim.push();
 	}
-	
+
 	public Set<SmtLibTerm> getCache() {
 		return indicatorVars.keySet();
 	}
-	
+
 	private Pair<List<SolverVariable>, List<SolverVariable>> makeAssertion(List<SmtLibTerm> formula, Integer id) {
 		ByteArrayOutputStream baos = null;
 		if (debugShim != null) {
@@ -142,9 +84,9 @@ public class Z3Process {
 			xs.add(x);
 		}
 		if (debugShim != null) {
-			String msg = "\nBEGIN Z3 JOB #" + id + " (Z3Process " + hashCode() + "):\n";
+			String msg = "\nBEGIN SMT JOB #" + id + " (SMT solver #" + hashCode() + "):\n";
 			msg += baos.toString();
-			msg += "END Z3 JOB #" + id;
+			msg += "END SMT JOB #" + id;
 			System.err.println(msg);
 		}
 		List<SolverVariable> onVars = new ArrayList<>();
@@ -163,15 +105,17 @@ public class Z3Process {
 		Term[] args = { x, assertion };
 		return (SmtLibTerm) Constructors.make(BuiltInConstructorSymbol.SMT_IMP, args);
 	}
-	
+
 	private SolverVariable makeIndicatorVar(SmtLibTerm assertion) {
 		Term[] args = Terms.singletonArray(Terms.makeDummyTerm(nextVarId++));
-		ParameterizedConstructorSymbol sym = GlobalSymbolManager.getParameterizedSymbol(BuiltInConstructorSymbolBase.SMT_VAR);
+		ParameterizedConstructorSymbol sym = GlobalSymbolManager
+				.getParameterizedSymbol(BuiltInConstructorSymbolBase.SMT_VAR);
 		sym = sym.copyWithNewArgs(Param.wildCard(), new Param(BuiltInTypes.bool, ParamKind.PRE_SMT_TYPE));
 		return (SolverVariable) Constructors.make(sym, args);
 	}
 
-	public synchronized Pair<Status, Map<SolverVariable, Term>> check(List<SmtLibTerm> t, boolean getModel, Integer timeout)
+	@Override
+	public synchronized Pair<Status, Map<SolverVariable, Term>> check(List<SmtLibTerm> t, boolean getModel, int timeout)
 			throws EvaluationException {
 		boolean debug = debugShim != null;
 		int id = 0;
@@ -186,7 +130,7 @@ public class Z3Process {
 		Status status = shim.checkSatAssuming(p.fst(), p.snd(), timeout);
 		if (debug) {
 			double time = (System.currentTimeMillis() - start) / 1000.0;
-			System.err.println("\nRES Z3 JOB #" + id + ": " + status + " (" + time + "s)");
+			System.err.println("\nRES SMT JOB #" + id + ": " + status + " (" + time + "s)");
 		}
 		if (Configuration.timeSmt) {
 			long time = System.currentTimeMillis() - start;

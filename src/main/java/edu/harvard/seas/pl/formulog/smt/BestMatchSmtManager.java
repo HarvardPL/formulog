@@ -38,17 +38,17 @@ import edu.harvard.seas.pl.formulog.util.Pair;
 
 public class BestMatchSmtManager extends AbstractSmtManager {
 
-	private final Z3Process[] processes;
+	private final CheckSatAssumingSolver[] solvers;
 	private final AtomicIntegerArray statuses;
 	private static final int cacheCap = Configuration.smtCacheSize;
 
 	public BestMatchSmtManager(Program<?, ?> prog, int size) {
-		processes = new Z3Process[size];
+		solvers = new CheckSatAssumingSolver[size];
 		statuses = new AtomicIntegerArray(size);
 		for (int i = 0; i < size; ++i) {
-			Z3Process proc = new Z3Process();
-			proc.start(prog);
-			processes[i] = proc;
+			CheckSatAssumingSolver solver = new CheckSatAssumingSolver();
+			solver.start(prog);
+			solvers[i] = solver;
 		}
 	}
 
@@ -56,16 +56,16 @@ public class BestMatchSmtManager extends AbstractSmtManager {
 	public Pair<Status, Map<SolverVariable, Term>> check(List<SmtLibTerm> conjuncts, boolean getModel, int timeout)
 			throws EvaluationException {
 		while (true) {
-			PriorityQueue<Pair<Integer, Double>> q = new PriorityQueue<>(processes.length, cmp);
-			for (int i = 0; i < processes.length; ++i) {
-				double score = score(conjuncts, processes[i]);
+			PriorityQueue<Pair<Integer, Double>> q = new PriorityQueue<>(solvers.length, cmp);
+			for (int i = 0; i < solvers.length; ++i) {
+				double score = score(conjuncts, solvers[i]);
 				q.add(new Pair<>(i, score));
 			}
 			while (!q.isEmpty()) {
 				int i = q.remove().fst();
 				if (statuses.compareAndSet(i, 0, 1)) {
 					try {
-						return processes[i].check(conjuncts, getModel, timeout);
+						return solvers[i].check(conjuncts, getModel, timeout);
 					} finally {
 						statuses.set(i, 0);
 					}
@@ -83,8 +83,8 @@ public class BestMatchSmtManager extends AbstractSmtManager {
 
 	};
 
-	private double score(List<SmtLibTerm> conjuncts, Z3Process proc) {
-		Set<SmtLibTerm> cache = proc.getCache();
+	private double score(List<SmtLibTerm> conjuncts, CheckSatAssumingSolver solver) {
+		Set<SmtLibTerm> cache = solver.getCache();
 		int cacheSize = cache.size();
 		if (cacheSize == 0) {
 			return 0;

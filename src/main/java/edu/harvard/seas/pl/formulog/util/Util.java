@@ -2,6 +2,7 @@ package edu.harvard.seas.pl.formulog.util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
 
 /*-
@@ -172,5 +173,25 @@ public final class Util {
 			f.delete();
 		}
 	}
-	
+
+	public static void assertBinaryOnPath(String exec) {
+		String os = System.getProperty("os.name");
+		String cmd = "";
+		if (os.startsWith("Windows")) {
+			cmd += "where";
+		} else {
+			cmd += "which";
+		}
+		cmd += " " + exec;
+		try {
+			Process p = Runtime.getRuntime().exec(cmd);
+			if (p.waitFor() != 0) {
+				throw new AssertionError(
+						"Cannot find " + exec + " executable on path (`" + cmd + "` returned a non-zero exit code).");
+			}
+		} catch (IOException | InterruptedException e) {
+			throw new AssertionError("Command checking for presence of " + exec + " executable failed: " + cmd);
+		}
+	}
+
 }

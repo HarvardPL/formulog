@@ -37,28 +37,28 @@ import edu.harvard.seas.pl.formulog.util.Pair;
 
 public class QueueSmtManager extends AbstractSmtManager {
 
-	private final ArrayBlockingQueue<Z3Process> processes;
+	private final ArrayBlockingQueue<SmtLibSolver> solvers;
 
 	public QueueSmtManager(Program<UserPredicate, BasicRule> prog, int size) {
-		processes = new ArrayBlockingQueue<>(size);
+		solvers = new ArrayBlockingQueue<>(size);
 		for (int i = 0; i < size; ++i) {
-			Z3Process proc = new Z3Process();
-			proc.start(prog);
-			processes.add(proc);
+			CheckSatAssumingSolver solver = new CheckSatAssumingSolver();
+			solver.start(prog);
+			solvers.add(solver);
 		}
 	}
 
 	@Override
 	public Pair<Status, Map<SolverVariable, Term>> check(List<SmtLibTerm> conjuncts, boolean getModel, int timeout)
 			throws EvaluationException {
-		Z3Process proc;
+		SmtLibSolver solver;
 		try {
-			proc = processes.take();
+			solver = solvers.take();
 		} catch (InterruptedException e) {
 			throw new EvaluationException(e);
 		}
-		Pair<Status, Map<SolverVariable, Term>> res = proc.check(conjuncts, getModel, timeout);
-		processes.add(proc);
+		Pair<Status, Map<SolverVariable, Term>> res = solver.check(conjuncts, getModel, timeout);
+		solvers.add(solver);
 		return res;
 	}
 
