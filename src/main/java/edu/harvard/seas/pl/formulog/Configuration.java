@@ -42,6 +42,7 @@ import edu.harvard.seas.pl.formulog.db.IndexedFactDb;
 import edu.harvard.seas.pl.formulog.smt.SmtStrategy;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
+import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
 
 public final class Configuration {
@@ -54,7 +55,7 @@ public final class Configuration {
 	private static final Map<FunctionSymbol, AtomicLong> funcTimes = new ConcurrentHashMap<>();
 
 	public static final boolean recordRuleDiagnostics = propIsSet("timeRules");
-	private static final Map<Rule<?, ?>, AtomicLong> ruleTimes = new ConcurrentHashMap<>();
+	private static final Map<Rule<?, ?>, Pair<AtomicLong, AtomicLong>> ruleTimes = new ConcurrentHashMap<>();
 
 	public static final boolean debugSmt = propIsSet("debugSmt");
 
@@ -90,7 +91,7 @@ public final class Configuration {
 
 	public static final boolean codeGen = propIsSet("codeGen");
 	public static final boolean testCodeGen = propIsSet("testCodeGen");
-	
+
 	public static final String souffleInclude = System.getProperty("souffleInclude");
 	public static final String boostInclude = System.getProperty("boostInclude");
 	public static final String antlrInclude = System.getProperty("antlrInclude");
@@ -100,11 +101,11 @@ public final class Configuration {
 	public static final int memoizeThreshold() {
 		return getIntProp("memoizeThreshold", 0);
 	}
-	
+
 	public static final boolean genComparators = propIsSet("genComparators", true);
 
 	public static final boolean inlineInRules = propIsSet("inlineInRules", true);
-	
+
 	public static final boolean eagerSemiNaive = propIsSet("eagerSemiNaive");
 
 	static {
@@ -216,26 +217,47 @@ public final class Configuration {
 			return -Long.compare(e1.getValue().get(), e2.getValue().get());
 		}
 
+	};	
+	
+	private static final Comparator<Map.Entry<?, Pair<AtomicLong, AtomicLong>>> sortPairedTimes = new Comparator<Map.Entry<?, Pair<AtomicLong, AtomicLong>>>() {
+
+		@Override
+		public int compare(Entry<?, Pair<AtomicLong, AtomicLong>> e1, Entry<?, Pair<AtomicLong, AtomicLong>> e2) {
+			return -Long.compare(getTotal(e1), getTotal(e2));
+		}
+
+		private long getTotal(Entry<?, Pair<AtomicLong, AtomicLong>> e) {
+			Pair<AtomicLong, AtomicLong> p = e.getValue();
+			return p.fst().get() + p.snd().get();
+		}
+
 	};
 
-	public static void recordRuleTime(Rule<?, ?> rule, long time) {
-		AtomicLong l = Util.lookupOrCreate(ruleTimes, rule, () -> new AtomicLong());
-		l.addAndGet(time);
+	public static void recordRulePrefixTime(Rule<?, ?> rule, long time) {
+		Pair<AtomicLong, AtomicLong> p = Util.lookupOrCreate(ruleTimes, rule,
+				() -> new Pair<>(new AtomicLong(), new AtomicLong()));
+		p.fst().addAndGet(time);
 	}
 
-	public static Map<Rule<?, ?>, AtomicLong> getRuleDiagnostics() {
-		return Collections.unmodifiableMap(ruleTimes);
+	public static void recordRuleSuffixTime(Rule<?, ?> rule, long time) {
+		Pair<AtomicLong, AtomicLong> p = Util.lookupOrCreate(ruleTimes, rule,
+				() -> new Pair<>(new AtomicLong(), new AtomicLong()));
+		p.snd().addAndGet(time);
 	}
 
 	public static synchronized void printRuleDiagnostics(PrintStream out) {
-		Map<Rule<?, ?>, AtomicLong> times = Configuration.getRuleDiagnostics();
-		List<Map.Entry<Rule<?, ?>, AtomicLong>> sorted = times.entrySet().stream().sorted(sortTimes)
+		Map<Rule<?, ?>, Pair<AtomicLong, AtomicLong>> times = ruleTimes;
+		List<Map.Entry<Rule<?, ?>, Pair<AtomicLong, AtomicLong>>> sorted = times.entrySet().stream().sorted(sortPairedTimes)
 				.collect(Collectors.toList());
-		Iterator<Map.Entry<Rule<?, ?>, AtomicLong>> it = sorted.iterator();
+		Iterator<Map.Entry<Rule<?, ?>, Pair<AtomicLong, AtomicLong>>> it = sorted.iterator();
 		int end = Math.min(times.size(), 10);
 		for (int i = 0; i < end; ++i) {
-			Map.Entry<Rule<?, ?>, AtomicLong> e = it.next();
-			out.println("[RULE DIAGNOSTICS] " + e.getValue().get() + "ms:\n" + e.getKey());
+			Map.Entry<Rule<?, ?>, Pair<AtomicLong, AtomicLong>> e = it.next();
+			Pair<AtomicLong, AtomicLong> p = e.getValue();
+			long pre = p.fst().get();
+			long suf = p.snd().get();
+			long total = pre + suf;
+			out.println("[RULE DIAGNOSTICS] " + total + " (" + pre + " + " + suf + ") ms:\n" + e.getKey());
 		}
 	}
 
@@ -288,7 +310,7 @@ public final class Configuration {
 		breakIntoCollection(val, l);
 		return Collections.unmodifiableList(l);
 	}
-	
+
 	private static void breakIntoCollection(String s, Collection<String> acc) {
 		int split;
 		while ((split = s.indexOf(',')) != -1) {
@@ -338,12 +360,12 @@ public final class Configuration {
 	}
 
 	private static Set<String> selectedRelsToPrint;
-	
+
 	public static Set<String> getSelectedRelsToPrint() {
 		assert printResultsPreference.equals(PrintPreference.SOME);
 		return selectedRelsToPrint;
 	}
-	
+
 	private static PrintPreference getPrintResultsPreference() {
 		String val = System.getProperty("printResults");
 		if (val == null) {

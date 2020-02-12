@@ -240,7 +240,7 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 			}
 			if (recordRuleDiagnostics) {
 				long end = System.currentTimeMillis();
-				Configuration.recordRuleTime(rule, end - start);
+				Configuration.recordRuleSuffixTime(rule, end - start);
 			}
 		}
 
@@ -364,7 +364,7 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 			}
 			if (recordRuleDiagnostics) {
 				long end = System.currentTimeMillis();
-				Configuration.recordRuleTime(rule, end - start);
+				Configuration.recordRulePrefixTime(rule, end - start);
 			}
 		}
 

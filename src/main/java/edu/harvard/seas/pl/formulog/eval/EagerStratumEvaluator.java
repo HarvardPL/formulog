@@ -169,7 +169,7 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 			}
 			if (recordRuleDiagnostics) {
 				long end = System.currentTimeMillis();
-				Configuration.recordRuleTime(rule, end - start);
+				Configuration.recordRuleSuffixTime(rule, end - start);
 			}
 		}
 
@@ -314,7 +314,7 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 			}
 			if (recordRuleDiagnostics) {
 				long end = System.currentTimeMillis();
-				Configuration.recordRuleTime(rule, end - start);
+				Configuration.recordRulePrefixTime(rule, end - start);
 			}
 		}
 
@@ -367,8 +367,8 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 					reportFact(head.getSymbol(), head.getArgs(), s);
 					return;
 				} catch (EvaluationException e) {
-					throw new EvaluationException("Exception raised while evaluationg the literal: " + rule.getHead()
-							+ e.getLocalizedMessage());
+					throw new EvaluationException("Exception raised while evaluationg the literal: "
+							+ rule.getHead() + e.getLocalizedMessage());
 				}
 			}
 			Iterator<Iterable<Term[]>> tups = lookup(rule, pos, s).iterator();
