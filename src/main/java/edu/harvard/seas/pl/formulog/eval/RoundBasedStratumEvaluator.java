@@ -116,7 +116,7 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 			}
 		}
 	}
-	
+
 	void updateDbs() {
 		StopWatch watch = recordDbUpdateStart();
 		for (RelationSymbol sym : nextDeltaDb.getSymbols()) {
@@ -357,57 +357,7 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 				start = System.currentTimeMillis();
 			}
 			try {
-				int len = rule.getBodySize();
-				int pos = 0;
-				OverwriteSubstitution s = new OverwriteSubstitution();
-				loop: for (; pos < len; ++pos) {
-					SimpleLiteral l = rule.getBody(pos);
-					try {
-						switch (l.getTag()) {
-						case ASSIGNMENT:
-							((Assignment) l).assign(s);
-							break;
-						case CHECK:
-							if (!((Check) l).check(s)) {
-								return;
-							}
-							break;
-						case DESTRUCTOR:
-							if (!((Destructor) l).destruct(s)) {
-								return;
-							}
-							break;
-						case PREDICATE:
-							SimplePredicate p = (SimplePredicate) l;
-							if (p.isNegated()) {
-								if (lookup(rule, pos, s).iterator().hasNext()) {
-									return;
-								}
-							} else {
-								// Stop on the first positive user predicate.
-								break loop;
-							}
-							break;
-						}
-					} catch (EvaluationException e) {
-						throw new EvaluationException(
-								"Exception raised while evaluating the literal: " + l + "\n\n" + e.getMessage());
-					}
-				}
-				if (pos == len) {
-					try {
-						SimplePredicate head = rule.getHead();
-						reportFact(head.getSymbol(), head.getArgs(), s);
-						return;
-					} catch (EvaluationException e) {
-						throw new EvaluationException("Exception raised while evaluationg the literal: "
-								+ rule.getHead() + e.getLocalizedMessage());
-					}
-				}
-				Iterator<Iterable<Term[]>> tups = lookup(rule, pos, s).iterator();
-				if (tups.hasNext()) {
-					exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s, tups));
-				}
+				evaluate();
 			} catch (EvaluationException e) {
 				throw new EvaluationException(
 						"Exception raised while evaluating the rule:\n" + rule + "\n\n" + e.getMessage());
@@ -418,8 +368,61 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 			}
 		}
 
+		void evaluate() throws EvaluationException {
+			int len = rule.getBodySize();
+			int pos = 0;
+			OverwriteSubstitution s = new OverwriteSubstitution();
+			loop: for (; pos < len; ++pos) {
+				SimpleLiteral l = rule.getBody(pos);
+				try {
+					switch (l.getTag()) {
+					case ASSIGNMENT:
+						((Assignment) l).assign(s);
+						break;
+					case CHECK:
+						if (!((Check) l).check(s)) {
+							return;
+						}
+						break;
+					case DESTRUCTOR:
+						if (!((Destructor) l).destruct(s)) {
+							return;
+						}
+						break;
+					case PREDICATE:
+						SimplePredicate p = (SimplePredicate) l;
+						if (p.isNegated()) {
+							if (lookup(rule, pos, s).iterator().hasNext()) {
+								return;
+							}
+						} else {
+							// Stop on the first positive user predicate.
+							break loop;
+						}
+						break;
+					}
+				} catch (EvaluationException e) {
+					throw new EvaluationException(
+							"Exception raised while evaluating the literal: " + l + "\n\n" + e.getMessage());
+				}
+			}
+			if (pos == len) {
+				try {
+					SimplePredicate head = rule.getHead();
+					reportFact(head.getSymbol(), head.getArgs(), s);
+					return;
+				} catch (EvaluationException e) {
+					throw new EvaluationException("Exception raised while evaluationg the literal: " + rule.getHead()
+							+ e.getLocalizedMessage());
+				}
+			}
+			Iterator<Iterable<Term[]>> tups = lookup(rule, pos, s).iterator();
+			if (tups.hasNext()) {
+				exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s, tups));
+			}
+		}
 	}
-	
+
 	StopWatch recordRoundStart(int round) {
 		if (!Configuration.debugRounds) {
 			return null;
