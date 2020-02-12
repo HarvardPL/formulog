@@ -23,21 +23,33 @@ package edu.harvard.seas.pl.formulog.smt;
 public class SmtStrategy {
 
 	public enum Tag {
-		QUEUE, BEST_MATCH, PER_THREAD_QUEUE, PER_THREAD_BEST_MATCH, PER_THREAD_PUSH_POP;
+		QUEUE,
+		
+		BEST_MATCH,
+		
+		PER_THREAD_QUEUE,
+		
+		PER_THREAD_BEST_MATCH,
+		
+		PER_THREAD_PUSH_POP,
+		
+		PER_THREAD_NAIVE,
+		
+		;
 	}
 
 	private final Tag tag;
 	private final Object metadata;
-	
+
 	public SmtStrategy(Tag tag, Object metadata) {
 		this.tag = tag;
 		this.metadata = metadata;
 	}
-	
+
 	public Tag getTag() {
 		return tag;
 	}
-	
+
 	public Object getMetadata() {
 		return metadata;
 	}
@@ -74,5 +86,5 @@ public class SmtStrategy {
 	public String toString() {
 		return "SmtStrategy [tag=" + tag + ", metadata=" + metadata + "]";
 	}
-	
+
 }

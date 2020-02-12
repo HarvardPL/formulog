@@ -78,6 +78,11 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 		solver.destroy();
 		solver = null;
 	}
+	
+	@Override
+	public void finalize() {
+		destroy();
+	}
 
 	protected abstract Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(List<SmtLibTerm> assertions,
 			int id);
@@ -87,6 +92,7 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 	@Override
 	public synchronized Pair<SmtStatus, Map<SolverVariable, Term>> check(List<SmtLibTerm> assertions, boolean getModel,
 			int timeout) throws EvaluationException {
+		assert solver != null;
 		boolean debug = debugShim != null;
 		int id = 0;
 		if (debug) {
