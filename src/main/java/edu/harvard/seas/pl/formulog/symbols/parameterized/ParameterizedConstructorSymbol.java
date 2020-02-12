@@ -36,9 +36,9 @@ import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.sym;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbolType;
@@ -53,7 +53,7 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 		implements ConstructorSymbol {
 
 	private final FunctorType type;
-	private static final Map<Pair<BuiltInConstructorSymbolBase, List<Param>>, ParameterizedConstructorSymbol> memo = new HashMap<>();
+	private static final Map<Pair<BuiltInConstructorSymbolBase, List<Param>>, ParameterizedConstructorSymbol> memo = new ConcurrentHashMap<>();
 
 	private ParameterizedConstructorSymbol(BuiltInConstructorSymbolBase base, List<Param> args) {
 		super(base, args);
