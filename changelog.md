@@ -1,6 +1,16 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+### Added
+- Eager semi-naive evaluation algorithm.
+- SMT manager that uses push and pop.
+- Naive SMT manager that does not do any form of caching.
+
+### Fixed
+- Concurrency bug in the memoization of parameterized constructor symbols.
+- Bug in the recording of rule evaluation diagnostics.
+
 ## [0.3.0] - 2020-02-03
 ### Added
 - Support for `fold` terms.
