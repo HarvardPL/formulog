@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Concurrency bug in the memoization of parameterized constructor symbols.
 - Bug in the recording of rule evaluation diagnostics.
+- Bug in the "freshening" of `let fun` expressions.
 
 ## [0.3.0] - 2020-02-03
 ### Added

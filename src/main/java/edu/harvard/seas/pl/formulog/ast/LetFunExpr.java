@@ -68,7 +68,7 @@ public class LetFunExpr implements Expr {
 		for (NestedFunctionDef def : defs) {
 			newDefs.add(def.applySubstitution(s));
 		}
-		return make(defs, letBody.applySubstitution(s));
+		return make(newDefs, letBody.applySubstitution(s));
 	}
 
 	@Override

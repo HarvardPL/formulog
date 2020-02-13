@@ -1,0 +1,8 @@
+fun f(X: i32, Y: i32) : i32 =
+  let fun g(Z: i32) : i32 =
+    let fun h(W: i32) : i32 = W + Z in
+    h(Z) in
+  g(X + Y)
+
+output ok
+ok :- f(2, 3) = 10.
