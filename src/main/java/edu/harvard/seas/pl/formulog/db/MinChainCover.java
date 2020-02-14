@@ -35,42 +35,42 @@ import org.jgrapht.alg.flow.PushRelabelMFImpl;
 import org.jgrapht.alg.interfaces.MaximumFlowAlgorithm;
 import org.jgrapht.graph.SimpleDirectedGraph;
 
-import edu.harvard.seas.pl.formulog.util.Util;
-
 public class MinChainCover<T> {
 
 	private final BiFunction<T, T, Boolean> lessThan;
-	
+
 	public MinChainCover(BiFunction<T, T, Boolean> lessThan) {
 		this.lessThan = lessThan;
 	}
-	
+
 	public Iterable<Iterable<T>> compute(Set<T> elts) {
 		return new Worker(elts).go();
 	}
 
 	private class Worker {
 
-		private final BiGraphNode source = new BiGraphNode() {
-			
+		private final Graph<Node, Edge> bigraph = new SimpleDirectedGraph<>(Edge.class);
+		private final T[] elts;
+		private final Boolean[][] memo;
+
+		private final Node source = new Node() {
+
 			@Override
 			public String toString() {
 				return "source";
 			}
-			
+
 		};
-		private final BiGraphNode sink = new BiGraphNode() {
-			
+		
+		private final Node sink = new Node() {
+
 			@Override
 			public String toString() {
 				return "sink";
 			}
-			
-		};
-		private final Graph<BiGraphNode, BiGraphEdge> bigraph = new SimpleDirectedGraph<>(BiGraphEdge.class);
-		private final T[] elts;
-		private final Boolean[][] memo;
 
+		};
+		
 		@SuppressWarnings("unchecked")
 		public Worker(Set<T> s) {
 			int n = s.size();
@@ -92,29 +92,28 @@ public class MinChainCover<T> {
 			bigraph.addVertex(source);
 			bigraph.addVertex(sink);
 			for (T elt : elts) {
-				BiGraphNode left = new FilledBiGraphNode(elt, false);
-				BiGraphNode right = new FilledBiGraphNode(elt, true);
+				Node left = new InnerNode(elt, false);
+				Node right = new InnerNode(elt, true);
 				bigraph.addVertex(left);
 				bigraph.addVertex(right);
-				bigraph.addEdge(source, left, new BiGraphEdge(source, left));
-				bigraph.addEdge(right, sink, new BiGraphEdge(right, sink));
+				bigraph.addEdge(source, left, new Edge(source, left));
+				bigraph.addEdge(right, sink, new Edge(right, sink));
 			}
 			for (int i = 0; i < elts.length; ++i) {
-				BiGraphNode iv = new FilledBiGraphNode(elts[i], false);
+				Node iv = new InnerNode(elts[i], false);
 				for (int j = 0; j < elts.length; ++j) {
 					considerEdge(i, iv, j);
 				}
 			}
-			Util.printGraph(System.out, bigraph);
 		}
 
-		private void considerEdge(int i, BiGraphNode iv, int j) {
+		private void considerEdge(int i, Node iv, int j) {
 			if (memo[i][j] == null) {
 				memoize(i, j);
 			}
 			if (memo[i][j]) {
-				BiGraphNode jv = new FilledBiGraphNode(elts[j], true);
-				bigraph.addEdge(iv, jv, new BiGraphEdge(iv, jv));
+				Node jv = new InnerNode(elts[j], true);
+				bigraph.addEdge(iv, jv, new Edge(iv, jv));
 			}
 		}
 
@@ -135,25 +134,25 @@ public class MinChainCover<T> {
 				memo[i][j] = false;
 			}
 		}
-		
-		private Map<BiGraphEdge, Double> computeMaxFlowMap() {
-			MaximumFlowAlgorithm<BiGraphNode, BiGraphEdge> maxFlow = new PushRelabelMFImpl<>(bigraph);
+
+		private Map<Edge, Double> computeMaxFlowMap() {
+			MaximumFlowAlgorithm<Node, Edge> maxFlow = new PushRelabelMFImpl<>(bigraph);
 			return maxFlow.getMaximumFlow(source, sink).getFlowMap();
 		}
 
 		@SuppressWarnings("unchecked")
 		private Iterable<Iterable<T>> mkChains() {
-			Map<BiGraphEdge, Double> maxFlowMap = computeMaxFlowMap();
+			Map<Edge, Double> maxFlowMap = computeMaxFlowMap();
 			Set<T> roots = new HashSet<>(Arrays.asList(elts));
 			Map<T, T> m = new HashMap<>();
-			for (Map.Entry<BiGraphEdge, Double> entry : maxFlowMap.entrySet()) {
+			for (Map.Entry<Edge, Double> entry : maxFlowMap.entrySet()) {
 				if (entry.getValue() > 0) {
-					BiGraphEdge edge = entry.getKey();
+					Edge edge = entry.getKey();
 					if (edge.src == source || edge.dst == sink) {
 						continue;
 					}
-					FilledBiGraphNode src = (FilledBiGraphNode) edge.src;
-					FilledBiGraphNode dst = (FilledBiGraphNode) edge.dst;
+					InnerNode src = (InnerNode) edge.src;
+					InnerNode dst = (InnerNode) edge.dst;
 					roots.remove(dst.elt);
 					T other = m.put(src.elt, dst.elt);
 					assert other == null;
@@ -171,19 +170,19 @@ public class MinChainCover<T> {
 			}
 			return chains;
 		}
-		
-	}
-
-	private static interface BiGraphNode {
 
 	}
 
-	private class FilledBiGraphNode implements BiGraphNode {
+	private static interface Node {
+
+	}
+
+	private class InnerNode implements Node {
 
 		public final T elt;
 		public final boolean side;
 
-		public FilledBiGraphNode(T elt, boolean side) {
+		public InnerNode(T elt, boolean side) {
 			this.elt = elt;
 			this.side = side;
 		}
@@ -206,7 +205,7 @@ public class MinChainCover<T> {
 			if (getClass() != obj.getClass())
 				return false;
 			@SuppressWarnings("unchecked")
-			FilledBiGraphNode other = (FilledBiGraphNode) obj;
+			InnerNode other = (InnerNode) obj;
 			if (elt == null) {
 				if (other.elt != null)
 					return false;
@@ -216,7 +215,7 @@ public class MinChainCover<T> {
 				return false;
 			return true;
 		}
-		
+
 		@Override
 		public String toString() {
 			return elt + ((side) ? "@R" : "@L");
@@ -224,12 +223,12 @@ public class MinChainCover<T> {
 
 	}
 
-	private static class BiGraphEdge {
+	private static class Edge {
 
-		public final BiGraphNode src;
-		public final BiGraphNode dst;
+		public final Node src;
+		public final Node dst;
 
-		public BiGraphEdge(BiGraphNode src, BiGraphNode dst) {
+		public Edge(Node src, Node dst) {
 			this.src = src;
 			this.dst = dst;
 		}
@@ -251,7 +250,7 @@ public class MinChainCover<T> {
 				return false;
 			if (getClass() != obj.getClass())
 				return false;
-			BiGraphEdge other = (BiGraphEdge) obj;
+			Edge other = (Edge) obj;
 			if (dst == null) {
 				if (other.dst != null)
 					return false;
@@ -264,14 +263,14 @@ public class MinChainCover<T> {
 				return false;
 			return true;
 		}
-		
+
 		@Override
 		public String toString() {
 			return src + " ---> " + dst;
 		}
 
 	}
-	
+
 	public static void main(String[] args) {
 		Set<String> s1 = new HashSet<>(Arrays.asList("x"));
 		Set<String> s2 = new HashSet<>(Arrays.asList("x", "y"));
@@ -279,7 +278,7 @@ public class MinChainCover<T> {
 		Set<String> s4 = new HashSet<>(Arrays.asList("x", "y", "z"));
 		Set<Set<String>> elts = new HashSet<>(Arrays.asList(s1, s2, s3, s4));
 		MinChainCover<Set<String>> mcc = new MinChainCover<>((x, y) -> y.containsAll(x));
-		mcc.compute(elts);
+		System.out.println(mcc.compute(elts));
 	}
 
 }
