@@ -38,6 +38,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.jgrapht.Graph;
+
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 
 public final class Util {
@@ -192,6 +194,25 @@ public final class Util {
 		} catch (IOException | InterruptedException e) {
 			throw new AssertionError("Command checking for presence of " + exec + " executable failed: " + cmd);
 		}
+	}
+	
+	public static <V, E> void printGraph(PrintStream out, Graph<V, E> g) {
+		out.println("{");
+		for (Iterator<V> it = g.vertexSet().iterator(); it.hasNext();) {
+			V v = it.next();
+			out.println("\t" + v + ":");
+			if (g.outDegreeOf(v) == 0) {
+				out.println("\t\tNONE");
+			} else {
+				for (E e : g.outgoingEdgesOf(v)) {
+					out.println("\t\t" + e);
+				}
+			}
+			if (it.hasNext()) {
+				out.println();
+			}
+		}
+		out.println("}");
 	}
 
 }
