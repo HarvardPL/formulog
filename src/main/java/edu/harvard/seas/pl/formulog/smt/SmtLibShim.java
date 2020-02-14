@@ -38,7 +38,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 import org.jgrapht.Graph;
-import org.jgrapht.alg.KosarajuStrongConnectivityInspector;
+import org.jgrapht.alg.connectivity.KosarajuStrongConnectivityInspector;
 import org.jgrapht.alg.interfaces.StrongConnectivityAlgorithm;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;

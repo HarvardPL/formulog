@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.db;
 
+import java.util.ArrayList;
+
 /*-
  * #%L
  * FormuLog
@@ -21,11 +23,16 @@ package edu.harvard.seas.pl.formulog.db;
  */
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 
 import org.jgrapht.Graph;
+import org.jgrapht.alg.flow.PushRelabelMFImpl;
+import org.jgrapht.alg.interfaces.MaximumFlowAlgorithm;
 import org.jgrapht.graph.SimpleDirectedGraph;
 
 import edu.harvard.seas.pl.formulog.util.Util;
@@ -128,9 +135,41 @@ public class MinChainCover<T> {
 				memo[i][j] = false;
 			}
 		}
+		
+		private Map<BiGraphEdge, Double> computeMaxFlowMap() {
+			MaximumFlowAlgorithm<BiGraphNode, BiGraphEdge> maxFlow = new PushRelabelMFImpl<>(bigraph);
+			return maxFlow.getMaximumFlow(source, sink).getFlowMap();
+		}
 
+		@SuppressWarnings("unchecked")
 		private Iterable<Iterable<T>> mkChains() {
-			return null;
+			Map<BiGraphEdge, Double> maxFlowMap = computeMaxFlowMap();
+			Set<T> roots = new HashSet<>(Arrays.asList(elts));
+			Map<T, T> m = new HashMap<>();
+			for (Map.Entry<BiGraphEdge, Double> entry : maxFlowMap.entrySet()) {
+				if (entry.getValue() > 0) {
+					BiGraphEdge edge = entry.getKey();
+					if (edge.src == source || edge.dst == sink) {
+						continue;
+					}
+					FilledBiGraphNode src = (FilledBiGraphNode) edge.src;
+					FilledBiGraphNode dst = (FilledBiGraphNode) edge.dst;
+					roots.remove(dst.elt);
+					T other = m.put(src.elt, dst.elt);
+					assert other == null;
+				}
+			}
+			List<Iterable<T>> chains = new ArrayList<>();
+			for (T root : roots) {
+				T cur = root;
+				List<T> chain = new ArrayList<>();
+				while (cur != null) {
+					chain.add(cur);
+					cur = m.get(cur);
+				}
+				chains.add(chain);
+			}
+			return chains;
 		}
 		
 	}

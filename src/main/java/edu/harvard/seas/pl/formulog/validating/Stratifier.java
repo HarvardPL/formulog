@@ -28,7 +28,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.jgrapht.Graph;
-import org.jgrapht.alg.KosarajuStrongConnectivityInspector;
+import org.jgrapht.alg.connectivity.KosarajuStrongConnectivityInspector;
 import org.jgrapht.alg.interfaces.StrongConnectivityAlgorithm;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
@@ -61,7 +61,7 @@ import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 
 public class Stratifier {
 
-	private final Program<UserPredicate, BasicRule>  prog;
+	private final Program<UserPredicate, BasicRule> prog;
 
 	public Stratifier(Program<UserPredicate, BasicRule> prog) {
 		this.prog = prog;
