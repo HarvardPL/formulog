@@ -21,7 +21,6 @@ package edu.harvard.seas.pl.formulog.codegen;
  */
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -283,7 +282,7 @@ public class LiteralCodeGen {
 		private Pair<Function<CppStmt, CppStmt>, CppExpr> genNormalLookup(SimplePredicate pred) {
 			Pair<CppStmt, CppExpr> p = genKey(pred);
 			Relation rel = ctx.lookupRelation(pred.getSymbol());
-			CppExpr call = rel.mkLookup(index, Arrays.asList(pred.getBindingPattern()), p.snd(), useHint(rel));
+			CppExpr call = rel.mkLookup(index, pred.getBindingPattern(), p.snd(), useHint(rel));
 			return new Pair<>(s -> CppSeq.mk(p.fst(), s), call);
 		}
 

@@ -103,6 +103,7 @@ public final class Configuration {
 	}
 
 	public static final boolean genComparators = propIsSet("genComparators", true);
+	public static final boolean minIndex = propIsSet("minIndex", true);
 
 	public static final boolean inlineInRules = propIsSet("inlineInRules", true);
 

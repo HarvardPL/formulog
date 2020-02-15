@@ -26,6 +26,7 @@ import java.util.Collections;
 
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +35,6 @@ import java.util.NavigableSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import edu.harvard.seas.pl.formulog.Configuration;
@@ -43,14 +43,16 @@ import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolComparator;
+import edu.harvard.seas.pl.formulog.util.Pair;
+import edu.harvard.seas.pl.formulog.util.Util;
 
 public class SortedIndexedFactDb implements IndexedFactDb {
 
-	private final Map<RelationSymbol, List<IndexedFactSet>> indices;
-	private final Map<RelationSymbol, IndexedFactSet> masterIndex;
+	private final Map<RelationSymbol, Pair<IndexedFactSet, BindingType[]>[]> indices;
+	private final Map<RelationSymbol, Pair<IndexedFactSet, BindingType[]>> masterIndex;
 
-	private SortedIndexedFactDb(Map<RelationSymbol, List<IndexedFactSet>> indices,
-			Map<RelationSymbol, IndexedFactSet> masterIndex) {
+	private SortedIndexedFactDb(Map<RelationSymbol, Pair<IndexedFactSet, BindingType[]>[]> indices,
+			Map<RelationSymbol, Pair<IndexedFactSet, BindingType[]>> masterIndex) {
 		this.indices = indices;
 		this.masterIndex = masterIndex;
 	}
@@ -62,39 +64,49 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 
 	@Override
 	public Iterable<Term[]> getAll(RelationSymbol sym) {
-		return masterIndex.get(sym).getAll();
+		return masterIndex.get(sym).fst().getAll();
 	}
 
 	@Override
 	public boolean isEmpty(RelationSymbol sym) {
-		return masterIndex.get(sym).isEmpty();
+		return masterIndex.get(sym).fst().isEmpty();
 	}
 
 	@Override
 	public int countDistinct(RelationSymbol sym) {
-		return masterIndex.get(sym).count();
+		return masterIndex.get(sym).fst().count();
 	}
 
 	@Override
 	public int countDuplicates(RelationSymbol sym) {
 		int count = 0;
-		for (IndexedFactSet idx : indices.get(sym)) {
+		for (IndexedFactSet idx : getUniqueIndices(sym)) {
 			count += idx.count();
 		}
 		return count;
 	}
+	
+	private Set<IndexedFactSet> getUniqueIndices(RelationSymbol sym) {
+		Set<IndexedFactSet> s = new HashSet<>();
+		for (Pair<IndexedFactSet, ?> e : indices.get(sym)) {
+			s.add(e.fst());
+		}
+		return s;
+	}
 
 	@Override
 	public Iterable<Term[]> get(RelationSymbol sym, Term[] key, int index) {
-		return indices.get(sym).get(index).lookup(key);
+		Pair<IndexedFactSet, BindingType[]> p = indices.get(sym)[index];
+		return p.fst().lookup(key, p.snd());
 	}
 
 	@Override
 	public boolean add(RelationSymbol sym, Term[] tup) {
 		assert allNormal(tup);
-		IndexedFactSet master = masterIndex.get(sym);
+		IndexedFactSet master = masterIndex.get(sym).fst();
 		if (master.add(tup)) {
-			for (IndexedFactSet idx : indices.get(sym)) {
+			for (Pair<IndexedFactSet, ?> p : indices.get(sym)) {
+				IndexedFactSet idx = p.fst();
 				if (!idx.equals(master)) {
 					idx.add(tup);
 				}
@@ -106,9 +118,10 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 
 	@Override
 	public boolean addAll(RelationSymbol sym, Iterable<Term[]> tups) {
-		IndexedFactSet master = masterIndex.get(sym);
+		IndexedFactSet master = masterIndex.get(sym).fst();
 		if (master.addAll(tups)) {
-			for (IndexedFactSet idx : indices.get(sym)) {
+			for (Pair<IndexedFactSet, ?> p : indices.get(sym)) {
+				IndexedFactSet idx = p.fst();
 				if (!idx.equals(master)) {
 					idx.addAll(tups);
 				}
@@ -127,18 +140,10 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 		return true;
 	}
 
-	private void forEachIndex(Consumer<IndexedFactSet> f) {
-		for (Iterable<IndexedFactSet> idxs : indices.values()) {
-			for (IndexedFactSet idx : idxs) {
-				f.accept(idx);
-			}
-		}
-	}
-
 	@Override
 	public boolean hasFact(RelationSymbol sym, Term[] args) {
 		assert allGround(args);
-		return masterIndex.get(sym).contains(args);
+		return masterIndex.get(sym).fst().contains(args);
 	}
 
 	private boolean allGround(Term[] args) {
@@ -152,7 +157,11 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 
 	@Override
 	public void clear() {
-		forEachIndex(IndexedFactSet::clear);
+		for (Pair<IndexedFactSet, BindingType[]>[] idxs : indices.values()) {
+			for (Pair<IndexedFactSet, ?> p : idxs) {
+				p.fst().clear();
+			}
+		}
 	}
 
 	@Override
@@ -160,8 +169,9 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 		String s = "{\n";
 		for (RelationSymbol sym : masterIndex.keySet()) {
 			s += "\t" + sym + " = {\n";
-			for (IndexedFactSet idx : indices.get(sym)) {
-				s += idx.toString() + "\n";
+			for (Pair<IndexedFactSet, BindingType[]> p : indices.get(sym)) {
+				s += "\t" + Arrays.toString(p.snd()) + "\n";
+				s += p.fst().toString() + "\n";
 			}
 			s += "\t}\n";
 		}
@@ -171,9 +181,11 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 	public String toSimplifiedString() {
 		String s = "{\n";
 		for (RelationSymbol sym : masterIndex.keySet()) {
-			IndexedFactSet idx = masterIndex.get(sym);
+			Pair<IndexedFactSet, BindingType[]> p = masterIndex.get(sym);
+			IndexedFactSet idx = p.fst();
 			if (!idx.isEmpty()) {
 				s += "\t" + sym + " = {\n";
+				s += "\t" + Arrays.toString(p.snd()) + "\n";
 				s += idx.toString() + "\n";
 				s += "\t}\n";
 			}
@@ -186,15 +198,16 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 		if (!indices.containsKey(sym)) {
 			throw new IllegalArgumentException("Unrecognized symbol: " + sym);
 		}
-		return indices.get(sym).size();
+		return getUniqueIndices(sym).size();
 	}
 
 	public IndexInfo getIndexInfo(RelationSymbol sym, int idx) {
 		if (idx < 0 || idx > numIndices(sym)) {
 			throw new IllegalArgumentException("Unrecognized index for symbol " + sym + ": " + idx);
 		}
-		IndexedFactSet index = indices.get(sym).get(idx);
-		return new IndexInfo(index.comparatorOrder, Collections.singleton(Arrays.asList(index.pat)));
+		Pair<IndexedFactSet, BindingType[]> p = indices.get(sym)[idx];
+		IndexedFactSet index = p.fst();
+		return new IndexInfo(index.getId(), index.comparatorOrder, p.snd());
 	}
 
 	public int getMasterIndex(RelationSymbol sym) {
@@ -202,9 +215,9 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			throw new IllegalArgumentException("Unrecognized symbol: " + sym);
 		}
 		int i = 0;
-		IndexedFactSet master = masterIndex.get(sym);
-		for (IndexedFactSet s : indices.get(sym)) {
-			if (s.equals(master)) {
+		IndexedFactSet master = masterIndex.get(sym).fst();
+		for (Pair<IndexedFactSet, ?> p : indices.get(sym)) {
+			if (p.fst().equals(master)) {
 				break;
 			}
 			i++;
@@ -216,6 +229,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 
 		private final Map<RelationSymbol, Integer> counts = new HashMap<>();
 		private final Map<RelationSymbol, Map<BindingTypeArrayWrapper, Integer>> pats = new LinkedHashMap<>();
+		private final Map<RelationSymbol, Pair<IndexedFactSet, BindingType[]>> masterIndex = new HashMap<>();
 
 		public SortedIndexedFactDbBuilder(Set<RelationSymbol> allSyms) {
 			List<RelationSymbol> sortedSyms = allSyms.stream().sorted(SymbolComparator.INSTANCE)
@@ -243,38 +257,138 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 
 		@Override
 		public SortedIndexedFactDb build() {
-			Map<RelationSymbol, List<IndexedFactSet>> indices = new HashMap<>();
-			Map<RelationSymbol, IndexedFactSet> masterIndex = new HashMap<>();
+			Map<RelationSymbol, Pair<IndexedFactSet, BindingType[]>[]> indices = new HashMap<>();
 			for (Map.Entry<RelationSymbol, Map<BindingTypeArrayWrapper, Integer>> e : pats.entrySet()) {
 				RelationSymbol sym = e.getKey();
-				List<IndexedFactSet> idxs = new ArrayList<>();
-				List<Map.Entry<BindingTypeArrayWrapper, Integer>> sorted = e.getValue().entrySet().stream().sorted(cmp)
-						.collect(Collectors.toList());
-				for (Map.Entry<BindingTypeArrayWrapper, Integer> e2 : sorted) {
-					IndexedFactSet idx = IndexedFactSet.make(e2.getKey().getArr());
-					idxs.add(idx);
-					if (!idx.isProjected()) {
-						masterIndex.putIfAbsent(sym, idx);
-					}
-				}
-				if (!masterIndex.containsKey(sym)) {
-					BindingType[] pat = new BindingType[sym.getArity()];
-					for (int i = 0; i < pat.length; ++i) {
-						pat[i] = BindingType.FREE;
-					}
-					IndexedFactSet master = IndexedFactSet.make(pat);
-					masterIndex.put(sym, master);
-					idxs.add(master);
-				}
-				indices.put(sym, idxs);
+				indices.put(sym, mkIndices(sym, e.getValue()));
 			}
 			List<RelationSymbol> sortedSyms = masterIndex.keySet().stream().sorted(SymbolComparator.INSTANCE)
 					.collect(Collectors.toList());
-			HashMap<RelationSymbol, IndexedFactSet> sorted = new LinkedHashMap<>();
+			HashMap<RelationSymbol, Pair<IndexedFactSet, BindingType[]>> sorted = new LinkedHashMap<>();
 			for (RelationSymbol sym : sortedSyms) {
 				sorted.put(sym, masterIndex.get(sym));
 			}
 			return new SortedIndexedFactDb(indices, sorted);
+		}
+	
+		@SuppressWarnings("unchecked")
+		private Pair<IndexedFactSet, BindingType[]>[] mkIndices(RelationSymbol sym, Map<BindingTypeArrayWrapper, Integer> m) {
+			List<Pair<IndexedFactSet, BindingType[]>> indices;
+			if (Configuration.minIndex) {
+				indices = mkMinIndices(sym, m);
+			} else  {
+				indices = mkNaiveIndices(sym, m);
+			}
+			boolean ok = false;
+			for (Pair<IndexedFactSet, BindingType[]> p : indices) {
+				IndexedFactSet idx = p.fst();
+				if (idx.comparatorLength() == sym.getArity()) {
+					masterIndex.put(sym, new Pair<>(idx, p.snd()));
+					ok = true;
+					break;
+				}
+			}
+			if (!ok) {
+				BindingType[] pat = new BindingType[sym.getArity()];
+				for (int i = 0; i < pat.length; ++i) {
+					pat[i] = BindingType.FREE;
+				}
+				IndexedFactSet master = IndexedFactSet.make(pat);
+				Pair<IndexedFactSet, BindingType[]> p = new Pair<>(master, pat);
+				masterIndex.put(sym, p);
+				indices.add(p);
+			}
+			return indices.toArray(new Pair[0]);
+		}
+		
+		private List<Pair<IndexedFactSet, BindingType[]>> mkNaiveIndices(RelationSymbol sym, Map<BindingTypeArrayWrapper, Integer> m) {
+			List<Pair<IndexedFactSet, BindingType[]>> idxs = new ArrayList<>();
+			List<Map.Entry<BindingTypeArrayWrapper, Integer>> sorted = m.entrySet().stream().sorted(cmp)
+					.collect(Collectors.toList());
+			for (Map.Entry<BindingTypeArrayWrapper, Integer> e : sorted) {
+				BindingType[] pat = e.getKey().getArr();
+				IndexedFactSet idx = IndexedFactSet.make(pat);
+				idxs.add(new Pair<>(idx, pat));
+			}
+			return idxs;
+		}
+		
+		private List<Pair<IndexedFactSet, BindingType[]>> mkMinIndices(RelationSymbol sym, Map<BindingTypeArrayWrapper, Integer> m) {
+			List<Pair<IndexedFactSet, BindingType[]>> indices = new ArrayList<>(m.size());
+			for (int i = 0; i < m.size(); ++i) {
+				indices.add(null);
+			}
+			for (Map.Entry<Set<Integer>, Set<Pair<Integer, BindingType[]>>> e1 : partitionByIgnoredPositions(m).entrySet()) {
+				for (Map.Entry<Integer, Pair<IndexedFactSet, BindingType[]>> e2 : mkMinIndices(sym, e1.getKey(), e1.getValue()).entrySet()) {
+					assert indices.get(e2.getKey()) == null;
+					indices.set(e2.getKey(), e2.getValue());
+				}
+			}
+			return indices;
+		}
+		
+		private Map<Integer, Pair<IndexedFactSet, BindingType[]>> mkMinIndices(RelationSymbol sym, Set<Integer> ignored, Set<Pair<Integer, BindingType[]>> s) {
+			Map<Integer, Set<Integer>> searchByNum = new HashMap<>();
+			Map<Integer, BindingType[]> bindingsByNum = new HashMap<>();
+			Set<Set<Integer>> searches = new HashSet<>();
+			for (Pair<Integer, BindingType[]> p : s) {
+				Set<Integer> search = new HashSet<>();
+				BindingType[] pat = p.snd();
+				for (int i = 0; i < pat.length; ++i) {
+					if (pat[i].isBound()) {
+						search.add(i);
+					}
+				}
+				searches.add(search);
+				int i = p.fst();
+				searchByNum.put(i, search);
+				bindingsByNum.put(i, pat);
+			}
+			Set<Integer> search = new HashSet<>();
+			for (int i = 0; i < sym.getArity(); ++i) {
+				if (!ignored.contains(i)) {
+					search.add(i);
+				}
+			}
+			searches.add(search);
+			Map<Set<Integer>, Iterable<Integer>> indexBySearch = MinIndex.compute(searches);
+			Map<Iterable<Integer>, IndexedFactSet> factSetByIndex = new HashMap<>();
+			for (Iterable<Integer> idx : indexBySearch.values()) {
+				List<Integer> order = new ArrayList<>();
+				for (int i : idx) {
+					order.add(i);
+				}
+				factSetByIndex.put(idx, IndexedFactSet.make(order));
+			}
+			Map<Integer, Pair<IndexedFactSet, BindingType[]>> indices = new HashMap<>();
+			for (int i : searchByNum.keySet()) {
+				search = searchByNum.get(i);
+				BindingType[] pat = bindingsByNum.get(i);
+				Iterable<Integer> idx = indexBySearch.get(search);
+				indices.put(i, new Pair<>(factSetByIndex.get(idx), pat));
+			}
+			return indices;
+		}
+		
+		Map<Set<Integer>, Set<Pair<Integer, BindingType[]>>> partitionByIgnoredPositions(Map<BindingTypeArrayWrapper, Integer> m) {
+			Map<Set<Integer>, Set<Pair<Integer, BindingType[]>>> byIgnoredPos = new HashMap<>();
+			for (Map.Entry<BindingTypeArrayWrapper, Integer> e : m.entrySet()) {
+				BindingType[] pat = e.getKey().getArr();
+				Set<Integer> ignored = findIgnoredPositions(pat);
+				Pair<Integer, BindingType[]> p = new Pair<>(e.getValue(), pat);
+				Util.lookupOrCreate(byIgnoredPos, ignored, () -> new HashSet<>()).add(p);
+			}
+			return byIgnoredPos;
+		}
+		
+		private Set<Integer> findIgnoredPositions(BindingType[] pat) {
+			Set<Integer> ignored = new HashSet<>();
+			for (int i = 0; i < pat.length; ++i) {
+				if (pat[i].isIgnored()) {
+					ignored.add(i);
+				}
+			}
+			return ignored;
 		}
 
 		private static final Comparator<Map.Entry<BindingTypeArrayWrapper, Integer>> cmp = new Comparator<Map.Entry<BindingTypeArrayWrapper, Integer>>() {
@@ -290,7 +404,8 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 
 	private static class IndexedFactSet {
 
-		private final BindingType[] pat;
+		private static final AtomicInteger idCnt = new AtomicInteger();
+		private final int id;
 		private final NavigableSet<Term[]> s;
 		private final AtomicInteger cnt = new AtomicInteger();
 		private final List<Integer> comparatorOrder;
@@ -309,6 +424,10 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 					order.add(i);
 				}
 			}
+			return make(order);
+		}
+		
+		private static IndexedFactSet make(List<Integer> order) {
 			int[] a = new int[order.size()];
 			for (int i = 0; i < a.length; ++i) {
 				a[i] = order.get(i);
@@ -323,20 +442,15 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			} else {
 				cmp = new TermArrayComparator(a);
 			}
-			return new IndexedFactSet(pat, new ConcurrentSkipListSet<>(cmp), order);
+			return new IndexedFactSet(new ConcurrentSkipListSet<>(cmp), order);
 		}
 
+		public int comparatorLength() {
+			return comparatorOrder.size();
+		}
+		
 		public Iterable<Term[]> getAll() {
 			return s;
-		}
-
-		public boolean isProjected() {
-			for (BindingType b : pat) {
-				if (b.equals(BindingType.IGNORED)) {
-					return true;
-				}
-			}
-			return false;
 		}
 
 		public void clear() {
@@ -348,10 +462,14 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			return s.isEmpty();
 		}
 
-		private IndexedFactSet(BindingType[] pat, NavigableSet<Term[]> s, List<Integer> comparatorOrder) {
-			this.pat = pat;
+		private IndexedFactSet(NavigableSet<Term[]> s, List<Integer> comparatorOrder) {
 			this.s = s;
 			this.comparatorOrder = comparatorOrder;
+			this.id = idCnt.getAndIncrement();
+		}
+		
+		public int getId() {
+			return id;
 		}
 
 		public boolean add(Term[] arr) {
@@ -381,7 +499,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			return cnt.get();
 		}
 
-		public Iterable<Term[]> lookup(Term[] tup) {
+		public Iterable<Term[]> lookup(Term[] tup, BindingType[] pat) {
 			Term[] lower = new Term[tup.length];
 			Term[] upper = new Term[tup.length];
 			for (int i = 0; i < tup.length; ++i) {
@@ -403,7 +521,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 		@Override
 		public String toString() {
 			String str = "[\n\t";
-			str += Arrays.toString(pat);
+			str += "\t#" + id + " " + comparatorOrder + "\n";
 			for (Term[] tup : s) {
 				str += "\n\t";
 				str += Arrays.toString(tup);
@@ -440,20 +558,26 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 
 	public class IndexInfo {
 
+		private final int indexId;
 		private final List<Integer> comparatorOrder;
-		private final Set<List<BindingType>> bindingPatterns;
+		private final BindingType[] pat;
 
-		private IndexInfo(List<Integer> comparatorOrder, Set<List<BindingType>> bindingPatterns) {
+		private IndexInfo(int indexId, List<Integer> comparatorOrder, BindingType[] pat) {
+			this.indexId = indexId;
 			this.comparatorOrder = Collections.unmodifiableList(comparatorOrder);
-			this.bindingPatterns = Collections.unmodifiableSet(bindingPatterns);
+			this.pat = pat;
 		}
 
 		public List<Integer> getComparatorOrder() {
 			return comparatorOrder;
 		}
 
-		public Set<List<BindingType>> getBindingPatterns() {
-			return bindingPatterns;
+		public BindingType[] getPattern() {
+			return pat;
+		}
+		
+		public int getIndexId() {
+			return indexId;
 		}
 
 	}

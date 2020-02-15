@@ -52,7 +52,7 @@ public interface Relation extends CppExpr {
 	
 	CppStmt mkPurge();
 	
-	CppExpr mkLookup(int idx, List<BindingType> pat, CppExpr key, boolean useHints);
+	CppExpr mkLookup(int idx, BindingType[] pat, CppExpr key, boolean useHints);
 	
 	CppExpr mkSize();
 	

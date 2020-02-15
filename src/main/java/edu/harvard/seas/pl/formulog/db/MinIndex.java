@@ -23,8 +23,10 @@ package edu.harvard.seas.pl.formulog.db;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public final class MinIndex {
@@ -33,12 +35,16 @@ public final class MinIndex {
 		throw new AssertionError("impossible");
 	}
 	
-	public static <T> Iterable<Iterable<T>> compute(Set<Set<T>> searches) {
+	public static <T> Map<Set<T>, Iterable<T>> compute(Set<Set<T>> searches) {
 		MinChainCover<Set<T>> mcc = new MinChainCover<>((x, y) -> y.containsAll(x));
 		Iterable<Iterable<Set<T>>> chains = mcc.compute(searches); 
-		List<Iterable<T>> idxs = new ArrayList<>();
+		Map<Set<T>, Iterable<T>> idxs = new HashMap<>();
 		for (Iterable<Set<T>> chain : chains) {
-			idxs.add(computeIndex(chain));
+			Iterable<T> idx = computeIndex(chain);
+			for (Set<T> search : chain) {
+				Iterable<T> other = idxs.put(search, idx);
+				assert other == null;
+			}
 		}
 		return idxs;
 	}

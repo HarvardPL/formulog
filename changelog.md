@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 - Eager semi-naive evaluation algorithm.
 - SMT manager that uses push and pop.
 - Naive SMT manager that does not do any form of caching.
+- Optimal index selection.
 
 ### Fixed
 - Concurrency bug in the memoization of parameterized constructor symbols.

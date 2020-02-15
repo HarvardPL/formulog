@@ -30,6 +30,7 @@ import java.nio.file.Path;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
@@ -50,6 +51,10 @@ public class CodeGen {
 	}
 
 	public void go() throws IOException, URISyntaxException {
+		if (Configuration.minIndex) {
+			throw new UnsupportedOperationException(
+					"We do not currently support code gen and optimal index selection (use flag -DminIndex=false).");
+		}
 		copy("Term.hpp");
 		copy("FactParser.hpp");
 		copy("parsing.zip");

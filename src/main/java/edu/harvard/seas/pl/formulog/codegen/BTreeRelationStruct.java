@@ -22,6 +22,7 @@ package edu.harvard.seas.pl.formulog.codegen;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -197,7 +198,6 @@ public class BTreeRelationStruct implements RelationStruct {
 
 	private void declareInsertAll(PrintWriter out) {
 		declareGenericInsertAll(out);
-//		declareSpecializedInsertAll(out);
 	}
 
 	private void declareGenericInsertAll(PrintWriter out) {
@@ -208,30 +208,16 @@ public class BTreeRelationStruct implements RelationStruct {
 		out.println("  }");
 	}
 
-	// Seems like Souffle got rid of insertAll method
-//	private void declareSpecializedInsertAll(PrintWriter out) {
-//		out.println("  void insertAll(const " + name + "& other) {");
-//		CppVar other = CppVar.mk("other");
-//		for (int i = 0; i < indexInfo.size(); ++i) {
-//			String indexName = mkIndexName(i);
-//			CppExpr otherIndex = CppAccess.mk(other, indexName);
-//			CppExpr call = CppMethodCall.mk(CppVar.mk(indexName), "insertAll", otherIndex);
-//			call.toStmt().println(out, 2);
-//		}
-//		out.println("  }");
-//	}
-
 	private void declareLookup(PrintWriter out) {
 		for (Map.Entry<Integer, IndexInfo> e : indexInfo.entrySet()) {
-			for (List<BindingType> pat : e.getValue().getBindingPatterns()) {
-				int idx = e.getKey();
-				declareLookupHint(out, idx, pat);
-				declareLookupNoHint(out, idx, pat);
-			}
+			BindingType[] pat = e.getValue().getPattern();
+			int idx = e.getKey();
+			declareLookupHint(out, idx, pat);
+			declareLookupNoHint(out, idx, pat);
 		}
 	}
 
-	private void declareLookupHint(PrintWriter out, int idx, List<BindingType> pat) {
+	private void declareLookupHint(PrintWriter out, int idx, BindingType[] pat) {
 		out.print("  souffle::range<" + mkIndexType(idx) + "::iterator> ");
 		out.println(mkLookupName(idx, pat) + "(const " + mkTupleType() + "& key, context& h) const {");
 		List<Integer> emptyArgs = new ArrayList<>();
@@ -246,7 +232,7 @@ public class BTreeRelationStruct implements RelationStruct {
 			}
 			i++;
 		}
-		if (emptyArgs.size() == pat.size()) {
+		if (emptyArgs.size() == pat.length) {
 			mkLookupAll(idx).println(out, 2);
 		} else {
 			mkLookupSome(idx, emptyArgs).println(out, 2);
@@ -254,7 +240,7 @@ public class BTreeRelationStruct implements RelationStruct {
 		out.println("  }");
 	}
 
-	private void declareLookupNoHint(PrintWriter out, int idx, List<BindingType> pat) {
+	private void declareLookupNoHint(PrintWriter out, int idx, BindingType[] pat) {
 		String name = mkLookupName(idx, pat);
 		out.print("  souffle::range<" + mkIndexType(idx) + "::iterator> ");
 		out.println(name + "(const " + mkTupleType() + "& key) const {");
@@ -325,8 +311,8 @@ public class BTreeRelationStruct implements RelationStruct {
 		return "Tuple<" + arity + ">";
 	}
 
-	private String mkLookupName(int index, List<BindingType> pat) {
-		return "lookup_" + index + "_" + Util.lookupOrCreate(pats, pat, () -> patCnt.getAndIncrement());
+	private String mkLookupName(int index, BindingType[] pat) {
+		return "lookup_" + index + "_" + Util.lookupOrCreate(pats, Arrays.asList(pat), () -> patCnt.getAndIncrement());
 	}
 
 	private String mkContainsName(int index) {
@@ -476,7 +462,7 @@ public class BTreeRelationStruct implements RelationStruct {
 		}
 
 		@Override
-		public CppExpr mkLookup(int idx, List<BindingType> pat, CppExpr key, boolean useHints) {
+		public CppExpr mkLookup(int idx, BindingType[] pat, CppExpr key, boolean useHints) {
 			List<CppExpr> args = new ArrayList<>();
 			args.add(key);
 			if (useHints) {
@@ -503,7 +489,7 @@ public class BTreeRelationStruct implements RelationStruct {
 		public CppStmt mkDeclContext() {
 			return CppDecl.mk(mkContextName(), CppMethodCall.mkThruPtr(nameVar, "create_context"));
 		}
-		
+
 		@Override
 		public String toString() {
 			return "<" + name + ">";
