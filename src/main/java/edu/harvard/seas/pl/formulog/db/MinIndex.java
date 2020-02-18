@@ -35,12 +35,13 @@ public final class MinIndex {
 		throw new AssertionError("impossible");
 	}
 	
-	public static <T> Map<Set<T>, Iterable<T>> compute(Set<Set<T>> searches) {
+	public static <T> Map<Set<T>, Iterable<T>> compute(Set<T> domain, Set<Set<T>> searches) {
 		MinChainCover<Set<T>> mcc = new MinChainCover<>((x, y) -> y.containsAll(x));
 		Iterable<Iterable<Set<T>>> chains = mcc.compute(searches); 
 		Map<Set<T>, Iterable<T>> idxs = new HashMap<>();
 		for (Iterable<Set<T>> chain : chains) {
-			Iterable<T> idx = computeIndex(chain);
+			List<T> idx = computeIndex(chain);
+			padIndex(idx, domain);
 			for (Set<T> search : chain) {
 				Iterable<T> other = idxs.put(search, idx);
 				assert other == null;
@@ -49,7 +50,16 @@ public final class MinIndex {
 		return idxs;
 	}
 	
-	private static <T> Iterable<T> computeIndex(Iterable<Set<T>> chain) {
+	private static <T> void padIndex(List<T> idx, Set<T> domain) {
+		Set<T> seen = new HashSet<>(idx);
+		for (T elt : domain) {
+			if (seen.add(elt)) {
+				idx.add(elt);
+			}
+		}
+	}
+
+	private static <T> List<T> computeIndex(Iterable<Set<T>> chain) {
 		List<T> index = new ArrayList<>();
 		Set<T> prev = Collections.emptySet();
 		for (Set<T> s : chain) {
@@ -69,7 +79,7 @@ public final class MinIndex {
 		Set<String> s3 = new HashSet<>(Arrays.asList("x", "z"));
 		Set<String> s4 = new HashSet<>(Arrays.asList("x", "y", "z"));
 		Set<Set<String>> searches = new HashSet<>(Arrays.asList(s1, s2, s3, s4));
-		System.out.println(MinIndex.compute(searches));
+		System.out.println(MinIndex.compute(s4, searches));
 	}
 
 }

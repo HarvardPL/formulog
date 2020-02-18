@@ -85,7 +85,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 		}
 		return count;
 	}
-	
+
 	private Set<IndexedFactSet> getUniqueIndices(RelationSymbol sym) {
 		Set<IndexedFactSet> s = new HashSet<>();
 		for (Pair<IndexedFactSet, ?> e : indices.get(sym)) {
@@ -270,13 +270,14 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			}
 			return new SortedIndexedFactDb(indices, sorted);
 		}
-	
+
 		@SuppressWarnings("unchecked")
-		private Pair<IndexedFactSet, BindingType[]>[] mkIndices(RelationSymbol sym, Map<BindingTypeArrayWrapper, Integer> m) {
+		private Pair<IndexedFactSet, BindingType[]>[] mkIndices(RelationSymbol sym,
+				Map<BindingTypeArrayWrapper, Integer> m) {
 			List<Pair<IndexedFactSet, BindingType[]>> indices;
 			if (Configuration.minIndex) {
 				indices = mkMinIndices(sym, m);
-			} else  {
+			} else {
 				indices = mkNaiveIndices(sym, m);
 			}
 			boolean ok = false;
@@ -298,10 +299,30 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 				masterIndex.put(sym, p);
 				indices.add(p);
 			}
+			assert indicesWellFormed(indices) : "Bad index created for relation: " + sym;
 			return indices.toArray(new Pair[0]);
 		}
-		
-		private List<Pair<IndexedFactSet, BindingType[]>> mkNaiveIndices(RelationSymbol sym, Map<BindingTypeArrayWrapper, Integer> m) {
+
+		private static boolean indicesWellFormed(Iterable<Pair<IndexedFactSet, BindingType[]>> indices) {
+			boolean ok = true;
+			for (Pair<IndexedFactSet, BindingType[]> p : indices) {
+				ok &= p.fst().comparatorLength() == countNumNotIgnored(p.snd());
+			}
+			return ok;
+		}
+
+		private static int countNumNotIgnored(BindingType[] pat) {
+			int i = 0;
+			for (BindingType b : pat) {
+				if (!b.isIgnored()) {
+					i++;
+				}
+			}
+			return i;
+		}
+
+		private List<Pair<IndexedFactSet, BindingType[]>> mkNaiveIndices(RelationSymbol sym,
+				Map<BindingTypeArrayWrapper, Integer> m) {
 			List<Pair<IndexedFactSet, BindingType[]>> idxs = new ArrayList<>();
 			List<Map.Entry<BindingTypeArrayWrapper, Integer>> sorted = m.entrySet().stream().sorted(cmp)
 					.collect(Collectors.toList());
@@ -312,22 +333,26 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			}
 			return idxs;
 		}
-		
-		private List<Pair<IndexedFactSet, BindingType[]>> mkMinIndices(RelationSymbol sym, Map<BindingTypeArrayWrapper, Integer> m) {
+
+		private List<Pair<IndexedFactSet, BindingType[]>> mkMinIndices(RelationSymbol sym,
+				Map<BindingTypeArrayWrapper, Integer> m) {
 			List<Pair<IndexedFactSet, BindingType[]>> indices = new ArrayList<>(m.size());
 			for (int i = 0; i < m.size(); ++i) {
 				indices.add(null);
 			}
-			for (Map.Entry<Set<Integer>, Set<Pair<Integer, BindingType[]>>> e1 : partitionByIgnoredPositions(m).entrySet()) {
-				for (Map.Entry<Integer, Pair<IndexedFactSet, BindingType[]>> e2 : mkMinIndices(sym, e1.getKey(), e1.getValue()).entrySet()) {
+			for (Map.Entry<Set<Integer>, Set<Pair<Integer, BindingType[]>>> e1 : partitionByIgnoredPositions(m)
+					.entrySet()) {
+				for (Map.Entry<Integer, Pair<IndexedFactSet, BindingType[]>> e2 : mkMinIndices(sym, e1.getKey(),
+						e1.getValue()).entrySet()) {
 					assert indices.get(e2.getKey()) == null;
 					indices.set(e2.getKey(), e2.getValue());
 				}
 			}
 			return indices;
 		}
-		
-		private Map<Integer, Pair<IndexedFactSet, BindingType[]>> mkMinIndices(RelationSymbol sym, Set<Integer> ignored, Set<Pair<Integer, BindingType[]>> s) {
+
+		private Map<Integer, Pair<IndexedFactSet, BindingType[]>> mkMinIndices(RelationSymbol sym, Set<Integer> ignored,
+				Set<Pair<Integer, BindingType[]>> s) {
 			Map<Integer, Set<Integer>> searchByNum = new HashMap<>();
 			Map<Integer, BindingType[]> bindingsByNum = new HashMap<>();
 			Set<Set<Integer>> searches = new HashSet<>();
@@ -344,14 +369,8 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 				searchByNum.put(i, search);
 				bindingsByNum.put(i, pat);
 			}
-			Set<Integer> search = new HashSet<>();
-			for (int i = 0; i < sym.getArity(); ++i) {
-				if (!ignored.contains(i)) {
-					search.add(i);
-				}
-			}
-			searches.add(search);
-			Map<Set<Integer>, Iterable<Integer>> indexBySearch = MinIndex.compute(searches);
+			Set<Integer> domain = mkDomain(sym.getArity(), ignored);
+			Map<Set<Integer>, Iterable<Integer>> indexBySearch = MinIndex.compute(domain, searches);
 			Map<Iterable<Integer>, IndexedFactSet> factSetByIndex = new HashMap<>();
 			for (Iterable<Integer> idx : indexBySearch.values()) {
 				List<Integer> order = new ArrayList<>();
@@ -362,15 +381,26 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			}
 			Map<Integer, Pair<IndexedFactSet, BindingType[]>> indices = new HashMap<>();
 			for (int i : searchByNum.keySet()) {
-				search = searchByNum.get(i);
+				Set<Integer> search = searchByNum.get(i);
 				BindingType[] pat = bindingsByNum.get(i);
 				Iterable<Integer> idx = indexBySearch.get(search);
 				indices.put(i, new Pair<>(factSetByIndex.get(idx), pat));
 			}
 			return indices;
 		}
-		
-		Map<Set<Integer>, Set<Pair<Integer, BindingType[]>>> partitionByIgnoredPositions(Map<BindingTypeArrayWrapper, Integer> m) {
+
+		private static Set<Integer> mkDomain(int arity, Set<Integer> ignored) {
+			Set<Integer> s = new HashSet<>();
+			for (int i = 0; i < arity; ++i) {
+				if (!ignored.contains(i)) {
+					s.add(i);
+				}
+			}
+			return s;
+		}
+
+		private static Map<Set<Integer>, Set<Pair<Integer, BindingType[]>>> partitionByIgnoredPositions(
+				Map<BindingTypeArrayWrapper, Integer> m) {
 			Map<Set<Integer>, Set<Pair<Integer, BindingType[]>>> byIgnoredPos = new HashMap<>();
 			for (Map.Entry<BindingTypeArrayWrapper, Integer> e : m.entrySet()) {
 				BindingType[] pat = e.getKey().getArr();
@@ -380,8 +410,8 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			}
 			return byIgnoredPos;
 		}
-		
-		private Set<Integer> findIgnoredPositions(BindingType[] pat) {
+
+		private static Set<Integer> findIgnoredPositions(BindingType[] pat) {
 			Set<Integer> ignored = new HashSet<>();
 			for (int i = 0; i < pat.length; ++i) {
 				if (pat[i].isIgnored()) {
@@ -426,7 +456,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			}
 			return make(order);
 		}
-		
+
 		private static IndexedFactSet make(List<Integer> order) {
 			int[] a = new int[order.size()];
 			for (int i = 0; i < a.length; ++i) {
@@ -448,7 +478,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 		public int comparatorLength() {
 			return comparatorOrder.size();
 		}
-		
+
 		public Iterable<Term[]> getAll() {
 			return s;
 		}
@@ -467,7 +497,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 			this.comparatorOrder = comparatorOrder;
 			this.id = idCnt.getAndIncrement();
 		}
-		
+
 		public int getId() {
 			return id;
 		}
@@ -575,7 +605,7 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 		public BindingType[] getPattern() {
 			return pat;
 		}
-		
+
 		public int getIndexId() {
 			return indexId;
 		}

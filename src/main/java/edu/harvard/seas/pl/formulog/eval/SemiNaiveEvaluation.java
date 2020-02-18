@@ -74,7 +74,8 @@ import edu.harvard.seas.pl.formulog.validating.ast.SimpleRule;
 public class SemiNaiveEvaluation implements Evaluation {
 
 	private final SortedIndexedFactDb db;
-	private final IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb;
+	private final SortedIndexedFactDb deltaDb;
+	private final SortedIndexedFactDb nextDeltaDb;
 	private final List<Stratum> strata;
 	private final UserPredicate query;
 	private final CountingFJP exec;
@@ -428,7 +429,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 		this.strata = strata;
 		this.exec = exec;
 		this.trackedRelations = trackedRelations;
-		this.deltaDbb = deltaDbb;
+		this.deltaDb = deltaDbb.build();
+		this.nextDeltaDb = deltaDbb.build();
 		this.rules = rules;
 		this.eagerEval = eagerEval;
 	}
@@ -467,7 +469,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 		if (eagerEval) {
 			new EagerStratumEvaluator(stratum.getRank(), db, l, exec, trackedRelations).evaluate();
 		} else {
-			new RoundBasedStratumEvaluator(stratum.getRank(), db, deltaDbb, l, exec, trackedRelations).evaluate();
+			new RoundBasedStratumEvaluator(stratum.getRank(), db, deltaDb, nextDeltaDb, l, exec, trackedRelations)
+					.evaluate();
 		}
 	}
 
@@ -554,8 +557,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 		return db;
 	}
 
-	public IndexedFactDbBuilder<SortedIndexedFactDb> getDeltaDbBuilder() {
-		return deltaDbb;
+	public SortedIndexedFactDb getDeltaDb() {
+		return deltaDb;
 	}
 
 }

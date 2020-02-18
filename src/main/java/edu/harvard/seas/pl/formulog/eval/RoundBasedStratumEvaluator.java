@@ -31,7 +31,6 @@ import edu.harvard.seas.pl.formulog.ast.BindingType;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.db.IndexedFactDbBuilder;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
@@ -60,19 +59,21 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 	static final int smtTaskSize = Configuration.smtTaskSize;
 
 	public RoundBasedStratumEvaluator(int stratumNum, SortedIndexedFactDb db,
-			IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb, Iterable<IndexedRule> rules, CountingFJP exec,
+			SortedIndexedFactDb deltaDb, SortedIndexedFactDb nextDeltaDb, Iterable<IndexedRule> rules, CountingFJP exec,
 			Set<RelationSymbol> trackedRelations) {
 		super(rules);
 		this.stratumNum = stratumNum;
 		this.db = db;
-		this.deltaDb = deltaDbb.build();
-		this.nextDeltaDb = deltaDbb.build();
+		this.deltaDb = deltaDb;
+		this.nextDeltaDb = nextDeltaDb;
 		this.exec = exec;
 		this.trackedRelations = trackedRelations;
 	}
 
 	@Override
 	public void evaluate() throws EvaluationException {
+		this.deltaDb.clear();
+		this.nextDeltaDb.clear();
 		int round = 0;
 		StopWatch watch = recordRoundStart(round);
 		for (IndexedRule r : firstRoundRules) {

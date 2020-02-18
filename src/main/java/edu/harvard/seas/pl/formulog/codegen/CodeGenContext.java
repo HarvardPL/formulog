@@ -124,7 +124,7 @@ public class CodeGenContext {
 
 		public Worker() {
 			this.db = eval.getDb();
-			this.deltaDb = eval.getDeltaDbBuilder().build();
+			this.deltaDb = eval.getDeltaDb();
 		}
 
 		public void go() {
