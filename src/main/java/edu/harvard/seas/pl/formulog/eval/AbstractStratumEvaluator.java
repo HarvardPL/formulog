@@ -25,7 +25,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import edu.harvard.seas.pl.formulog.ast.Term;
+import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
+import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.ast.SimpleLiteral;
 import edu.harvard.seas.pl.formulog.validating.ast.SimplePredicate;
@@ -35,6 +38,7 @@ public abstract class AbstractStratumEvaluator implements StratumEvaluator {
 	final Set<IndexedRule> firstRoundRules = new HashSet<>();
 	final Map<RelationSymbol, Set<IndexedRule>> laterRoundRules = new HashMap<>();
 	final Map<IndexedRule, boolean[]> splitPositions = new HashMap<>();
+	final Map<IndexedRule, Integer> checkPosition = new HashMap<>();
 	
 	public AbstractStratumEvaluator(Iterable<IndexedRule> rules) {
 		processRules(rules);
@@ -51,7 +55,22 @@ public abstract class AbstractStratumEvaluator implements StratumEvaluator {
 			}
 			boolean[] positions = findSplitPositions(rule, scf);
 			splitPositions.put(rule, positions);
+			checkPosition.put(rule, findCheckPosition(rule));
 		}
+	}
+	
+	private int findCheckPosition(IndexedRule rule) {
+		Set<Var> headVars = rule.getHead().varSet();
+		int i = 0;
+		for (SimpleLiteral l : rule) {
+			if (headVars.isEmpty()) {
+				break;
+			}
+			headVars.removeAll(l.varSet());
+			++i;
+		}
+		assert headVars.isEmpty();
+		return i;
 	}
 
 	private static boolean[] findSplitPositions(IndexedRule rule, SmtCallFinder scf) {
@@ -68,6 +87,24 @@ public abstract class AbstractStratumEvaluator implements StratumEvaluator {
 			}
 		}
 		return splitPositions;
+	}
+	
+	protected static Term[] normalizeArgs(Term[] args, Substitution s) throws EvaluationException {
+		Term[] newArgs = new Term[args.length];
+		for (int i = 0; i < args.length; ++i) {
+			newArgs[i] = args[i].normalize(s);
+		}
+		return newArgs;
+	}
+	
+	protected static SimpleLiteral[] getBody(IndexedRule rule) {
+		SimpleLiteral[] bd = new SimpleLiteral[rule.getBodySize()];
+		int i = 0;
+		for (SimpleLiteral l : rule) {
+			bd[i] = l;
+			++i;
+		}
+		return bd;
 	}
 
 }

@@ -1,0 +1,18 @@
+input r
+input p(i32)
+input q(i32, i32)
+output s(i32)
+output ok
+
+r.
+p(1).
+p(2).
+q(1, 1).
+q(1, 2).
+q(2, 1).
+q(2, 2).
+q(2, 3).
+
+s(Y) :- p(X), q(X, Y), r.
+
+ok :- s(1), s(2), s(3). 

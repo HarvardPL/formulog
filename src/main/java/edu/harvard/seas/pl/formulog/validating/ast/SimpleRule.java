@@ -79,7 +79,8 @@ public class SimpleRule extends AbstractRule<SimplePredicate, SimpleLiteral> {
 		BindingType[] pat = new BindingType[args.length];
 		for (int i = 0; i < pat.length; ++i) {
 			Term arg = args[i];
-			if (arg instanceof Var && Integer.valueOf(1).equals(counts.get(arg))) {
+			if (Configuration.projectIgnoredAttributes && arg instanceof Var
+					&& Integer.valueOf(1).equals(counts.get(arg))) {
 				pat[i] = BindingType.IGNORED;
 			} else if (boundVars.containsAll(arg.varSet())) {
 				pat[i] = BindingType.BOUND;

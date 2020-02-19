@@ -35,7 +35,6 @@ import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.unification.OverwriteSubstitution;
-import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.AbstractFJPTask;
 import edu.harvard.seas.pl.formulog.util.CountingFJP;
 import edu.harvard.seas.pl.formulog.util.Util;
@@ -58,8 +57,8 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 	static final int taskSize = Configuration.taskSize;
 	static final int smtTaskSize = Configuration.smtTaskSize;
 
-	public RoundBasedStratumEvaluator(int stratumNum, SortedIndexedFactDb db,
-			SortedIndexedFactDb deltaDb, SortedIndexedFactDb nextDeltaDb, Iterable<IndexedRule> rules, CountingFJP exec,
+	public RoundBasedStratumEvaluator(int stratumNum, SortedIndexedFactDb db, SortedIndexedFactDb deltaDb,
+			SortedIndexedFactDb nextDeltaDb, Iterable<IndexedRule> rules, CountingFJP exec,
 			Set<RelationSymbol> trackedRelations) {
 		super(rules);
 		this.stratumNum = stratumNum;
@@ -105,15 +104,11 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 		}
 	}
 
-	void reportFact(RelationSymbol sym, Term[] args, Substitution s) throws EvaluationException {
-		Term[] newArgs = new Term[args.length];
-		for (int i = 0; i < args.length; ++i) {
-			newArgs[i] = args[i].normalize(s);
-		}
-		if (!db.hasFact(sym, newArgs) && nextDeltaDb.add(sym, newArgs)) {
+	void reportFact(RelationSymbol sym, Term[] args) throws EvaluationException {
+		if (nextDeltaDb.add(sym, args)) {
 			changed = true;
 			if (trackedRelations.contains(sym)) {
-				System.err.println("[TRACKED] " + UserPredicate.make(sym, newArgs, false));
+				System.err.println("[TRACKED] " + UserPredicate.make(sym, args, false));
 			}
 		}
 	}
@@ -194,9 +189,10 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 		final int startPos;
 		final OverwriteSubstitution s;
 		final Iterator<Iterable<Term[]>> it;
+		final Term[] finalArgs;
 
 		protected RuleSuffixEvaluator(IndexedRule rule, SimplePredicate head, SimpleLiteral[] body, int pos,
-				OverwriteSubstitution s, Iterator<Iterable<Term[]>> it) {
+				OverwriteSubstitution s, Iterator<Iterable<Term[]>> it, Term[] finalArgs) {
 			super(exec);
 			this.rule = rule;
 			this.head = head;
@@ -204,21 +200,12 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 			this.startPos = pos;
 			this.s = s;
 			this.it = it;
+			this.finalArgs = finalArgs;
 		}
 
-		protected RuleSuffixEvaluator(IndexedRule rule, int pos, OverwriteSubstitution s,
-				Iterator<Iterable<Term[]>> it) {
-			super(exec);
-			this.rule = rule;
-			this.head = rule.getHead();
-			SimpleLiteral[] bd = new SimpleLiteral[rule.getBodySize()];
-			for (int i = 0; i < bd.length; ++i) {
-				bd[i] = rule.getBody(i);
-			}
-			this.body = bd;
-			this.startPos = pos;
-			this.s = s;
-			this.it = it;
+		protected RuleSuffixEvaluator(IndexedRule rule, int pos, OverwriteSubstitution s, Iterator<Iterable<Term[]>> it,
+				Term[] finalArgs) {
+			this(rule, rule.getHead(), getBody(rule), pos, s, it, finalArgs);
 		}
 
 		@Override
@@ -229,7 +216,7 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 			}
 			Iterable<Term[]> tups = it.next();
 			if (it.hasNext()) {
-				exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, head, body, startPos, s.copy(), it));
+				exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, head, body, startPos, s.copy(), it, finalArgs));
 			}
 			try {
 				for (Term[] tup : tups) {
@@ -252,10 +239,27 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 			@SuppressWarnings("unchecked")
 			Iterator<Term[]>[] stack = new Iterator[rule.getBodySize()];
 			boolean movingRight = true;
+			int checkPos = checkPosition.get(rule);
+			Term[] finalArgs = this.finalArgs;
 			while (pos > startPos) {
+				if (pos == checkPos - 1) {
+					finalArgs = null;
+				} else if (pos == checkPos && finalArgs == null) {
+					try {
+						finalArgs = normalizeArgs(head.getArgs(), s);
+					} catch (EvaluationException e) {
+						throw new UncheckedEvaluationException("Problem normalizing head literal: " + head);
+					}
+					if (db.hasFact(head.getSymbol(), finalArgs)) {
+						movingRight = false;
+						--pos;
+						continue;
+					}
+				}
 				if (pos == body.length) {
 					try {
-						reportFact(head.getSymbol(), head.getArgs(), s);
+						assert finalArgs != null : rule;
+						reportFact(head.getSymbol(), finalArgs);
 					} catch (EvaluationException e) {
 						throw new UncheckedEvaluationException(
 								"Exception raised while evaluating the literal: " + head + "\n\n" + e.getMessage());
@@ -299,8 +303,8 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 								if (tups.hasNext()) {
 									stack[pos] = tups.next().iterator();
 									if (tups.hasNext()) {
-										exec.recursivelyAddTask(
-												new RuleSuffixEvaluator(rule, head, body, pos, s.copy(), tups));
+										exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, head, body, pos, s.copy(),
+												tups, finalArgs));
 									}
 									// No need to do anything else: we'll hit the right case on the next iteration.
 								} else {
@@ -372,8 +376,17 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 		void evaluate() throws EvaluationException {
 			int len = rule.getBodySize();
 			int pos = 0;
+			Term[] finalArgs = null;
+			int checkPos = checkPosition.get(rule);
 			OverwriteSubstitution s = new OverwriteSubstitution();
 			loop: for (; pos < len; ++pos) {
+				if (pos == checkPos) {
+					SimplePredicate head = rule.getHead();
+					finalArgs = normalizeArgs(head.getArgs(), s);
+					if (db.hasFact(head.getSymbol(), finalArgs)) {
+						return;
+					}
+				}
 				SimpleLiteral l = rule.getBody(pos);
 				try {
 					switch (l.getTag()) {
@@ -410,7 +423,10 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 			if (pos == len) {
 				try {
 					SimplePredicate head = rule.getHead();
-					reportFact(head.getSymbol(), head.getArgs(), s);
+					if (finalArgs == null) {
+						finalArgs = normalizeArgs(head.getArgs(), s);
+					}
+					reportFact(head.getSymbol(), finalArgs);
 					return;
 				} catch (EvaluationException e) {
 					throw new EvaluationException("Exception raised while evaluationg the literal: " + rule.getHead()
@@ -419,7 +435,7 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 			}
 			Iterator<Iterable<Term[]>> tups = lookup(rule, pos, s).iterator();
 			if (tups.hasNext()) {
-				exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s, tups));
+				exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s, tups, finalArgs));
 			}
 		}
 	}

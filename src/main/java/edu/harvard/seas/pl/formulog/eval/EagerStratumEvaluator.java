@@ -72,20 +72,16 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 		}
 	}
 
-	void reportFact(RelationSymbol sym, Term[] args, Substitution s) throws EvaluationException {
-		Term[] newArgs = new Term[args.length];
-		for (int i = 0; i < args.length; ++i) {
-			newArgs[i] = args[i].normalize(s);
-		}
-		if (db.add(sym, newArgs)) {
+	void reportFact(RelationSymbol sym, Term[] args) throws EvaluationException {
+		if (db.add(sym, args)) {
 			Set<IndexedRule> rs = laterRoundRules.get(sym);
 			if (rs != null) {
 				for (IndexedRule r : rs) {
-					exec.recursivelyAddTask(new RulePrefixEvaluator(r, newArgs));
+					exec.recursivelyAddTask(new RulePrefixEvaluator(r, args));
 				}
 			}
 			if (trackedRelations.contains(sym)) {
-				System.err.println("[TRACKED] " + UserPredicate.make(sym, newArgs, false));
+				System.err.println("[TRACKED] " + UserPredicate.make(sym, args, false));
 			}
 		}
 	}
@@ -122,9 +118,10 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 		final int startPos;
 		final OverwriteSubstitution s;
 		final Iterator<Iterable<Term[]>> it;
+		final Term[] finalArgs;
 
 		protected RuleSuffixEvaluator(IndexedRule rule, SimplePredicate head, SimpleLiteral[] body, int pos,
-				OverwriteSubstitution s, Iterator<Iterable<Term[]>> it) {
+				OverwriteSubstitution s, Iterator<Iterable<Term[]>> it, Term[] finalArgs) {
 			super(exec);
 			this.rule = rule;
 			this.head = head;
@@ -132,21 +129,12 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 			this.startPos = pos;
 			this.s = s;
 			this.it = it;
+			this.finalArgs = finalArgs;
 		}
 
 		protected RuleSuffixEvaluator(IndexedRule rule, int pos, OverwriteSubstitution s,
-				Iterator<Iterable<Term[]>> it) {
-			super(exec);
-			this.rule = rule;
-			this.head = rule.getHead();
-			SimpleLiteral[] bd = new SimpleLiteral[rule.getBodySize()];
-			for (int i = 0; i < bd.length; ++i) {
-				bd[i] = rule.getBody(i);
-			}
-			this.body = bd;
-			this.startPos = pos;
-			this.s = s;
-			this.it = it;
+				Iterator<Iterable<Term[]>> it, Term[] finalArgs) {
+			this(rule, rule.getHead(), getBody(rule), pos, s, it, finalArgs);
 		}
 
 		@Override
@@ -157,7 +145,7 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 			}
 			Iterable<Term[]> tups = it.next();
 			if (it.hasNext()) {
-				exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, head, body, startPos, s.copy(), it));
+				exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, head, body, startPos, s.copy(), it, finalArgs));
 			}
 			try {
 				for (Term[] tup : tups) {
@@ -180,10 +168,27 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 			@SuppressWarnings("unchecked")
 			Iterator<Term[]>[] stack = new Iterator[rule.getBodySize()];
 			boolean movingRight = true;
+			int checkPos = checkPosition.get(rule);
+			Term[] finalArgs = this.finalArgs;
 			while (pos > startPos) {
+				if (pos == checkPos - 1) {
+					finalArgs = null;
+				} else if (pos == checkPos && finalArgs == null) {
+					try {
+						finalArgs = normalizeArgs(head.getArgs(), s);
+					} catch (EvaluationException e) {
+						throw new UncheckedEvaluationException("Problem normalizing head literal: " + head);
+					}
+					if (db.hasFact(head.getSymbol(), finalArgs)) {
+						movingRight = false;
+						--pos;
+						continue;
+					}
+				}
 				if (pos == body.length) {
 					try {
-						reportFact(head.getSymbol(), head.getArgs(), s);
+						assert finalArgs != null : rule;
+						reportFact(head.getSymbol(), finalArgs);
 					} catch (EvaluationException e) {
 						throw new UncheckedEvaluationException(
 								"Exception raised while evaluating the literal: " + head + "\n\n" + e.getMessage());
@@ -228,7 +233,7 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 									stack[pos] = tups.next().iterator();
 									if (tups.hasNext()) {
 										exec.recursivelyAddTask(
-												new RuleSuffixEvaluator(rule, head, body, pos, s.copy(), tups));
+												new RuleSuffixEvaluator(rule, head, body, pos, s.copy(), tups, finalArgs));
 									}
 									// No need to do anything else: we'll hit the right case on the next iteration.
 								} else {
@@ -321,8 +326,17 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 		void evaluate() throws EvaluationException {
 			int len = rule.getBodySize();
 			int pos = 0;
+			Term[] finalArgs = null;
+			int checkPos = checkPosition.get(rule);
 			OverwriteSubstitution s = new OverwriteSubstitution();
 			loop: for (; pos < len; ++pos) {
+				if (pos == checkPos) {
+					SimplePredicate head = rule.getHead();
+					finalArgs = normalizeArgs(head.getArgs(), s);
+					if (db.hasFact(head.getSymbol(), finalArgs)) {
+						return;
+					}
+				}
 				SimpleLiteral l = rule.getBody(pos);
 				try {
 					switch (l.getTag()) {
@@ -364,7 +378,10 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 			if (pos == len) {
 				try {
 					SimplePredicate head = rule.getHead();
-					reportFact(head.getSymbol(), head.getArgs(), s);
+					if (finalArgs == null) {
+						finalArgs = normalizeArgs(head.getArgs(), s);
+					}
+					reportFact(head.getSymbol(), finalArgs);
 					return;
 				} catch (EvaluationException e) {
 					throw new EvaluationException("Exception raised while evaluationg the literal: "
@@ -373,7 +390,7 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 			}
 			Iterator<Iterable<Term[]>> tups = lookup(rule, pos, s).iterator();
 			if (tups.hasNext()) {
-				exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s, tups));
+				exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s, tups, finalArgs));
 			}
 		}
 	}
