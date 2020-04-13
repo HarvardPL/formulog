@@ -89,14 +89,20 @@ public class SmtLibShim {
 	private final Deque<Set<SolverVariable>> symbolsByStackPos = new ArrayDeque<>();
 	private final Map<String, SolverVariable> symbolLookup = new HashMap<>();
 	private final SymbolManager symbolManager;
+	private final PrintWriter log;
 	private Iterator<Pair<ConstructorSymbol, Type>> typeAnnotations;
 	private int cnt;
 
 	public SmtLibShim(Reader in, Writer out, Program<?, ?> prog) {
+		this(in, out, prog, null);
+	}
+	
+	public SmtLibShim(Reader in, Writer out, Program<?, ?> prog, Writer log) {
 		this.in = in != null ? new BufferedReader(in) : null;
 		this.out = new PrintWriter(out);
 		this.symbolManager = prog.getSymbolManager();
 		symbolsByStackPos.add(new HashSet<>());
+		this.log = log != null ? new PrintWriter(log) : null;
 		makeDeclarations(prog);
 	}
 
@@ -130,7 +136,7 @@ public class SmtLibShim {
 			Configuration.recordSmtSerialTime(end - start);
 		}
 		assert !typeAnnotations.hasNext() : typeAnnotations.next();
-		out.flush();
+		flush();
 	}
 
 	public void reset() {
@@ -138,24 +144,24 @@ public class SmtLibShim {
 		symbolLookup.clear();
 		symbolsByStackPos.clear();
 		println("(reset)");
-		out.flush();
+		flush();
 	}
 
 	public void push() {
 		println("(push)");
-		out.flush();
+		flush();
 		symbolsByStackPos.addLast(new HashSet<>());
 	}
 
 	public void pop() {
 		println("(pop)");
-		out.flush();
+		flush();
 		for (SolverVariable x : symbolsByStackPos.removeLast()) {
 			String s = declaredSymbols.remove(x);
 			symbolLookup.remove(s);
 		}
 	}
-	
+
 	public SmtStatus checkSat(int timeout) throws EvaluationException {
 		return checkSatAssuming(Collections.emptyList(), Collections.emptyList(), timeout);
 	}
@@ -166,7 +172,7 @@ public class SmtLibShim {
 			System.err.println("Warning: negative timeout provided to Z3 - ignored");
 			timeout = Integer.MAX_VALUE;
 		}
-		print("(set-option :timeout " + timeout + ")");
+		println("(set-option :timeout " + timeout + ")");
 		print("(check-sat-assuming (");
 		for (SolverVariable x : onVars) {
 			print(x);
@@ -178,11 +184,13 @@ public class SmtLibShim {
 			print(") ");
 		}
 		println("))");
-		out.flush();
+		flush();
 		String result;
 		try {
 			result = in.readLine();
-			if (result.equals("sat")) {
+			if (result == null) {
+				throw new EvaluationException("Problem with evaluating Z3! Unexpected end of stream");
+			} else if (result.equals("sat")) {
 				return SmtStatus.SATISFIABLE;
 			} else if (result.equals("unsat")) {
 				return SmtStatus.UNSATISFIABLE;
@@ -198,7 +206,7 @@ public class SmtLibShim {
 
 	public Map<SolverVariable, Term> getModel() throws EvaluationException {
 		println("(get-model)");
-		out.flush();
+		flush();
 		try {
 			return parseModel();
 		} catch (IOException e) {
@@ -213,12 +221,23 @@ public class SmtLibShim {
 		return p.getModel(in);
 	}
 
+	public void flush() {
+		out.flush();
+		if (log != null) {
+			log.flush();
+		}
+	}
+	
 	public void print(String s) {
 		out.print(s);
+		if (log != null) {
+			log.print(s);
+		}
 	}
 
 	public void println(String s) {
-		out.println(s);
+		print(s);
+		print("\n");
 	}
 
 	public void print(SolverVariable x) {
@@ -296,7 +315,7 @@ public class SmtLibShim {
 	private void makeDeclarations(Program<?, ?> prog) {
 		declareSorts(prog.getTypeSymbols());
 		declareUninterpretedFunctions(prog.getUninterpretedFunctionSymbols());
-		out.flush();
+		flush();
 	}
 
 	private void declareUninterpretedFunctions(Set<ConstructorSymbol> funcs) {
@@ -310,7 +329,6 @@ public class SmtLibShim {
 				}
 			}
 			println(") " + stringifyType(ft.getRetType()) + ")");
-
 		}
 	}
 
@@ -529,7 +547,7 @@ public class SmtLibShim {
 			}, null);
 			return syms;
 		}
-		
+
 		private boolean isDeclarableTypeSymbol(TypeSymbol sym) {
 			if (sym.isAlias()) {
 				return false;

@@ -142,17 +142,8 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 
 	@Override
 	public boolean hasFact(RelationSymbol sym, Term[] args) {
-		assert allGround(args);
+		assert allNormal(args);
 		return masterIndex.get(sym).fst().contains(args);
-	}
-
-	private boolean allGround(Term[] args) {
-		for (Term arg : args) {
-			if (!arg.isGround()) {
-				return false;
-			}
-		}
-		return true;
 	}
 
 	@Override

@@ -42,6 +42,7 @@ import edu.harvard.seas.pl.formulog.db.IndexedFactDb;
 import edu.harvard.seas.pl.formulog.smt.SmtStrategy;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
+import edu.harvard.seas.pl.formulog.util.Dataset;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
 
@@ -60,7 +61,8 @@ public final class Configuration {
 	public static final boolean debugSmt = propIsSet("debugSmt");
 
 	public static final boolean timeSmt = propIsSet("timeSmt");
-	private static final AtomicLong smtEvalTime = new AtomicLong();
+	private static final Map<Integer, Dataset> perProcessSmtEvalStats = new ConcurrentHashMap<>();
+	private static final Dataset smtEvalStats = new Dataset();
 	private static final AtomicLong smtDeclTime = new AtomicLong();
 	private static final AtomicLong smtInferTime = new AtomicLong();
 	private static final AtomicLong smtSerialTime = new AtomicLong();
@@ -174,8 +176,9 @@ public final class Configuration {
 		smtSerialTime.addAndGet(time);
 	}
 
-	public static void recordSmtEvalTime(long time) {
-		smtEvalTime.addAndGet(time);
+	public static void recordSmtEvalTime(int processId, long time) {
+		smtEvalStats.addDataPoint(time);
+		Util.lookupOrCreate(perProcessSmtEvalStats, processId, () -> new Dataset()).addDataPoint(time);
 	}
 
 	public static void recordSmtWaitTime(long time) {
@@ -183,11 +186,40 @@ public final class Configuration {
 	}
 
 	public static synchronized void printSmtDiagnostics(PrintStream out) {
+		Dataset callsPerSolver = new Dataset();
+		Dataset timePerSolver = new Dataset();
+		for (Dataset ds : perProcessSmtEvalStats.values()) {
+			callsPerSolver.addDataPoint(ds.size());
+			timePerSolver.addDataPoint(ds.computeSum());
+		}
 		out.println("[SMT DECL TIME] " + smtDeclTime.get() + "ms");
 		out.println("[SMT INFER TIME] " + smtInferTime.get() + "ms");
 		out.println("[SMT SERIAL TIME] " + smtSerialTime.get() + "ms");
-		out.println("[SMT EVAL TIME] " + smtEvalTime.get() + "ms");
 		out.println("[SMT WAIT TIME] " + smtWaitTime.get() + "ms");
+		
+		List<Double> minMedianMax = smtEvalStats.computeMinMedianMax(); 
+		out.printf("[SMT EVAL TIME - TOTAL] %1.1fms%n", smtEvalStats.computeSum());
+		out.printf("[SMT EVAL TIME PER TASK- MEAN] %1.1fms%n", smtEvalStats.computeMean());
+		out.printf("[SMT EVAL TIME PER TASK - MIN] %1.1fms%n", minMedianMax.get(0));
+		out.printf("[SMT EVAL TIME PER TASK - MEDIAN] %1.1fms%n", minMedianMax.get(1));
+		out.printf("[SMT EVAL TIME PER TASK - MAX] %1.1fms%n",  minMedianMax.get(2));
+		out.printf("[SMT EVAL TIME PER TASK - STDDEV] %1.1fms%n", smtEvalStats.computeStdDev());
+		
+		minMedianMax = timePerSolver.computeMinMedianMax();
+		out.printf("[SMT EVAL TIME PER SOLVER - MEAN] %1.1fms%n", timePerSolver.computeMean());
+		out.printf("[SMT EVAL TIME PER SOLVER - MIN] %1.1fms%n", minMedianMax.get(0));
+		out.printf("[SMT EVAL TIME PER SOLVER - MEDIAN] %1.1fms%n", minMedianMax.get(1));
+		out.printf("[SMT EVAL TIME PER SOLVER - MAX] %1.1fms%n", minMedianMax.get(2));
+		out.printf("[SMT EVAL TIME PER SOLVER - STDDEV] %1.1fms%n", timePerSolver.computeStdDev());
+
+		minMedianMax = timePerSolver.computeMinMedianMax();
+		out.println("[SMT NUM SOLVERS] " + perProcessSmtEvalStats.size());
+		out.println("[SMT NUM CALLS - TOTAL] " + smtEvalStats.size());
+		out.printf("[SMT NUM CALLS PER SOLVER - MEAN] %1.1f%n", callsPerSolver.computeMean());
+		out.printf("[SMT NUM CALLS PER SOLVER - MIN] %1.1f%n", minMedianMax.get(0));
+		out.printf("[SMT NUM CALLS PER SOLVER - MEDIAN] %1.1f%n", minMedianMax.get(1));
+		out.printf("[SMT NUM CALLS PER SOLVER - MAX] %1.1f%n", minMedianMax.get(2));
+		out.printf("[SMT NUM CALLS PER SOLVER - STDDEV] %1.1f%n", callsPerSolver.computeStdDev());
 	}
 
 	public static void recordFuncTime(FunctionSymbol func, long time) {
@@ -218,8 +250,8 @@ public final class Configuration {
 			return -Long.compare(e1.getValue().get(), e2.getValue().get());
 		}
 
-	};	
-	
+	};
+
 	private static final Comparator<Map.Entry<?, Pair<AtomicLong, AtomicLong>>> sortPairedTimes = new Comparator<Map.Entry<?, Pair<AtomicLong, AtomicLong>>>() {
 
 		@Override
@@ -248,8 +280,8 @@ public final class Configuration {
 
 	public static synchronized void printRuleDiagnostics(PrintStream out) {
 		Map<Rule<?, ?>, Pair<AtomicLong, AtomicLong>> times = ruleTimes;
-		List<Map.Entry<Rule<?, ?>, Pair<AtomicLong, AtomicLong>>> sorted = times.entrySet().stream().sorted(sortPairedTimes)
-				.collect(Collectors.toList());
+		List<Map.Entry<Rule<?, ?>, Pair<AtomicLong, AtomicLong>>> sorted = times.entrySet().stream()
+				.sorted(sortPairedTimes).collect(Collectors.toList());
 		Iterator<Map.Entry<Rule<?, ?>, Pair<AtomicLong, AtomicLong>>> it = sorted.iterator();
 		int end = Math.min(times.size(), 10);
 		for (int i = 0; i < end; ++i) {

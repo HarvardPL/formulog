@@ -30,10 +30,10 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.harvard.seas.pl.formulog.Configuration;
+import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
-import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.smt.SmtLibShim.SmtStatus;
 import edu.harvard.seas.pl.formulog.util.Pair;
@@ -41,7 +41,10 @@ import edu.harvard.seas.pl.formulog.util.Pair;
 public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 
 	private static final ExternalSolverProcessFactory solverFactory = Z3ProcessFactory.get();
-	private static final AtomicInteger cnt = new AtomicInteger();
+	private static final AtomicInteger solverCnt = new AtomicInteger();
+
+	private final int id = solverCnt.getAndIncrement();
+	private int taskCnt = 0;
 
 	protected SmtLibShim debugShim;
 	protected SmtLibShim shim;
@@ -56,7 +59,7 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 		}
 		BufferedReader reader = new BufferedReader(new InputStreamReader(solver.getInputStream()));
 		PrintWriter writer = new PrintWriter(solver.getOutputStream());
-		shim = new SmtLibShim(reader, writer, prog);
+		shim = new SmtLibShim(reader, writer, prog, null);
 		shim.push();
 		if (Configuration.debugSmt) {
 			setupDebugShim(prog);
@@ -78,14 +81,14 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 		solver.destroy();
 		solver = null;
 	}
-	
+
 	@Override
 	public void finalize() {
 		destroy();
 	}
 
 	protected abstract Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(List<SmtLibTerm> assertions,
-			int id);
+			String taskId);
 
 	protected abstract void cleanup();
 
@@ -94,11 +97,11 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 			int timeout) throws EvaluationException {
 		assert solver != null;
 		boolean debug = debugShim != null;
-		int id = 0;
+		String taskId = "";
 		if (debug) {
-			id = cnt.getAndIncrement();
+			taskId = id + ":" + taskCnt++;
 		}
-		Pair<List<SolverVariable>, List<SolverVariable>> p = makeAssertions(assertions, id);
+		Pair<List<SolverVariable>, List<SolverVariable>> p = makeAssertions(assertions, taskId);
 		long start = 0;
 		if (debug || Configuration.timeSmt) {
 			start = System.currentTimeMillis();
@@ -106,11 +109,11 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 		SmtStatus status = shim.checkSatAssuming(p.fst(), p.snd(), timeout);
 		if (debug) {
 			double time = (System.currentTimeMillis() - start) / 1000.0;
-			System.err.println("RES SMT JOB #" + id + ": " + status + " (" + time + "s)");
+			System.err.println("RES SMT JOB #" + taskId + ": " + status + " (" + time + "s)");
 		}
 		if (Configuration.timeSmt) {
 			long time = System.currentTimeMillis() - start;
-			Configuration.recordSmtEvalTime(time);
+			Configuration.recordSmtEvalTime(id, time);
 		}
 		Map<SolverVariable, Term> m = null;
 		if (status.equals(SmtStatus.SATISFIABLE) && getModel) {

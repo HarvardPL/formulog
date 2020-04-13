@@ -33,9 +33,9 @@ public class NoCachingSolver extends AbstractSmtLibSolver {
 
 	private final static Pair<List<SolverVariable>, List<SolverVariable>> emptyListPair = new Pair<>(
 			Collections.emptyList(), Collections.emptyList());
-	
+
 	@Override
-	protected Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(List<SmtLibTerm> assertions, int id) {
+	protected Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(List<SmtLibTerm> assertions, String id) {
 		shim.pop();
 		shim.push();
 		ByteArrayOutputStream baos = null;

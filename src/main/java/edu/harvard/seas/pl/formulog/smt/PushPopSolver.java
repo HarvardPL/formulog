@@ -40,7 +40,7 @@ public class PushPopSolver extends AbstractSmtLibSolver {
 			Collections.emptyList(), Collections.emptyList());
 
 	@Override
-	protected Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(List<SmtLibTerm> assertions, int id) {
+	protected Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(List<SmtLibTerm> assertions, String id) {
 		ByteArrayOutputStream baos = null;
 		if (debugShim != null) {
 			baos = new ByteArrayOutputStream();

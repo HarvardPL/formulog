@@ -60,7 +60,7 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 	}
 
 	@Override
-	protected Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(List<SmtLibTerm> formula, int id) {
+	protected Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(List<SmtLibTerm> formula, String id) {
 		ByteArrayOutputStream baos = null;
 		if (debugShim != null) {
 			baos = new ByteArrayOutputStream();
