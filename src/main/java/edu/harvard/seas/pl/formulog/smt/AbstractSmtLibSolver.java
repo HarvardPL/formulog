@@ -43,7 +43,7 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 	private static final ExternalSolverProcessFactory solverFactory = Z3ProcessFactory.get();
 	private static final AtomicInteger solverCnt = new AtomicInteger();
 
-	private final int id = solverCnt.getAndIncrement();
+	protected final int solverId = solverCnt.getAndIncrement();
 	private int taskCnt = 0;
 
 	protected SmtLibShim debugShim;
@@ -99,7 +99,7 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 		boolean debug = debugShim != null;
 		String taskId = "";
 		if (debug) {
-			taskId = id + ":" + taskCnt++;
+			taskId = solverId + ":" + taskCnt++;
 		}
 		Pair<List<SolverVariable>, List<SolverVariable>> p = makeAssertions(assertions, taskId);
 		long start = 0;
@@ -113,7 +113,7 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 		}
 		if (Configuration.timeSmt) {
 			long time = System.currentTimeMillis() - start;
-			Configuration.recordSmtEvalTime(id, time);
+			Configuration.recordSmtEvalTime(solverId, time);
 		}
 		Map<SolverVariable, Term> m = null;
 		if (status.equals(SmtStatus.SATISFIABLE) && getModel) {

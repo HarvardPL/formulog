@@ -29,6 +29,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
+import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
@@ -49,6 +50,9 @@ public class PushPopSolver extends AbstractSmtLibSolver {
 		int i = findDiffPos(assertions);
 		shrinkCache(i);
 		growCache(assertions.listIterator(i));
+		if (Configuration.timeSmt) {
+			Configuration.recordPushPopSolverStats(solverId, cache.size(), i);
+		}
 		if (debugShim != null) {
 			String msg = "\nBEGIN SMT JOB #" + id + " (SMT solver #" + hashCode() + "):\n";
 			msg += baos.toString();

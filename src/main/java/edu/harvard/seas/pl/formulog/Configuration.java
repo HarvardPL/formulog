@@ -79,6 +79,9 @@ public final class Configuration {
 	public static final int smtCacheSize = getIntProp("smtCacheSize", 100);
 	public static final SmtStrategy smtStrategy = getSmtStrategy();
 
+	private static final Dataset pushPopStackSize = new Dataset();
+	private static final Dataset pushPopStackReuse = new Dataset();
+	
 	public static final int parallelism = getIntProp("parallelism", 4);
 
 	public static final boolean useDemandTransformation = propIsSet("useDemandTransformation", true);
@@ -220,8 +223,18 @@ public final class Configuration {
 		out.printf("[SMT NUM CALLS PER SOLVER - MEDIAN] %1.1f%n", minMedianMax.get(1));
 		out.printf("[SMT NUM CALLS PER SOLVER - MAX] %1.1f%n", minMedianMax.get(2));
 		out.printf("[SMT NUM CALLS PER SOLVER - STDDEV] %1.1f%n", callsPerSolver.computeStdDev());
+		
+		if (smtStrategy.getTag() == SmtStrategy.Tag.PER_THREAD_PUSH_POP) {
+			out.println("[PUSH POP STACK SIZE] " + pushPopStackSize.getStatsString());
+			out.println("[PUSH POP STACK REUSE] " + pushPopStackReuse.getStatsString());
+		}
 	}
 
+	public static void recordPushPopSolverStats(int solverId, int stackSize, int stackReuse) {
+		pushPopStackSize.addDataPoint(stackSize);
+		pushPopStackReuse.addDataPoint(stackReuse);
+	}
+	
 	public static void recordFuncTime(FunctionSymbol func, long time) {
 		AtomicLong l = Util.lookupOrCreate(funcTimes, func, () -> new AtomicLong());
 		l.addAndGet(time);
