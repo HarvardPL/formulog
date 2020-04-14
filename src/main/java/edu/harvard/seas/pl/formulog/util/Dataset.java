@@ -58,8 +58,8 @@ public class Dataset {
 			return "-";
 		}
 		List<Double> mmm = computeMinMedianMax();
-		return String.format("mean=%1.1f,min=%1.1f,median=%1.1f,max=%1.1f,stddev=%1.1f", computeMean(), mmm.get(0),
-				mmm.get(1), mmm.get(2), computeStdDev());
+		return String.format("n=%d,mean=%1.1f,min=%1.1f,median=%1.1f,max=%1.1f,stddev=%1.1f", size(), computeMean(),
+				mmm.get(0), mmm.get(1), mmm.get(2), computeStdDev());
 	}
 
 	private static class Datum implements Comparable<Datum> {

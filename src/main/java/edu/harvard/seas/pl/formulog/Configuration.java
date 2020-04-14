@@ -199,30 +199,11 @@ public final class Configuration {
 		out.println("[SMT INFER TIME] " + smtInferTime.get() + "ms");
 		out.println("[SMT SERIAL TIME] " + smtSerialTime.get() + "ms");
 		out.println("[SMT WAIT TIME] " + smtWaitTime.get() + "ms");
-		
-		List<Double> minMedianMax = smtEvalStats.computeMinMedianMax(); 
-		out.printf("[SMT EVAL TIME - TOTAL] %1.1fms%n", smtEvalStats.computeSum());
-		out.printf("[SMT EVAL TIME PER TASK- MEAN] %1.1fms%n", smtEvalStats.computeMean());
-		out.printf("[SMT EVAL TIME PER TASK - MIN] %1.1fms%n", minMedianMax.get(0));
-		out.printf("[SMT EVAL TIME PER TASK - MEDIAN] %1.1fms%n", minMedianMax.get(1));
-		out.printf("[SMT EVAL TIME PER TASK - MAX] %1.1fms%n",  minMedianMax.get(2));
-		out.printf("[SMT EVAL TIME PER TASK - STDDEV] %1.1fms%n", smtEvalStats.computeStdDev());
-		
-		minMedianMax = timePerSolver.computeMinMedianMax();
-		out.printf("[SMT EVAL TIME PER SOLVER - MEAN] %1.1fms%n", timePerSolver.computeMean());
-		out.printf("[SMT EVAL TIME PER SOLVER - MIN] %1.1fms%n", minMedianMax.get(0));
-		out.printf("[SMT EVAL TIME PER SOLVER - MEDIAN] %1.1fms%n", minMedianMax.get(1));
-		out.printf("[SMT EVAL TIME PER SOLVER - MAX] %1.1fms%n", minMedianMax.get(2));
-		out.printf("[SMT EVAL TIME PER SOLVER - STDDEV] %1.1fms%n", timePerSolver.computeStdDev());
-
-		minMedianMax = timePerSolver.computeMinMedianMax();
+		out.printf("[SMT EVAL TIME] %1.1fms%n", smtEvalStats.computeSum());
+		out.println("[SMT EVAL TIME PER CALL (ms)] " + smtEvalStats.getStatsString());
+		out.println("[SMT EVAL TIME PER SOLVER (ms)] " + timePerSolver.getStatsString());
 		out.println("[SMT NUM SOLVERS] " + perProcessSmtEvalStats.size());
-		out.println("[SMT NUM CALLS - TOTAL] " + smtEvalStats.size());
-		out.printf("[SMT NUM CALLS PER SOLVER - MEAN] %1.1f%n", callsPerSolver.computeMean());
-		out.printf("[SMT NUM CALLS PER SOLVER - MIN] %1.1f%n", minMedianMax.get(0));
-		out.printf("[SMT NUM CALLS PER SOLVER - MEDIAN] %1.1f%n", minMedianMax.get(1));
-		out.printf("[SMT NUM CALLS PER SOLVER - MAX] %1.1f%n", minMedianMax.get(2));
-		out.printf("[SMT NUM CALLS PER SOLVER - STDDEV] %1.1f%n", callsPerSolver.computeStdDev());
+		out.println("[SMT NUM CALLS PER SOLVER] " + callsPerSolver.getStatsString());
 		
 		if (smtStrategy.getTag() == SmtStrategy.Tag.PER_THREAD_PUSH_POP) {
 			out.println("[PUSH POP STACK SIZE] " + pushPopStackSize.getStatsString());
