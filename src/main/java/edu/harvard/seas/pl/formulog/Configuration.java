@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -81,6 +82,11 @@ public final class Configuration {
 
 	private static final Dataset pushPopStackSize = new Dataset();
 	private static final Dataset pushPopStackReuse = new Dataset();
+	private static final Dataset csaCacheHitRate = new Dataset();
+	private static final Dataset csaCacheUseRate = new Dataset();
+	private static final Dataset csaCacheSize = new Dataset();
+	private static final Dataset csaCacheAdds = new Dataset();
+	private static final AtomicInteger csaCacheClears = new AtomicInteger();
 	
 	public static final int parallelism = getIntProp("parallelism", 4);
 
@@ -204,16 +210,42 @@ public final class Configuration {
 		out.println("[SMT EVAL TIME PER SOLVER (ms)] " + timePerSolver.getStatsString());
 		out.println("[SMT NUM SOLVERS] " + perProcessSmtEvalStats.size());
 		out.println("[SMT NUM CALLS PER SOLVER] " + callsPerSolver.getStatsString());
-		
-		if (smtStrategy.getTag() == SmtStrategy.Tag.PER_THREAD_PUSH_POP) {
+	
+		switch (smtStrategy.getTag()) {
+		case BEST_MATCH:
+		case PER_THREAD_BEST_MATCH:
+		case PER_THREAD_QUEUE:
+		case QUEUE:
+			out.println("[CSA CACHE LIMIT] " + smtCacheSize);
+			out.println("[CSA CACHE BASE SIZE] " + csaCacheSize.getStatsString());
+			out.println("[CSA CACHE ADDITIONS] " + csaCacheAdds.getStatsString());
+			out.println("[CSA CACHE HIT RATE] " + csaCacheHitRate.getStatsString());
+			out.println("[CSA CACHE USE RATE] " + csaCacheUseRate.getStatsString());
+			out.println("[CSA CACHE CLEARS] " + csaCacheClears.get());
+			break;
+		case PER_THREAD_PUSH_POP:
 			out.println("[PUSH POP STACK SIZE] " + pushPopStackSize.getStatsString());
 			out.println("[PUSH POP STACK REUSE] " + pushPopStackReuse.getStatsString());
+			break;
+		case PER_THREAD_NAIVE:
+			break;
 		}
 	}
 
 	public static void recordPushPopSolverStats(int solverId, int stackSize, int stackReuse) {
 		pushPopStackSize.addDataPoint(stackSize);
 		pushPopStackReuse.addDataPoint(stackReuse);
+	}
+	
+	public static void recordCsaCacheStats(int solverId, double hitRate, double useRate, int size, int additions) {
+		csaCacheHitRate.addDataPoint(hitRate);
+		csaCacheUseRate.addDataPoint(useRate);
+		csaCacheSize.addDataPoint(size);
+		csaCacheAdds.addDataPoint(additions);
+	}
+	
+	public static void recordCsaCacheClear(int solverId) {
+		csaCacheClears.incrementAndGet();
 	}
 	
 	public static void recordFuncTime(FunctionSymbol func, long time) {

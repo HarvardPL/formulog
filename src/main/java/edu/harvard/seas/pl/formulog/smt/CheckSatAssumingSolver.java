@@ -50,6 +50,9 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 	private int nextVarId;
 
 	private void clearCache() {
+		if (Configuration.timeSmt) {
+			Configuration.recordCsaCacheClear(solverId);
+		}
 		indicatorVars.clear();
 		shim.pop();
 		shim.push();
@@ -66,10 +69,16 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 			baos = new ByteArrayOutputStream();
 			debugShim.redirectOutput(new PrintWriter(baos));
 		}
+		int oldSize = indicatorVars.size();
+		int hits = 0;
+		int adds = 0;
 		Set<SolverVariable> xs = new HashSet<>();
 		for (SmtLibTerm conjunct : formula) {
 			SolverVariable x = indicatorVars.get(conjunct);
-			if (x == null) {
+			if (x != null) {
+				hits++;
+			} else {
+				adds++;
 				x = makeIndicatorVar(conjunct);
 				indicatorVars.put(conjunct, x);
 				SmtLibTerm imp = makeImp(x, conjunct);
@@ -79,6 +88,11 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 				}
 			}
 			xs.add(x);
+		}
+		if (Configuration.timeSmt) {
+			double useRate = oldSize == 0 ? 1 : hits / oldSize;
+			double hitRate = hits / formula.size();
+			Configuration.recordCsaCacheStats(solverId, hitRate, useRate, oldSize, adds);
 		}
 		if (debugShim != null) {
 			String msg = "\nBEGIN SMT JOB #" + id + " (SMT solver #" + hashCode() + "):\n";
