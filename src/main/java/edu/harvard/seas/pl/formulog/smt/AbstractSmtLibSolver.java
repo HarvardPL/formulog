@@ -21,10 +21,13 @@ package edu.harvard.seas.pl.formulog.smt;
  */
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -44,11 +47,28 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 	private static final AtomicInteger solverCnt = new AtomicInteger();
 
 	protected final int solverId = solverCnt.getAndIncrement();
-	private int taskCnt = 0;
 
-	protected SmtLibShim debugShim;
 	protected SmtLibShim shim;
 	protected Process solver;
+	private final PrintWriter log;
+
+	public AbstractSmtLibSolver() {
+		PrintWriter w = null;
+		if (Configuration.debugSmt) {
+			try {
+				Path path = Paths.get(Configuration.debugSmtOutDir);
+				File dir = path.toFile();
+				if (!dir.exists()) {
+					dir.mkdirs();
+				}
+				File log = path.resolve("solver" + solverId + ".log.smt2").toFile();
+				w = new PrintWriter(new FileWriter(log));
+			} catch (IOException e) {
+				System.err.println("WARNING: Unable to create log for solver #" + solverId);
+			}
+		}
+		log = w;
+	}
 
 	public synchronized void start(Program<?, ?> prog) {
 		assert solver == null;
@@ -59,21 +79,8 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 		}
 		BufferedReader reader = new BufferedReader(new InputStreamReader(solver.getInputStream()));
 		PrintWriter writer = new PrintWriter(solver.getOutputStream());
-		shim = new SmtLibShim(reader, writer, prog, null);
+		shim = new SmtLibShim(reader, writer, prog, log);
 		shim.push();
-		if (Configuration.debugSmt) {
-			setupDebugShim(prog);
-		}
-	}
-
-	private void setupDebugShim(Program<?, ?> prog) {
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		debugShim = new SmtLibShim(null, new PrintWriter(baos), prog);
-		String msg = "\nBEGIN SMT DECLARATIONS (SMT solver #" + hashCode() + "):\n";
-		msg += baos.toString();
-		msg += "(push)\n";
-		msg += "END SMT DECLARATIONS (SMT solver #" + hashCode() + ")";
-		System.err.println(msg);
 	}
 
 	public synchronized void destroy() {
@@ -87,8 +94,7 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 		destroy();
 	}
 
-	protected abstract Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(List<SmtLibTerm> assertions,
-			String taskId);
+	protected abstract Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(List<SmtLibTerm> assertions);
 
 	protected abstract void cleanup();
 
@@ -96,31 +102,31 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 	public synchronized Pair<SmtStatus, Map<SolverVariable, Term>> check(List<SmtLibTerm> assertions, boolean getModel,
 			int timeout) throws EvaluationException {
 		assert solver != null;
-		boolean debug = debugShim != null;
-		String taskId = "";
-		if (debug) {
-			taskId = solverId + ":" + taskCnt++;
-		}
-		Pair<List<SolverVariable>, List<SolverVariable>> p = makeAssertions(assertions, taskId);
+		boolean debug = log != null;
+		Pair<List<SolverVariable>, List<SolverVariable>> p = makeAssertions(assertions);
 		long start = 0;
 		if (debug || Configuration.timeSmt) {
 			start = System.currentTimeMillis();
 		}
-		SmtStatus status = shim.checkSatAssuming(p.fst(), p.snd(), timeout);
-		if (debug) {
-			double time = (System.currentTimeMillis() - start) / 1000.0;
-			System.err.println("RES SMT JOB #" + taskId + ": " + status + " (" + time + "s)");
+		try {
+			SmtStatus status = shim.checkSatAssuming(p.fst(), p.snd(), timeout);
+			if (Configuration.timeSmt || debug) {
+				long time = System.currentTimeMillis() - start;
+				Configuration.recordSmtEvalTime(solverId, time);
+				if (debug) {
+					log.println("; time: " + time + "ms");
+					log.flush();
+				}
+			}
+			Map<SolverVariable, Term> m = null;
+			if (status.equals(SmtStatus.SATISFIABLE) && getModel) {
+				m = shim.getModel();
+			}
+			cleanup();
+			return new Pair<>(status, m);
+		} catch (EvaluationException e) {
+			throw new EvaluationException("Problem with solver " + solverId + ":\n" + e.getMessage());
 		}
-		if (Configuration.timeSmt) {
-			long time = System.currentTimeMillis() - start;
-			Configuration.recordSmtEvalTime(solverId, time);
-		}
-		Map<SolverVariable, Term> m = null;
-		if (status.equals(SmtStatus.SATISFIABLE) && getModel) {
-			m = shim.getModel();
-		}
-		cleanup();
-		return new Pair<>(status, m);
 	}
 
 }

@@ -60,6 +60,7 @@ public final class Configuration {
 	private static final Map<Rule<?, ?>, Pair<AtomicLong, AtomicLong>> ruleTimes = new ConcurrentHashMap<>();
 
 	public static final boolean debugSmt = propIsSet("debugSmt");
+	public static final String debugSmtOutDir = getStringProp("debugSmtOutDir", "solver_logs");
 
 	public static final boolean timeSmt = propIsSet("timeSmt");
 	private static final Map<Integer, Dataset> perProcessSmtEvalStats = new ConcurrentHashMap<>();
@@ -82,6 +83,9 @@ public final class Configuration {
 
 	private static final Dataset pushPopStackSize = new Dataset();
 	private static final Dataset pushPopStackReuse = new Dataset();
+	private static final Dataset pushPopStackPushes = new Dataset();
+	private static final Dataset pushPopStackPops = new Dataset();
+	private static final Dataset pushPopStackDelta = new Dataset();
 	private static final Dataset csaCacheHitRate = new Dataset();
 	private static final Dataset csaCacheUseRate = new Dataset();
 	private static final Dataset csaCacheSize = new Dataset();
@@ -208,7 +212,6 @@ public final class Configuration {
 		out.printf("[SMT EVAL TIME] %1.1fms%n", smtEvalStats.computeSum());
 		out.println("[SMT EVAL TIME PER CALL (ms)] " + smtEvalStats.getStatsString());
 		out.println("[SMT EVAL TIME PER SOLVER (ms)] " + timePerSolver.getStatsString());
-		out.println("[SMT NUM SOLVERS] " + perProcessSmtEvalStats.size());
 		out.println("[SMT NUM CALLS PER SOLVER] " + callsPerSolver.getStatsString());
 	
 		switch (smtStrategy.getTag()) {
@@ -224,7 +227,10 @@ public final class Configuration {
 			out.println("[CSA CACHE CLEARS] " + csaCacheClears.get());
 			break;
 		case PER_THREAD_PUSH_POP:
-			out.println("[PUSH POP STACK SIZE] " + pushPopStackSize.getStatsString());
+			out.println("[PUSH POP STACK BASE SIZE] " + pushPopStackSize.getStatsString());
+			out.println("[PUSH POP STACK PUSHES] " + pushPopStackPushes.getStatsString());
+			out.println("[PUSH POP STACK POPS] " + pushPopStackPops.getStatsString());
+			out.println("[PUSH POP STACK DELTA] " + pushPopStackDelta.getStatsString());
 			out.println("[PUSH POP STACK REUSE] " + pushPopStackReuse.getStatsString());
 			break;
 		case PER_THREAD_NAIVE:
@@ -232,9 +238,12 @@ public final class Configuration {
 		}
 	}
 
-	public static void recordPushPopSolverStats(int solverId, int stackSize, int stackReuse) {
-		pushPopStackSize.addDataPoint(stackSize);
-		pushPopStackReuse.addDataPoint(stackReuse);
+	public static void recordPushPopSolverStats(int solverId, int stackStartSize, int pops, int pushes) {
+		pushPopStackSize.addDataPoint(stackStartSize);
+		pushPopStackReuse.addDataPoint(stackStartSize - pops);
+		pushPopStackPops.addDataPoint(pops);
+		pushPopStackPushes.addDataPoint(pushes);
+		pushPopStackDelta.addDataPoint(pushes - pops);
 	}
 	
 	public static void recordCsaCacheStats(int solverId, double hitRate, double useRate, int size, int additions) {
@@ -358,6 +367,14 @@ public final class Configuration {
 		} catch (NumberFormatException e) {
 			throw new IllegalArgumentException("Property " + prop + " expects an integer argument");
 		}
+	}
+	
+	private static String getStringProp(String prop, String def) {
+		String val = System.getProperty(prop);
+		if (val == null) {
+			return def;
+		}
+		return val;
 	}
 
 	private static List<String> getListProp(String prop) {

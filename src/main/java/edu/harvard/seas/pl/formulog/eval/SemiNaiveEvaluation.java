@@ -49,6 +49,7 @@ import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
 import edu.harvard.seas.pl.formulog.smt.BestMatchSmtManager;
 import edu.harvard.seas.pl.formulog.smt.NaiveSmtManager;
+import edu.harvard.seas.pl.formulog.smt.NotThreadSafeQueueSmtManager;
 import edu.harvard.seas.pl.formulog.smt.PerThreadSmtManager;
 import edu.harvard.seas.pl.formulog.smt.PushPopSmtManager;
 import edu.harvard.seas.pl.formulog.smt.QueueSmtManager;
@@ -246,7 +247,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 		case PER_THREAD_QUEUE: {
 			int size = (int) strategy.getMetadata();
-			return new PerThreadSmtManager(() -> new QueueSmtManager(prog, size));
+			return new PerThreadSmtManager(() -> new NotThreadSafeQueueSmtManager(prog, size));
 		}
 		case PER_THREAD_BEST_MATCH: {
 			int size = (int) strategy.getMetadata();

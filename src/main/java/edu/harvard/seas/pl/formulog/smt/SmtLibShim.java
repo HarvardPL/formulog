@@ -96,7 +96,7 @@ public class SmtLibShim {
 	public SmtLibShim(Reader in, Writer out, Program<?, ?> prog) {
 		this(in, out, prog, null);
 	}
-	
+
 	public SmtLibShim(Reader in, Writer out, Program<?, ?> prog, Writer log) {
 		this.in = in != null ? new BufferedReader(in) : null;
 		this.out = new PrintWriter(out);
@@ -190,7 +190,11 @@ public class SmtLibShim {
 			result = in.readLine();
 			if (result == null) {
 				throw new EvaluationException("Problem with evaluating Z3! Unexpected end of stream");
-			} else if (result.equals("sat")) {
+			}
+			if (log != null) {
+				log.println("; result: " + result);
+			}
+			if (result.equals("sat")) {
 				return SmtStatus.SATISFIABLE;
 			} else if (result.equals("unsat")) {
 				return SmtStatus.UNSATISFIABLE;
@@ -227,7 +231,7 @@ public class SmtLibShim {
 			log.flush();
 		}
 	}
-	
+
 	public void print(String s) {
 		out.print(s);
 		if (log != null) {
