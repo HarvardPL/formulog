@@ -28,6 +28,9 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -43,7 +46,22 @@ import edu.harvard.seas.pl.formulog.util.Pair;
 
 public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 
-	private static final ExternalSolverProcessFactory solverFactory = Z3ProcessFactory.get();
+	private static final ExternalSolverProcessFactory solverFactory;
+	static {
+		switch (Configuration.smtSolver) {
+		case "z3":
+			solverFactory = Z3ProcessFactory.get();
+			break;
+		case "cvc4":
+			solverFactory = Cvc4ProcessFactory.get();
+			break;
+		case "yices":
+			solverFactory = YicesProcessFactory.get();
+			break;
+		default:
+			throw new AssertionError("impossible");
+		}
+	}
 	private static final AtomicInteger solverCnt = new AtomicInteger();
 
 	protected final int solverId = solverCnt.getAndIncrement();
@@ -79,7 +97,10 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 		}
 		BufferedReader reader = new BufferedReader(new InputStreamReader(solver.getInputStream()));
 		PrintWriter writer = new PrintWriter(solver.getOutputStream());
-		shim = new SmtLibShim(reader, writer, prog, log);
+		shim = new SmtLibShim(reader, writer, prog.getSymbolManager(), log);
+		shim.println("(set-logic " + Configuration.smtLogic + ")");
+		boolean includeAdts = Configuration.smtSolver.equals("z3") && Configuration.smtLogic.equals("ALL");
+		shim.makeDeclarations(prog, includeAdts);
 		shim.push();
 	}
 
@@ -102,6 +123,11 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 	public synchronized Pair<SmtStatus, Map<SolverVariable, Term>> check(List<SmtLibTerm> assertions, boolean getModel,
 			int timeout) throws EvaluationException {
 		assert solver != null;
+		if (assertions.isEmpty()) {
+			Map<SolverVariable, Term> m = getModel ? Collections.emptyMap() : null;
+			return new Pair<>(SmtStatus.SATISFIABLE, m);
+		}
+		assertions = new ArrayList<>(new LinkedHashSet<>(assertions));
 		boolean debug = log != null;
 		Pair<List<SolverVariable>, List<SolverVariable>> p = makeAssertions(assertions);
 		long start = 0;

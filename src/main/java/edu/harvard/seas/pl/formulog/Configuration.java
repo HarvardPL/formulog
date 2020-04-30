@@ -80,7 +80,20 @@ public final class Configuration {
 	public static final int smtTaskSize = getIntProp("smtTaskSize", 8);
 	public static final int smtCacheSize = getIntProp("smtCacheSize", 100);
 	public static final SmtStrategy smtStrategy = getSmtStrategy();
-
+	public static final String smtSolver;
+	static {
+		smtSolver = getStringProp("smtSolver", "z3");
+		switch (smtSolver) {
+		case "z3":
+		case "cvc4":
+		case "yices":
+			break;
+		default:
+			throw new IllegalArgumentException("Unrecognized solver: " + smtSolver);
+		}
+	}
+	public static final String smtLogic = getStringProp("smtLogic", "ALL");
+	
 	private static final Dataset pushPopStackSize = new Dataset();
 	private static final Dataset pushPopStackReuse = new Dataset();
 	private static final Dataset pushPopStackPushes = new Dataset();
@@ -89,9 +102,10 @@ public final class Configuration {
 	private static final Dataset csaCacheHitRate = new Dataset();
 	private static final Dataset csaCacheUseRate = new Dataset();
 	private static final Dataset csaCacheSize = new Dataset();
-	private static final Dataset csaCacheAdds = new Dataset();
+	private static final Dataset csaCacheHits = new Dataset();
+	private static final Dataset csaCacheMisses = new Dataset();
 	private static final AtomicInteger csaCacheClears = new AtomicInteger();
-	
+
 	public static final int parallelism = getIntProp("parallelism", 4);
 
 	public static final boolean useDemandTransformation = propIsSet("useDemandTransformation", true);
@@ -213,7 +227,7 @@ public final class Configuration {
 		out.println("[SMT EVAL TIME PER CALL (ms)] " + smtEvalStats.getStatsString());
 		out.println("[SMT EVAL TIME PER SOLVER (ms)] " + timePerSolver.getStatsString());
 		out.println("[SMT NUM CALLS PER SOLVER] " + callsPerSolver.getStatsString());
-	
+
 		switch (smtStrategy.getTag()) {
 		case BEST_MATCH:
 		case PER_THREAD_BEST_MATCH:
@@ -221,7 +235,8 @@ public final class Configuration {
 		case QUEUE:
 			out.println("[CSA CACHE LIMIT] " + smtCacheSize);
 			out.println("[CSA CACHE BASE SIZE] " + csaCacheSize.getStatsString());
-			out.println("[CSA CACHE ADDITIONS] " + csaCacheAdds.getStatsString());
+			out.println("[CSA CACHE HITS] " + csaCacheHits.getStatsString());
+			out.println("[CSA CACHE MISSES] " + csaCacheMisses.getStatsString());
 			out.println("[CSA CACHE HIT RATE] " + csaCacheHitRate.getStatsString());
 			out.println("[CSA CACHE USE RATE] " + csaCacheUseRate.getStatsString());
 			out.println("[CSA CACHE CLEARS] " + csaCacheClears.get());
@@ -245,18 +260,20 @@ public final class Configuration {
 		pushPopStackPushes.addDataPoint(pushes);
 		pushPopStackDelta.addDataPoint(pushes - pops);
 	}
-	
-	public static void recordCsaCacheStats(int solverId, double hitRate, double useRate, int size, int additions) {
-		csaCacheHitRate.addDataPoint(hitRate);
-		csaCacheUseRate.addDataPoint(useRate);
-		csaCacheSize.addDataPoint(size);
-		csaCacheAdds.addDataPoint(additions);
+
+	public static void recordCsaCacheStats(int solverId, int hits, int misses, int oldSize) {
+		int numAsserts = hits + misses;
+		csaCacheHits.addDataPoint(hits);
+		csaCacheMisses.addDataPoint(misses);
+		csaCacheHitRate.addDataPoint(numAsserts == 0 ? 1 : (double) hits / numAsserts);
+		csaCacheUseRate.addDataPoint(oldSize == 0 ? 1 : (double) hits / oldSize);
+		csaCacheSize.addDataPoint(oldSize);
 	}
-	
+
 	public static void recordCsaCacheClear(int solverId) {
 		csaCacheClears.incrementAndGet();
 	}
-	
+
 	public static void recordFuncTime(FunctionSymbol func, long time) {
 		AtomicLong l = Util.lookupOrCreate(funcTimes, func, () -> new AtomicLong());
 		l.addAndGet(time);
@@ -368,7 +385,7 @@ public final class Configuration {
 			throw new IllegalArgumentException("Property " + prop + " expects an integer argument");
 		}
 	}
-	
+
 	private static String getStringProp(String prop, String def) {
 		String val = System.getProperty(prop);
 		if (val == null) {

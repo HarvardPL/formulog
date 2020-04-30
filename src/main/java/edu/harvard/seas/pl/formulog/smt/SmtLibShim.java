@@ -84,7 +84,7 @@ public class SmtLibShim {
 	}
 
 	private final BufferedReader in;
-	private PrintWriter out;
+	private final PrintWriter out;
 	private final Map<SolverVariable, String> declaredSymbols = new HashMap<>();
 	private final Deque<Set<SolverVariable>> symbolsByStackPos = new ArrayDeque<>();
 	private final Map<String, SolverVariable> symbolLookup = new HashMap<>();
@@ -93,21 +93,16 @@ public class SmtLibShim {
 	private Iterator<Pair<ConstructorSymbol, Type>> typeAnnotations;
 	private int cnt;
 
-	public SmtLibShim(Reader in, Writer out, Program<?, ?> prog) {
-		this(in, out, prog, null);
+	public SmtLibShim(Reader in, Writer out, SymbolManager sm) {
+		this(in, out, sm, null);
 	}
 
-	public SmtLibShim(Reader in, Writer out, Program<?, ?> prog, Writer log) {
+	public SmtLibShim(Reader in, Writer out, SymbolManager sm, Writer log) {
 		this.in = in != null ? new BufferedReader(in) : null;
 		this.out = new PrintWriter(out);
-		this.symbolManager = prog.getSymbolManager();
+		this.symbolManager = sm;
 		symbolsByStackPos.add(new HashSet<>());
 		this.log = log != null ? new PrintWriter(log) : null;
-		makeDeclarations(prog);
-	}
-
-	public void redirectOutput(Writer out) {
-		this.out = new PrintWriter(out);
 	}
 
 	public void makeAssertion(SmtLibTerm assertion) {
@@ -148,13 +143,13 @@ public class SmtLibShim {
 	}
 
 	public void push() {
-		println("(push)");
+		println("(push 1)");
 		flush();
 		symbolsByStackPos.addLast(new HashSet<>());
 	}
 
 	public void pop() {
-		println("(pop)");
+		println("(pop 1)");
 		flush();
 		for (SolverVariable x : symbolsByStackPos.removeLast()) {
 			String s = declaredSymbols.remove(x);
@@ -169,10 +164,12 @@ public class SmtLibShim {
 	public SmtStatus checkSatAssuming(List<SolverVariable> onVars, List<SolverVariable> offVars, int timeout)
 			throws EvaluationException {
 		if (timeout < 0) {
-			System.err.println("Warning: negative timeout provided to Z3 - ignored");
+			System.err.println("Warning: negative timeout provided to solver - ignored");
 			timeout = Integer.MAX_VALUE;
 		}
-		println("(set-option :timeout " + timeout + ")");
+		if (Configuration.smtSolver.equals("z3")) {
+			println("(set-option :timeout " + timeout + ")");
+		}
 		print("(check-sat-assuming (");
 		for (SolverVariable x : onVars) {
 			print(x);
@@ -290,7 +287,7 @@ public class SmtLibShim {
 						declaredSymbols.put(var, s);
 						symbolLookup.put(s, var);
 						symbolsByStackPos.getLast().add(var);
-						print("(declare-const " + s + " ");
+						print("(declare-fun " + s + " () ");
 						FunctorType ft = (FunctorType) var.getSymbol().getCompileTimeType();
 						print(stringifyType(ft.getRetType()));
 						println(")");
@@ -316,8 +313,8 @@ public class SmtLibShim {
 		}, null);
 	}
 
-	private void makeDeclarations(Program<?, ?> prog) {
-		declareSorts(prog.getTypeSymbols());
+	public void makeDeclarations(Program<?, ?> prog, boolean includeAdts) {
+		declareSorts(prog.getTypeSymbols(), includeAdts);
 		declareUninterpretedFunctions(prog.getUninterpretedFunctionSymbols());
 		flush();
 	}
@@ -336,7 +333,7 @@ public class SmtLibShim {
 		}
 	}
 
-	private void declareSorts(Set<TypeSymbol> sorts) {
+	private void declareSorts(Set<TypeSymbol> sorts, boolean includeAdts) {
 		SortDependencyFinder depends = new SortDependencyFinder(sorts);
 		StrongConnectivityAlgorithm<TypeSymbol, DefaultEdge> k = new KosarajuStrongConnectivityInspector<>(
 				depends.compute());
@@ -344,17 +341,17 @@ public class SmtLibShim {
 				k.getCondensation());
 		while (topo.hasNext()) {
 			Graph<TypeSymbol, DefaultEdge> scc = topo.next();
-			declareScc(scc.vertexSet());
+			declareScc(scc.vertexSet(), includeAdts);
 		}
 	}
 
-	private void declareScc(Set<TypeSymbol> sorts) {
+	private void declareScc(Set<TypeSymbol> sorts, boolean includeAdts) {
 		assert !sorts.isEmpty();
 		TypeSymbol sym = sorts.iterator().next();
 		if (sym.isUninterpretedSort()) {
 			assert sorts.size() == 1;
 			declareUninterpretedSort(sym);
-		} else {
+		} else if (includeAdts) {
 			assert sym.isNormalType();
 			declareAdtSorts(sorts);
 		}

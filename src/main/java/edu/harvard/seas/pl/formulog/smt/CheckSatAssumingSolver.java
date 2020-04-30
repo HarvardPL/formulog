@@ -44,14 +44,14 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 	protected Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(List<SmtLibTerm> formula) {
 		int oldSize = indicatorVars.size();
 		int hits = 0;
-		int adds = 0;
+		int misses = 0;
 		Set<SolverVariable> xs = new HashSet<>();
 		for (SmtLibTerm conjunct : formula) {
 			SolverVariable x = indicatorVars.get(conjunct);
 			if (x != null) {
 				hits++;
 			} else {
-				adds++;
+				misses++;
 				x = makeIndicatorVar(conjunct);
 				indicatorVars.put(conjunct, x);
 				SmtLibTerm imp = makeImp(x, conjunct);
@@ -60,9 +60,7 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 			xs.add(x);
 		}
 		if (Configuration.timeSmt) {
-			double useRate = oldSize == 0 ? 1 : (double) hits / oldSize;
-			double hitRate = (double) hits / formula.size();
-			Configuration.recordCsaCacheStats(solverId, hitRate, useRate, oldSize, adds);
+			Configuration.recordCsaCacheStats(solverId, hits, misses, oldSize);
 		}
 		List<SolverVariable> onVars = new ArrayList<>();
 		List<SolverVariable> offVars = new ArrayList<>();
