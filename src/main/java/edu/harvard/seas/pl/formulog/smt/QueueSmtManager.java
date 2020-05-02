@@ -25,12 +25,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 
-import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
-import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.smt.SmtLibShim.SmtStatus;
 import edu.harvard.seas.pl.formulog.util.Pair;
@@ -39,13 +37,11 @@ public class QueueSmtManager extends AbstractSmtManager {
 
 	private final ArrayBlockingQueue<SmtLibSolver> solvers;
 
-	public QueueSmtManager(Program<UserPredicate, BasicRule> prog, int size) {
-		solvers = new ArrayBlockingQueue<>(size);
-		for (int i = 0; i < size; ++i) {
-			CheckSatAssumingSolver solver = new CheckSatAssumingSolver();
-			solver.start(prog);
-			solvers.add(solver);
+	public QueueSmtManager(int size) {
+		if (size <= 0) {
+			throw new IllegalArgumentException("Cannot have non-positive number of solvers.");
 		}
+		solvers = new ArrayBlockingQueue<>(size);
 	}
 
 	@Override
@@ -60,6 +56,15 @@ public class QueueSmtManager extends AbstractSmtManager {
 		Pair<SmtStatus, Map<SolverVariable, Term>> res = solver.check(conjuncts, getModel, timeout);
 		solvers.add(solver);
 		return res;
+	}
+
+	@Override
+	public void initialize(Program<?, ?> prog) throws EvaluationException {
+		while (solvers.remainingCapacity() > 0) {
+			CheckSatAssumingSolver solver = new CheckSatAssumingSolver();
+			solver.start(prog);
+			solvers.add(solver);
+		}
 	}
 
 }

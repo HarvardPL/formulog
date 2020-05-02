@@ -9,6 +9,7 @@ import java.util.List;
 import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
+import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
 public class PushPopSolver extends AbstractSmtLibSolver {
@@ -19,7 +20,8 @@ public class PushPopSolver extends AbstractSmtLibSolver {
 			Collections.emptyList(), Collections.emptyList());
 
 	@Override
-	protected Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(List<SmtLibTerm> assertions) {
+	protected Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(List<SmtLibTerm> assertions)
+			throws EvaluationException {
 		int baseSize = cache.size();
 		int i = findDiffPos(assertions);
 		int pops = baseSize - i;
@@ -47,7 +49,7 @@ public class PushPopSolver extends AbstractSmtLibSolver {
 		return i;
 	}
 
-	private void shrinkCache(int tgtSize) {
+	private void shrinkCache(int tgtSize) throws EvaluationException {
 		int size = cache.size();
 		while (size > tgtSize) {
 			shim.pop();
@@ -55,8 +57,8 @@ public class PushPopSolver extends AbstractSmtLibSolver {
 			--size;
 		}
 	}
-	
-	private void growCache(Iterator<SmtLibTerm> assertions) {
+
+	private void growCache(Iterator<SmtLibTerm> assertions) throws EvaluationException {
 		while (assertions.hasNext()) {
 			SmtLibTerm assertion = assertions.next();
 			shim.push();
@@ -71,8 +73,8 @@ public class PushPopSolver extends AbstractSmtLibSolver {
 	}
 
 	@Override
-	protected void start() {
-		shim.println("(set-logic " + Configuration.smtLogic + ")");
+	protected void start() throws EvaluationException {
+		shim.setLogic(Configuration.smtLogic);
 		shim.makeDeclarations();
 	}
 

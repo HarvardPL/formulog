@@ -13,6 +13,7 @@ import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
+import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.GlobalSymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInConstructorSymbolBase;
@@ -27,7 +28,7 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 	private final Map<SmtLibTerm, SolverVariable> indicatorVars = new ConcurrentHashMap<>();
 	private int nextVarId;
 
-	private void clearCache() {
+	private void clearCache() throws EvaluationException {
 		if (Configuration.timeSmt) {
 			Configuration.recordCsaCacheClear(solverId);
 		}
@@ -41,7 +42,8 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 	}
 
 	@Override
-	protected Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(List<SmtLibTerm> formula) {
+	protected Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(List<SmtLibTerm> formula)
+			throws EvaluationException {
 		int oldSize = indicatorVars.size();
 		int hits = 0;
 		int misses = 0;
@@ -88,15 +90,15 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 	}
 
 	@Override
-	protected void cleanup() {
+	protected void cleanup() throws EvaluationException {
 		if (indicatorVars.size() > Configuration.smtCacheSize) {
 			clearCache();
 		}
 	}
 
 	@Override
-	protected void start() {
-		shim.println("(set-logic " + Configuration.smtLogic + ")");
+	protected void start() throws EvaluationException {
+		shim.setLogic(Configuration.smtLogic);
 		shim.makeDeclarations();
 	}
 

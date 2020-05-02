@@ -54,6 +54,7 @@ import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
+import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitorExn;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.smt.SmtLibParser.SmtLibParseException;
@@ -92,9 +93,9 @@ public class SmtLibShim {
 	private PrintWriter log;
 	private Iterator<Pair<ConstructorSymbol, Type>> typeAnnotations;
 	private int cnt;
-	
+
 	private SymbolManager symbolManager;
-	private String declarations;
+	private final List<String> declarations = new ArrayList<>();
 
 	public SmtLibShim(Reader in, Writer out) {
 		this(in, out, null);
@@ -106,21 +107,37 @@ public class SmtLibShim {
 		this.log = log != null ? new PrintWriter(log) : null;
 		symbolsByStackPos.add(new HashSet<>());
 	}
-	
+
 	public void initialize(Program<?, ?> prog, boolean declareAdts) {
 		symbolManager = prog.getSymbolManager();
-		PrintWriter tmpLog = log;
-		log = null;
-		PrintWriter tmpOut = out;
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		out = new PrintWriter(baos);
-		makeDeclarations(prog, declareAdts);
-		declarations = baos.toString();
-		out = tmpOut;
-		log = tmpLog;
+		new DeclarationGatherer(declareAdts).go(prog);
+		println("(set-option :print-success true)");
+		flush();
+		try {
+			checkSuccess();
+		} catch (EvaluationException e) {
+			throw new AssertionError(e);
+		}
 	}
 
-	public void makeAssertion(SmtLibTerm assertion) {
+	private void checkSuccess() throws EvaluationException {
+		if (in != null) {
+			try {
+				String r = in.readLine();
+				if (log != null) {
+					log.println("; success? " + r);
+					log.flush();
+				}
+				if (r == null || !r.equals("success")) {
+					throw new EvaluationException("Solver did not return success: " + r);
+				}
+			} catch (IOException e) {
+				throw new EvaluationException("Problem with evaluating solver: " + e.getMessage());
+			}
+		}
+	}
+
+	public void makeAssertion(SmtLibTerm assertion) throws EvaluationException {
 		long start = 0;
 		long end = 0;
 		if (recordTime) {
@@ -141,6 +158,8 @@ public class SmtLibShim {
 		print("(assert ");
 		assertion.toSmtLib(this);
 		println(")");
+		flush();
+		checkSuccess();
 		if (recordTime) {
 			end = System.currentTimeMillis();
 			Configuration.recordSmtSerialTime(end - start);
@@ -149,24 +168,27 @@ public class SmtLibShim {
 		flush();
 	}
 
-	public void reset() {
+	public void reset() throws EvaluationException {
 		declaredSymbols.clear();
 		symbolLookup.clear();
 		symbolsByStackPos.clear();
 		symbolsByStackPos.add(new HashSet<>());
 		println("(reset)");
 		flush();
+		checkSuccess();
 	}
 
-	public void push() {
+	public void push() throws EvaluationException {
 		println("(push 1)");
 		flush();
+		checkSuccess();
 		symbolsByStackPos.addLast(new HashSet<>());
 	}
 
-	public void pop() {
+	public void pop() throws EvaluationException {
 		println("(pop 1)");
 		flush();
+		checkSuccess();
 		for (SolverVariable x : symbolsByStackPos.removeLast()) {
 			String s = declaredSymbols.remove(x);
 			symbolLookup.remove(s);
@@ -185,6 +207,8 @@ public class SmtLibShim {
 		}
 		if (Configuration.smtSolver.equals("z3")) {
 			println("(set-option :timeout " + timeout + ")");
+			flush();
+			checkSuccess();
 		}
 		if (onVars.isEmpty() && offVars.isEmpty()) {
 			println("(check-sat)");
@@ -206,7 +230,7 @@ public class SmtLibShim {
 		try {
 			result = in.readLine();
 			if (result == null) {
-				throw new EvaluationException("Problem with evaluating Z3! Unexpected end of stream");
+				throw new EvaluationException("Problem with evaluating solver! Unexpected end of stream");
 			}
 			if (log != null) {
 				log.println("; result: " + result);
@@ -219,10 +243,10 @@ public class SmtLibShim {
 			} else if (result.equals("unknown")) {
 				return SmtStatus.UNKNOWN;
 			} else {
-				throw new EvaluationException("Problem with evaluating Z3! Unexpected result: " + result);
+				throw new EvaluationException("Problem with evaluating solver! Unexpected result: " + result);
 			}
 		} catch (IOException e) {
-			throw new EvaluationException("Problem with evaluating Z3: " + e.getMessage());
+			throw new EvaluationException("Problem with evaluating solver: " + e.getMessage());
 		}
 	}
 
@@ -232,9 +256,9 @@ public class SmtLibShim {
 		try {
 			return parseModel();
 		} catch (IOException e) {
-			throw new EvaluationException("Problem with evaluating Z3: " + e.getMessage());
+			throw new EvaluationException("Problem with evaluating solver: " + e.getMessage());
 		} catch (SmtLibParseException e) {
-			throw new EvaluationException("Problem parsing Z3 output: " + e.getMessage());
+			throw new EvaluationException("Problem parsing solver output: " + e.getMessage());
 		}
 	}
 
@@ -250,6 +274,12 @@ public class SmtLibShim {
 		}
 	}
 
+	public void setLogic(String logic) throws EvaluationException {
+		println("(set-logic " + logic + ")");
+		flush();
+		checkSuccess();
+	}
+
 	public void print(String s) {
 		out.print(s);
 		if (log != null) {
@@ -258,7 +288,7 @@ public class SmtLibShim {
 		}
 	}
 
-	public void println(String s) {
+	private void println(String s) {
 		print(s);
 		print("\n");
 	}
@@ -292,8 +322,8 @@ public class SmtLibShim {
 		return "x" + cnt++;
 	}
 
-	private void declareSymbols(SmtLibTerm t) {
-		t.accept(new TermVisitor<Void, Void>() {
+	private void declareSymbols(SmtLibTerm t) throws EvaluationException {
+		t.accept(new TermVisitorExn<Void, Void, EvaluationException>() {
 
 			@Override
 			public Void visit(Var t, Void in) {
@@ -301,7 +331,7 @@ public class SmtLibShim {
 			}
 
 			@Override
-			public Void visit(Constructor c, Void in) {
+			public Void visit(Constructor c, Void in) throws EvaluationException {
 				if (c instanceof SolverVariable) {
 					SolverVariable var = (SolverVariable) c;
 					if (!declaredSymbols.containsKey(var)) {
@@ -313,6 +343,8 @@ public class SmtLibShim {
 						FunctorType ft = (FunctorType) var.getSymbol().getCompileTimeType();
 						print(stringifyType(ft.getRetType()));
 						println(")");
+						flush();
+						checkSuccess();
 					}
 					return null;
 				}
@@ -336,97 +368,129 @@ public class SmtLibShim {
 	}
 
 	public void makeDeclarations() {
-		print(declarations);
-		flush();
-	}
-	
-	private void makeDeclarations(Program<?, ?> prog, boolean declareAdts) {
-		declareSorts(prog.getTypeSymbols(), declareAdts);
-		declareUninterpretedFunctions(prog.getUninterpretedFunctionSymbols());
-		flush();
+		for (String decl : declarations) {
+			println(decl);
+			flush();
+			try {
+				checkSuccess();
+			} catch (EvaluationException e) {
+				System.err.println("WARNING: solver rejected declaration:\n" + decl + "\n" + e.getMessage());
+			}
+		}
 	}
 
-	private void declareUninterpretedFunctions(Set<ConstructorSymbol> funcs) {
-		for (ConstructorSymbol func : funcs) {
-			print("(declare-fun " + stringifySymbol(func) + " (");
-			FunctorType ft = func.getCompileTimeType();
-			for (Iterator<Type> it = ft.getArgTypes().iterator(); it.hasNext();) {
+	private class DeclarationGatherer {
+
+		private final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		private final boolean declareAdts;
+
+		public DeclarationGatherer(boolean declareAdts) {
+			this.declareAdts = declareAdts;
+		}
+
+		public void go(Program<?, ?> prog) {
+			PrintWriter tmpLog = log;
+			log = null;
+			PrintWriter tmpOut = out;
+			out = new PrintWriter(baos);
+			declareSorts(prog.getTypeSymbols());
+			declareUninterpretedFunctions(prog.getUninterpretedFunctionSymbols());
+			out = tmpOut;
+			log = tmpLog;
+		}
+
+		private void pushDeclaration() {
+			flush();
+			declarations.add(baos.toString());
+			baos.reset();
+		}
+
+		private void declareUninterpretedFunctions(Set<ConstructorSymbol> funcs) {
+			for (ConstructorSymbol func : funcs) {
+				print("(declare-fun " + stringifySymbol(func) + " (");
+				FunctorType ft = func.getCompileTimeType();
+				for (Iterator<Type> it = ft.getArgTypes().iterator(); it.hasNext();) {
+					print(stringifyType(it.next()));
+					if (it.hasNext()) {
+						print(" ");
+					}
+				}
+				print(") " + stringifyType(ft.getRetType()) + ")");
+				pushDeclaration();
+			}
+		}
+
+		private void declareSorts(Set<TypeSymbol> sorts) {
+			SortDependencyFinder depends = new SortDependencyFinder(sorts);
+			StrongConnectivityAlgorithm<TypeSymbol, DefaultEdge> k = new KosarajuStrongConnectivityInspector<>(
+					depends.compute());
+			TopologicalOrderIterator<Graph<TypeSymbol, DefaultEdge>, DefaultEdge> topo = new TopologicalOrderIterator<>(
+					k.getCondensation());
+			while (topo.hasNext()) {
+				Graph<TypeSymbol, DefaultEdge> scc = topo.next();
+				declareScc(scc.vertexSet());
+			}
+		}
+
+		private void declareScc(Set<TypeSymbol> sorts) {
+			assert !sorts.isEmpty();
+			TypeSymbol sym = sorts.iterator().next();
+			if (sym.isUninterpretedSort()) {
+				assert sorts.size() == 1;
+				declareUninterpretedSort(sym);
+			} else if (declareAdts) {
+				assert sym.isNormalType();
+				declareAdtSorts(sorts);
+			}
+		}
+
+		private void declareUninterpretedSort(TypeSymbol sort) {
+			assert sort.isUninterpretedSort();
+			print("(declare-sort " + stringifySymbol(sort) + " " + sort.getArity() + ")");
+			pushDeclaration();
+		}
+
+		private void declareAdtSorts(Set<TypeSymbol> sorts) {
+			assert !sorts.isEmpty();
+			print("(declare-datatypes ( ");
+			for (TypeSymbol sym : sorts) {
+				assert sym.isNormalType();
+				print("(" + stringifySymbol(sym) + " " + sym.getArity() + ") ");
+			}
+			print(") (");
+			for (TypeSymbol sym : sorts) {
+				declareAdtSort(AlgebraicDataType.makeWithFreshArgs(sym));
+			}
+			print("))");
+			pushDeclaration();
+		}
+
+		private void declareAdtSort(AlgebraicDataType type) {
+			print("\n  (par (");
+			for (Iterator<Type> it = type.getTypeArgs().iterator(); it.hasNext();) {
 				print(stringifyType(it.next()));
 				if (it.hasNext()) {
 					print(" ");
 				}
 			}
-			println(") " + stringifyType(ft.getRetType()) + ")");
-		}
-	}
-
-	private void declareSorts(Set<TypeSymbol> sorts, boolean declareAdts) {
-		SortDependencyFinder depends = new SortDependencyFinder(sorts);
-		StrongConnectivityAlgorithm<TypeSymbol, DefaultEdge> k = new KosarajuStrongConnectivityInspector<>(
-				depends.compute());
-		TopologicalOrderIterator<Graph<TypeSymbol, DefaultEdge>, DefaultEdge> topo = new TopologicalOrderIterator<>(
-				k.getCondensation());
-		while (topo.hasNext()) {
-			Graph<TypeSymbol, DefaultEdge> scc = topo.next();
-			declareScc(scc.vertexSet(), declareAdts);
-		}
-	}
-
-	private void declareScc(Set<TypeSymbol> sorts, boolean declareAdts) {
-		assert !sorts.isEmpty();
-		TypeSymbol sym = sorts.iterator().next();
-		if (sym.isUninterpretedSort()) {
-			assert sorts.size() == 1;
-			declareUninterpretedSort(sym);
-		} else if (declareAdts) {
-			assert sym.isNormalType();
-			declareAdtSorts(sorts);
-		}
-	}
-
-	private void declareUninterpretedSort(TypeSymbol sort) {
-		assert sort.isUninterpretedSort();
-		println("(declare-sort " + stringifySymbol(sort) + " " + sort.getArity() + ")");
-	}
-
-	private void declareAdtSorts(Set<TypeSymbol> sorts) {
-		assert !sorts.isEmpty();
-		print("(declare-datatypes ( ");
-		for (TypeSymbol sym : sorts) {
-			assert sym.isNormalType();
-			print("(" + stringifySymbol(sym) + " " + sym.getArity() + ") ");
-		}
-		print(") (");
-		for (TypeSymbol sym : sorts) {
-			declareAdtSort(AlgebraicDataType.makeWithFreshArgs(sym));
-		}
-		println("))");
-	}
-
-	private void declareAdtSort(AlgebraicDataType type) {
-		print("\n  (par (");
-		for (Iterator<Type> it = type.getTypeArgs().iterator(); it.hasNext();) {
-			print(stringifyType(it.next()));
-			if (it.hasNext()) {
-				print(" ");
+			print(") (");
+			for (ConstructorScheme c : type.getConstructors()) {
+				declareConstructor(c);
 			}
+			print("))");
 		}
-		print(") (");
-		for (ConstructorScheme c : type.getConstructors()) {
-			declareConstructor(c);
-		}
-		print("))");
-	}
 
-	private void declareConstructor(ConstructorScheme c) {
-		print("\n    (");
-		print(stringifySymbol(c.getSymbol()));
-		Iterator<ConstructorSymbol> getterSyms = c.getGetterSymbols().iterator();
-		for (Type t : c.getTypeArgs()) {
-			String getter = stringifySymbol(getterSyms.next());
-			print(" (" + getter + " " + stringifyType(t) + ")");
+		private void declareConstructor(ConstructorScheme c) {
+			print("\n    (");
+			print(stringifySymbol(c.getSymbol()));
+			Iterator<ConstructorSymbol> getterSyms = c.getGetterSymbols().iterator();
+			for (Type t : c.getTypeArgs()) {
+				String getter = stringifySymbol(getterSyms.next());
+				print(" (" + getter + " " + stringifyType(t) + ")");
+			}
+			print(")");
 		}
-		print(")");
+
 	}
 
 	private String stringifySymbol(Symbol sym) {

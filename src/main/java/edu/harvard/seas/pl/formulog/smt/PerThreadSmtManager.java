@@ -26,22 +26,31 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
+import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
+import edu.harvard.seas.pl.formulog.eval.UncheckedEvaluationException;
 import edu.harvard.seas.pl.formulog.smt.SmtLibShim.SmtStatus;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
 public class PerThreadSmtManager extends AbstractSmtManager {
 
-	private final ThreadLocal<AbstractSmtManager> subManager;
+	private final ThreadLocal<SmtManager> subManager;
+	private volatile Program<?, ?> prog;
 
 	public PerThreadSmtManager(Supplier<AbstractSmtManager> managerMaker) {
-		subManager = new ThreadLocal<AbstractSmtManager>() {
+		subManager = new ThreadLocal<SmtManager>() {
 
 			@Override
-			protected AbstractSmtManager initialValue() {
-				return managerMaker.get();
+			protected SmtManager initialValue() {
+				SmtManager m = managerMaker.get();
+				try {
+					m.initialize(prog);
+				} catch (EvaluationException e) {
+					throw new UncheckedEvaluationException(e.getMessage());
+				}
+				return m;
 			}
 
 		};
@@ -50,7 +59,16 @@ public class PerThreadSmtManager extends AbstractSmtManager {
 	@Override
 	public Pair<SmtStatus, Map<SolverVariable, Term>> check(List<SmtLibTerm> conjuncts, boolean getModel, int timeout)
 			throws EvaluationException {
-		return subManager.get().check(conjuncts, getModel, timeout);
+		try {
+			return subManager.get().check(conjuncts, getModel, timeout);
+		} catch (UncheckedEvaluationException e) {
+			throw new EvaluationException(e.getMessage());
+		}
+	}
+
+	@Override
+	public void initialize(Program<?, ?> prog) throws EvaluationException {
+		this.prog = prog;
 	}
 
 }

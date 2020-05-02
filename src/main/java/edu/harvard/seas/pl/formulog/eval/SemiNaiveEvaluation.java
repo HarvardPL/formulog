@@ -35,7 +35,6 @@ import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralVisitor;
-import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
@@ -138,7 +137,12 @@ public class SemiNaiveEvaluation implements Evaluation {
 		SortedIndexedFactDb db = dbb.build();
 		predFuncs.setDb(db);
 
-		SmtManager smt = getSmtManager(magicProg);
+		SmtManager smt = getSmtManager();
+		try {
+			smt.initialize(magicProg);
+		} catch (EvaluationException e) {
+			throw new InvalidProgramException("Problem initializing SMT shims: " + e.getMessage());
+		}
 		prog.getFunctionCallFactory().getDefManager().loadBuiltInFunctions(smt);
 
 		CountingFJP exec;
@@ -234,30 +238,30 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 	}
 
-	private static SmtManager getSmtManager(Program<UserPredicate, BasicRule> prog) {
+	private static SmtManager getSmtManager() {
 		SmtStrategy strategy = Configuration.smtStrategy;
 		switch (strategy.getTag()) {
 		case QUEUE: {
 			int size = (int) strategy.getMetadata();
-			return new QueueSmtManager(prog, size);
+			return new QueueSmtManager(size);
 		}
 		case BEST_MATCH: {
 			int size = (int) strategy.getMetadata();
-			return new BestMatchSmtManager(prog, size);
+			return new BestMatchSmtManager(size);
 		}
 		case PER_THREAD_QUEUE: {
 			int size = (int) strategy.getMetadata();
-			return new PerThreadSmtManager(() -> new NotThreadSafeQueueSmtManager(prog, size));
+			return new PerThreadSmtManager(() -> new NotThreadSafeQueueSmtManager(size));
 		}
 		case PER_THREAD_BEST_MATCH: {
 			int size = (int) strategy.getMetadata();
-			return new PerThreadSmtManager(() -> new BestMatchSmtManager(prog, size));
+			return new PerThreadSmtManager(() -> new BestMatchSmtManager(size));
 		}
 		case PER_THREAD_PUSH_POP: {
-			return new PerThreadSmtManager(() -> new PushPopSmtManager(prog));
+			return new PerThreadSmtManager(() -> new PushPopSmtManager());
 		}
 		case PER_THREAD_NAIVE: {
-			return new PerThreadSmtManager(() -> new NaiveSmtManager(prog));
+			return new PerThreadSmtManager(() -> new NaiveSmtManager());
 		}
 		default:
 			throw new UnsupportedOperationException("Cannot support SMT strategy: " + strategy);

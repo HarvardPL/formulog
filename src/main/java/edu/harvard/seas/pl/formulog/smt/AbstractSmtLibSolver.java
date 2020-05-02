@@ -88,7 +88,7 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 		log = w;
 	}
 
-	public synchronized void start(Program<?, ?> prog) {
+	public synchronized void start(Program<?, ?> prog) throws EvaluationException {
 		assert solver == null;
 		try {
 			solver = solverFactory.newProcess();
@@ -102,8 +102,6 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 		start();
 	}
 
-	protected abstract void start();
-
 	public synchronized void destroy() {
 		assert solver != null;
 		solver.destroy();
@@ -114,10 +112,12 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 	public void finalize() {
 		destroy();
 	}
+	
+	protected abstract void start() throws EvaluationException;
 
-	protected abstract Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(List<SmtLibTerm> assertions);
+	protected abstract Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(List<SmtLibTerm> assertions) throws EvaluationException;
 
-	protected abstract void cleanup();
+	protected abstract void cleanup() throws EvaluationException;
 
 	@Override
 	public synchronized Pair<SmtStatus, Map<SolverVariable, Term>> check(List<SmtLibTerm> assertions, boolean getModel,

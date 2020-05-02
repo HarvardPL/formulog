@@ -24,11 +24,9 @@ import java.util.List;
 import java.util.Map;
 
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
-import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
-import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.smt.SmtLibShim.SmtStatus;
 import edu.harvard.seas.pl.formulog.util.Pair;
@@ -37,14 +35,15 @@ public class PushPopSmtManager extends AbstractSmtManager {
 
 	private final PushPopSolver solver = new PushPopSolver();
 	
-	public PushPopSmtManager(Program<UserPredicate, BasicRule> prog) {
-		solver.start(prog);
-	}
-	
 	@Override
 	public Pair<SmtStatus, Map<SolverVariable, Term>> check(List<SmtLibTerm> assertions, boolean getModel, int timeout)
 			throws EvaluationException {
 		return solver.check(assertions, getModel, timeout);
+	}
+
+	@Override
+	public void initialize(Program<?, ?> prog) throws EvaluationException {
+		solver.start(prog);
 	}
 
 }

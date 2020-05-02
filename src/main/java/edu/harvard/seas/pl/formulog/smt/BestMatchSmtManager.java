@@ -42,14 +42,9 @@ public class BestMatchSmtManager extends AbstractSmtManager {
 	private final AtomicIntegerArray statuses;
 	private static final int cacheCap = Configuration.smtCacheSize;
 
-	public BestMatchSmtManager(Program<?, ?> prog, int size) {
+	public BestMatchSmtManager(int size) {
 		solvers = new CheckSatAssumingSolver[size];
 		statuses = new AtomicIntegerArray(size);
-		for (int i = 0; i < size; ++i) {
-			CheckSatAssumingSolver solver = new CheckSatAssumingSolver();
-			solver.start(prog);
-			solvers[i] = solver;
-		}
 	}
 
 	@Override
@@ -98,6 +93,15 @@ public class BestMatchSmtManager extends AbstractSmtManager {
 		double score1 = 3 * hits / conjuncts.size();
 		double score2 = -((cacheSize - hits) / cacheCap);
 		return score1 + score2;
+	}
+
+	@Override
+	public void initialize(Program<?, ?> prog) throws EvaluationException {
+		for (int i = 0; i < solvers.length; ++i) {
+			CheckSatAssumingSolver solver = new CheckSatAssumingSolver();
+			solver.start(prog);
+			solvers[i] = solver;
+		}
 	}
 
 }
