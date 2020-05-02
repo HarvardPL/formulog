@@ -98,8 +98,7 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 		BufferedReader reader = new BufferedReader(new InputStreamReader(solver.getInputStream()));
 		PrintWriter writer = new PrintWriter(solver.getOutputStream());
 		shim = new SmtLibShim(reader, writer, log);
-		boolean declareAdts = Configuration.smtSolver.equals("z3") && Configuration.smtLogic.equals("ALL");
-		shim.initialize(prog, declareAdts);
+		shim.initialize(prog, Configuration.smtDeclareAdts);
 		start();
 	}
 
