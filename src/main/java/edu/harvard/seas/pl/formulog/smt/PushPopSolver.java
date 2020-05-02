@@ -70,4 +70,10 @@ public class PushPopSolver extends AbstractSmtLibSolver {
 		// Do nothing
 	}
 
+	@Override
+	protected void start() {
+		shim.println("(set-logic " + Configuration.smtLogic + ")");
+		shim.makeDeclarations();
+	}
+
 }

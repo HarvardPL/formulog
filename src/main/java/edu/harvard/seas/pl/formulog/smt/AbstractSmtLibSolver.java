@@ -97,12 +97,13 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 		}
 		BufferedReader reader = new BufferedReader(new InputStreamReader(solver.getInputStream()));
 		PrintWriter writer = new PrintWriter(solver.getOutputStream());
-		shim = new SmtLibShim(reader, writer, prog.getSymbolManager(), log);
-		shim.println("(set-logic " + Configuration.smtLogic + ")");
-		boolean includeAdts = Configuration.smtSolver.equals("z3") && Configuration.smtLogic.equals("ALL");
-		shim.makeDeclarations(prog, includeAdts);
-		shim.push();
+		shim = new SmtLibShim(reader, writer, log);
+		boolean declareAdts = Configuration.smtSolver.equals("z3") && Configuration.smtLogic.equals("ALL");
+		shim.initialize(prog, declareAdts);
+		start();
 	}
+
+	protected abstract void start();
 
 	public synchronized void destroy() {
 		assert solver != null;

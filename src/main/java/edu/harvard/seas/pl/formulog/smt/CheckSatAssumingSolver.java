@@ -32,8 +32,8 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 			Configuration.recordCsaCacheClear(solverId);
 		}
 		indicatorVars.clear();
-		shim.pop();
-		shim.push();
+		shim.reset();
+		start();
 	}
 
 	public Set<SmtLibTerm> getCache() {
@@ -92,6 +92,12 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 		if (indicatorVars.size() > Configuration.smtCacheSize) {
 			clearCache();
 		}
+	}
+
+	@Override
+	protected void start() {
+		shim.println("(set-logic " + Configuration.smtLogic + ")");
+		shim.makeDeclarations();
 	}
 
 }

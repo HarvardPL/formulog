@@ -21,6 +21,7 @@ package edu.harvard.seas.pl.formulog.smt;
  */
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
@@ -84,25 +85,39 @@ public class SmtLibShim {
 	}
 
 	private final BufferedReader in;
-	private final PrintWriter out;
+	private PrintWriter out;
 	private final Map<SolverVariable, String> declaredSymbols = new HashMap<>();
 	private final Deque<Set<SolverVariable>> symbolsByStackPos = new ArrayDeque<>();
 	private final Map<String, SolverVariable> symbolLookup = new HashMap<>();
-	private final SymbolManager symbolManager;
-	private final PrintWriter log;
+	private PrintWriter log;
 	private Iterator<Pair<ConstructorSymbol, Type>> typeAnnotations;
 	private int cnt;
+	
+	private SymbolManager symbolManager;
+	private String declarations;
 
-	public SmtLibShim(Reader in, Writer out, SymbolManager sm) {
-		this(in, out, sm, null);
+	public SmtLibShim(Reader in, Writer out) {
+		this(in, out, null);
 	}
 
-	public SmtLibShim(Reader in, Writer out, SymbolManager sm, Writer log) {
+	public SmtLibShim(Reader in, Writer out, Writer log) {
 		this.in = in != null ? new BufferedReader(in) : null;
 		this.out = new PrintWriter(out);
-		this.symbolManager = sm;
-		symbolsByStackPos.add(new HashSet<>());
 		this.log = log != null ? new PrintWriter(log) : null;
+		symbolsByStackPos.add(new HashSet<>());
+	}
+	
+	public void initialize(Program<?, ?> prog, boolean declareAdts) {
+		symbolManager = prog.getSymbolManager();
+		PrintWriter tmpLog = log;
+		log = null;
+		PrintWriter tmpOut = out;
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		out = new PrintWriter(baos);
+		makeDeclarations(prog, declareAdts);
+		declarations = baos.toString();
+		out = tmpOut;
+		log = tmpLog;
 	}
 
 	public void makeAssertion(SmtLibTerm assertion) {
@@ -138,6 +153,7 @@ public class SmtLibShim {
 		declaredSymbols.clear();
 		symbolLookup.clear();
 		symbolsByStackPos.clear();
+		symbolsByStackPos.add(new HashSet<>());
 		println("(reset)");
 		flush();
 	}
@@ -170,17 +186,21 @@ public class SmtLibShim {
 		if (Configuration.smtSolver.equals("z3")) {
 			println("(set-option :timeout " + timeout + ")");
 		}
-		print("(check-sat-assuming (");
-		for (SolverVariable x : onVars) {
-			print(x);
-			print(" ");
+		if (onVars.isEmpty() && offVars.isEmpty()) {
+			println("(check-sat)");
+		} else {
+			print("(check-sat-assuming (");
+			for (SolverVariable x : onVars) {
+				print(x);
+				print(" ");
+			}
+			for (SolverVariable x : offVars) {
+				print("(not ");
+				print(x);
+				print(") ");
+			}
+			println("))");
 		}
-		for (SolverVariable x : offVars) {
-			print("(not ");
-			print(x);
-			print(") ");
-		}
-		println("))");
 		flush();
 		String result;
 		try {
@@ -190,6 +210,7 @@ public class SmtLibShim {
 			}
 			if (log != null) {
 				log.println("; result: " + result);
+				log.flush();
 			}
 			if (result.equals("sat")) {
 				return SmtStatus.SATISFIABLE;
@@ -233,6 +254,7 @@ public class SmtLibShim {
 		out.print(s);
 		if (log != null) {
 			log.print(s);
+			log.flush();
 		}
 	}
 
@@ -313,8 +335,13 @@ public class SmtLibShim {
 		}, null);
 	}
 
-	public void makeDeclarations(Program<?, ?> prog, boolean includeAdts) {
-		declareSorts(prog.getTypeSymbols(), includeAdts);
+	public void makeDeclarations() {
+		print(declarations);
+		flush();
+	}
+	
+	private void makeDeclarations(Program<?, ?> prog, boolean declareAdts) {
+		declareSorts(prog.getTypeSymbols(), declareAdts);
 		declareUninterpretedFunctions(prog.getUninterpretedFunctionSymbols());
 		flush();
 	}
@@ -333,7 +360,7 @@ public class SmtLibShim {
 		}
 	}
 
-	private void declareSorts(Set<TypeSymbol> sorts, boolean includeAdts) {
+	private void declareSorts(Set<TypeSymbol> sorts, boolean declareAdts) {
 		SortDependencyFinder depends = new SortDependencyFinder(sorts);
 		StrongConnectivityAlgorithm<TypeSymbol, DefaultEdge> k = new KosarajuStrongConnectivityInspector<>(
 				depends.compute());
@@ -341,17 +368,17 @@ public class SmtLibShim {
 				k.getCondensation());
 		while (topo.hasNext()) {
 			Graph<TypeSymbol, DefaultEdge> scc = topo.next();
-			declareScc(scc.vertexSet(), includeAdts);
+			declareScc(scc.vertexSet(), declareAdts);
 		}
 	}
 
-	private void declareScc(Set<TypeSymbol> sorts, boolean includeAdts) {
+	private void declareScc(Set<TypeSymbol> sorts, boolean declareAdts) {
 		assert !sorts.isEmpty();
 		TypeSymbol sym = sorts.iterator().next();
 		if (sym.isUninterpretedSort()) {
 			assert sorts.size() == 1;
 			declareUninterpretedSort(sym);
-		} else if (includeAdts) {
+		} else if (declareAdts) {
 			assert sym.isNormalType();
 			declareAdtSorts(sorts);
 		}

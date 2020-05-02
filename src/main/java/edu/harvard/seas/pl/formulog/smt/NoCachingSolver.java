@@ -3,6 +3,7 @@ package edu.harvard.seas.pl.formulog.smt;
 import java.util.Collections;
 import java.util.List;
 
+import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.util.Pair;
@@ -14,8 +15,9 @@ public class NoCachingSolver extends AbstractSmtLibSolver {
 
 	@Override
 	protected Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(List<SmtLibTerm> assertions) {
-		shim.pop();
-		shim.push();
+		shim.reset();
+		shim.println("(set-logic " + Configuration.smtLogic + ")");
+		shim.makeDeclarations();
 		for (SmtLibTerm assertion : assertions) {
 			shim.makeAssertion(assertion);
 		}
@@ -24,6 +26,11 @@ public class NoCachingSolver extends AbstractSmtLibSolver {
 
 	@Override
 	protected void cleanup() {
+		// do nothing
+	}
+
+	@Override
+	protected void start() {
 		// do nothing
 	}
 

@@ -30,7 +30,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.Configuration;
-import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.smt.SmtLibShim;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
@@ -88,10 +87,10 @@ public class SmtHpp {
 		}
 
 		public void copyDeclarations() {
-			Program<?, ?> prog = ctx.getEval().getInputProgram();
-			SmtLibShim shim = new SmtLibShim(null, out, prog.getSymbolManager());
+			SmtLibShim shim = new SmtLibShim(null, out);
+			shim.initialize(ctx.getEval().getInputProgram(), true);
 			shim.println("(set-logic " + Configuration.smtLogic + ")");
-			shim.makeDeclarations(prog, true);
+			shim.makeDeclarations();
 		}
 
 		public void genSolverVarCases() {

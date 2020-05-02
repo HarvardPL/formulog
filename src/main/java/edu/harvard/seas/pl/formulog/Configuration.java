@@ -77,6 +77,7 @@ public final class Configuration {
 	public static final int optimizationSetting = getIntProp("optimize", 0);
 
 	public static final int taskSize = getIntProp("taskSize", 128);
+
 	public static final int smtTaskSize = getIntProp("smtTaskSize", 8);
 	public static final int smtCacheSize = getIntProp("smtCacheSize", 100);
 	public static final SmtStrategy smtStrategy = getSmtStrategy();
@@ -93,7 +94,8 @@ public final class Configuration {
 		}
 	}
 	public static final String smtLogic = getStringProp("smtLogic", "ALL");
-	
+	public static final boolean smtSingleShot = smtStrategy.getTag().equals(SmtStrategy.Tag.PER_THREAD_NAIVE);
+
 	private static final Dataset pushPopStackSize = new Dataset();
 	private static final Dataset pushPopStackReuse = new Dataset();
 	private static final Dataset pushPopStackPushes = new Dataset();

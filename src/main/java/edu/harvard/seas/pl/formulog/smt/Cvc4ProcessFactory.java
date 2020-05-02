@@ -2,6 +2,7 @@ package edu.harvard.seas.pl.formulog.smt;
 
 import java.io.IOException;
 
+import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.util.Util;
 
 public class Cvc4ProcessFactory implements ExternalSolverProcessFactory {
@@ -11,7 +12,7 @@ public class Cvc4ProcessFactory implements ExternalSolverProcessFactory {
 	private Cvc4ProcessFactory() {
 		Util.assertBinaryOnPath("cvc4");
 	}
-	
+
 	public static Cvc4ProcessFactory get() {
 		if (instance == null) {
 			synchronized (Cvc4ProcessFactory.class) {
@@ -22,9 +23,9 @@ public class Cvc4ProcessFactory implements ExternalSolverProcessFactory {
 		}
 		return instance;
 	}
-	
+
 	@Override
 	public Process newProcess() throws IOException {
-		return Runtime.getRuntime().exec("cvc4 --lang smt --incremental");
+		return Runtime.getRuntime().exec("cvc4 --lang smt" + (Configuration.smtSingleShot ? "" : " --incremental"));
 	}
 }
