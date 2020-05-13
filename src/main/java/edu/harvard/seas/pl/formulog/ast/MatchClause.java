@@ -83,7 +83,7 @@ public class MatchClause {
 		
 	};
 	
-	private MatchClause(Term lhs, Term rhs) {
+	MatchClause(Term lhs, Term rhs) {
 		this.lhs = lhs;
 		this.rhs = rhs;
 	}

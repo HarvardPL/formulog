@@ -1,5 +1,8 @@
 package edu.harvard.seas.pl.formulog.functions;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,10 +49,12 @@ import edu.harvard.seas.pl.formulog.ast.StringTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.smt.SmtLibShim.SmtStatus;
 import edu.harvard.seas.pl.formulog.smt.SmtManager;
+import edu.harvard.seas.pl.formulog.smt.SmtResult;
+import edu.harvard.seas.pl.formulog.smt.SmtStatus;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
+import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Triple;
@@ -1367,37 +1372,83 @@ public final class BuiltInFunctionDefFactory {
 
 	}
 
-	private final Map<Triple<Object, Boolean, Integer>, Future<Pair<SmtStatus, Model>>> smtMemo = new ConcurrentHashMap<>();
+	private final Map<Triple<Set<SmtLibTerm>, Boolean, Integer>, Future<SmtResult>> smtMemo = new ConcurrentHashMap<>();
 
-	private Pair<SmtStatus, Model> querySmt(Object assertions, boolean getModel) throws EvaluationException {
+	private Pair<SmtStatus, Model> querySmt(SmtLibTerm assertions, boolean getModel) throws EvaluationException {
 		return querySmt(assertions, getModel, Integer.MAX_VALUE);
 	}
 
-	@SuppressWarnings("unchecked")
-	private Pair<SmtStatus, Model> querySmt(Object assertions, boolean getModel, int timeout)
+	private Pair<SmtStatus, Model> querySmt(SmtLibTerm assertions, boolean getModel, int timeout) throws EvaluationException {
+		return querySmt(breakIntoConjuncts(assertions), getModel, timeout);
+	}
+
+	private List<SmtLibTerm> breakIntoConjuncts(SmtLibTerm assertion) {
+		List<SmtLibTerm> l = new ArrayList<>();
+		breakIntoConjuncts(assertion, l);
+		return l;
+	}
+
+	private void breakIntoConjuncts(SmtLibTerm assertion, List<SmtLibTerm> acc) {
+		if (assertion instanceof Constructor) {
+			Constructor c = (Constructor) assertion;
+			ConstructorSymbol sym = c.getSymbol();
+			Term[] args = c.getArgs();
+			if (sym.equals(BuiltInConstructorSymbol.SMT_AND)) {
+				breakIntoConjuncts((SmtLibTerm) args[0], acc);
+				breakIntoConjuncts((SmtLibTerm) args[1], acc);
+				return;
+			}
+			if (sym.equals(BuiltInConstructorSymbol.SMT_NOT)) {
+				if (args[0] instanceof Constructor) {
+					c = (Constructor) args[0];
+					sym = c.getSymbol();
+					args = c.getArgs();
+					if (sym.equals(BuiltInConstructorSymbol.SMT_IMP)) {
+						// Turn ~(A => B) into A /\ ~B
+						breakIntoConjuncts((SmtLibTerm) args[0], acc);
+						breakIntoConjuncts(negate(args[1]), acc);
+						return;
+					}
+					if (sym.equals(BuiltInConstructorSymbol.SMT_OR)) {
+						// Turn ~(A \/ B) into ~A /\ ~B
+						breakIntoConjuncts(negate(args[0]), acc);
+						breakIntoConjuncts(negate(args[1]), acc);
+						return;
+					}
+				}
+			}
+		}
+		acc.add(assertion);
+	}
+
+	private SmtLibTerm negate(Term t) {
+		return (SmtLibTerm) Constructors.make(BuiltInConstructorSymbol.SMT_NOT, Terms.singletonArray(t));
+	}
+
+	private Pair<SmtStatus, Model> querySmt(List<SmtLibTerm> assertions, boolean getModel, int timeout)
 			throws EvaluationException {
 		if (timeout < 0) {
 			timeout = -1;
 		}
-		Triple<Object, Boolean, Integer> key = new Triple<>(assertions, getModel, timeout);
-		Future<Pair<SmtStatus, Model>> fut = smtMemo.get(key);
+		Set<SmtLibTerm> set = new LinkedHashSet<>(assertions);
+		if (set.contains(BoolTerm.mkFalse())) {
+			return new Pair<>(SmtStatus.UNSATISFIABLE, null);
+		}
+		set.remove(BoolTerm.mkTrue());
+		if (set.isEmpty()) {
+			Model m = getModel ? Model.make(Collections.emptyMap()) : null;
+			return new Pair<>(SmtStatus.SATISFIABLE, m);
+		}
+		Triple<Set<SmtLibTerm>, Boolean, Integer> key = new Triple<>(set, getModel, timeout);
+		Future<SmtResult> fut = smtMemo.get(key);
 		if (fut == null) {
-			CompletableFuture<Pair<SmtStatus, Model>> completableFut = new CompletableFuture<>();
+			CompletableFuture<SmtResult> completableFut = new CompletableFuture<>();
 			fut = completableFut;
-			Future<Pair<SmtStatus, Model>> fut2 = smtMemo.putIfAbsent(key, fut);
+			Future<SmtResult> fut2 = smtMemo.putIfAbsent(key, fut);
 			if (fut2 != null) {
 				fut = fut2;
 			} else {
-				Pair<SmtStatus, Map<SolverVariable, Term>> p;
-				if (assertions instanceof SmtLibTerm) {
-					p = smt.check((SmtLibTerm) assertions, getModel, timeout);
-				} else {
-					assert assertions instanceof List<?>;
-					p = smt.check((List<SmtLibTerm>) assertions, getModel, timeout);
-				}
-				Map<SolverVariable, Term> m = p.snd();
-				Model model = m == null ? null : Model.make(m);
-				completableFut.complete(new Pair<>(p.fst(), model));
+				completableFut.complete(smt.check(set, getModel, timeout));
 			}
 		}
 		try {
@@ -1405,12 +1456,12 @@ public final class BuiltInFunctionDefFactory {
 			if (Configuration.timeSmt) {
 				start = System.currentTimeMillis();
 			}
-			Pair<SmtStatus, Model> p = fut.get();
+			SmtResult res = fut.get();
 			if (Configuration.timeSmt) {
 				long end = System.currentTimeMillis();
 				Configuration.recordSmtWaitTime(end - start);
 			}
-			return p;
+			return new Pair<>(res.status, res.model);
 		} catch (InterruptedException | ExecutionException e) {
 			throw new EvaluationException(e);
 		}	
@@ -1439,7 +1490,7 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 	};
-	
+
 	private final FunctionDef isSatOpt = new FunctionDef() {
 
 		@Override
@@ -1476,8 +1527,7 @@ public final class BuiltInFunctionDefFactory {
 
 		@Override
 		public Term evaluate(Term[] args) throws EvaluationException {
-			SmtLibTerm formula = (SmtLibTerm) args[0];
-			formula = (SmtLibTerm) Constructors.make(BuiltInConstructorSymbol.SMT_NOT, args);
+			SmtLibTerm formula = negate((SmtLibTerm) args[0]);
 			Pair<SmtStatus, Model> p = querySmt(formula, false);
 			switch (p.fst()) {
 			case SATISFIABLE:

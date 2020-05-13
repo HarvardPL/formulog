@@ -81,10 +81,6 @@ public class SmtLibShim {
 
 	private static final boolean recordTime = Configuration.timeSmt;
 
-	public static enum SmtStatus {
-		SATISFIABLE, UNSATISFIABLE, UNKNOWN
-	}
-
 	private final BufferedReader in;
 	private PrintWriter out;
 	private final Map<SolverVariable, String> declaredSymbols = new HashMap<>();
@@ -92,7 +88,6 @@ public class SmtLibShim {
 	private final Map<String, SolverVariable> symbolLookup = new HashMap<>();
 	private PrintWriter log;
 	private Iterator<Pair<ConstructorSymbol, Type>> typeAnnotations;
-	private int cnt;
 
 	private SymbolManager symbolManager;
 	private final List<String> declarations = new ArrayList<>();
@@ -292,6 +287,10 @@ public class SmtLibShim {
 		print(s);
 		print("\n");
 	}
+	
+	public void printComment(String comment) {
+		println("; " + comment);
+	}
 
 	public void print(SolverVariable x) {
 		String s = declaredSymbols.get(x);
@@ -318,8 +317,8 @@ public class SmtLibShim {
 		return null;
 	}
 
-	private String freshSymbol() {
-		return "x" + cnt++;
+	private String toSmtSymbol(SolverVariable x) {
+		return "x" + x.getId();
 	}
 
 	private void declareSymbols(SmtLibTerm t) throws EvaluationException {
@@ -335,7 +334,7 @@ public class SmtLibShim {
 				if (c instanceof SolverVariable) {
 					SolverVariable var = (SolverVariable) c;
 					if (!declaredSymbols.containsKey(var)) {
-						String s = freshSymbol();
+						String s = toSmtSymbol(var);
 						declaredSymbols.put(var, s);
 						symbolLookup.put(s, var);
 						symbolsByStackPos.getLast().add(var);

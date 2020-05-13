@@ -65,7 +65,7 @@ public class MatchExpr extends AbstractTerm implements Expr, Iterable<MatchClaus
 	public Term getMatchee() {
 		return matchee;
 	}
-	
+
 	public List<MatchClause> getClauses() {
 		return Collections.unmodifiableList(match);
 	}
@@ -83,7 +83,15 @@ public class MatchExpr extends AbstractTerm implements Expr, Iterable<MatchClaus
 				return m.getRhs().normalize(s);
 			}
 		}
-		throw new EvaluationException("No matching pattern in function for " + e + " under substitution " + s);
+		if (e instanceof Constructor) {
+			throw new EvaluationException("No matching pattern for " + matchee
+					+ " which normalizes to a complex term with outermost constructor "
+					+ ((Constructor) e).getSymbol());
+		} else {
+			throw new EvaluationException("No matching pattern for " + matchee + " which normalizes to the term " + e);
+		}
+		// throw new EvaluationException("No matching pattern for " + e + " under
+		// substitution " + s);
 	}
 
 	@Override
@@ -93,6 +101,9 @@ public class MatchExpr extends AbstractTerm implements Expr, Iterable<MatchClaus
 
 	@Override
 	public Term applySubstitution(Substitution s) {
+		if (isGround) {
+			return this;
+		}
 		Term newMatchee = matchee.applySubstitution(s);
 		List<MatchClause> clauses = new ArrayList<>();
 		for (MatchClause cl : match) {
@@ -105,7 +116,7 @@ public class MatchExpr extends AbstractTerm implements Expr, Iterable<MatchClaus
 				}
 			}
 			Term newRhs = cl.getRhs().applySubstitution(newS);
-			clauses.add(MatchClause.make(pat, newRhs));
+			clauses.add(new MatchClause(pat, newRhs));
 		}
 		return make(newMatchee, clauses);
 	}

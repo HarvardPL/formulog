@@ -28,20 +28,19 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
+import edu.harvard.seas.pl.formulog.ast.Model;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.smt.SmtLibShim.SmtStatus;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
 public abstract class AbstractSmtLibSolver implements SmtLibSolver {
@@ -69,6 +68,8 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 	protected SmtLibShim shim;
 	protected Process solver;
 	private final PrintWriter log;
+
+	protected static int taskCnt;
 
 	public AbstractSmtLibSolver() {
 		PrintWriter w = null;
@@ -112,22 +113,30 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 	public void finalize() {
 		destroy();
 	}
-	
+
 	protected abstract void start() throws EvaluationException;
 
-	protected abstract Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(List<SmtLibTerm> assertions) throws EvaluationException;
+	protected abstract Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(
+			Collection<SmtLibTerm> assertions) throws EvaluationException;
 
 	protected abstract void cleanup() throws EvaluationException;
 
+	private SmtResult makeResult(SmtStatus status, Map<SolverVariable, Term> m, int taskId) {
+		Model model = m == null ? null : Model.make(m);
+		return new SmtResult(status, model, solverId, taskId);
+	}
+
 	@Override
-	public synchronized Pair<SmtStatus, Map<SolverVariable, Term>> check(List<SmtLibTerm> assertions, boolean getModel,
-			int timeout) throws EvaluationException {
+	public synchronized SmtResult check(Collection<SmtLibTerm> assertions, boolean getModel, int timeout)
+			throws EvaluationException {
 		assert solver != null;
+		int taskId = taskCnt++;
 		if (assertions.isEmpty()) {
 			Map<SolverVariable, Term> m = getModel ? Collections.emptyMap() : null;
-			return new Pair<>(SmtStatus.SATISFIABLE, m);
+			return makeResult(SmtStatus.SATISFIABLE, m, taskId);
 		}
-		assertions = new ArrayList<>(new LinkedHashSet<>(assertions));
+		String taskName = "#" + solverId + ":" + taskId + " (thread #" + Thread.currentThread().getId() + ")";
+		shim.printComment("*** START CALL " + taskName + " ***");
 		boolean debug = log != null;
 		Pair<List<SolverVariable>, List<SolverVariable>> p = makeAssertions(assertions);
 		long start = 0;
@@ -149,7 +158,8 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 				m = shim.getModel();
 			}
 			cleanup();
-			return new Pair<>(status, m);
+			shim.printComment("*** END CALL " + taskName + " ***\n");
+			return makeResult(status, m, taskId);
 		} catch (EvaluationException e) {
 			throw new EvaluationException("Problem with solver " + solverId + ":\n" + e.getMessage());
 		}

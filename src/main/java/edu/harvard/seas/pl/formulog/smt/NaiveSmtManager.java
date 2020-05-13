@@ -20,23 +20,18 @@ package edu.harvard.seas.pl.formulog.smt;
  * #L%
  */
 
-import java.util.List;
-import java.util.Map;
+import java.util.Collection;
 
-import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
-import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.smt.SmtLibShim.SmtStatus;
-import edu.harvard.seas.pl.formulog.util.Pair;
 
-public class NaiveSmtManager extends AbstractSmtManager {
+public class NaiveSmtManager implements SmtManager {
 
-	private final NoCachingSolver solver = new NoCachingSolver(); 
+	private final NoCachingSolver solver = new NoCachingSolver();
 
 	@Override
-	public Pair<SmtStatus, Map<SolverVariable, Term>> check(List<SmtLibTerm> assertions, boolean getModel, int timeout)
+	public SmtResult check(Collection<SmtLibTerm> assertions, boolean getModel, int timeout)
 			throws EvaluationException {
 		return solver.check(assertions, getModel, timeout);
 	}

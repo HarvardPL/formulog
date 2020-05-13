@@ -31,6 +31,7 @@ import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitorExn;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.functions.FunctionDefManager;
+import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
@@ -140,7 +141,7 @@ public final class FunctionCallFactory {
 				System.err.println(msg);
 			}
 			Term r;
-			if (memoizeThreshold > -1) {
+			if (memoizeThreshold > -1 && !hasSideEffects()) {
 				r = computeWithMemoization(newArgs);
 			} else {
 				r = computeWithoutMemoization(newArgs);
@@ -154,6 +155,13 @@ public final class FunctionCallFactory {
 				System.err.println(msg);
 			}
 			return r;
+		}
+		
+		private boolean hasSideEffects() {
+			// XXX This is rough, since it doesn't take into account the call
+			// graph (i.e., A could call B which is side effecting, but this
+			// would say that A is not).
+			return sym.equals(BuiltInFunctionSymbol.PRINT);
 		}
 
 		private Term computeWithMemoization(Term[] newArgs) throws EvaluationException {

@@ -72,6 +72,7 @@ public final class Configuration {
 
 	public static final boolean printRelSizes = propIsSet("printRelSizes");
 	public static final boolean printFinalRules = propIsSet("printFinalRules");
+	public static final boolean simplifyFormulaVars = propIsSet("simplifyFormulaVars", true);
 	public static final boolean debugRounds = propIsSet("debugRounds");
 
 	public static final int optimizationSetting = getIntProp("optimize", 0);

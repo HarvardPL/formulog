@@ -34,6 +34,7 @@ import java.util.function.Function;
 
 import org.pcollections.PMap;
 
+import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.smt.SmtLibShim;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
@@ -860,6 +861,9 @@ public final class Constructors {
 
 	public static class SolverVariable extends AbstractConstructor<ParameterizedConstructorSymbol> {
 
+		private static final AtomicInteger cnt = new AtomicInteger();
+		private final int id = cnt.getAndIncrement();
+		
 		public SolverVariable(ParameterizedConstructorSymbol sym, Term[] args) {
 			super(sym, args);
 		}
@@ -868,9 +872,16 @@ public final class Constructors {
 		public void toSmtLib(SmtLibShim shim) {
 			shim.print(this);
 		}
+		
+		public int getId() {
+			return id;
+		}
 
 		@Override
 		public String toString() {
+			if (Configuration.simplifyFormulaVars) {
+				return "#x" + id;
+			}
 			Type ty = ((FunctorType) sym.getCompileTimeType()).getRetType();
 			ty = ((AlgebraicDataType) ty).getTypeArgs().get(0);
 			return "#{" + args[0] + "}[" + ty + "]";
