@@ -188,10 +188,6 @@ public final class BuiltInFunctionDefFactory {
 			return isSat;
 		case IS_SAT_OPT:
 			return isSatOpt;
-		case IS_SATS:
-			return isSats;
-		case IS_VALID_OPT:
-			return isValidOpt;
 		case IS_VALID:
 			return isValid;
 		case GET_MODEL:
@@ -1443,38 +1439,12 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 	};
-
+	
 	private final FunctionDef isSatOpt = new FunctionDef() {
 
 		@Override
 		public FunctionSymbol getSymbol() {
 			return BuiltInFunctionSymbol.IS_SAT_OPT;
-		}
-
-		@Override
-		public Term evaluate(Term[] args) throws EvaluationException {
-			SmtLibTerm formula = (SmtLibTerm) args[0];
-			Constructor timeoutOpt = (Constructor) args[1];
-			Integer timeout = extractOptionalTimeout(timeoutOpt);
-			Pair<SmtStatus, Model> p = querySmt(formula, false, timeout);
-			switch (p.fst()) {
-			case SATISFIABLE:
-				return some(trueTerm);
-			case UNKNOWN:
-				return none;
-			case UNSATISFIABLE:
-				return some(falseTerm);
-			}
-			throw new AssertionError("impossible");
-		}
-
-	};
-	
-	private final FunctionDef isSats = new FunctionDef() {
-
-		@Override
-		public FunctionSymbol getSymbol() {
-			return BuiltInFunctionSymbol.IS_SATS;
 		}
 
 		@Override
@@ -1491,33 +1461,6 @@ public final class BuiltInFunctionDefFactory {
 				return none;
 			case UNSATISFIABLE:
 				return some(falseTerm);
-			}
-			throw new AssertionError("impossible");
-		}
-
-	};
-
-	private final FunctionDef isValidOpt = new FunctionDef() {
-
-		@Override
-		public FunctionSymbol getSymbol() {
-			return BuiltInFunctionSymbol.IS_VALID_OPT;
-		}
-
-		@Override
-		public Term evaluate(Term[] args) throws EvaluationException {
-			SmtLibTerm formula = (SmtLibTerm) args[0];
-			formula = (SmtLibTerm) Constructors.make(BuiltInConstructorSymbol.SMT_NOT, Terms.singletonArray(formula));
-			Constructor timeoutOpt = (Constructor) args[1];
-			Integer timeout = extractOptionalTimeout(timeoutOpt);
-			Pair<SmtStatus, Model> p = querySmt(formula, false, timeout);
-			switch (p.fst()) {
-			case SATISFIABLE:
-				return some(falseTerm);
-			case UNKNOWN:
-				return none;
-			case UNSATISFIABLE:
-				return some(trueTerm);
 			}
 			throw new AssertionError("impossible");
 		}

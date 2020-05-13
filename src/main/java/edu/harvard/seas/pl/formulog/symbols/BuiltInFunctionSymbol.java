@@ -314,9 +314,6 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 		case IS_VALID:
 			return new FunctorType(smt(bool), bool);
 		case IS_SAT_OPT:
-		case IS_VALID_OPT:
-			return new FunctorType(smt(bool), option(i32), option(bool));
-		case IS_SATS:
 			return new FunctorType(list(smt(bool)), option(i32), option(bool));
 		case PRINT:
 			return new FunctorType(a, bool);
