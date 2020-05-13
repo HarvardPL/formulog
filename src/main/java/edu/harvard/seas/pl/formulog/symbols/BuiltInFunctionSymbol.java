@@ -176,12 +176,8 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 	IS_SAT("is_sat", 1),
 	
 	IS_VALID("is_valid", 1),
-	
+
 	IS_SAT_OPT("is_sat_opt", 2),
-	
-	IS_VALID_OPT("is_valid_opt", 2),
-	
-	IS_SATS("is_sats", 2),
 	
 	GET_MODEL("get_model", 2),
 	
