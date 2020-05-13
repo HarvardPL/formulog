@@ -427,8 +427,9 @@ formulas:
 
 ```
 is_sat       : bool smt -> bool
-is_sat_opt   : [bool smt list, i32 option] -> bool option
+is_sat_opt   : [bool smt, i32 option] -> bool option
 is_valid     : bool smt -> bool
+is_valid_opt : [bool smt, i32 option] -> bool option
 get_model    : [bool smt, i32 option] -> model option
 query_model  : ['a sym, model] -> 'a option
 substitute   : ['a sym, 'a smt, 'b smt] -> 'b smt
@@ -437,8 +438,8 @@ is_free      : ['a sym, 'b smt] -> bool
 
 The functions `is_sat` and `is_valid` check the satisfiability and validity,
 resp., of their argument and throw an exception if the SMT solver returns
-`unknown`. The functions `is_sat_opt` returns `none` in this
-case; it also takes an argument for an optional timeout.
+`unknown`. The functions `is_sat_opt` and `is_valid_opt` return `none` in this
+case; they also take an argument for an optional timeout.
 
 The function takes a proposition and an optional timeout and returns a model
 for that proposition if the SMT solver finds one in time; it returns `none`

@@ -304,8 +304,14 @@ public class FuncsHpp {
 			case IS_SAT_OPT:
 				ctx.register(sym, "is_sat_opt");
 				break;
+			case IS_SATS:
+				// XXX
+				break;
 			case IS_VALID:
 				ctx.register(sym, "is_valid");
+				break;
+			case IS_VALID_OPT:
+				ctx.register(sym, "is_valid_opt");
 				break;
 			case PRINT:
 				ctx.register(sym, "print");

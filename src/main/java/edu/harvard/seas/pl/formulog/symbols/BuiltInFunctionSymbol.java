@@ -176,8 +176,12 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 	IS_SAT("is_sat", 1),
 	
 	IS_VALID("is_valid", 1),
-
+	
 	IS_SAT_OPT("is_sat_opt", 2),
+	
+	IS_VALID_OPT("is_valid_opt", 2),
+	
+	IS_SATS("is_sats", 2),
 	
 	GET_MODEL("get_model", 2),
 	
@@ -314,6 +318,9 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 		case IS_VALID:
 			return new FunctorType(smt(bool), bool);
 		case IS_SAT_OPT:
+		case IS_VALID_OPT:
+			return new FunctorType(smt(bool), option(i32), option(bool));
+		case IS_SATS:
 			return new FunctorType(list(smt(bool)), option(i32), option(bool));
 		case PRINT:
 			return new FunctorType(a, bool);

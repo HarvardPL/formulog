@@ -50,6 +50,7 @@ public class SmtCallFinder {
 		smtCallSymbols.add(BuiltInFunctionSymbol.IS_SAT);
 		smtCallSymbols.add(BuiltInFunctionSymbol.IS_SAT_OPT);
 		smtCallSymbols.add(BuiltInFunctionSymbol.IS_VALID);
+		smtCallSymbols.add(BuiltInFunctionSymbol.IS_VALID_OPT);
 		smtCallSymbols.add(BuiltInFunctionSymbol.GET_MODEL);
 	}
 	
