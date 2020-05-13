@@ -2,4 +2,4 @@ output ok.
 ok :-
   X = #x[bool],
   Y = #y[bool],
-  is_sat_opt(`X #= Y`, some(100)) = some(true).
+  is_sat_opt([`X #= Y`], some(100)) = some(true).
