@@ -1,11 +1,32 @@
 package edu.harvard.seas.pl.formulog.smt;
 
+/*-
+ * #%L
+ * FormuLog
+ * %%
+ * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
+ * %%
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * #L%
+ */
+
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
@@ -25,7 +46,7 @@ import edu.harvard.seas.pl.formulog.util.Pair;
 
 public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 
-	private final Map<SmtLibTerm, SolverVariable> indicatorVars = new ConcurrentHashMap<>();
+	private final Map<SmtLibTerm, SolverVariable> indicatorVars = new HashMap<>();
 	private int nextVarId;
 
 	private void clearCache() throws EvaluationException {
@@ -33,6 +54,7 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 			Configuration.recordCsaCacheClear(solverId);
 		}
 		indicatorVars.clear();
+		nextVarId = 0;
 		shim.reset();
 		start();
 	}
@@ -42,7 +64,7 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 	}
 
 	@Override
-	protected Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(List<SmtLibTerm> formula)
+	protected Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(Collection<SmtLibTerm> formula)
 			throws EvaluationException {
 		int oldSize = indicatorVars.size();
 		int hits = 0;
@@ -88,7 +110,7 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 		sym = sym.copyWithNewArgs(Param.wildCard(), new Param(BuiltInTypes.bool, ParamKind.PRE_SMT_TYPE));
 		return (SolverVariable) Constructors.make(sym, args);
 	}
-
+	
 	@Override
 	protected void cleanup() throws EvaluationException {
 		if (indicatorVars.size() > Configuration.smtCacheSize) {

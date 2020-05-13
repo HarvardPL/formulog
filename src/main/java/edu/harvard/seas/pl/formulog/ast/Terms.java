@@ -264,7 +264,7 @@ public final class Terms {
 		}
 		assert c.getSymbol() == BuiltInConstructorSymbol.NIL;
 		Collections.reverse(xs);
-		return xs;
+		return Collections.unmodifiableList(xs);
 	}
 	
 }

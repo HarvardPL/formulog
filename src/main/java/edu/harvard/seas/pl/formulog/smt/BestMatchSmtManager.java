@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.smt;
 
+import java.util.Collection;
+
 /*-
  * #%L
  * FormuLog
@@ -21,22 +23,17 @@ package edu.harvard.seas.pl.formulog.smt;
  */
 
 import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
 import edu.harvard.seas.pl.formulog.Configuration;
-import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
-import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.smt.SmtLibShim.SmtStatus;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
-public class BestMatchSmtManager extends AbstractSmtManager {
+public class BestMatchSmtManager implements SmtManager {
 
 	private final CheckSatAssumingSolver[] solvers;
 	private final AtomicIntegerArray statuses;
@@ -48,8 +45,7 @@ public class BestMatchSmtManager extends AbstractSmtManager {
 	}
 
 	@Override
-	public Pair<SmtStatus, Map<SolverVariable, Term>> check(List<SmtLibTerm> conjuncts, boolean getModel, int timeout)
-			throws EvaluationException {
+	public SmtResult check(Collection<SmtLibTerm> conjuncts, boolean getModel, int timeout) throws EvaluationException {
 		while (true) {
 			PriorityQueue<Pair<Integer, Double>> q = new PriorityQueue<>(solvers.length, cmp);
 			for (int i = 0; i < solvers.length; ++i) {
@@ -78,7 +74,7 @@ public class BestMatchSmtManager extends AbstractSmtManager {
 
 	};
 
-	private double score(List<SmtLibTerm> conjuncts, CheckSatAssumingSolver solver) {
+	private double score(Collection<SmtLibTerm> conjuncts, CheckSatAssumingSolver solver) {
 		Set<SmtLibTerm> cache = solver.getCache();
 		int cacheSize = cache.size();
 		if (cacheSize == 0) {

@@ -1,12 +1,10 @@
 package edu.harvard.seas.pl.formulog.smt;
 
-import java.util.List;
-
 /*-
  * #%L
  * FormuLog
  * %%
- * Copyright (C) 2018 - 2019 President and Fellows of Harvard College
+ * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,24 +20,20 @@ import java.util.List;
  * #L%
  */
 
-import java.util.Map;
+import java.util.Collection;
 import java.util.function.Supplier;
 
-import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
-import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.eval.UncheckedEvaluationException;
-import edu.harvard.seas.pl.formulog.smt.SmtLibShim.SmtStatus;
-import edu.harvard.seas.pl.formulog.util.Pair;
 
-public class PerThreadSmtManager extends AbstractSmtManager {
+public class PerThreadSmtManager implements SmtManager {
 
 	private final ThreadLocal<SmtManager> subManager;
 	private volatile Program<?, ?> prog;
 
-	public PerThreadSmtManager(Supplier<AbstractSmtManager> managerMaker) {
+	public PerThreadSmtManager(Supplier<SmtManager> managerMaker) {
 		subManager = new ThreadLocal<SmtManager>() {
 
 			@Override
@@ -57,7 +51,7 @@ public class PerThreadSmtManager extends AbstractSmtManager {
 	}
 
 	@Override
-	public Pair<SmtStatus, Map<SolverVariable, Term>> check(List<SmtLibTerm> conjuncts, boolean getModel, int timeout)
+	public SmtResult check(Collection<SmtLibTerm> conjuncts, boolean getModel, int timeout)
 			throws EvaluationException {
 		try {
 			return subManager.get().check(conjuncts, getModel, timeout);

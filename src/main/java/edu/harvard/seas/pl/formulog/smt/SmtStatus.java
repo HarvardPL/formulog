@@ -20,13 +20,6 @@ package edu.harvard.seas.pl.formulog.smt;
  * #L%
  */
 
-import java.util.Collection;
-
-import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
-import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-
-public interface SmtLibSolver {
-
-	SmtResult check(Collection<SmtLibTerm> t, boolean getModel, int timeout) throws EvaluationException;
-
+public enum SmtStatus {
+	SATISFIABLE, UNSATISFIABLE, UNKNOWN
 }
