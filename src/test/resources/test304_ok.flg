@@ -4,11 +4,11 @@ ok :-
   X = `#x[?] #= 42`,
   Y = `#y[?] #= 21`,
   Z = `#x[bv[32]] #= #y[?]`,
-  is_sats([X], none) = some(true),
-  is_sats([Y], none) = some(true),
-  is_sats([Z], none) = some(true),
-  is_sats([X, Y], none) = some(true),
-  is_sats([X, Z], none) = some(true),
-  is_sats([Y, Z], none) = some(true),
-  is_sats([X, Y, Z], none) = some(false). 
+  is_sat_opt([X], none) = some(true),
+  is_sat_opt([Y], none) = some(true),
+  is_sat_opt([Z], none) = some(true),
+  is_sat_opt([X, Y], none) = some(true),
+  is_sat_opt([X, Z], none) = some(true),
+  is_sat_opt([Y, Z], none) = some(true),
+  is_sat_opt([X, Y, Z], none) = some(false).
   
