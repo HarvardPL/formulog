@@ -3,13 +3,12 @@ Datalog with support for SMT queries.
 
 ## Setup
 
-
 ### Prepackaged JAR
 
 Dependencies:
 
 * JRE 1.8+
-* The SMT solver Z3 (you need to have the `z3` binary on your path)
+* A supported SMT solver (see discussion below)
 
 You can find a prepackaged JAR file in the Releases section of the GitHub
 repository.
@@ -20,15 +19,24 @@ Dependencies:
 
 * JDK 1.8+
 * Maven
-* The SMT solver Z3 (you need to have the `z3` binary on your path)
+* A supported SMT solver (see discussion below)
 
 To build an executable JAR, run the command `mvn package` from the project
 directory. This will create an executable JAR with a name like 
 `formulog-X.Y.Z-SNAPSHOT-jar-with-dependencies.jar` in the `target/`
 directory.
 
-If `mvn package` hangs during testing, it likely means that something is wrong
-with Z3. You can compile without testing by adding the `-DskipTests` flag.
+If `mvn package` hangs during testing, it might mean that there is a problem
+connecting with your SMT solver. You can compile without testing by adding the
+`-DskipTests` flag.
+
+### Supported SMT solvers
+
+We currently support the solvers Z3, CVC4, and Yices 2; however, not all these
+solvers handle the full range of Formulog features. The default solver is Z3;
+to set another one, you need to use a command-line option (see below). For each
+solver, the relevant binary needs to be on your path: `z3` for Z3, `cvc4` for
+CVC4, and `yices-smt2` for Yices 2.
 
 ## Running Formulog
 
@@ -97,12 +105,8 @@ You can set the following system properties (using the `-D` flag, as in
   types of facts are printed after evaluation (default is all)
 * `smtLogic=LOGIC` - set the logic used by the external SMT solver (defaults to
   `ALL`)
-* `smtSolver=SOLVER` - set the external SMT solver to used. Note that not all
-  supported solvers support the full feature range of Formulog. We currently
-  support these options:
-    * `z3` (the binary `z3` needs to be on your path)
-    * `cvc4` (the binary `cvc4` needs to be on your path)
-    * `yices` (the binary `yices-smt2` needs to be on your path)
+* `smtSolver=SOLVER` - set the external SMT solver to use; current options are
+  `z3` (default), `cvc4`, and `yices`
 
 For example, to run the test program above with SMT debug information and 3
 threads, use
