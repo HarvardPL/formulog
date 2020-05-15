@@ -26,7 +26,7 @@ directory. This will create an executable JAR with a name like
 `formulog-X.Y.Z-SNAPSHOT-jar-with-dependencies.jar` in the `target/`
 directory.
 
-If `mvn package` hangs during testing, it might mean that there is a problem
+If `mvn package` fails during testing, it might mean that there is a problem
 connecting with your SMT solver. You can compile without testing by adding the
 `-DskipTests` flag.
 

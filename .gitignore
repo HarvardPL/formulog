@@ -26,6 +26,7 @@ target/
 .classpath
 .project
 .settings/
+.metadata/
 
 # Vim swap files
 *.swp
