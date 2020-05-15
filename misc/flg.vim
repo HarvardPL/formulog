@@ -1,5 +1,5 @@
 " Vim syntax file
-" Language: FormuLog
+" Language: Formulog
 " Maintainer: Aaron Bembenek
 " Latest Revision: 9 May 2019
 

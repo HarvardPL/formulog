@@ -1,10 +1,8 @@
 package edu.harvard.seas.pl.formulog.codegen;
 
-import java.io.PrintWriter;
-
 /*-
  * #%L
- * FormuLog
+ * Formulog
  * %%
  * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
  * %%
@@ -21,6 +19,9 @@ import java.io.PrintWriter;
  * limitations under the License.
  * #L%
  */
+
+import java.io.PrintWriter;
+
 
 import java.util.ArrayList;
 import java.util.HashMap;

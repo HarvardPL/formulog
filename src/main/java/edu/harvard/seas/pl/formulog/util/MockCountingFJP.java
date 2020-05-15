@@ -1,15 +1,10 @@
 package edu.harvard.seas.pl.formulog.util;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-
-import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-
 /*-
  * #%L
- * FormuLog
+ * Formulog
  * %%
- * Copyright (C) 2018 - 2019 President and Fellows of Harvard College
+ * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +19,12 @@ import edu.harvard.seas.pl.formulog.eval.EvaluationException;
  * limitations under the License.
  * #L%
  */
+
+import java.util.ArrayDeque;
+import java.util.Deque;
+
+import edu.harvard.seas.pl.formulog.eval.EvaluationException;
+
 
 public class MockCountingFJP implements CountingFJP {
 

@@ -2,7 +2,7 @@ package edu.harvard.seas.pl.formulog.magic;
 
 /*-
  * #%L
- * FormuLog
+ * Formulog
  * %%
  * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
  * %%
@@ -19,6 +19,7 @@ package edu.harvard.seas.pl.formulog.magic;
  * limitations under the License.
  * #L%
  */
+
 
 import edu.harvard.seas.pl.formulog.eval.InterpretedSemiNaiveTester;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;

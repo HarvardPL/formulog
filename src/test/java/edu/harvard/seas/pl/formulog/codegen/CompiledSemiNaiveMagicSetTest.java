@@ -1,10 +1,8 @@
 package edu.harvard.seas.pl.formulog.codegen;
 
-import edu.harvard.seas.pl.formulog.Configuration;
-
 /*-
  * #%L
- * FormuLog
+ * Formulog
  * %%
  * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
  * %%
@@ -21,6 +19,9 @@ import edu.harvard.seas.pl.formulog.Configuration;
  * limitations under the License.
  * #L%
  */
+
+import edu.harvard.seas.pl.formulog.Configuration;
+
 
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
 import edu.harvard.seas.pl.formulog.magic.CommonMagicSetTest;

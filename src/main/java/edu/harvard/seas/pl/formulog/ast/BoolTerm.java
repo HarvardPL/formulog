@@ -2,7 +2,7 @@ package edu.harvard.seas.pl.formulog.ast;
 
 /*-
  * #%L
- * FormuLog
+ * Formulog
  * %%
  * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
  * %%
@@ -19,6 +19,7 @@ package edu.harvard.seas.pl.formulog.ast;
  * limitations under the License.
  * #L%
  */
+
 
 import java.util.Collections;
 import java.util.Set;

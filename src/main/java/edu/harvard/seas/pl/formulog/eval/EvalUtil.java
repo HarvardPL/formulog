@@ -2,7 +2,7 @@ package edu.harvard.seas.pl.formulog.eval;
 
 /*-
  * #%L
- * FormuLog
+ * Formulog
  * %%
  * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
  * %%
@@ -19,6 +19,7 @@ package edu.harvard.seas.pl.formulog.eval;
  * limitations under the License.
  * #L%
  */
+
 
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;

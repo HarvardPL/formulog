@@ -96,7 +96,7 @@
 				<configuration>
 					<inceptionYear>2018</inceptionYear>
 					<organizationName>President and Fellows of Harvard College</organizationName>
-					<projectName>FormuLog</projectName>
+					<projectName>Formulog</projectName>
 					<licenseName>apache_v2</licenseName>
 					<roots>
 						<root>src/main/java</root>

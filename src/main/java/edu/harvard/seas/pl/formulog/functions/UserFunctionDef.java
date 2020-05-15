@@ -1,12 +1,10 @@
 package edu.harvard.seas.pl.formulog.functions;
 
-import java.util.List;
-
 /*-
  * #%L
- * FormuLog
+ * Formulog
  * %%
- * Copyright (C) 2018 - 2019 President and Fellows of Harvard College
+ * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +19,9 @@ import java.util.List;
  * limitations under the License.
  * #L%
  */
+
+import java.util.List;
+
 
 import edu.harvard.seas.pl.formulog.ast.Expr;
 import edu.harvard.seas.pl.formulog.ast.Term;

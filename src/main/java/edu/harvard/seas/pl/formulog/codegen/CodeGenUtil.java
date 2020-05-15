@@ -1,11 +1,8 @@
 package edu.harvard.seas.pl.formulog.codegen;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-
 /*-
  * #%L
- * FormuLog
+ * Formulog
  * %%
  * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
  * %%
@@ -22,6 +19,10 @@ import java.io.IOException;
  * limitations under the License.
  * #L%
  */
+
+import java.io.BufferedReader;
+import java.io.IOException;
+
 
 import java.io.PrintWriter;
 import java.util.Iterator;

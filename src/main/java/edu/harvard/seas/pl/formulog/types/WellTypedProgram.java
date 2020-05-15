@@ -1,12 +1,10 @@
 package edu.harvard.seas.pl.formulog.types;
 
-import edu.harvard.seas.pl.formulog.ast.BasicRule;
-
 /*-
  * #%L
- * FormuLog
+ * Formulog
  * %%
- * Copyright (C) 2018 - 2019 President and Fellows of Harvard College
+ * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +19,9 @@ import edu.harvard.seas.pl.formulog.ast.BasicRule;
  * limitations under the License.
  * #L%
  */
+
+import edu.harvard.seas.pl.formulog.ast.BasicRule;
+
 
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;

@@ -1,10 +1,8 @@
 package edu.harvard.seas.pl.formulog.db;
 
-import java.util.ArrayList;
-
 /*-
  * #%L
- * FormuLog
+ * Formulog
  * %%
  * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
  * %%
@@ -21,6 +19,9 @@ import java.util.ArrayList;
  * limitations under the License.
  * #L%
  */
+
+import java.util.ArrayList;
+
 
 import java.util.Arrays;
 import java.util.HashMap;

@@ -1,13 +1,8 @@
 package edu.harvard.seas.pl.formulog.codegen;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-
 /*-
  * #%L
- * FormuLog
+ * Formulog
  * %%
  * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
  * %%
@@ -24,6 +19,12 @@ import java.util.Iterator;
  * limitations under the License.
  * #L%
  */
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+
 
 import java.util.Map;
 import java.util.Set;

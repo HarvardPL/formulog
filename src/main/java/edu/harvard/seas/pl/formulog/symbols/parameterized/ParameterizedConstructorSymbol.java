@@ -1,23 +1,10 @@
 package edu.harvard.seas.pl.formulog.symbols.parameterized;
 
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.array;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.bool;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.bv;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.fp;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.fp32;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.fp64;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.i32;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.i64;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.smt;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.smtPattern;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.smtWrappedVar;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.sym;
-
 /*-
  * #%L
- * FormuLog
+ * Formulog
  * %%
- * Copyright (C) 2018 - 2019 President and Fellows of Harvard College
+ * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +19,20 @@ import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.sym;
  * limitations under the License.
  * #L%
  */
+
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.array;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.bool;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.bv;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.fp;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.fp32;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.fp64;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.i32;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.i64;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.smt;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.smtPattern;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.smtWrappedVar;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.sym;
+
 
 import java.util.ArrayList;
 import java.util.Arrays;

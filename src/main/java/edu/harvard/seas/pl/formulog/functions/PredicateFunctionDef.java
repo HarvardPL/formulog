@@ -1,10 +1,8 @@
 package edu.harvard.seas.pl.formulog.functions;
 
-import edu.harvard.seas.pl.formulog.ast.BindingType;
-
 /*-
  * #%L
- * FormuLog
+ * Formulog
  * %%
  * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
  * %%
@@ -21,6 +19,9 @@ import edu.harvard.seas.pl.formulog.ast.BindingType;
  * limitations under the License.
  * #L%
  */
+
+import edu.harvard.seas.pl.formulog.ast.BindingType;
+
 
 public interface PredicateFunctionDef extends FunctionDef {
 

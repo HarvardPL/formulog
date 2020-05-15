@@ -2,9 +2,9 @@ package edu.harvard.seas.pl.formulog.eval;
 
 /*-
  * #%L
- * FormuLog
+ * Formulog
  * %%
- * Copyright (C) 2018 - 2019 President and Fellows of Harvard College
+ * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package edu.harvard.seas.pl.formulog.eval;
  * limitations under the License.
  * #L%
  */
+
 
 public class UncheckedEvaluationException extends RuntimeException {
 
