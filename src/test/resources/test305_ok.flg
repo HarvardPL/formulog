@@ -1,9 +1,9 @@
 output ok
 ok :-
-  is_sats([`true`], none) = some(true),
-  is_sats([`#x[?] #= true`, `true`], none) = some(true),
-  is_sats([`#x[bool] #= #y[?]`, `#x[?] #= true`, `true`], none) = some(true),
-  is_sats([`#y[?] #= false`, `#x[bool] #= #y[?]`, `#x[?] #= true`, `true`], none) = some(false),
-  is_sats([`#y[?] /\ #x[?]`, `#x[bool] #= #y[?]`, `#x[?] #= true`, `true`], none) = some(true),
-  is_sats([`#x[?] /\ #x[?]`, `#x[?] #= true`, `true`], none) = some(true),
-  is_sats([`false`], none) = some(false).
+  is_sat_opt([`true`], none) = some(true),
+  is_sat_opt([`#x[?] #= true`, `true`], none) = some(true),
+  is_sat_opt([`#x[bool] #= #y[?]`, `#x[?] #= true`, `true`], none) = some(true),
+  is_sat_opt([`#y[?] #= false`, `#x[bool] #= #y[?]`, `#x[?] #= true`, `true`], none) = some(false),
+  is_sat_opt([`#y[?] /\ #x[?]`, `#x[bool] #= #y[?]`, `#x[?] #= true`, `true`], none) = some(true),
+  is_sat_opt([`#x[?] /\ #x[?]`, `#x[?] #= true`, `true`], none) = some(true),
+  is_sat_opt([`false`], none) = some(false).
