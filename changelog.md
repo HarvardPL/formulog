@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - SMT manager that uses push and pop.
 - Naive SMT manager that does not do any form of caching.
 - Optimal index selection.
+- Ability to interface with different solvers and set logic.
 
 ### Fixed
 - Concurrency bug in the memoization of parameterized constructor symbols.

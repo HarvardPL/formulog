@@ -95,6 +95,14 @@ You can set the following system properties (using the `-D` flag, as in
   they are derived (defaults to the empty list)
 * `printResults=(all|none|edb|idb|query|some=rel_1,...,rel_n)` - restrict which
   types of facts are printed after evaluation (default is all)
+* `smtLogic=LOGIC` - set the logic used by the external SMT solver (defaults to
+  `ALL`)
+* `smtSolver=SOLVER` - set the external SMT solver to used. Note that not all
+  supported solvers support the full feature range of Formulog. We currently
+  support these options:
+    * `z3` (the binary `z3` needs to be on your path)
+    * `cvc4` (the binary `cvc4` needs to be on your path)
+    * `yices` (the binary `yices-smt2` needs to be on your path)
 
 For example, to run the test program above with SMT debug information and 3
 threads, use
