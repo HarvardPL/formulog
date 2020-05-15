@@ -1,0 +1,664 @@
+(*-
+ * #%L
+ * Formulog
+ * %%
+ * Copyright (C) 2018 - 2019 Anonymous Institute
+ * %%
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * #L%
+ *)
+
+(*******************************************************************************
+  SYMEVAL.FLG
+
+  This file has the implementation of a bounded symbolic evaluator for a simple
+  imperative language.
+*******************************************************************************)
+
+type ('k, 'v) map = ('k * 'v) list
+
+fun get(K:'k, Map:('k, 'v) map) : 'v option =
+  match Map with
+  | [] => none
+  | (K2, V) :: Rest => if K = K2 then some(V) else get(K, Rest)
+  end
+
+fun put(K:'k, V:'v, Map:('k, 'v) map) : ('k, 'v) map = (K, V) :: Map
+
+type node = i32
+type var = string
+
+type cond =
+  | cond_eq
+  | cond_ne
+  | cond_lt
+  | cond_le
+  | cond_gt
+  | cond_ge
+
+type binop =
+  | binop_add
+  | binop_mul
+  | binop_div
+  | binop_rem
+    
+type unop =
+  | unop_neg
+
+type inst =
+  | inst_jmp(cond, var, var, node)
+  | inst_goto(node)
+  | inst_binop(var, binop, var, var)
+  | inst_unop(var, unop, var)
+  | inst_fail
+  | inst_assign(var, var)
+
+type val =
+  | v_conc(i32)
+  | v_symb(bv[32] sym)
+
+type store = (var, val) map
+type state = (store * bool smt)
+
+input fall_thru_succ(node, node)
+input start(node, store)
+input stmt(node, inst)
+output reach(node, state, i32)
+output failed_assert(node, state)
+output stepping_to(node, state, i32)
+input max_steps(i32)
+
+fun get_store(State:state) : store =
+  match State with (Store, _) => Store end
+  
+fun get_constraints(State:state) : bool smt =
+  match State with (_, Constraints) => Constraints end
+  
+fun update_store(Reg:var, Val:val, State:state) : state =
+  let (Store, Constraints) = State in
+  let New_store = put(Reg, Val, Store) in
+  (New_store, Constraints)
+
+fun update_constraints(Constraint:bool smt, State:state) : state =
+  let (Store, Constraints) = State in
+  (Store, `Constraint /\ Constraints`)
+
+fun flip_cond(Cond:cond) : cond =
+  match Cond with
+  | cond_eq => cond_ne
+  | cond_ne => cond_eq
+  | cond_lt => cond_ge
+  | cond_le => cond_gt
+  | cond_gt => cond_le
+  | cond_ge => cond_lt
+  end
+
+fun handle_unop(Dest:var, Op:unop, Val:var, State:state) : state =
+  let Store = get_store(State) in
+  match get(Val, Store) with
+  | some(v_conc(X)) =>
+    let Res =
+      match Op with
+      | unop_neg => -X
+      end in
+    update_store(Dest, v_conc(Res), State)
+  | some(v_symb(Val)) =>
+    let X = #{State}[bv[32]] in
+    let Neg =
+      match Op with
+      | unop_neg => `bv_neg(Val)`
+      end in
+    let State = update_constraints(`X #= Neg`, State) in
+    update_store(Dest, v_symb(X), State)
+  end
+
+fun coerce_symbolic_val(Val:val) : bv[32] smt =
+  match Val with v_conc(X) | v_symb(X) => `X` end
+
+fun handle_binop(Dest:var, Op:binop, Val1:var, Val2:var, State:state) : state =
+    let Store = get_store(State) in
+    let some(Val1) = get(Val1, Store) in
+    let some(Val2) = get(Val2, Store) in
+    match (Val1, Val2) with
+    | (v_conc(X1), v_conc(X2)) =>
+      let Res =
+        match Op with
+        | binop_add => X1 + X2
+        | binop_mul => X1 * X2
+        | binop_div => X1 / X2
+        | binop_rem => X1 % X2
+        end in
+      update_store(Dest, v_conc(Res), State)
+    | _ =>
+      let X = #{State}[bv[32]] in
+      let Val1 = coerce_symbolic_val(Val1) in
+      let Val2 = coerce_symbolic_val(Val2) in
+      let Res =
+        match Op with
+        | binop_add => `bv_add(Val1, Val2)`
+        | binop_mul => `bv_mul(Val1, Val2)`
+        | binop_div => `bv_sdiv(Val1, Val2)`
+        | binop_rem => `bv_srem(Val1, Val2)`
+        end in
+      let State = update_constraints(`X #= Res`, State) in
+      update_store(Dest, v_symb(X), State)
+    end
+
+fun handle_cond(Cond:cond, Reg1:var, Reg2:var, State:state) : state option =
+  let (Store, Constraints) = State in
+  let some(Val1) = get(Reg1, Store) in
+  let some(Val2) = get(Reg2, Store) in
+  match (Val1, Val2) with
+  | (v_conc(X1), v_conc(X2)) =>
+    let Feasible =
+      match Cond with
+      | cond_eq => X1 = X2
+      | cond_ne => X1 != X2
+      | cond_lt => X1 < X2
+      | cond_le => X1 <= X2
+      | cond_gt => X1 > X2
+      | cond_ge => X1 >= X2
+      end in
+    if Feasible then some(State) else none
+  | _ => 
+    let Val1 = coerce_symbolic_val(Val1) in
+    let Val2 = coerce_symbolic_val(Val2) in
+    let Constraint =
+      match Cond with
+      | cond_eq => `Val1 #= Val2`
+      | cond_ne => `~(Val1 #= Val2)`
+      | cond_lt => `bv_slt(Val1, Val2)`
+      | cond_le => `~bv_sgt(Val1, Val2)`
+      | cond_gt => `bv_sgt(Val1, Val2)`
+      | cond_ge => `~bv_slt(Val1, Val2)`
+      end in
+    let New_constraints = `Constraint /\ Constraints` in
+    if is_sat(New_constraints) then
+      let New_state = (Store, New_constraints) in
+      some(New_state)
+    else none
+  end
+
+stepping_to(Node, (Store, `true`), 0) :-
+  start(Node, Store).
+
+stepping_to(Succ, New_state, D) :-
+  fall_thru_succ(Node, Succ),
+  stmt(Node, inst_assign(Dest, Val)),
+  reach(Node, State, D),
+  some(X) = get(Val, get_store(State)),
+  New_state = update_store(Dest, X, State).
+
+stepping_to(Succ, New_state, D) :-
+  fall_thru_succ(Node, Succ),
+  stmt(Node, inst_unop(Dest, Op, Val)),
+  reach(Node, State, D),
+  New_state = handle_unop(Dest, Op, Val, State).
+
+stepping_to(Succ, New_state, D) :-
+  fall_thru_succ(Node, Succ),
+  stmt(Node, inst_binop(Dest, Op, Val1, Val2)),
+  reach(Node, State, D),
+  New_state = handle_binop(Dest, Op, Val1, Val2, State).
+
+stepping_to(Succ, New_state, D) :-
+  stmt(Node, inst_jmp(Cond, Val1, Val2, Succ)),
+  reach(Node, State, D),
+  some(New_state) = handle_cond(Cond, Val1, Val2, State).
+
+stepping_to(Succ, New_state, D) :-
+  fall_thru_succ(Node, Succ),
+  stmt(Node, inst_jmp(Cond, Val1, Val2, _)),
+  reach(Node, State, D),
+  some(New_state) = handle_cond(flip_cond(Cond), Val1, Val2, State).
+
+stepping_to(Succ, State, D) :-
+  stmt(Node, inst_goto(Succ)),
+  reach(Node, State, D).
+
+max_steps(10).
+
+reach(Node, State, D + 1) :-
+  stepping_to(Node, State, D),
+  max_steps(X),
+  D < X.
+
+failed_assert(Node, State) :-
+  stmt(Node, inst_fail),
+  reach(Node, State, _).
+
+(* our query... comment this out to exhaustively explore the program states *)
+:- failed_assert(_N, _S).
+
+fun vc(N:i32) : val = v_conc(N).
+fun vs(X:string) : val = v_symb(#{X}[bv[32]]).
+
+(* example 01 *)
+
+(*
+start(0, []).
+*)
+
+(* example 02
+
+    x = 21 + 21;
+*)
+
+(*
+start(0, [("21", vc(21))]).
+stmt(0, inst_binop("x", binop_add, "21", "21")).
+fall_thru_succ(0, 1).
+*)
+
+(* example 03
+
+    x = mksym();
+    if (x != x) {
+        fail();
+    }
+*)
+
+(*
+start(0, [("x", vs("x"))]).
+stmt(0, inst_jmp(cond_eq, "x", "x", 2)).
+stmt(1, inst_fail).
+fall_thru_succ(0, 1).
+*)
+
+(* example 04
+
+    x = mksym();
+    if (x == 0) {
+        x = x + 1; 
+    }
+    if (x == 0) {
+        fail();
+    }
+*)
+
+(*
+start(0, [("0", vc(0)), ("1", vc(1)), ("x", vs("x"))]).
+stmt(0, inst_jmp(cond_ne, "x", "0", 2)).
+stmt(1, inst_binop("x", binop_add, "x", "1")).
+stmt(2, inst_jmp(cond_ne, "x", "0", 4)).
+stmt(3, inst_fail).
+fall_thru_succ(0, 1).
+fall_thru_succ(1, 2).
+fall_thru_succ(2, 3).
+*)
+
+(* example 05
+
+    x = mksym();
+    y = mksym();
+    if (x < 0) {
+        x = -x;
+    }
+    if (y < 0) {
+        y = -y;
+    }
+    z = x + y;
+    if (z < 0) {
+        fail();
+    } 
+*)
+
+(*
+start(2, [("0", vc(0)), ("x", vs("x")), ("y", vs("y"))]).
+stmt(2, inst_jmp(cond_ge, "x", "0", 4)).
+stmt(3, inst_unop("x", unop_neg, "x")).
+stmt(4, inst_jmp(cond_ge, "y", "0", 6)).
+stmt(5, inst_unop("y", unop_neg, "y")).
+stmt(6, inst_binop("z", binop_add, "x", "y")).
+stmt(7, inst_jmp(cond_ge, "z", "0", 9)).
+stmt(8, inst_fail).
+fall_thru_succ(0, 1).
+fall_thru_succ(1, 2).
+fall_thru_succ(2, 3).
+fall_thru_succ(3, 4).
+fall_thru_succ(4, 5).
+fall_thru_succ(5, 6).
+fall_thru_succ(6, 7).
+fall_thru_succ(7, 8).
+*)
+
+(* example 06
+
+    euclid's gCD algorithm
+    
+    x0 = 0;
+    x1 = ...;
+    x2 = ...;
+    while (x2 != x0) {
+        x3 = x2;
+        x2 = x1 % x2;
+        x1 = x3;
+    }
+*)
+
+(*
+start(0, [("x0", vc(0)), ("x2", vc(1071)), ("x1", vc(462))]).
+stmt(0, inst_jmp(cond_eq, "x2", "x0", 1)).
+stmt(2, inst_assign("x3", "x2")).
+stmt(3, inst_binop("x2", binop_rem, "x1", "x2")).
+stmt(4, inst_assign("x1", "x3")).
+stmt(5, inst_goto(0)).
+fall_thru_succ(0, 2).
+fall_thru_succ(2, 3).
+fall_thru_succ(3, 4).
+fall_thru_succ(4, 5).
+*)
+
+(* example 07
+
+    x0 = 42;
+    if (x0 == x0) {
+      fail();
+    } else {
+      x0 = x0;
+      x0 = x0;
+      x0 = x0;
+    }
+*)
+
+(*
+stmt(0, inst_jmp(cond_ne, "x", "x", 2)).
+stmt(1, inst_fail).
+stmt(2, inst_assign("x", "x")).
+stmt(3, inst_assign("x", "x")).
+stmt(4, inst_assign("x", "x")).
+fall_thru_succ(0, 1).
+fall_thru_succ(2, 3).
+fall_thru_succ(3, 4).
+start(0, [("x", vc(42))]).
+*)
+
+(* example 08
+
+  x = mksym();
+  while (x == x) {
+    // do nothing    
+  }
+  fail();
+
+*)
+
+(*
+stmt(1, inst_jmp(cond_ne, "x", "x", 2)).
+fall_thru_succ(0, 1).
+fall_thru_succ(1, 1).
+stmt(2, inst_fail).
+start(1, [("x", vs("x"))]).
+*)
+
+(* example 09
+
+  goto label2;
+  label1:
+  goto label1;
+  label2:
+  fail();
+
+*)
+
+(*
+stmt(0, inst_goto(2)).
+stmt(1, inst_goto(1)).
+stmt(2, inst_fail).
+start(0, []).
+*)
+
+(* example 10 
+  
+  x = mksym();
+  y = mksym();
+  goto label;
+  while (x == y) {
+    // do nothing
+  }
+  label:
+  fail();
+
+*)
+
+(*
+stmt(0, inst_goto(2)).
+stmt(1, inst_jmp(cond_ne, "x", "y", 2)).
+stmt(2, inst_fail).
+fall_thru_succ(1, 1).
+start(0, [("x", vs("x")), ("y", vs("y"))]).
+*)
+
+(* example 11 
+  
+  x = mksym();
+  y = mksym();
+  while (x == y) {
+    // do nothing
+  }
+  fail();
+
+*)
+
+(*
+stmt(0, inst_jmp(cond_ne, "x", "y", 1)).
+stmt(1, inst_fail).
+fall_thru_succ(0, 0).
+start(0, [("x", vs("x")), ("y", vs("y"))]).
+*)
+
+(* example 12
+
+  goto end;
+  while (true) {};
+  fail();
+
+*)
+
+(*
+stmt(0, inst_goto(2)).
+stmt(1, inst_jmp(cond_ne, "1", "1", 2)).
+stmt(2, inst_fail).
+fall_thru_succ(1, 1).
+start(0, [("1", vc(1))]).
+*)
+
+(* example 13 
+
+    x0 = mksymb();
+    if (x0 == x0) {
+      fail();
+    } else {
+      x0 = x0;
+      x0 = x0;
+      x0 = x0;
+    }
+*)
+
+(*
+stmt(0, inst_jmp(cond_ne, "x", "x", 2)).
+stmt(1, inst_fail).
+stmt(2, inst_assign("x", "x")).
+stmt(3, inst_assign("x", "x")).
+stmt(4, inst_assign("x", "x")).
+fall_thru_succ(0, 1).
+fall_thru_succ(2, 3).
+fall_thru_succ(3, 4).
+start(0, [("x", vs("x"))]).
+*)
+
+(* example 14 
+
+    x0 = mksymb();
+    if (x0 != x0) {
+      x0 = x0;
+      x0 = x0;
+      x0 = x0;
+    } else {
+      fail();
+    }
+*)
+
+(*
+stmt(0, inst_jmp(cond_eq, "x", "x", 1)).
+stmt(1, inst_fail).
+stmt(2, inst_assign("x", "x")).
+stmt(3, inst_assign("x", "x")).
+stmt(4, inst_assign("x", "x")).
+fall_thru_succ(0, 2).
+fall_thru_succ(2, 3).
+fall_thru_succ(3, 4).
+start(0, [("x", vs("x"))]).
+*)
+
+(* example 15 
+  
+  x = mksym();
+  y = mksym();
+  while (x != y) {
+    x = x + x;
+  }
+  fail();
+
+*)
+
+(*
+stmt(0, inst_jmp(cond_eq, "x", "y", 2)).
+stmt(1, inst_binop("x", binop_add, "x", "x")).
+stmt(2, inst_fail).
+fall_thru_succ(0, 1).
+fall_thru_succ(1, 0).
+start(0, [("x", vs("x")), ("y", vs("y"))]).
+*)
+
+(* example 15 
+  
+  x = x + x;
+  x = x + x;
+  x = x + x;
+  x = x + x;
+  x = x + x;
+  x = x + x;
+  x = x + x;
+  x = x + x;
+  x = x + x;
+  x = x + x;
+  fail();
+
+*)
+
+(*
+stmt(0, inst_binop("x", binop_add, "x", "x")).
+stmt(1, inst_binop("x", binop_add, "x", "x")).
+stmt(2, inst_binop("x", binop_add, "x", "x")).
+stmt(3, inst_binop("x", binop_add, "x", "x")).
+stmt(4, inst_binop("x", binop_add, "x", "x")).
+stmt(5, inst_binop("x", binop_add, "x", "x")).
+stmt(6, inst_binop("x", binop_add, "x", "x")).
+stmt(7, inst_binop("x", binop_add, "x", "x")).
+stmt(8, inst_binop("x", binop_add, "x", "x")).
+stmt(9, inst_binop("x", binop_add, "x", "x")).
+stmt(10, inst_binop("x", binop_add, "x", "x")).
+stmt(11, inst_fail).
+fall_thru_succ(0, 1).
+fall_thru_succ(1, 2).
+fall_thru_succ(2, 3).
+fall_thru_succ(3, 4).
+fall_thru_succ(4, 5).
+fall_thru_succ(5, 6).
+fall_thru_succ(6, 7).
+fall_thru_succ(7, 8).
+fall_thru_succ(8, 9).
+fall_thru_succ(9, 10).
+fall_thru_succ(10, 11).
+start(0, [("x", vc(1))]).
+*)
+
+(* example 16
+
+  if (x == y) {
+    x = x + x;
+    x = x + x;
+  } else {
+    y = y + y;
+  }
+  fail();
+
+*)
+
+(*
+stmt(0, inst_jmp(cond_ne, "x", "y", 3)).
+stmt(1, inst_binop("x", binop_add, "x", "x")).
+stmt(2, inst_binop("x", binop_add, "x", "x")).
+stmt(3, inst_binop("y", binop_add, "y", "y")).
+stmt(4, inst_fail).
+fall_thru_succ(0, 1).
+fall_thru_succ(1, 2).
+fall_thru_succ(2, 4).
+fall_thru_succ(3, 4).
+start(0, [("x", vs("x")), ("y", vs("y"))]).
+*)
+
+(* example 17 
+
+    x0 = mksymb();
+    y = 42;
+    if (x0 != y) {
+      x0 = x0;
+      x0 = x0;
+      x0 = x0;
+    } else {
+      fail();
+    }
+*)
+
+(*
+stmt(0, inst_jmp(cond_eq, "x", "y", 1)).
+stmt(1, inst_fail).
+stmt(2, inst_assign("x", "x")).
+stmt(3, inst_assign("x", "x")).
+stmt(4, inst_assign("x", "x")).
+fall_thru_succ(0, 2).
+fall_thru_succ(2, 3).
+fall_thru_succ(3, 4).
+start(0, [("x", vs("x")), ("y", vc(42))]).
+*)
+
+(* example 18
+
+    x = mksymb();
+    y = mksymb();
+    z = mksymb();
+    0: if (x != 0)
+    1:  x = x; 
+    2: if (y != 0)
+    3:  y = y;
+    4: if (z != 0)
+    5:  z = z;
+    6: fail();
+*)
+
+stmt(0, inst_jmp(cond_eq, "x", "0", 2)).
+stmt(1, inst_assign("x", "x")).
+stmt(2, inst_jmp(cond_eq, "y", "0", 4)).
+stmt(3, inst_assign("y", "y")).
+stmt(4, inst_jmp(cond_eq, "z", "0", 6)).
+stmt(5, inst_assign("z", "z")).
+stmt(6, inst_fail).
+fall_thru_succ(0, 1).
+fall_thru_succ(1, 2).
+fall_thru_succ(2, 3).
+fall_thru_succ(3, 4).
+fall_thru_succ(4, 5).
+fall_thru_succ(5, 6).
+start(0, [("x", vs("x")), ("y", vs("y")), ("z", vs("z")), ("0", vc(0))]).
