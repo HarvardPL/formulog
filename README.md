@@ -81,7 +81,7 @@ greeting("Hello, World")
 You can set the following system properties (using the `-D` flag, as in
 `-DdebugSmt` or `-DuseDemandTransformation=false`):
 
-* `debugSmt` - print debugging information related to SMT calls (defaults to
+* `debugSmt` - log debugging information related to SMT calls (defaults to
   false)
 * `debugMst` - print debugging information related to the magic set
   transformation (defaults to false)
@@ -97,12 +97,12 @@ You can set the following system properties (using the `-D` flag, as in
 * `parallelism=N` - run interpreter with `N` threads (defaults to 4)
 * `printRelSizes` - print final relation sizes (defaults to false)
 * `printFinalRules` - print the final, transformed rules (defaults to false)
-* `factDirs=dir_1,...,dir_n` - directories for CSV files of input facts
+* `factDirs=DIR_1,...,DIR_n` - directories for CSV files of input facts
   (defaults to the current directory)
-* `trackedRelations=rel_1,...,rel_n` - print facts from listed relations as
+* `trackedRelations=REL_1,...,REL_n` - print facts from listed relations as
   they are derived (defaults to the empty list)
-* `printResults=(all|none|edb|idb|query|some=rel_1,...,rel_n)` - restrict which
-  types of facts are printed after evaluation (default is all)
+* `printResults=(all|none|edb|idb|query|some=REL_1,...,REL_n)` - restrict which
+  types of facts are printed after evaluation (defaults to `all`)
 * `smtLogic=LOGIC` - set the logic used by the external SMT solver (defaults to
   `ALL`)
 * `smtSolver=SOLVER` - set the external SMT solver to use; current options are

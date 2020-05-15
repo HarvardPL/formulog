@@ -9,6 +9,10 @@ All notable changes to this project will be documented in this file.
 - Optimal index selection.
 - Ability to interface with different solvers and set logic.
 
+### Changed
+- The `debugSmt` option logs SMT calls to separate files by solver, instead of
+  printing them to same stream.
+
 ### Fixed
 - Concurrency bug in the memoization of parameterized constructor symbols.
 - Bug in the recording of rule evaluation diagnostics.
