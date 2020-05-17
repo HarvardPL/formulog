@@ -90,6 +90,7 @@ public final class Configuration {
 		case "z3":
 		case "cvc4":
 		case "yices":
+		case "boolector":
 			break;
 		default:
 			throw new IllegalArgumentException("Unrecognized solver: " + smtSolver);

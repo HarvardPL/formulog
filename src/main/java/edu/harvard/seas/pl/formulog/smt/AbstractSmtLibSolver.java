@@ -58,6 +58,9 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 		case "yices":
 			solverFactory = YicesProcessFactory.get();
 			break;
+		case "boolector":
+			solverFactory = BoolectorProcessFactory.get();
+			break;
 		default:
 			throw new AssertionError("impossible");
 		}

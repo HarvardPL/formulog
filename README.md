@@ -32,11 +32,11 @@ connecting with your SMT solver. You can compile without testing by adding the
 
 ### Supported SMT solvers
 
-We currently support the solvers Z3, CVC4, and Yices 2; however, not all these
-solvers handle the full range of Formulog features. The default solver is Z3;
-to set another one, you need to use a command-line option (see below). For each
-solver, the relevant binary needs to be on your path: `z3` for Z3, `cvc4` for
-CVC4, and `yices-smt2` for Yices 2.
+We currently support the solvers Z3, Boolector, CVC4, and Yices 2; however, not
+all these solvers handle the full range of Formulog features. The default
+solver is Z3; to set another one, you need to use a command-line option (see
+below). For each solver, the relevant binary needs to be on your path: `z3` for
+Z3, `boolector` for Boolector, `cvc4` for CVC4, and `yices-smt2` for Yices 2.
 
 ## Running Formulog
 

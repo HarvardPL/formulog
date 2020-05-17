@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Naive SMT manager that does not do any form of caching.
 - Optimal index selection.
 - Ability to interface with different solvers and set logic.
+- Ability to use alternate solvers (CVC4, Yices 2, Boolector).
 
 ### Changed
 - The `debugSmt` option logs SMT calls to separate files by solver, instead of
