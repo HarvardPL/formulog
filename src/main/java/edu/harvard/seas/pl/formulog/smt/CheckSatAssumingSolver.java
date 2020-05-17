@@ -56,8 +56,13 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 		}
 		indicatorVars.clear();
 		nextVarId = 0;
-		shim.reset();
-		start();
+		if (Configuration.smtCacheHardResets) {
+			shim.reset();
+			start();
+		} else {
+			shim.pop();
+			shim.push();
+		}
 	}
 
 	public Set<SmtLibTerm> getCache() {
@@ -123,6 +128,9 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 	protected void start() throws EvaluationException {
 		shim.setLogic(Configuration.smtLogic);
 		shim.makeDeclarations();
+		if (!Configuration.smtCacheHardResets) {
+			shim.push();
+		}
 	}
 
 }

@@ -98,6 +98,7 @@ public final class Configuration {
 	public static final String smtLogic = getStringProp("smtLogic", "ALL");
 	public static final boolean smtSingleShot = smtStrategy.getTag().equals(SmtStrategy.Tag.PER_THREAD_NAIVE);
 	public static final boolean smtDeclareAdts = propIsSet("smtDeclareAdts", true);
+	public static final boolean smtCacheHardResets = propIsSet("smtCacheHardResets", false);
 
 	private static final Dataset pushPopStackSize = new Dataset();
 	private static final Dataset pushPopStackReuse = new Dataset();
