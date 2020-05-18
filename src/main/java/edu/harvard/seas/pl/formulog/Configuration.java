@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
 
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDb;
+import edu.harvard.seas.pl.formulog.smt.SmtStatus;
 import edu.harvard.seas.pl.formulog.smt.SmtStrategy;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
@@ -70,6 +71,9 @@ public final class Configuration {
 	private static final AtomicLong smtInferTime = new AtomicLong();
 	private static final AtomicLong smtSerialTime = new AtomicLong();
 	private static final AtomicLong smtWaitTime = new AtomicLong();
+	private static final AtomicInteger smtNumCallsSat = new AtomicInteger();
+	private static final AtomicInteger smtNumCallsUnsat = new AtomicInteger();
+	private static final AtomicInteger smtNumCallsUnknown = new AtomicInteger();
 
 	public static final boolean printRelSizes = propIsSet("printRelSizes");
 	public static final boolean printFinalRules = propIsSet("printFinalRules");
@@ -211,9 +215,20 @@ public final class Configuration {
 		smtSerialTime.addAndGet(time);
 	}
 
-	public static void recordSmtEvalTime(int processId, long time) {
+	public static void recordSmtEvalTime(int processId, long time, SmtStatus result) {
 		smtEvalStats.addDataPoint(time);
 		Util.lookupOrCreate(perProcessSmtEvalStats, processId, () -> new Dataset()).addDataPoint(time);
+		switch (result) {
+		case SATISFIABLE:
+			smtNumCallsSat.incrementAndGet();
+			break;
+		case UNKNOWN:
+			smtNumCallsUnknown.incrementAndGet();
+			break;
+		case UNSATISFIABLE:
+			smtNumCallsUnsat.incrementAndGet();
+			break;
+		}
 	}
 
 	public static void recordSmtWaitTime(long time) {
@@ -227,14 +242,18 @@ public final class Configuration {
 			callsPerSolver.addDataPoint(ds.size());
 			timePerSolver.addDataPoint(ds.computeSum());
 		}
-		out.println("[SMT DECL TIME] " + smtDeclTime.get() + "ms");
-		out.println("[SMT INFER TIME] " + smtInferTime.get() + "ms");
-		out.println("[SMT SERIAL TIME] " + smtSerialTime.get() + "ms");
-		out.println("[SMT WAIT TIME] " + smtWaitTime.get() + "ms");
+		out.println("[SMT DECL TIME] " + smtDeclTime + "ms");
+		out.println("[SMT INFER TIME] " + smtInferTime + "ms");
+		out.println("[SMT SERIAL TIME] " + smtSerialTime + "ms");
+		out.println("[SMT WAIT TIME] " + smtWaitTime + "ms");
 		out.printf("[SMT EVAL TIME] %1.1fms%n", smtEvalStats.computeSum());
 		out.println("[SMT EVAL TIME PER CALL (ms)] " + smtEvalStats.getStatsString());
 		out.println("[SMT EVAL TIME PER SOLVER (ms)] " + timePerSolver.getStatsString());
 		out.println("[SMT NUM CALLS PER SOLVER] " + callsPerSolver.getStatsString());
+		out.println("[SMT NUM CALLS - SAT] " + smtNumCallsSat);
+		out.println("[SMT NUM CALLS - UNSAT] " + smtNumCallsUnsat);
+		out.println("[SMT NUM CALLS - UNKNOWN] " + smtNumCallsUnknown);
+		
 
 		switch (smtStrategy.getTag()) {
 		case BEST_MATCH:

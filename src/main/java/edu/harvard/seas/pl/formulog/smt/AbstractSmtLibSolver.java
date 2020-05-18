@@ -153,7 +153,7 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 			SmtStatus status = shim.checkSatAssuming(p.fst(), p.snd(), timeout);
 			if (Configuration.timeSmt || debug) {
 				long time = System.currentTimeMillis() - start;
-				Configuration.recordSmtEvalTime(solverId, time);
+				Configuration.recordSmtEvalTime(solverId, time, status);
 				if (debug) {
 					log.println("; time: " + time + "ms");
 					log.flush();
