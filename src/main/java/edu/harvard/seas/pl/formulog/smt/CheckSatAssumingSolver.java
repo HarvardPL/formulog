@@ -97,7 +97,7 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 		for (SolverVariable x : indicatorVars.values()) {
 			if (xs.contains(x)) {
 				onVars.add(x);
-			} else {
+			} else if (Configuration.smtUseNegativeLiterals) {
 				offVars.add(x);
 			}
 		}

@@ -100,6 +100,7 @@ public final class Configuration {
 	public static final boolean smtSingleShot = smtStrategy.getTag().equals(SmtStrategy.Tag.PER_THREAD_NAIVE);
 	public static final boolean smtDeclareAdts = propIsSet("smtDeclareAdts", true);
 	public static final boolean smtCacheHardResets = propIsSet("smtCacheHardResets", false);
+	public static final boolean smtUseNegativeLiterals = propIsSet("smtUseNegativeLiterals", true);
 
 	private static final Dataset pushPopStackSize = new Dataset();
 	private static final Dataset pushPopStackReuse = new Dataset();
