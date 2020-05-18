@@ -93,6 +93,7 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 		log = w;
 	}
 
+	@Override
 	public synchronized void start(Program<?, ?> prog) throws EvaluationException {
 		assert solver == null;
 		try {
@@ -107,6 +108,7 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 		start();
 	}
 
+	@Override
 	public synchronized void destroy() {
 		assert solver != null;
 		solver.destroy();
@@ -119,7 +121,7 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 	}
 
 	protected abstract void start() throws EvaluationException;
-
+	
 	protected abstract Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(
 			Collection<SmtLibTerm> assertions) throws EvaluationException;
 

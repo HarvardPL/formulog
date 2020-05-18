@@ -21,26 +21,48 @@ package edu.harvard.seas.pl.formulog.smt;
  */
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import edu.harvard.seas.pl.formulog.Configuration;
+import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
+import edu.harvard.seas.pl.formulog.util.Pair;
 
-public class NaiveSmtManager implements SmtManager {
+public class SingleShotSolver extends AbstractSmtLibSolver {
 
-	private final SmtLibSolver solver = Configuration.smtSolver.equals("boolector") ? new SingleShotSolver()
-			: new CallAndResetSolver();
+	private Program<?, ?> prog;
+	
+	private final static Pair<List<SolverVariable>, List<SolverVariable>> emptyListPair = new Pair<>(
+			Collections.emptyList(), Collections.emptyList());
 
 	@Override
-	public SmtResult check(Collection<SmtLibTerm> assertions, boolean getModel, int timeout)
+	protected Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(Collection<SmtLibTerm> assertions)
 			throws EvaluationException {
-		return solver.check(assertions, getModel, timeout);
+		shim.setLogic(Configuration.smtLogic);
+		shim.makeDeclarations();
+		for (SmtLibTerm assertion : assertions) {
+			shim.makeAssertion(assertion);
+		}
+		return emptyListPair;
 	}
 
 	@Override
-	public void initialize(Program<?, ?> prog) throws EvaluationException {
-		solver.start(prog);
+	protected void start() throws EvaluationException {
+		// do nothing
+	}
+
+	@Override
+	protected void cleanup() throws EvaluationException {
+		destroy();
+		super.start(prog);
+	}
+
+	public synchronized void start(Program<?, ?> prog) throws EvaluationException {
+		this.prog = prog;
+		super.start(prog);
 	}
 
 }

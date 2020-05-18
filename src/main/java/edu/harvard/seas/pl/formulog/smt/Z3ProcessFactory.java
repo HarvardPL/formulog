@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.smt;
  * #L%
  */
 
-
 import java.io.IOException;
 
 import edu.harvard.seas.pl.formulog.util.Util;
@@ -32,7 +31,7 @@ public class Z3ProcessFactory implements ExternalSolverProcessFactory {
 	private Z3ProcessFactory() {
 		Util.assertBinaryOnPath("z3");
 	}
-	
+
 	public static Z3ProcessFactory get() {
 		if (instance == null) {
 			synchronized (Z3ProcessFactory.class) {
@@ -43,10 +42,10 @@ public class Z3ProcessFactory implements ExternalSolverProcessFactory {
 		}
 		return instance;
 	}
-	
+
 	@Override
 	public Process newProcess() throws IOException {
-		return Runtime.getRuntime().exec("z3 -in -smt2");
+		return new ProcessBuilder("z3", "-in", "-smt2").redirectErrorStream(true).start();
 	}
 
 }

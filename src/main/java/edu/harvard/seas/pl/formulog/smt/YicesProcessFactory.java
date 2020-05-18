@@ -20,8 +20,9 @@ package edu.harvard.seas.pl.formulog.smt;
  * #L%
  */
 
-
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.util.Util;
@@ -47,6 +48,11 @@ public class YicesProcessFactory implements ExternalSolverProcessFactory {
 
 	@Override
 	public Process newProcess() throws IOException {
-		return Runtime.getRuntime().exec("yices-smt2" + (Configuration.smtSingleShot ? "" : " --incremental"));
+		List<String> command = new ArrayList<>();
+		command.add("yices-smt2");
+		if (!Configuration.smtSingleShot) {
+			command.add("--incremental");
+		}
+		return new ProcessBuilder(command).redirectErrorStream(true).start();
 	}
 }

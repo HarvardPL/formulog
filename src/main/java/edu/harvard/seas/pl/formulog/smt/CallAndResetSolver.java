@@ -31,7 +31,7 @@ import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
-public class NoCachingSolver extends AbstractSmtLibSolver {
+public class CallAndResetSolver extends AbstractSmtLibSolver {
 
 	private final static Pair<List<SolverVariable>, List<SolverVariable>> emptyListPair = new Pair<>(
 			Collections.emptyList(), Collections.emptyList());
