@@ -22,6 +22,7 @@ package edu.harvard.seas.pl.formulog.smt;
 
 
 import java.util.Collection;
+import java.util.function.Supplier;
 
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
@@ -31,12 +32,14 @@ public class NotThreadSafeQueueSmtManager implements SmtLibSolver {
 
 	private final SmtLibSolver[] solvers;
 	private int pos;
+	private final Supplier<SmtLibSolver> maker;
 
-	public NotThreadSafeQueueSmtManager(int size) {
+	public NotThreadSafeQueueSmtManager(int size, Supplier<SmtLibSolver> maker) {
 		if (size <= 0) {
 			throw new IllegalArgumentException("Cannot have non-positive number of solvers.");
 		}
 		solvers = new SmtLibSolver[size];
+		this.maker = maker;
 	}
 
 	@Override
@@ -51,7 +54,7 @@ public class NotThreadSafeQueueSmtManager implements SmtLibSolver {
 	@Override
 	public void start(Program<?, ?> prog) throws EvaluationException {
 		for (int i = 0; i < solvers.length; ++i) {
-			CheckSatAssumingSolver solver = new CheckSatAssumingSolver();
+			SmtLibSolver solver = maker.get();
 			solver.start(prog);
 			solvers[i] = solver;
 		}

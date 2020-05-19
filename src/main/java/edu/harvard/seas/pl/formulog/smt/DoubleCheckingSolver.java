@@ -22,30 +22,38 @@ package edu.harvard.seas.pl.formulog.smt;
 
 import java.util.Collection;
 
-import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 
-public class NaiveSmtManager implements SmtLibSolver {
+public class DoubleCheckingSolver implements SmtLibSolver {
 
-	private final SmtLibSolver solver = Configuration.smtUseSingleShotSolver
-			|| Configuration.smtSolver.equals("boolector") ? new SingleShotSolver() : new CallAndResetSolver();
-
-	@Override
-	public SmtResult check(Collection<SmtLibTerm> assertions, boolean getModel, int timeout)
-			throws EvaluationException {
-		return solver.check(assertions, getModel, timeout);
+	private final SmtLibSolver inner;
+	private final SmtLibSolver checker = new PushPopSolver();
+	
+	public DoubleCheckingSolver(SmtLibSolver inner) {
+		this.inner = inner;
 	}
 
 	@Override
 	public void start(Program<?, ?> prog) throws EvaluationException {
-		solver.start(prog);
+		inner.start(prog);
+		checker.start(prog);
+	}
+
+	@Override
+	public SmtResult check(Collection<SmtLibTerm> formula, boolean getModel, int timeout) throws EvaluationException {
+		SmtResult res = inner.check(formula, getModel, timeout);
+		if (res.status.equals(SmtStatus.UNKNOWN)) {
+			res = checker.check(formula, getModel, timeout);
+		}
+		return res;
 	}
 
 	@Override
 	public void destroy() {
-		solver.destroy();
+		inner.destroy();
+		checker.destroy();
 	}
 
 }

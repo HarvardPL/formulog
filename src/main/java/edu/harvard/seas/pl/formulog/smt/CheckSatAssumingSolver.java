@@ -32,7 +32,6 @@ import java.util.Set;
 import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
-import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
@@ -50,7 +49,6 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 
 	private final Map<SmtLibTerm, SolverVariable> indicatorVars = new HashMap<>();
 	private int nextVarId;
-	private final SmtLibSolver doubleCheckingSolver = Configuration.smtDoubleCheckUnknowns ? new PushPopSolver() : null;
 	
 	private void clearCache() throws EvaluationException {
 		if (Configuration.timeSmt) {
@@ -106,16 +104,6 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 		return new Pair<>(onVars, offVars);
 	}
 	
-	@Override
-	public synchronized SmtResult check(Collection<SmtLibTerm> assertions, boolean getModel, int timeout)
-			throws EvaluationException {
-		SmtResult res = super.check(assertions, getModel, timeout);
-		if (res.status.equals(SmtStatus.UNKNOWN) && doubleCheckingSolver != null) {
-			res = doubleCheckingSolver.check(assertions, getModel, timeout);
-		}
-		return res;
-	}
-
 	private SmtLibTerm makeImp(SolverVariable x, SmtLibTerm assertion) {
 		Term[] args = { x, assertion };
 		return (SmtLibTerm) Constructors.make(BuiltInConstructorSymbol.SMT_IMP, args);
@@ -136,14 +124,6 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 		}
 	}
 
-	@Override
-	public synchronized void start(Program<?, ?> prog) throws EvaluationException {
-		if (doubleCheckingSolver != null) {
-			doubleCheckingSolver.start(prog);
-		}
-		super.start(prog);
-	}
-	
 	@Override
 	protected void start() throws EvaluationException {
 		shim.setLogic(Configuration.smtLogic);

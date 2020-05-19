@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.eval;
  * #L%
  */
 
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -48,11 +47,14 @@ import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb.SortedIndexedFactDbBu
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
 import edu.harvard.seas.pl.formulog.smt.BestMatchSmtManager;
-import edu.harvard.seas.pl.formulog.smt.NaiveSmtManager;
+import edu.harvard.seas.pl.formulog.smt.CallAndResetSolver;
+import edu.harvard.seas.pl.formulog.smt.CheckSatAssumingSolver;
+import edu.harvard.seas.pl.formulog.smt.DoubleCheckingSolver;
 import edu.harvard.seas.pl.formulog.smt.NotThreadSafeQueueSmtManager;
 import edu.harvard.seas.pl.formulog.smt.PerThreadSmtManager;
 import edu.harvard.seas.pl.formulog.smt.PushPopSolver;
 import edu.harvard.seas.pl.formulog.smt.QueueSmtManager;
+import edu.harvard.seas.pl.formulog.smt.SingleShotSolver;
 import edu.harvard.seas.pl.formulog.smt.SmtLibSolver;
 import edu.harvard.seas.pl.formulog.smt.SmtStrategy;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
@@ -239,30 +241,39 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 	}
 
+	private static SmtLibSolver maybeDoubleCheckSolver(SmtLibSolver inner) {
+		if (Configuration.smtDoubleCheckUnknowns) {
+			return new DoubleCheckingSolver(inner);
+		}
+		return inner;
+	}
+
 	private static SmtLibSolver getSmtManager() {
 		SmtStrategy strategy = Configuration.smtStrategy;
 		switch (strategy.getTag()) {
 		case QUEUE: {
 			int size = (int) strategy.getMetadata();
-			return new QueueSmtManager(size);
+			return new QueueSmtManager(size, () -> maybeDoubleCheckSolver(new CheckSatAssumingSolver()));
 		}
 		case BEST_MATCH: {
 			int size = (int) strategy.getMetadata();
-			return new BestMatchSmtManager(size);
+			return maybeDoubleCheckSolver(new BestMatchSmtManager(size));
 		}
 		case PER_THREAD_QUEUE: {
 			int size = (int) strategy.getMetadata();
-			return new PerThreadSmtManager(() -> new NotThreadSafeQueueSmtManager(size));
+			return new PerThreadSmtManager(() -> new NotThreadSafeQueueSmtManager(size,
+					() -> maybeDoubleCheckSolver(new CheckSatAssumingSolver())));
 		}
 		case PER_THREAD_BEST_MATCH: {
 			int size = (int) strategy.getMetadata();
-			return new PerThreadSmtManager(() -> new BestMatchSmtManager(size));
+			return new PerThreadSmtManager(() -> maybeDoubleCheckSolver(new BestMatchSmtManager(size)));
 		}
 		case PER_THREAD_PUSH_POP: {
 			return new PerThreadSmtManager(() -> new PushPopSolver());
 		}
 		case PER_THREAD_NAIVE: {
-			return new PerThreadSmtManager(() -> new NaiveSmtManager());
+			return new PerThreadSmtManager(() -> maybeDoubleCheckSolver(
+					Configuration.smtUseSingleShotSolver ? new SingleShotSolver() : new CallAndResetSolver()));
 		}
 		default:
 			throw new UnsupportedOperationException("Cannot support SMT strategy: " + strategy);

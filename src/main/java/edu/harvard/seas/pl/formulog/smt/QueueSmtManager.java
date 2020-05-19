@@ -23,6 +23,7 @@ package edu.harvard.seas.pl.formulog.smt;
 
 import java.util.Collection;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.function.Supplier;
 
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
@@ -31,12 +32,14 @@ import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 public class QueueSmtManager implements SmtLibSolver {
 
 	private final ArrayBlockingQueue<SmtLibSolver> solvers;
+	private final Supplier<SmtLibSolver> maker;
 
-	public QueueSmtManager(int size) {
+	public QueueSmtManager(int size, Supplier<SmtLibSolver> maker) {
 		if (size <= 0) {
 			throw new IllegalArgumentException("Cannot have non-positive number of solvers.");
 		}
 		solvers = new ArrayBlockingQueue<>(size);
+		this.maker = maker;
 	}
 
 	@Override
@@ -56,7 +59,7 @@ public class QueueSmtManager implements SmtLibSolver {
 	@Override
 	public void start(Program<?, ?> prog) throws EvaluationException {
 		while (solvers.remainingCapacity() > 0) {
-			CheckSatAssumingSolver solver = new CheckSatAssumingSolver();
+			SmtLibSolver solver = maker.get();
 			solver.start(prog);
 			solvers.add(solver);
 		}

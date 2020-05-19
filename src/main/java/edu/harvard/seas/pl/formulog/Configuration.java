@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog;
  * #L%
  */
 
-
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -105,8 +104,9 @@ public final class Configuration {
 	public static final boolean smtCacheHardResets = propIsSet("smtCacheHardResets", false);
 	public static final boolean smtUseNegativeLiterals = propIsSet("smtUseNegativeLiterals", true);
 	public static final boolean smtDoubleCheckUnknowns = propIsSet("smtDoubleCheckUnknowns", true);
-	public static final boolean smtUseSingleShotSolver = propIsSet("smtUseSingleShotSolver", false);
-	
+	public static final boolean smtUseSingleShotSolver = propIsSet("smtUseSingleShotSolver", false)
+			|| smtSolver.equals("boolector");
+
 	private static final Dataset pushPopStackSize = new Dataset();
 	private static final Dataset pushPopStackReuse = new Dataset();
 	private static final Dataset pushPopStackPushes = new Dataset();
@@ -254,7 +254,6 @@ public final class Configuration {
 		out.println("[SMT NUM CALLS - SAT] " + smtNumCallsSat);
 		out.println("[SMT NUM CALLS - UNSAT] " + smtNumCallsUnsat);
 		out.println("[SMT NUM CALLS - UNKNOWN] " + smtNumCallsUnknown);
-		
 
 		switch (smtStrategy.getTag()) {
 		case BEST_MATCH:
