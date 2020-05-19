@@ -104,7 +104,7 @@ public final class Configuration {
 	public static final String smtLogic = getStringProp("smtLogic", "ALL");
 	public static final boolean smtDeclareAdts = propIsSet("smtDeclareAdts", true);
 	public static final boolean smtCacheHardResets = propIsSet("smtCacheHardResets", false);
-	public static final boolean smtUseNegativeLiterals = propIsSet("smtUseNegativeLiterals", true);
+	public static final boolean smtUseNegativeLiterals = propIsSet("smtUseNegativeLiterals", false);
 	public static final boolean smtDoubleCheckUnknowns = propIsSet("smtDoubleCheckUnknowns", true);
 	public static final boolean smtUseSingleShotSolver = propIsSet("smtUseSingleShotSolver", false)
 			|| smtSolver.equals("boolector");
