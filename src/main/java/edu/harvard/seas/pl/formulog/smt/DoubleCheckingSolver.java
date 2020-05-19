@@ -22,6 +22,7 @@ package edu.harvard.seas.pl.formulog.smt;
 
 import java.util.Collection;
 
+import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
@@ -45,7 +46,11 @@ public class DoubleCheckingSolver implements SmtLibSolver {
 	public SmtResult check(Collection<SmtLibTerm> formula, boolean getModel, int timeout) throws EvaluationException {
 		SmtResult res = inner.check(formula, getModel, timeout);
 		if (res.status.equals(SmtStatus.UNKNOWN)) {
-			res = checker.check(formula, getModel, timeout);
+			SmtResult res2 = checker.check(formula, getModel, timeout);
+			if (Configuration.timeSmt) {
+				Configuration.recordSmtDoubleCheck(!res2.status.equals(SmtStatus.UNKNOWN));
+			}
+			res = res2;
 		}
 		return res;
 	}

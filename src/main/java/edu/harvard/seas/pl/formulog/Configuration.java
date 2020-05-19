@@ -73,6 +73,8 @@ public final class Configuration {
 	private static final AtomicInteger smtNumCallsSat = new AtomicInteger();
 	private static final AtomicInteger smtNumCallsUnsat = new AtomicInteger();
 	private static final AtomicInteger smtNumCallsUnknown = new AtomicInteger();
+	private static final AtomicInteger smtNumCallsDoubleCheck = new AtomicInteger();
+	private static final AtomicInteger smtNumCallsFalseUnknown = new AtomicInteger();
 
 	public static final boolean printRelSizes = propIsSet("printRelSizes");
 	public static final boolean printFinalRules = propIsSet("printFinalRules");
@@ -254,6 +256,8 @@ public final class Configuration {
 		out.println("[SMT NUM CALLS - SAT] " + smtNumCallsSat);
 		out.println("[SMT NUM CALLS - UNSAT] " + smtNumCallsUnsat);
 		out.println("[SMT NUM CALLS - UNKNOWN] " + smtNumCallsUnknown);
+		out.println("[SMT NUM CALLS - DOUBLE CHECK] " + smtNumCallsDoubleCheck);
+		out.println("[SMT NUM CALLS - FALSE UNKNOWN] " + smtNumCallsFalseUnknown);
 
 		switch (smtStrategy.getTag()) {
 		case BEST_MATCH:
@@ -295,6 +299,13 @@ public final class Configuration {
 		csaCacheHitRate.addDataPoint(numAsserts == 0 ? 1 : (double) hits / numAsserts);
 		csaCacheUseRate.addDataPoint(oldSize == 0 ? 1 : (double) hits / oldSize);
 		csaCacheSize.addDataPoint(oldSize);
+	}
+	
+	public static void recordSmtDoubleCheck(boolean falseUnknown) {
+		smtNumCallsDoubleCheck.incrementAndGet();
+		if (falseUnknown) {
+			smtNumCallsFalseUnknown.incrementAndGet();
+		}
 	}
 
 	public static void recordCsaCacheClear(int solverId) {
