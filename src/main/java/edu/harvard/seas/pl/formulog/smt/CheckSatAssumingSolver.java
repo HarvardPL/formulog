@@ -103,6 +103,17 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 		}
 		return new Pair<>(onVars, offVars);
 	}
+	
+	@Override
+	public synchronized SmtResult check(Collection<SmtLibTerm> assertions, boolean getModel, int timeout)
+			throws EvaluationException {
+		SmtResult res = super.check(assertions, getModel, timeout);
+		if (res.status.equals(SmtStatus.UNKNOWN)) {
+			clearCache();
+			res = super.check(assertions, getModel, timeout);
+		}
+		return res;
+	}
 
 	private SmtLibTerm makeImp(SolverVariable x, SmtLibTerm assertion) {
 		Term[] args = { x, assertion };
