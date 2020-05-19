@@ -110,6 +110,11 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 	}
 	
 	private Pair<List<SolverVariable>, List<SolverVariable>> makeAssertionsDoubleChecking(Collection<SmtLibTerm> formula) throws EvaluationException {
+		shim.reset();
+		indicatorVars.clear();
+		nextVarId = 0;
+		shim.setLogic(Configuration.smtLogic);
+		shim.makeDeclarations();
 		for (SmtLibTerm conjunct : formula) {
 			shim.makeAssertion(conjunct);
 		}
@@ -121,7 +126,6 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 			throws EvaluationException {
 		SmtResult res = super.check(assertions, getModel, timeout);
 		if (res.status.equals(SmtStatus.UNKNOWN)) {
-			clearCache();
 			doubleChecking = true;
 			res = super.check(assertions, getModel, timeout);
 		}
@@ -143,8 +147,12 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 	
 	@Override
 	protected void cleanup() throws EvaluationException {
-		if (doubleChecking || indicatorVars.size() > Configuration.smtCacheSize) {
+		if (doubleChecking) {
 			doubleChecking = false;
+			shim.reset();
+			start();
+		}
+		if (indicatorVars.size() > Configuration.smtCacheSize) {
 			clearCache();
 		}
 	}
