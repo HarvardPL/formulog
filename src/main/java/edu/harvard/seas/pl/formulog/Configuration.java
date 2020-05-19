@@ -105,7 +105,8 @@ public final class Configuration {
 	public static final boolean smtCacheHardResets = propIsSet("smtCacheHardResets", false);
 	public static final boolean smtUseNegativeLiterals = propIsSet("smtUseNegativeLiterals", true);
 	public static final boolean smtDoubleCheckUnknowns = propIsSet("smtDoubleCheckUnknowns", true);
-
+	public static final boolean smtUseSingleShotSolver = propIsSet("smtUseSingleShotSolver", false);
+	
 	private static final Dataset pushPopStackSize = new Dataset();
 	private static final Dataset pushPopStackReuse = new Dataset();
 	private static final Dataset pushPopStackPushes = new Dataset();

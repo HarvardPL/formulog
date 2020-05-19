@@ -29,8 +29,8 @@ import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 
 public class NaiveSmtManager implements SmtManager {
 
-	private final SmtLibSolver solver = Configuration.smtSolver.equals("boolector") ? new SingleShotSolver()
-			: new CallAndResetSolver();
+	private final SmtLibSolver solver = Configuration.smtUseSingleShotSolver
+			|| Configuration.smtSolver.equals("boolector") ? new SingleShotSolver() : new CallAndResetSolver();
 
 	@Override
 	public SmtResult check(Collection<SmtLibTerm> assertions, boolean getModel, int timeout)
