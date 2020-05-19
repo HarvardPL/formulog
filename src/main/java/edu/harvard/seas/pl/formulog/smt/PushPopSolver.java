@@ -100,4 +100,9 @@ public class PushPopSolver extends AbstractSmtLibSolver {
 		shim.makeDeclarations();
 	}
 
+	@Override
+	protected boolean isIncremental() {
+		return true;
+	}
+
 }

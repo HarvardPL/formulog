@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.util.Util;
 
 public class BoolectorProcessFactory implements ExternalSolverProcessFactory {
@@ -47,11 +46,11 @@ public class BoolectorProcessFactory implements ExternalSolverProcessFactory {
 	}
 
 	@Override
-	public Process newProcess() throws IOException {
+	public Process newProcess(boolean incremental) throws IOException {
 		List<String> command = new ArrayList<>();
 		command.add("boolector");
 		command.add("--smt2");
-		if (!Configuration.smtSingleShot) {
+		if (incremental) {
 			command.add("--incremental");
 		}
 		return new ProcessBuilder(command).redirectErrorStream(true).start();

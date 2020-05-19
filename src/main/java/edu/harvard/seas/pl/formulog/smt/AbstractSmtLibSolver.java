@@ -96,11 +96,13 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 		log = w;
 	}
 
+	protected abstract boolean isIncremental();
+	
 	@Override
 	public synchronized void start(Program<?, ?> prog) throws EvaluationException {
 		assert solver == null;
 		try {
-			solver = solverFactory.newProcess();
+			solver = solverFactory.newProcess(isIncremental());
 		} catch (IOException e) {
 			throw new AssertionError("Could not create external solver process:\n" + e);
 		}

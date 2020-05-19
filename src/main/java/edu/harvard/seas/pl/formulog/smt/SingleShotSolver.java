@@ -61,4 +61,9 @@ public class SingleShotSolver extends AbstractSmtLibSolver {
 		super.start(prog);
 	}
 
+	@Override
+	protected boolean isIncremental() {
+		return false;
+	}
+
 }

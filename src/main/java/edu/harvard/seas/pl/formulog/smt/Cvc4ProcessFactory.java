@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.util.Util;
 
 public class Cvc4ProcessFactory implements ExternalSolverProcessFactory {
@@ -48,12 +47,12 @@ public class Cvc4ProcessFactory implements ExternalSolverProcessFactory {
 	}
 
 	@Override
-	public Process newProcess() throws IOException {
+	public Process newProcess(boolean incremental) throws IOException {
 		List<String> command = new ArrayList<>();
 		command.add("cvc4");
 		command.add("--lang");
 		command.add("smt");
-		if (!Configuration.smtSingleShot) {
+		if (incremental) {
 			command.add("--incremental");
 		}
 		return new ProcessBuilder(command).redirectErrorStream(true).start();

@@ -25,6 +25,6 @@ import java.io.IOException;
 
 public interface ExternalSolverProcessFactory {
 
-	Process newProcess() throws IOException;
+	Process newProcess(boolean incremental) throws IOException;
 	
 }

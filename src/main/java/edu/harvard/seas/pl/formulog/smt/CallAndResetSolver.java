@@ -54,4 +54,9 @@ public class CallAndResetSolver extends AbstractSmtLibSolver {
 		// do nothing
 	}
 
+	@Override
+	protected boolean isIncremental() {
+		return false;
+	}
+
 }

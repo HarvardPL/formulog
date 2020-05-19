@@ -32,6 +32,7 @@ import java.util.Set;
 import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
+import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
@@ -49,9 +50,8 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 
 	private final Map<SmtLibTerm, SolverVariable> indicatorVars = new HashMap<>();
 	private int nextVarId;
+	private final SmtManager doubleCheckingSolver = Configuration.smtDoubleCheckUnknowns ? new NaiveSmtManager() : null;
 	
-	private boolean doubleChecking;
-
 	private void clearCache() throws EvaluationException {
 		if (Configuration.timeSmt) {
 			Configuration.recordCsaCacheClear(solverId);
@@ -74,9 +74,6 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 	@Override
 	protected Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(Collection<SmtLibTerm> formula)
 			throws EvaluationException {
-		if (doubleChecking) {
-			return makeAssertionsDoubleChecking(formula);
-		}
 		int oldSize = indicatorVars.size();
 		int hits = 0;
 		int misses = 0;
@@ -109,25 +106,12 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 		return new Pair<>(onVars, offVars);
 	}
 	
-	private Pair<List<SolverVariable>, List<SolverVariable>> makeAssertionsDoubleChecking(Collection<SmtLibTerm> formula) throws EvaluationException {
-		shim.reset();
-		indicatorVars.clear();
-		nextVarId = 0;
-		shim.setLogic(Configuration.smtLogic);
-		shim.makeDeclarations();
-		for (SmtLibTerm conjunct : formula) {
-			shim.makeAssertion(conjunct);
-		}
-		return emptyListPair;
-	}
-	
 	@Override
 	public synchronized SmtResult check(Collection<SmtLibTerm> assertions, boolean getModel, int timeout)
 			throws EvaluationException {
 		SmtResult res = super.check(assertions, getModel, timeout);
-		if (res.status.equals(SmtStatus.UNKNOWN)) {
-			doubleChecking = true;
-			res = super.check(assertions, getModel, timeout);
+		if (res.status.equals(SmtStatus.UNKNOWN) && doubleCheckingSolver != null) {
+			res = doubleCheckingSolver.check(assertions, getModel, timeout);
 		}
 		return res;
 	}
@@ -147,16 +131,19 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 	
 	@Override
 	protected void cleanup() throws EvaluationException {
-		if (doubleChecking) {
-			doubleChecking = false;
-			shim.reset();
-			start();
-		}
 		if (indicatorVars.size() > Configuration.smtCacheSize) {
 			clearCache();
 		}
 	}
 
+	@Override
+	public synchronized void start(Program<?, ?> prog) throws EvaluationException {
+		if (doubleCheckingSolver != null) {
+			doubleCheckingSolver.initialize(prog);
+		}
+		super.start(prog);
+	}
+	
 	@Override
 	protected void start() throws EvaluationException {
 		shim.setLogic(Configuration.smtLogic);
@@ -164,6 +151,11 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 		if (!Configuration.smtCacheHardResets) {
 			shim.push();
 		}
+	}
+
+	@Override
+	protected boolean isIncremental() {
+		return true;
 	}
 
 }

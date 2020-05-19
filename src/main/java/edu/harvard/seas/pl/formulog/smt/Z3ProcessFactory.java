@@ -44,7 +44,7 @@ public class Z3ProcessFactory implements ExternalSolverProcessFactory {
 	}
 
 	@Override
-	public Process newProcess() throws IOException {
+	public Process newProcess(boolean incremental) throws IOException {
 		return new ProcessBuilder("z3", "-in", "-smt2").redirectErrorStream(true).start();
 	}
 
