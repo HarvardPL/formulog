@@ -51,9 +51,9 @@ import edu.harvard.seas.pl.formulog.smt.BestMatchSmtManager;
 import edu.harvard.seas.pl.formulog.smt.NaiveSmtManager;
 import edu.harvard.seas.pl.formulog.smt.NotThreadSafeQueueSmtManager;
 import edu.harvard.seas.pl.formulog.smt.PerThreadSmtManager;
-import edu.harvard.seas.pl.formulog.smt.PushPopSmtManager;
+import edu.harvard.seas.pl.formulog.smt.PushPopSolver;
 import edu.harvard.seas.pl.formulog.smt.QueueSmtManager;
-import edu.harvard.seas.pl.formulog.smt.SmtManager;
+import edu.harvard.seas.pl.formulog.smt.SmtLibSolver;
 import edu.harvard.seas.pl.formulog.smt.SmtStrategy;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
@@ -138,9 +138,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 		SortedIndexedFactDb db = dbb.build();
 		predFuncs.setDb(db);
 
-		SmtManager smt = getSmtManager();
+		SmtLibSolver smt = getSmtManager();
 		try {
-			smt.initialize(magicProg);
+			smt.start(magicProg);
 		} catch (EvaluationException e) {
 			throw new InvalidProgramException("Problem initializing SMT shims: " + e.getMessage());
 		}
@@ -239,7 +239,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 	}
 
-	private static SmtManager getSmtManager() {
+	private static SmtLibSolver getSmtManager() {
 		SmtStrategy strategy = Configuration.smtStrategy;
 		switch (strategy.getTag()) {
 		case QUEUE: {
@@ -259,7 +259,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 			return new PerThreadSmtManager(() -> new BestMatchSmtManager(size));
 		}
 		case PER_THREAD_PUSH_POP: {
-			return new PerThreadSmtManager(() -> new PushPopSmtManager());
+			return new PerThreadSmtManager(() -> new PushPopSolver());
 		}
 		case PER_THREAD_NAIVE: {
 			return new PerThreadSmtManager(() -> new NaiveSmtManager());

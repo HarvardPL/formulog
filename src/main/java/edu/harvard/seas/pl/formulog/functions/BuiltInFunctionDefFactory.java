@@ -50,7 +50,7 @@ import edu.harvard.seas.pl.formulog.ast.StringTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.smt.SmtManager;
+import edu.harvard.seas.pl.formulog.smt.SmtLibSolver;
 import edu.harvard.seas.pl.formulog.smt.SmtResult;
 import edu.harvard.seas.pl.formulog.smt.SmtStatus;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
@@ -62,9 +62,9 @@ import edu.harvard.seas.pl.formulog.util.Triple;
 
 public final class BuiltInFunctionDefFactory {
 
-	private final SmtManager smt;
+	private final SmtLibSolver smt;
 
-	public BuiltInFunctionDefFactory(SmtManager smt) {
+	public BuiltInFunctionDefFactory(SmtLibSolver smt) {
 		this.smt = smt;
 	}
 

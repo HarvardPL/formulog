@@ -27,7 +27,7 @@ import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 
-public class NotThreadSafeQueueSmtManager implements SmtManager {
+public class NotThreadSafeQueueSmtManager implements SmtLibSolver {
 
 	private final SmtLibSolver[] solvers;
 	private int pos;
@@ -49,11 +49,18 @@ public class NotThreadSafeQueueSmtManager implements SmtManager {
 	}
 
 	@Override
-	public void initialize(Program<?, ?> prog) throws EvaluationException {
+	public void start(Program<?, ?> prog) throws EvaluationException {
 		for (int i = 0; i < solvers.length; ++i) {
 			CheckSatAssumingSolver solver = new CheckSatAssumingSolver();
 			solver.start(prog);
 			solvers[i] = solver;
+		}
+	}
+
+	@Override
+	public void destroy() {
+		for (SmtLibSolver solver : solvers) {
+			solver.destroy();
 		}
 	}
 }

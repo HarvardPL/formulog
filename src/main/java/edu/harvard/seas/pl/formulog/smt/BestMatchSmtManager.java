@@ -34,7 +34,7 @@ import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
-public class BestMatchSmtManager implements SmtManager {
+public class BestMatchSmtManager implements SmtLibSolver {
 
 	private final CheckSatAssumingSolver[] solvers;
 	private final AtomicIntegerArray statuses;
@@ -93,11 +93,18 @@ public class BestMatchSmtManager implements SmtManager {
 	}
 
 	@Override
-	public void initialize(Program<?, ?> prog) throws EvaluationException {
+	public void start(Program<?, ?> prog) throws EvaluationException {
 		for (int i = 0; i < solvers.length; ++i) {
 			CheckSatAssumingSolver solver = new CheckSatAssumingSolver();
 			solver.start(prog);
 			solvers[i] = solver;
+		}
+	}
+
+	@Override
+	public void destroy() {
+		for (SmtLibSolver solver : solvers) {
+			solver.destroy();
 		}
 	}
 

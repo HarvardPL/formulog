@@ -27,7 +27,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import edu.harvard.seas.pl.formulog.smt.SmtManager;
+import edu.harvard.seas.pl.formulog.smt.SmtLibSolver;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 
@@ -71,7 +71,7 @@ public class FunctionDefManager {
 		return Collections.unmodifiableSet(new HashSet<>(memo.keySet()));
 	}
 
-	public void loadBuiltInFunctions(SmtManager smt) {
+	public void loadBuiltInFunctions(SmtLibSolver smt) {
 		BuiltInFunctionDefFactory builtIns = new BuiltInFunctionDefFactory(smt);
 		for (BuiltInFunctionSymbol sym : BuiltInFunctionSymbol.values()) {
 			memo.put(sym, builtIns.get(sym));

@@ -50,7 +50,7 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 
 	private final Map<SmtLibTerm, SolverVariable> indicatorVars = new HashMap<>();
 	private int nextVarId;
-	private final SmtManager doubleCheckingSolver = Configuration.smtDoubleCheckUnknowns ? new NaiveSmtManager() : null;
+	private final SmtLibSolver doubleCheckingSolver = Configuration.smtDoubleCheckUnknowns ? new NaiveSmtManager() : null;
 	
 	private void clearCache() throws EvaluationException {
 		if (Configuration.timeSmt) {
@@ -139,7 +139,7 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 	@Override
 	public synchronized void start(Program<?, ?> prog) throws EvaluationException {
 		if (doubleCheckingSolver != null) {
-			doubleCheckingSolver.initialize(prog);
+			doubleCheckingSolver.start(prog);
 		}
 		super.start(prog);
 	}

@@ -27,7 +27,7 @@ import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 
-public class NaiveSmtManager implements SmtManager {
+public class NaiveSmtManager implements SmtLibSolver {
 
 	private final SmtLibSolver solver = Configuration.smtUseSingleShotSolver
 			|| Configuration.smtSolver.equals("boolector") ? new SingleShotSolver() : new CallAndResetSolver();
@@ -39,8 +39,13 @@ public class NaiveSmtManager implements SmtManager {
 	}
 
 	@Override
-	public void initialize(Program<?, ?> prog) throws EvaluationException {
+	public void start(Program<?, ?> prog) throws EvaluationException {
 		solver.start(prog);
+	}
+
+	@Override
+	public void destroy() {
+		solver.destroy();
 	}
 
 }

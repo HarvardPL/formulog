@@ -29,19 +29,19 @@ import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.eval.UncheckedEvaluationException;
 
-public class PerThreadSmtManager implements SmtManager {
+public class PerThreadSmtManager implements SmtLibSolver {
 
-	private final ThreadLocal<SmtManager> subManager;
+	private final ThreadLocal<SmtLibSolver> subManager;
 	private volatile Program<?, ?> prog;
 
-	public PerThreadSmtManager(Supplier<SmtManager> managerMaker) {
-		subManager = new ThreadLocal<SmtManager>() {
+	public PerThreadSmtManager(Supplier<SmtLibSolver> managerMaker) {
+		subManager = new ThreadLocal<SmtLibSolver>() {
 
 			@Override
-			protected SmtManager initialValue() {
-				SmtManager m = managerMaker.get();
+			protected SmtLibSolver initialValue() {
+				SmtLibSolver m = managerMaker.get();
 				try {
-					m.initialize(prog);
+					m.start(prog);
 				} catch (EvaluationException e) {
 					throw new UncheckedEvaluationException(e.getMessage());
 				}
@@ -62,8 +62,13 @@ public class PerThreadSmtManager implements SmtManager {
 	}
 
 	@Override
-	public void initialize(Program<?, ?> prog) throws EvaluationException {
+	public void start(Program<?, ?> prog) throws EvaluationException {
 		this.prog = prog;
+	}
+
+	@Override
+	public void destroy() {
+		subManager.get().destroy();
 	}
 
 }
