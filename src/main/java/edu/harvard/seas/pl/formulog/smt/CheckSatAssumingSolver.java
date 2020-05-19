@@ -49,6 +49,8 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 
 	private final Map<SmtLibTerm, SolverVariable> indicatorVars = new HashMap<>();
 	private int nextVarId;
+	
+	private boolean doubleChecking;
 
 	private void clearCache() throws EvaluationException {
 		if (Configuration.timeSmt) {
@@ -72,6 +74,9 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 	@Override
 	protected Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(Collection<SmtLibTerm> formula)
 			throws EvaluationException {
+		if (doubleChecking) {
+			return makeAssertionsDoubleChecking(formula);
+		}
 		int oldSize = indicatorVars.size();
 		int hits = 0;
 		int misses = 0;
@@ -104,12 +109,20 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 		return new Pair<>(onVars, offVars);
 	}
 	
+	private Pair<List<SolverVariable>, List<SolverVariable>> makeAssertionsDoubleChecking(Collection<SmtLibTerm> formula) throws EvaluationException {
+		for (SmtLibTerm conjunct : formula) {
+			shim.makeAssertion(conjunct);
+		}
+		return emptyListPair;
+	}
+	
 	@Override
 	public synchronized SmtResult check(Collection<SmtLibTerm> assertions, boolean getModel, int timeout)
 			throws EvaluationException {
 		SmtResult res = super.check(assertions, getModel, timeout);
 		if (res.status.equals(SmtStatus.UNKNOWN)) {
 			clearCache();
+			doubleChecking = true;
 			res = super.check(assertions, getModel, timeout);
 		}
 		return res;
@@ -130,7 +143,8 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 	
 	@Override
 	protected void cleanup() throws EvaluationException {
-		if (indicatorVars.size() > Configuration.smtCacheSize) {
+		if (doubleChecking || indicatorVars.size() > Configuration.smtCacheSize) {
+			doubleChecking = false;
 			clearCache();
 		}
 	}

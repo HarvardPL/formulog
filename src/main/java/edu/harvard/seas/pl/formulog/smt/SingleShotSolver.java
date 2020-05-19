@@ -21,7 +21,6 @@ package edu.harvard.seas.pl.formulog.smt;
  */
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import edu.harvard.seas.pl.formulog.Configuration;
@@ -34,9 +33,6 @@ import edu.harvard.seas.pl.formulog.util.Pair;
 public class SingleShotSolver extends AbstractSmtLibSolver {
 
 	private Program<?, ?> prog;
-	
-	private final static Pair<List<SolverVariable>, List<SolverVariable>> emptyListPair = new Pair<>(
-			Collections.emptyList(), Collections.emptyList());
 
 	@Override
 	protected Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(Collection<SmtLibTerm> assertions)

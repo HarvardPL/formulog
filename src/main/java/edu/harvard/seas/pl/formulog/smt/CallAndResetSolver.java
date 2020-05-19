@@ -22,7 +22,6 @@ package edu.harvard.seas.pl.formulog.smt;
 
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import edu.harvard.seas.pl.formulog.Configuration;
@@ -32,9 +31,6 @@ import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
 public class CallAndResetSolver extends AbstractSmtLibSolver {
-
-	private final static Pair<List<SolverVariable>, List<SolverVariable>> emptyListPair = new Pair<>(
-			Collections.emptyList(), Collections.emptyList());
 
 	@Override
 	protected Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(Collection<SmtLibTerm> assertions)

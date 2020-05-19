@@ -23,7 +23,6 @@ package edu.harvard.seas.pl.formulog.smt;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
@@ -37,9 +36,6 @@ import edu.harvard.seas.pl.formulog.util.Pair;
 public class PushPopSolver extends AbstractSmtLibSolver {
 
 	private final Deque<SmtLibTerm> cache = new ArrayDeque<>();
-
-	private final static Pair<List<SolverVariable>, List<SolverVariable>> emptyListPair = new Pair<>(
-			Collections.emptyList(), Collections.emptyList());
 
 	@Override
 	protected Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(Collection<SmtLibTerm> assertions)

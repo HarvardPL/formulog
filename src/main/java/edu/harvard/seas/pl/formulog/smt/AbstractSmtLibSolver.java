@@ -46,6 +46,9 @@ import edu.harvard.seas.pl.formulog.util.Pair;
 
 public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 
+	protected final static Pair<List<SolverVariable>, List<SolverVariable>> emptyListPair = new Pair<>(
+			Collections.emptyList(), Collections.emptyList());
+	
 	private static final ExternalSolverProcessFactory solverFactory;
 	static {
 		switch (Configuration.smtSolver) {
