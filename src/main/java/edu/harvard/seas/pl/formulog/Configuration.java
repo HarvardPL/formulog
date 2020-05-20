@@ -108,6 +108,7 @@ public final class Configuration {
 	public static final boolean smtDoubleCheckUnknowns = propIsSet("smtDoubleCheckUnknowns", true);
 	public static final boolean smtUseSingleShotSolver = propIsSet("smtUseSingleShotSolver", false)
 			|| smtSolver.equals("boolector");
+	public static final boolean smtCheckSuccess = propIsSet("smtCheckSuccess", true);
 
 	private static final Dataset pushPopStackSize = new Dataset();
 	private static final Dataset pushPopStackReuse = new Dataset();

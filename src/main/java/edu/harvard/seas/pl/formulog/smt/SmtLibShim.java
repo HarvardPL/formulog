@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.smt;
  * #L%
  */
 
-
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -107,7 +106,9 @@ public class SmtLibShim {
 	public void initialize(Program<?, ?> prog, boolean declareAdts) {
 		symbolManager = prog.getSymbolManager();
 		new DeclarationGatherer(declareAdts).go(prog);
-		println("(set-option :print-success true)");
+		if (Configuration.smtCheckSuccess) {
+			println("(set-option :print-success true)");
+		}
 		flush();
 		try {
 			checkSuccess();
@@ -117,7 +118,7 @@ public class SmtLibShim {
 	}
 
 	private void checkSuccess() throws EvaluationException {
-		if (in != null) {
+		if (in != null && Configuration.smtCheckSuccess) {
 			try {
 				String r = in.readLine();
 				if (log != null) {
@@ -288,7 +289,7 @@ public class SmtLibShim {
 		print(s);
 		print("\n");
 	}
-	
+
 	public void printComment(String comment) {
 		println("; " + comment);
 	}
