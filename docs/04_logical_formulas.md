@@ -337,7 +337,7 @@ int_big_const : bv[64] -> int smt
 int_ge        : [int smt, int smt] -> bool smt
 int_gt        : [int smt, int smt] -> bool smt
 int_le        : [int smt, int smt] -> bool smt
-int_gt        : [int smt, int smt] -> bool smt
+int_lt        : [int smt, int smt] -> bool smt
 int_add       : [int smt, int smt] -> int smt
 int_mul       : [int smt, int smt] -> int smt
 int_mod       : [int smt, int smt] -> int smt
