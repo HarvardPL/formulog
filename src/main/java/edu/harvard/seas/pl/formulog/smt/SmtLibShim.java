@@ -28,6 +28,7 @@ import java.io.Reader;
 import java.io.Writer;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -196,8 +197,8 @@ public class SmtLibShim {
 		return checkSatAssuming(Collections.emptyList(), Collections.emptyList(), timeout);
 	}
 
-	public SmtStatus checkSatAssuming(List<SolverVariable> onVars, List<SolverVariable> offVars, int timeout)
-			throws EvaluationException {
+	public SmtStatus checkSatAssuming(Collection<SolverVariable> onVars, Collection<SolverVariable> offVars,
+			int timeout) throws EvaluationException {
 		if (timeout < 0) {
 			System.err.println("Warning: negative timeout provided to solver - ignored");
 			timeout = Integer.MAX_VALUE;

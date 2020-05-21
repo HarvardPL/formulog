@@ -21,7 +21,6 @@ package edu.harvard.seas.pl.formulog.smt;
  */
 
 import java.util.Collection;
-import java.util.List;
 
 import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
@@ -35,14 +34,14 @@ public class SingleShotSolver extends AbstractSmtLibSolver {
 	private Program<?, ?> prog;
 
 	@Override
-	protected Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(Collection<SmtLibTerm> assertions)
+	protected Pair<Collection<SolverVariable>, Collection<SolverVariable>> makeAssertions(Collection<SmtLibTerm> assertions)
 			throws EvaluationException {
 		shim.setLogic(Configuration.smtLogic);
 		shim.makeDeclarations();
 		for (SmtLibTerm assertion : assertions) {
 			shim.makeAssertion(assertion);
 		}
-		return emptyListPair;
+		return emptyCollectionPair;
 	}
 
 	@Override

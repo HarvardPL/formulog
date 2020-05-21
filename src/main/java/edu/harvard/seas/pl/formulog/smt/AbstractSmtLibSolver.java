@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.smt;
  * #L%
  */
 
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
@@ -31,7 +30,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -46,9 +44,9 @@ import edu.harvard.seas.pl.formulog.util.Pair;
 
 public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 
-	protected final static Pair<List<SolverVariable>, List<SolverVariable>> emptyListPair = new Pair<>(
+	protected final static Pair<Collection<SolverVariable>, Collection<SolverVariable>> emptyCollectionPair = new Pair<>(
 			Collections.emptyList(), Collections.emptyList());
-	
+
 	private static final ExternalSolverProcessFactory solverFactory;
 	static {
 		switch (Configuration.smtSolver) {
@@ -97,7 +95,7 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 	}
 
 	protected abstract boolean isIncremental();
-	
+
 	@Override
 	public synchronized void start(Program<?, ?> prog) throws EvaluationException {
 		assert solver == null;
@@ -126,8 +124,8 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 	}
 
 	protected abstract void start() throws EvaluationException;
-	
-	protected abstract Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(
+
+	protected abstract Pair<Collection<SolverVariable>, Collection<SolverVariable>> makeAssertions(
 			Collection<SmtLibTerm> assertions) throws EvaluationException;
 
 	protected abstract void cleanup() throws EvaluationException;
@@ -149,7 +147,7 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 		String taskName = "#" + solverId + ":" + taskId + " (thread #" + Thread.currentThread().getId() + ")";
 		shim.printComment("*** START CALL " + taskName + " ***");
 		boolean debug = log != null;
-		Pair<List<SolverVariable>, List<SolverVariable>> p = makeAssertions(assertions);
+		Pair<Collection<SolverVariable>, Collection<SolverVariable>> p = makeAssertions(assertions);
 		long start = 0;
 		if (debug || Configuration.timeSmt) {
 			start = System.currentTimeMillis();

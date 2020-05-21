@@ -25,7 +25,6 @@ import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.Iterator;
-import java.util.List;
 
 import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
@@ -38,7 +37,7 @@ public class PushPopSolver extends AbstractSmtLibSolver {
 	private final Deque<SmtLibTerm> cache = new ArrayDeque<>();
 
 	@Override
-	protected Pair<List<SolverVariable>, List<SolverVariable>> makeAssertions(Collection<SmtLibTerm> assertions)
+	protected Pair<Collection<SolverVariable>, Collection<SolverVariable>> makeAssertions(Collection<SmtLibTerm> assertions)
 			throws EvaluationException {
 		int baseSize = cache.size();
 		int i = findDiffPos(assertions);
@@ -52,7 +51,7 @@ public class PushPopSolver extends AbstractSmtLibSolver {
 		if (Configuration.timeSmt) {
 			Configuration.recordPushPopSolverStats(solverId, baseSize, pops, cache.size() - i);
 		}
-		return emptyListPair;
+		return emptyCollectionPair;
 	}
 
 	private int findDiffPos(Collection<SmtLibTerm> assertions) {
