@@ -72,8 +72,8 @@ public class PushPopSolver extends AbstractSmtLibSolver {
 
 	private void shrinkCache(int tgtSize) throws EvaluationException {
 		int size = cache.size();
+		shim.pop(size - tgtSize);
 		while (size > tgtSize) {
-			shim.pop();
 			cache.removeLast();
 			--size;
 		}

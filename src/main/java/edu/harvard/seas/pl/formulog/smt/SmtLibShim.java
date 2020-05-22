@@ -184,12 +184,18 @@ public class SmtLibShim {
 	}
 
 	public void pop() throws EvaluationException {
-		println("(pop 1)");
+		pop(1);
+	}
+
+	public void pop(int n) throws EvaluationException {
+		println("(pop " + n + ")");
 		flush();
 		checkSuccess();
-		for (SolverVariable x : symbolsByStackPos.removeLast()) {
-			String s = declaredSymbols.remove(x);
-			symbolLookup.remove(s);
+		for (int i = 0; i < n; ++i) {
+			for (SolverVariable x : symbolsByStackPos.removeLast()) {
+				String s = declaredSymbols.remove(x);
+				symbolLookup.remove(s);
+			}
 		}
 	}
 
