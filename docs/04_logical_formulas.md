@@ -279,10 +279,14 @@ bv_to_bv_signed[j,k]   : bv[j] smt -> bv[k] smt
 bv_to_bv_unsigned[j,k] : bv[j] smt -> bv[k] smt
 fp_to_sbv[i,j,k]       : fp[i,j] smt -> bv[k] smt
 fp_to_ubv[i,j,k]       : fp[i,j] smt -> bv[k] smt
-bv_lt[k]               : [bv[k] smt, bv[k] smt] -> bool smt
-bv_le[k]               : [bv[k] smt, bv[k] smt] -> bool smt
-bv_gt[k]               : [bv[k] smt, bv[k] smt] -> bool smt
-bv_ge[k]               : [bv[k] smt, bv[k] smt] -> bool smt
+bv_slt[k]               : [bv[k] smt, bv[k] smt] -> bool smt
+bv_sle[k]               : [bv[k] smt, bv[k] smt] -> bool smt
+bv_sgt[k]               : [bv[k] smt, bv[k] smt] -> bool smt
+bv_sge[k]               : [bv[k] smt, bv[k] smt] -> bool smt
+bv_ult[k]               : [bv[k] smt, bv[k] smt] -> bool smt
+bv_ule[k]               : [bv[k] smt, bv[k] smt] -> bool smt
+bv_ugt[k]               : [bv[k] smt, bv[k] smt] -> bool smt
+bv_uge[k]               : [bv[k] smt, bv[k] smt] -> bool smt
 ```
 
 Note that in some cases the bit vector width is a parameter to the constructor;
