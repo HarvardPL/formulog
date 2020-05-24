@@ -64,6 +64,7 @@ public final class Configuration {
 	public static final String debugSmtOutDir = getStringProp("debugSmtOutDir", "solver_logs");
 
 	public static final boolean timeSmt = propIsSet("timeSmt");
+	public static final boolean smtMemoize = propIsSet("smtMemoize", true);
 	private static final Map<Integer, Dataset> perProcessSmtEvalStats = new ConcurrentHashMap<>();
 	private static final Dataset smtEvalStats = new Dataset();
 	private static final AtomicLong smtDeclTime = new AtomicLong();
@@ -75,6 +76,16 @@ public final class Configuration {
 	private static final AtomicInteger smtNumCallsUnknown = new AtomicInteger();
 	private static final AtomicInteger smtNumCallsDoubleCheck = new AtomicInteger();
 	private static final AtomicInteger smtNumCallsFalseUnknown = new AtomicInteger();
+	
+	private static final AtomicLong smtTotalTime = new AtomicLong();
+	
+	public static void recordSmtDelta(long delta) {
+		smtTotalTime.addAndGet(delta);
+	}
+	
+	public static long getSmtTotalTime() {
+		return smtTotalTime.get();
+	}
 
 	public static final boolean printRelSizes = propIsSet("printRelSizes");
 	public static final boolean printFinalRules = propIsSet("printFinalRules");

@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog;
  * #L%
  */
 
-
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.PrintStream;
@@ -140,7 +139,8 @@ public final class Main {
 		try {
 			eval.run();
 			clock.stop();
-			System.out.println("Finished evaluating (" + clock.getTime() / 1000.0 + "s)");
+			System.out.println("Finished evaluating (total: " + clock.getTime() / 1000.0 + "s, SMT: "
+					+ Configuration.getSmtTotalTime() / 1000.0 + "s)");
 		} catch (EvaluationException e) {
 			handleException("Error while evaluating the program!", e, false);
 		}

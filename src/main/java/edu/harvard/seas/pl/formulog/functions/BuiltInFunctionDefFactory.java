@@ -32,7 +32,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.BiFunction;
 
-
 import org.pcollections.HashTreePMap;
 
 import edu.harvard.seas.pl.formulog.Configuration;
@@ -1379,7 +1378,8 @@ public final class BuiltInFunctionDefFactory {
 		return querySmt(assertions, getModel, Integer.MAX_VALUE);
 	}
 
-	private Pair<SmtStatus, Model> querySmt(SmtLibTerm assertions, boolean getModel, int timeout) throws EvaluationException {
+	private Pair<SmtStatus, Model> querySmt(SmtLibTerm assertions, boolean getModel, int timeout)
+			throws EvaluationException {
 		return querySmt(breakIntoConjuncts(assertions), getModel, timeout);
 	}
 
@@ -1428,6 +1428,7 @@ public final class BuiltInFunctionDefFactory {
 
 	private Pair<SmtStatus, Model> querySmt(List<SmtLibTerm> assertions, boolean getModel, int timeout)
 			throws EvaluationException {
+		long start = System.currentTimeMillis();
 		if (timeout < 0) {
 			timeout = -1;
 		}
@@ -1440,34 +1441,42 @@ public final class BuiltInFunctionDefFactory {
 			Model m = getModel ? Model.make(Collections.emptyMap()) : null;
 			return new Pair<>(SmtStatus.SATISFIABLE, m);
 		}
-		Triple<Set<SmtLibTerm>, Boolean, Integer> key = new Triple<>(set, getModel, timeout);
-		Future<SmtResult> fut = smtMemo.get(key);
-		if (fut == null) {
-			CompletableFuture<SmtResult> completableFut = new CompletableFuture<>();
-			fut = completableFut;
-			Future<SmtResult> fut2 = smtMemo.putIfAbsent(key, fut);
-			if (fut2 != null) {
-				fut = fut2;
-			} else {
-				completableFut.complete(smt.check(set, getModel, timeout));
+		SmtResult res;
+		if (Configuration.smtMemoize) {
+			Triple<Set<SmtLibTerm>, Boolean, Integer> key = new Triple<>(set, getModel, timeout);
+			Future<SmtResult> fut = smtMemo.get(key);
+			if (fut == null) {
+				CompletableFuture<SmtResult> completableFut = new CompletableFuture<>();
+				fut = completableFut;
+				Future<SmtResult> fut2 = smtMemo.putIfAbsent(key, fut);
+				if (fut2 != null) {
+					fut = fut2;
+				} else {
+					completableFut.complete(smt.check(set, getModel, timeout));
+				}
 			}
+			long waitStart = 0;
+			if (Configuration.timeSmt) {
+				waitStart = System.currentTimeMillis();
+			}
+			try {
+				res = fut.get();
+			} catch (InterruptedException | ExecutionException e) {
+				throw new EvaluationException(e);
+			} finally {
+				if (Configuration.timeSmt) {
+					long end = System.currentTimeMillis();
+					Configuration.recordSmtWaitTime(end - waitStart);
+				}
+				Configuration.recordSmtDelta(System.currentTimeMillis() - start);
+			}
+		} else {
+			res = smt.check(set, getModel, timeout);
 		}
-		try {
-			long start = 0;
-			if (Configuration.timeSmt) {
-				start = System.currentTimeMillis();
-			}
-			SmtResult res = fut.get();
-			if (Configuration.timeSmt) {
-				long end = System.currentTimeMillis();
-				Configuration.recordSmtWaitTime(end - start);
-			}
-			return new Pair<>(res.status, res.model);
-		} catch (InterruptedException | ExecutionException e) {
-			throw new EvaluationException(e);
-		}	
+		Configuration.recordSmtDelta(System.currentTimeMillis() - start);
+		return new Pair<>(res.status, res.model);
 	}
-	
+
 	private final FunctionDef isSat = new FunctionDef() {
 
 		@Override
