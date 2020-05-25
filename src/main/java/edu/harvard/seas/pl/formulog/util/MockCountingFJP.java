@@ -68,4 +68,9 @@ public class MockCountingFJP implements CountingFJP {
 		
 	}
 
+	@Override
+	public long getStealCount() {
+		return 0;
+	}
+
 }

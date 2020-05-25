@@ -473,6 +473,16 @@ public class SemiNaiveEvaluation implements Evaluation {
 
 			});
 		}
+		if (Configuration.debugParallelism) {
+			Runtime.getRuntime().addShutdownHook(new Thread() {
+
+				@Override
+				public void run() {
+					System.err.println("[STEAL COUNT] " + exec.getStealCount());
+				}
+
+			});
+		}
 		for (Stratum stratum : strata) {
 			evaluateStratum(stratum);
 		}

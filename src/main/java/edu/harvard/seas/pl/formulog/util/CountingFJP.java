@@ -41,4 +41,6 @@ public interface CountingFJP {
 	
 	EvaluationException getFailureCause();
 	
+	long getStealCount();
+	
 }

@@ -22,6 +22,8 @@ package edu.harvard.seas.pl.formulog.util;
 
 
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -57,7 +59,12 @@ public class CountingFJPImpl implements CountingFJP {
 
 	public void recursivelyAddTask(AbstractFJPTask w) {
 		taskCount.incrementAndGet();
-		w.fork();
+		if (ForkJoinTask.inForkJoinPool()) {
+			assert ((ForkJoinWorkerThread) Thread.currentThread()).getPool() == exec;
+			w.fork();
+		} else {
+			exec.execute(w);
+		}
 	}
 
 	public void reportTaskCompletion() {
@@ -105,6 +112,11 @@ public class CountingFJPImpl implements CountingFJP {
 
 	public final EvaluationException getFailureCause() {
 		return failureCause;
+	}
+
+	@Override
+	public long getStealCount() {
+		return exec.getStealCount();
 	}
 
 }

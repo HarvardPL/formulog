@@ -91,6 +91,7 @@ public final class Configuration {
 	public static final boolean printFinalRules = propIsSet("printFinalRules");
 	public static final boolean simplifyFormulaVars = propIsSet("simplifyFormulaVars", true);
 	public static final boolean debugRounds = propIsSet("debugRounds");
+	public static final boolean debugParallelism = propIsSet("debugParallelism");
 
 	public static final int optimizationSetting = getIntProp("optimize", 0);
 
