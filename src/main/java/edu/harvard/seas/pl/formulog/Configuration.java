@@ -79,7 +79,7 @@ public final class Configuration {
 	
 	private static final AtomicLong smtTotalTime = new AtomicLong();
 	
-	public static void recordSmtDelta(long delta) {
+	public static void recordSmtTime(long delta) {
 		smtTotalTime.addAndGet(delta);
 	}
 	

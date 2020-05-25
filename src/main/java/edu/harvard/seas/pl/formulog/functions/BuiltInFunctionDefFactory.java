@@ -1441,40 +1441,41 @@ public final class BuiltInFunctionDefFactory {
 			Model m = getModel ? Model.make(Collections.emptyMap()) : null;
 			return new Pair<>(SmtStatus.SATISFIABLE, m);
 		}
-		SmtResult res;
-		if (Configuration.smtMemoize) {
-			Triple<Set<SmtLibTerm>, Boolean, Integer> key = new Triple<>(set, getModel, timeout);
-			Future<SmtResult> fut = smtMemo.get(key);
-			if (fut == null) {
-				CompletableFuture<SmtResult> completableFut = new CompletableFuture<>();
-				fut = completableFut;
-				Future<SmtResult> fut2 = smtMemo.putIfAbsent(key, fut);
-				if (fut2 != null) {
-					fut = fut2;
-				} else {
-					completableFut.complete(smt.check(set, getModel, timeout));
-				}
+		try {
+			SmtResult res;
+			if (Configuration.smtMemoize) {
+				res = querySmtWithMemo(set, getModel, timeout);
+			} else {
+				res = smt.check(set, getModel, timeout);
 			}
-			long waitStart = 0;
-			if (Configuration.timeSmt) {
-				waitStart = System.currentTimeMillis();
-			}
-			try {
-				res = fut.get();
-			} catch (InterruptedException | ExecutionException e) {
-				throw new EvaluationException(e);
-			} finally {
-				if (Configuration.timeSmt) {
-					long end = System.currentTimeMillis();
-					Configuration.recordSmtWaitTime(end - waitStart);
-				}
-				Configuration.recordSmtDelta(System.currentTimeMillis() - start);
-			}
-		} else {
-			res = smt.check(set, getModel, timeout);
+			return new Pair<>(res.status, res.model);
+		} finally {
+			Configuration.recordSmtTime(System.currentTimeMillis() - start);
 		}
-		Configuration.recordSmtDelta(System.currentTimeMillis() - start);
-		return new Pair<>(res.status, res.model);
+	}
+
+	private SmtResult querySmtWithMemo(Set<SmtLibTerm> assertions, boolean getModel, int timeout)
+			throws EvaluationException {
+		Triple<Set<SmtLibTerm>, Boolean, Integer> key = new Triple<>(assertions, getModel, timeout);
+		CompletableFuture<SmtResult> completableFut = new CompletableFuture<>();
+		Future<SmtResult> fut = smtMemo.putIfAbsent(key, completableFut);
+		if (fut == null) {
+			completableFut.complete(smt.check(assertions, getModel, timeout));
+			fut = completableFut;
+		}
+		long waitStart = 0;
+		if (Configuration.timeSmt) {
+			waitStart = System.currentTimeMillis();
+		}
+		try {
+			return fut.get();
+		} catch (InterruptedException | ExecutionException e) {
+			throw new EvaluationException(e);
+		} finally {
+			if (Configuration.timeSmt) {
+				Configuration.recordSmtWaitTime(System.currentTimeMillis() - waitStart);
+			}
+		}
 	}
 
 	private final FunctionDef isSat = new FunctionDef() {
