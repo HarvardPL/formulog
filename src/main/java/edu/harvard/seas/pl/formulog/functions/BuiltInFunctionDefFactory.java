@@ -1429,19 +1429,19 @@ public final class BuiltInFunctionDefFactory {
 	private Pair<SmtStatus, Model> querySmt(List<SmtLibTerm> assertions, boolean getModel, int timeout)
 			throws EvaluationException {
 		long start = System.currentTimeMillis();
-		if (timeout < 0) {
-			timeout = -1;
-		}
-		Set<SmtLibTerm> set = new LinkedHashSet<>(assertions);
-		if (set.contains(BoolTerm.mkFalse())) {
-			return new Pair<>(SmtStatus.UNSATISFIABLE, null);
-		}
-		set.remove(BoolTerm.mkTrue());
-		if (set.isEmpty()) {
-			Model m = getModel ? Model.make(Collections.emptyMap()) : null;
-			return new Pair<>(SmtStatus.SATISFIABLE, m);
-		}
 		try {
+			if (timeout < 0) {
+				timeout = -1;
+			}
+			Set<SmtLibTerm> set = new LinkedHashSet<>(assertions);
+			if (set.contains(BoolTerm.mkFalse())) {
+				return new Pair<>(SmtStatus.UNSATISFIABLE, null);
+			}
+			set.remove(BoolTerm.mkTrue());
+			if (set.isEmpty()) {
+				Model m = getModel ? Model.make(Collections.emptyMap()) : null;
+				return new Pair<>(SmtStatus.SATISFIABLE, m);
+			}
 			SmtResult res;
 			if (Configuration.smtMemoize) {
 				res = querySmtWithMemo(set, getModel, timeout);
