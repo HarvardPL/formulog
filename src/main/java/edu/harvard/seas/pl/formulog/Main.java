@@ -140,7 +140,7 @@ public final class Main {
 			eval.run();
 			clock.stop();
 			System.out.println("Finished evaluating (total: " + clock.getTime() / 1000.0 + "s, SMT: "
-					+ Configuration.getSmtTotalTime() / 1000.0 + "s)");
+					+ Configuration.getSmtTotalTime() / 1e9 + "s)");
 		} catch (EvaluationException e) {
 			handleException("Error while evaluating the program!", e, false);
 		}

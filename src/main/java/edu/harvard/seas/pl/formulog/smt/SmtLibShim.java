@@ -139,17 +139,17 @@ public class SmtLibShim {
 		long start = 0;
 		long end = 0;
 		if (recordTime) {
-			start = System.currentTimeMillis();
+			start = System.nanoTime();
 		}
 		declareSymbols(assertion);
 		if (recordTime) {
-			end = System.currentTimeMillis();
+			end = System.nanoTime();
 			Configuration.recordSmtDeclTime(end - start);
 			start = end;
 		}
 		typeAnnotations = new MiniTypeInferer().inferTypes(assertion).iterator();
 		if (recordTime) {
-			end = System.currentTimeMillis();
+			end = System.nanoTime();
 			Configuration.recordSmtInferTime(end - start);
 			start = end;
 		}
@@ -158,7 +158,7 @@ public class SmtLibShim {
 		println(")");
 		checkSuccess();
 		if (recordTime) {
-			end = System.currentTimeMillis();
+			end = System.nanoTime();
 			Configuration.recordSmtSerialTime(end - start);
 		}
 		assert !typeAnnotations.hasNext() : typeAnnotations.next();
@@ -367,6 +367,10 @@ public class SmtLibShim {
 	}
 
 	public void makeDeclarations() {
+		long start = 0;
+		if (Configuration.timeSmt) {
+			start = System.nanoTime();
+		}
 		for (String decl : declarations) {
 			println(decl);
 			try {
@@ -374,6 +378,9 @@ public class SmtLibShim {
 			} catch (EvaluationException e) {
 				System.err.println("WARNING: solver rejected declaration:\n" + decl + "\n" + e.getMessage());
 			}
+		}
+		if (Configuration.timeSmt) {
+			Configuration.recordSmtDeclGlobalsTime(System.nanoTime() - start);
 		}
 	}
 

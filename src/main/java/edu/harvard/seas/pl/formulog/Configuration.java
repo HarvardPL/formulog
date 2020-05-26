@@ -67,6 +67,7 @@ public final class Configuration {
 	public static final boolean smtMemoize = propIsSet("smtMemoize", true);
 	private static final Map<Integer, Dataset> perProcessSmtEvalStats = new ConcurrentHashMap<>();
 	private static final Dataset smtEvalStats = new Dataset();
+	private static final AtomicLong smtDeclGlobalsTime = new AtomicLong();
 	private static final AtomicLong smtEncodeTime = new AtomicLong();
 	private static final AtomicLong smtDeclTime = new AtomicLong();
 	private static final AtomicLong smtInferTime = new AtomicLong();
@@ -252,6 +253,10 @@ public final class Configuration {
 	public static void recordSmtWaitTime(long time) {
 		smtWaitTime.addAndGet(time);
 	}
+	
+	public static void recordSmtDeclGlobalsTime(long time) {
+		smtDeclGlobalsTime.addAndGet(time);
+	}
 
 	public static synchronized void printSmtDiagnostics(PrintStream out) {
 		Dataset callsPerSolver = new Dataset();
@@ -260,14 +265,15 @@ public final class Configuration {
 			callsPerSolver.addDataPoint(ds.size());
 			timePerSolver.addDataPoint(ds.computeSum());
 		}
-		out.println("[SMT DECL TIME] " + smtDeclTime + "ms");
-		out.println("[SMT INFER TIME] " + smtInferTime + "ms");
-		out.println("[SMT SERIAL TIME] " + smtSerialTime + "ms");
-		out.println("[SMT WAIT TIME] " + smtWaitTime + "ms");
-		out.println("[SMT ENCODE TIME] " + smtEncodeTime + "ms");
-		out.printf("[SMT EVAL TIME] %1.1fms%n", smtEvalStats.computeSum());
-		out.println("[SMT EVAL TIME PER CALL (ms)] " + smtEvalStats.getStatsString());
-		out.println("[SMT EVAL TIME PER SOLVER (ms)] " + timePerSolver.getStatsString());
+		out.println("[SMT WAIT TIME] " + smtWaitTime.get() / 1e6 + "ms");
+		out.println("[SMT DECL GLOBALS TIME] " + smtDeclGlobalsTime.get() / 1e6 + "ms");
+		out.println("[SMT ENCODE TIME - TOTAL] " + smtEncodeTime.get() / 1e6 + "ms");
+		out.println("[SMT ENCODE TIME - DECL] " + smtDeclTime.get() / 1e6 + "ms");
+		out.println("[SMT ENCODE TIME - INFER] " + smtInferTime.get() / 1e6 + "ms");
+		out.println("[SMT ENCODE TIME - SERIAL] " + smtSerialTime.get() / 1e6 + "ms");
+		out.printf("[SMT EVAL TIME] %1.1fms%n", smtEvalStats.computeSum() / 1e6);
+		out.println("[SMT EVAL TIME PER CALL (ns)] " + smtEvalStats.getStatsString());
+		out.println("[SMT EVAL TIME PER SOLVER (ns)] " + timePerSolver.getStatsString());
 		out.println("[SMT NUM CALLS PER SOLVER] " + callsPerSolver.getStatsString());
 		out.println("[SMT NUM CALLS - SAT] " + smtNumCallsSat);
 		out.println("[SMT NUM CALLS - UNSAT] " + smtNumCallsUnsat);

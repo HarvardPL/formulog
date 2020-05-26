@@ -1428,7 +1428,7 @@ public final class BuiltInFunctionDefFactory {
 
 	private Pair<SmtStatus, Model> querySmt(List<SmtLibTerm> assertions, boolean getModel, int timeout)
 			throws EvaluationException {
-		long start = System.currentTimeMillis();
+		long start = System.nanoTime();
 		try {
 			if (timeout < 0) {
 				timeout = -1;
@@ -1450,7 +1450,7 @@ public final class BuiltInFunctionDefFactory {
 			}
 			return new Pair<>(res.status, res.model);
 		} finally {
-			Configuration.recordSmtTime(System.currentTimeMillis() - start);
+			Configuration.recordSmtTime(System.nanoTime() - start);
 		}
 	}
 
@@ -1465,7 +1465,7 @@ public final class BuiltInFunctionDefFactory {
 		}
 		long waitStart = 0;
 		if (Configuration.timeSmt) {
-			waitStart = System.currentTimeMillis();
+			waitStart = System.nanoTime();
 		}
 		try {
 			return fut.get();
@@ -1473,7 +1473,7 @@ public final class BuiltInFunctionDefFactory {
 			throw new EvaluationException(e);
 		} finally {
 			if (Configuration.timeSmt) {
-				Configuration.recordSmtWaitTime(System.currentTimeMillis() - waitStart);
+				Configuration.recordSmtWaitTime(System.nanoTime() - waitStart);
 			}
 		}
 	}

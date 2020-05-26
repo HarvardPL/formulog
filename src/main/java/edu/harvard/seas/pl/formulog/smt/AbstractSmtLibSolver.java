@@ -149,22 +149,22 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 		boolean debug = Configuration.timeSmt || log != null;
 		long start = 0;
 		if (debug) {
-			start = System.currentTimeMillis();
+			start = System.nanoTime();
 		}
 		Pair<Collection<SolverVariable>, Collection<SolverVariable>> p = makeAssertions(assertions);
 		long encodeTime = 0;
 		if (debug) {
-			long end = System.currentTimeMillis();
+			long end = System.nanoTime();
 			encodeTime = end - start;
 			start = end;
 		}
 		try {
 			SmtStatus status = shim.checkSatAssuming(p.fst(), p.snd(), timeout);
 			if (debug) {
-				long evalTime = System.currentTimeMillis() - start;
+				long evalTime = System.nanoTime() - start;
 				Configuration.recordSmtEvalTime(solverId, encodeTime, evalTime, status);
 				if (log != null) {
-					log.println("; time: " + evalTime + "ms");
+					log.println("; time: " + evalTime / 1e6 + "ms");
 					log.flush();
 				}
 			}
