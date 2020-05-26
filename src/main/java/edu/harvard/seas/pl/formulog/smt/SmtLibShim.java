@@ -110,7 +110,6 @@ public class SmtLibShim {
 		if (Configuration.smtCheckSuccess) {
 			println("(set-option :print-success true)");
 		}
-		flush();
 		try {
 			checkSuccess();
 		} catch (EvaluationException e) {
@@ -120,6 +119,7 @@ public class SmtLibShim {
 
 	private void checkSuccess() throws EvaluationException {
 		if (in != null && Configuration.smtCheckSuccess) {
+			flush();
 			try {
 				String r = in.readLine();
 				if (log != null) {
@@ -156,14 +156,12 @@ public class SmtLibShim {
 		print("(assert ");
 		assertion.toSmtLib(this);
 		println(")");
-		flush();
 		checkSuccess();
 		if (recordTime) {
 			end = System.currentTimeMillis();
 			Configuration.recordSmtSerialTime(end - start);
 		}
 		assert !typeAnnotations.hasNext() : typeAnnotations.next();
-		flush();
 	}
 
 	public void reset() throws EvaluationException {
@@ -172,13 +170,11 @@ public class SmtLibShim {
 		symbolsByStackPos.clear();
 		symbolsByStackPos.add(new HashSet<>());
 		println("(reset)");
-		flush();
 		checkSuccess();
 	}
 
 	public void push() throws EvaluationException {
 		println("(push 1)");
-		flush();
 		checkSuccess();
 		symbolsByStackPos.addLast(new HashSet<>());
 	}
@@ -189,7 +185,6 @@ public class SmtLibShim {
 
 	public void pop(int n) throws EvaluationException {
 		println("(pop " + n + ")");
-		flush();
 		checkSuccess();
 		for (int i = 0; i < n; ++i) {
 			for (SolverVariable x : symbolsByStackPos.removeLast()) {
@@ -211,7 +206,6 @@ public class SmtLibShim {
 		}
 		if (Configuration.smtSolver.equals("z3")) {
 			println("(set-option :timeout " + timeout + ")");
-			flush();
 			checkSuccess();
 		}
 		if (onVars.isEmpty() && offVars.isEmpty()) {
@@ -280,7 +274,6 @@ public class SmtLibShim {
 
 	public void setLogic(String logic) throws EvaluationException {
 		println("(set-logic " + logic + ")");
-		flush();
 		checkSuccess();
 	}
 
@@ -288,7 +281,6 @@ public class SmtLibShim {
 		out.print(s);
 		if (log != null) {
 			log.print(s);
-			log.flush();
 		}
 	}
 
@@ -351,7 +343,6 @@ public class SmtLibShim {
 						FunctorType ft = (FunctorType) var.getSymbol().getCompileTimeType();
 						print(stringifyType(ft.getRetType()));
 						println(")");
-						flush();
 						checkSuccess();
 					}
 					return null;
@@ -378,7 +369,6 @@ public class SmtLibShim {
 	public void makeDeclarations() {
 		for (String decl : declarations) {
 			println(decl);
-			flush();
 			try {
 				checkSuccess();
 			} catch (EvaluationException e) {
