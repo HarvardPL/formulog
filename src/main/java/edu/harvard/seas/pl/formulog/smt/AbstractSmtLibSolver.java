@@ -146,19 +146,25 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 		}
 		String taskName = "#" + solverId + ":" + taskId + " (thread #" + Thread.currentThread().getId() + ")";
 		shim.printComment("*** START CALL " + taskName + " ***");
-		boolean debug = log != null;
-		Pair<Collection<SolverVariable>, Collection<SolverVariable>> p = makeAssertions(assertions);
+		boolean debug = Configuration.timeSmt || log != null;
 		long start = 0;
-		if (debug || Configuration.timeSmt) {
+		if (debug) {
 			start = System.currentTimeMillis();
+		}
+		Pair<Collection<SolverVariable>, Collection<SolverVariable>> p = makeAssertions(assertions);
+		long encodeTime = 0;
+		if (debug) {
+			long end = System.currentTimeMillis();
+			encodeTime = end - start;
+			start = end;
 		}
 		try {
 			SmtStatus status = shim.checkSatAssuming(p.fst(), p.snd(), timeout);
-			if (Configuration.timeSmt || debug) {
-				long time = System.currentTimeMillis() - start;
-				Configuration.recordSmtEvalTime(solverId, time, status);
-				if (debug) {
-					log.println("; time: " + time + "ms");
+			if (debug) {
+				long evalTime = System.currentTimeMillis() - start;
+				Configuration.recordSmtEvalTime(solverId, encodeTime, evalTime, status);
+				if (log != null) {
+					log.println("; time: " + evalTime + "ms");
 					log.flush();
 				}
 			}

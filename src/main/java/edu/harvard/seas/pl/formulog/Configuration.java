@@ -67,6 +67,7 @@ public final class Configuration {
 	public static final boolean smtMemoize = propIsSet("smtMemoize", true);
 	private static final Map<Integer, Dataset> perProcessSmtEvalStats = new ConcurrentHashMap<>();
 	private static final Dataset smtEvalStats = new Dataset();
+	private static final AtomicLong smtEncodeTime = new AtomicLong();
 	private static final AtomicLong smtDeclTime = new AtomicLong();
 	private static final AtomicLong smtInferTime = new AtomicLong();
 	private static final AtomicLong smtSerialTime = new AtomicLong();
@@ -231,9 +232,10 @@ public final class Configuration {
 		smtSerialTime.addAndGet(time);
 	}
 
-	public static void recordSmtEvalTime(int processId, long time, SmtStatus result) {
-		smtEvalStats.addDataPoint(time);
-		Util.lookupOrCreate(perProcessSmtEvalStats, processId, () -> new Dataset()).addDataPoint(time);
+	public static void recordSmtEvalTime(int processId, long encodeTime, long evalTime, SmtStatus result) {
+		smtEncodeTime.addAndGet(encodeTime);
+		smtEvalStats.addDataPoint(evalTime);
+		Util.lookupOrCreate(perProcessSmtEvalStats, processId, () -> new Dataset()).addDataPoint(evalTime);
 		switch (result) {
 		case SATISFIABLE:
 			smtNumCallsSat.incrementAndGet();
@@ -262,6 +264,7 @@ public final class Configuration {
 		out.println("[SMT INFER TIME] " + smtInferTime + "ms");
 		out.println("[SMT SERIAL TIME] " + smtSerialTime + "ms");
 		out.println("[SMT WAIT TIME] " + smtWaitTime + "ms");
+		out.println("[SMT ENCODE TIME] " + smtEncodeTime + "ms");
 		out.printf("[SMT EVAL TIME] %1.1fms%n", smtEvalStats.computeSum());
 		out.println("[SMT EVAL TIME PER CALL (ms)] " + smtEvalStats.getStatsString());
 		out.println("[SMT EVAL TIME PER SOLVER (ms)] " + timePerSolver.getStatsString());
