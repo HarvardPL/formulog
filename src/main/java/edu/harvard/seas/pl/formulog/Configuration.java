@@ -40,6 +40,11 @@ import java.util.stream.Collectors;
 
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDb;
+import edu.harvard.seas.pl.formulog.smt.CallAndResetSolver;
+import edu.harvard.seas.pl.formulog.smt.CheckSatAssumingSolver;
+import edu.harvard.seas.pl.formulog.smt.PushPopSolver;
+import edu.harvard.seas.pl.formulog.smt.SingleShotSolver;
+import edu.harvard.seas.pl.formulog.smt.SmtLibSolver;
 import edu.harvard.seas.pl.formulog.smt.SmtStatus;
 import edu.harvard.seas.pl.formulog.smt.SmtStrategy;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
@@ -65,7 +70,7 @@ public final class Configuration {
 
 	public static final boolean timeSmt = propIsSet("timeSmt");
 	public static final boolean smtMemoize = propIsSet("smtMemoize", true);
-	private static final Map<Integer, Dataset> perProcessSmtEvalStats = new ConcurrentHashMap<>();
+	private static final Map<SmtLibSolver, Dataset> perProcessSmtEvalStats = new ConcurrentHashMap<>();
 	private static final Dataset smtEvalStats = new Dataset();
 	private static final AtomicLong smtDeclGlobalsTime = new AtomicLong();
 	private static final AtomicLong smtEncodeTime = new AtomicLong();
@@ -136,6 +141,8 @@ public final class Configuration {
 	private static final Dataset csaCacheMisses = new Dataset();
 	private static final AtomicInteger csaCacheClears = new AtomicInteger();
 	private static final Dataset csaEvalStats = new Dataset();
+	private static final Dataset pushPopEvalStats = new Dataset();
+	private static final Dataset naiveEvalStats = new Dataset();
 
 	public static final int parallelism = getIntProp("parallelism", 4);
 
@@ -234,14 +241,17 @@ public final class Configuration {
 		smtSerialTime.addAndGet(time);
 	}
 
-	public static void recordSmtEvalTime(int processId, long encodeTime, long evalTime, SmtStatus result,
-			boolean isCsaSolver) {
+	public static void recordSmtEvalTime(SmtLibSolver solver, long encodeTime, long evalTime, SmtStatus result) {
 		smtEncodeTime.addAndGet(encodeTime);
 		smtEvalStats.addDataPoint(evalTime);
-		if (isCsaSolver) {
+		if (solver instanceof CheckSatAssumingSolver) {
 			csaEvalStats.addDataPoint(evalTime);
+		} else if (solver instanceof PushPopSolver) {
+			pushPopEvalStats.addDataPoint(evalTime);
+		} else if (solver instanceof CallAndResetSolver || solver instanceof SingleShotSolver) {
+			naiveEvalStats.addDataPoint(evalTime);
 		}
-		Util.lookupOrCreate(perProcessSmtEvalStats, processId, () -> new Dataset()).addDataPoint(evalTime);
+		Util.lookupOrCreate(perProcessSmtEvalStats, solver, () -> new Dataset()).addDataPoint(evalTime);
 		switch (result) {
 		case SATISFIABLE:
 			smtNumCallsSat.incrementAndGet();
@@ -278,6 +288,18 @@ public final class Configuration {
 		out.println("[SMT ENCODE TIME - SERIAL] " + smtSerialTime.get() / 1e6 + "ms");
 		out.printf("[SMT EVAL TIME] %1.1fms%n", smtEvalStats.computeSum() / 1e6);
 		out.println("[SMT EVAL TIME PER CALL (ms)] " + smtEvalStats.getStatsString(1e-6));
+		if (csaEvalStats.size() > 0) {
+			out.printf("[CSA EVAL TIME] %1.1fms%n", csaEvalStats.computeSum() / 1e6);
+			out.println("[CSA EVAL TIME PER CALL (ms)] " + csaEvalStats.getStatsString(1e-6));
+		}
+		if (pushPopEvalStats.size() > 0) {
+			out.printf("[PUSH POP EVAL TIME] %1.1fms%n", pushPopEvalStats.computeSum() / 1e6);
+			out.println("[PUSH POP EVAL TIME PER CALL (ms)] " + pushPopEvalStats.getStatsString(1e-6));
+		}
+		if (naiveEvalStats.size() > 0) {
+			out.printf("[NAIVE EVAL TIME] %1.1fms%n", naiveEvalStats.computeSum() / 1e6);
+			out.println("[NAIVE EVAL TIME PER CALL (ms)] " + naiveEvalStats.getStatsString(1e-6));
+		}
 		out.println("[SMT EVAL TIME PER SOLVER (ms)] " + timePerSolver.getStatsString(1e-6));
 		out.println("[SMT NUM CALLS PER SOLVER] " + callsPerSolver.getStatsString());
 		out.println("[SMT NUM CALLS - SAT] " + smtNumCallsSat);
@@ -291,8 +313,6 @@ public final class Configuration {
 		case PER_THREAD_BEST_MATCH:
 		case PER_THREAD_QUEUE:
 		case QUEUE:
-			out.printf("[CSA EVAL TIME] %1.1fms%n", csaEvalStats.computeSum() / 1e6);
-			out.println("[CSA EVAL TIME PER CALL (ms)] " + csaEvalStats.getStatsString(1e-6));
 			out.println("[CSA CACHE LIMIT] " + smtCacheSize);
 			out.println("[CSA CACHE BASE SIZE] " + csaCacheSize.getStatsString());
 			out.println("[CSA CACHE HITS] " + csaCacheHits.getStatsString());
