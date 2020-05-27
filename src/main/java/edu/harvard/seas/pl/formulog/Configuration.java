@@ -78,13 +78,13 @@ public final class Configuration {
 	private static final AtomicInteger smtNumCallsUnknown = new AtomicInteger();
 	private static final AtomicInteger smtNumCallsDoubleCheck = new AtomicInteger();
 	private static final AtomicInteger smtNumCallsFalseUnknown = new AtomicInteger();
-	
+
 	private static final AtomicLong smtTotalTime = new AtomicLong();
-	
+
 	public static void recordSmtTime(long delta) {
 		smtTotalTime.addAndGet(delta);
 	}
-	
+
 	public static long getSmtTotalTime() {
 		return smtTotalTime.get();
 	}
@@ -234,7 +234,8 @@ public final class Configuration {
 		smtSerialTime.addAndGet(time);
 	}
 
-	public static void recordSmtEvalTime(int processId, long encodeTime, long evalTime, SmtStatus result, boolean isCsaSolver) {
+	public static void recordSmtEvalTime(int processId, long encodeTime, long evalTime, SmtStatus result,
+			boolean isCsaSolver) {
 		smtEncodeTime.addAndGet(encodeTime);
 		smtEvalStats.addDataPoint(evalTime);
 		if (isCsaSolver) {
@@ -257,7 +258,7 @@ public final class Configuration {
 	public static void recordSmtWaitTime(long time) {
 		smtWaitTime.addAndGet(time);
 	}
-	
+
 	public static void recordSmtDeclGlobalsTime(long time) {
 		smtDeclGlobalsTime.addAndGet(time);
 	}
@@ -276,8 +277,8 @@ public final class Configuration {
 		out.println("[SMT ENCODE TIME - INFER] " + smtInferTime.get() / 1e6 + "ms");
 		out.println("[SMT ENCODE TIME - SERIAL] " + smtSerialTime.get() / 1e6 + "ms");
 		out.printf("[SMT EVAL TIME] %1.1fms%n", smtEvalStats.computeSum() / 1e6);
-		out.println("[SMT EVAL TIME PER CALL (ns)] " + smtEvalStats.getStatsString());
-		out.println("[SMT EVAL TIME PER SOLVER (ns)] " + timePerSolver.getStatsString());
+		out.println("[SMT EVAL TIME PER CALL (ms)] " + smtEvalStats.getStatsString(1e-6));
+		out.println("[SMT EVAL TIME PER SOLVER (ms)] " + timePerSolver.getStatsString(1e-6));
 		out.println("[SMT NUM CALLS PER SOLVER] " + callsPerSolver.getStatsString());
 		out.println("[SMT NUM CALLS - SAT] " + smtNumCallsSat);
 		out.println("[SMT NUM CALLS - UNSAT] " + smtNumCallsUnsat);
@@ -291,7 +292,7 @@ public final class Configuration {
 		case PER_THREAD_QUEUE:
 		case QUEUE:
 			out.printf("[CSA EVAL TIME] %1.1fms%n", csaEvalStats.computeSum() / 1e6);
-			out.println("[CSA EVAL TIME PER CALL (ns)] " + csaEvalStats.getStatsString());
+			out.println("[CSA EVAL TIME PER CALL (ms)] " + csaEvalStats.getStatsString(1e-6));
 			out.println("[CSA CACHE LIMIT] " + smtCacheSize);
 			out.println("[CSA CACHE BASE SIZE] " + csaCacheSize.getStatsString());
 			out.println("[CSA CACHE HITS] " + csaCacheHits.getStatsString());
@@ -300,6 +301,7 @@ public final class Configuration {
 			out.println("[CSA CACHE USE RATE] " + csaCacheUseRate.getStatsString());
 			out.println("[CSA CACHE CLEARS] " + csaCacheClears.get());
 			break;
+		case PUSH_POP:
 		case PER_THREAD_PUSH_POP:
 			out.println("[PUSH POP STACK BASE SIZE] " + pushPopStackSize.getStatsString());
 			out.println("[PUSH POP STACK PUSHES] " + pushPopStackPushes.getStatsString());
@@ -307,6 +309,7 @@ public final class Configuration {
 			out.println("[PUSH POP STACK DELTA] " + pushPopStackDelta.getStatsString());
 			out.println("[PUSH POP STACK REUSE] " + pushPopStackReuse.getStatsString());
 			break;
+		case NAIVE:
 		case PER_THREAD_NAIVE:
 			break;
 		}
@@ -328,7 +331,7 @@ public final class Configuration {
 		csaCacheUseRate.addDataPoint(oldSize == 0 ? 1 : (double) hits / oldSize);
 		csaCacheSize.addDataPoint(oldSize);
 	}
-	
+
 	public static void recordSmtDoubleCheck(boolean falseUnknown) {
 		smtNumCallsDoubleCheck.incrementAndGet();
 		if (falseUnknown) {
