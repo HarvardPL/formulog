@@ -288,18 +288,6 @@ public final class Configuration {
 		out.println("[SMT ENCODE TIME - SERIAL] " + smtSerialTime.get() / 1e6 + "ms");
 		out.printf("[SMT EVAL TIME] %1.1fms%n", smtEvalStats.computeSum() / 1e6);
 		out.println("[SMT EVAL TIME PER CALL (ms)] " + smtEvalStats.getStatsString(1e-6));
-		if (csaEvalStats.size() > 0) {
-			out.printf("[CSA EVAL TIME] %1.1fms%n", csaEvalStats.computeSum() / 1e6);
-			out.println("[CSA EVAL TIME PER CALL (ms)] " + csaEvalStats.getStatsString(1e-6));
-		}
-		if (pushPopEvalStats.size() > 0) {
-			out.printf("[PUSH POP EVAL TIME] %1.1fms%n", pushPopEvalStats.computeSum() / 1e6);
-			out.println("[PUSH POP EVAL TIME PER CALL (ms)] " + pushPopEvalStats.getStatsString(1e-6));
-		}
-		if (naiveEvalStats.size() > 0) {
-			out.printf("[NAIVE EVAL TIME] %1.1fms%n", naiveEvalStats.computeSum() / 1e6);
-			out.println("[NAIVE EVAL TIME PER CALL (ms)] " + naiveEvalStats.getStatsString(1e-6));
-		}
 		out.println("[SMT EVAL TIME PER SOLVER (ms)] " + timePerSolver.getStatsString(1e-6));
 		out.println("[SMT NUM CALLS PER SOLVER] " + callsPerSolver.getStatsString());
 		out.println("[SMT NUM CALLS - SAT] " + smtNumCallsSat);
@@ -307,12 +295,10 @@ public final class Configuration {
 		out.println("[SMT NUM CALLS - UNKNOWN] " + smtNumCallsUnknown);
 		out.println("[SMT NUM CALLS - DOUBLE CHECK] " + smtNumCallsDoubleCheck);
 		out.println("[SMT NUM CALLS - FALSE UNKNOWN] " + smtNumCallsFalseUnknown);
-
-		switch (smtStrategy.getTag()) {
-		case BEST_MATCH:
-		case PER_THREAD_BEST_MATCH:
-		case PER_THREAD_QUEUE:
-		case QUEUE:
+		if (csaEvalStats.size() > 0) {
+			out.println("--- CSA ---");
+			out.printf("[CSA EVAL TIME] %1.1fms%n", csaEvalStats.computeSum() / 1e6);
+			out.println("[CSA EVAL TIME PER CALL (ms)] " + csaEvalStats.getStatsString(1e-6));
 			out.println("[CSA CACHE LIMIT] " + smtCacheSize);
 			out.println("[CSA CACHE BASE SIZE] " + csaCacheSize.getStatsString());
 			out.println("[CSA CACHE HITS] " + csaCacheHits.getStatsString());
@@ -320,18 +306,21 @@ public final class Configuration {
 			out.println("[CSA CACHE HIT RATE] " + csaCacheHitRate.getStatsString());
 			out.println("[CSA CACHE USE RATE] " + csaCacheUseRate.getStatsString());
 			out.println("[CSA CACHE CLEARS] " + csaCacheClears.get());
-			break;
-		case PUSH_POP:
-		case PER_THREAD_PUSH_POP:
+		}
+		if (pushPopEvalStats.size() > 0) {
+			out.println("--- PUSH POP ---");
+			out.printf("[PUSH POP EVAL TIME] %1.1fms%n", pushPopEvalStats.computeSum() / 1e6);
+			out.println("[PUSH POP EVAL TIME PER CALL (ms)] " + pushPopEvalStats.getStatsString(1e-6));
 			out.println("[PUSH POP STACK BASE SIZE] " + pushPopStackSize.getStatsString());
 			out.println("[PUSH POP STACK PUSHES] " + pushPopStackPushes.getStatsString());
 			out.println("[PUSH POP STACK POPS] " + pushPopStackPops.getStatsString());
 			out.println("[PUSH POP STACK DELTA] " + pushPopStackDelta.getStatsString());
 			out.println("[PUSH POP STACK REUSE] " + pushPopStackReuse.getStatsString());
-			break;
-		case NAIVE:
-		case PER_THREAD_NAIVE:
-			break;
+		}
+		if (naiveEvalStats.size() > 0) {
+			out.println("--- NAIVE ---");
+			out.printf("[NAIVE EVAL TIME] %1.1fms%n", naiveEvalStats.computeSum() / 1e6);
+			out.println("[NAIVE EVAL TIME PER CALL (ms)] " + naiveEvalStats.getStatsString(1e-6));
 		}
 	}
 
