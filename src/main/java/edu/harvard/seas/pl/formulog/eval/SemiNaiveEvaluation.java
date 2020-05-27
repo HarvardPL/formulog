@@ -248,6 +248,10 @@ public class SemiNaiveEvaluation implements Evaluation {
 		return inner;
 	}
 
+	private static SmtLibSolver makeNaiveSolver() {
+		return Configuration.smtUseSingleShotSolver ? new SingleShotSolver() : new CallAndResetSolver();
+	}
+
 	private static SmtLibSolver getSmtManager() {
 		SmtStrategy strategy = Configuration.smtStrategy;
 		switch (strategy.getTag()) {
@@ -255,6 +259,10 @@ public class SemiNaiveEvaluation implements Evaluation {
 			int size = (int) strategy.getMetadata();
 			return new QueueSmtManager(size, () -> maybeDoubleCheckSolver(new CheckSatAssumingSolver()));
 		}
+		case NAIVE:
+			return maybeDoubleCheckSolver(makeNaiveSolver());
+		case PUSH_POP:
+			return new PushPopSolver();
 		case BEST_MATCH: {
 			int size = (int) strategy.getMetadata();
 			return maybeDoubleCheckSolver(new BestMatchSmtManager(size));

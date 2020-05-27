@@ -135,6 +135,7 @@ public final class Configuration {
 	private static final Dataset csaCacheHits = new Dataset();
 	private static final Dataset csaCacheMisses = new Dataset();
 	private static final AtomicInteger csaCacheClears = new AtomicInteger();
+	private static final Dataset csaEvalStats = new Dataset();
 
 	public static final int parallelism = getIntProp("parallelism", 4);
 
@@ -233,9 +234,12 @@ public final class Configuration {
 		smtSerialTime.addAndGet(time);
 	}
 
-	public static void recordSmtEvalTime(int processId, long encodeTime, long evalTime, SmtStatus result) {
+	public static void recordSmtEvalTime(int processId, long encodeTime, long evalTime, SmtStatus result, boolean isCsaSolver) {
 		smtEncodeTime.addAndGet(encodeTime);
 		smtEvalStats.addDataPoint(evalTime);
+		if (isCsaSolver) {
+			csaEvalStats.addDataPoint(evalTime);
+		}
 		Util.lookupOrCreate(perProcessSmtEvalStats, processId, () -> new Dataset()).addDataPoint(evalTime);
 		switch (result) {
 		case SATISFIABLE:
@@ -286,6 +290,8 @@ public final class Configuration {
 		case PER_THREAD_BEST_MATCH:
 		case PER_THREAD_QUEUE:
 		case QUEUE:
+			out.printf("[CSA EVAL TIME] %1.1fms%n", csaEvalStats.computeSum() / 1e6);
+			out.println("[CSA EVAL TIME PER CALL (ns)] " + csaEvalStats.getStatsString());
 			out.println("[CSA CACHE LIMIT] " + smtCacheSize);
 			out.println("[CSA CACHE BASE SIZE] " + csaCacheSize.getStatsString());
 			out.println("[CSA CACHE HITS] " + csaCacheHits.getStatsString());
@@ -481,6 +487,12 @@ public final class Configuration {
 		String val = System.getProperty("smtStrategy");
 		if (val == null) {
 			val = "queue-1";
+		}
+		if (val.equals("naive")) {
+			return new SmtStrategy(SmtStrategy.Tag.NAIVE, null);
+		}
+		if (val.equals("pushPop")) {
+			return new SmtStrategy(SmtStrategy.Tag.PUSH_POP, null);
 		}
 		if (val.equals("perThreadPushPop")) {
 			return new SmtStrategy(SmtStrategy.Tag.PER_THREAD_PUSH_POP, null);

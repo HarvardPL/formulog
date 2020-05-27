@@ -28,6 +28,10 @@ public class SmtStrategy {
 		
 		BEST_MATCH,
 		
+		NAIVE,
+		
+		PUSH_POP,
+		
 		PER_THREAD_QUEUE,
 		
 		PER_THREAD_BEST_MATCH,
