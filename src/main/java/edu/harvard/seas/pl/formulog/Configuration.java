@@ -40,10 +40,8 @@ import java.util.stream.Collectors;
 
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDb;
-import edu.harvard.seas.pl.formulog.smt.CallAndResetSolver;
 import edu.harvard.seas.pl.formulog.smt.CheckSatAssumingSolver;
 import edu.harvard.seas.pl.formulog.smt.PushPopSolver;
-import edu.harvard.seas.pl.formulog.smt.SingleShotSolver;
 import edu.harvard.seas.pl.formulog.smt.SmtLibSolver;
 import edu.harvard.seas.pl.formulog.smt.SmtStatus;
 import edu.harvard.seas.pl.formulog.smt.SmtStrategy;
@@ -142,7 +140,7 @@ public final class Configuration {
 	private static final AtomicInteger csaCacheClears = new AtomicInteger();
 	private static final Dataset csaEvalStats = new Dataset();
 	private static final Dataset pushPopEvalStats = new Dataset();
-	private static final Dataset naiveEvalStats = new Dataset();
+	private static final Dataset otherSolverEvalStats = new Dataset();
 
 	public static final int parallelism = getIntProp("parallelism", 4);
 
@@ -248,8 +246,8 @@ public final class Configuration {
 			csaEvalStats.addDataPoint(evalTime);
 		} else if (solver instanceof PushPopSolver) {
 			pushPopEvalStats.addDataPoint(evalTime);
-		} else if (solver instanceof CallAndResetSolver || solver instanceof SingleShotSolver) {
-			naiveEvalStats.addDataPoint(evalTime);
+		} else {
+			otherSolverEvalStats.addDataPoint(evalTime);
 		}
 		Util.lookupOrCreate(perProcessSmtEvalStats, solver, () -> new Dataset()).addDataPoint(evalTime);
 		switch (result) {
@@ -317,10 +315,10 @@ public final class Configuration {
 			out.println("[PUSH POP STACK DELTA] " + pushPopStackDelta.getStatsString());
 			out.println("[PUSH POP STACK REUSE] " + pushPopStackReuse.getStatsString());
 		}
-		if (naiveEvalStats.size() > 0) {
-			out.println("--- NAIVE ---");
-			out.printf("[NAIVE EVAL TIME] %1.1fms%n", naiveEvalStats.computeSum() / 1e6);
-			out.println("[NAIVE EVAL TIME PER CALL (ms)] " + naiveEvalStats.getStatsString(1e-6));
+		if (otherSolverEvalStats.size() > 0) {
+			out.println("--- OTHER ---");
+			out.printf("[OTHER EVAL TIME] %1.1fms%n", otherSolverEvalStats.computeSum() / 1e6);
+			out.println("[OTHER EVAL TIME PER CALL (ms)] " + otherSolverEvalStats.getStatsString(1e-6));
 		}
 	}
 
@@ -500,18 +498,22 @@ public final class Configuration {
 		if (val == null) {
 			val = "queue-1";
 		}
-		if (val.equals("naive")) {
+		
+		switch (val) {
+		case "naive":
 			return new SmtStrategy(SmtStrategy.Tag.NAIVE, null);
-		}
-		if (val.equals("pushPop")) {
+		case "pushPop": 
 			return new SmtStrategy(SmtStrategy.Tag.PUSH_POP, null);
-		}
-		if (val.equals("perThreadPushPop")) {
-			return new SmtStrategy(SmtStrategy.Tag.PER_THREAD_PUSH_POP, null);
-		}
-		if (val.equals("perThreadNaive")) {
+		case "pushPopNaive":
+			return new SmtStrategy(SmtStrategy.Tag.PUSH_POP_NAIVE, null);
+		case "perThreadNaive":
 			return new SmtStrategy(SmtStrategy.Tag.PER_THREAD_NAIVE, null);
+		case "perThreadPushPop": 
+			return new SmtStrategy(SmtStrategy.Tag.PER_THREAD_PUSH_POP, null);
+		case "perThreadPushPopNaive":
+			return new SmtStrategy(SmtStrategy.Tag.PER_THREAD_PUSH_POP_NAIVE, null);
 		}
+		
 		Pattern p = Pattern.compile("queue-(\\d+)");
 		Matcher m = p.matcher(val);
 		if (m.matches()) {

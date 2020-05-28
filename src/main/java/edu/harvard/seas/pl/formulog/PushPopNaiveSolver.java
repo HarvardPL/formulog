@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.smt;
+package edu.harvard.seas.pl.formulog;
 
 /*-
  * #%L
@@ -20,29 +20,19 @@ package edu.harvard.seas.pl.formulog.smt;
  * #L%
  */
 
-
 import java.util.Collection;
 
-import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
+import edu.harvard.seas.pl.formulog.smt.AbstractSmtLibSolver;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
-public class CallAndResetSolver extends AbstractSmtLibSolver {
+public class PushPopNaiveSolver extends AbstractSmtLibSolver {
 
 	@Override
-	protected Pair<Collection<SolverVariable>, Collection<SolverVariable>> makeAssertions(Collection<SmtLibTerm> assertions)
-			throws EvaluationException {
-		for (SmtLibTerm assertion : assertions) {
-			shim.makeAssertion(assertion);
-		}
-		return emptyCollectionPair;
-	}
-
-	@Override
-	protected void cleanup() throws EvaluationException {
-		shim.resetAssertions();
+	protected boolean isIncremental() {
+		return true;
 	}
 
 	@Override
@@ -52,8 +42,18 @@ public class CallAndResetSolver extends AbstractSmtLibSolver {
 	}
 
 	@Override
-	protected boolean isIncremental() {
-		return false;
+	protected Pair<Collection<SolverVariable>, Collection<SolverVariable>> makeAssertions(
+			Collection<SmtLibTerm> assertions) throws EvaluationException {
+		shim.push();
+		for (SmtLibTerm assertion : assertions) {
+			shim.makeAssertion(assertion);
+		}
+		return emptyCollectionPair;
+	}
+
+	@Override
+	protected void cleanup() throws EvaluationException {
+		shim.pop();
 	}
 
 }

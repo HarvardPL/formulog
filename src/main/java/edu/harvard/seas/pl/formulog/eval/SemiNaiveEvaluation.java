@@ -31,6 +31,7 @@ import java.util.Set;
 import java.util.function.BiFunction;
 
 import edu.harvard.seas.pl.formulog.Configuration;
+import edu.harvard.seas.pl.formulog.PushPopNaiveSolver;
 import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
@@ -263,6 +264,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 			return maybeDoubleCheckSolver(makeNaiveSolver());
 		case PUSH_POP:
 			return new PushPopSolver();
+		case PUSH_POP_NAIVE:
+			return new PushPopNaiveSolver();
 		case BEST_MATCH: {
 			int size = (int) strategy.getMetadata();
 			return maybeDoubleCheckSolver(new BestMatchSmtManager(size));
@@ -278,6 +281,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 		case PER_THREAD_PUSH_POP: {
 			return new PerThreadSmtManager(() -> new PushPopSolver());
+		}
+		case PER_THREAD_PUSH_POP_NAIVE: {
+			return new PerThreadSmtManager(() -> new PushPopNaiveSolver());
 		}
 		case PER_THREAD_NAIVE: {
 			return new PerThreadSmtManager(() -> maybeDoubleCheckSolver(

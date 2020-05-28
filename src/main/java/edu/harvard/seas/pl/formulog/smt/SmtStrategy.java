@@ -32,6 +32,8 @@ public class SmtStrategy {
 		
 		PUSH_POP,
 		
+		PUSH_POP_NAIVE,
+		
 		PER_THREAD_QUEUE,
 		
 		PER_THREAD_BEST_MATCH,
@@ -39,6 +41,8 @@ public class SmtStrategy {
 		PER_THREAD_PUSH_POP,
 		
 		PER_THREAD_NAIVE,
+		
+		PER_THREAD_PUSH_POP_NAIVE,
 		
 		;
 	}

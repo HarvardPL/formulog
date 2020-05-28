@@ -172,6 +172,12 @@ public class SmtLibShim {
 		println("(reset)");
 		checkSuccess();
 	}
+	
+
+	public void resetAssertions() throws EvaluationException {
+		println("(reset-assertions)");
+		checkSuccess();
+	}
 
 	public void push() throws EvaluationException {
 		println("(push 1)");
