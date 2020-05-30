@@ -97,7 +97,7 @@ public final class Main {
 			System.out.println("Finished parsing (" + clock.getTime() / 1000.0 + "s)");
 			return prog;
 		} catch (ParseException | FileNotFoundException e) {
-			handleException("Error while parsing!", e, true);
+			handleException("Error while parsing!", e);
 			throw new AssertionError("impossible");
 		}
 	}
@@ -112,7 +112,7 @@ public final class Main {
 			System.out.println("Finished type checking (" + clock.getTime() / 1000.0 + "s)");
 			return prog2;
 		} catch (TypeException e) {
-			handleException("Error while typechecking the program!", e, true);
+			handleException("Error while typechecking the program!", e);
 			throw new AssertionError("impossible");
 		}
 	}
@@ -127,7 +127,7 @@ public final class Main {
 			System.out.println("Finished rewriting and validating (" + clock.getTime() / 1000.0 + "s)");
 			return eval;
 		} catch (InvalidProgramException e) {
-			handleException("Error while rewriting/validation!", e, true);
+			handleException("Error while rewriting/validation!", e);
 			throw new AssertionError("impossible");
 		}
 	}
@@ -142,7 +142,7 @@ public final class Main {
 			System.out.println("Finished evaluating (total: " + clock.getTime() / 1000.0 + "s, SMT: "
 					+ Configuration.getSmtTotalTime() / 1e9 + "s)");
 		} catch (EvaluationException e) {
-			handleException("Error while evaluating the program!", e, false);
+			handleException("Error while evaluating the program!", e);
 		}
 	}
 
@@ -230,15 +230,13 @@ public final class Main {
 		}
 	}
 
-	private static void handleException(String msg, Exception e, boolean die) {
+	private static void handleException(String msg, Exception e) {
 		System.out.println(msg);
 		System.out.println(e.getMessage());
 		if (exnStackTrace) {
 			e.printStackTrace(System.out);
 		}
-		if (die) {
-			System.exit(1);
-		}
+		System.exit(1);
 	}
 
 }
