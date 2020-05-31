@@ -213,8 +213,8 @@ public class TypeChecker {
 				@Override
 				public Set<Term[]> call() throws Exception {
 					Set<Term[]> s = new HashSet<>();
+					TypeCheckerContext ctx = new TypeCheckerContext();
 					for (Term[] args : prog.getFacts(sym)) {
-						TypeCheckerContext ctx = new TypeCheckerContext();
 						s.add(ctx.typeCheckFact(sym, args));
 					}
 					return s;
@@ -765,7 +765,7 @@ public class TypeChecker {
 							+ " with a parameter that is not ground: " + param);
 				}
 			}
-			return sym.copyWithNewArgs(params);
+			return sym.copyWithNewArgs(params).makeFinal();
 		}
 
 		private final Map<FunctionSymbol, FunctionSymbol> topLevelSymbolOfNestedFunction = new HashMap<>();

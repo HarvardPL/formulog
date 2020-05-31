@@ -33,7 +33,6 @@ import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.smtPattern;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.smtWrappedVar;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.sym;
 
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -119,13 +118,14 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 				args = newArgs;
 			}
 			break;
+		default:
+			throw new AssertionError("Unexpected symbol: " + base);
 		}
-		final List<Param> args2 = new ArrayList<>(args);
-		if (args2.isEmpty()) {
-			args2.addAll(Param.wildCards(base.getNumParams()));
+		if (args.isEmpty()) {
+			args = Param.wildCards(base.getNumParams());
 		}
-		return Util.lookupOrCreate(memo, new Pair<>(base, args2),
-				() -> new ParameterizedConstructorSymbol(base, args2));
+		List<Param> args2 = Collections.unmodifiableList(new ArrayList<>(args));
+		return new ParameterizedConstructorSymbol(base, args2);
 	}
 
 	private static List<Param> expandAsFpAlias(Param param) {
@@ -145,7 +145,7 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 	public ParameterizedConstructorSymbol copyWithNewArgs(List<Param> args) {
 		return mk(getBase(), args);
 	}
-	
+
 	@Override
 	public ParameterizedConstructorSymbol copyWithNewArgs(Param... args) {
 		return copyWithNewArgs(Arrays.asList(args));
@@ -247,7 +247,7 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 		}
 		case SMT_LET: {
 			Type a = types.get(0);
-			Type b = TypeVar.fresh(); 
+			Type b = TypeVar.fresh();
 			return mkType(sym(a), smt(a), smt(b), smt(b));
 		}
 		case SMT_PAT: {
@@ -270,6 +270,12 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 
 	private static FunctorType mkType(Type... types) {
 		return new FunctorType(types);
+	}
+
+	@Override
+	public ParameterizedSymbol makeFinal() {
+		return Util.lookupOrCreate(memo, new Pair<>(getBase(), getArgs()),
+				() -> new ParameterizedConstructorSymbol(getBase(), getArgs()));
 	}
 
 }

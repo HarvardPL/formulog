@@ -32,8 +32,10 @@ public interface ParameterizedSymbol extends Symbol {
 	List<Param> getArgs();
 	
 	ParameterizedSymbol copyWithNewArgs(List<Param> args);
-	
+
 	ParameterizedSymbol copyWithNewArgs(Param... args);
+	
+	ParameterizedSymbol makeFinal();
 	
 	boolean isGround();
 	
