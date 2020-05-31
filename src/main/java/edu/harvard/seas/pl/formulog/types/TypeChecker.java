@@ -212,15 +212,9 @@ public class TypeChecker {
 
 				@Override
 				public Set<Term[]> call() throws Exception {
-					// Can use same type checker context for all, since there should be neither
-					// program variables (in a fact) or type variables (in a relation type).
-					// Addendum: there can be program variables (in type index positions),
-					// but they should be unique.
-					// XXX Not sure if this is still true, as I don't think
-					// there are index positions any more.
-					TypeCheckerContext ctx = new TypeCheckerContext();
 					Set<Term[]> s = new HashSet<>();
 					for (Term[] args : prog.getFacts(sym)) {
+						TypeCheckerContext ctx = new TypeCheckerContext();
 						s.add(ctx.typeCheckFact(sym, args));
 					}
 					return s;
