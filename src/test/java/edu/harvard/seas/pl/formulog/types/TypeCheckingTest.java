@@ -216,4 +216,9 @@ public class TypeCheckingTest {
 		test("test296_bd.flg");
 	}
 	
+	@Test
+	public void test307() {
+		test("test307_ok.flg");
+	}
+	
 }

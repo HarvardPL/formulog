@@ -1,0 +1,7 @@
+output ok
+
+(*
+  Check that negative integers are serialized correctly to SMT-LIB
+  (especially for less forgiving solvers like CVC4).
+*)
+ok :- is_sat(`#x[int] #= int_const(-1)`).

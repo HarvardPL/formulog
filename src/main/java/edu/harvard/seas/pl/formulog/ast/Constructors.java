@@ -469,7 +469,12 @@ public final class Constructors {
 
 			@Override
 			public void toSmtLib(SmtLibShim shim) {
-				shim.print(((Primitive<?>) args[0]).getVal().toString());
+				String repr = ((Primitive<?>) args[0]).getVal().toString();
+				if (repr.charAt(0) == '-') {
+					shim.print("(- " + repr.substring(1, repr.length()) + ")");
+				} else {
+					shim.print(repr);
+				}
 			}
 
 		});
