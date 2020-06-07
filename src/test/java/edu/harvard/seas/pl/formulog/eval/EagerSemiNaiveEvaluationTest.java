@@ -24,7 +24,7 @@ package edu.harvard.seas.pl.formulog.eval;
 public class EagerSemiNaiveEvaluationTest extends CommonEvaluationTest<SemiNaiveEvaluation> {
 
 	public EagerSemiNaiveEvaluationTest() {
-		super(new InterpretedSemiNaiveTester(true));
+		super(new InterpretedSemiNaiveTester(SemiNaiveEvaluation.EvalType.EAGER));
 	}
 
 }

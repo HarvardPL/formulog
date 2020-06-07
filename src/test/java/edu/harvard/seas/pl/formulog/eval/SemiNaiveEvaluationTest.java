@@ -24,7 +24,7 @@ package edu.harvard.seas.pl.formulog.eval;
 public class SemiNaiveEvaluationTest extends CommonEvaluationTest<SemiNaiveEvaluation> {
 
 	public SemiNaiveEvaluationTest() {
-		super(new InterpretedSemiNaiveTester(false));
+		super(new InterpretedSemiNaiveTester(SemiNaiveEvaluation.EvalType.NORMAL));
 	}
 
 }
