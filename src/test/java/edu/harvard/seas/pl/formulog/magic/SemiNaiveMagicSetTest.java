@@ -27,7 +27,7 @@ import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
 public class SemiNaiveMagicSetTest extends CommonMagicSetTest<SemiNaiveEvaluation> {
 
 	public SemiNaiveMagicSetTest() {
-		super(new InterpretedSemiNaiveTester(false));
+		super(new InterpretedSemiNaiveTester(SemiNaiveEvaluation.EvalType.NORMAL));
 	}
 
 }

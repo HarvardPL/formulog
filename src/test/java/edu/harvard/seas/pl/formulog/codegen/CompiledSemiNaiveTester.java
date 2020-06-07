@@ -52,7 +52,7 @@ public class CompiledSemiNaiveTester extends AbstractTester<SemiNaiveEvaluation>
 	
 	@Override
 	protected SemiNaiveEvaluation setup(WellTypedProgram prog) throws InvalidProgramException, EvaluationException {
-		return SemiNaiveEvaluation.setup(prog, 2, false);
+		return SemiNaiveEvaluation.setup(prog, 2, SemiNaiveEvaluation.EvalType.NORMAL);
 	}
 
 	@Override

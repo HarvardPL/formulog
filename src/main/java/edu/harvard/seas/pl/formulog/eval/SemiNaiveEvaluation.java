@@ -77,6 +77,13 @@ import edu.harvard.seas.pl.formulog.validating.ast.SimpleRule;
 
 public class SemiNaiveEvaluation implements Evaluation {
 
+	public enum EvalType {
+		NORMAL,
+		EAGER,
+		INFLATIONARY,
+		SEMI_INFLATIONARY
+	}
+
 	private final SortedIndexedFactDb db;
 	private final SortedIndexedFactDb deltaDb;
 	private final SortedIndexedFactDb nextDeltaDb;
@@ -86,13 +93,13 @@ public class SemiNaiveEvaluation implements Evaluation {
 	private final Set<RelationSymbol> trackedRelations;
 	private final WellTypedProgram inputProgram;
 	private final Map<RelationSymbol, Set<IndexedRule>> rules;
-	private final boolean eagerEval;
+	private final EvalType evalType;
 
 	static final boolean sequential = System.getProperty("sequential") != null;
 	static final boolean debugRounds = Configuration.debugRounds;
 
 	@SuppressWarnings("serial")
-	public static SemiNaiveEvaluation setup(WellTypedProgram prog, int parallelism, boolean eagerEval)
+	public static SemiNaiveEvaluation setup(WellTypedProgram prog, int parallelism, EvalType evalType)
 			throws InvalidProgramException {
 		FunctionDefValidation.validate(prog);
 		MagicSetTransformer mst = new MagicSetTransformer(prog);
@@ -115,9 +122,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 				Set<IndexedRule> rs = new HashSet<>();
 				for (BasicRule br : magicProg.getRules(sym)) {
 					for (SemiNaiveRule snr : SemiNaiveRule.make(br, stratumSymbols)) {
-						BiFunction<ComplexLiteral, Set<Var>, Integer> score = chooseScoringFunction(eagerEval);
-						ValidRule vr = ValidRule.make(tweakRule(snr, eagerEval), score);
-						checkRule(vr, eagerEval);
+						BiFunction<ComplexLiteral, Set<Var>, Integer> score = chooseScoringFunction(evalType);
+						ValidRule vr = ValidRule.make(tweakRule(snr, evalType), score);
+						checkRule(vr, evalType);
 						predFuncs.preprocess(vr);
 						SimpleRule sr = SimpleRule.make(vr);
 						IndexedRule ir = IndexedRule.make(sr, p -> {
@@ -181,12 +188,12 @@ public class SemiNaiveEvaluation implements Evaluation {
 			throw new InvalidProgramException(exec.getFailureCause());
 		}
 		return new SemiNaiveEvaluation(prog, db, deltaDbb, rules, magicProg.getQuery(), strata, exec,
-				getTrackedRelations(magicProg.getSymbolManager()), eagerEval);
+				getTrackedRelations(magicProg.getSymbolManager()), evalType);
 	}
 
 	private static Rule<UserPredicate, ComplexLiteral> tweakRule(Rule<UserPredicate, ComplexLiteral> r,
-			boolean eagerEval) {
-		if (!eagerEval) {
+			EvalType evalType) {
+		if (!(evalType == EvalType.EAGER)) {
 			return r;
 		}
 		List<ComplexLiteral> newBody = new ArrayList<>();
@@ -226,8 +233,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 		return BasicRule.make(r.getHead(), newBody);
 	}
 
-	private static void checkRule(ValidRule r, boolean eagerEval) throws InvalidProgramException {
-		if (!eagerEval) {
+	private static void checkRule(ValidRule r, EvalType evalType) throws InvalidProgramException {
+		if (!(evalType == EvalType.EAGER)) {
 			return;
 		}
 		boolean seenUserPred = false;
@@ -312,8 +319,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 		return s;
 	}
 
-	static BiFunction<ComplexLiteral, Set<Var>, Integer> chooseScoringFunction(boolean eagerEval) {
-		if (eagerEval) {
+	static BiFunction<ComplexLiteral, Set<Var>, Integer> chooseScoringFunction(EvalType evalType) {
+		if (evalType == EvalType.EAGER) {
 			return SemiNaiveEvaluation::score4;
 		}
 		switch (Configuration.optimizationSetting) {
@@ -453,7 +460,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 	SemiNaiveEvaluation(WellTypedProgram inputProgram, SortedIndexedFactDb db,
 			IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb, Map<RelationSymbol, Set<IndexedRule>> rules,
 			UserPredicate query, List<Stratum> strata, CountingFJP exec, Set<RelationSymbol> trackedRelations,
-			boolean eagerEval) {
+			EvalType evalType) {
 		this.inputProgram = inputProgram;
 		this.db = db;
 		this.query = query;
@@ -463,7 +470,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		this.deltaDb = deltaDbb.build();
 		this.nextDeltaDb = deltaDbb.build();
 		this.rules = rules;
-		this.eagerEval = eagerEval;
+		this.evalType = evalType;
 	}
 
 	@Override
@@ -507,7 +514,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		for (RelationSymbol sym : stratum.getPredicateSyms()) {
 			l.addAll(rules.get(sym));
 		}
-		if (eagerEval) {
+		if (evalType == EvalType.EAGER) {
 			new EagerStratumEvaluator(stratum.getRank(), db, l, exec, trackedRelations).evaluate();
 		} else {
 			new RoundBasedStratumEvaluator(stratum.getRank(), db, deltaDb, nextDeltaDb, l, exec, trackedRelations)

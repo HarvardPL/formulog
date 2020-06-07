@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDb;
+import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
 import edu.harvard.seas.pl.formulog.smt.CheckSatAssumingSolver;
 import edu.harvard.seas.pl.formulog.smt.PushPopSolver;
 import edu.harvard.seas.pl.formulog.smt.SmtLibSolver;
@@ -172,7 +173,8 @@ public final class Configuration {
 
 	public static final boolean inlineInRules = propIsSet("inlineInRules", true);
 
-	public static final boolean eagerSemiNaive = propIsSet("eagerSemiNaive");
+	public static final SemiNaiveEvaluation.EvalType eagerSemiNaive =
+			propIsSet("eagerSemiNaive") ? SemiNaiveEvaluation.EvalType.EAGER : SemiNaiveEvaluation.EvalType.NORMAL;
 
 	static {
 		if (recordFuncDiagnostics) {
