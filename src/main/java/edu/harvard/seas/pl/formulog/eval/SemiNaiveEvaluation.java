@@ -114,7 +114,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		Map<RelationSymbol, Set<IndexedRule>> rules = new HashMap<>();
 		List<Stratum> strata = new Stratifier(magicProg, evalType).stratify();
 		for (Stratum stratum : strata) {
-			if (stratum.hasRecursiveNegationOrAggregation()) {
+			if (stratum.hasRecursiveNegationOrAggregation() && !(evalType == EvalType.SEMI_INFLATIONARY)) {
 				throw new InvalidProgramException("Cannot handle recursive negation or aggregation: " + stratum);
 			}
 			Set<RelationSymbol> stratumSymbols = stratum.getPredicateSyms();
