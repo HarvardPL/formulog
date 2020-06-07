@@ -51,6 +51,7 @@ import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
+import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
 import edu.harvard.seas.pl.formulog.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.functions.UserFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
@@ -651,7 +652,7 @@ public class MagicSetTransformer {
 
 	private boolean isStratified(BasicProgram p) {
 		try {
-			Stratifier stratifier = new Stratifier(p);
+			Stratifier stratifier = new Stratifier(p, SemiNaiveEvaluation.EvalType.NORMAL);
 			for (Stratum s : stratifier.stratify()) {
 				if (s.hasRecursiveNegationOrAggregation()) {
 					return false;
