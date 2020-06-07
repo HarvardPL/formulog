@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
 import org.jgrapht.Graph;
 import org.jgrapht.alg.connectivity.KosarajuStrongConnectivityInspector;
 import org.jgrapht.alg.interfaces.StrongConnectivityAlgorithm;
@@ -63,9 +64,11 @@ import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 public class Stratifier {
 
 	private final Program<UserPredicate, BasicRule> prog;
+	private final SemiNaiveEvaluation.EvalType evalType;
 
-	public Stratifier(Program<UserPredicate, BasicRule> prog) {
+	public Stratifier(Program<UserPredicate, BasicRule> prog, SemiNaiveEvaluation.EvalType evalType) {
 		this.prog = prog;
+		this.evalType = evalType;
 	}
 
 	public List<Stratum> stratify() throws InvalidProgramException {
@@ -88,33 +91,40 @@ public class Stratifier {
 				}
 			}
 		}
-		StrongConnectivityAlgorithm<RelationSymbol, DependencyTypeWrapper> k = new KosarajuStrongConnectivityInspector<>(
-				g);
-		Graph<Graph<RelationSymbol, DependencyTypeWrapper>, DefaultEdge> condensation = k.getCondensation();
-		TopologicalOrderIterator<Graph<RelationSymbol, DependencyTypeWrapper>, DefaultEdge> topo = new TopologicalOrderIterator<>(
-				condensation);
+
 		List<Stratum> strata = new ArrayList<>();
 		int rank = 0;
-		while (topo.hasNext()) {
-			boolean hasRecursiveNegationOrAggregation = false;
-			Graph<RelationSymbol, DependencyTypeWrapper> component = topo.next();
-			Set<RelationSymbol> edbs = component.vertexSet().stream().filter(r -> r.isEdbSymbol())
-					.collect(Collectors.toSet());
-			if (!edbs.isEmpty()) {
-				if (!component.edgeSet().isEmpty()) {
-					throw new InvalidProgramException("EDB relations cannot have dependencies: " + edbs);
+		boolean hasRecursiveNegationOrAggregation = false;
+
+		if (evalType == SemiNaiveEvaluation.EvalType.INFLATIONARY) {
+			strata.add(new Stratum(rank, g.vertexSet(), hasRecursiveNegationOrAggregation));
+		}
+		else {
+			StrongConnectivityAlgorithm<RelationSymbol, DependencyTypeWrapper> k = new KosarajuStrongConnectivityInspector<>(
+					g);
+			Graph<Graph<RelationSymbol, DependencyTypeWrapper>, DefaultEdge> condensation = k.getCondensation();
+			TopologicalOrderIterator<Graph<RelationSymbol, DependencyTypeWrapper>, DefaultEdge> topo = new TopologicalOrderIterator<>(
+					condensation);
+			while (topo.hasNext()) {
+				Graph<RelationSymbol, DependencyTypeWrapper> component = topo.next();
+				Set<RelationSymbol> edbs = component.vertexSet().stream().filter(r -> r.isEdbSymbol())
+						.collect(Collectors.toSet());
+				if (!edbs.isEmpty()) {
+					if (!component.edgeSet().isEmpty()) {
+						throw new InvalidProgramException("EDB relations cannot have dependencies: " + edbs);
+					}
+					continue;
 				}
-				continue;
-			}
-			for (DependencyTypeWrapper dw : component.edgeSet()) {
-				DependencyType d = dw.get();
-				if (d.equals(DependencyType.NEG_OR_AGG_IN_FUN)) {
-					throw new InvalidProgramException("Not stratified...");
+				for (DependencyTypeWrapper dw : component.edgeSet()) {
+					DependencyType d = dw.get();
+					if (d.equals(DependencyType.NEG_OR_AGG_IN_FUN)) {
+						throw new InvalidProgramException("Not stratified...");
+					}
+					hasRecursiveNegationOrAggregation |= d.equals(DependencyType.NEG_OR_AGG_IN_REL);
 				}
-				hasRecursiveNegationOrAggregation |= d.equals(DependencyType.NEG_OR_AGG_IN_REL);
+				strata.add(new Stratum(rank, component.vertexSet(), hasRecursiveNegationOrAggregation));
+				rank++;
 			}
-			strata.add(new Stratum(rank, component.vertexSet(), hasRecursiveNegationOrAggregation));
-			rank++;
 		}
 		return strata;
 	}
