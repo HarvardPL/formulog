@@ -30,7 +30,7 @@ public class SemiNaiveValidatingTest extends ValidatingTest {
 
 	@Override
 	protected Evaluation setup(WellTypedProgram prog) throws InvalidProgramException, EvaluationException {
-		return SemiNaiveEvaluation.setup(prog, 2, false);
+		return SemiNaiveEvaluation.setup(prog, 2, SemiNaiveEvaluation.EvalType.NORMAL);
 	}
 
 }
