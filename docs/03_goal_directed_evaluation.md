@@ -17,11 +17,11 @@ bottom-up, since there are unbound variables (in the head of the rules):
 
 ```
 output member(i32, i32 list)
-member(X, X :: Xs).
-member(X, _ :: Xs) :- member(X, Xs).
+member(X, X :: _Xs).
+member(X, _Y :: Xs) :- member(X, Xs).
 ```
 
-However, when we add the query `:- member(X, [1, 2, 3]).`, the program is
+However, when we add the query `:- member(_X, [1, 2, 3]).`, the program is
 rewritten to a valid program that can be evaluated bottom-up:
 
 ```
