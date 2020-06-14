@@ -72,34 +72,33 @@ public class Stratifier {
 	}
 
 	public List<Stratum> stratify() throws InvalidProgramException {
-		Graph<RelationSymbol, DependencyTypeWrapper> g = new DefaultDirectedGraph<>(DependencyTypeWrapper.class);
-		for (RelationSymbol sym : prog.getRuleSymbols()) {
-			for (BasicRule r : prog.getRules(sym)) {
-				DependencyFinder depends = new DependencyFinder();
-				for (ComplexLiteral bd : r) {
-					depends.processAtom(bd);
-				}
-				UserPredicate hd = r.getHead();
-				for (Term t : hd.getArgs()) {
-					depends.processTerm(t);
-				}
-				RelationSymbol hdSym = hd.getSymbol();
-				g.addVertex(hdSym);
-				for (RelationSymbol bdSym : depends) {
-					g.addVertex(bdSym);
-					g.addEdge(bdSym, hdSym, new DependencyTypeWrapper(depends.getDependencyType(bdSym)));
-				}
-			}
-		}
-
 		List<Stratum> strata = new ArrayList<>();
 		int rank = 0;
 		boolean hasRecursiveNegationOrAggregation = false;
 
 		if (evalType == SemiNaiveEvaluation.EvalType.INFLATIONARY) {
-			strata.add(new Stratum(rank, g.vertexSet(), hasRecursiveNegationOrAggregation));
-		}
-		else {
+			strata.add(new Stratum(rank, prog.getRuleSymbols(), hasRecursiveNegationOrAggregation));
+		} else {
+			Graph<RelationSymbol, DependencyTypeWrapper> g = new DefaultDirectedGraph<>(DependencyTypeWrapper.class);
+			for (RelationSymbol sym : prog.getRuleSymbols()) {
+				for (BasicRule r : prog.getRules(sym)) {
+					DependencyFinder depends = new DependencyFinder();
+					for (ComplexLiteral bd : r) {
+						depends.processAtom(bd);
+					}
+					UserPredicate hd = r.getHead();
+					for (Term t : hd.getArgs()) {
+						depends.processTerm(t);
+					}
+					RelationSymbol hdSym = hd.getSymbol();
+					g.addVertex(hdSym);
+					for (RelationSymbol bdSym : depends) {
+						g.addVertex(bdSym);
+						g.addEdge(bdSym, hdSym, new DependencyTypeWrapper(depends.getDependencyType(bdSym)));
+					}
+				}
+			}
+
 			StrongConnectivityAlgorithm<RelationSymbol, DependencyTypeWrapper> k = new KosarajuStrongConnectivityInspector<>(
 					g);
 			Graph<Graph<RelationSymbol, DependencyTypeWrapper>, DefaultEdge> condensation = k.getCondensation();
