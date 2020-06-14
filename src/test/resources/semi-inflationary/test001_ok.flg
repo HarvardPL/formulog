@@ -1,0 +1,10 @@
+input r.
+output q.
+output p.
+output ok.
+
+p :- q.
+q :- r.
+r.
+
+ok :- p, q, r.
