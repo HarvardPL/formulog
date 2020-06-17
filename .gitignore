@@ -37,3 +37,6 @@ target/
 # backup files
 *~
 .DS_Store
+
+# Formulog stuff
+codegen/
