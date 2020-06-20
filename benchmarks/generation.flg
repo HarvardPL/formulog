@@ -1,0 +1,11 @@
+input parent(string, string)
+parent("d", "b"). parent("e", "b"). parent("f","c").
+parent("g", "c"). parent("b", "a"). parent("c","a").
+
+output person(string)
+person(X) :- parent(X, _).
+person(X) :- parent(_, X).
+
+output same_generation(string, string)
+same_generation(X, X) :- person(X).
+same_generation(X, Y) :- parent(X, P), parent(Y, Q), same_generation(P, Q).
