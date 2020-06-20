@@ -13,6 +13,30 @@ Dependencies:
 You can find a prepackaged JAR file in the Releases section of the GitHub
 repository.
 
+### Docker
+
+Prebuilt images are available at https://hub.docker.com/r/ekzhang/formulog. If
+you have Docker installed, you can spin up a container with Formulog and all
+codegen dependencies by running the command
+
+```bash
+docker run -it ekzhang/formulog 
+```
+
+Once inside the container, to compile and execute a sample program, you can run
+the commands
+
+```bash
+java -DcodeGen -DminIndex=false -jar formulog.jar benchmarks/fibonacci.flg
+cd codegen
+./compile.sh && ./flg
+```
+
+You also can build the latest image for Formulog by running
+`docker build -t formulog .`. For development, run `docker-compose run dev`,
+which will launch a container with the project root directory bound to
+`/home/formulog/dev`.
+
 ### Building from source
 
 Dependencies:
