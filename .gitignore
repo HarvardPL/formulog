@@ -28,6 +28,9 @@ target/
 .settings/
 .metadata/
 
+# VSCode stuff
+.vscode/
+
 # Vim swap files
 *.swp
 
