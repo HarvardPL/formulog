@@ -122,7 +122,7 @@ public final class Main {
 		clock.reset();
 		clock.start();
 		try {
-			Evaluation eval = SemiNaiveEvaluation.setup(prog, Configuration.parallelism, Configuration.eagerSemiNaive);
+			Evaluation eval = SemiNaiveEvaluation.setup(prog, Configuration.parallelism, Configuration.evalType);
 			clock.stop();
 			System.out.println("Finished rewriting and validating (" + clock.getTime() / 1000.0 + "s)");
 			return eval;
