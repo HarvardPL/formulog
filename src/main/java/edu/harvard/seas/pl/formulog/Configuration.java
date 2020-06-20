@@ -173,8 +173,29 @@ public final class Configuration {
 
 	public static final boolean inlineInRules = propIsSet("inlineInRules", true);
 
-	public static final SemiNaiveEvaluation.EvalType eagerSemiNaive =
-			propIsSet("eagerSemiNaive") ? SemiNaiveEvaluation.EvalType.EAGER : SemiNaiveEvaluation.EvalType.NORMAL;
+//	public static final SemiNaiveEvaluation.EvalType eagerSemiNaive =
+//			propIsSet("eagerSemiNaive") ? SemiNaiveEvaluation.EvalType.EAGER : SemiNaiveEvaluation.EvalType.NORMAL;
+
+	public static final SemiNaiveEvaluation.EvalType evalType = getEvalType();
+
+	private static SemiNaiveEvaluation.EvalType getEvalType() {
+		String val = System.getProperty("evalType");
+		if (val == null) {
+			val = "normal";
+		}
+
+		switch (val) {
+			case "normal":
+				return SemiNaiveEvaluation.EvalType.NORMAL;
+			case "eager":
+				return SemiNaiveEvaluation.EvalType.EAGER;
+			case "inflationary":
+				return SemiNaiveEvaluation.EvalType.INFLATIONARY;
+			case "semiInflationary":
+				return SemiNaiveEvaluation.EvalType.SEMI_INFLATIONARY;
+		}
+		throw new IllegalArgumentException("Unrecognized evaluation type: " + val);
+	}
 
 	static {
 		if (recordFuncDiagnostics) {
