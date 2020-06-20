@@ -22,13 +22,16 @@ package edu.harvard.seas.pl.formulog.eval;
 
 import org.junit.Test;
 
-public class SemiInflationaryEvaluationTest<T extends Evaluation> extends AbstractEvaluationTest<T> {
+public class SemiInflationaryEvaluationTest extends AbstractEvaluationTest {
 
     public SemiInflationaryEvaluationTest() {
-        super((Tester<T>) new InterpretedSemiNaiveTester(SemiNaiveEvaluation.EvalType.SEMI_INFLATIONARY));
+        super(new InterpretedSemiNaiveTester(SemiNaiveEvaluation.EvalType.SEMI_INFLATIONARY));
     }
 
     @Test
     public void test001() { test("semi-inflationary/test001_ok.flg"); }
+
+    @Test
+    public void test002() { test("semi-inflationary/test002_ok.flg"); }
 
 }
