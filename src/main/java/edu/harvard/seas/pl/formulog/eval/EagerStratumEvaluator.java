@@ -64,7 +64,7 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 
 	@Override
 	public void evaluate() throws EvaluationException {
-		for (IndexedRule r : firstRoundRules) {
+		for (IndexedRule r : noDeltaRules) {
 			exec.externallyAddTask(new RulePrefixEvaluator(r, null));
 		}
 		exec.blockUntilFinished();
@@ -79,7 +79,7 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 			newArgs[i] = args[i].normalize(s);
 		}
 		if (db.add(sym, newArgs)) {
-			Set<IndexedRule> rs = laterRoundRules.get(sym);
+			Set<IndexedRule> rs = deltaRules.get(sym);
 			if (rs != null) {
 				for (IndexedRule r : rs) {
 					exec.recursivelyAddTask(new RulePrefixEvaluator(r, newArgs));

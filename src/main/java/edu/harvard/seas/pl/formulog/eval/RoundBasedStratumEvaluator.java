@@ -77,7 +77,7 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 		this.nextDeltaDb.clear();
 		int round = 0;
 		StopWatch watch = recordRoundStart(round);
-		for (IndexedRule r : firstRoundRules) {
+		for (IndexedRule r : noDeltaRules) {
 			exec.externallyAddTask(new RulePrefixEvaluator(r));
 		}
 		exec.blockUntilFinished();
@@ -90,9 +90,9 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 			round++;
 			watch = recordRoundStart(round);
 			changed = false;
-			for (RelationSymbol delta : laterRoundRules.keySet()) {
+			for (RelationSymbol delta : deltaRules.keySet()) {
 				if (!deltaDb.isEmpty(delta)) {
-					for (IndexedRule r : laterRoundRules.get(delta)) {
+					for (IndexedRule r : deltaRules.get(delta)) {
 						exec.externallyAddTask(new RulePrefixEvaluator(r));
 					}
 				}
