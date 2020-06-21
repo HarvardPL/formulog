@@ -54,6 +54,7 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 	SortedIndexedFactDb nextDeltaDb;
 	final CountingFJP exec;
 	final Set<RelationSymbol> trackedRelations;
+	final boolean distinguishNoDeltaAndDeltaRules;
 	volatile boolean changed;
 
 	static final int taskSize = Configuration.taskSize;
@@ -61,7 +62,7 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 
 	public RoundBasedStratumEvaluator(int stratumNum, SortedIndexedFactDb db,
 			SortedIndexedFactDb deltaDb, SortedIndexedFactDb nextDeltaDb, Iterable<IndexedRule> rules, CountingFJP exec,
-			Set<RelationSymbol> trackedRelations) {
+			Set<RelationSymbol> trackedRelations, boolean distinguishNoDeltaAndDeltaRules) {
 		super(rules);
 		this.stratumNum = stratumNum;
 		this.db = db;
@@ -69,6 +70,7 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 		this.nextDeltaDb = nextDeltaDb;
 		this.exec = exec;
 		this.trackedRelations = trackedRelations;
+		this.distinguishNoDeltaAndDeltaRules = distinguishNoDeltaAndDeltaRules;
 	}
 
 	@Override

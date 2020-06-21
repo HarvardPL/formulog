@@ -64,66 +64,58 @@ import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 public class Stratifier {
 
 	private final Program<UserPredicate, BasicRule> prog;
-	private final SemiNaiveEvaluation.EvalType evalType;
 
-	public Stratifier(Program<UserPredicate, BasicRule> prog, SemiNaiveEvaluation.EvalType evalType) {
+	public Stratifier(Program<UserPredicate, BasicRule> prog) {
 		this.prog = prog;
-		this.evalType = evalType;
 	}
 
 	public List<Stratum> stratify() throws InvalidProgramException {
+		Graph<RelationSymbol, DependencyTypeWrapper> g = new DefaultDirectedGraph<>(DependencyTypeWrapper.class);
+		for (RelationSymbol sym : prog.getRuleSymbols()) {
+			for (BasicRule r : prog.getRules(sym)) {
+				DependencyFinder depends = new DependencyFinder();
+				for (ComplexLiteral bd : r) {
+					depends.processAtom(bd);
+				}
+				UserPredicate hd = r.getHead();
+				for (Term t : hd.getArgs()) {
+					depends.processTerm(t);
+				}
+				RelationSymbol hdSym = hd.getSymbol();
+				g.addVertex(hdSym);
+				for (RelationSymbol bdSym : depends) {
+					g.addVertex(bdSym);
+					g.addEdge(bdSym, hdSym, new DependencyTypeWrapper(depends.getDependencyType(bdSym)));
+				}
+			}
+		}
+		StrongConnectivityAlgorithm<RelationSymbol, DependencyTypeWrapper> k = new KosarajuStrongConnectivityInspector<>(
+				g);
+		Graph<Graph<RelationSymbol, DependencyTypeWrapper>, DefaultEdge> condensation = k.getCondensation();
+		TopologicalOrderIterator<Graph<RelationSymbol, DependencyTypeWrapper>, DefaultEdge> topo = new TopologicalOrderIterator<>(
+				condensation);
 		List<Stratum> strata = new ArrayList<>();
 		int rank = 0;
-		boolean hasRecursiveNegationOrAggregation = false;
-
-		if (evalType == SemiNaiveEvaluation.EvalType.INFLATIONARY) {
-			strata.add(new Stratum(rank, prog.getRuleSymbols(), hasRecursiveNegationOrAggregation));
-		} else {
-			Graph<RelationSymbol, DependencyTypeWrapper> g = new DefaultDirectedGraph<>(DependencyTypeWrapper.class);
-			for (RelationSymbol sym : prog.getRuleSymbols()) {
-				for (BasicRule r : prog.getRules(sym)) {
-					DependencyFinder depends = new DependencyFinder();
-					for (ComplexLiteral bd : r) {
-						depends.processAtom(bd);
-					}
-					UserPredicate hd = r.getHead();
-					for (Term t : hd.getArgs()) {
-						depends.processTerm(t);
-					}
-					RelationSymbol hdSym = hd.getSymbol();
-					g.addVertex(hdSym);
-					for (RelationSymbol bdSym : depends) {
-						g.addVertex(bdSym);
-						g.addEdge(bdSym, hdSym, new DependencyTypeWrapper(depends.getDependencyType(bdSym)));
-					}
+		while (topo.hasNext()) {
+			boolean hasRecursiveNegationOrAggregation = false;
+			Graph<RelationSymbol, DependencyTypeWrapper> component = topo.next();
+			Set<RelationSymbol> edbs = component.vertexSet().stream().filter(r -> r.isEdbSymbol())
+					.collect(Collectors.toSet());
+			if (!edbs.isEmpty()) {
+				if (!component.edgeSet().isEmpty()) {
+					throw new InvalidProgramException("EDB relations cannot have dependencies: " + edbs);
 				}
+				continue;
 			}
-
-			StrongConnectivityAlgorithm<RelationSymbol, DependencyTypeWrapper> k = new KosarajuStrongConnectivityInspector<>(
-					g);
-			Graph<Graph<RelationSymbol, DependencyTypeWrapper>, DefaultEdge> condensation = k.getCondensation();
-			TopologicalOrderIterator<Graph<RelationSymbol, DependencyTypeWrapper>, DefaultEdge> topo = new TopologicalOrderIterator<>(
-					condensation);
-			while (topo.hasNext()) {
-				Graph<RelationSymbol, DependencyTypeWrapper> component = topo.next();
-				Set<RelationSymbol> edbs = component.vertexSet().stream().filter(r -> r.isEdbSymbol())
-						.collect(Collectors.toSet());
-				if (!edbs.isEmpty()) {
-					if (!component.edgeSet().isEmpty()) {
-						throw new InvalidProgramException("EDB relations cannot have dependencies: " + edbs);
-					}
-					continue;
+			for (DependencyTypeWrapper dw : component.edgeSet()) {
+				DependencyType d = dw.get();
+				if (d.equals(DependencyType.NEG_OR_AGG_IN_FUN)) {
+					throw new InvalidProgramException("Not stratified...");
 				}
-				for (DependencyTypeWrapper dw : component.edgeSet()) {
-					DependencyType d = dw.get();
-					if (d.equals(DependencyType.NEG_OR_AGG_IN_FUN)) {
-						throw new InvalidProgramException("Not stratified...");
-					}
-					hasRecursiveNegationOrAggregation |= d.equals(DependencyType.NEG_OR_AGG_IN_REL);
-				}
-				strata.add(new Stratum(rank, component.vertexSet(), hasRecursiveNegationOrAggregation));
-				rank++;
+				hasRecursiveNegationOrAggregation |= d.equals(DependencyType.NEG_OR_AGG_IN_REL);
 			}
+			strata.add(new Stratum(rank, component.vertexSet(), hasRecursiveNegationOrAggregation));
+			rank++;
 		}
 		return strata;
 	}
