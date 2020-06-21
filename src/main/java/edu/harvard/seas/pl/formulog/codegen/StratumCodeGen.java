@@ -44,19 +44,19 @@ public class StratumCodeGen {
 		List<CppStmt> stmts = new ArrayList<>();
 		stmts.add(CppDecl.mk("changed", CppConst.mkFalse()));
 		RuleCodeGen rcg = new RuleCodeGen(ctx);
-		List<IndexedRule> firstRoundRules = new ArrayList<>();
-		List<IndexedRule> laterRoundRules = new ArrayList<>();
+		List<IndexedRule> noDeltaRules = new ArrayList<>();
+		List<IndexedRule> deltaRules = new ArrayList<>();
 		for (RelationSymbol sym : stratum.getPredicateSyms()) {
 			for (IndexedRule r : ctx.getEval().getRules(sym)) {
 				if (EvalUtil.findDelta(r) != null) {
-					laterRoundRules.add(r);
+					deltaRules.add(r);
 				} else {
-					firstRoundRules.add(r);
+					noDeltaRules.add(r);
 				}
 			}
 		}
-		stmts.add(genFirstRound(stratum, firstRoundRules, rcg));
-		stmts.add(genLoop(stratum, laterRoundRules, rcg));
+		stmts.add(genFirstRound(stratum, noDeltaRules, rcg));
+		stmts.add(genLoop(stratum, deltaRules, rcg));
 		return CppSeq.mk(stmts);
 	}
 

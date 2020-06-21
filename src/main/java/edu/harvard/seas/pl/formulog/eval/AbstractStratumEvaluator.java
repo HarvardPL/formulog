@@ -33,8 +33,8 @@ import edu.harvard.seas.pl.formulog.validating.ast.SimplePredicate;
 
 public abstract class AbstractStratumEvaluator implements StratumEvaluator {
 
-	final Set<IndexedRule> firstRoundRules = new HashSet<>();
-	final Map<RelationSymbol, Set<IndexedRule>> laterRoundRules = new HashMap<>();
+	final Set<IndexedRule> noDeltaRules = new HashSet<>();
+	final Map<RelationSymbol, Set<IndexedRule>> deltaRules = new HashMap<>();
 	final Map<IndexedRule, boolean[]> splitPositions = new HashMap<>();
 	
 	public AbstractStratumEvaluator(Iterable<IndexedRule> rules) {
@@ -46,9 +46,9 @@ public abstract class AbstractStratumEvaluator implements StratumEvaluator {
 		for (IndexedRule rule : rules) {
 			RelationSymbol delta = EvalUtil.findDelta(rule);
 			if (delta != null) {
-				Util.lookupOrCreate(laterRoundRules, delta, () -> new HashSet<>()).add(rule);
+				Util.lookupOrCreate(deltaRules, delta, () -> new HashSet<>()).add(rule);
 			} else {
-				firstRoundRules.add(rule);
+				noDeltaRules.add(rule);
 			}
 			boolean[] positions = findSplitPositions(rule, scf);
 			splitPositions.put(rule, positions);
