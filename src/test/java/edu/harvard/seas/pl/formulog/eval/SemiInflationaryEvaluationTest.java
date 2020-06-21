@@ -34,4 +34,10 @@ public class SemiInflationaryEvaluationTest extends AbstractEvaluationTest {
     @Test
     public void test002() { test("semi-inflationary/test002_ok.flg"); }
 
+    @Test
+    public void test003() { test("semi-inflationary/test003_ok.flg"); }
+
+    @Test
+    public void test004() { test("semi-inflationary/test004_ok.flg"); }
+
 }
