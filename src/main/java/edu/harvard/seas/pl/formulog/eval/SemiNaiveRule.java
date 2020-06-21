@@ -46,7 +46,7 @@ public class SemiNaiveRule extends AbstractRule<UserPredicate, ComplexLiteral> {
 	public static Set<SemiNaiveRule> make(Rule<UserPredicate, ComplexLiteral> rule, Set<RelationSymbol> stratumSymbols) {
 		Set<SemiNaiveRule> rules = new HashSet<>();
 		for (int i = 0; i < rule.getBodySize(); ++i) {
-			boolean canBeDelta = rule.getBody(i).accept(new ComplexLiteralVisitor<Void, Boolean>() {
+			boolean canBeDelta = rule.getBody(i).isNegated() ? false : rule.getBody(i).accept(new ComplexLiteralVisitor<Void, Boolean>() {
 
 				@Override
 				public Boolean visit(UnificationPredicate unificationPredicate, Void input) {
