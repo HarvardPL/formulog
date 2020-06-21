@@ -48,6 +48,7 @@ import edu.harvard.seas.pl.formulog.validating.ast.SimplePredicate;
 
 public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 
+	Iterable<IndexedRule> rules;
 	final int stratumNum;
 	final SortedIndexedFactDb db;
 	SortedIndexedFactDb deltaDb;
@@ -64,6 +65,7 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 			SortedIndexedFactDb deltaDb, SortedIndexedFactDb nextDeltaDb, Iterable<IndexedRule> rules, CountingFJP exec,
 			Set<RelationSymbol> trackedRelations, boolean distinguishNoDeltaAndDeltaRules) {
 		super(rules);
+		this.rules = rules;
 		this.stratumNum = stratumNum;
 		this.db = db;
 		this.deltaDb = deltaDb;
@@ -79,25 +81,11 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 		this.nextDeltaDb.clear();
 		int round = 0;
 		StopWatch watch = recordRoundStart(round);
-		for (IndexedRule r : noDeltaRules) {
-			exec.externallyAddTask(new RulePrefixEvaluator(r));
-		}
-		exec.blockUntilFinished();
-		if (exec.hasFailed()) {
-			throw exec.getFailureCause();
-		}
-		recordRoundEnd(round, watch);
-		updateDbs();
-		while (changed) {
-			round++;
-			watch = recordRoundStart(round);
-			changed = false;
-			for (RelationSymbol delta : deltaRules.keySet()) {
-				if (!deltaDb.isEmpty(delta)) {
-					for (IndexedRule r : deltaRules.get(delta)) {
-						exec.externallyAddTask(new RulePrefixEvaluator(r));
-					}
-				}
+
+		// For inflationary evaluation only - don't distinguish between noDeltaRules and deltaRules
+		if (!distinguishNoDeltaAndDeltaRules) {
+			for (IndexedRule r : rules) {
+				exec.externallyAddTask(new RulePrefixEvaluator(r));
 			}
 			exec.blockUntilFinished();
 			if (exec.hasFailed()) {
@@ -105,6 +93,48 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 			}
 			recordRoundEnd(round, watch);
 			updateDbs();
+			while (changed) {
+				round++;
+				watch = recordRoundStart(round);
+				changed = false;
+				for (IndexedRule r : rules) {
+					exec.externallyAddTask(new RulePrefixEvaluator(r));
+				}
+				exec.blockUntilFinished();
+				if (exec.hasFailed()) {
+					throw exec.getFailureCause();
+				}
+				recordRoundEnd(round, watch);
+				updateDbs();
+			}
+		} else {
+			for (IndexedRule r : noDeltaRules) {
+				exec.externallyAddTask(new RulePrefixEvaluator(r));
+			}
+			exec.blockUntilFinished();
+			if (exec.hasFailed()) {
+				throw exec.getFailureCause();
+			}
+			recordRoundEnd(round, watch);
+			updateDbs();
+			while (changed) {
+				round++;
+				watch = recordRoundStart(round);
+				changed = false;
+				for (RelationSymbol delta : deltaRules.keySet()) {
+					if (!deltaDb.isEmpty(delta)) {
+						for (IndexedRule r : deltaRules.get(delta)) {
+							exec.externallyAddTask(new RulePrefixEvaluator(r));
+						}
+					}
+				}
+				exec.blockUntilFinished();
+				if (exec.hasFailed()) {
+					throw exec.getFailureCause();
+				}
+				recordRoundEnd(round, watch);
+				updateDbs();
+			}
 		}
 	}
 
