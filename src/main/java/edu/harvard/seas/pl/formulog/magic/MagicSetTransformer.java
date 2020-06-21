@@ -123,7 +123,7 @@ public class MagicSetTransformer {
 			BasicRule queryRule = makeQueryRule(adornedQuery);
 			UserPredicate newQuery = queryRule.getHead();
 			BasicProgram magicProg = new ProgramImpl(magicRules, newQuery);
-			if (restoreStratification && !isStratified(magicProg)) {
+			if (restoreStratification && !isStratified(magicProg) && isStratified((BasicProgram) origProg)) {
 				magicProg = stratify(magicProg, Pair.map(adRules, (rule, num) -> rule));
 			}
 			((ProgramImpl) magicProg).rules.put(newQuery.getSymbol(), Collections.singleton(queryRule));
@@ -288,7 +288,7 @@ public class MagicSetTransformer {
 		Set<Pair<BasicRule, Integer>> adRules = adorn(bottomUpSymbols);
 		Set<BasicRule> magicRules = makeMagicRules(adRules);
 		BasicProgram magicProg = new ProgramImpl(magicRules, null);
-		if (restoreStratification && !isStratified(magicProg)) {
+		if (restoreStratification && !isStratified(magicProg) && isStratified((BasicProgram) origProg)) {
 			magicProg = stratify(magicProg, Pair.map(adRules, (rule, num) -> rule));
 		}
 		if (useDemandTransformation) {
@@ -652,7 +652,7 @@ public class MagicSetTransformer {
 
 	private boolean isStratified(BasicProgram p) {
 		try {
-			Stratifier stratifier = new Stratifier(p, SemiNaiveEvaluation.EvalType.NORMAL);
+			Stratifier stratifier = new Stratifier(p);
 			for (Stratum s : stratifier.stratify()) {
 				if (s.hasRecursiveNegationOrAggregation()) {
 					return false;
