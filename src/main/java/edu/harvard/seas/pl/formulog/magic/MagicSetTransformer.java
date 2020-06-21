@@ -123,7 +123,7 @@ public class MagicSetTransformer {
 			BasicRule queryRule = makeQueryRule(adornedQuery);
 			UserPredicate newQuery = queryRule.getHead();
 			BasicProgram magicProg = new ProgramImpl(magicRules, newQuery);
-			if (restoreStratification && !isStratified(magicProg) && isStratified((BasicProgram) origProg)) {
+			if (restoreStratification && !isStratified(magicProg)) {
 				magicProg = stratify(magicProg, Pair.map(adRules, (rule, num) -> rule));
 			}
 			((ProgramImpl) magicProg).rules.put(newQuery.getSymbol(), Collections.singleton(queryRule));
@@ -288,7 +288,7 @@ public class MagicSetTransformer {
 		Set<Pair<BasicRule, Integer>> adRules = adorn(bottomUpSymbols);
 		Set<BasicRule> magicRules = makeMagicRules(adRules);
 		BasicProgram magicProg = new ProgramImpl(magicRules, null);
-		if (restoreStratification && !isStratified(magicProg) && isStratified((BasicProgram) origProg)) {
+		if (restoreStratification && !isStratified(magicProg)) {
 			magicProg = stratify(magicProg, Pair.map(adRules, (rule, num) -> rule));
 		}
 		if (useDemandTransformation) {
