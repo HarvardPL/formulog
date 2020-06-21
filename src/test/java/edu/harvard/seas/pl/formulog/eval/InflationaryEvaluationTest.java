@@ -34,4 +34,10 @@ public class InflationaryEvaluationTest extends AbstractEvaluationTest {
     @Test
     public void test002() { test("inflationary/test002_ok.flg"); }
 
+    @Test
+    public void test003() { test("inflationary/test003_ok.flg"); }
+
+    @Test
+    public void test004() { test("inflationary/test004_ok.flg"); }
+
 }
