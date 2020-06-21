@@ -112,7 +112,13 @@ public class SemiNaiveEvaluation implements Evaluation {
 				magicProg.getFunctionCallFactory().getDefManager(), dbb);
 
 		Map<RelationSymbol, Set<IndexedRule>> rules = new HashMap<>();
-		List<Stratum> strata = new Stratifier(magicProg, evalType).stratify();
+
+		List<Stratum> strata = new ArrayList<>();
+		if (evalType == SemiNaiveEvaluation.EvalType.INFLATIONARY) {
+			strata.add(new Stratum(0, prog.getRuleSymbols(), false));
+		} else {
+			strata = new Stratifier(magicProg).stratify();
+		}
 		for (Stratum stratum : strata) {
 			if (stratum.hasRecursiveNegationOrAggregation() && !(evalType == EvalType.SEMI_INFLATIONARY)) {
 				throw new InvalidProgramException("Cannot handle recursive negation or aggregation: " + stratum);
@@ -517,7 +523,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 		if (evalType == EvalType.EAGER) {
 			new EagerStratumEvaluator(stratum.getRank(), db, l, exec, trackedRelations).evaluate();
 		} else {
-			new RoundBasedStratumEvaluator(stratum.getRank(), db, deltaDb, nextDeltaDb, l, exec, trackedRelations)
+			boolean distinguishNoDeltaAndDeltaRules = !(evalType == EvalType.INFLATIONARY);
+			new RoundBasedStratumEvaluator(stratum.getRank(), db, deltaDb, nextDeltaDb, l, exec, trackedRelations,
+					distinguishNoDeltaAndDeltaRules)
 					.evaluate();
 		}
 	}
