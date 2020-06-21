@@ -1,0 +1,15 @@
+input r(i32).
+output q(i32).
+output p(i32).
+output ok.
+
+p(X) :- q(X).
+q(X) :- r(X).
+r(-42).
+r(0).
+r(42).
+
+ok :-
+	r(-42), r(0), r(42),
+	q(-42), q(0), q(42),
+	p(-42), p(0), p(42).
