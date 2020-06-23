@@ -1,0 +1,11 @@
+(* Formulog program computing graph transitive closure *)
+
+(* The edges should be stored in a file called edge.csv *)
+@external
+input edge(i32, i32)
+
+output tc(i32, i32)
+
+tc(X, Y) :- edge(X, Y).
+
+tc(X, Z) :- edge(X, Y), tc(Y, Z).
