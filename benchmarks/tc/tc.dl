@@ -11,4 +11,4 @@
 
 tc(x, y) :- edge(x, y).
 
-tc(x, z) :- edge(x, y), tc(y, z). .strict
+tc(x, z) :- edge(x, y), tc(y, z).

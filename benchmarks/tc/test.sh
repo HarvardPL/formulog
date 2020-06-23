@@ -5,10 +5,10 @@ PROBABILITY=0.5
 
 python3 rand_graph.py $NODES $PROBABILITY | tee edge.csv edge.facts > /dev/null
 
-echo "Formulog:"
+echo -n "Formulog:"
 java -DminIndex=false -DcodeGen -jar $1 tc.flg \
-  && ./codegen/compile.sh > /dev/null \
+  && ./codegen/compile.sh 2> /dev/null \
   && time ./codegen/flg > formulog.out
 
-echo "Souffle:"
+echo -n "Souffle:"
 time souffle tc.dl > souffle.out
