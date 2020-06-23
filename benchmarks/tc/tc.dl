@@ -1,0 +1,14 @@
+// Souffle program computing graph transitive closure
+
+// The edges should be stored in a file called edge.facts
+.decl edge(n: number, m: number)
+.input edge
+
+.decl tc(n: number, m: number)
+// Need to do something like print the size (or output the relation) to force
+// the relation to actually be computed
+.printsize tc
+
+tc(x, y) :- edge(x, y).
+
+tc(x, z) :- edge(x, y), tc(y, z). .strict

@@ -2,7 +2,7 @@
 FROM ubuntu:20.04 AS base
 RUN apt-get update && \
   DEBIAN_FRONTEND=noninteractive \
-  apt-get install -y build-essential wget openjdk-11-jre z3 libantlr4-runtime-dev
+  apt-get install -y build-essential wget openjdk-11-jre z3 libantlr4-runtime-dev python3
 
 # Boost
 # (adapted from https://github.com/pblischak/boost-docker-test)
@@ -51,5 +51,5 @@ FROM base
 ARG version=0.3.0-SNAPSHOT
 USER formulog
 WORKDIR /home/formulog
-COPY --from=build /home/app/target/formulog-${version}-jar-with-dependencies.jar formulog.jar
-COPY benchmarks benchmarks
+COPY --chown=formulog:formulog --from=build /home/app/target/formulog-${version}-jar-with-dependencies.jar formulog.jar
+COPY --chown=formulog:formulog benchmarks benchmarks
