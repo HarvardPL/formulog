@@ -55,7 +55,6 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 	SortedIndexedFactDb nextDeltaDb;
 	final CountingFJP exec;
 	final Set<RelationSymbol> trackedRelations;
-	final boolean distinguishNoDeltaAndDeltaRules;
 	volatile boolean changed;
 
 	static final int taskSize = Configuration.taskSize;
@@ -63,7 +62,7 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 
 	public RoundBasedStratumEvaluator(int stratumNum, SortedIndexedFactDb db,
 			SortedIndexedFactDb deltaDb, SortedIndexedFactDb nextDeltaDb, Iterable<IndexedRule> rules, CountingFJP exec,
-			Set<RelationSymbol> trackedRelations, boolean distinguishNoDeltaAndDeltaRules) {
+			Set<RelationSymbol> trackedRelations) {
 		super(rules);
 		this.rules = rules;
 		this.stratumNum = stratumNum;
@@ -72,7 +71,6 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 		this.nextDeltaDb = nextDeltaDb;
 		this.exec = exec;
 		this.trackedRelations = trackedRelations;
-		this.distinguishNoDeltaAndDeltaRules = distinguishNoDeltaAndDeltaRules;
 	}
 
 	@Override
@@ -82,59 +80,32 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 		int round = 0;
 		StopWatch watch = recordRoundStart(round);
 
-		// For inflationary evaluation only - don't distinguish between noDeltaRules and deltaRules
-		if (!distinguishNoDeltaAndDeltaRules) {
-			for (IndexedRule r : rules) {
-				exec.externallyAddTask(new RulePrefixEvaluator(r));
-			}
-			exec.blockUntilFinished();
-			if (exec.hasFailed()) {
-				throw exec.getFailureCause();
-			}
-			recordRoundEnd(round, watch);
-			updateDbs();
-			while (changed) {
-				round++;
-				watch = recordRoundStart(round);
-				changed = false;
-				for (IndexedRule r : rules) {
-					exec.externallyAddTask(new RulePrefixEvaluator(r));
-				}
-				exec.blockUntilFinished();
-				if (exec.hasFailed()) {
-					throw exec.getFailureCause();
-				}
-				recordRoundEnd(round, watch);
-				updateDbs();
-			}
-		} else {
-			for (IndexedRule r : noDeltaRules) {
-				exec.externallyAddTask(new RulePrefixEvaluator(r));
-			}
-			exec.blockUntilFinished();
-			if (exec.hasFailed()) {
-				throw exec.getFailureCause();
-			}
-			recordRoundEnd(round, watch);
-			updateDbs();
-			while (changed) {
-				round++;
-				watch = recordRoundStart(round);
-				changed = false;
-				for (RelationSymbol delta : deltaRules.keySet()) {
-					if (!deltaDb.isEmpty(delta)) {
-						for (IndexedRule r : deltaRules.get(delta)) {
-							exec.externallyAddTask(new RulePrefixEvaluator(r));
-						}
+		for (IndexedRule r : rules) {
+			exec.externallyAddTask(new RulePrefixEvaluator(r));
+		}
+		exec.blockUntilFinished();
+		if (exec.hasFailed()) {
+			throw exec.getFailureCause();
+		}
+		recordRoundEnd(round, watch);
+		updateDbs();
+		while (changed) {
+			round++;
+			watch = recordRoundStart(round);
+			changed = false;
+			for (RelationSymbol delta : deltaRules.keySet()) {
+				if (!deltaDb.isEmpty(delta)) {
+					for (IndexedRule r : deltaRules.get(delta)) {
+						exec.externallyAddTask(new RulePrefixEvaluator(r));
 					}
 				}
-				exec.blockUntilFinished();
-				if (exec.hasFailed()) {
-					throw exec.getFailureCause();
-				}
-				recordRoundEnd(round, watch);
-				updateDbs();
 			}
+			exec.blockUntilFinished();
+			if (exec.hasFailed()) {
+				throw exec.getFailureCause();
+			}
+			recordRoundEnd(round, watch);
+			updateDbs();
 		}
 	}
 

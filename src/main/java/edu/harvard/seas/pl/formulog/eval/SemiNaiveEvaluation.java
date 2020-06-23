@@ -523,9 +523,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		if (evalType == EvalType.EAGER) {
 			new EagerStratumEvaluator(stratum.getRank(), db, l, exec, trackedRelations).evaluate();
 		} else {
-			boolean distinguishNoDeltaAndDeltaRules = !(evalType == EvalType.INFLATIONARY);
-			new RoundBasedStratumEvaluator(stratum.getRank(), db, deltaDb, nextDeltaDb, l, exec, trackedRelations,
-					distinguishNoDeltaAndDeltaRules)
+			new RoundBasedStratumEvaluator(stratum.getRank(), db, deltaDb, nextDeltaDb, l, exec, trackedRelations)
 					.evaluate();
 		}
 	}
