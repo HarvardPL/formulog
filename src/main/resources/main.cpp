@@ -59,7 +59,7 @@ void evaluate() {
 /* INSERT 3 */
 }
 
-void printResults() {
+void printResults(bool dump) {
 /* INSERT 4 */
 }
 
@@ -72,7 +72,8 @@ int main(int argc, char** argv) {
     ("parallelism,j", po::value<size_t>()->default_value(1),
      "number of threads to use")
     ("fact-dir", po::value<vector<string>>()->default_value({ cwd }),
-     "input directory with external EDBs (can be set multiple times)");
+     "input directory with external EDBs (can be set multiple times)")
+    ("no-dump", "only print sizes of relations, not the database");
 
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -93,6 +94,6 @@ int main(int argc, char** argv) {
   omp_set_num_threads(parallelism);
   loadEdbs(vm["fact-dir"].as<vector<string>>(), parallelism);
   evaluate();
-  printResults();
+  printResults(!vm.count("no-dump"));
   return 0;
 }

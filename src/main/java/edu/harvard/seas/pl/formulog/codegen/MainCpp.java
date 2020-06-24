@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.codegen;
  * #L%
  */
 
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -85,7 +84,7 @@ public class MainCpp {
 				}
 			}
 		}
-		
+
 		public void loadExternalEdbs(RelationSymbol sym) {
 			Relation rel = ctx.lookupRelation(sym);
 			String func = "loadEdbs<" + rel.getStruct().getName() + ">";
@@ -93,7 +92,7 @@ public class MainCpp {
 			CppExpr call = CppFuncCall.mk(func, CppVar.mk("dir"), file, CppUnop.mkDeref(rel));
 			call.toStmt().println(out, 1);
 		}
-		
+
 		public void loadEdbs() {
 			for (RelationSymbol sym : db.getSymbols()) {
 				if (sym.isEdbSymbol()) {
@@ -145,7 +144,8 @@ public class MainCpp {
 				out.print(": \" << ");
 				ctx.lookupRelation(sym).mkSize().print(out);
 				out.println(" << endl;");
-				ctx.lookupRelation(sym).mkPrint().println(out, 1);
+				out.println("  if (dump)");
+				ctx.lookupRelation(sym).mkPrint().println(out, 2);
 			}
 		}
 
