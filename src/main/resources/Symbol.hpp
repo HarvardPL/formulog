@@ -21,17 +21,17 @@ enum class Symbol {
 };
 
 ostream& operator<<(ostream& out, const Symbol& sym) {
-	switch (sym) {
+  switch (sym) {
     case Symbol::min_term: return out << "min_term";
-	  case Symbol::boxed_bool: return out << "boxed_bool";
-	  case Symbol::boxed_i32: return out << "boxed_i32";
-	  case Symbol::boxed_i64: return out << "boxed_i64";
-	  case Symbol::boxed_fp32: return out << "boxed_fp32";
-	  case Symbol::boxed_fp64: return out << "boxed_fp64";
-	  case Symbol::boxed_string: return out << "boxed_string";
+    case Symbol::boxed_bool: return out << "boxed_bool";
+    case Symbol::boxed_i32: return out << "boxed_i32";
+    case Symbol::boxed_i64: return out << "boxed_i64";
+    case Symbol::boxed_fp32: return out << "boxed_fp32";
+    case Symbol::boxed_fp64: return out << "boxed_fp64";
+    case Symbol::boxed_string: return out << "boxed_string";
 /* INSERT 1 */
     case Symbol::max_term: return out << "max_term";
-	}
+  }
   __builtin_unreachable();
 }
 
