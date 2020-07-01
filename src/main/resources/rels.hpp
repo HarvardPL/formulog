@@ -44,37 +44,37 @@ struct Comparator<First, Rest...> {
 
   template <size_t N>
   int operator()(const Tuple<N>& a, const Tuple<N>& b) const {
-		int cmp = Term::compare(a[First].get(), b[First].get());
-		return cmp ? cmp : Comparator<Rest...>()(a, b);
+    int cmp = Term::compare(a[First].get(), b[First].get());
+    return cmp ? cmp : Comparator<Rest...>()(a, b);
   }
 
   template <size_t N>
   bool less(const Tuple<N>& a, const Tuple<N>& b) const {
-		int cmp = Term::compare(a[First].get(), b[First].get());
-		return cmp ? cmp < 0 : Comparator<Rest...>().less(a, b);
+    int cmp = Term::compare(a[First].get(), b[First].get());
+    return cmp ? cmp < 0 : Comparator<Rest...>().less(a, b);
   }
 
   template <size_t N>
   bool equal(const Tuple<N>& a, const Tuple<N>& b) const {
-		int cmp = Term::compare(a[First].get(), b[First].get());
-		return cmp ? false : Comparator<Rest...>().equal(a, b);
+    int cmp = Term::compare(a[First].get(), b[First].get());
+    return cmp ? false : Comparator<Rest...>().equal(a, b);
   }
 };
 
 template <>
 struct Comparator<> {
 
-	template <size_t N>
+  template <size_t N>
   int operator()(const Tuple<N>& a, const Tuple<N>& b) const {
     return 0;
   }
 
-	template <size_t N>
+  template <size_t N>
   bool less(const Tuple<N>& a, const Tuple<N>& b) const {
     return false;
   }
 
-	template <size_t N>
+  template <size_t N>
   bool equal(const Tuple<N>& a, const Tuple<N>& b) const {
     return true;
   }

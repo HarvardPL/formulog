@@ -84,17 +84,17 @@ struct BaseTerm : public Term {
 };
 
 ostream& operator<<(ostream& out, const Term& t) {
-	switch (t.sym) {
-	  case Symbol::boxed_bool: {
+  switch (t.sym) {
+    case Symbol::boxed_bool: {
       return out << boolalpha << t.as_base<bool>().val << noboolalpha;
     }
-	  case Symbol::boxed_i32: {
+    case Symbol::boxed_i32: {
       return out << t.as_base<int32_t>().val;
     }
-	  case Symbol::boxed_i64: {
+    case Symbol::boxed_i64: {
       return out << t.as_base<int64_t>().val << "L";
     }
-	  case Symbol::boxed_fp32: {
+    case Symbol::boxed_fp32: {
       auto val = t.as_base<float>().val;
       if (isnan(val)) {
         out << "fp32_nan";
@@ -109,7 +109,7 @@ ostream& operator<<(ostream& out, const Term& t) {
       }
       return out;
     }
-	  case Symbol::boxed_fp64: {
+    case Symbol::boxed_fp64: {
       auto val = t.as_base<double>().val;
       if (isnan(val)) {
         out << "fp64_nan";
@@ -124,7 +124,7 @@ ostream& operator<<(ostream& out, const Term& t) {
       }
       return out;
     }
-	  case Symbol::boxed_string: {
+    case Symbol::boxed_string: {
       return out << "\"" << t.as_base<string>().val << "\"";
     }
     default: {
@@ -143,7 +143,7 @@ ostream& operator<<(ostream& out, const Term& t) {
       }
       return out;
     }
-	}
+  }
 }
 
 int Term::compare(const Term* t1, const Term* t2) {
