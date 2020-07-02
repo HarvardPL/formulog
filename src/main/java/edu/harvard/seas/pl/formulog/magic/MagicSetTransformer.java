@@ -76,6 +76,12 @@ import edu.harvard.seas.pl.formulog.validating.Stratum;
 
 public class MagicSetTransformer {
 
+	public enum RestoreStratification {
+		TRUE,
+		FALSE,
+		FALSE_AND_NO_MAGIC_RULES_FOR_NEG_LITERALS
+	}
+
 	private final Program<UserPredicate, BasicRule> origProg;
 	private boolean topDownIsDefault;
 
@@ -85,7 +91,7 @@ public class MagicSetTransformer {
 		this.origProg = prog;
 	}
 
-	public BasicProgram transform(boolean useDemandTransformation, boolean restoreStratification)
+	public BasicProgram transform(boolean useDemandTransformation, RestoreStratification restoreStratification)
 			throws InvalidProgramException {
 		BasicProgram prog;
 		if (origProg.hasQuery()) {
@@ -107,7 +113,7 @@ public class MagicSetTransformer {
 	}
 
 	private BasicProgram transformForQuery(UserPredicate query, boolean useDemandTransformation,
-			boolean restoreStratification) throws InvalidProgramException {
+										   RestoreStratification restoreStratification) throws InvalidProgramException {
 		topDownIsDefault = true;
 		if (query.isNegated()) {
 			throw new InvalidProgramException("Query cannot be negated");
@@ -123,7 +129,7 @@ public class MagicSetTransformer {
 			BasicRule queryRule = makeQueryRule(adornedQuery);
 			UserPredicate newQuery = queryRule.getHead();
 			BasicProgram magicProg = new ProgramImpl(magicRules, newQuery);
-			if (restoreStratification && !isStratified(magicProg) && isStratified(origProg)) {
+			if (restoreStratification == RestoreStratification.TRUE && !isStratified(magicProg) && isStratified(origProg)) {
 				magicProg = stratify(magicProg, Pair.map(adRules, (rule, num) -> rule));
 			}
 			((ProgramImpl) magicProg).rules.put(newQuery.getSymbol(), Collections.singleton(queryRule));
@@ -276,7 +282,7 @@ public class MagicSetTransformer {
 		};
 	}
 
-	private BasicProgram transformNoQuery(boolean useDemandTransformation, boolean restoreStratification)
+	private BasicProgram transformNoQuery(boolean useDemandTransformation, RestoreStratification restoreStratification)
 			throws InvalidProgramException {
 		topDownIsDefault = false;
 		Set<RelationSymbol> bottomUpSymbols = new HashSet<>();
@@ -288,7 +294,7 @@ public class MagicSetTransformer {
 		Set<Pair<BasicRule, Integer>> adRules = adorn(bottomUpSymbols);
 		Set<BasicRule> magicRules = makeMagicRules(adRules);
 		BasicProgram magicProg = new ProgramImpl(magicRules, null);
-		if (restoreStratification && !isStratified(magicProg) && isStratified(origProg)) {
+		if (restoreStratification == RestoreStratification.TRUE && !isStratified(magicProg) && isStratified(origProg)) {
 			magicProg = stratify(magicProg, Pair.map(adRules, (rule, num) -> rule));
 		}
 		if (useDemandTransformation) {
@@ -297,7 +303,7 @@ public class MagicSetTransformer {
 		return magicProg;
 	}
 
-	private BasicProgram applyDemandTransformation(BasicProgram prog, boolean mustBeStratified)
+	private BasicProgram applyDemandTransformation(BasicProgram prog, RestoreStratification mustBeStratified)
 			throws InvalidProgramException {
 		BasicProgram prog2 = stripAdornments(prog);
 		if (isStratified(prog2)) {
