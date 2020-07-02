@@ -21,7 +21,6 @@ public class BalbinEvaluation implements Evaluation {
         FunctionDefValidation.validate(prog);
         MagicSetTransformer mst = new MagicSetTransformer(prog);
 
-        // TODO: define a new transform function here
         BasicProgram magicProg = mst.transform(Configuration.useDemandTransformation,
                 MagicSetTransformer.RestoreStratification.FALSE_AND_NO_MAGIC_RULES_FOR_NEG_LITERALS);
 //        Set<RelationSymbol> allRelations = new HashSet<>(magicProg.getFactSymbols());
@@ -34,6 +33,7 @@ public class BalbinEvaluation implements Evaluation {
 
         // TODO: part 5 - setup for part 6:
         // x create a pred(p) function
+        // x update the transform function in MagicSetTransformer.java
         // - create a prules(q, D) function that takes a predicate q, database D, and returns a set of rules (a subset of D)
 
         return new BalbinEvaluation(prog, magicProg.getQuery());
