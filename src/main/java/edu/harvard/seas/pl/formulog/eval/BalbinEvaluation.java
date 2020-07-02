@@ -22,11 +22,12 @@ public class BalbinEvaluation implements Evaluation {
         MagicSetTransformer mst = new MagicSetTransformer(prog);
 
         // TODO: define a new transform function here
-        BasicProgram magicProg = mst.transform(Configuration.useDemandTransformation, true);
+        BasicProgram magicProg = mst.transform(Configuration.useDemandTransformation,
+                MagicSetTransformer.RestoreStratification.FALSE_AND_NO_MAGIC_RULES_FOR_NEG_LITERALS);
 //        Set<RelationSymbol> allRelations = new HashSet<>(magicProg.getFactSymbols());
 //        allRelations.addAll(magicProg.getRuleSymbols());
-
-        //        Set<BasicRule> db = new HashSet<>();
+//
+//        Set<BasicRule> db = new HashSet<>();
 //        for (RelationSymbol ruleSymbol : magicProg.getRuleSymbols()) {
 //            db.addAll(magicProg.getRules(ruleSymbol));
 //        }
@@ -35,11 +36,19 @@ public class BalbinEvaluation implements Evaluation {
         // x create a pred(p) function
         // - create a prules(q, D) function that takes a predicate q, database D, and returns a set of rules (a subset of D)
 
-        // Definition 29 - prules:
-        // Create a dependency graph for running prules
-
         return new BalbinEvaluation(prog, magicProg.getQuery());
     }
+
+    // Balbin, Definition 29 - prules
+//    private static Set<BasicRule> getPRules(RelationSymbol q, Set<BasicRule> db) {
+//        Set<BasicRule> prules = new HashSet<>();
+//
+//         Case 1 - q = pred(p0), where p0 is the head of a rule
+//
+//         Case 2 - q <--(+) pred(p0), where p0 is the head of a rule
+//
+//        return prules;
+//    }
 
     // Balbin, Definition 1 - pred(p)
     private static UserPredicate getPred(ComplexLiteral p) {
@@ -57,16 +66,6 @@ public class BalbinEvaluation implements Evaluation {
 
         }, null);
     }
-
-//    private static Set<BasicRule> getPRules(RelationSymbol q, Set<BasicRule> db) {
-//        Set<BasicRule> prules = new HashSet<>();
-//
-//        // Case 1 - q = pred(p0), where p0 is the head of a rule
-//
-//        // Case 2 - q <--(+) pred(p0), where p0 is the head of a rule
-//
-//        return prules;
-//    }
 
     BalbinEvaluation(WellTypedProgram inputProgram, UserPredicate query) {
         this.inputProgram = inputProgram;
