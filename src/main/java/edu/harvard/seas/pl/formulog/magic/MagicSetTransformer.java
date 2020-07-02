@@ -97,6 +97,9 @@ public class MagicSetTransformer {
 		if (origProg.hasQuery()) {
 			prog = transformForQuery(origProg.getQuery(), useDemandTransformation, restoreStratification);
 		} else {
+			if (restoreStratification == RestoreStratification.FALSE_AND_NO_MAGIC_RULES_FOR_NEG_LITERALS) {
+				throw new InvalidProgramException("Must include query for Balbin evaluation method");
+			}
 			prog = transformNoQuery(useDemandTransformation, restoreStratification);
 		}
 		if (debug) {
@@ -124,7 +127,7 @@ public class MagicSetTransformer {
 		} else {
 			UserPredicate adornedQuery = Adornments.adorn(query, Collections.emptySet(), topDownIsDefault);
 			Set<Pair<BasicRule, Integer>> adRules = adorn(Collections.singleton(adornedQuery.getSymbol()));
-			Set<BasicRule> magicRules = makeMagicRules(adRules);
+			Set<BasicRule> magicRules = makeMagicRules(adRules, restoreStratification);
 			magicRules.add(makeSeedRule(adornedQuery));
 			BasicRule queryRule = makeQueryRule(adornedQuery);
 			UserPredicate newQuery = queryRule.getHead();
@@ -292,7 +295,13 @@ public class MagicSetTransformer {
 			}
 		}
 		Set<Pair<BasicRule, Integer>> adRules = adorn(bottomUpSymbols);
-		Set<BasicRule> magicRules = makeMagicRules(adRules);
+
+		/*
+		 * Won't be called with restoreStratification == RestoreStratification.FALSE_AND_NO_MAGIC_RULES_FOR_NEG_LITERALS
+		 * due to InvalidProgramException thrown in transform
+		 */
+		Set<BasicRule> magicRules = makeMagicRules(adRules, restoreStratification);
+
 		BasicProgram magicProg = new ProgramImpl(magicRules, null);
 		if (restoreStratification == RestoreStratification.TRUE && !isStratified(magicProg) && isStratified(origProg)) {
 			magicProg = stratify(magicProg, Pair.map(adRules, (rule, num) -> rule));
@@ -419,10 +428,10 @@ public class MagicSetTransformer {
 		return adRules;
 	}
 
-	private Set<BasicRule> makeMagicRules(Set<Pair<BasicRule, Integer>> adornedRules) {
+	private Set<BasicRule> makeMagicRules(Set<Pair<BasicRule, Integer>> adornedRules, RestoreStratification restoreStratification) {
 		Set<BasicRule> magicRules = new HashSet<>();
 		for (Pair<BasicRule, Integer> p : adornedRules) {
-			magicRules.addAll(makeMagicRules(p.fst(), p.snd()));
+			magicRules.addAll(makeMagicRules(p.fst(), p.snd(), restoreStratification));
 		}
 		return magicRules;
 	}
@@ -437,7 +446,7 @@ public class MagicSetTransformer {
 		return sym.isTopDown() || (topDownIsDefault && !sym.isBottomUp());
 	}
 
-	private Set<BasicRule> makeMagicRules(BasicRule r, int number) {
+	private Set<BasicRule> makeMagicRules(BasicRule r, int number, RestoreStratification restoreStratification) {
 		int[] supCount = { 0 };
 		Set<BasicRule> magicRules = new HashSet<>();
 		List<Set<Var>> liveVarsByAtom = liveVarsByAtom(r);
@@ -463,6 +472,10 @@ public class MagicSetTransformer {
 
 				@Override
 				public List<ComplexLiteral> visit(UserPredicate userPredicate, List<ComplexLiteral> l) {
+					if (restoreStratification == RestoreStratification.FALSE_AND_NO_MAGIC_RULES_FOR_NEG_LITERALS
+							&& userPredicate.isNegated()) {
+						return null;
+					}
 					RelationSymbol sym = userPredicate.getSymbol();
 					if (exploreTopDown(sym)) {
 						Set<Var> supVars = a.varSet().stream().filter(curLiveVars::contains)
