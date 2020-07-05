@@ -2,6 +2,7 @@ package edu.harvard.seas.pl.formulog.eval;
 
 import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.*;
+import edu.harvard.seas.pl.formulog.codegen.Relation;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
@@ -39,19 +40,50 @@ public class BalbinEvaluation implements Evaluation {
             db.addAll(magicProg.getRules(ruleSymbol));
         }
 
-        // Call getPRules
+        UserPredicate newQ = magicProg.getQuery();
+        RelationSymbol newQSymbol = newQ.getSymbol();
+        Set<BasicRule> newQRules = magicProg.getRules(newQSymbol);
+        for (BasicRule basicRule : newQRules) {
+            ComplexLiteral head = basicRule.getHead();
+            UserPredicate headPred = getPred(head);
+            RelationSymbol headPredSymbol = headPred.getSymbol();
+            if (!newQSymbol.equals(headPredSymbol)) {
+                continue;
+            }
 
-//        ComplexLiteral query = magicProg.getQuery();
+            for (int i = 0; i < basicRule.getBodySize(); i++) {
+                basicRule.getBody(i);
+                // TODO: Get query q
+            }
+        }
 
-        // TODO: part 5 - setup for part 6:
+        // TODO: Get set of magic facts for q
+//        UserPredicate q = null; // Delete this line
+//        UserPredicate qInputAtom = MagicSetTransformer.createInputAtom(q);
+//        RelationSymbol qSymbol = qInputAtom.getSymbol();
+//        Set<BasicRule> qRules = magicProg.getRules(qSymbol);
+//        Set<BasicRule> qMagicFacts = null;
+//        for (BasicRule basicRule : qRules) {
+//            // TODO: Determine whether basicRule is a magic fact
+//        }
+
+        // eval(qInputAtom, qMagicFacts)
+
+        // --------------------------------------------------------------------------------
+        // part 5 - setup for part 6:
         // x create a pred(p) function
         // x update the transform function in MagicSetTransformer.java
         // x create a prules(q, D) function that takes a predicate q, database D, and returns a set of rules (a subset of D)
 
-        // TODO: part 6 - eval
+        // part 6 - eval
 
         return new BalbinEvaluation(prog, magicProg.getQuery());
     }
+
+    // TODO: Balbin, Algorithm 7 - eval
+//    private static void eval(UserPredicate q, Set<BasicRule> mq) {
+//
+//    }
 
     // Balbin, Definition 29 - prules
     private static Set<BasicRule> getPRules(UserPredicate q, Set<BasicRule> db) {

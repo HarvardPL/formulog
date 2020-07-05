@@ -537,7 +537,7 @@ public class MagicSetTransformer {
 		return UserPredicate.make(supSym, args, false);
 	}
 
-	private UserPredicate createInputAtom(UserPredicate a) {
+	public static UserPredicate createInputAtom(UserPredicate a) {
 		AdornedSymbol headSym = (AdornedSymbol) a.getSymbol();
 		InputSymbol inputSym = new InputSymbol(headSym);
 		Term[] inputArgs = new Term[inputSym.getArity()];
