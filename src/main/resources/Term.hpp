@@ -24,7 +24,7 @@ template <typename T> struct BaseTerm;
 struct ComplexTerm;
 
 struct Term {
-  Symbol sym;
+  const Symbol sym;
 
   Term(Symbol sym_) : sym{sym_} {}
 
@@ -38,28 +38,11 @@ struct Term {
 };
 
 struct ComplexTerm : public Term {
-  size_t arity;
-  term_ptr* val;
+  const size_t arity;
+  const term_ptr* const val;
 
   ComplexTerm(Symbol sym_, size_t arity_, term_ptr* val_) :
     Term{sym_}, arity{arity_}, val{val_} {}
-
-  ComplexTerm(const ComplexTerm& t) :
-    Term{t.sym}, arity{t.arity}, val{new term_ptr[t.arity]} {
-    copy(t.val, t.val + t.arity, val);
-  }
-
-  ComplexTerm& operator=(const ComplexTerm& t) {
-    if (this != &t) {
-      term_ptr* new_val = new term_ptr[t.arity];
-      copy(t.val, t.val + t.arity, new_val);
-      delete[] val;
-      sym = t.sym;
-      arity = t.arity;
-      val = new_val;
-    }
-    return *this;
-  }
 
   ~ComplexTerm() {
     delete[] val;
@@ -68,7 +51,7 @@ struct ComplexTerm : public Term {
 
 template<typename T>
 struct BaseTerm : public Term {
-  T val;
+  const T val;
 
   BaseTerm(Symbol sym_, T val_) : Term{sym_}, val(val_) {}
 
