@@ -66,8 +66,7 @@ term_ptr* TermParser::parse(vector<FormulogParser::TermContext*> ctxs) {
   term_ptr* a = new term_ptr[ctxs.size()];
   size_t i{0};
   for (auto& ctx : ctxs) {
-    const term_ptr& t = parse(ctx);
-    a[i++] = t;
+    a[i++] = parse(ctx);
   }
   return a;
 }

@@ -26,7 +26,7 @@ enum class SmtStatus { sat, unsat, unknown };
 
 struct SmtShim {
   SmtShim();
-  SmtStatus check(const term_ptr& assertion, int timeout);
+  SmtStatus check(term_ptr assertion, int timeout);
 
   static bool needs_type_annotation(const Symbol& sym);
   static bool is_solver_var(const Term* t);
@@ -113,7 +113,7 @@ Type TypeInferer::visit(const Term* t) {
     auto x = t->as_complex();
     if (!SmtShim::is_solver_var(t)) {
       for (size_t i = 0; i < x.arity; ++i) {
-        constraints.push_back(make_pair(visit(x.val[i].get()), ft.first[i]));
+        constraints.push_back(make_pair(visit(x.val[i]), ft.first[i]));
       }
     }
   }
@@ -153,7 +153,7 @@ SmtShim::SmtShim() :
   z3_in.flush();
 }
 
-SmtStatus SmtShim::check(const term_ptr& assertion, int timeout) {
+SmtStatus SmtShim::check(term_ptr assertion, int timeout) {
   z3_in << "(pop)" << endl;
   z3_in << "(push)" << endl;
   if (timeout < 0) {
@@ -161,7 +161,7 @@ SmtStatus SmtShim::check(const term_ptr& assertion, int timeout) {
     timeout = numeric_limits<int>::max();
   }
   z3_in << "(set-option :timeout " << timeout << ")" << endl;
-  auto t = assertion.get();
+  auto t = assertion;
   preprocess(t);
   z3_in << "(assert ";
   TypeInferer ti;
@@ -219,7 +219,7 @@ void SmtShim::visit(const Term* t) {
     default:
       auto x = t->as_complex();
       for (size_t i = 0; i < x.arity; ++i) {
-        visit(x.val[i].get());
+        visit(x.val[i]);
       }
   }
 }
@@ -252,7 +252,7 @@ string SmtShim::lookup_var(const Term* t) {
 }
 
 Term* SmtShim::Serializer::arg0(const Term* t) {
-  return t->as_complex().val[0].get();
+  return t->as_complex().val[0];
 }
 
 void SmtShim::Serializer::serialize(const Term* t) {
@@ -301,7 +301,7 @@ void SmtShim::Serializer::serialize(const std::string& repr, const ComplexTerm& 
   }
   for (size_t i = 0; i < n; ++i) {
     out << " ";
-    serialize(t.val[i].get());
+    serialize(t.val[i]);
   }
   if (n > 0) {
     out << ")";
@@ -373,11 +373,11 @@ void SmtShim::Serializer::serialize_fp_to_fp(const Term* t) {
 void SmtShim::Serializer::serialize_let(const Term* t) {
   auto x = t->as_complex();
   out << "(let ((";
-  serialize(x.val[0].get());
+  serialize(x.val[0]);
   out << " ";
-  serialize(x.val[1].get());
+  serialize(x.val[1]);
   out << ")) ";
-  serialize(x.val[2].get());
+  serialize(x.val[2]);
   out << ")";
 }
 
@@ -390,10 +390,10 @@ template <bool Exists>
 void SmtShim::Serializer::serialize_quantifier(const Term* t) {
   auto x = t->as_complex();
   out << "(" << (Exists ? "exists (" : "forall (");
-  for (auto& v : Term::vectorizeListTerm(x.val[0].get())) {
+  for (auto& v : Term::vectorizeListTerm(x.val[0])) {
     // Consume annotation for cons
     shim.annotations++;
-    auto var = arg0(v.get());
+    auto var = arg0(v);
     out << "(";
     serialize(var);
     out << " " << Type::lookup(var->sym).second << ")";
@@ -401,25 +401,25 @@ void SmtShim::Serializer::serialize_quantifier(const Term* t) {
   out << ") ";
   // Consume annotation for nil
   shim.annotations++;
-  auto pats = Term::vectorizeListTerm(x.val[2].get());
+  auto pats = Term::vectorizeListTerm(x.val[2]);
   if (!pats.empty()) {
     out << "(! ";
   }
-  serialize(x.val[1].get());
+  serialize(x.val[1]);
   if (!pats.empty()) {
     for (auto& pat : pats) {
       out << " :pattern (";
       // Consume annotation for cons
       shim.annotations++;
       bool first{true};
-      for (auto& sub : Term::vectorizeListTerm(pat.get())) {
+      for (auto& sub : Term::vectorizeListTerm(pat)) {
         if (!first) {
           out << " ";
         }
         first = false;
         // Consume annotation for cons
         shim.annotations++;
-        serialize(arg0(sub.get()));
+        serialize(arg0(sub));
       }
       out << ")";
       // Consume annotation for nil

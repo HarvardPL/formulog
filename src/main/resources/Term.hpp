@@ -18,7 +18,7 @@ using namespace std;
 
 struct Term;
 
-typedef shared_ptr<Term> term_ptr;
+typedef Term* term_ptr;
 
 template <typename T> struct BaseTerm;
 struct ComplexTerm;
@@ -117,7 +117,7 @@ ostream& operator<<(ostream& out, const Term& t) {
       if (n > 0) {
         out << "(";
         for (size_t i = 0; i < n; ++i) {
-          out << *x.val[i].get();
+          out << *x.val[i];
           if (i < n - 1) {
             out << ", ";
           }
@@ -206,7 +206,7 @@ int Term::compare(const Term* t1, const Term* t2) {
         auto y = t2->as_complex();
         size_t n = x.arity;
         for (size_t i = 0; i < n; ++i) {
-          w.emplace(x.val[i].get(), y.val[i].get()); 
+          w.emplace(x.val[i], y.val[i]); 
         }
       }
     }
@@ -214,41 +214,41 @@ int Term::compare(const Term* t1, const Term* t2) {
   return 0;
 }
 
-term_ptr min_term = make_shared<Term>(Symbol::min_term);
-term_ptr max_term = make_shared<Term>(Symbol::max_term);
+term_ptr min_term = new Term(Symbol::min_term);
+term_ptr max_term = new Term(Symbol::max_term);
 
 template<>
 term_ptr Term::make<bool>(bool val) {
-  return make_shared<BaseTerm<bool>>(Symbol::boxed_bool, val);
+  return new BaseTerm<bool>(Symbol::boxed_bool, val);
 }
 
 template<>
 term_ptr Term::make<int32_t>(int32_t val) {
-  return make_shared<BaseTerm<int32_t>>(Symbol::boxed_i32, val);
+  return new BaseTerm<int32_t>(Symbol::boxed_i32, val);
 }
 
 template<>
 term_ptr Term::make<int64_t>(int64_t val) {
-  return make_shared<BaseTerm<int64_t>>(Symbol::boxed_i64, val);
+  return new BaseTerm<int64_t>(Symbol::boxed_i64, val);
 }
 
 template<>
 term_ptr Term::make<float>(float val) {
-  return make_shared<BaseTerm<float>>(Symbol::boxed_fp32, val);
+  return new BaseTerm<float>(Symbol::boxed_fp32, val);
 }
 
 template<>
 term_ptr Term::make<double>(double val) {
-  return make_shared<BaseTerm<double>>(Symbol::boxed_fp64, val);
+  return new BaseTerm<double>(Symbol::boxed_fp64, val);
 }
 
 template<>
 term_ptr Term::make<string>(string val) {
-  return make_shared<BaseTerm<string>>(Symbol::boxed_string, val);
+  return new BaseTerm<string>(Symbol::boxed_string, val);
 }
 
 term_ptr Term::make(Symbol sym, size_t arity, term_ptr* val) {
-  return make_shared<ComplexTerm>(sym, arity, val);
+  return new ComplexTerm(sym, arity, val);
 }
 
 template<typename T>
@@ -271,7 +271,7 @@ vector<term_ptr> Term::vectorizeListTerm(const Term *t) {
   while (t->sym == Symbol::cons) {
     auto x = t->as_complex();
     v.push_back(x.val[0]);
-    t = x.val[1].get();
+    t = x.val[1];
   }
   assert(t->sym == Symbol::nil);
   return v;
