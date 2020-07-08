@@ -26,7 +26,7 @@ ostream& operator<<(ostream& out, const Tuple<N>& tup)
 {
   out << "[";
   for (size_t i = 0; i < N; ++i) {
-    out << *tup[i].get();
+    out << *tup[i];
     if (i < N - 1) {
       out << ", ";
     }
@@ -44,19 +44,19 @@ struct Comparator<First, Rest...> {
 
   template <size_t N>
   int operator()(const Tuple<N>& a, const Tuple<N>& b) const {
-    int cmp = Term::compare(a[First].get(), b[First].get());
+    int cmp = Term::compare(a[First], b[First]);
     return cmp ? cmp : Comparator<Rest...>()(a, b);
   }
 
   template <size_t N>
   bool less(const Tuple<N>& a, const Tuple<N>& b) const {
-    int cmp = Term::compare(a[First].get(), b[First].get());
+    int cmp = Term::compare(a[First], b[First]);
     return cmp ? cmp < 0 : Comparator<Rest...>().less(a, b);
   }
 
   template <size_t N>
   bool equal(const Tuple<N>& a, const Tuple<N>& b) const {
-    int cmp = Term::compare(a[First].get(), b[First].get());
+    int cmp = Term::compare(a[First], b[First]);
     return cmp ? false : Comparator<Rest...>().equal(a, b);
   }
 };
