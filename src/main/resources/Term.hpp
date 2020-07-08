@@ -31,10 +31,10 @@ struct Term {
   template<typename T> inline const BaseTerm<T>& as_base() const;
   inline const ComplexTerm& as_complex() const;
 
-  static int compare(const Term* t1, const Term* t2);
+  static int compare(Term* t1, Term* t2);
   template<typename T> inline static term_ptr make(T val);
   inline static term_ptr make(Symbol sym, size_t arity, term_ptr* val);
-  static vector<term_ptr> vectorizeListTerm(const Term *t);
+  static vector<term_ptr> vectorizeListTerm(Term* t);
 };
 
 struct ComplexTerm : public Term {
@@ -66,7 +66,7 @@ struct BaseTerm : public Term {
   }
 };
 
-ostream& operator<<(ostream& out, const Term& t) {
+ostream& operator<<(ostream& out, Term& t) {
   switch (t.sym) {
     case Symbol::boxed_bool: {
       return out << boolalpha << t.as_base<bool>().val << noboolalpha;
@@ -129,8 +129,8 @@ ostream& operator<<(ostream& out, const Term& t) {
   }
 }
 
-int Term::compare(const Term* t1, const Term* t2) {
-  stack<pair<const Term*, const Term*>> w;
+int Term::compare(Term* t1, Term* t2) {
+  stack<pair<Term*, Term*>> w;
   w.emplace(t1, t2);
   while (!w.empty()) {
     auto p = w.top();
@@ -261,12 +261,12 @@ const ComplexTerm& Term::as_complex() const {
 }
 
 struct TermCompare {
-  bool operator()(const Term* const& lhs, const Term* const& rhs) const {
+  bool operator()(Term* lhs, Term* rhs) const {
     return Term::compare(lhs, rhs) < 0;
   }
 };
 
-vector<term_ptr> Term::vectorizeListTerm(const Term *t) {
+vector<term_ptr> Term::vectorizeListTerm(Term* t) {
   vector<term_ptr> v;
   while (t->sym == Symbol::cons) {
     auto x = t->as_complex();
