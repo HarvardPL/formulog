@@ -29,49 +29,49 @@ struct SmtShim {
   SmtStatus check(term_ptr assertion, int timeout);
 
   static bool needs_type_annotation(const Symbol& sym);
-  static bool is_solver_var(const Term* t);
+  static bool is_solver_var(Term* t);
 
   private:
   bp::opstream z3_in;
   bp::ipstream z3_out;
   bp::child z3;
-  map<const Term*, string, TermCompare> z3_vars;
+  map<Term*, string, TermCompare> z3_vars;
   size_t cnt;
   vector<Type>::iterator annotations;
 
-  void preprocess(const Term* assertion);
-  void visit(const Term* assertion);
-  void record_var(const Term* var);
+  void preprocess(Term* assertion);
+  void visit(Term* assertion);
+  void record_var(Term* var);
   void declare_vars(ostream& out);
-  string lookup_var(const Term* var);
+  string lookup_var(Term* var);
 
   struct Serializer {
     Serializer(SmtShim& shim_, ostream& out_) : shim{shim_}, out{out_} {}
-    void serialize(const Term* assertion);
+    void serialize(Term* assertion);
 
     private:
     SmtShim& shim;
     ostream& out;
 
-    static Term* arg0(const Term* t);
+    static Term* arg0(Term* t);
     void serialize(const std::string& repr, const ComplexTerm& t);
     template<typename T, size_t N>
-      void serialize_bit_string(const Term* t);
+      void serialize_bit_string(Term* t);
     template<size_t From, size_t To, bool Signed>
-      void serialize_bv_to_bv(const Term* t);
+      void serialize_bv_to_bv(Term* t);
     template <size_t E, size_t S>
-      void serialize_bv_to_fp(const Term* t);
+      void serialize_bv_to_fp(Term* t);
     template <typename T, size_t E, size_t S>
-      void serialize_fp(const Term* t);
+      void serialize_fp(Term* t);
     template <size_t N, bool Signed>
-      void serialize_fp_to_bv(const Term* t);
+      void serialize_fp_to_bv(Term* t);
     template <size_t S, size_t E>
-      void serialize_fp_to_fp(const Term* t);
-    void serialize_let(const Term* t);
+      void serialize_fp_to_fp(Term* t);
+    void serialize_let(Term* t);
     template <typename T>
-      void serialize_int(const Term* t);
+      void serialize_int(Term* t);
     template <bool Exists>
-      void serialize_quantifier(const Term* t);
+      void serialize_quantifier(Term* t);
     string serialize_sym(const Symbol& sym);
     string serialize_tester(const Symbol& sym);
   };
@@ -79,19 +79,19 @@ struct SmtShim {
 };
 
 struct TypeInferer {
-  vector<Type> go(const Term* t);
+  vector<Type> go(Term* t);
 
   private:
   vector<Type> annotations;
   vector<pair<Type, Type>> constraints;
   TypeSubst subst;
 
-  Type visit(const Term* t);
+  Type visit(Term* t);
   void unify_constraints();
   void unify(const Type& ty1, const Type& ty2);
 };
 
-vector<Type> TypeInferer::go(const Term* t) {
+vector<Type> TypeInferer::go(Term* t) {
   constraints.clear();
   subst.clear();
   annotations.clear();
@@ -103,7 +103,7 @@ vector<Type> TypeInferer::go(const Term* t) {
   return annotations;
 }
 
-Type TypeInferer::visit(const Term* t) {
+Type TypeInferer::visit(Term* t) {
   vector<Type> types;
   functor_type ft = Type::lookup(t->sym);
   if (SmtShim::needs_type_annotation(t->sym)) {
@@ -195,7 +195,7 @@ SmtStatus SmtShim::check(term_ptr assertion, int timeout) {
   return res;
 }
 
-bool SmtShim::is_solver_var(const Term* t) {
+bool SmtShim::is_solver_var(Term* t) {
   switch (t->sym) {
 /* INSERT 1 */
     default:
@@ -203,7 +203,7 @@ bool SmtShim::is_solver_var(const Term* t) {
   }
 }
 
-void SmtShim::visit(const Term* t) {
+void SmtShim::visit(Term* t) {
   if (is_solver_var(t)) {
     record_var(t);
     return;
@@ -224,7 +224,7 @@ void SmtShim::visit(const Term* t) {
   }
 }
 
-void SmtShim::record_var(const Term* t) {
+void SmtShim::record_var(Term* t) {
   auto v = z3_vars.find(t);
   if (v == z3_vars.end()) {
     string name = "x" + to_string(cnt++);
@@ -232,7 +232,7 @@ void SmtShim::record_var(const Term* t) {
   }
 }
 
-void SmtShim::preprocess(const Term* t) {
+void SmtShim::preprocess(Term* t) {
   z3_vars.clear();
   cnt = 0;
   visit(t);
@@ -247,15 +247,15 @@ void SmtShim::declare_vars(ostream& out) {
   }
 }
 
-string SmtShim::lookup_var(const Term* t) {
+string SmtShim::lookup_var(Term* t) {
   return z3_vars.find(t)->second;
 }
 
-Term* SmtShim::Serializer::arg0(const Term* t) {
+Term* SmtShim::Serializer::arg0(Term* t) {
   return t->as_complex().val[0];
 }
 
-void SmtShim::Serializer::serialize(const Term* t) {
+void SmtShim::Serializer::serialize(Term* t) {
   switch (t->sym) {
     case Symbol::min_term:
     case Symbol::max_term:
@@ -309,12 +309,12 @@ void SmtShim::Serializer::serialize(const std::string& repr, const ComplexTerm& 
 }
 
 template <typename T, size_t N>
-void SmtShim::Serializer::serialize_bit_string(const Term* t) {
+void SmtShim::Serializer::serialize_bit_string(Term* t) {
   out << "#b" << bitset<N>(t->as_base<T>().val).to_string();
 }
 
 template <size_t From, size_t To, bool Signed>
-void SmtShim::Serializer::serialize_bv_to_bv(const Term* t) {
+void SmtShim::Serializer::serialize_bv_to_bv(Term* t) {
   auto arg = arg0(t);
   if (From < To) {
     out << "((_ " << (Signed ? "sign" : "zero") << "_extend "
@@ -331,14 +331,14 @@ void SmtShim::Serializer::serialize_bv_to_bv(const Term* t) {
 }
 
 template <size_t E, size_t S>
-void SmtShim::Serializer::serialize_bv_to_fp(const Term* t) {
+void SmtShim::Serializer::serialize_bv_to_fp(Term* t) {
   out << "((_ to_fp " << E << " " << S << ") RNE ";
   serialize(arg0(t));
   out << ")";
 }
 
 template <typename T, size_t E, size_t S>
-void SmtShim::Serializer::serialize_fp(const Term* t) {
+void SmtShim::Serializer::serialize_fp(Term* t) {
   auto val = t->as_base<T>().val;
   stringstream ss;
   ss << E << " " << S;
@@ -357,20 +357,20 @@ void SmtShim::Serializer::serialize_fp(const Term* t) {
 }
 
 template <size_t N, bool Signed>
-void SmtShim::Serializer::serialize_fp_to_bv(const Term* t) {
+void SmtShim::Serializer::serialize_fp_to_bv(Term* t) {
   out << "((_ " << (Signed ? "fp.to_sbv" : "fp.to_ubv") << " " << N << ") RNE ";
   serialize(arg0(t));
   out << ")";
 }
 
 template <size_t E, size_t S>
-void SmtShim::Serializer::serialize_fp_to_fp(const Term* t) {
+void SmtShim::Serializer::serialize_fp_to_fp(Term* t) {
   out << "((_ to_fp " << E << " " << S << ") RNE ";
   serialize(arg0(t));
   out << ")";
 }
 
-void SmtShim::Serializer::serialize_let(const Term* t) {
+void SmtShim::Serializer::serialize_let(Term* t) {
   auto x = t->as_complex();
   out << "(let ((";
   serialize(x.val[0]);
@@ -382,12 +382,12 @@ void SmtShim::Serializer::serialize_let(const Term* t) {
 }
 
 template <typename T>
-void SmtShim::Serializer::serialize_int(const Term* t) {
+void SmtShim::Serializer::serialize_int(Term* t) {
   out << arg0(t)->as_base<T>().val;
 }
 
 template <bool Exists>
-void SmtShim::Serializer::serialize_quantifier(const Term* t) {
+void SmtShim::Serializer::serialize_quantifier(Term* t) {
   auto x = t->as_complex();
   out << "(" << (Exists ? "exists (" : "forall (");
   for (auto& v : Term::vectorizeListTerm(x.val[0])) {
