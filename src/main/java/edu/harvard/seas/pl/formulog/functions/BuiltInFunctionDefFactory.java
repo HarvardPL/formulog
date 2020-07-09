@@ -95,6 +95,14 @@ public final class BuiltInFunctionDefFactory {
 			return I32Lt.INSTANCE;
 		case I32_LE:
 			return I32Lte.INSTANCE;
+		case I32_SHL:
+			return i32Shl;
+		case I32_SHR:
+			return i32Shr;
+		case I64_SHL:
+			return i64Shl;
+		case I64_SHR:
+			return i64Shr;
 		case I64_ADD:
 			return I64Add.INSTANCE;
 		case I64_SUB:
@@ -471,6 +479,70 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 	}
+	
+	private static final FunctionDef i32Shl = new FunctionDef() {
+
+		@Override
+		public FunctionSymbol getSymbol() {
+			return BuiltInFunctionSymbol.I32_SHL;
+		}
+
+		@Override
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I32 arg1 = (I32) args[0];
+			I32 arg2 = (I32) args[1];
+			return I32.make(arg1.getVal() << arg2.getVal());
+		}
+		
+	};
+	
+	private static final FunctionDef i32Shr = new FunctionDef() {
+
+		@Override
+		public FunctionSymbol getSymbol() {
+			return BuiltInFunctionSymbol.I32_SHR;
+		}
+
+		@Override
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I32 arg1 = (I32) args[0];
+			I32 arg2 = (I32) args[1];
+			return I32.make(arg1.getVal() >> arg2.getVal());
+		}
+		
+	};
+	
+	private static final FunctionDef i64Shl = new FunctionDef() {
+
+		@Override
+		public FunctionSymbol getSymbol() {
+			return BuiltInFunctionSymbol.I64_SHL;
+		}
+
+		@Override
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I64 arg1 = (I64) args[0];
+			I64 arg2 = (I64) args[1];
+			return I64.make(arg1.getVal() << arg2.getVal());
+		}
+		
+	};
+	
+	private static final FunctionDef i64Shr = new FunctionDef() {
+
+		@Override
+		public FunctionSymbol getSymbol() {
+			return BuiltInFunctionSymbol.I64_SHR;
+		}
+
+		@Override
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I64 arg1 = (I64) args[0];
+			I64 arg2 = (I64) args[1];
+			return I64.make(arg1.getVal() >> arg2.getVal());
+		}
+		
+	};
 
 	private enum I64Add implements FunctionDef {
 
