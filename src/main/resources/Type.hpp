@@ -128,9 +128,6 @@ Type Type::new_var() {
 
 functor_type Type::lookup(const Symbol& sym) {
   switch (sym) {
-    case Symbol::min_term:
-    case Symbol::max_term:
-      abort();
     case Symbol::boxed_bool: return bool_;
     case Symbol::boxed_i32: return i32;
     case Symbol::boxed_i64: return i64;
