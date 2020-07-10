@@ -257,9 +257,6 @@ Term* SmtShim::Serializer::arg0(Term* t) {
 
 void SmtShim::Serializer::serialize(Term* t) {
   switch (t->sym) {
-    case Symbol::min_term:
-    case Symbol::max_term:
-      abort();
     case Symbol::boxed_bool:
     case Symbol::boxed_string: {
       out << *t;
@@ -390,7 +387,7 @@ template <bool Exists>
 void SmtShim::Serializer::serialize_quantifier(Term* t) {
   auto x = t->as_complex();
   out << "(" << (Exists ? "exists (" : "forall (");
-  for (auto& v : Term::vectorizeListTerm(x.val[0])) {
+  for (auto& v : Term::vectorize_list_term(x.val[0])) {
     // Consume annotation for cons
     shim.annotations++;
     auto var = arg0(v);
@@ -401,7 +398,7 @@ void SmtShim::Serializer::serialize_quantifier(Term* t) {
   out << ") ";
   // Consume annotation for nil
   shim.annotations++;
-  auto pats = Term::vectorizeListTerm(x.val[2]);
+  auto pats = Term::vectorize_list_term(x.val[2]);
   if (!pats.empty()) {
     out << "(! ";
   }
@@ -412,7 +409,7 @@ void SmtShim::Serializer::serialize_quantifier(Term* t) {
       // Consume annotation for cons
       shim.annotations++;
       bool first{true};
-      for (auto& sub : Term::vectorizeListTerm(pat)) {
+      for (auto& sub : Term::vectorize_list_term(pat)) {
         if (!first) {
           out << " ";
         }

@@ -31,10 +31,23 @@ struct Term {
   template<typename T> inline const BaseTerm<T>& as_base() const;
   inline const ComplexTerm& as_complex() const;
 
+  // Compare two terms by their memory address -> {-1, 0, 1}
   static int compare(Term* t1, Term* t2);
+
+  // Compare two terms by their natural order -> {-1, 0, 1}:
+  // - if of the different types, then by order in the Symbol enum
+  // - if of the same type BaseTerm<T>, then by T::operator<()
+  // - if of the same type ComplexTerm, then by lexicographical order
+  static int compare_natural(Term* t1, Term* t2);
+
+  // Construct a memoized BaseTerm
   template<typename T> inline static term_ptr make(T val);
+
+  // Construct a memoized ComplexTerm
   inline static term_ptr make(Symbol sym, size_t arity, term_ptr* val);
-  static vector<term_ptr> vectorizeListTerm(Term* t);
+
+  // Convert a Lisp-style list term into a vector
+  static vector<term_ptr> vectorize_list_term(Term* t);
 };
 
 struct ComplexTerm : public Term {
@@ -56,13 +69,7 @@ struct BaseTerm : public Term {
   BaseTerm(Symbol sym_, T val_) : Term{sym_}, val(val_) {}
 
   inline static int compare(BaseTerm<T> t1, BaseTerm<T> t2) {
-    if (t1.val < t2.val) {
-      return -1;
-    } else if (t1.val > t2.val) {
-      return 1;
-    } else {
-      return 0;
-    }
+    return (t1.val > t2.val) - (t1.val < t2.val);
   }
 };
 
@@ -130,6 +137,10 @@ ostream& operator<<(ostream& out, Term& t) {
 }
 
 int Term::compare(Term* t1, Term* t2) {
+  return less<>()(t2, t1) - less<>()(t1, t2);
+}
+
+int Term::compare_natural(Term* t1, Term* t2) {
   stack<pair<Term*, Term*>> w;
   w.emplace(t1, t2);
   while (!w.empty()) {
@@ -214,8 +225,8 @@ int Term::compare(Term* t1, Term* t2) {
   return 0;
 }
 
-term_ptr min_term = new Term(Symbol::min_term);
-term_ptr max_term = new Term(Symbol::max_term);
+term_ptr min_term = reinterpret_cast<term_ptr>(numeric_limits<uintptr_t>::min());
+term_ptr max_term = reinterpret_cast<term_ptr>(numeric_limits<uintptr_t>::max());
 
 template<>
 term_ptr Term::make<bool>(bool val) {
@@ -266,7 +277,7 @@ struct TermCompare {
   }
 };
 
-vector<term_ptr> Term::vectorizeListTerm(Term* t) {
+vector<term_ptr> Term::vectorize_list_term(Term* t) {
   vector<term_ptr> v;
   while (t->sym == Symbol::cons) {
     auto x = t->as_complex();
