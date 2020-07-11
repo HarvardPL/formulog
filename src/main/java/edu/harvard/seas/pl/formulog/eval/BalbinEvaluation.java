@@ -54,6 +54,7 @@ public class BalbinEvaluation implements Evaluation {
             for (int i = 0; i < basicRule.getBodySize(); i++) {
                 basicRule.getBody(i);
                 // TODO: Get query q
+                // use getPred, or instanceOf
             }
         }
 
@@ -65,6 +66,7 @@ public class BalbinEvaluation implements Evaluation {
 //        Set<BasicRule> qMagicFacts = null;
 //        for (BasicRule basicRule : qRules) {
 //            // TODO: Determine whether basicRule is a magic fact
+// check true = true in rule body, create a UnificationPredicate
 //        }
 
         // eval(qInputAtom, qMagicFacts)
@@ -116,7 +118,7 @@ public class BalbinEvaluation implements Evaluation {
         }
 
         // Case 2 - q <--(+) pred(p0), where p0 is the head of a rule
-        AllDirectedPaths allPathsG = new AllDirectedPaths(g);
+        AllDirectedPaths<RelationSymbol, EdgeType> allPathsG = new AllDirectedPaths<RelationSymbol, EdgeType>(g);
         List<GraphPath<RelationSymbol, EdgeType>> allPaths = null;
         for (BasicRule basicRule : db) {
             ComplexLiteral head = basicRule.getHead();
