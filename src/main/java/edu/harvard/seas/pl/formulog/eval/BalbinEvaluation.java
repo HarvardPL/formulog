@@ -43,20 +43,22 @@ public class BalbinEvaluation implements Evaluation {
         UserPredicate newQ = magicProg.getQuery();
         RelationSymbol newQSymbol = newQ.getSymbol();
         Set<BasicRule> newQRules = magicProg.getRules(newQSymbol);
+
+        // Get query q
+        UserPredicate q = null;
         for (BasicRule basicRule : newQRules) {
             ComplexLiteral head = basicRule.getHead();
             UserPredicate headPred = getPred(head);
             RelationSymbol headPredSymbol = headPred.getSymbol();
-            if (!newQSymbol.equals(headPredSymbol)) {
-                continue;
-            }
-
             for (int i = 0; i < basicRule.getBodySize(); i++) {
-                basicRule.getBody(i);
-                // TODO: Get query q
-                // use getPred, or instanceOf
+                ComplexLiteral l = basicRule.getBody(i);
+                q = getPred(l);
+                if (q != null) {
+                    break;
+                }
             }
         }
+        assert q != null : "Balbin evaluation method: Could not get query";
 
         // TODO: Get set of magic facts for q
 //        UserPredicate q = null; // Delete this line
