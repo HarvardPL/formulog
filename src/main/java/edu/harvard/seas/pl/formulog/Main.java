@@ -123,8 +123,7 @@ public final class Main {
 			if (Configuration.eval == "semiNaiveEvaluation") {
 				eval = SemiNaiveEvaluation.setup(prog, Configuration.parallelism, Configuration.evalType);
 			} else { // Configuration.eval == "balbinEvaluation"
-//				eval = BalbinEvaluation.setup(prog, Configuration.parallelism);
-				eval = BalbinEvaluation.setup(prog);
+				eval = BalbinEvaluation.setup(prog, Configuration.parallelism);
 			}
 
 			clock.stop();
