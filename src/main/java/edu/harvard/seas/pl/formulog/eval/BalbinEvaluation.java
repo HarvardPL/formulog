@@ -6,6 +6,7 @@ import edu.harvard.seas.pl.formulog.codegen.Relation;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
+import edu.harvard.seas.pl.formulog.unification.Unification;
 import edu.harvard.seas.pl.formulog.validating.FunctionDefValidation;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 import org.jgrapht.Graph;
@@ -48,11 +49,11 @@ public class BalbinEvaluation implements Evaluation {
         UserPredicate q = null;
         for (BasicRule basicRule : newQRules) {
             ComplexLiteral head = basicRule.getHead();
-            UserPredicate headPred = getPred(head);
+            UserPredicate headPred = getUserPredicate(head);
             RelationSymbol headPredSymbol = headPred.getSymbol();
             for (int i = 0; i < basicRule.getBodySize(); i++) {
                 ComplexLiteral l = basicRule.getBody(i);
-                q = getPred(l);
+                q = getUserPredicate(l);
                 if (q != null) {
                     break;
                 }
@@ -60,16 +61,23 @@ public class BalbinEvaluation implements Evaluation {
         }
         assert q != null : "Balbin evaluation method: Could not get query";
 
-        // TODO: Get set of magic facts for q
-//        UserPredicate q = null; // Delete this line
-//        UserPredicate qInputAtom = MagicSetTransformer.createInputAtom(q);
-//        RelationSymbol qSymbol = qInputAtom.getSymbol();
-//        Set<BasicRule> qRules = magicProg.getRules(qSymbol);
-//        Set<BasicRule> qMagicFacts = null;
-//        for (BasicRule basicRule : qRules) {
-//            // TODO: Determine whether basicRule is a magic fact
-// check true = true in rule body, create a UnificationPredicate
-//        }
+        // Get set of magic facts for q
+        UserPredicate qInputAtom = MagicSetTransformer.createInputAtom(q);
+        RelationSymbol qSymbol = qInputAtom.getSymbol();
+        Set<BasicRule> qRules = magicProg.getRules(qSymbol);
+        Set<BasicRule> qMagicFacts = null;
+        UnificationPredicate magicFactMatch = UnificationPredicate.make(Var.make("true"), Var.make("true"), false);
+        for (BasicRule basicRule : qRules) {
+            // Determine whether basicRule is a magic fact
+            UnificationPredicate unificationPredicate = null;
+            for (int i = 0; i < basicRule.getBodySize(); i++) {
+                unificationPredicate = getUnificationPredicate(basicRule.getBody(i));
+                if (unificationPredicate.equals(magicFactMatch)) {
+                    qMagicFacts.add(basicRule);
+                    break;
+                }
+            }
+        }
 
         // eval(qInputAtom, qMagicFacts)
 
@@ -101,7 +109,7 @@ public class BalbinEvaluation implements Evaluation {
         for (BasicRule basicRule : db) {
             // Case 1 - q = pred(p0), where p0 is the head of a rule
             ComplexLiteral head = basicRule.getHead();
-            UserPredicate headPred = getPred(head);
+            UserPredicate headPred = getUserPredicate(head);
             RelationSymbol headPredSymbol = headPred.getSymbol();
             if (qSymbol.equals(headPredSymbol)) {
                 prules.add(basicRule);
@@ -110,7 +118,7 @@ public class BalbinEvaluation implements Evaluation {
             // Construct dependency graph g for Case 2
             g.addVertex(headPredSymbol);
             for (int i = 0; i < basicRule.getBodySize(); i++) {
-                UserPredicate bodyIPred = getPred(basicRule.getBody(i));
+                UserPredicate bodyIPred = getUserPredicate(basicRule.getBody(i));
                 RelationSymbol bodyIPredSymbol = bodyIPred.getSymbol();
                 g.addVertex(bodyIPredSymbol);
 
@@ -124,7 +132,7 @@ public class BalbinEvaluation implements Evaluation {
         List<GraphPath<RelationSymbol, EdgeType>> allPaths = null;
         for (BasicRule basicRule : db) {
             ComplexLiteral head = basicRule.getHead();
-            UserPredicate headPred = getPred(head);
+            UserPredicate headPred = getUserPredicate(head);
             RelationSymbol headPredSymbol = headPred.getSymbol();
 
             // Get all paths from headPredSymbol to qSymbol
@@ -156,8 +164,8 @@ public class BalbinEvaluation implements Evaluation {
         POSITIVE
     }
 
-    // Balbin, Definition 1 - pred(p)
-    private static UserPredicate getPred(ComplexLiteral p) {
+    // Balbin, Definition 1 - pred(p) (for UserPredicate)
+    private static UserPredicate getUserPredicate(ComplexLiteral p) {
         return p.accept(new ComplexLiterals.ComplexLiteralVisitor<Void, UserPredicate>() {
 
             @Override
@@ -168,6 +176,23 @@ public class BalbinEvaluation implements Evaluation {
             @Override
             public UserPredicate visit(UserPredicate userPredicate, Void input) {
                 return userPredicate;
+            }
+
+        }, null);
+    }
+
+    // (for UnificationPredicate)
+    private static UnificationPredicate getUnificationPredicate(ComplexLiteral p) {
+        return p.accept(new ComplexLiterals.ComplexLiteralVisitor<Void, UnificationPredicate>() {
+
+            @Override
+            public UnificationPredicate visit(UnificationPredicate unificationPredicate, Void input) {
+                return unificationPredicate;
+            }
+
+            @Override
+            public UnificationPredicate visit(UserPredicate userPredicate, Void input) {
+                return null;
             }
 
         }, null);
