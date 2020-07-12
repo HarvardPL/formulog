@@ -33,13 +33,15 @@ import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.util.*;
 import edu.harvard.seas.pl.formulog.validating.FunctionDefValidation;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
-import edu.harvard.seas.pl.formulog.validating.Stratum;
+import edu.harvard.seas.pl.formulog.validating.ValidRule;
+import edu.harvard.seas.pl.formulog.validating.ast.SimpleRule;
 import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.AllDirectedPaths;
 import org.jgrapht.graph.DefaultDirectedGraph;
 
 import java.util.*;
+import java.util.function.BiFunction;
 
 public class BalbinEvaluation implements Evaluation {
 
@@ -51,6 +53,7 @@ public class BalbinEvaluation implements Evaluation {
     private final Set<BasicRule> qMagicFacts;
     private final CountingFJP exec;
     private final WellTypedProgram inputProgram;
+    private final Map<RelationSymbol, Set<IndexedRule>> rules;
 
     static final boolean sequential = System.getProperty("sequential") != null;
 
@@ -67,6 +70,8 @@ public class BalbinEvaluation implements Evaluation {
         SortedIndexedFactDb.SortedIndexedFactDbBuilder deltaDbb = new SortedIndexedFactDb.SortedIndexedFactDbBuilder(magicProg.getRuleSymbols());
         PredicateFunctionSetter predFuncs = new PredicateFunctionSetter(
                 magicProg.getFunctionCallFactory().getDefManager(), dbb);
+
+        Map<RelationSymbol, Set<IndexedRule>> rules = new HashMap<>();
 
         // Get query newQ created for magicProg by MagicSetTransformer
         UserPredicate newQ = magicProg.getQuery();
@@ -107,8 +112,33 @@ public class BalbinEvaluation implements Evaluation {
             }
         }
 
-        // Todo: Add more setup for dbb and deltaDbb
-
+        // Set up dbb and deltaDbb; add to rules
+        Set<RelationSymbol> ruleSymbols = magicProg.getRuleSymbols();
+        for (RelationSymbol sym : ruleSymbols) {
+            Set<IndexedRule> rs = new HashSet<>();
+            for (BasicRule br : magicProg.getRules(sym)) {
+                for (SemiNaiveRule snr : SemiNaiveRule.make(br, ruleSymbols)) {
+                    BiFunction<ComplexLiteral, Set<Var>, Integer> score = chooseScoringFunction();
+                    ValidRule vr = ValidRule.make(snr, score);
+                    predFuncs.preprocess(vr);
+                    SimpleRule sr = SimpleRule.make(vr);
+                    IndexedRule ir = IndexedRule.make(sr, p -> {
+                        RelationSymbol psym = p.getSymbol();
+                        if (psym instanceof SemiNaiveRule.DeltaSymbol) {
+                            psym = ((SemiNaiveRule.DeltaSymbol) psym).getBaseSymbol();
+                            return deltaDbb.makeIndex(psym, p.getBindingPattern());
+                        } else {
+                            return dbb.makeIndex(psym, p.getBindingPattern());
+                        }
+                    });
+                    rs.add(ir);
+                    if (Configuration.printFinalRules) {
+                        System.err.println("[FINAL RULE]:\n" + ir);
+                    }
+                }
+            }
+            rules.put(sym, rs);
+        }
         SortedIndexedFactDb db = dbb.build();
         predFuncs.setDb(db);
 
@@ -127,41 +157,152 @@ public class BalbinEvaluation implements Evaluation {
             exec = new CountingFJPImpl(parallelism);
         }
 
-        // Todo: Fix this section
-//        for (RelationSymbol sym : magicProg.getFactSymbols()) {
-//            for (Iterable<Term[]> tups : Util.splitIterable(magicProg.getFacts(sym), Configuration.taskSize)) {
-//                exec.externallyAddTask(new AbstractFJPTask(exec) {
-//
-//                    @Override
-//                    public void doTask() throws EvaluationException {
-//                        for (Term[] tup : tups) {
-//                            try {
-//                                db.add(sym, Terms.normalize(tup, new SimpleSubstitution()));
-//                            } catch (EvaluationException e) {
-//                                UserPredicate p = UserPredicate.make(sym, tup, false);
-//                                throw new EvaluationException("Cannot normalize fact " + p + ":\n" + e.getMessage());
-//                            }
-//                        }
-//                    }
-//
-//                });
-//            }
-//        }
+        for (RelationSymbol sym : magicProg.getFactSymbols()) {
+            for (Iterable<Term[]> tups : Util.splitIterable(magicProg.getFacts(sym), Configuration.taskSize)) {
+                exec.externallyAddTask(new AbstractFJPTask(exec) {
+
+                    @Override
+                    public void doTask() throws EvaluationException {
+                        for (Term[] tup : tups) {
+                            try {
+                                db.add(sym, Terms.normalize(tup, new SimpleSubstitution()));
+                            } catch (EvaluationException e) {
+                                UserPredicate p = UserPredicate.make(sym, tup, false);
+                                throw new EvaluationException("Cannot normalize fact " + p + ":\n" + e.getMessage());
+                            }
+                        }
+                    }
+
+                });
+            }
+        }
         exec.blockUntilFinished();
         if (exec.hasFailed()) {
             exec.shutdown();
             throw new InvalidProgramException(exec.getFailureCause());
         }
+        return new BalbinEvaluation(prog, db, deltaDbb, rules, q, qInputAtom, qMagicFacts, exec);
+    }
 
-        // --------------------------------------------------------------------------------
-        // part 5 - setup for part 6:
-        // x create a pred(p) function
-        // x update the transform function in MagicSetTransformer.java
-        // x create a prules(q, D) function that takes a predicate q, database D, and returns a set of rules (a subset of D)
+    private static SmtLibSolver maybeDoubleCheckSolver(SmtLibSolver inner) {
+        if (Configuration.smtDoubleCheckUnknowns) {
+            return new DoubleCheckingSolver(inner);
+        }
+        return inner;
+    }
 
-        // part 6 - eval
+    private static SmtLibSolver makeNaiveSolver() {
+        return Configuration.smtUseSingleShotSolver ? new SingleShotSolver() : new CallAndResetSolver();
+    }
 
-        return new BalbinEvaluation(prog, db, deltaDbb, q, qInputAtom, qMagicFacts, exec);
+    private static SmtLibSolver getSmtManager() {
+        SmtStrategy strategy = Configuration.smtStrategy;
+        switch (strategy.getTag()) {
+            case QUEUE: {
+                int size = (int) strategy.getMetadata();
+                return new QueueSmtManager(size, () -> maybeDoubleCheckSolver(new CheckSatAssumingSolver()));
+            }
+            case NAIVE:
+                return maybeDoubleCheckSolver(makeNaiveSolver());
+            case PUSH_POP:
+                return new PushPopSolver();
+            case PUSH_POP_NAIVE:
+                return new PushPopNaiveSolver();
+            case BEST_MATCH: {
+                int size = (int) strategy.getMetadata();
+                return maybeDoubleCheckSolver(new BestMatchSmtManager(size));
+            }
+            case PER_THREAD_QUEUE: {
+                int size = (int) strategy.getMetadata();
+                return new PerThreadSmtManager(() -> new NotThreadSafeQueueSmtManager(size,
+                        () -> maybeDoubleCheckSolver(new CheckSatAssumingSolver())));
+            }
+            case PER_THREAD_BEST_MATCH: {
+                int size = (int) strategy.getMetadata();
+                return new PerThreadSmtManager(() -> maybeDoubleCheckSolver(new BestMatchSmtManager(size)));
+            }
+            case PER_THREAD_PUSH_POP: {
+                return new PerThreadSmtManager(() -> new PushPopSolver());
+            }
+            case PER_THREAD_PUSH_POP_NAIVE: {
+                return new PerThreadSmtManager(() -> new PushPopNaiveSolver());
+            }
+            case PER_THREAD_NAIVE: {
+                return new PerThreadSmtManager(() -> maybeDoubleCheckSolver(
+                        Configuration.smtUseSingleShotSolver ? new SingleShotSolver() : new CallAndResetSolver()));
+            }
+            default:
+                throw new UnsupportedOperationException("Cannot support SMT strategy: " + strategy);
+        }
+    }
+
+    static BiFunction<ComplexLiteral, Set<Var>, Integer> chooseScoringFunction() {
+        return BalbinEvaluation::score0;
+    }
+
+    static int score0(ComplexLiteral l, Set<Var> boundVars) {
+        return 0;
+    }
+
+    BalbinEvaluation(WellTypedProgram inputProgram, SortedIndexedFactDb db,
+                     IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb, Map<RelationSymbol, Set<IndexedRule>> rules,
+                     UserPredicate q, UserPredicate qInputAtom, Set<BasicRule> qMagicFacts, CountingFJP exec) {
+        this.inputProgram = inputProgram;
+        this.db = db;
+        this.q = q;
+        this.qInputAtom = qInputAtom;
+        this.qMagicFacts = qMagicFacts;
+        this.exec = exec;
+        this.deltaDb = deltaDbb.build();
+        this.nextDeltaDb = deltaDbb.build();
+        this.rules = rules;
+    }
+
+    @Override
+    public WellTypedProgram getInputProgram() {
+        return inputProgram;
+    }
+
+    @Override
+    public synchronized void run() throws EvaluationException {
+        if (Configuration.printRelSizes) {
+            Runtime.getRuntime().addShutdownHook(new Thread() {
+
+                @Override
+                public void run() {
+                    Configuration.printRelSizes(System.err, "REL SIZE", db, true);
+                }
+
+            });
+        }
+        if (Configuration.debugParallelism) {
+            Runtime.getRuntime().addShutdownHook(new Thread() {
+
+                @Override
+                public void run() {
+                    System.err.println("[STEAL COUNT] " + exec.getStealCount());
+                }
+
+            });
+        }
+        eval(qInputAtom, qMagicFacts);
+    }
+
+    // Todo: Balbin, Algorithm 7 - eval
+    private void eval(UserPredicate qInputAtom, Set<BasicRule> mq) throws EvaluationException {
+        // Create new BalbinEvaluationContext
+
+        // Copied from SemiNaiveEvaluation.java
+//        List<IndexedRule> l = new ArrayList<>();
+//        for (RelationSymbol sym : stratum.getPredicateSyms()) {
+//            l.addAll(rules.get(sym));
+//        }
+//        if (evalType == SemiNaiveEvaluation.EvalType.EAGER) {
+//            new EagerStratumEvaluator(stratum.getRank(), db, l, exec, trackedRelations).evaluate();
+//        } else {
+//            new RoundBasedStratumEvaluator(stratum.getRank(), db, deltaDb, nextDeltaDb, l, exec, trackedRelations)
+//                    .evaluate();
+//        }
     }
 
     // Balbin, Definition 29 - prules
@@ -264,118 +405,6 @@ public class BalbinEvaluation implements Evaluation {
             }
 
         }, null);
-    }
-
-    private static SmtLibSolver maybeDoubleCheckSolver(SmtLibSolver inner) {
-        if (Configuration.smtDoubleCheckUnknowns) {
-            return new DoubleCheckingSolver(inner);
-        }
-        return inner;
-    }
-
-    private static SmtLibSolver makeNaiveSolver() {
-        return Configuration.smtUseSingleShotSolver ? new SingleShotSolver() : new CallAndResetSolver();
-    }
-
-    private static SmtLibSolver getSmtManager() {
-        SmtStrategy strategy = Configuration.smtStrategy;
-        switch (strategy.getTag()) {
-            case QUEUE: {
-                int size = (int) strategy.getMetadata();
-                return new QueueSmtManager(size, () -> maybeDoubleCheckSolver(new CheckSatAssumingSolver()));
-            }
-            case NAIVE:
-                return maybeDoubleCheckSolver(makeNaiveSolver());
-            case PUSH_POP:
-                return new PushPopSolver();
-            case PUSH_POP_NAIVE:
-                return new PushPopNaiveSolver();
-            case BEST_MATCH: {
-                int size = (int) strategy.getMetadata();
-                return maybeDoubleCheckSolver(new BestMatchSmtManager(size));
-            }
-            case PER_THREAD_QUEUE: {
-                int size = (int) strategy.getMetadata();
-                return new PerThreadSmtManager(() -> new NotThreadSafeQueueSmtManager(size,
-                        () -> maybeDoubleCheckSolver(new CheckSatAssumingSolver())));
-            }
-            case PER_THREAD_BEST_MATCH: {
-                int size = (int) strategy.getMetadata();
-                return new PerThreadSmtManager(() -> maybeDoubleCheckSolver(new BestMatchSmtManager(size)));
-            }
-            case PER_THREAD_PUSH_POP: {
-                return new PerThreadSmtManager(() -> new PushPopSolver());
-            }
-            case PER_THREAD_PUSH_POP_NAIVE: {
-                return new PerThreadSmtManager(() -> new PushPopNaiveSolver());
-            }
-            case PER_THREAD_NAIVE: {
-                return new PerThreadSmtManager(() -> maybeDoubleCheckSolver(
-                        Configuration.smtUseSingleShotSolver ? new SingleShotSolver() : new CallAndResetSolver()));
-            }
-            default:
-                throw new UnsupportedOperationException("Cannot support SMT strategy: " + strategy);
-        }
-    }
-
-    BalbinEvaluation(WellTypedProgram inputProgram, SortedIndexedFactDb db,
-                     IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb, UserPredicate q, UserPredicate qInputAtom,
-                     Set<BasicRule> qMagicFacts, CountingFJP exec) {
-        this.inputProgram = inputProgram;
-        this.db = db;
-        this.q = q;
-        this.qInputAtom = qInputAtom;
-        this.qMagicFacts = qMagicFacts;
-        this.exec = exec;
-        this.deltaDb = deltaDbb.build();
-        this.nextDeltaDb = deltaDbb.build();
-    }
-
-    @Override
-    public WellTypedProgram getInputProgram() {
-        return inputProgram;
-    }
-
-    @Override
-    public synchronized void run() throws EvaluationException {
-        if (Configuration.printRelSizes) {
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-
-                @Override
-                public void run() {
-                    Configuration.printRelSizes(System.err, "REL SIZE", db, true);
-                }
-
-            });
-        }
-        if (Configuration.debugParallelism) {
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-
-                @Override
-                public void run() {
-                    System.err.println("[STEAL COUNT] " + exec.getStealCount());
-                }
-
-            });
-        }
-        eval(qInputAtom, qMagicFacts);
-    }
-
-    // Todo: Balbin, Algorithm 7 - eval
-    private void eval(UserPredicate qInputAtom, Set<BasicRule> mq) throws EvaluationException {
-        // Create new BalbinEvaluationContext
-
-        // Copied from SemiNaiveEvaluation.java
-//        List<IndexedRule> l = new ArrayList<>();
-//        for (RelationSymbol sym : stratum.getPredicateSyms()) {
-//            l.addAll(rules.get(sym));
-//        }
-//        if (evalType == SemiNaiveEvaluation.EvalType.EAGER) {
-//            new EagerStratumEvaluator(stratum.getRank(), db, l, exec, trackedRelations).evaluate();
-//        } else {
-//            new RoundBasedStratumEvaluator(stratum.getRank(), db, deltaDb, nextDeltaDb, l, exec, trackedRelations)
-//                    .evaluate();
-//        }
     }
 
     @Override
