@@ -1,5 +1,25 @@
 package edu.harvard.seas.pl.formulog.eval;
 
+/*-
+ * #%L
+ * Formulog
+ * %%
+ * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
+ * %%
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * #L%
+ */
+
 import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.*;
 import edu.harvard.seas.pl.formulog.codegen.Relation;
@@ -59,7 +79,7 @@ public class BalbinEvaluation implements Evaluation {
                 }
             }
         }
-        assert q != null : "Balbin evaluation method: Could not get query";
+        assert q != null : "Balbin evaluation: Could not get query";
 
         // Get set of magic facts for q
         UserPredicate qInputAtom = MagicSetTransformer.createInputAtom(q);
@@ -92,7 +112,7 @@ public class BalbinEvaluation implements Evaluation {
         return new BalbinEvaluation(prog, magicProg.getQuery());
     }
 
-    // TODO: Balbin, Algorithm 7 - eval
+    // Todo: Balbin, Algorithm 7 - eval
 //    private static void eval(UserPredicate q, Set<BasicRule> mq) {
 //
 //    }
@@ -136,6 +156,7 @@ public class BalbinEvaluation implements Evaluation {
             RelationSymbol headPredSymbol = headPred.getSymbol();
 
             // Get all paths from headPredSymbol to qSymbol
+            // Todo: Check that getAllPaths is working as expected (i.e. for cycles)
             allPaths = allPathsG.getAllPaths(headPredSymbol, qSymbol, false, null);
 
             // Only add basicRule to prules if every edge in every path of allPaths is positive

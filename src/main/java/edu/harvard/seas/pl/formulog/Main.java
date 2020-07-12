@@ -29,16 +29,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import edu.harvard.seas.pl.formulog.eval.*;
 import org.apache.commons.lang3.time.StopWatch;
 
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.codegen.CodeGen;
-import edu.harvard.seas.pl.formulog.eval.Evaluation;
-import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.eval.EvaluationResult;
-import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
 import edu.harvard.seas.pl.formulog.parsing.ParseException;
 import edu.harvard.seas.pl.formulog.parsing.Parser;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
@@ -122,7 +119,14 @@ public final class Main {
 		clock.reset();
 		clock.start();
 		try {
-			Evaluation eval = SemiNaiveEvaluation.setup(prog, Configuration.parallelism, Configuration.evalType);
+			Evaluation eval = null;
+			if (Configuration.eval == "semiNaiveEvaluation") {
+				eval = SemiNaiveEvaluation.setup(prog, Configuration.parallelism, Configuration.evalType);
+			} else { // Configuration.eval == "balbinEvaluation"
+//				eval = BalbinEvaluation.setup(prog, Configuration.parallelism);
+				eval = BalbinEvaluation.setup(prog);
+			}
+
 			clock.stop();
 			System.out.println("Finished rewriting and validating (" + clock.getTime() / 1000.0 + "s)");
 			return eval;

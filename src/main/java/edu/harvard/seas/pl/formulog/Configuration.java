@@ -164,6 +164,20 @@ public final class Configuration {
 	public static final String boostLib = System.getProperty("boostLib");
 	public static final String outputExec = System.getProperty("outputExec");
 
+	public static final String eval = getEval();
+	public static final String getEval() {
+		String val = System.getProperty("eval");
+		if (val == null) {
+			val = "semiNaiveEvaluation";
+		}
+		switch (val) {
+			case "semiNaiveEvaluation":
+			case "balbinEvaluation":
+				return val;
+		}
+		throw new IllegalArgumentException("Unrecognized evaluation: " + val);
+	}
+
 	public static final int memoizeThreshold() {
 		return getIntProp("memoizeThreshold", 0);
 	}
@@ -173,17 +187,12 @@ public final class Configuration {
 
 	public static final boolean inlineInRules = propIsSet("inlineInRules", true);
 
-//	public static final SemiNaiveEvaluation.EvalType eagerSemiNaive =
-//			propIsSet("eagerSemiNaive") ? SemiNaiveEvaluation.EvalType.EAGER : SemiNaiveEvaluation.EvalType.NORMAL;
-
 	public static final SemiNaiveEvaluation.EvalType evalType = getEvalType();
-
 	private static SemiNaiveEvaluation.EvalType getEvalType() {
 		String val = System.getProperty("evalType");
 		if (val == null) {
 			val = "normal";
 		}
-
 		switch (val) {
 			case "normal":
 				return SemiNaiveEvaluation.EvalType.NORMAL;

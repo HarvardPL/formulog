@@ -98,7 +98,7 @@ public class MagicSetTransformer {
 			prog = transformForQuery(origProg.getQuery(), useDemandTransformation, restoreStratification);
 		} else {
 			if (restoreStratification == RestoreStratification.FALSE_AND_NO_MAGIC_RULES_FOR_NEG_LITERALS) {
-				throw new InvalidProgramException("Balbin evaluation method: Must include queryGrab");
+				throw new InvalidProgramException("Balbin evaluation: Must include queryGrab");
 			}
 			prog = transformNoQuery(useDemandTransformation, restoreStratification);
 		}
