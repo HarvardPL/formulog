@@ -29,7 +29,7 @@ struct SmtShim {
   SmtShim();
   SmtStatus check(term_ptr assertion, int timeout);
 
-  static bool needs_type_annotation(const Symbol& sym);
+  static bool needs_type_annotation(Symbol sym);
   static bool is_solver_var(Term* t);
 
   private:
@@ -73,8 +73,8 @@ struct SmtShim {
       void serialize_int(Term* t);
     template <bool Exists>
       void serialize_quantifier(Term* t);
-    string serialize_sym(const Symbol& sym);
-    string serialize_tester(const Symbol& sym);
+    string serialize_sym(Symbol sym);
+    string serialize_tester(Symbol sym);
   };
 
 };
@@ -430,7 +430,7 @@ void SmtShim::Serializer::serialize_quantifier(Term* t) {
   out << ")";
 }
 
-bool SmtShim::needs_type_annotation(const Symbol& sym) {
+bool SmtShim::needs_type_annotation(Symbol sym) {
   switch (sym) {
 /* INSERT 3 */
     default:
@@ -438,7 +438,7 @@ bool SmtShim::needs_type_annotation(const Symbol& sym) {
   }
 }
 
-string SmtShim::Serializer::serialize_sym(const Symbol& sym) {
+string SmtShim::Serializer::serialize_sym(Symbol sym) {
   switch (sym) {
 /* INSERT 4 */
     default:
@@ -448,7 +448,7 @@ string SmtShim::Serializer::serialize_sym(const Symbol& sym) {
   }
 }
 
-string SmtShim::Serializer::serialize_tester(const Symbol& sym) {
+string SmtShim::Serializer::serialize_tester(Symbol sym) {
   stringstream ss;
   ss << sym;
   string s = ss.str().substr(4, string::npos);

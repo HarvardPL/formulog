@@ -19,7 +19,7 @@ enum class Symbol {
 /* INSERT 0 */
 };
 
-ostream& operator<<(ostream& out, const Symbol& sym) {
+ostream& operator<<(ostream& out, Symbol sym) {
   switch (sym) {
     case Symbol::boxed_bool: return out << "boxed_bool";
     case Symbol::boxed_i32: return out << "boxed_i32";
@@ -58,7 +58,7 @@ Symbol lookup_tuple_symbol(size_t arity) {
   __builtin_unreachable();
 }
 
-size_t symbol_arity(const Symbol& sym) {
+constexpr size_t symbol_arity(Symbol sym) {
   switch (sym) {
 /* INSERT 4 */
     default: abort();
