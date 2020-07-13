@@ -5,7 +5,10 @@
 #include <cmath>
 #include <cstdint>
 #include <limits>
+#include <map>
 #include <memory>
+#include <mutex>
+#include <shared_mutex>
 #include <stack>
 #include <utility>
 #include <vector>
@@ -225,39 +228,65 @@ int Term::compare_natural(Term* t1, Term* t2) {
   return 0;
 }
 
+// These terms do not exist, but are useful for pointer comparisons
 term_ptr min_term = reinterpret_cast<term_ptr>(numeric_limits<uintptr_t>::min());
 term_ptr max_term = reinterpret_cast<term_ptr>(numeric_limits<uintptr_t>::max());
 
+// Concurrency-safe cache for BaseTerm values
+template <typename T, Symbol S> class BaseTermCache {
+  unordered_map<T, term_ptr> cache;
+  shared_mutex m;
+
+  public:
+  inline term_ptr get(const T& val) {
+    shared_lock<shared_mutex> lock(m);
+    auto it = cache.find(val);
+    if (it != cache.end()) {
+      return it->second;
+    }
+    lock.unlock();
+    unique_lock<shared_mutex> lock2(m);
+    return cache[val] = new BaseTerm<T>(S, val);
+  }
+};
+
 template<>
 term_ptr Term::make<bool>(bool val) {
-  return new BaseTerm<bool>(Symbol::boxed_bool, val);
+  static BaseTermCache<bool, Symbol::boxed_bool> cache;
+  return cache.get(val);
 }
 
 template<>
 term_ptr Term::make<int32_t>(int32_t val) {
-  return new BaseTerm<int32_t>(Symbol::boxed_i32, val);
+  static BaseTermCache<int32_t, Symbol::boxed_i32> cache;
+  return cache.get(val);
 }
 
 template<>
 term_ptr Term::make<int64_t>(int64_t val) {
-  return new BaseTerm<int64_t>(Symbol::boxed_i64, val);
+  static BaseTermCache<int64_t, Symbol::boxed_i64> cache;
+  return cache.get(val);
 }
 
 template<>
 term_ptr Term::make<float>(float val) {
-  return new BaseTerm<float>(Symbol::boxed_fp32, val);
+  static BaseTermCache<float, Symbol::boxed_fp32> cache;
+  return cache.get(val);
 }
 
 template<>
 term_ptr Term::make<double>(double val) {
-  return new BaseTerm<double>(Symbol::boxed_fp64, val);
+  static BaseTermCache<double, Symbol::boxed_fp64> cache;
+  return cache.get(val);
 }
 
 template<>
 term_ptr Term::make<string>(string val) {
-  return new BaseTerm<string>(Symbol::boxed_string, val);
+  static BaseTermCache<string, Symbol::boxed_string> cache;
+  return cache.get(val);
 }
 
+// FIXME add a cache for complex terms!
 term_ptr Term::make(Symbol sym, size_t arity, term_ptr* val) {
   return new ComplexTerm(sym, arity, val);
 }
