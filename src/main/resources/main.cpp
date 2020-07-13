@@ -1,3 +1,6 @@
+#include <vector>
+#include <string>
+
 #include <boost/asio.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>

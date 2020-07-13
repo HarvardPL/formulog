@@ -9,6 +9,7 @@
 #include <iostream>
 #include <limits>
 #include <map>
+#include <string>
 
 #include "Term.hpp"
 #include "Type.hpp"

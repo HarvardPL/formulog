@@ -1,5 +1,9 @@
 #pragma once
 
+#include <array>
+#include <iostream>
+#include <string>
+
 #include <souffle/CompiledSouffle.h>
 
 #include "Term.hpp"
