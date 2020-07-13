@@ -1,0 +1,12 @@
+# Fact files
+edge.csv
+edge.facts
+
+# Formulog files and output
+codegen/
+formulog.out
+
+# Souffle files and output
+tc
+tc.cpp
+souffle.out
