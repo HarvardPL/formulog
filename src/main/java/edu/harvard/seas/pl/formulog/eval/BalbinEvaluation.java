@@ -28,13 +28,15 @@ import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
 import edu.harvard.seas.pl.formulog.smt.*;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
+import edu.harvard.seas.pl.formulog.symbols.Symbol;
+import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.util.*;
 import edu.harvard.seas.pl.formulog.validating.FunctionDefValidation;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 import edu.harvard.seas.pl.formulog.validating.ValidRule;
-import edu.harvard.seas.pl.formulog.validating.ast.SimpleRule;
+import edu.harvard.seas.pl.formulog.validating.ast.*;
 import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.AllDirectedPaths;
@@ -52,6 +54,7 @@ public class BalbinEvaluation implements Evaluation {
     private final UserPredicate qInputAtom;
     private final Set<BasicRule> qMagicFacts;
     private final CountingFJP exec;
+    private final Set<RelationSymbol> trackedRelations;
     private final WellTypedProgram inputProgram;
     private final Map<RelationSymbol, Set<IndexedRule>> rules;
 
@@ -181,7 +184,8 @@ public class BalbinEvaluation implements Evaluation {
             exec.shutdown();
             throw new InvalidProgramException(exec.getFailureCause());
         }
-        return new BalbinEvaluation(prog, db, deltaDbb, rules, q, qInputAtom, qMagicFacts, exec);
+        return new BalbinEvaluation(prog, db, deltaDbb, rules, q, qInputAtom, qMagicFacts, exec,
+                getTrackedRelations(magicProg.getSymbolManager()));
     }
 
     private static SmtLibSolver maybeDoubleCheckSolver(SmtLibSolver inner) {
@@ -236,6 +240,24 @@ public class BalbinEvaluation implements Evaluation {
         }
     }
 
+    static Set<RelationSymbol> getTrackedRelations(SymbolManager sm) {
+        Set<RelationSymbol> s = new HashSet<>();
+        for (String name : Configuration.trackedRelations) {
+            if (sm.hasName(name)) {
+                Symbol sym = sm.lookupSymbol(name);
+                if (sym instanceof RelationSymbol) {
+                    s.add((RelationSymbol) sm.lookupSymbol(name));
+                } else {
+                    System.err.println("[WARNING] Cannot track non-relation " + sym);
+                }
+
+            } else {
+                System.err.println("[WARNING] Cannot track unrecognized relation " + name);
+            }
+        }
+        return s;
+    }
+
     static BiFunction<ComplexLiteral, Set<Var>, Integer> chooseScoringFunction() {
         return BalbinEvaluation::score0;
     }
@@ -246,13 +268,15 @@ public class BalbinEvaluation implements Evaluation {
 
     BalbinEvaluation(WellTypedProgram inputProgram, SortedIndexedFactDb db,
                      IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb, Map<RelationSymbol, Set<IndexedRule>> rules,
-                     UserPredicate q, UserPredicate qInputAtom, Set<BasicRule> qMagicFacts, CountingFJP exec) {
+                     UserPredicate q, UserPredicate qInputAtom, Set<BasicRule> qMagicFacts, CountingFJP exec,
+                     Set<RelationSymbol> trackedRelations) {
         this.inputProgram = inputProgram;
         this.db = db;
         this.q = q;
         this.qInputAtom = qInputAtom;
         this.qMagicFacts = qMagicFacts;
         this.exec = exec;
+        this.trackedRelations = trackedRelations;
         this.deltaDb = deltaDbb.build();
         this.nextDeltaDb = deltaDbb.build();
         this.rules = rules;
@@ -285,27 +309,19 @@ public class BalbinEvaluation implements Evaluation {
 
             });
         }
-        eval(qInputAtom, qMagicFacts);
+        eval();
     }
 
     // Todo: Balbin, Algorithm 7 - eval
-    private void eval(UserPredicate qInputAtom, Set<BasicRule> mq) throws EvaluationException {
-        // Create new BalbinEvaluationContext
+    private void eval() throws EvaluationException {
+        List<IndexedRule> l = new ArrayList<>();
+        l.addAll(getPRules(qInputAtom, rules));
 
-        // Copied from SemiNaiveEvaluation.java
-//        List<IndexedRule> l = new ArrayList<>();
-//        for (RelationSymbol sym : stratum.getPredicateSyms()) {
-//            l.addAll(rules.get(sym));
-//        }
-//        if (evalType == SemiNaiveEvaluation.EvalType.EAGER) {
-//            new EagerStratumEvaluator(stratum.getRank(), db, l, exec, trackedRelations).evaluate();
-//        } else {
-//            new RoundBasedStratumEvaluator(stratum.getRank(), db, deltaDb, nextDeltaDb, l, exec, trackedRelations)
-//                    .evaluate();
-//        }
+        // Create new BalbinEvaluationContext
+//        new BalbinEvaluationContext(db, deltaDb, nextDeltaDb, qInputAtom, l, exec, trackedRelations).evaluate();
     }
 
-    // Balbin, Definition 29 - prules
+    // Balbin, Definition 29 - prules (with BasicRule)
     private static Set<BasicRule> getPRules(UserPredicate q, Set<BasicRule> db) {
         RelationSymbol qSymbol = q.getSymbol();
         Set<BasicRule> prules = new HashSet<>();
@@ -368,6 +384,72 @@ public class BalbinEvaluation implements Evaluation {
         return prules;
     }
 
+    // - prules (with IndexedRule)
+    private static Set<IndexedRule> getPRules(UserPredicate q, Map<RelationSymbol, Set<IndexedRule>> rules) {
+        Set<IndexedRule> db = null;
+        for (Map.Entry<RelationSymbol, Set<IndexedRule>> entry : rules.entrySet()) {
+            db.addAll(entry.getValue());
+        }
+
+        RelationSymbol qSymbol = q.getSymbol();
+        Set<IndexedRule> prules = new HashSet<>();
+
+        // DefaultDirectedGraph; assuming no recursive negation
+        Graph<RelationSymbol, EdgeType> g = new DefaultDirectedGraph<>(EdgeType.class);
+        g.addVertex(qSymbol);
+
+        for (IndexedRule indexedRule : db) {
+            // Case 1 - q = pred(p0), where p0 is the head of a rule
+            SimplePredicate headPred = indexedRule.getHead();
+            RelationSymbol headPredSymbol = headPred.getSymbol();
+            if (qSymbol.equals(headPredSymbol)) {
+                prules.add(indexedRule);
+            }
+
+            // Construct dependency graph g for Case 2
+            g.addVertex(headPredSymbol);
+            for (int i = 0; i < indexedRule.getBodySize(); i++) {
+                SimplePredicate bodyIPred = getSimplePredicate(indexedRule.getBody(i));
+                RelationSymbol bodyIPredSymbol = bodyIPred.getSymbol();
+                g.addVertex(bodyIPredSymbol);
+
+                EdgeType edgeType = bodyIPred.isNegated() ? EdgeType.NEGATIVE : EdgeType.POSITIVE;
+                g.addEdge(bodyIPredSymbol, headPredSymbol, edgeType);
+            }
+        }
+
+        // Case 2 - q <--(+) pred(p0), where p0 is the head of a rule
+        AllDirectedPaths<RelationSymbol, EdgeType> allPathsG = new AllDirectedPaths<RelationSymbol, EdgeType>(g);
+        List<GraphPath<RelationSymbol, EdgeType>> allPaths = null;
+        for (IndexedRule indexedRule : db) {
+            SimplePredicate headPred = indexedRule.getHead();
+            RelationSymbol headPredSymbol = headPred.getSymbol();
+
+            // Get all paths from headPredSymbol to qSymbol
+            // Todo: Check that getAllPaths is working as expected (i.e. for cycles)
+            allPaths = allPathsG.getAllPaths(headPredSymbol, qSymbol, false, null);
+
+            // Only add basicRule to prules if every edge in every path of allPaths is positive
+            boolean foundNegativeEdge = false;
+            for (GraphPath graphPath : allPaths) {
+                List<EdgeType> edgeList = graphPath.getEdgeList();
+                for (EdgeType edgeType : edgeList) {
+                    if (edgeType == EdgeType.NEGATIVE) {
+                        foundNegativeEdge = true;
+                        break;
+                    }
+                }
+                if (foundNegativeEdge) {
+                    break;
+                }
+            }
+            if (!foundNegativeEdge) {
+                prules.add(indexedRule);
+            }
+        }
+        return prules;
+    }
+
     private static enum EdgeType {
         NEGATIVE,
         POSITIVE
@@ -390,7 +472,7 @@ public class BalbinEvaluation implements Evaluation {
         }, null);
     }
 
-    // (for UnificationPredicate)
+    // - pred(p) (for UnificationPredicate)
     private static UnificationPredicate getUnificationPredicate(ComplexLiteral p) {
         return p.accept(new ComplexLiterals.ComplexLiteralVisitor<Void, UnificationPredicate>() {
 
@@ -405,6 +487,37 @@ public class BalbinEvaluation implements Evaluation {
             }
 
         }, null);
+    }
+
+    // - pred(p) (for SimplePredicate)
+    private static SimplePredicate getSimplePredicate(SimpleLiteral p) {
+        return p.accept(new SimpleLiteralVisitor<Void, SimplePredicate>() {
+
+            @Override
+            public SimplePredicate visit(Assignment assignment, Void input) {
+                return null;
+            }
+
+            @Override
+            public SimplePredicate visit(Check check, Void input) {
+                return null;
+            }
+
+            @Override
+            public SimplePredicate visit(Destructor destructor, Void input) {
+                return null;
+            }
+
+            @Override
+            public SimplePredicate visit(SimplePredicate simplePredicate, Void input) {
+                return simplePredicate;
+            }
+
+        }, null);
+    }
+
+    public Set<IndexedRule> getRules(RelationSymbol sym) {
+        return Collections.unmodifiableSet(rules.get(sym));
     }
 
     @Override

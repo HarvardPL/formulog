@@ -43,10 +43,10 @@ import java.util.Set;
 public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
 
     Iterable<IndexedRule> rules;
-    final int stratumNum;
     final SortedIndexedFactDb db;
     SortedIndexedFactDb deltaDb;
     SortedIndexedFactDb nextDeltaDb;
+    UserPredicate qInputAtom;
     final CountingFJP exec;
     final Set<RelationSymbol> trackedRelations;
     volatile boolean changed;
@@ -54,15 +54,15 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
     static final int taskSize = Configuration.taskSize;
     static final int smtTaskSize = Configuration.smtTaskSize;
 
-    public BalbinEvaluationContext(int stratumNum, SortedIndexedFactDb db,
-                                      SortedIndexedFactDb deltaDb, SortedIndexedFactDb nextDeltaDb, Iterable<IndexedRule> rules, CountingFJP exec,
-                                      Set<RelationSymbol> trackedRelations) {
+    public BalbinEvaluationContext(SortedIndexedFactDb db, SortedIndexedFactDb deltaDb, SortedIndexedFactDb nextDeltaDb,
+                                   UserPredicate qInputAtom, Iterable<IndexedRule> rules, CountingFJP exec,
+                                   Set<RelationSymbol> trackedRelations) {
         super(rules);
         this.rules = rules;
-        this.stratumNum = stratumNum;
         this.db = db;
         this.deltaDb = deltaDb;
         this.nextDeltaDb = nextDeltaDb;
+        this.qInputAtom = qInputAtom;
         this.exec = exec;
         this.trackedRelations = trackedRelations;
     }
@@ -427,7 +427,7 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
             return null;
         }
         System.err.println("#####");
-        System.err.println("[START] Stratum " + stratumNum + ", round " + round);
+        System.err.println("[START] Round " + round);
         LocalDateTime now = LocalDateTime.now();
         System.err.println("Start: " + now);
         StopWatch watch = new StopWatch();
@@ -440,7 +440,7 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
             return;
         }
         watch.stop();
-        System.err.println("[END] Stratum " + stratumNum + ", round " + round);
+        System.err.println("[END] Round " + round);
         System.err.println("Time: " + watch.getTime() + "ms");
     }
 
