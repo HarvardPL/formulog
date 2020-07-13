@@ -26,6 +26,7 @@ import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
+import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.unification.OverwriteSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
@@ -39,7 +40,7 @@ import java.time.LocalDateTime;
 import java.util.Iterator;
 import java.util.Set;
 
-// Todo: Update this class (currently just a copy of RoundBasedStratumEvaluator.java)
+// Todo: Update this class
 public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
 
     Iterable<IndexedRule> rules;
@@ -286,7 +287,19 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
                                 break;
                             case PREDICATE:
                                 Iterator<Iterable<Term[]>> tups = lookup(rule, pos, s).iterator();
-                                if (((SimplePredicate) l).isNegated()) {
+                                SimplePredicate lPred = (SimplePredicate) l;
+                                if (lPred.isNegated()) {
+                                    // Todo: Check whether there exists a SIPS arc to (SimplePredicate) l; if so:
+
+                                    // Apply substitution, which returns a new UserPredicate
+                                    UserPredicate newLPred = applySubstitutionToNegLiteralWithNegArc(lPred.getSymbol(), lPred.getArgs(), s);
+
+                                    // Create input atom
+                                    UserPredicate newLInputAtom = MagicSetTransformer.createInputAtom(newLPred);
+
+                                    // Todo: Create a new context, call eval
+
+                                    // Todo (cont.): else:
                                     if (!tups.hasNext()) {
                                         pos++;
                                     } else {
@@ -389,8 +402,19 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
                             }
                             break;
                         case PREDICATE:
-                            SimplePredicate p = (SimplePredicate) l;
-                            if (p.isNegated()) {
+                            SimplePredicate lPred = (SimplePredicate) l;
+                            if (lPred.isNegated()) {
+                                // Todo: Check whether there exists a SIPS arc to (SimplePredicate) l; if so:
+
+                                // Apply substitution, which returns a new UserPredicate
+                                UserPredicate newLPred = applySubstitutionToNegLiteralWithNegArc(lPred.getSymbol(), lPred.getArgs(), s);
+
+                                // Create input atom
+                                UserPredicate newLInputAtom = MagicSetTransformer.createInputAtom(newLPred);
+
+                                // Todo: Create a new context, call eval
+
+                                // Todo (cont.): else:
                                 if (lookup(rule, pos, s).iterator().hasNext()) {
                                     return;
                                 }
@@ -420,6 +444,20 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
                 exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s, tups));
             }
         }
+    }
+
+    UserPredicate applySubstitutionToNegLiteralWithNegArc(RelationSymbol sym, Term[] args, Substitution s) {
+        Term[] newArgs = new Term[args.length];
+        for (int i = 0; i < args.length; ++i) {
+            newArgs[i] = args[i].applySubstitution(s);
+        }
+        if (!db.hasFact(sym, newArgs) && nextDeltaDb.add(sym, newArgs)) {
+            changed = true;
+            if (trackedRelations.contains(sym)) {
+                System.err.println("[TRACKED] " + UserPredicate.make(sym, newArgs, false));
+            }
+        }
+        return UserPredicate.make(sym, newArgs, true);
     }
 
     StopWatch recordRoundStart(int round) {
