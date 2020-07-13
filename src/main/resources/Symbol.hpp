@@ -45,7 +45,6 @@ Symbol lookup_symbol(const string& name) {
   }
   cerr << "Unrecognized symbol: " << name << endl;
   abort();
-  __builtin_unreachable();
 }
 
 Symbol lookup_tuple_symbol(size_t arity) {
@@ -55,7 +54,6 @@ Symbol lookup_tuple_symbol(size_t arity) {
     cerr << "Unrecognized tuple arity: " << arity << endl;
     abort();
   }
-  __builtin_unreachable();
 }
 
 constexpr size_t symbol_arity(Symbol sym) {
@@ -63,7 +61,6 @@ constexpr size_t symbol_arity(Symbol sym) {
 /* INSERT 4 */
     default: abort();
   }
-  __builtin_unreachable();
 }
 
 } // namespace flg
