@@ -23,7 +23,7 @@ struct Type {
   bool is_var;
   vector<Type> args;
 
-  static functor_type lookup(const Symbol& sym); 
+  static functor_type lookup(Symbol sym); 
 
   static functor_type i32;
   static functor_type i64;
@@ -126,7 +126,7 @@ Type Type::new_var() {
   return Type{"x" + to_string(cnt++), true, {}};
 }
 
-functor_type Type::lookup(const Symbol& sym) {
+functor_type Type::lookup(Symbol sym) {
   switch (sym) {
     case Symbol::boxed_bool: return bool_;
     case Symbol::boxed_i32: return i32;
