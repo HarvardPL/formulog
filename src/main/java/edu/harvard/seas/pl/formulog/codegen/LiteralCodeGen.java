@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.codegen;
  * #L%
  */
 
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -143,8 +142,8 @@ public class LiteralCodeGen {
 			Term rhs = check.getRhs();
 			Pair<CppStmt, CppExpr> p1 = tcg.gen(lhs, env);
 			Pair<CppStmt, CppExpr> p2 = tcg.gen(rhs, env);
-			CppExpr term1 = CppMethodCall.mk(p1.snd(), "get");
-			CppExpr term2 = CppMethodCall.mk(p2.snd(), "get");
+			CppExpr term1 = p1.snd();
+			CppExpr term2 = p2.snd();
 			CppExpr guard = CppFuncCall.mk("Term::compare", term1, term2);
 			if (!check.isNegated()) {
 				guard = CppUnop.mkNot(guard);
