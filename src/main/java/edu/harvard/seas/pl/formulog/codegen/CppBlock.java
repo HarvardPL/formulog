@@ -23,10 +23,27 @@ package edu.harvard.seas.pl.formulog.codegen;
 import java.io.PrintWriter;
 
 /**
- * Interface representing generated C++ code, which can be output.
+ * Generates an unnamed block, useful for scoping local variables.
  */
-public interface CppStmt {
+public class CppBlock implements CppStmt {
 
-	void println(PrintWriter out, int indent);
+    private final CppStmt stmt;
+
+    private CppBlock(CppStmt stmt) {
+        this.stmt = stmt;
+    }
+
+    public static CppBlock mk(CppStmt stmt) {
+        return new CppBlock(stmt);
+    }
+
+    @Override
+    public void println(PrintWriter out, int indent) {
+        CodeGenUtil.printIndent(out, indent);
+        out.println("{");
+        stmt.println(out, indent + 1);
+        CodeGenUtil.printIndent(out, indent);
+        out.println("}");
+    }
 
 }
