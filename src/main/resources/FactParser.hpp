@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <cmath>
 #include <iostream>
 #include <limits>
@@ -27,7 +28,7 @@ class TermParser : private FormulogBaseVisitor {
   term_ptr parse(FormulogParser::TermContext* ctx);
 
   private:
-  term_ptr* parse(vector<FormulogParser::TermContext*> ctxs);
+  term_ptr parse(Symbol sym, const vector<FormulogParser::TermContext*>& ctxs);
 
   antlrcpp::Any visitHoleTerm(FormulogParser::HoleTermContext* ctx) override;
   antlrcpp::Any visitVarTerm(FormulogParser::VarTermContext* ctx) override;
@@ -59,24 +60,23 @@ class TermParser : private FormulogBaseVisitor {
   antlrcpp::Any visitLetFunExpr(FormulogParser::LetFunExprContext* ctx) override;
   antlrcpp::Any visitIfExpr(FormulogParser::IfExprContext* ctx) override;
 
-  static antlrcpp::Any die(const string& feature);
+  [[noreturn]] static antlrcpp::Any die(const string& feature);
 };
 
-term_ptr* TermParser::parse(vector<FormulogParser::TermContext*> ctxs) {
-  term_ptr* a = new term_ptr[ctxs.size()];
-  size_t i{0};
-  for (auto& ctx : ctxs) {
-    a[i++] = parse(ctx);
+term_ptr TermParser::parse(Symbol sym, const vector<FormulogParser::TermContext*>& ctxs) {
+  assert(symbol_arity(sym) == ctxs.size());
+  switch (sym) {
+/* INSERT 0 */
+    default: __builtin_unreachable();
   }
-  return a;
 }
 
 antlrcpp::Any TermParser::visitHoleTerm(FormulogParser::HoleTermContext* ctx) {
-  return die("hole terms");
+  die("hole terms");
 }
 
 antlrcpp::Any TermParser::visitVarTerm(FormulogParser::VarTermContext* ctx) {
-  return die("variables");
+  die("variables");
 }
 
 antlrcpp::Any TermParser::visitStringTerm(FormulogParser::StringTermContext* ctx) {
@@ -86,7 +86,7 @@ antlrcpp::Any TermParser::visitStringTerm(FormulogParser::StringTermContext* ctx
 }
 
 antlrcpp::Any TermParser::visitConsTerm(FormulogParser::ConsTermContext* ctx) {
-  return Term::make(Symbol::cons, 2, parse(ctx->term()));
+  return parse(Symbol::cons, ctx->term());
 }
 
 antlrcpp::Any TermParser::visitIndexedFunctor(FormulogParser::IndexedFunctorContext* ctx) {
@@ -101,21 +101,18 @@ antlrcpp::Any TermParser::visitIndexedFunctor(FormulogParser::IndexedFunctorCont
     return Term::make<bool>(false);
   }
   auto sym = lookup_symbol(name);
-  auto arity = symbol_arity(sym);
-  auto args = parse(ctx->termArgs()->term());
-  return Term::make(sym, arity, args); 
+  return parse(sym, ctx->termArgs()->term());
 }
 
 antlrcpp::Any TermParser::visitFoldTerm(FormulogParser::FoldTermContext* ctx) {
-  return die("fold");
+  die("fold");
 }
 
 antlrcpp::Any TermParser::visitTupleTerm(FormulogParser::TupleTermContext* ctx) {
   auto terms = ctx->tuple()->term();
   auto arity = terms.size();
   auto sym = lookup_tuple_symbol(arity);
-  auto args = parse(terms);
-  return Term::make(sym, arity, args);
+  return parse(sym, terms);
 }
 
 antlrcpp::Any TermParser::visitI32Term(FormulogParser::I32TermContext* ctx) {
@@ -152,27 +149,27 @@ antlrcpp::Any TermParser::visitSpecialFPTerm(FormulogParser::SpecialFPTermContex
   __builtin_unreachable();
 }
 antlrcpp::Any TermParser::visitRecordTerm(FormulogParser::RecordTermContext* ctx) {
-  return die("records");
+  die("records");
 }
 
 antlrcpp::Any TermParser::visitRecordUpdateTerm(FormulogParser::RecordUpdateTermContext* ctx) {
-  return die("record updates");
+  die("record updates");
 }
 
 antlrcpp::Any TermParser::visitUnopTerm(FormulogParser::UnopTermContext* ctx) {
-  return die("unops");
+  die("unops");
 }
 
 antlrcpp::Any TermParser::visitBinopTerm(FormulogParser::BinopTermContext* ctx) {
-  return die("binops");
+  die("binops");
 }
 
 antlrcpp::Any TermParser::visitListTerm(FormulogParser::ListTermContext* ctx) {
-  auto l = Term::make(Symbol::nil, 0, new term_ptr[0]);
+  term_ptr l = Term::make<Symbol::nil>();
   auto terms = ctx->list()->term();
-  for (auto it = terms.rbegin(); it != terms.rend(); ++it) {
-    auto val = parse(*it);
-    l = Term::make(Symbol::cons, 2, new term_ptr[2] { val, l });
+  for (auto it = terms.crbegin(); it != terms.crend(); ++it) {
+    term_ptr val = parse(*it);
+    l = Term::make<Symbol::cons>(val, l);
   }
   return l;
 }
@@ -182,53 +179,52 @@ antlrcpp::Any TermParser::visitParensTerm(FormulogParser::ParensTermContext* ctx
 }
 
 antlrcpp::Any TermParser::visitFormulaTerm(FormulogParser::FormulaTermContext* ctx) {
-  return die("formulas");
+  die("formulas");
 }
 
 antlrcpp::Any TermParser::visitNotFormula(FormulogParser::NotFormulaContext* ctx) {
-  return die("formulas");
+  die("formulas");
 }
 
 antlrcpp::Any TermParser::visitBinopFormula(FormulogParser::BinopFormulaContext* ctx) {
-  return die("formulas");
+  die("formulas");
 }
 
 antlrcpp::Any TermParser::visitLetFormula(FormulogParser::LetFormulaContext* ctx) {
-  return die("formulas");
+  die("formulas");
 }
 
 antlrcpp::Any TermParser::visitQuantifiedFormula(FormulogParser::QuantifiedFormulaContext* ctx) {
-  return die("formulas");
+  die("formulas");
 }
 
 antlrcpp::Any TermParser::visitIteTerm(FormulogParser::IteTermContext* ctx) {
-  return die("formulas");
+  die("formulas");
 }
 
 antlrcpp::Any TermParser::visitTermSymFormula(FormulogParser::TermSymFormulaContext* ctx) {
-  return die("formula variables");
+  die("formula variables");
 }
 
 antlrcpp::Any TermParser::visitMatchExpr(FormulogParser::MatchExprContext* ctx) {
-  return die("match expressions");
+  die("match expressions");
 }
 
 antlrcpp::Any TermParser::visitLetExpr(FormulogParser::LetExprContext* ctx) {
-  return die("let expressions");
+  die("let expressions");
 }
 
 antlrcpp::Any TermParser::visitLetFunExpr(FormulogParser::LetFunExprContext* ctx) {
-  return die("let fun expressions");
+  die("let fun expressions");
 }
 
 antlrcpp::Any TermParser::visitIfExpr(FormulogParser::IfExprContext* ctx) {
-  return die("if expressions");
+  die("if expressions");
 }
 
-antlrcpp::Any TermParser::die(const string& feature) {
+[[noreturn]] antlrcpp::Any TermParser::die(const string& feature) {
   cerr << "Feature unsupported in external EDBs: " << feature << endl;
   abort();
-  return nullptr;
 }
 
 term_ptr TermParser::parse(FormulogParser::TermContext* ctx) {
