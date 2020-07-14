@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cmath>
 #include <cstdint>
@@ -10,6 +11,7 @@
 #include <mutex>
 #include <shared_mutex>
 #include <stack>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -44,10 +46,12 @@ struct Term {
   static int compare_natural(Term* t1, Term* t2);
 
   // Construct a memoized BaseTerm
-  template<typename T> inline static term_ptr make(T val);
+  template <typename T>
+  inline static term_ptr make(T val);
 
   // Construct a memoized ComplexTerm
-  inline static term_ptr make(Symbol sym, size_t arity, term_ptr* val);
+  template <Symbol S, typename... T>
+  inline static term_ptr make(T... val);
 
   // Convert a Lisp-style list term into a vector
   static vector<term_ptr> vectorize_list_term(Term* t);
@@ -234,11 +238,11 @@ term_ptr max_term = reinterpret_cast<term_ptr>(numeric_limits<uintptr_t>::max())
 
 // Concurrency-safe cache for BaseTerm values
 template <typename T, Symbol S> class BaseTermCache {
-  unordered_map<T, term_ptr> cache;
-  shared_mutex m;
+  inline static unordered_map<T, term_ptr> cache;
+  inline static shared_mutex m;
 
   public:
-  inline term_ptr get(const T& val) {
+  static term_ptr get(const T& val) {
     shared_lock<shared_mutex> lock(m);
     auto it = cache.find(val);
     if (it != cache.end()) {
@@ -252,43 +256,72 @@ template <typename T, Symbol S> class BaseTermCache {
 
 template<>
 term_ptr Term::make<bool>(bool val) {
-  static BaseTermCache<bool, Symbol::boxed_bool> cache;
-  return cache.get(val);
+  return BaseTermCache<bool, Symbol::boxed_bool>::get(val);
 }
 
 template<>
 term_ptr Term::make<int32_t>(int32_t val) {
-  static BaseTermCache<int32_t, Symbol::boxed_i32> cache;
-  return cache.get(val);
+  return BaseTermCache<int32_t, Symbol::boxed_i32>::get(val);
 }
 
 template<>
 term_ptr Term::make<int64_t>(int64_t val) {
-  static BaseTermCache<int64_t, Symbol::boxed_i64> cache;
-  return cache.get(val);
+  return BaseTermCache<int64_t, Symbol::boxed_i64>::get(val);
 }
 
 template<>
 term_ptr Term::make<float>(float val) {
-  static BaseTermCache<float, Symbol::boxed_fp32> cache;
-  return cache.get(val);
+  return BaseTermCache<float, Symbol::boxed_fp32>::get(val);
 }
 
 template<>
 term_ptr Term::make<double>(double val) {
-  static BaseTermCache<double, Symbol::boxed_fp64> cache;
-  return cache.get(val);
+  return BaseTermCache<double, Symbol::boxed_fp64>::get(val);
 }
 
 template<>
 term_ptr Term::make<string>(string val) {
-  static BaseTermCache<string, Symbol::boxed_string> cache;
-  return cache.get(val);
+  return BaseTermCache<string, Symbol::boxed_string>::get(val);
 }
 
-// FIXME add a cache for complex terms!
-term_ptr Term::make(Symbol sym, size_t arity, term_ptr* val) {
-  return new ComplexTerm(sym, arity, val);
+// Template hash function for arrays of term_ptr's
+template<size_t N>
+struct ComplexTermHash {
+  size_t operator()(const array<term_ptr, N>& arr) const {
+    size_t retval = 0;
+    for (term_ptr p : arr) {
+      retval ^= (retval << 32) + 0xdeadbeef + reinterpret_cast<size_t>(p);
+    }
+    return retval;
+  }
+};
+
+// Concurrency-safe cache for ComplexTerm values
+template <Symbol S> class ComplexTermCache {
+  static constexpr size_t arity = symbol_arity(S);
+  inline static unordered_map<array<term_ptr, arity>, term_ptr, ComplexTermHash<arity>> cache;
+  inline static shared_mutex m;
+
+  public:
+  template <typename... T,
+            typename = enable_if_t<sizeof...(T) == arity>>
+  inline static term_ptr get(T... val) {
+    array<term_ptr, arity> arr = { val... };
+    shared_lock<shared_mutex> lock(m);
+    auto it = cache.find(arr);
+    if (it != cache.end()) {
+      return it->second;
+    }
+    lock.unlock();
+    term_ptr* heap_arr = new term_ptr[arity] { val... };
+    unique_lock<shared_mutex> lock2(m);
+    return cache[arr] = new ComplexTerm(S, arity, heap_arr);
+  }
+};
+
+template <Symbol S, typename... T>
+term_ptr Term::make(T... val) {
+  return ComplexTermCache<S>::get(val...);
 }
 
 template<typename T>

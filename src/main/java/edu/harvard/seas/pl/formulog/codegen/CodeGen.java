@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.codegen;
  * #L%
  */
 
-
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -57,7 +56,6 @@ public class CodeGen {
 					"We do not currently support code gen and optimal index selection (use flag -DminIndex=false).");
 		}
 		copy("Term.hpp");
-		copy("FactParser.hpp");
 		copy("parsing.zip");
 		CodeGenContext ctx = new CodeGenContext(eval);
 		new RelsHpp(ctx).gen(outDir);
@@ -66,6 +64,7 @@ public class CodeGen {
 		new SmtHpp(ctx).gen(outDir);
 		new TypeHpp(ctx).gen(outDir);
 		new SymbolHpp(ctx).print(outDir);
+		new FactParserHpp(ctx).print(outDir);
 		new CompileSh().print(outDir);
 	}
 

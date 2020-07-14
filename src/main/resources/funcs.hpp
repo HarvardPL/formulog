@@ -109,11 +109,12 @@ term_ptr __cmp(term_ptr t1, term_ptr t2) {
   auto yval = t2->as_base<T>().val;
   Symbol sym{Symbol::cmp_eq};
   if (xval < yval) {
-    sym = Symbol::cmp_lt;
+    return Term::make<Symbol::cmp_lt>();
   } else if (xval > yval) {
-    sym = Symbol::cmp_gt;
+    return Term::make<Symbol::cmp_gt>();
+  } else {
+    return Term::make<Symbol::cmp_eq>();
   }
-  return Term::make(sym, 0, new term_ptr[0]);
 }
 
 term_ptr print(term_ptr t1) {
@@ -164,7 +165,7 @@ term_ptr is_sat(term_ptr t1) {
 }
 
 term_ptr _make_smt_not(term_ptr t) {
-  return Term::make(Symbol::smt_not, 1, new term_ptr[1] { t }); 
+  return Term::make<Symbol::smt_not>(t); 
 }
 
 term_ptr is_valid(term_ptr t1) {
@@ -177,11 +178,11 @@ term_ptr is_valid(term_ptr t1) {
 }
 
 term_ptr _make_some(term_ptr t) {
-  return Term::make(Symbol::some, 1, new term_ptr[1] { t }); 
+  return Term::make<Symbol::some>(t);
 }
 
 term_ptr _make_none() {
-  return Term::make(Symbol::none, 0, new term_ptr[0]);
+  return Term::make<Symbol::none>();
 }
 
 int _extract_timeout_from_option(term_ptr o) {
