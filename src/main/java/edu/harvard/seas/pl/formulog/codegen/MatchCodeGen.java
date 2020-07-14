@@ -22,7 +22,6 @@ package edu.harvard.seas.pl.formulog.codegen;
 
 import java.io.PrintWriter;
 
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -225,8 +224,8 @@ public class MatchCodeGen {
 					@Override
 					public CppStmt visit(PrimEdge e, Void in) {
 						Pair<CppStmt, CppExpr> p = tcg.gen(e.getLabel(), env);
-						CppExpr lhs = CppMethodCall.mk(expr, "get");
-						CppExpr rhs = CppMethodCall.mk(p.snd(), "get");
+						CppExpr lhs = expr;
+						CppExpr rhs = p.snd();
 						CppExpr guard = CppUnop.mkNot(CppFuncCall.mk("Term::compare", lhs, rhs));
 						CppStmt body = go(dest);
 						return CppSeq.mk(p.fst(), CppIf.mk(guard, body));
