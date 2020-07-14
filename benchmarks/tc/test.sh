@@ -11,5 +11,5 @@ java -DminIndex=false -DcodeGen -jar $1 tc.flg \
   && time ./codegen/flg --no-dump > formulog.out
 
 echo -n "Souffle:"
-souffle -o tc tc.dl \
-  && time ./tc > souffle.out
+souffle -o souffle tc.dl \
+  && time ./souffle > souffle.out
