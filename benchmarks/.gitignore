@@ -1,12 +1,12 @@
 # Fact files
-edge.csv
-edge.facts
+*.csv
+*.facts
 
 # Formulog files and output
 codegen/
 formulog.out
 
 # Souffle files and output
-tc
-tc.cpp
+souffle
+souffle.cpp
 souffle.out
