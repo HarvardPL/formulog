@@ -23,20 +23,42 @@ struct Tuple {
   term_ptr& operator[](int idx) {
     return val[idx];
   }
+
+  bool operator<(const Tuple<N>& other) const {
+    for (size_t i = 0; i < N; ++i) {
+      int cmp = Term::compare_natural((*this)[i], other[i]);
+      if (cmp != 0) {
+        return cmp < 0;
+      }
+    }
+    return false;
+  }
 };
 
 template <size_t N>
 ostream& operator<<(ostream& out, const Tuple<N>& tup)
 {
-  out << "[";
+  out << "(";
   for (size_t i = 0; i < N; ++i) {
     out << *tup[i];
     if (i < N - 1) {
       out << ", ";
     }
   }
-  out << "]";
+  out << ")";
   return out;
+}
+
+template <typename Index>
+void print_relation(const string& name, bool sorted, const Index& btree) {
+  vector<typename Index::element_type> v(btree.begin(), btree.end());
+  if (sorted) {
+    sort(v.begin(), v.end());
+  }
+  for (const auto& tuple : v) {
+    cout << name << tuple << '\n';
+  }
+  cout << flush;
 }
 
 // Inspired by the comparator in souffle/CompiledIndexUtils.h

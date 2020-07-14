@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.codegen;
  * #L%
  */
 
-
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -116,9 +115,9 @@ public class BTreeRelationStruct implements RelationStruct {
 	}
 
 	private void declarePrint(PrintWriter out) {
-		out.println("  void print() const {");
+		out.println("  void print(const string& name, bool sorted = true) const {");
 		CppVar m = CppVar.mk(mkIndexName(masterIndex));
-		CppMethodCall.mk(m, "printTree").toStmt().println(out, 2);
+		CppFuncCall.mk("print_relation", CppVar.mk("name"), CppVar.mk("sorted"), m).toStmt().println(out, 2);
 		out.println("  }");
 	}
 
@@ -225,11 +224,11 @@ public class BTreeRelationStruct implements RelationStruct {
 		int i = 0;
 		for (BindingType ty : pat) {
 			switch (ty) {
-			case BOUND:
-				break;
-			case FREE:
-			case IGNORED:
-				emptyArgs.add(i);
+				case BOUND:
+					break;
+				case FREE:
+				case IGNORED:
+					emptyArgs.add(i);
 			}
 			i++;
 		}
@@ -449,7 +448,7 @@ public class BTreeRelationStruct implements RelationStruct {
 
 		@Override
 		public CppStmt mkPrint() {
-			return CppMethodCall.mkThruPtr(nameVar, "print").toStmt();
+			return CppMethodCall.mkThruPtr(nameVar, "print", CppConst.mkString(name)).toStmt();
 		}
 
 		@Override
