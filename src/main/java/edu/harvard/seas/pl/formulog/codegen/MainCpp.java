@@ -144,8 +144,7 @@ public class MainCpp {
 				out.print(": \" << ");
 				ctx.lookupRelation(sym).mkSize().print(out);
 				out.println(" << endl;");
-				out.println("  if (dump)");
-				ctx.lookupRelation(sym).mkPrint().println(out, 2);
+				CppIf.mk(CppVar.mk("dump"), ctx.lookupRelation(sym).mkPrint()).println(out, 1);
 			}
 		}
 
