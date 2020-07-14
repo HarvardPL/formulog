@@ -20,19 +20,23 @@ package edu.harvard.seas.pl.formulog.codegen;
  * #L%
  */
 
-
 import java.io.PrintWriter;
 
 public class CppVar implements CppExpr {
 
 	private final String var;
-	
+
 	private CppVar(String var) {
 		this.var = var;
 	}
-	
+
 	public static CppVar mk(String var) {
 		return new CppVar(var);
+	}
+
+	@Override
+	public String toString() {
+		return var;
 	}
 
 	@Override

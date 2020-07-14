@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.codegen;
  * #L%
  */
 
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -47,38 +46,31 @@ public class TermCodeGen {
 	public TermCodeGen(CodeGenContext ctx) {
 		this.ctx = ctx;
 	}
-	
+
 	public CppExpr mkBool(CppExpr bool) {
 		return CppFuncCall.mk("Term::make<bool>", bool);
 	}
-	
+
+	// mkComplex no longer requires supporting statements, but these methods still
+	// exist in order to not break the rest of the code
 	public Pair<CppStmt, CppExpr> mkComplex(ConstructorSymbol sym, List<CppExpr> args) {
-		List<CppStmt> acc = new ArrayList<>();
-		CppExpr val = mkComplex(acc, sym, args);
-		return new Pair<>(CppSeq.mk(acc), val);
+		assert sym.getArity() == args.size();
+		CppVar symbol = CppVar.mk(ctx.lookupRepr(sym));
+		CppExpr val = CppFuncCall.mk("Term::make<" + symbol + ">", args);
+		return new Pair<>(CppSeq.mk(), val);
 	}
-	
+
 	public Pair<CppStmt, CppExpr> mkComplex(ConstructorSymbol sym, CppExpr... args) {
 		return mkComplex(sym, Arrays.asList(args));
 	}
-	
-	public CppExpr mkComplex(List<CppStmt> acc, ConstructorSymbol sym, List<CppExpr> args) {
-		assert sym.getArity() == args.size();
-		CppVar symbol = CppVar.mk(ctx.lookupRepr(sym));
-		CppExpr size = CppConst.mkInt(sym.getArity());
-		String arrId = ctx.newId("a");
-		CppExpr arr = CppVar.mk(arrId);
-		acc.add(CppDecl.mk(arrId, CppNewArray.mk("term_ptr", size)));
-		int i = 0;
-		for (CppExpr arg : args) {
-			CppExpr lhs = CppSubscript.mk(arr, CppConst.mkInt(i));
-			acc.add(CppBinop.mkAssign(lhs, arg).toStmt());
-			i++;
-		}
-		return CppFuncCall.mk("Term::make", symbol, size, arr);
-	}
-	
+
 	public CppExpr mkComplex(List<CppStmt> acc, ConstructorSymbol sym, CppExpr... args) {
+		Pair<CppStmt, CppExpr> p = mkComplex(sym, args);
+		acc.add(p.fst());
+		return p.snd();
+	}
+
+	public CppExpr mkComplex(List<CppStmt> acc, ConstructorSymbol sym, List<CppExpr> args) {
 		Pair<CppStmt, CppExpr> p = mkComplex(sym, args);
 		acc.add(p.fst());
 		return p.snd();
@@ -89,7 +81,7 @@ public class TermCodeGen {
 		CppExpr e = gen(acc, t, env);
 		return new Pair<>(CppSeq.mk(acc), e);
 	}
-	
+
 	public CppExpr gen(List<CppStmt> acc, Term t, Map<Var, CppExpr> env) {
 		return new Worker(acc, env).go(t);
 	}
@@ -101,7 +93,7 @@ public class TermCodeGen {
 		}
 		return exprs;
 	}
-	
+
 	public Pair<CppStmt, List<CppExpr>> gen(List<Term> ts, Map<Var, CppExpr> env) {
 		List<CppStmt> acc = new ArrayList<>();
 		List<CppExpr> es = gen(acc, ts, env);
@@ -156,7 +148,7 @@ public class TermCodeGen {
 			}
 
 		};
-		
+
 		private final ExprVisitor<Void, CppExpr> ev = new ExprVisitor<Void, CppExpr>() {
 
 			@Override
@@ -184,7 +176,7 @@ public class TermCodeGen {
 			public CppExpr visit(Fold fold, Void in) {
 				throw new UnsupportedOperationException("Not supporting codegen for fold");
 			}
-			
+
 		};
 
 	}
