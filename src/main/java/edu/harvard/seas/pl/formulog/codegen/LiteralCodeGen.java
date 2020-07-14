@@ -161,7 +161,7 @@ public class LiteralCodeGen {
 			int i = 0;
 			for (Var x : destructor.getBindings()) {
 				String id = ctx.newId("x");
-				stmts.add(CppDecl.mkRef(id, CodeGenUtil.mkComplexTermLookup(base, i)));
+				stmts.add(CppDecl.mk(id, CodeGenUtil.mkComplexTermLookup(base, i)));
 				env.put(x, CppVar.mk(id));
 				i++;
 			}
@@ -296,7 +296,7 @@ public class LiteralCodeGen {
 				if (pat[i] == BindingType.FREE) {
 					String id = ctx.newId("x");
 					CppExpr access = rel.mkTupleAccess(CppVar.mk(tup), CppConst.mkInt(i));
-					assignments.add(CppDecl.mkRef(id, access));
+					assignments.add(CppDecl.mk(id, access));
 					env.put((Var) t, CppVar.mk(id));
 				}
 				i++;

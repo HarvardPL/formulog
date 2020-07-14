@@ -189,7 +189,7 @@ public class MatchCodeGen {
 							CppExpr base = symMap.get(dst.getBase());
 							assert base != null;
 							String id = ctx.newId("s");
-							stmts.add(CppDecl.mkRef(id, CodeGenUtil.mkComplexTermLookup(base, dst.getIndex())));
+							stmts.add(CppDecl.mk(id, CodeGenUtil.mkComplexTermLookup(base, dst.getIndex())));
 							expr = CppVar.mk(id);
 						}
 						assert !(symMap.containsKey(symTerm));
