@@ -23,8 +23,8 @@ package edu.harvard.seas.pl.formulog.codegen;
 import java.io.BufferedReader;
 import java.io.IOException;
 
-
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Iterator;
 
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
@@ -40,13 +40,13 @@ public final class CodeGenUtil {
 			out.print("  ");
 		}
 	}
-	
+
 	public static void print(Iterable<CppStmt> stmts, PrintWriter out, int indent) {
 		for (CppStmt stmt : stmts) {
 			stmt.println(out, indent);
 		}
 	}
-	
+
 	public static void printSeparated(Iterable<CppExpr> exprs, String sep, PrintWriter out) {
 		for (Iterator<CppExpr> it = exprs.iterator(); it.hasNext();) {
 			it.next().print(out);
@@ -55,22 +55,28 @@ public final class CodeGenUtil {
 			}
 		}
 	}
-	
+
 	public static CppExpr mkComplexTermLookup(CppExpr base, int offset) {
 		CppExpr cast = CppCast.mkReinterpret("ComplexTerm&", CppUnop.mkDeref(base));
 		CppExpr access = CppAccess.mk(cast, "val");
 		return CppSubscript.mk(access, CppConst.mkInt(offset));
 	}
-	
+
 	public static void copyOver(BufferedReader in, PrintWriter out, int stopAt) throws IOException {
 		String line;
 		while ((line = in.readLine()) != null && !line.equals("/* INSERT " + stopAt + " */")) {
 			out.println(line);
 		}
 	}
-	
+
 	public static String mkName(Symbol sym) {
 		return sym.toString().replaceAll("[^A-Za-z0-9_]", "__");
 	}
-	
+
+	public static String toString(CppStmt stmt, int indent) {
+		StringWriter sw = new StringWriter();
+		stmt.println(new PrintWriter(sw), indent);
+		return sw.toString();
+	}
+
 }

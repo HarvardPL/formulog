@@ -218,12 +218,18 @@ public class MatchCodeGen {
 					public CppStmt visit(VarEdge e, Void in) {
 						CppExpr x = env.get(e.getLabel());
 						assert x instanceof CppVar;
-						return CppSeq.mk(CppBinop.mkAssign(x, expr).toStmt(), go(dest));
+						// Here, the enclosing `CppBlock` is necessary so that possible variable
+						// initializations aren't in the outside scope, due to limitations of `goto`
+						return CppBlock.mk(CppSeq.mk(CppBinop.mkAssign(x, expr).toStmt(), go(dest)));
 					}
 
 					@Override
 					public CppStmt visit(PrimEdge e, Void in) {
 						Pair<CppStmt, CppExpr> p = tcg.gen(e.getLabel(), env);
+						// Primitive edge should have no statements; otherwise, this could pollute the
+						// enclosing scope and cause a compilation error, since `goto` can't jump over
+						// variable initializations in C++
+						assert CodeGenUtil.toString(p.fst(), 0).isEmpty();
 						CppExpr lhs = expr;
 						CppExpr rhs = p.snd();
 						CppExpr guard = CppUnop.mkNot(CppFuncCall.mk("Term::compare", lhs, rhs));
