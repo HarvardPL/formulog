@@ -118,7 +118,7 @@ public class FuncsHpp {
 			out.print("term_ptr " + name + "(");
 			int n = sym.getArity();
 			for (int i = 0; i < n; ++i) {
-				out.print("const term_ptr&");
+				out.print("term_ptr");
 				if (i < n - 1) {
 					out.print(", ");
 				}
@@ -391,7 +391,7 @@ public class FuncsHpp {
 				String id = ctx.newId("x");
 				CppVar var = CppVar.mk(id);
 				env.put(params.next(), var);
-				out.print("const term_ptr& ");
+				out.print("term_ptr ");
 				var.print(out);
 				if (i < n - 1) {
 					out.print(", ");
@@ -421,7 +421,7 @@ public class FuncsHpp {
 					String id = ctx.newId("x");
 					CppVar var = CppVar.mk(id);
 					env.put(x, var);
-					out.print("const term_ptr& ");
+					out.print("term_ptr ");
 					var.print(out);
 					if (j < nbound - 1) {
 						out.print(", ");

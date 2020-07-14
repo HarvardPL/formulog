@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.codegen;
  * #L%
  */
 
-
 import java.io.PrintWriter;
 
 public class CppDecl implements CppStmt {
@@ -34,11 +33,11 @@ public class CppDecl implements CppStmt {
 		this.var = var;
 		this.val = val;
 	}
-	
+
 	public static CppDecl mk(String var, CppExpr val) {
 		return new CppDecl("auto", var, val);
 	}
-	
+
 	public static CppDecl mkRef(String var, CppExpr val) {
 		return new CppDecl("auto&", var, val);
 	}
