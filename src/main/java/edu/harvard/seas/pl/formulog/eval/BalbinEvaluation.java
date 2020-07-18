@@ -57,6 +57,7 @@ public class BalbinEvaluation implements Evaluation {
     private final Set<RelationSymbol> trackedRelations;
     private final WellTypedProgram inputProgram;
     private final Map<RelationSymbol, Set<IndexedRule>> rules;
+    private final MagicSetTransformer mst;
 
     static final boolean sequential = System.getProperty("sequential") != null;
 
@@ -102,7 +103,7 @@ public class BalbinEvaluation implements Evaluation {
         RelationSymbol qSymbol = qInputAtom.getSymbol();
         Set<BasicRule> qRules = magicProg.getRules(qSymbol);
         Set<BasicRule> qMagicFacts = null;
-        UnificationPredicate magicFactMatch = UnificationPredicate.make(Var.make("true"), Var.make("true"), false);
+        UnificationPredicate magicFactMatch = UnificationPredicate.make(BoolTerm.mkTrue(), BoolTerm.mkTrue(), false);
         for (BasicRule basicRule : qRules) {
             // Determine whether basicRule is a magic fact
             UnificationPredicate unificationPredicate = null;
@@ -185,7 +186,7 @@ public class BalbinEvaluation implements Evaluation {
             throw new InvalidProgramException(exec.getFailureCause());
         }
         return new BalbinEvaluation(prog, db, deltaDbb, rules, q, qInputAtom, qMagicFacts, exec,
-                getTrackedRelations(magicProg.getSymbolManager()));
+                getTrackedRelations(magicProg.getSymbolManager()), mst);
     }
 
     private static SmtLibSolver maybeDoubleCheckSolver(SmtLibSolver inner) {
@@ -269,7 +270,7 @@ public class BalbinEvaluation implements Evaluation {
     BalbinEvaluation(WellTypedProgram inputProgram, SortedIndexedFactDb db,
                      IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb, Map<RelationSymbol, Set<IndexedRule>> rules,
                      UserPredicate q, UserPredicate qInputAtom, Set<BasicRule> qMagicFacts, CountingFJP exec,
-                     Set<RelationSymbol> trackedRelations) {
+                     Set<RelationSymbol> trackedRelations, MagicSetTransformer mst) {
         this.inputProgram = inputProgram;
         this.db = db;
         this.q = q;
@@ -280,6 +281,7 @@ public class BalbinEvaluation implements Evaluation {
         this.deltaDb = deltaDbb.build();
         this.nextDeltaDb = deltaDbb.build();
         this.rules = rules;
+        this.mst = mst;
     }
 
     @Override
@@ -318,7 +320,7 @@ public class BalbinEvaluation implements Evaluation {
         l.addAll(getPRules(qInputAtom, rules));
 
         // Create new BalbinEvaluationContext
-//        new BalbinEvaluationContext(db, deltaDb, nextDeltaDb, qInputAtom, l, exec, trackedRelations).evaluate();
+        new BalbinEvaluationContext(db, deltaDb, nextDeltaDb, qInputAtom, l, exec, trackedRelations, mst).evaluate();
     }
 
     // Balbin, Definition 29 - prules (with BasicRule)
@@ -385,7 +387,7 @@ public class BalbinEvaluation implements Evaluation {
     }
 
     // - prules (with IndexedRule)
-    private static Set<IndexedRule> getPRules(UserPredicate q, Map<RelationSymbol, Set<IndexedRule>> rules) {
+    public static Set<IndexedRule> getPRules(UserPredicate q, Map<RelationSymbol, Set<IndexedRule>> rules) {
         Set<IndexedRule> db = null;
         for (Map.Entry<RelationSymbol, Set<IndexedRule>> entry : rules.entrySet()) {
             db.addAll(entry.getValue());

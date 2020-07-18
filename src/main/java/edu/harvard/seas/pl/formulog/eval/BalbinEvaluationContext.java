@@ -51,13 +51,14 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
     final CountingFJP exec;
     final Set<RelationSymbol> trackedRelations;
     volatile boolean changed;
+    MagicSetTransformer mst;
 
     static final int taskSize = Configuration.taskSize;
     static final int smtTaskSize = Configuration.smtTaskSize;
 
     public BalbinEvaluationContext(SortedIndexedFactDb db, SortedIndexedFactDb deltaDb, SortedIndexedFactDb nextDeltaDb,
                                    UserPredicate qInputAtom, Iterable<IndexedRule> rules, CountingFJP exec,
-                                   Set<RelationSymbol> trackedRelations) {
+                                   Set<RelationSymbol> trackedRelations, MagicSetTransformer mst) {
         super(rules);
         this.rules = rules;
         this.db = db;
@@ -66,6 +67,7 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
         this.qInputAtom = qInputAtom;
         this.exec = exec;
         this.trackedRelations = trackedRelations;
+        this.mst = mst;
     }
 
     @Override
@@ -291,13 +293,16 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
                                 if (lPred.isNegated()) {
                                     // Todo: Check whether there exists a SIPS arc to (SimplePredicate) l; if so:
 
+
                                     // Apply substitution, which returns a new UserPredicate
                                     UserPredicate newLPred = applySubstitutionToNegLiteralWithNegArc(lPred.getSymbol(), lPred.getArgs(), s);
 
                                     // Create input atom
                                     UserPredicate newLInputAtom = MagicSetTransformer.createInputAtom(newLPred);
+                                    // call getPRules
 
                                     // Todo: Create a new context, call eval
+
 
                                     // Todo (cont.): else:
                                     if (!tups.hasNext()) {
