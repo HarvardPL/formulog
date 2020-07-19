@@ -27,7 +27,8 @@ enum class SmtStatus { sat, unsat, unknown };
 
 struct SmtShim {
   SmtShim();
-  SmtStatus check(term_ptr assertion, int timeout);
+  SmtStatus check(const vector<term_ptr>& assertions,
+                  int timeout=numeric_limits<int>::max());
 
   static bool needs_type_annotation(Symbol sym);
   static bool is_solver_var(Term* t);
@@ -40,8 +41,8 @@ struct SmtShim {
   size_t cnt;
   vector<Type>::iterator annotations;
 
-  void preprocess(Term* assertion);
-  void visit(Term* assertion);
+  void preprocess(const vector<term_ptr>& assertions);
+  void visit(Term* t);
   void record_var(Term* var);
   void declare_vars(ostream& out);
   string lookup_var(Term* var);
@@ -154,7 +155,7 @@ SmtShim::SmtShim() :
   z3_in.flush();
 }
 
-SmtStatus SmtShim::check(term_ptr assertion, int timeout) {
+SmtStatus SmtShim::check(const vector<term_ptr>& assertions, int timeout) {
   z3_in << "(pop)" << endl;
   z3_in << "(push)" << endl;
   if (timeout < 0) {
@@ -162,31 +163,28 @@ SmtStatus SmtShim::check(term_ptr assertion, int timeout) {
     timeout = numeric_limits<int>::max();
   }
   z3_in << "(set-option :timeout " << timeout << ")" << endl;
-  auto t = assertion;
-  preprocess(t);
-  z3_in << "(assert ";
+
+  preprocess(assertions);
   TypeInferer ti;
-  auto types = ti.go(t);
-  annotations = types.begin();
-  Serializer{*this, z3_in}.serialize(t);
-  assert(annotations == types.end()); 
-  //annotations = types.begin();
-  //Serializer{*this, cout}.serialize(t);
-  //cout << endl;
-  z3_in << ")" << endl;
+  for (term_ptr t : assertions) {
+    z3_in << "(assert ";
+    auto types = ti.go(t);
+    annotations = types.begin();
+    Serializer{*this, z3_in}.serialize(t);
+    assert(annotations == types.end());
+    z3_in << ")" << endl;
+  }
+
   z3_in << "(check-sat)" << endl;
   z3_in.flush();
   string line;
   getline(z3_out, line);
   SmtStatus res;
-  if (line == "sat") { 
-    //cout << "sat" << endl;
-    res = SmtStatus::sat; 
+  if (line == "sat") {
+    res = SmtStatus::sat;
   } else if (line == "unsat") {
-    //cout << "unsat" << endl;
     res = SmtStatus::unsat;
   } else if (line == "unknown") {
-    //cout << "unknown" << endl;
     res = SmtStatus::unknown;
   } else {
     cerr << "Unexpected Z3 response:" << endl;
@@ -225,20 +223,21 @@ void SmtShim::visit(Term* t) {
   }
 }
 
-void SmtShim::record_var(Term* t) {
-  auto v = z3_vars.find(t);
+void SmtShim::record_var(Term* var) {
+  auto v = z3_vars.find(var);
   if (v == z3_vars.end()) {
     string name = "x" + to_string(cnt++);
-    z3_vars.emplace(t, name);
+    z3_vars.emplace(var, name);
   }
 }
 
-void SmtShim::preprocess(Term* t) {
+void SmtShim::preprocess(const vector<term_ptr>& assertions) {
   z3_vars.clear();
   cnt = 0;
-  visit(t);
+  for (auto t : assertions) {
+    visit(t);
+  }
   declare_vars(z3_in);
-  //declare_vars(cout);
 }
 
 void SmtShim::declare_vars(ostream& out) {
