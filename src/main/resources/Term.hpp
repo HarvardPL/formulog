@@ -101,6 +101,30 @@ struct BaseTerm : public Term {
   template <typename, Symbol> friend class BaseTermCache;
 };
 
+// Specializations for BaseTerm<float> and BaseTerm<double>
+// This creates a total order where NaNs compare after everything else, avoiding
+// undefined behavior when calling std::sort() in natural order.
+
+template <>
+int BaseTerm<float>::compare(
+  const BaseTerm<float>& t1, const BaseTerm<float>& t2
+) {
+  if (isunordered(t1.val, t2.val)) {
+    return isnan(t1.val) - isnan(t2.val);
+  }
+  return (t1.val > t2.val) - (t1.val < t2.val);
+}
+
+template <>
+int BaseTerm<double>::compare(
+  const BaseTerm<double>& t1, const BaseTerm<double>& t2
+) {
+  if (isunordered(t1.val, t2.val)) {
+    return isnan(t1.val) - isnan(t2.val);
+  }
+  return (t1.val > t2.val) - (t1.val < t2.val);
+}
+
 ostream& operator<<(ostream& out, Term& t) {
   switch (t.sym) {
     case Symbol::boxed_bool: {
@@ -292,12 +316,24 @@ term_ptr Term::make<int64_t>(int64_t val) {
 
 template<>
 term_ptr Term::make<float>(float val) {
-  return BaseTermCache<float, Symbol::boxed_fp32>::get(val);
+  typedef BaseTermCache<float, Symbol::boxed_fp32> cache;
+  // NaN is a special case due to ill-behaved floating point comparison
+  static term_ptr nan32_term = cache::get(nanf(""));
+  if (isnan(val)) {
+    return nan32_term;
+  }
+  return cache::get(val);
 }
 
 template<>
 term_ptr Term::make<double>(double val) {
-  return BaseTermCache<double, Symbol::boxed_fp64>::get(val);
+  typedef BaseTermCache<double, Symbol::boxed_fp64> cache;
+  // NaN is a special case due to ill-behaved floating point comparison
+  static term_ptr nan64_term = cache::get(nan(""));
+  if (isnan(val)) {
+    return nan64_term;
+  }
+  return cache::get(val);
 }
 
 template<>
