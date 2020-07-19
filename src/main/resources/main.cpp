@@ -74,7 +74,7 @@ int main(int argc, char** argv) {
     ("help", "produce help message")
     ("parallelism,j", po::value<size_t>()->default_value(1),
      "number of threads to use")
-    ("fact-dir", po::value<vector<string>>()->default_value({ cwd }),
+    ("fact-dir", po::value<vector<string>>()->default_value({cwd}),
      "input directory with external EDBs (can be set multiple times)")
     ("no-dump", "only print sizes of relations, not the database");
 
