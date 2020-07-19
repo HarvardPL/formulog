@@ -7,6 +7,6 @@ codegen/
 formulog.out
 
 # Souffle files and output
-souffle
-souffle.cpp
+sfl
+sfl.cpp
 souffle.out
