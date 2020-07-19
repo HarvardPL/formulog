@@ -188,7 +188,7 @@ term_ptr _make_none() {
 int _extract_timeout_from_option(term_ptr o) {
   int timeout{numeric_limits<int>::max()};
   if (o->sym == Symbol::some) {
-    auto x = o->as_complex();
+    auto& x = o->as_complex();
     timeout = x.val[0]->as_base<int32_t>().val;
   }
   return timeout;
