@@ -278,8 +278,10 @@ int Term::compare_natural(Term* t1, Term* t2) {
 }
 
 // These terms do not exist, but are useful for pointer comparisons
-term_ptr min_term = reinterpret_cast<term_ptr>(numeric_limits<uintptr_t>::min());
-term_ptr max_term = reinterpret_cast<term_ptr>(numeric_limits<uintptr_t>::max());
+const term_ptr min_term =
+  reinterpret_cast<term_ptr>(numeric_limits<uintptr_t>::min());
+const term_ptr max_term =
+  reinterpret_cast<term_ptr>(numeric_limits<uintptr_t>::max());
 
 // Concurrency-safe cache for BaseTerm values
 template <typename T, Symbol S> class BaseTermCache {
@@ -318,7 +320,7 @@ template<>
 term_ptr Term::make<float>(float val) {
   typedef BaseTermCache<float, Symbol::boxed_fp32> cache;
   // NaN is a special case due to ill-behaved floating point comparison
-  static term_ptr nan32_term = cache::get(nanf(""));
+  static const term_ptr nan32_term = cache::get(nanf(""));
   if (isnan(val)) {
     return nan32_term;
   }
@@ -329,7 +331,7 @@ template<>
 term_ptr Term::make<double>(double val) {
   typedef BaseTermCache<double, Symbol::boxed_fp64> cache;
   // NaN is a special case due to ill-behaved floating point comparison
-  static term_ptr nan64_term = cache::get(nan(""));
+  static const term_ptr nan64_term = cache::get(nan(""));
   if (isnan(val)) {
     return nan64_term;
   }
@@ -356,7 +358,8 @@ struct ComplexTermHash {
 // Concurrency-safe cache for ComplexTerm values
 template <Symbol S> class ComplexTermCache {
   static constexpr size_t arity = symbol_arity(S);
-  inline static unordered_map<array<term_ptr, arity>, term_ptr, ComplexTermHash<arity>> cache;
+  inline static unordered_map<
+    array<term_ptr, arity>, term_ptr, ComplexTermHash<arity>> cache;
   inline static shared_mutex m;
 
   public:
