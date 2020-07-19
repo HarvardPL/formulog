@@ -17,6 +17,11 @@
 
 #include "Symbol.hpp"
 
+#define NO_COPY_OR_ASSIGN(t) \
+  t(const t&) = delete; t(t&&) = delete; \
+  t& operator=(const t&) = delete; \
+  t& operator=(t&&) = delete;
+
 namespace flg {
 
 using namespace std;
@@ -28,10 +33,13 @@ typedef Term* term_ptr;
 template <typename T> struct BaseTerm;
 struct ComplexTerm;
 
+template <typename T, Symbol S> class BaseTermCache;
+template <Symbol S> class ComplexTermCache;
+
 struct Term {
   const Symbol sym;
 
-  Term(Symbol sym_) : sym{sym_} {}
+  NO_COPY_OR_ASSIGN(Term);
 
   template<typename T> inline const BaseTerm<T>& as_base() const;
   inline const ComplexTerm& as_complex() const;
@@ -55,29 +63,42 @@ struct Term {
 
   // Convert a Lisp-style list term into a vector
   static vector<term_ptr> vectorize_list_term(Term* t);
+
+  protected:
+  Term(Symbol sym_) : sym{sym_} {}
 };
 
 struct ComplexTerm : public Term {
   const size_t arity;
   const term_ptr* const val;
 
+  NO_COPY_OR_ASSIGN(ComplexTerm);
+
+  private:
   ComplexTerm(Symbol sym_, size_t arity_, term_ptr* val_) :
     Term{sym_}, arity{arity_}, val{val_} {}
 
   ~ComplexTerm() {
     delete[] val;
   }
+
+  template <Symbol> friend class ComplexTermCache;
 };
 
 template<typename T>
 struct BaseTerm : public Term {
   const T val;
 
-  BaseTerm(Symbol sym_, T val_) : Term{sym_}, val(val_) {}
+  NO_COPY_OR_ASSIGN(BaseTerm);
 
-  inline static int compare(BaseTerm<T> t1, BaseTerm<T> t2) {
+  inline static int compare(const BaseTerm<T>& t1, const BaseTerm<T>& t2) {
     return (t1.val > t2.val) - (t1.val < t2.val);
   }
+
+  private:
+  BaseTerm(Symbol sym_, T val_) : Term{sym_}, val(val_) {}
+
+  template <typename, Symbol> friend class BaseTermCache;
 };
 
 ostream& operator<<(ostream& out, Term& t) {
@@ -125,7 +146,7 @@ ostream& operator<<(ostream& out, Term& t) {
       return out << "\"" << t.as_base<string>().val << "\"";
     }
     default: {
-      auto x = t.as_complex();
+      auto& x = t.as_complex();
       out << x.sym;
       size_t n = x.arity;
       if (n > 0) {
@@ -166,8 +187,8 @@ int Term::compare_natural(Term* t1, Term* t2) {
     }
     switch (t1->sym) {
       case Symbol::boxed_bool: {
-        auto x = t1->as_base<bool>();
-        auto y = t2->as_base<bool>();
+        auto& x = t1->as_base<bool>();
+        auto& y = t2->as_base<bool>();
         int cmp = BaseTerm<bool>::compare(x, y);
         if (cmp != 0) {
           return cmp;
@@ -175,8 +196,8 @@ int Term::compare_natural(Term* t1, Term* t2) {
         break;
       }
       case Symbol::boxed_i32: {
-        auto x = t1->as_base<int32_t>();
-        auto y = t2->as_base<int32_t>();
+        auto& x = t1->as_base<int32_t>();
+        auto& y = t2->as_base<int32_t>();
         int cmp = BaseTerm<int32_t>::compare(x, y);
         if (cmp != 0) {
           return cmp;
@@ -184,8 +205,8 @@ int Term::compare_natural(Term* t1, Term* t2) {
         break;
       }
       case Symbol::boxed_i64: {
-        auto x = t1->as_base<int64_t>();
-        auto y = t2->as_base<int64_t>();
+        auto& x = t1->as_base<int64_t>();
+        auto& y = t2->as_base<int64_t>();
         int cmp = BaseTerm<int64_t>::compare(x, y);
         if (cmp != 0) {
           return cmp;
@@ -193,8 +214,8 @@ int Term::compare_natural(Term* t1, Term* t2) {
         break;
       }
       case Symbol::boxed_fp32: {
-        auto x = t1->as_base<float>();
-        auto y = t2->as_base<float>();
+        auto& x = t1->as_base<float>();
+        auto& y = t2->as_base<float>();
         int cmp = BaseTerm<float>::compare(x, y);
         if (cmp != 0) {
           return cmp;
@@ -202,8 +223,8 @@ int Term::compare_natural(Term* t1, Term* t2) {
         break;
       }
       case Symbol::boxed_fp64: {
-        auto x = t1->as_base<double>();
-        auto y = t2->as_base<double>();
+        auto& x = t1->as_base<double>();
+        auto& y = t2->as_base<double>();
         int cmp = BaseTerm<double>::compare(x, y);
         if (cmp != 0) {
           return cmp;
@@ -211,8 +232,8 @@ int Term::compare_natural(Term* t1, Term* t2) {
         break;
       }
       case Symbol::boxed_string: {
-        auto x = t1->as_base<string>();
-        auto y = t2->as_base<string>();
+        auto& x = t1->as_base<string>();
+        auto& y = t2->as_base<string>();
         int cmp = BaseTerm<string>::compare(x, y);
         if (cmp != 0) {
           return cmp;
@@ -220,8 +241,8 @@ int Term::compare_natural(Term* t1, Term* t2) {
         break;
       }
       default: {
-        auto x = t1->as_complex();
-        auto y = t2->as_complex();
+        auto& x = t1->as_complex();
+        auto& y = t2->as_complex();
         size_t n = x.arity;
         for (size_t i = 0; i < n; ++i) {
           w.emplace(x.val[i], y.val[i]); 
@@ -285,7 +306,7 @@ term_ptr Term::make<string>(string val) {
 }
 
 // Template hash function for arrays of term_ptr's
-template<size_t N>
+template <size_t N>
 struct ComplexTermHash {
   size_t operator()(const array<term_ptr, N>& arr) const {
     size_t retval = 0;
@@ -342,7 +363,7 @@ struct TermCompare {
 vector<term_ptr> Term::vectorize_list_term(Term* t) {
   vector<term_ptr> v;
   while (t->sym == Symbol::cons) {
-    auto x = t->as_complex();
+    auto& x = t->as_complex();
     v.push_back(x.val[0]);
     t = x.val[1];
   }

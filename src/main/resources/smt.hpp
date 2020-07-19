@@ -111,7 +111,7 @@ Type TypeInferer::visit(Term* t) {
     annotations.push_back(ft.second);
   }
   if (!ft.first.empty()) {
-    auto x = t->as_complex();
+    auto& x = t->as_complex();
     if (!SmtShim::is_solver_var(t)) {
       for (size_t i = 0; i < x.arity; ++i) {
         constraints.push_back(make_pair(visit(x.val[i]), ft.first[i]));
@@ -218,7 +218,7 @@ void SmtShim::visit(Term* t) {
     case Symbol::boxed_string:
       break;
     default:
-      auto x = t->as_complex();
+      auto& x = t->as_complex();
       for (size_t i = 0; i < x.arity; ++i) {
         visit(x.val[i]);
       }
@@ -281,7 +281,7 @@ void SmtShim::Serializer::serialize(Term* t) {
     }
 /* INSERT 2 */
     default:
-      auto x = t->as_complex();
+      auto& x = t->as_complex();
       stringstream ss;
       serialize(serialize_sym(x.sym), x);
   }
@@ -369,7 +369,7 @@ void SmtShim::Serializer::serialize_fp_to_fp(Term* t) {
 }
 
 void SmtShim::Serializer::serialize_let(Term* t) {
-  auto x = t->as_complex();
+  auto& x = t->as_complex();
   out << "(let ((";
   serialize(x.val[0]);
   out << " ";
@@ -386,7 +386,7 @@ void SmtShim::Serializer::serialize_int(Term* t) {
 
 template <bool Exists>
 void SmtShim::Serializer::serialize_quantifier(Term* t) {
-  auto x = t->as_complex();
+  auto& x = t->as_complex();
   out << "(" << (Exists ? "exists (" : "forall (");
   for (auto& v : Term::vectorize_list_term(x.val[0])) {
     // Consume annotation for cons
