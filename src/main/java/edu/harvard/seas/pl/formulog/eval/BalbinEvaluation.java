@@ -49,8 +49,6 @@ public class BalbinEvaluation implements Evaluation {
 
     private final SortedIndexedFactDb db;
     private final IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb;
-//    private final SortedIndexedFactDb deltaDb;
-//    private final SortedIndexedFactDb nextDeltaDb;
     private final UserPredicate q;
     private final UserPredicate qInputAtom;
     private final Set<UserPredicate> qMagicFacts;
@@ -59,6 +57,7 @@ public class BalbinEvaluation implements Evaluation {
     private final WellTypedProgram inputProgram;
     private final Map<RelationSymbol, Set<IndexedRule>> rules;
     private final MagicSetTransformer mst;
+    private final BasicProgram magicProg;
 
     static final boolean sequential = System.getProperty("sequential") != null;
 
@@ -187,7 +186,7 @@ public class BalbinEvaluation implements Evaluation {
             throw new InvalidProgramException(exec.getFailureCause());
         }
         return new BalbinEvaluation(prog, db, deltaDbb, rules, q, qInputAtom, qMagicFacts, exec,
-                getTrackedRelations(magicProg.getSymbolManager()), mst);
+                getTrackedRelations(magicProg.getSymbolManager()), mst, magicProg);
     }
 
     private static SmtLibSolver maybeDoubleCheckSolver(SmtLibSolver inner) {
@@ -271,7 +270,7 @@ public class BalbinEvaluation implements Evaluation {
     BalbinEvaluation(WellTypedProgram inputProgram, SortedIndexedFactDb db,
                      IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb, Map<RelationSymbol, Set<IndexedRule>> rules,
                      UserPredicate q, UserPredicate qInputAtom, Set<UserPredicate> qMagicFacts, CountingFJP exec,
-                     Set<RelationSymbol> trackedRelations, MagicSetTransformer mst) {
+                     Set<RelationSymbol> trackedRelations, MagicSetTransformer mst, BasicProgram magicProg) {
         this.inputProgram = inputProgram;
         this.db = db;
         this.q = q;
@@ -280,10 +279,9 @@ public class BalbinEvaluation implements Evaluation {
         this.exec = exec;
         this.trackedRelations = trackedRelations;
         this.deltaDbb = deltaDbb;
-//        this.deltaDb = deltaDbb.build();
-//        this.nextDeltaDb = deltaDbb.build();
         this.rules = rules;
         this.mst = mst;
+        this.magicProg = magicProg;
     }
 
     @Override
@@ -316,13 +314,13 @@ public class BalbinEvaluation implements Evaluation {
         eval();
     }
 
-    // Todo: Balbin, Algorithm 7 - eval
+    // Balbin, Algorithm 7 - eval
     private void eval() throws EvaluationException {
         List<IndexedRule> pRules = new ArrayList<>();
         pRules.addAll(getPRules(qInputAtom, rules));
 
         // Create new BalbinEvaluationContext
-        new BalbinEvaluationContext(db, deltaDbb, qInputAtom, qMagicFacts, pRules, rules, exec, trackedRelations, mst)
+        new BalbinEvaluationContext(db, deltaDbb, qInputAtom, qMagicFacts, pRules, rules, exec, trackedRelations, mst, magicProg)
                 .evaluate();
     }
 

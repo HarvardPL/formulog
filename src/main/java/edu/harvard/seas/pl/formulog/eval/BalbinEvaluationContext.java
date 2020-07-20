@@ -27,6 +27,7 @@ import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.unification.OverwriteSubstitution;
+import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.AbstractFJPTask;
 import edu.harvard.seas.pl.formulog.util.CountingFJP;
@@ -37,12 +38,12 @@ import org.apache.commons.lang3.time.StopWatch;
 import java.time.LocalDateTime;
 import java.util.*;
 
-// Todo: Update this class
 public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
 
     Iterable<IndexedRule> rules;
     Map<RelationSymbol, Set<IndexedRule>> allRules;
     final SortedIndexedFactDb db;
+//    IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb;
     SortedIndexedFactDb deltaDb;
     SortedIndexedFactDb nextDeltaDb;
     UserPredicate qInputAtom;
@@ -51,6 +52,7 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
     final Set<RelationSymbol> trackedRelations;
     volatile boolean changed;
     MagicSetTransformer mst;
+    BasicProgram magicProg;
 
     static final int taskSize = Configuration.taskSize;
     static final int smtTaskSize = Configuration.smtTaskSize;
@@ -58,20 +60,46 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
     public BalbinEvaluationContext(SortedIndexedFactDb db, IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb,
                                    UserPredicate qInputAtom, Set<UserPredicate> qMagicFacts, Iterable<IndexedRule> rules,
                                    Map<RelationSymbol, Set<IndexedRule>> allRules, CountingFJP exec,
-                                   Set<RelationSymbol> trackedRelations, MagicSetTransformer mst) {
+                                   Set<RelationSymbol> trackedRelations, MagicSetTransformer mst, BasicProgram magicProg) {
         super(rules);
         this.rules = rules;
         this.allRules = allRules;
         this.db = db;
+//        this.deltaDbb = deltaDbb;
         this.deltaDb = deltaDbb.build();
         this.nextDeltaDb = deltaDbb.build();
-//        this.deltaDb = deltaDb;
-//        this.nextDeltaDb = nextDeltaDb;
         this.qInputAtom = qInputAtom;
         this.qMagicFacts = qMagicFacts;
         this.exec = exec;
         this.trackedRelations = trackedRelations;
         this.mst = mst;
+        this.magicProg = magicProg;
+
+        addQMagicFactsToDb(db);
+        addQMagicFactsToDb(deltaDb);
+    }
+
+    private void addQMagicFactsToDb(SortedIndexedFactDb db) {
+        for (UserPredicate qMagicFact : qMagicFacts) {
+            RelationSymbol sym = qMagicFact.getSymbol();
+            for (Iterable<Term[]> tups : Util.splitIterable(magicProg.getFacts(sym), Configuration.taskSize)) {
+                exec.externallyAddTask(new AbstractFJPTask(exec) {
+
+                    @Override
+                    public void doTask() throws EvaluationException {
+                        for (Term[] tup : tups) {
+                            try {
+                                db.add(sym, Terms.normalize(tup, new SimpleSubstitution()));
+                            } catch (EvaluationException e) {
+                                UserPredicate p = UserPredicate.make(sym, tup, false);
+                                throw new EvaluationException("Cannot normalize fact " + p + ":\n" + e.getMessage());
+                            }
+                        }
+                    }
+
+                });
+            }
+        }
     }
 
     @Override
@@ -305,12 +333,12 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
                                         List<IndexedRule> pRules = new ArrayList<>();
                                         pRules.addAll(BalbinEvaluation.getPRules(newLInputAtom, allRules));
 
-                                        // Todo: Evaluate a new context
+                                        // Evaluate a new context
                                         IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb = null;
                                         Set<UserPredicate> newQMagicFacts = null;
                                         newQMagicFacts.add(newLInputAtom);
-                                        new BalbinEvaluationContext(db, deltaDbb, qInputAtom, newQMagicFacts, pRules, allRules, exec, trackedRelations, mst)
-                                                .evaluate();
+                                        new BalbinEvaluationContext(db, deltaDbb, qInputAtom, newQMagicFacts, pRules, allRules,
+                                                exec, trackedRelations, mst, magicProg).evaluate();
                                     } else {
                                         if (!tups.hasNext()) {
                                             pos++;
@@ -427,11 +455,12 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
                                     List<IndexedRule> pRules = new ArrayList<>();
                                     pRules.addAll(BalbinEvaluation.getPRules(newLInputAtom, allRules));
 
-                                    // Todo: Copy above
+                                    // Evaluate a new context
                                     IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb = null;
                                     Set<UserPredicate> newQMagicFacts = null;
-                                    new BalbinEvaluationContext(db, deltaDbb, qInputAtom, newQMagicFacts, pRules, allRules, exec, trackedRelations, mst)
-                                            .evaluate();
+                                    newQMagicFacts.add(newLInputAtom);
+                                    new BalbinEvaluationContext(db, deltaDbb, qInputAtom, newQMagicFacts, pRules, allRules,
+                                            exec, trackedRelations, mst, magicProg).evaluate();
                                 } else {
                                     if (lookup(rule, pos, s).iterator().hasNext()) {
                                         return;
