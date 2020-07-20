@@ -436,7 +436,7 @@ public class MagicSetTransformer {
 		return magicRules;
 	}
 
-	private boolean exploreTopDown(RelationSymbol sym) {
+	public boolean exploreTopDown(RelationSymbol sym) {
 		if (sym instanceof AdornedSymbol) {
 			sym = ((AdornedSymbol) sym).getBaseSymbol();
 		}
@@ -619,12 +619,12 @@ public class MagicSetTransformer {
 
 		@Override
 		public boolean isBottomUp() {
-			throw new UnsupportedOperationException();
+			return true;
 		}
 
 		@Override
 		public boolean isTopDown() {
-			throw new UnsupportedOperationException();
+			return false;
 		}
 
 	}
@@ -659,12 +659,12 @@ public class MagicSetTransformer {
 
 		@Override
 		public boolean isBottomUp() {
-			throw new UnsupportedOperationException();
+			return true;
 		}
 
 		@Override
 		public boolean isTopDown() {
-			throw new UnsupportedOperationException();
+			return false;
 		}
 
 	}
@@ -766,12 +766,12 @@ public class MagicSetTransformer {
 
 		@Override
 		public boolean isBottomUp() {
-			throw new UnsupportedOperationException();
+			return true;
 		}
 
 		@Override
 		public boolean isTopDown() {
-			throw new UnsupportedOperationException();
+			return false;
 		}
 
 	}

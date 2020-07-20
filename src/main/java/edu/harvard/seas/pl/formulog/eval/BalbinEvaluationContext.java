@@ -21,10 +21,8 @@ package edu.harvard.seas.pl.formulog.eval;
  */
 
 import edu.harvard.seas.pl.formulog.Configuration;
-import edu.harvard.seas.pl.formulog.ast.BindingType;
-import edu.harvard.seas.pl.formulog.ast.Term;
-import edu.harvard.seas.pl.formulog.ast.UserPredicate;
-import edu.harvard.seas.pl.formulog.ast.Var;
+import edu.harvard.seas.pl.formulog.ast.*;
+import edu.harvard.seas.pl.formulog.db.IndexedFactDbBuilder;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
@@ -37,17 +35,18 @@ import edu.harvard.seas.pl.formulog.validating.ast.*;
 import org.apache.commons.lang3.time.StopWatch;
 
 import java.time.LocalDateTime;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 // Todo: Update this class
 public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
 
     Iterable<IndexedRule> rules;
+    Map<RelationSymbol, Set<IndexedRule>> allRules;
     final SortedIndexedFactDb db;
     SortedIndexedFactDb deltaDb;
     SortedIndexedFactDb nextDeltaDb;
     UserPredicate qInputAtom;
+    Set<BasicRule> qMagicFacts;
     final CountingFJP exec;
     final Set<RelationSymbol> trackedRelations;
     volatile boolean changed;
@@ -56,15 +55,20 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
     static final int taskSize = Configuration.taskSize;
     static final int smtTaskSize = Configuration.smtTaskSize;
 
-    public BalbinEvaluationContext(SortedIndexedFactDb db, SortedIndexedFactDb deltaDb, SortedIndexedFactDb nextDeltaDb,
-                                   UserPredicate qInputAtom, Iterable<IndexedRule> rules, CountingFJP exec,
+    public BalbinEvaluationContext(SortedIndexedFactDb db, IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb,
+                                   UserPredicate qInputAtom, Set<BasicRule> qMagicFacts, Iterable<IndexedRule> rules,
+                                   Map<RelationSymbol, Set<IndexedRule>> allRules, CountingFJP exec,
                                    Set<RelationSymbol> trackedRelations, MagicSetTransformer mst) {
         super(rules);
         this.rules = rules;
+        this.allRules = allRules;
         this.db = db;
-        this.deltaDb = deltaDb;
-        this.nextDeltaDb = nextDeltaDb;
+        this.deltaDb = deltaDbb.build();
+        this.nextDeltaDb = deltaDbb.build();
+//        this.deltaDb = deltaDb;
+//        this.nextDeltaDb = nextDeltaDb;
         this.qInputAtom = qInputAtom;
+        this.qMagicFacts = qMagicFacts;
         this.exec = exec;
         this.trackedRelations = trackedRelations;
         this.mst = mst;
@@ -291,25 +295,28 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
                                 Iterator<Iterable<Term[]>> tups = lookup(rule, pos, s).iterator();
                                 SimplePredicate lPred = (SimplePredicate) l;
                                 if (lPred.isNegated()) {
-                                    // Todo: Check whether there exists a SIPS arc to (SimplePredicate) l; if so:
+                                    // Check whether there exists a SIPS arc to lPred
+                                    if (mst.exploreTopDown(lPred.getSymbol())) {
+                                        // Apply substitution, which returns a new UserPredicate
+                                        UserPredicate newLPred = applySubstitutionToNegLiteralWithNegArc(lPred.getSymbol(), lPred.getArgs(), s);
+                                        // Create input atom
+                                        UserPredicate newLInputAtom = MagicSetTransformer.createInputAtom(newLPred);
+                                        // Call getPRules
+                                        List<IndexedRule> pRules = new ArrayList<>();
+                                        pRules.addAll(BalbinEvaluation.getPRules(newLInputAtom, allRules));
 
-
-                                    // Apply substitution, which returns a new UserPredicate
-                                    UserPredicate newLPred = applySubstitutionToNegLiteralWithNegArc(lPred.getSymbol(), lPred.getArgs(), s);
-
-                                    // Create input atom
-                                    UserPredicate newLInputAtom = MagicSetTransformer.createInputAtom(newLPred);
-                                    // call getPRules
-
-                                    // Todo: Create a new context, call eval
-
-
-                                    // Todo (cont.): else:
-                                    if (!tups.hasNext()) {
-                                        pos++;
+                                        // Todo: Evaluate a new context
+                                        IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb = null;
+                                        Set<BasicRule> newQMagicFacts = null;
+                                        new BalbinEvaluationContext(db, deltaDbb, qInputAtom, newQMagicFacts, pRules, allRules, exec, trackedRelations, mst)
+                                                .evaluate();
                                     } else {
-                                        pos--;
-                                        movingRight = false;
+                                        if (!tups.hasNext()) {
+                                            pos++;
+                                        } else {
+                                            pos--;
+                                            movingRight = false;
+                                        }
                                     }
                                 } else {
                                     if (tups.hasNext()) {
@@ -409,19 +416,25 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
                         case PREDICATE:
                             SimplePredicate lPred = (SimplePredicate) l;
                             if (lPred.isNegated()) {
-                                // Todo: Check whether there exists a SIPS arc to (SimplePredicate) l; if so:
+                                // Check whether there exists a SIPS arc to lPred
+                                if (mst.exploreTopDown(lPred.getSymbol())) {
+                                    // Apply substitution, which returns a new UserPredicate
+                                    UserPredicate newLPred = applySubstitutionToNegLiteralWithNegArc(lPred.getSymbol(), lPred.getArgs(), s);
+                                    // Create input atom
+                                    UserPredicate newLInputAtom = MagicSetTransformer.createInputAtom(newLPred);
+                                    // Call getPRules
+                                    List<IndexedRule> pRules = new ArrayList<>();
+                                    pRules.addAll(BalbinEvaluation.getPRules(newLInputAtom, allRules));
 
-                                // Apply substitution, which returns a new UserPredicate
-                                UserPredicate newLPred = applySubstitutionToNegLiteralWithNegArc(lPred.getSymbol(), lPred.getArgs(), s);
-
-                                // Create input atom
-                                UserPredicate newLInputAtom = MagicSetTransformer.createInputAtom(newLPred);
-
-                                // Todo: Create a new context, call eval
-
-                                // Todo (cont.): else:
-                                if (lookup(rule, pos, s).iterator().hasNext()) {
-                                    return;
+                                    // Todo: Evaluate a new context
+                                    IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb = null;
+                                    Set<BasicRule> newQMagicFacts = null;
+                                    new BalbinEvaluationContext(db, deltaDbb, qInputAtom, newQMagicFacts, pRules, allRules, exec, trackedRelations, mst)
+                                            .evaluate();
+                                } else {
+                                    if (lookup(rule, pos, s).iterator().hasNext()) {
+                                        return;
+                                    }
                                 }
                             } else {
                                 // Stop on the first positive user predicate.
