@@ -107,7 +107,6 @@ template <typename T>
 term_ptr __cmp(term_ptr t1, term_ptr t2) {
   auto xval = t1->as_base<T>().val;
   auto yval = t2->as_base<T>().val;
-  Symbol sym{Symbol::cmp_eq};
   if (xval < yval) {
     return Term::make<Symbol::cmp_lt>();
   } else if (xval > yval) {
