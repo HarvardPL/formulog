@@ -82,6 +82,7 @@ public final class Configuration {
 	private static final AtomicInteger smtNumCallsDoubleCheck = new AtomicInteger();
 	private static final AtomicInteger smtNumCallsFalseUnknown = new AtomicInteger();
 
+	// XXX I don't think this is being used any more
 	private static final AtomicLong smtTotalTime = new AtomicLong();
 
 	public static void recordSmtTime(long delta) {
