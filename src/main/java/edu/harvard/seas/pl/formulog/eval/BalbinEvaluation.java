@@ -53,7 +53,7 @@ public class BalbinEvaluation implements Evaluation {
 //    private final SortedIndexedFactDb nextDeltaDb;
     private final UserPredicate q;
     private final UserPredicate qInputAtom;
-    private final Set<BasicRule> qMagicFacts;
+    private final Set<UserPredicate> qMagicFacts;
     private final CountingFJP exec;
     private final Set<RelationSymbol> trackedRelations;
     private final WellTypedProgram inputProgram;
@@ -103,7 +103,7 @@ public class BalbinEvaluation implements Evaluation {
         UserPredicate qInputAtom = MagicSetTransformer.createInputAtom(q);
         RelationSymbol qSymbol = qInputAtom.getSymbol();
         Set<BasicRule> qRules = magicProg.getRules(qSymbol);
-        Set<BasicRule> qMagicFacts = null;
+        Set<UserPredicate> qMagicFacts = null;
         UnificationPredicate magicFactMatch = UnificationPredicate.make(BoolTerm.mkTrue(), BoolTerm.mkTrue(), false);
         for (BasicRule basicRule : qRules) {
             // Determine whether basicRule is a magic fact
@@ -111,7 +111,7 @@ public class BalbinEvaluation implements Evaluation {
             for (int i = 0; i < basicRule.getBodySize(); i++) {
                 unificationPredicate = getUnificationPredicate(basicRule.getBody(i));
                 if (unificationPredicate.equals(magicFactMatch)) {
-                    qMagicFacts.add(basicRule);
+                    qMagicFacts.add(getUserPredicate(basicRule.getHead()));
                     break;
                 }
             }
@@ -270,7 +270,7 @@ public class BalbinEvaluation implements Evaluation {
 
     BalbinEvaluation(WellTypedProgram inputProgram, SortedIndexedFactDb db,
                      IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb, Map<RelationSymbol, Set<IndexedRule>> rules,
-                     UserPredicate q, UserPredicate qInputAtom, Set<BasicRule> qMagicFacts, CountingFJP exec,
+                     UserPredicate q, UserPredicate qInputAtom, Set<UserPredicate> qMagicFacts, CountingFJP exec,
                      Set<RelationSymbol> trackedRelations, MagicSetTransformer mst) {
         this.inputProgram = inputProgram;
         this.db = db;

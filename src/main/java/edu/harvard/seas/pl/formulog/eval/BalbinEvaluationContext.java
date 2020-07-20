@@ -46,7 +46,7 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
     SortedIndexedFactDb deltaDb;
     SortedIndexedFactDb nextDeltaDb;
     UserPredicate qInputAtom;
-    Set<BasicRule> qMagicFacts;
+    Set<UserPredicate> qMagicFacts;
     final CountingFJP exec;
     final Set<RelationSymbol> trackedRelations;
     volatile boolean changed;
@@ -56,7 +56,7 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
     static final int smtTaskSize = Configuration.smtTaskSize;
 
     public BalbinEvaluationContext(SortedIndexedFactDb db, IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb,
-                                   UserPredicate qInputAtom, Set<BasicRule> qMagicFacts, Iterable<IndexedRule> rules,
+                                   UserPredicate qInputAtom, Set<UserPredicate> qMagicFacts, Iterable<IndexedRule> rules,
                                    Map<RelationSymbol, Set<IndexedRule>> allRules, CountingFJP exec,
                                    Set<RelationSymbol> trackedRelations, MagicSetTransformer mst) {
         super(rules);
@@ -307,7 +307,8 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
 
                                         // Todo: Evaluate a new context
                                         IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb = null;
-                                        Set<BasicRule> newQMagicFacts = null;
+                                        Set<UserPredicate> newQMagicFacts = null;
+                                        newQMagicFacts.add(newLInputAtom);
                                         new BalbinEvaluationContext(db, deltaDbb, qInputAtom, newQMagicFacts, pRules, allRules, exec, trackedRelations, mst)
                                                 .evaluate();
                                     } else {
@@ -426,9 +427,9 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
                                     List<IndexedRule> pRules = new ArrayList<>();
                                     pRules.addAll(BalbinEvaluation.getPRules(newLInputAtom, allRules));
 
-                                    // Todo: Evaluate a new context
+                                    // Todo: Copy above
                                     IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb = null;
-                                    Set<BasicRule> newQMagicFacts = null;
+                                    Set<UserPredicate> newQMagicFacts = null;
                                     new BalbinEvaluationContext(db, deltaDbb, qInputAtom, newQMagicFacts, pRules, allRules, exec, trackedRelations, mst)
                                             .evaluate();
                                 } else {
