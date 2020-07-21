@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.codegen;
  * #L%
  */
 
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -38,6 +37,10 @@ import edu.harvard.seas.pl.formulog.types.Types.TypeVar;
 import edu.harvard.seas.pl.formulog.types.Types.TypeVisitor;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
+/**
+ * This class is used to take a Formulog type and generate its C++
+ * representation.
+ */
 public class TypeCodeGen {
 
 	private final CodeGenContext ctx;
@@ -46,25 +49,67 @@ public class TypeCodeGen {
 		this.ctx = ctx;
 	}
 
-	public Pair<CppStmt, CppExpr> gen(FunctorType type) {
+	/**
+	 * Take a Formulog type and generate its C++ representation.
+	 * 
+	 * @param type
+	 *            The Formulog type that needs to be represented in C++
+	 * @return A pair of a C++ statement and an C++ expression. The expression is
+	 *         the C++ representation of the provided type; the statement is code
+	 *         that should be evaluated before that expression is used.
+	 */
+	public Pair<CppStmt, CppExpr> gen(Type type) {
 		List<CppStmt> acc = new ArrayList<>();
 		CppExpr e = gen(acc, type);
 		return new Pair<>(CppSeq.mk(acc), e);
 	}
 
-	public CppExpr gen(List<CppStmt> acc, FunctorType type) {
+	/**
+	 * Take a Formulog type and generate its C++ representation. Any C++ statements
+	 * that need to be run before the expression (representing that type) is used
+	 * are appended to the given accumulator list.
+	 * 
+	 * @param acc
+	 *            An accumulator list of statements
+	 * @param type
+	 *            The Formulog type that needs to be represented in C++
+	 * @return The C++ expression representing the given Formulog type
+	 */
+	public CppExpr gen(List<CppStmt> acc, Type type) {
 		return new Worker(acc, new HashMap<>()).go(type);
 	}
-	
-	public List<CppExpr> gen(List<CppStmt> acc, List<FunctorType> types) {
+
+	/**
+	 * Take a list of Formulog types and generate their C++ representation. Any C++
+	 * statements that need to be run before the expressions (representing those
+	 * types) are used are appended to the given accumulator list.
+	 * 
+	 * @param acc
+	 *            An accumulator list of statements
+	 * @param types
+	 *            The Formulog types that need to be represented in C++
+	 * @return The C++ expressions representing the given Formulog types (and in the
+	 *         same order)
+	 */
+	public List<CppExpr> gen(List<CppStmt> acc, List<Type> types) {
 		List<CppExpr> es = new ArrayList<>();
-		for (FunctorType ty : types) {
+		for (Type ty : types) {
 			gen(acc, ty);
 		}
 		return es;
 	}
-	
-	public Pair<CppStmt, List<CppExpr>> gen(List<FunctorType> types) {
+
+	/**
+	 * Take a list of Formulog types and generate their C++ representations.
+	 * 
+	 * @param types
+	 *            The Formulog types that need to be represented in C++
+	 * @return A pair of a C++ statement and a list of C++ expression. The
+	 *         expressions are the C++ representations of the provided types (in the
+	 *         same order); the statement is code that should be evaluated before
+	 *         those expressions are used.
+	 */
+	public Pair<CppStmt, List<CppExpr>> gen(List<Type> types) {
 		List<CppStmt> acc = new ArrayList<>();
 		List<CppExpr> es = gen(acc, types);
 		return new Pair<>(CppSeq.mk(acc), es);
@@ -72,6 +117,7 @@ public class TypeCodeGen {
 
 	private class Worker {
 
+		// Keep track of which type variables have already been generated
 		private final Map<TypeVar, CppExpr> env;
 		private final List<CppStmt> acc;
 
@@ -87,8 +133,19 @@ public class TypeCodeGen {
 			return type.accept(visitor, null);
 		}
 		
-		public CppExpr go1(FunctorType type) {
+
+		private List<CppExpr> go(List<Type> types) {
+			List<CppExpr> l = new ArrayList<>();
+			for (Type ty : types) {
+				l.add(go(ty));
+			}
+			return l;
+		}
+
+		private CppExpr go1(FunctorType type) {
 			CppExpr ret = go(type.getRetType());
+			// A FunctorType is represented in C++ by a pair of the argument types and the
+			// return type.
 			return CppFuncCall.mk("make_pair", mkVec(type.getArgTypes()), ret);
 		}
 
@@ -98,6 +155,7 @@ public class TypeCodeGen {
 			public CppExpr visit(TypeVar typeVar, Void in) {
 				CppExpr e = env.get(typeVar);
 				if (e == null) {
+					// Tell the C++ code to generate a fresh type variable
 					String id = ctx.newId("ty");
 					acc.add(CppDecl.mk(id, CppFuncCall.mk("new_var")));
 					e = CppVar.mk(id);
@@ -148,6 +206,8 @@ public class TypeCodeGen {
 				return mkType("_ FloatingPoint", args);
 			case INT_TYPE:
 				return mkType("Int", args);
+			// The rest of the built-in types can be treated as normal (i.e., user-defined)
+			// types
 			case LIST_TYPE:
 			case OPTION_TYPE:
 			case CMP_TYPE:
@@ -161,26 +221,20 @@ public class TypeCodeGen {
 			return null;
 		}
 
-		private List<CppExpr> go(List<Type> types) {
-			List<CppExpr> l = new ArrayList<>();
-			for (Type ty : types) {
-				l.add(go(ty));
-			}
-			return l;
-		}
-
 		private CppExpr mkType(String name) {
 			return mkType(name, Collections.emptyList());
 		}
-		
+
 		private CppExpr mkType(String name, List<Type> args) {
 			CppExpr cppName = CppConst.mkString(name);
 			CppExpr vec = mkVec(args);
 			String tyId = ctx.newId("ty");
+			// Create a new variable and initialize it. The initializer has the signature
+			// (type_name, is_var, type_args).
 			acc.add(CppCtor.mkInitializer("Type", tyId, cppName, CppConst.mkFalse(), vec));
 			return CppVar.mk(tyId);
 		}
-		
+
 		private CppExpr mkVec(List<Type> args) {
 			String vId = ctx.newId("v");
 			acc.add(CppCtor.mkInitializer("vector<Type>", vId, go(args)));
