@@ -32,10 +32,11 @@ import edu.harvard.seas.pl.formulog.validating.Stratum;
 
 /**
  * This class is used to take a stratum (from a stratified Formulog program) and
- * generate C++ code that evaluates it.
+ * generate C++ code that evaluates it. This class implements semi-naive
+ * evaluation.
  */
 public class StratumCodeGen {
-
+	
 	private final CodeGenContext ctx;
 	/**
 	 * This variable is used in the C++ code to track whether a new tuple has been
