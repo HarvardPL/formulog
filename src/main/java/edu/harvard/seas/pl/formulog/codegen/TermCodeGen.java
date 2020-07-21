@@ -39,6 +39,10 @@ import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
+/**
+ * This class is used to take a Formulog term and generate its C++
+ * representation.
+ */
 public class TermCodeGen {
 
 	private final CodeGenContext ctx;
@@ -51,8 +55,24 @@ public class TermCodeGen {
 		return CppFuncCall.mk("Term::make<bool>", bool);
 	}
 
-	// mkComplex no longer requires supporting statements, but these methods still
-	// exist in order to not break the rest of the code
+	/*
+	 * EZ: mkComplex no longer requires supporting statements, but these methods
+	 * still exist in order to not break the rest of the code.
+	 * 
+	 * AB: Probably makes sense to keep the current signature - I don't think it
+	 * causes any significant harm, and it gives us some future flexibility.
+	 */
+
+	/**
+	 * Generate the C++ representation of a complex term given the symbol of a
+	 * constructor and its arguments.
+	 * 
+	 * @param sym
+	 * @param args
+	 * @return A pair of a C++ statement and a C++ expression representing the
+	 *         complex term; the statement should be executed before the expression
+	 *         is used.
+	 */
 	public Pair<CppStmt, CppExpr> mkComplex(ConstructorSymbol sym, List<CppExpr> args) {
 		assert sym.getArity() == args.size();
 		CppVar symbol = CppVar.mk(ctx.lookupRepr(sym));
@@ -60,32 +80,95 @@ public class TermCodeGen {
 		return new Pair<>(CppSeq.mk(), val);
 	}
 
+	/**
+	 * Generate the C++ representation of a complex term given the symbol of a
+	 * constructor and its arguments.
+	 * 
+	 * @param sym
+	 * @param args
+	 * @return A pair of a C++ statement and a C++ expression representing the
+	 *         complex term; the statement should be executed before the expression
+	 *         is used.
+	 */
 	public Pair<CppStmt, CppExpr> mkComplex(ConstructorSymbol sym, CppExpr... args) {
 		return mkComplex(sym, Arrays.asList(args));
 	}
 
+	/**
+	 * Generate the C++ representation of a complex term given the symbol of a
+	 * constructor and its arguments.
+	 * 
+	 * @param acc
+	 *            An accumulator list of statements; these should be executed before
+	 *            the returned expression is used
+	 * @param sym
+	 * @param args
+	 * @return A C++ expression representing the complex term
+	 */
 	public CppExpr mkComplex(List<CppStmt> acc, ConstructorSymbol sym, CppExpr... args) {
 		Pair<CppStmt, CppExpr> p = mkComplex(sym, args);
 		acc.add(p.fst());
 		return p.snd();
 	}
 
+	/**
+	 * Generate the C++ representation of a complex term given the symbol of a
+	 * constructor and its arguments.
+	 * 
+	 * @param acc
+	 *            An accumulator list of statements; these should be executed before
+	 *            the returned expression is used
+	 * @param sym
+	 * @param args
+	 * @return A C++ expression representing the complex term
+	 */
 	public CppExpr mkComplex(List<CppStmt> acc, ConstructorSymbol sym, List<CppExpr> args) {
 		Pair<CppStmt, CppExpr> p = mkComplex(sym, args);
 		acc.add(p.fst());
 		return p.snd();
 	}
 
+	/**
+	 * Generate the C++ representation of a term, given an environment mapping
+	 * Formulog variables to C++ expressions.
+	 * 
+	 * @param t
+	 * @param env
+	 * @return A pair of a C++ statement and a C++ expression representing the term;
+	 *         the statement should be executed before the expression is used.
+	 */
 	public Pair<CppStmt, CppExpr> gen(Term t, Map<Var, CppExpr> env) {
 		List<CppStmt> acc = new ArrayList<>();
 		CppExpr e = gen(acc, t, env);
 		return new Pair<>(CppSeq.mk(acc), e);
 	}
 
+	/**
+	 * Generate the C++ representation of a term, given an environement mapping
+	 * Formulog variables to C++ expressions.
+	 * 
+	 * @param acc
+	 *            An accumulator list of statements; these should be executed before
+	 *            the returned expression is used
+	 * @param sym
+	 * @param args
+	 * @return A C++ expression representing the term
+	 */
 	public CppExpr gen(List<CppStmt> acc, Term t, Map<Var, CppExpr> env) {
 		return new Worker(acc, env).go(t);
 	}
 
+	/**
+	 * Generate the C++ representation of a term, given an environement mapping
+	 * Formulog variables to C++ expressions.
+	 * 
+	 * @param acc
+	 *            An accumulator list of statements; these should be executed before
+	 *            the returned expression is used
+	 * @param sym
+	 * @param args
+	 * @return C++ expressions representing the terms (in order)
+	 */
 	public List<CppExpr> gen(List<CppStmt> acc, List<Term> ts, Map<Var, CppExpr> env) {
 		List<CppExpr> exprs = new ArrayList<>();
 		for (Term t : ts) {
@@ -94,6 +177,16 @@ public class TermCodeGen {
 		return exprs;
 	}
 
+	/**
+	 * Generate the C++ representation of some terms, given an environment mapping
+	 * Formulog variables to C++ expressions.
+	 * 
+	 * @param ts
+	 * @param env
+	 * @return A pair of a C++ statement and a list of C++ expressions representing
+	 *         the terms (in order); the statement should be executed before the
+	 *         expressions are used.
+	 */
 	public Pair<CppStmt, List<CppExpr>> gen(List<Term> ts, Map<Var, CppExpr> env) {
 		List<CppStmt> acc = new ArrayList<>();
 		List<CppExpr> es = gen(acc, ts, env);
