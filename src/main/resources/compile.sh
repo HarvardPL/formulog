@@ -17,11 +17,6 @@ if [ -z "$BOOST_INCLUDE" ] ; then
   exit 1
 fi
 
-if [ -z "$ANTLR_INCLUDE" ] ; then
-  >&2 echo '$ANTLR_INCLUDE variable is empty'
-  exit 1
-fi
-
 if [ -z "$BOOST_LIB" ] ; then
   >&2 echo '$BOOST_LIB variable is empty'
   exit 1
@@ -29,6 +24,6 @@ fi
 
 OUTPUT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd $OUTPUT_DIR
-g++ -fopenmp -I $SOUFFLE_INCLUDE -I $BOOST_INCLUDE -I $ANTLR_INCLUDE -Wall -Wno-trigraphs \
+g++ -fopenmp -I $SOUFFLE_INCLUDE -I $BOOST_INCLUDE -Wall -Wno-trigraphs \
   -std=c++17 -O3 -o $OUTPUT_EXEC main.cpp -L$BOOST_LIB \
-  -lpthread -lboost_filesystem -lboost_system -lboost_program_options -lantlr4-runtime
+  -lpthread -lboost_filesystem -lboost_system -lboost_program_options

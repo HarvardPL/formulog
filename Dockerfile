@@ -2,7 +2,7 @@
 FROM ubuntu:20.04 AS base
 RUN apt-get update && \
   DEBIAN_FRONTEND=noninteractive \
-  apt-get install -y build-essential wget openjdk-11-jre z3 libantlr4-runtime-dev python3
+  apt-get install -y build-essential wget openjdk-11-jre z3 python3
 
 # Boost
 # (adapted from https://github.com/pblischak/boost-docker-test)
@@ -26,7 +26,6 @@ RUN echo "deb https://dl.bintray.com/souffle-lang/deb-unstable focal main" >> /e
 # Environment variables for compile.sh
 ENV SOUFFLE_INCLUDE /usr/include
 ENV BOOST_INCLUDE /usr/local/include
-ENV ANTLR_INCLUDE /usr/include/antlr4-runtime
 ENV BOOST_LIB /usr/local/lib
 RUN useradd -ms /bin/bash formulog
 
