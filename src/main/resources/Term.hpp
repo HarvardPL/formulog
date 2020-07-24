@@ -269,7 +269,7 @@ int Term::compare_natural(Term* t1, Term* t2) {
         auto& y = t2->as_complex();
         size_t n = x.arity;
         for (size_t i = 0; i < n; ++i) {
-          w.emplace(x.val[i], y.val[i]); 
+          w.emplace(x.val[i], y.val[i]);
         }
       }
     }

@@ -66,7 +66,7 @@ void printResults(bool dump) {
 int main(int argc, char** argv) {
   namespace po = boost::program_options;
   po::options_description desc("Allowed options");
-  string cwd = boost::filesystem::current_path().string(); 
+  string cwd = boost::filesystem::current_path().string();
   desc.add_options()
     ("help", "produce help message")
     ("parallelism,j", po::value<size_t>()->default_value(1),
