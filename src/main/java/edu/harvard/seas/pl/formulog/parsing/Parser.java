@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.parsing;
  * #L%
  */
 
-
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -39,6 +38,7 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.TokenStream;
+import org.antlr.v4.runtime.atn.PredictionMode;
 
 import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.BasicProgram;
@@ -113,10 +113,12 @@ public class Parser {
 		}
 	}
 
-	private void readEdbFromFile(ParsingContext pc, RelationSymbol sym, Path inputDir, Set<Term[]> acc) throws ParseException {
+	private void readEdbFromFile(ParsingContext pc, RelationSymbol sym, Path inputDir, Set<Term[]> acc)
+			throws ParseException {
 		Path path = inputDir.resolve(sym.toString() + ".csv");
 		try (FileReader fr = new FileReader(path.toFile())) {
 			FormulogParser parser = getParser(fr, true);
+			parser.getInterpreter().setPredictionMode(PredictionMode.SLL);
 			FactFileParser fpp = new FactFileParser(pc);
 			fpp.loadFacts(parser.tsvFile(), sym.getArity(), acc);
 		} catch (Exception e) {
