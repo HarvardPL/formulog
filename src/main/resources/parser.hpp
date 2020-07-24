@@ -58,7 +58,7 @@ class TermParser {
 
   inline void take_whitespace();
   inline bool take_string(const string& str);
-  inline optional<smatch> take_regex(const string& rgx);
+  inline optional<smatch> take_regex(const regex& rgx);
 
   inline char peek();
   inline bool empty();
@@ -89,10 +89,9 @@ inline bool TermParser::take_string(const string& str) {
   return false;
 }
 
-inline optional<smatch> TermParser::take_regex(const string& rgx) {
-  regex r("^" + rgx);
+inline optional<smatch> TermParser::take_regex(const regex& rgx) {
   smatch m;
-  if (regex_search(buffer.begin() + pos, buffer.end(), m, r)) {
+  if (regex_search(buffer.begin() + pos, buffer.end(), m, rgx)) {
     pos += m.length();
     return m;
   }
@@ -205,7 +204,8 @@ inline term_ptr TermParser::take_constructor() {
     {"fp64_pos_infinity", Term::make<double>(INFINITY)},
     {"fp64_neg_infinity", Term::make<double>(-INFINITY)},
   };
-  auto match = take_regex(R"([a-z][a-zA-Z0-9_]*)");
+  static const regex name_re(R"(^[a-z][a-zA-Z0-9_]*)");
+  auto match = take_regex(name_re);
   assert(match);
   string name = match->str();
   const auto it = literals.find(name);
@@ -234,7 +234,8 @@ inline term_ptr TermParser::take_string() {
   //   impossible to create strings with the characters \", \n, \t, \r, etc.
   assert(buffer[pos] == '"');
   ++pos;
-  auto match = take_regex(R"([^"]*")");
+  static const regex string_re(R"(^[^"]*")");
+  auto match = take_regex(string_re);
   if (!match) {
     throw parsing_error("Could not detect end of string literal");
   }
@@ -255,7 +256,8 @@ inline term_ptr TermParser::take_numeric() {
   }
 
   // Handle hexadecimal case
-  if (auto match = take_regex(R"(0(?:x|X)([0-9a-fA-F]+)([Ll]?)\b)")) {
+  static const regex hex_re(R"(^0(?:x|X)([0-9a-fA-F]+)([Ll]?)\b)");
+  if (auto match = take_regex(hex_re)) {
     if (match->length(2)) {
       auto value = stoll(match->str(1), nullptr, 16);
       return Term::make<int64_t>(sign * value);
@@ -266,7 +268,8 @@ inline term_ptr TermParser::take_numeric() {
   }
 
   // Handle decimal case
-  if (auto match = take_regex(R"(([0-9]+)([Ll]?)\b(?!\.))")) {
+  static const regex dec_re(R"(^([0-9]+)([Ll]?)\b(?!\.))");
+  if (auto match = take_regex(dec_re)) {
     if (match->length(2)) {
       auto value = stoll(match->str(1));
       return Term::make<int64_t>(sign * value);
@@ -277,9 +280,10 @@ inline term_ptr TermParser::take_numeric() {
   }
 
   // Handle floating-point case
-  static constexpr const char* FP_REGEX =
-    R"(((?:[0-9]*\.[0-9]+|[0-9]+)(?:[Ee][+-]?[0-9]+)?)([FfDd]?)\b)";
-  if (auto match = take_regex(FP_REGEX)) {
+  static const regex fp_re(
+    R"(^((?:[0-9]*\.[0-9]+|[0-9]+)(?:[Ee][+-]?[0-9]+)?)([FfDd]?)\b)"
+  );
+  if (auto match = take_regex(fp_re)) {
     string suffix = match->str(2);
     if (suffix == "f" || suffix == "F") {
       auto value = stof(match->str(1));
