@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.codegen;
  * #L%
  */
 
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -48,13 +47,13 @@ public class CompileSh {
 	}
 
 	private class Worker {
-	
+
 		private final PrintWriter out;
-		
+
 		public Worker(PrintWriter out) {
 			this.out = out;
 		}
-		
+
 		void defineVariables() {
 			String execName = Configuration.outputExec;
 			if (execName == null) {
@@ -67,18 +66,15 @@ public class CompileSh {
 			if (Configuration.boostInclude != null) {
 				defineVar("BOOST_INCLUDE", Configuration.boostInclude);
 			}
-			if (Configuration.antlrInclude != null) {
-				defineVar("ANTLR_INCLUDE", Configuration.antlrInclude);
-			}
 			if (Configuration.boostLib != null) {
 				defineVar("BOOST_LIB", "'" + Configuration.boostLib + "'");
 			}
 		}
-		
+
 		void defineVar(String var, String val) {
 			out.println(var + "=" + val);
 		}
-		
+
 	}
 
 }
