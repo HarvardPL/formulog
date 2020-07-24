@@ -24,6 +24,7 @@ fi
 
 OUTPUT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd $OUTPUT_DIR
-g++ -fopenmp -I $SOUFFLE_INCLUDE -I $BOOST_INCLUDE -Wall -Wno-trigraphs \
-  -std=c++17 -O3 -o $OUTPUT_EXEC main.cpp -L$BOOST_LIB \
+g++ -fopenmp -I $SOUFFLE_INCLUDE -I $BOOST_INCLUDE -L$BOOST_LIB \
+  -Wall -Wno-unused-variable -Wno-unused-but-set-variable \
+  -std=c++17 -O3 -march=native -o $OUTPUT_EXEC main.cpp \
   -lpthread -lboost_filesystem -lboost_system -lboost_program_options
