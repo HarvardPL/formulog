@@ -164,7 +164,7 @@ term_ptr is_sat(term_ptr t1) {
 }
 
 term_ptr _make_smt_not(term_ptr t) {
-  return Term::make<Symbol::smt_not>(t); 
+  return Term::make<Symbol::smt_not>(t);
 }
 
 term_ptr is_valid(term_ptr t1) {

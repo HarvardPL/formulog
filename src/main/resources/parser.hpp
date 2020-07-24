@@ -311,7 +311,7 @@ void parse_facts(istream& in, T& rel) {
   // Parse each fact of the stream on a new line
   string line;
   while (getline(in, line)) {
-    stringstream ss(line);
+    istringstream ss(line);
     Tuple<T::arity> value;
     // Tab-separated term format
     string term;

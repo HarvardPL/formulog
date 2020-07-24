@@ -23,7 +23,7 @@ struct Type {
   bool is_var;
   vector<Type> args;
 
-  static functor_type lookup(Symbol sym); 
+  static functor_type lookup(Symbol sym);
 
   static functor_type i32;
   static functor_type i64;
@@ -118,7 +118,7 @@ functor_type Type::i32 = make_prim("_ BitVec", { make_index("32") });
 functor_type Type::i64 = make_prim("_ BitVec", { make_index("64") });
 functor_type Type::fp32 = make_prim("_ FloatingPoint", { make_index("8"), make_index("24") });
 functor_type Type::fp64 = make_prim("_ FloatingPoint", { make_index("11"), make_index("53") });
-functor_type Type::string_ = make_prim("String"); 
+functor_type Type::string_ = make_prim("String");
 
 atomic_size_t Type::cnt;
 
