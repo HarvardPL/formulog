@@ -56,7 +56,6 @@ public class CodeGen {
 					"We do not currently support code gen and optimal index selection (use flag -DminIndex=false).");
 		}
 		copy("Term.hpp");
-		copy("parsing.zip");
 		CodeGenContext ctx = new CodeGenContext(eval);
 		new RelsHpp(ctx).gen(outDir);
 		new FuncsHpp(ctx).gen(outDir);
@@ -64,7 +63,7 @@ public class CodeGen {
 		new SmtHpp(ctx).gen(outDir);
 		new TypeHpp(ctx).gen(outDir);
 		new SymbolHpp(ctx).print(outDir);
-		new FactParserHpp(ctx).print(outDir);
+		new ParserHpp(ctx).print(outDir);
 		new CompileSh().print(outDir);
 	}
 

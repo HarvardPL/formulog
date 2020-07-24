@@ -1,3 +1,4 @@
+#include <iostream>
 #include <vector>
 #include <string>
 
@@ -6,7 +7,7 @@
 #include <boost/program_options.hpp>
 #include <omp.h>
 
-#include "FactParser.hpp"
+#include "parser.hpp"
 #include "funcs.hpp"
 
 using namespace flg;
@@ -40,19 +41,15 @@ template <typename T>
 void ExternalEdbLoader::loadEdbs(const string& dir, const string& file, T& rel) {
   boost::filesystem::path path{dir};
   path /= file;
-  auto s = path.string();
-  boost::asio::post(pool,
-      [s, &rel]() {
-        FactParser<T> parser;
-        parser.parse(s, rel);
-      });
+  string pathstr = path.string();
+  boost::asio::post(pool, [pathstr, &rel]() {
+    ifstream stream(pathstr);
+    parse_facts(stream, rel);
+  });
 }
 
 void loadEdbs(const vector<string>& dirs, size_t nthreads) {
-  {
-    ExternalEdbLoader edb_loader(nthreads);
-    edb_loader.go(dirs);
-  }
+  ExternalEdbLoader(nthreads).go(dirs);
 /* INSERT 1 */
 }
 
