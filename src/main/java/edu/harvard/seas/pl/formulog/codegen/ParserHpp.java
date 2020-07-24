@@ -30,19 +30,19 @@ import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 
-public class FactParserHpp {
+public class ParserHpp {
 
     private final CodeGenContext ctx;
 
-    public FactParserHpp(CodeGenContext ctx) {
+    public ParserHpp(CodeGenContext ctx) {
         this.ctx = ctx;
     }
 
     public void print(File outDir) throws IOException {
-        try (InputStream is = getClass().getClassLoader().getResourceAsStream("FactParser.hpp");
+        try (InputStream is = getClass().getClassLoader().getResourceAsStream("parser.hpp");
                 InputStreamReader isr = new InputStreamReader(is);
                 BufferedReader br = new BufferedReader(isr);
-                PrintWriter out = new PrintWriter(outDir.toPath().resolve("FactParser.hpp").toFile())) {
+                PrintWriter out = new PrintWriter(outDir.toPath().resolve("parser.hpp").toFile())) {
             Worker w = new Worker(out);
             CodeGenUtil.copyOver(br, out, 0);
             w.defineParser();
@@ -66,7 +66,7 @@ public class FactParserHpp {
                 int arity = sym.getArity();
                 String[] args = new String[arity];
                 for (int i = 0; i < arity; i++)
-                    args[i] = "parse(ctxs[" + i + "])";
+                    args[i] = "terms[" + i + "]";
                 out.printf("    case %s:\n", symName);
                 out.printf("      return Term::make<%s>(%s);\n", symName, String.join(", ", args));
             }
