@@ -129,7 +129,7 @@ inline term_ptr TermParser::take_term() {
   } else if (c >= 'a' && c <= 'z') {
     retval = take_constructor();
   } else {
-    throw parsing_error("Unexpected character: " + c);
+    throw parsing_error(string("Unexpected character: ") + c);
   }
 
   // Handle right-associative cons (::) operator
@@ -175,6 +175,11 @@ inline term_ptr TermParser::take_tuple_or_parens() {
 inline term_ptr TermParser::take_list() {
   assert(buffer[pos] == '['); // Sanity check
   ++pos;
+  // Case: empty list (equivalent to nil)
+  if (peek() == ']') {
+    ++pos;
+    return Term::make<Symbol::nil>();
+  }
   vector<term_ptr> terms = take_terms();
   if (peek() != ']') {
     throw parsing_error("Expected character ']' to close list");
