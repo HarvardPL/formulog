@@ -60,6 +60,12 @@ public class RulesMk {
 			if (Configuration.boostLib != null) {
 				defineVar("BOOST_LIB", "'" + Configuration.boostLib + "'");
 			}
+			if (Configuration.tbbInclude != null) {
+				defineVar("TBB_INCLUDE", "'" + Configuration.tbbInclude + "'");
+			}
+			if (Configuration.tbbLib != null) {
+				defineVar("TBB_LIB", "'" + Configuration.tbbLib + "'");
+			}
 		}
 
 		void defineVar(String var, String val) {

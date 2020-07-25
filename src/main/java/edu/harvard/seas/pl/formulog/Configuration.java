@@ -168,6 +168,8 @@ public final class Configuration {
 	public static final String souffleInclude = System.getProperty("souffleInclude");
 	public static final String boostInclude = System.getProperty("boostInclude");
 	public static final String boostLib = System.getProperty("boostLib");
+	public static final String tbbInclude = System.getProperty("tbbInclude");
+	public static final String tbbLib = System.getProperty("tbbLib");
 	public static final String outputExec = System.getProperty("outputExec");
 
 	public static final int memoizeThreshold() {

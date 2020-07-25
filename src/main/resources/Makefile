@@ -26,12 +26,20 @@ ifndef BOOST_LIB
 $(error BOOST_LIB is not set)
 endif
 
+ifndef TBB_INCLUDE
+$(error TBB_INCLUDE is not set)
+endif
+
+ifndef TBB_LIB
+$(error TBB_LIB is not set)
+endif
+
 CXX = g++
 CXXFLAGS = -std=c++17 -O3 -march=native -fopenmp \
 	-Wall -Wno-unused-variable -Wno-unused-but-set-variable \
-	-I$(SOUFFLE_INCLUDE) -I$(BOOST_INCLUDE) $(FLAGS)
-LDFLAGS = -L$(BOOST_LIB)
-LDLIBS = -lpthread -lgomp \
+	-I$(SOUFFLE_INCLUDE) -I$(BOOST_INCLUDE) -I$(TBB_INCLUDE) $(FLAGS)
+LDFLAGS = -L$(BOOST_LIB) -L$(TBB_LIB)
+LDLIBS = -lpthread -lgomp -ltbb \
 	-lboost_filesystem -lboost_system -lboost_program_options
 
 OBJS = main.o parser.o smt.o Symbol.o Term.o

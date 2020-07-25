@@ -3,10 +3,9 @@
 #include <cassert>
 #include <cmath>
 #include <cstdint>
-#include <mutex>
-#include <shared_mutex>
-#include <unordered_map>
 #include <vector>
+
+#include <tbb/concurrent_unordered_map.h>
 
 #include "Symbol.hpp"
 
@@ -18,6 +17,7 @@
 namespace flg {
 
 using namespace std;
+using tbb::concurrent_unordered_map;
 
 struct Term;
 
@@ -106,18 +106,14 @@ inline const term_ptr max_term =
 
 // Concurrency-safe cache for BaseTerm values
 template <typename T, Symbol S> class BaseTermCache {
-  inline static unordered_map<T, term_ptr> cache;
-  inline static shared_mutex m;
+  inline static concurrent_unordered_map<T, term_ptr> cache;
 
   public:
   static term_ptr get(const T& val) {
-    shared_lock<shared_mutex> lock(m);
     auto it = cache.find(val);
     if (it != cache.end()) {
       return it->second;
     }
-    lock.unlock();
-    unique_lock<shared_mutex> lock2(m);
     return cache[val] = new BaseTerm<T>(S, val);
   }
 };

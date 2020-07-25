@@ -200,23 +200,19 @@ struct ComplexTermHash {
 // Concurrency-safe cache for ComplexTerm values
 template <Symbol S> class ComplexTermCache {
   inline static constexpr size_t arity = symbol_arity(S);
-  inline static unordered_map<
+  inline static concurrent_unordered_map<
     array<term_ptr, arity>, term_ptr, ComplexTermHash<arity>> cache;
-  inline static shared_mutex m;
 
   public:
   template <typename... T,
             typename = enable_if_t<sizeof...(T) == arity>>
   static term_ptr get(T... val) {
     array<term_ptr, arity> arr = { val... };
-    shared_lock<shared_mutex> lock(m);
     auto it = cache.find(arr);
     if (it != cache.end()) {
       return it->second;
     }
-    lock.unlock();
     term_ptr* heap_arr = new term_ptr[arity] { val... };
-    unique_lock<shared_mutex> lock2(m);
     return cache[arr] = new ComplexTerm(S, arity, heap_arr);
   }
 };

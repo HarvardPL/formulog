@@ -2,7 +2,7 @@
 FROM ubuntu:20.04 AS base
 RUN apt-get update && \
   DEBIAN_FRONTEND=noninteractive \
-  apt-get install -y build-essential wget openjdk-11-jre z3 python3
+  apt-get install -y build-essential wget openjdk-11-jre libtbb-dev z3 python3
 
 # Boost
 # (adapted from https://github.com/pblischak/boost-docker-test)
@@ -27,6 +27,8 @@ RUN echo "deb https://dl.bintray.com/souffle-lang/deb-unstable focal main" >> /e
 ENV SOUFFLE_INCLUDE /usr/include
 ENV BOOST_INCLUDE /usr/local/include
 ENV BOOST_LIB /usr/local/lib
+ENV TBB_INCLUDE /usr/include
+ENV TBB_LIB /usr/lib/x86_64-linux-gnu
 RUN useradd -ms /bin/bash formulog
 
 
