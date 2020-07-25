@@ -124,7 +124,11 @@ template <typename T, Symbol S> class BaseTermCache {
 
 template<>
 inline term_ptr Term::make<bool>(bool val) {
-  return BaseTermCache<bool, Symbol::boxed_bool>::get(val);
+  typedef BaseTermCache<bool, Symbol::boxed_bool> cache;
+  // Optimization to avoid unnecessary lock contention
+  static const term_ptr true_term = cache::get(true);
+  static const term_ptr false_term = cache::get(false);
+  return val ? true_term : false_term;
 }
 
 template<>
