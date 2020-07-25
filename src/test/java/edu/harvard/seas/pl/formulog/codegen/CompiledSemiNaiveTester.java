@@ -32,6 +32,7 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 
+import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.eval.AbstractTester;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
@@ -63,7 +64,8 @@ public class CompiledSemiNaiveTester extends AbstractTester<SemiNaiveEvaluation>
 		CodeGen cg = new CodeGen(eval, dir);
 		try {
 			cg.go();
-			Process proc = Runtime.getRuntime().exec(new String[] { "make", "-C", path.toString() });
+			Process proc = Runtime.getRuntime().exec(
+					new String[] { "make", "-C", path.toString(), "-j", String.valueOf(Configuration.parallelism) });
 			if (proc.waitFor() != 0) {
 				System.err.println("Could not compile test");
 				printToStdErr(proc.getErrorStream());
