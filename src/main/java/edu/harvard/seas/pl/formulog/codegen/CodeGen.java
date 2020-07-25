@@ -55,6 +55,7 @@ public class CodeGen {
 			throw new UnsupportedOperationException(
 					"We do not currently support code gen and optimal index selection (use flag -DminIndex=false).");
 		}
+		copy("Makefile");
 		copy("Term.hpp");
 		CodeGenContext ctx = new CodeGenContext(eval);
 		new RelsHpp(ctx).gen(outDir);
@@ -64,7 +65,7 @@ public class CodeGen {
 		new TypeHpp(ctx).gen(outDir);
 		new SymbolHpp(ctx).print(outDir);
 		new ParserHpp(ctx).print(outDir);
-		new CompileSh().print(outDir);
+		new RulesMk().print(outDir);
 	}
 
 	private void copy(String name) throws IOException {

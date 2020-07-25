@@ -23,7 +23,7 @@ RUN echo "deb https://dl.bintray.com/souffle-lang/deb-unstable focal main" >> /e
   && apt-get update \
   && apt-get install -y souffle
 
-# Environment variables for compile.sh
+# Environment variables for Makefile
 ENV SOUFFLE_INCLUDE /usr/include
 ENV BOOST_INCLUDE /usr/local/include
 ENV BOOST_LIB /usr/local/lib

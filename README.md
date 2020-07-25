@@ -44,8 +44,8 @@ the commands
 
 ```bash
 java -DcodeGen -DminIndex=false -jar formulog.jar benchmarks/fibonacci.flg
-cd codegen
-./compile.sh && ./flg
+make -C codegen/
+./codegen/flg
 ```
 
 You also can build the latest image for Formulog by running
