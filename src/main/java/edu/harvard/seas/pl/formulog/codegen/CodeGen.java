@@ -64,6 +64,7 @@ public class CodeGen {
 		new SmtHpp(ctx).gen(outDir);
 		new TypeHpp(ctx).gen(outDir);
 		new SymbolHpp(ctx).print(outDir);
+		new SymbolCpp(ctx).print(outDir);
 		new ParserHpp(ctx).print(outDir);
 		new RulesMk().print(outDir);
 	}

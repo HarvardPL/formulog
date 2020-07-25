@@ -29,25 +29,28 @@ import java.io.PrintWriter;
 import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.GlobalSymbolManager.TupleSymbol;
 
-public class SymbolHpp {
+public class SymbolCpp {
 
 	private final CodeGenContext ctx;
 
-	public SymbolHpp(CodeGenContext ctx) {
+	public SymbolCpp(CodeGenContext ctx) {
 		this.ctx = ctx;
 	}
 
 	public void print(File outDir) throws IOException {
-		try (InputStream is = getClass().getClassLoader().getResourceAsStream("Symbol.hpp");
+		try (InputStream is = getClass().getClassLoader().getResourceAsStream("Symbol.cpp");
 				InputStreamReader isr = new InputStreamReader(is);
 				BufferedReader br = new BufferedReader(isr);
-				PrintWriter out = new PrintWriter(outDir.toPath().resolve("Symbol.hpp").toFile())) {
+				PrintWriter out = new PrintWriter(outDir.toPath().resolve("Symbol.cpp").toFile())) {
 			Worker w = new Worker(out);
 			CodeGenUtil.copyOver(br, out, 0);
-			w.declareSymbols();
+			w.defineSerialization();
 			CodeGenUtil.copyOver(br, out, 1);
-			w.defineArity();
+			w.initializeSymbolTable();
+			CodeGenUtil.copyOver(br, out, 2);
+			w.defineTupleLookup();
 			CodeGenUtil.copyOver(br, out, -1);
 			out.flush();
 		}
@@ -62,18 +65,31 @@ public class SymbolHpp {
 			this.out = out;
 		}
 
-		void declareSymbols() {
-			for (ConstructorSymbol sym : symbols) {
-				out.print("  ");
-				out.println(ctx.lookupUnqualifiedRepr(sym) + ",");
-			}
-		}
-
-		void defineArity() {
+		void defineSerialization() {
 			for (ConstructorSymbol sym : symbols) {
 				out.print("    case ");
 				out.print(ctx.lookupRepr(sym));
-				out.println(": return " + sym.getArity() + ";");
+				out.print(": return out << \"");
+				out.print(sym);
+				out.println("\";");
+			}
+		}
+
+		void initializeSymbolTable() {
+			for (ConstructorSymbol sym : symbols) {
+				CppExpr access = CppSubscript.mk(CppVar.mk("symbol_table"), CppConst.mkString(sym.toString()));
+				CppExpr assign = CppBinop.mkAssign(access, CppVar.mk(ctx.lookupRepr(sym)));
+				assign.toStmt().println(out, 1);
+			}
+		}
+
+		void defineTupleLookup() {
+			for (ConstructorSymbol sym : symbols) {
+				if (sym instanceof TupleSymbol) {
+					out.print("    case " + sym.getArity() + ": return ");
+					out.print(ctx.lookupRepr(sym));
+					out.println(";");
+				}
 			}
 		}
 
