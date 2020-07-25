@@ -64,8 +64,8 @@ public class CompiledSemiNaiveTester extends AbstractTester<SemiNaiveEvaluation>
 		CodeGen cg = new CodeGen(eval, dir);
 		try {
 			cg.go();
-			Process proc = Runtime.getRuntime().exec(
-					new String[] { "make", "-C", path.toString(), "-j", String.valueOf(Configuration.parallelism) });
+			Process proc = Runtime.getRuntime().exec(new String[] { "make", "-C", path.toString(), "-j",
+					String.valueOf(Configuration.parallelism), "FLAGS=-O0" });
 			if (proc.waitFor() != 0) {
 				System.err.println("Could not compile test");
 				printToStdErr(proc.getErrorStream());
