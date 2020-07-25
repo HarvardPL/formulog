@@ -19,7 +19,7 @@ namespace smt {
 
 namespace bp = boost::process;
 
-const auto declarations = R"_(
+static const auto declarations = R"_(
 /* INSERT 0 */
 )_";
 
