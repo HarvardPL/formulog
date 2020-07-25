@@ -40,28 +40,28 @@ import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInConstructorSymb
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedConstructorSymbol;
 import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
 
-public class SmtHpp {
+public class SmtCpp {
 
 	private final CodeGenContext ctx;
 
-	public SmtHpp(CodeGenContext ctx) {
+	public SmtCpp(CodeGenContext ctx) {
 		this.ctx = ctx;
 	}
 
 	public void gen(File outDir) throws IOException {
-		try (InputStream is = getClass().getClassLoader().getResourceAsStream("smt.hpp");
+		try (InputStream is = getClass().getClassLoader().getResourceAsStream("smt.cpp");
 				InputStreamReader isr = new InputStreamReader(is);
 				BufferedReader br = new BufferedReader(isr);
-				PrintWriter out = new PrintWriter(outDir.toPath().resolve("smt.hpp").toFile())) {
+				PrintWriter out = new PrintWriter(outDir.toPath().resolve("smt.cpp").toFile())) {
 			Worker pr = new Worker(out);
 			CodeGenUtil.copyOver(br, out, 0);
 			pr.copyDeclarations();
 			CodeGenUtil.copyOver(br, out, 1);
 			pr.genSolverVarCases();
 			CodeGenUtil.copyOver(br, out, 2);
-			pr.genSerializationCases();
-			CodeGenUtil.copyOver(br, out, 3);
 			pr.genNeedsTypeAnnotationCases();
+			CodeGenUtil.copyOver(br, out, 3);
+			pr.genSerializationCases();
 			CodeGenUtil.copyOver(br, out, 4);
 			pr.genSymbolSerializationCases();
 			CodeGenUtil.copyOver(br, out, -1);
