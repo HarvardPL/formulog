@@ -34,12 +34,12 @@ LDFLAGS = -L$(BOOST_LIB)
 LDLIBS = -lpthread -lgomp \
 	-lboost_filesystem -lboost_system -lboost_program_options
 
-OBJS = main.o
+OBJS = main.o Symbol.o
 
 all: $(OUTPUT_EXEC)
 
 $(OUTPUT_EXEC): $(OBJS)
-	$(CXX) $(LDFLAGS) -o $@ $< $(LDLIBS)
+	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 clean:
 	rm -f $(OBJS) $(OUTPUT_EXEC)
