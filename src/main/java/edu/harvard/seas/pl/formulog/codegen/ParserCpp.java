@@ -30,19 +30,19 @@ import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 
-public class ParserHpp {
+public class ParserCpp {
 
     private final CodeGenContext ctx;
 
-    public ParserHpp(CodeGenContext ctx) {
+    public ParserCpp(CodeGenContext ctx) {
         this.ctx = ctx;
     }
 
     public void print(File outDir) throws IOException {
-        try (InputStream is = getClass().getClassLoader().getResourceAsStream("parser.hpp");
+        try (InputStream is = getClass().getClassLoader().getResourceAsStream("parser.cpp");
                 InputStreamReader isr = new InputStreamReader(is);
                 BufferedReader br = new BufferedReader(isr);
-                PrintWriter out = new PrintWriter(outDir.toPath().resolve("parser.hpp").toFile())) {
+                PrintWriter out = new PrintWriter(outDir.toPath().resolve("parser.cpp").toFile())) {
             Worker w = new Worker(out);
             CodeGenUtil.copyOver(br, out, 0);
             w.defineParser();
