@@ -15,8 +15,6 @@ ostream& operator<<(ostream& out, Symbol sym) {
   __builtin_unreachable();
 }
 
-map<string, Symbol> symbol_table;
-
 void initialize_symbols() {
 /* INSERT 1 */
 }

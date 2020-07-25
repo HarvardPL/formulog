@@ -99,8 +99,10 @@ inline int Term::compare(Term* t1, Term* t2) {
 }
 
 // These terms do not exist, but are useful for pointer comparisons
-extern const term_ptr min_term;
-extern const term_ptr max_term;
+inline const term_ptr min_term =
+  reinterpret_cast<term_ptr>(numeric_limits<uintptr_t>::min());
+inline const term_ptr max_term =
+  reinterpret_cast<term_ptr>(numeric_limits<uintptr_t>::max());
 
 // Concurrency-safe cache for BaseTerm values
 template <typename T, Symbol S> class BaseTermCache {
