@@ -23,7 +23,6 @@ package edu.harvard.seas.pl.formulog.codegen;
 import java.io.BufferedReader;
 import java.io.File;
 
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -49,7 +48,7 @@ public class CompiledSemiNaiveTester extends AbstractTester<SemiNaiveEvaluation>
 		this.inputDirs = inputDirs;
 		super.test(file, Collections.emptyList());
 	}
-	
+
 	@Override
 	protected SemiNaiveEvaluation setup(WellTypedProgram prog) throws InvalidProgramException, EvaluationException {
 		return SemiNaiveEvaluation.setup(prog, 2, false);
@@ -64,7 +63,7 @@ public class CompiledSemiNaiveTester extends AbstractTester<SemiNaiveEvaluation>
 		CodeGen cg = new CodeGen(eval, dir);
 		try {
 			cg.go();
-			Process proc = Runtime.getRuntime().exec(path.resolve("compile.sh").toString());
+			Process proc = Runtime.getRuntime().exec(new String[] { "make", "-C", path.toString() });
 			if (proc.waitFor() != 0) {
 				System.err.println("Could not compile test");
 				printToStdErr(proc.getErrorStream());

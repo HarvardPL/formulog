@@ -20,30 +20,21 @@ package edu.harvard.seas.pl.formulog.codegen;
  * #L%
  */
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 
 import edu.harvard.seas.pl.formulog.Configuration;
 
-public class CompileSh {
+public class RulesMk {
 
 	public void print(File outDir) throws IOException {
-		File dest = outDir.toPath().resolve("compile.sh").toFile();
-		try (InputStream is = getClass().getClassLoader().getResourceAsStream("compile.sh");
-				InputStreamReader isr = new InputStreamReader(is);
-				BufferedReader br = new BufferedReader(isr);
-				PrintWriter out = new PrintWriter(dest)) {
+		File dest = outDir.toPath().resolve("rules.mk").toFile();
+		try (PrintWriter out = new PrintWriter(dest)) {
 			Worker w = new Worker(out);
-			CodeGenUtil.copyOver(br, out, 0);
 			w.defineVariables();
-			CodeGenUtil.copyOver(br, out, -1);
 			out.flush();
 		}
-		dest.setExecutable(true);
 	}
 
 	private class Worker {
@@ -61,10 +52,10 @@ public class CompileSh {
 			}
 			defineVar("OUTPUT_EXEC", execName);
 			if (Configuration.souffleInclude != null) {
-				defineVar("SOUFFLE_INCLUDE", Configuration.souffleInclude);
+				defineVar("SOUFFLE_INCLUDE", "'" + Configuration.souffleInclude + "'");
 			}
 			if (Configuration.boostInclude != null) {
-				defineVar("BOOST_INCLUDE", Configuration.boostInclude);
+				defineVar("BOOST_INCLUDE", "'" + Configuration.boostInclude + "'");
 			}
 			if (Configuration.boostLib != null) {
 				defineVar("BOOST_LIB", "'" + Configuration.boostLib + "'");
@@ -72,7 +63,7 @@ public class CompileSh {
 		}
 
 		void defineVar(String var, String val) {
-			out.println(var + "=" + val);
+			out.println(var + " = " + val);
 		}
 
 	}
