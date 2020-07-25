@@ -296,6 +296,4 @@ term_ptr parse_term(const string& term) {
 
 } // namespace parser
 
-using parser::parse_facts;
-
 } // namespace flg
