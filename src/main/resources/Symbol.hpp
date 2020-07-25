@@ -19,7 +19,7 @@ enum class Symbol {
 /* INSERT 0 */
 };
 
-extern map<string, Symbol> symbol_table;
+inline map<string, Symbol> symbol_table;
 
 ostream& operator<<(ostream& out, Symbol sym);
 void initialize_symbols();

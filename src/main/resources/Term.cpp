@@ -185,11 +185,6 @@ int Term::compare_natural(Term* t1, Term* t2) {
   return 0;
 }
 
-const term_ptr min_term =
-  reinterpret_cast<term_ptr>(numeric_limits<uintptr_t>::min());
-const term_ptr max_term =
-  reinterpret_cast<term_ptr>(numeric_limits<uintptr_t>::max());
-
 // Template hash function for arrays of term_ptr's
 template <size_t N>
 struct ComplexTermHash {
