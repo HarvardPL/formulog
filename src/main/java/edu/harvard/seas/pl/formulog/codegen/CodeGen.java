@@ -60,7 +60,8 @@ public class CodeGen {
 		new RelsHpp(ctx).gen(outDir);
 		new FuncsHpp(ctx).gen(outDir);
 		new MainCpp(ctx).gen(outDir);
-		new SmtHpp(ctx).gen(outDir);
+		copy("smt.hpp");
+		new SmtCpp(ctx).gen(outDir);
 		new TypeHpp(ctx).gen(outDir);
 		new SymbolHpp(ctx).print(outDir);
 		new SymbolCpp(ctx).print(outDir);
