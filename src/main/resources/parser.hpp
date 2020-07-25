@@ -13,7 +13,7 @@
 #include <boost/optional.hpp>
 
 #include "Term.hpp"
-#include "rels.hpp"
+#include "Tuple.hpp"
 
 namespace flg {
 

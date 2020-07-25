@@ -57,6 +57,7 @@ public class CodeGen {
 		}
 		copy("Makefile");
 		copy("Term.hpp");
+		copy("Tuple.hpp");
 		CodeGenContext ctx = new CodeGenContext(eval);
 		new RelsHpp(ctx).gen(outDir);
 		new FuncsHpp(ctx).gen(outDir);
