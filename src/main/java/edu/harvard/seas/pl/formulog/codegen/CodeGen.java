@@ -66,6 +66,7 @@ public class CodeGen {
 		new SymbolHpp(ctx).print(outDir);
 		new SymbolCpp(ctx).print(outDir);
 		new ParserHpp(ctx).print(outDir);
+		new TermCpp(ctx).print(outDir);
 		new RulesMk().print(outDir);
 	}
 

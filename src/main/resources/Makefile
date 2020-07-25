@@ -34,7 +34,7 @@ LDFLAGS = -L$(BOOST_LIB)
 LDLIBS = -lpthread -lgomp \
 	-lboost_filesystem -lboost_system -lboost_program_options
 
-OBJS = main.o Symbol.o
+OBJS = main.o Symbol.o Term.o
 
 all: $(OUTPUT_EXEC)
 

@@ -1,18 +1,11 @@
 #pragma once
 
-#include <algorithm>
-#include <array>
 #include <cassert>
 #include <cmath>
 #include <cstdint>
-#include <limits>
-#include <map>
-#include <memory>
 #include <mutex>
 #include <shared_mutex>
-#include <stack>
-#include <type_traits>
-#include <utility>
+#include <unordered_map>
 #include <vector>
 
 #include "Symbol.hpp"
@@ -45,7 +38,7 @@ struct Term {
   inline const ComplexTerm& as_complex() const;
 
   // Compare two terms by their memory address -> {-1, 0, 1}
-  static int compare(Term* t1, Term* t2);
+  inline static int compare(Term* t1, Term* t2);
 
   // Compare two terms by their natural order -> {-1, 0, 1}:
   // - if of the different types, then by order in the Symbol enum
@@ -59,10 +52,10 @@ struct Term {
 
   // Construct a memoized ComplexTerm
   template <Symbol S, typename... T>
-  inline static term_ptr make(T... val);
+  static term_ptr make(T... val);
 
   // Convert a Lisp-style list term into a vector
-  static vector<term_ptr> vectorize_list_term(Term* t);
+  inline static vector<term_ptr> vectorize_list_term(Term* t);
 
   protected:
   Term(Symbol sym_) : sym{sym_} {}
@@ -91,9 +84,7 @@ struct BaseTerm : public Term {
 
   NO_COPY_OR_ASSIGN(BaseTerm);
 
-  inline static int compare(const BaseTerm<T>& t1, const BaseTerm<T>& t2) {
-    return (t1.val > t2.val) - (t1.val < t2.val);
-  }
+  static int compare(const BaseTerm<T>& t1, const BaseTerm<T>& t2);
 
   private:
   BaseTerm(Symbol sym_, T val_) : Term{sym_}, val(val_) {}
@@ -101,187 +92,15 @@ struct BaseTerm : public Term {
   template <typename, Symbol> friend class BaseTermCache;
 };
 
-// Specializations for BaseTerm<float> and BaseTerm<double>
-// This creates a total order where NaNs compare after everything else, avoiding
-// undefined behavior when calling std::sort() in natural order.
+ostream& operator<<(ostream& out, Term& t);
 
-template <>
-int BaseTerm<float>::compare(
-  const BaseTerm<float>& t1, const BaseTerm<float>& t2
-) {
-  if (isunordered(t1.val, t2.val)) {
-    return isnan(t1.val) - isnan(t2.val);
-  }
-  return (t1.val > t2.val) - (t1.val < t2.val);
-}
-
-template <>
-int BaseTerm<double>::compare(
-  const BaseTerm<double>& t1, const BaseTerm<double>& t2
-) {
-  if (isunordered(t1.val, t2.val)) {
-    return isnan(t1.val) - isnan(t2.val);
-  }
-  return (t1.val > t2.val) - (t1.val < t2.val);
-}
-
-ostream& operator<<(ostream& out, Term& t) {
-  switch (t.sym) {
-    case Symbol::boxed_bool: {
-      return out << boolalpha << t.as_base<bool>().val << noboolalpha;
-    }
-    case Symbol::boxed_i32: {
-      return out << t.as_base<int32_t>().val;
-    }
-    case Symbol::boxed_i64: {
-      return out << t.as_base<int64_t>().val << "L";
-    }
-    case Symbol::boxed_fp32: {
-      auto val = t.as_base<float>().val;
-      if (isnan(val)) {
-        out << "fp32_nan";
-      } else if (isinf(val)) {
-        if (val > 0) {
-          out << "fp32_pos_infinity";
-        } else {
-          out << "fp32_neg_infinity";
-        }
-      } else {
-        out << val << "F";
-      }
-      return out;
-    }
-    case Symbol::boxed_fp64: {
-      auto val = t.as_base<double>().val;
-      if (isnan(val)) {
-        out << "fp64_nan";
-      } else if (isinf(val)) {
-        if (val > 0) {
-          out << "fp64_pos_infinity";
-        } else {
-          out << "fp64_neg_infinity";
-        }
-      } else {
-        out << val << "F";
-      }
-      return out;
-    }
-    case Symbol::boxed_string: {
-      return out << "\"" << t.as_base<string>().val << "\"";
-    }
-    default: {
-      auto& x = t.as_complex();
-      out << x.sym;
-      size_t n = x.arity;
-      if (n > 0) {
-        out << "(";
-        for (size_t i = 0; i < n; ++i) {
-          out << *x.val[i];
-          if (i < n - 1) {
-            out << ", ";
-          }
-        }
-        out << ")";
-      }
-      return out;
-    }
-  }
-}
-
-int Term::compare(Term* t1, Term* t2) {
+inline int Term::compare(Term* t1, Term* t2) {
   return less<>()(t2, t1) - less<>()(t1, t2);
 }
 
-int Term::compare_natural(Term* t1, Term* t2) {
-  stack<pair<Term*, Term*>> w;
-  w.emplace(t1, t2);
-  while (!w.empty()) {
-    auto p = w.top();
-    w.pop();
-    t1 = p.first;
-    t2 = p.second;
-    if (t1 == t2) {
-      continue;
-    }
-    if (t1->sym < t2->sym) {
-      return -1;
-    }
-    if (t1->sym > t2->sym) {
-      return 1;
-    }
-    switch (t1->sym) {
-      case Symbol::boxed_bool: {
-        auto& x = t1->as_base<bool>();
-        auto& y = t2->as_base<bool>();
-        int cmp = BaseTerm<bool>::compare(x, y);
-        if (cmp != 0) {
-          return cmp;
-        }
-        break;
-      }
-      case Symbol::boxed_i32: {
-        auto& x = t1->as_base<int32_t>();
-        auto& y = t2->as_base<int32_t>();
-        int cmp = BaseTerm<int32_t>::compare(x, y);
-        if (cmp != 0) {
-          return cmp;
-        }
-        break;
-      }
-      case Symbol::boxed_i64: {
-        auto& x = t1->as_base<int64_t>();
-        auto& y = t2->as_base<int64_t>();
-        int cmp = BaseTerm<int64_t>::compare(x, y);
-        if (cmp != 0) {
-          return cmp;
-        }
-        break;
-      }
-      case Symbol::boxed_fp32: {
-        auto& x = t1->as_base<float>();
-        auto& y = t2->as_base<float>();
-        int cmp = BaseTerm<float>::compare(x, y);
-        if (cmp != 0) {
-          return cmp;
-        }
-        break;
-      }
-      case Symbol::boxed_fp64: {
-        auto& x = t1->as_base<double>();
-        auto& y = t2->as_base<double>();
-        int cmp = BaseTerm<double>::compare(x, y);
-        if (cmp != 0) {
-          return cmp;
-        }
-        break;
-      }
-      case Symbol::boxed_string: {
-        auto& x = t1->as_base<string>();
-        auto& y = t2->as_base<string>();
-        int cmp = BaseTerm<string>::compare(x, y);
-        if (cmp != 0) {
-          return cmp;
-        }
-        break;
-      }
-      default: {
-        auto& x = t1->as_complex();
-        auto& y = t2->as_complex();
-        size_t n = x.arity;
-        for (size_t i = 0; i < n; ++i) {
-          w.emplace(x.val[i], y.val[i]);
-        }
-      }
-    }
-  }
-  return 0;
-}
-
 // These terms do not exist, but are useful for pointer comparisons
-const term_ptr min_term =
-  reinterpret_cast<term_ptr>(numeric_limits<uintptr_t>::min());
-const term_ptr max_term =
-  reinterpret_cast<term_ptr>(numeric_limits<uintptr_t>::max());
+extern const term_ptr min_term;
+extern const term_ptr max_term;
 
 // Concurrency-safe cache for BaseTerm values
 template <typename T, Symbol S> class BaseTermCache {
@@ -302,22 +121,22 @@ template <typename T, Symbol S> class BaseTermCache {
 };
 
 template<>
-term_ptr Term::make<bool>(bool val) {
+inline term_ptr Term::make<bool>(bool val) {
   return BaseTermCache<bool, Symbol::boxed_bool>::get(val);
 }
 
 template<>
-term_ptr Term::make<int32_t>(int32_t val) {
+inline term_ptr Term::make<int32_t>(int32_t val) {
   return BaseTermCache<int32_t, Symbol::boxed_i32>::get(val);
 }
 
 template<>
-term_ptr Term::make<int64_t>(int64_t val) {
+inline term_ptr Term::make<int64_t>(int64_t val) {
   return BaseTermCache<int64_t, Symbol::boxed_i64>::get(val);
 }
 
 template<>
-term_ptr Term::make<float>(float val) {
+inline term_ptr Term::make<float>(float val) {
   typedef BaseTermCache<float, Symbol::boxed_fp32> cache;
   // NaN is a special case due to ill-behaved floating point comparison
   static const term_ptr nan32_term = cache::get(nanf(""));
@@ -328,7 +147,7 @@ term_ptr Term::make<float>(float val) {
 }
 
 template<>
-term_ptr Term::make<double>(double val) {
+inline term_ptr Term::make<double>(double val) {
   typedef BaseTermCache<double, Symbol::boxed_fp64> cache;
   // NaN is a special case due to ill-behaved floating point comparison
   static const term_ptr nan64_term = cache::get(nan(""));
@@ -339,49 +158,8 @@ term_ptr Term::make<double>(double val) {
 }
 
 template<>
-term_ptr Term::make<string>(string val) {
+inline term_ptr Term::make<string>(string val) {
   return BaseTermCache<string, Symbol::boxed_string>::get(val);
-}
-
-// Template hash function for arrays of term_ptr's
-template <size_t N>
-struct ComplexTermHash {
-  size_t operator()(const array<term_ptr, N>& arr) const {
-    size_t retval = 0;
-    for (term_ptr p : arr) {
-      retval ^= (retval << 32) + 0xdeadbeef + reinterpret_cast<size_t>(p);
-    }
-    return retval;
-  }
-};
-
-// Concurrency-safe cache for ComplexTerm values
-template <Symbol S> class ComplexTermCache {
-  static constexpr size_t arity = symbol_arity(S);
-  inline static unordered_map<
-    array<term_ptr, arity>, term_ptr, ComplexTermHash<arity>> cache;
-  inline static shared_mutex m;
-
-  public:
-  template <typename... T,
-            typename = enable_if_t<sizeof...(T) == arity>>
-  inline static term_ptr get(T... val) {
-    array<term_ptr, arity> arr = { val... };
-    shared_lock<shared_mutex> lock(m);
-    auto it = cache.find(arr);
-    if (it != cache.end()) {
-      return it->second;
-    }
-    lock.unlock();
-    term_ptr* heap_arr = new term_ptr[arity] { val... };
-    unique_lock<shared_mutex> lock2(m);
-    return cache[arr] = new ComplexTerm(S, arity, heap_arr);
-  }
-};
-
-template <Symbol S, typename... T>
-term_ptr Term::make(T... val) {
-  return ComplexTermCache<S>::get(val...);
 }
 
 template<typename T>
@@ -394,12 +172,12 @@ const ComplexTerm& Term::as_complex() const {
 }
 
 struct TermCompare {
-  bool operator()(Term* lhs, Term* rhs) const {
+  inline bool operator()(Term* lhs, Term* rhs) const {
     return Term::compare(lhs, rhs) < 0;
   }
 };
 
-vector<term_ptr> Term::vectorize_list_term(Term* t) {
+inline vector<term_ptr> Term::vectorize_list_term(Term* t) {
   vector<term_ptr> v;
   while (t->sym == Symbol::cons) {
     auto& x = t->as_complex();
