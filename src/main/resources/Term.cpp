@@ -187,10 +187,10 @@ int Term::compare_natural(Term* t1, Term* t2) {
 
 // Template hash function for arrays of term_ptr's
 template <size_t N>
-struct ComplexTermHashCompare {
+struct ComplexTermHash {
   typedef array<term_ptr, N> key_type;
 
-  size_t hash(const key_type& arr) const {
+  size_t operator()(const key_type& arr) const {
     size_t retval = 0;
     for (term_ptr p : arr) {
       retval ^=
@@ -198,17 +198,13 @@ struct ComplexTermHashCompare {
     }
     return retval;
   }
-
-  bool equal(const key_type& arr1, const key_type& arr2) const {
-    return arr1 == arr2;
-  }
 };
 
 // Concurrency-safe cache for ComplexTerm values
 template <Symbol S> class ComplexTermCache {
   inline static constexpr size_t arity = symbol_arity(S);
-  typedef concurrent_hash_map<
-    array<term_ptr, arity>, term_ptr, ComplexTermHashCompare<arity>> map_t;
+  typedef concurrent_unordered_map<
+    array<term_ptr, arity>, term_ptr, ComplexTermHash<arity>> map_t;
   inline static map_t cache;
 
   public:
@@ -216,16 +212,18 @@ template <Symbol S> class ComplexTermCache {
             typename = enable_if_t<sizeof...(T) == arity>>
   static term_ptr get(T... val) {
     array<term_ptr, arity> arr = { val... };
-    typename map_t::const_accessor a1;
-    if (cache.find(a1, arr)) {
-      return a1->second;
-    }
-    typename map_t::accessor a2;
-    if (!cache.insert(a2, arr)) {
-      return a2->second;
+    auto it = cache.find(arr);
+    if (it != cache.end()) {
+      return it->second;
     }
     term_ptr* heap_arr = new term_ptr[arity] { val... };
-    return a2->second = new ComplexTerm(S, arity, heap_arr);
+    auto ptr = new ComplexTerm(S, arity, heap_arr);
+    auto result = cache.insert({arr, ptr});
+    if (!result.second) {
+      // Term was not successfully inserted
+      delete ptr;
+    }
+    return result.first->second;
   }
 };
 
