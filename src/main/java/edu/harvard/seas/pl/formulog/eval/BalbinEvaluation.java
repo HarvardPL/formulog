@@ -52,12 +52,12 @@ public class BalbinEvaluation implements Evaluation {
     private final UserPredicate q;
     private final UserPredicate qInputAtom;
     private final Set<UserPredicate> qMagicFacts;
+    private final Set<Term[]> qMagicFactsTerms;
     private final CountingFJP exec;
     private final Set<RelationSymbol> trackedRelations;
     private final WellTypedProgram inputProgram;
     private final Map<RelationSymbol, Set<IndexedRule>> rules;
     private final MagicSetTransformer mst;
-    private final BasicProgram magicProg;
 
     static final boolean sequential = System.getProperty("sequential") != null;
 
@@ -114,6 +114,14 @@ public class BalbinEvaluation implements Evaluation {
                     break;
                 }
             }
+        }
+
+        // Normalize the args of qMagicFacts
+        Set<Term[]> qMagicFactsTerms = null;
+        try {
+            qMagicFactsTerms = applySubstitution(qMagicFacts);
+        } catch (EvaluationException e) {
+            e.printStackTrace();
         }
 
         // Set up dbb and deltaDbb; add to rules
@@ -185,8 +193,21 @@ public class BalbinEvaluation implements Evaluation {
             exec.shutdown();
             throw new InvalidProgramException(exec.getFailureCause());
         }
-        return new BalbinEvaluation(prog, db, deltaDbb, rules, q, qInputAtom, qMagicFacts, exec,
-                getTrackedRelations(magicProg.getSymbolManager()), mst, magicProg);
+        return new BalbinEvaluation(prog, db, deltaDbb, rules, q, qInputAtom, qMagicFacts, qMagicFactsTerms, exec,
+                getTrackedRelations(magicProg.getSymbolManager()), mst);
+    }
+
+    private static Set<Term[]> applySubstitution(Set<UserPredicate> qMagicFacts) throws EvaluationException {
+        Set<Term[]> qMagicFactsTerms = null;
+        for (UserPredicate userPredicate : qMagicFacts) {
+            Term[] args = userPredicate.getArgs();
+            Term[] newArgs = new Term[args.length];
+            for (int i = 0; i < args.length; ++i) {
+                newArgs[i] = args[i].normalize(new SimpleSubstitution());
+            }
+            qMagicFactsTerms.add(newArgs);
+        }
+        return qMagicFactsTerms;
     }
 
     private static SmtLibSolver maybeDoubleCheckSolver(SmtLibSolver inner) {
@@ -269,19 +290,20 @@ public class BalbinEvaluation implements Evaluation {
 
     BalbinEvaluation(WellTypedProgram inputProgram, SortedIndexedFactDb db,
                      IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb, Map<RelationSymbol, Set<IndexedRule>> rules,
-                     UserPredicate q, UserPredicate qInputAtom, Set<UserPredicate> qMagicFacts, CountingFJP exec,
-                     Set<RelationSymbol> trackedRelations, MagicSetTransformer mst, BasicProgram magicProg) {
+                     UserPredicate q, UserPredicate qInputAtom, Set<UserPredicate> qMagicFacts,
+                     Set<Term[]> qMagicFactsTerms, CountingFJP exec, Set<RelationSymbol> trackedRelations,
+                     MagicSetTransformer mst) {
         this.inputProgram = inputProgram;
         this.db = db;
         this.q = q;
         this.qInputAtom = qInputAtom;
         this.qMagicFacts = qMagicFacts;
+        this.qMagicFactsTerms = qMagicFactsTerms;
         this.exec = exec;
         this.trackedRelations = trackedRelations;
         this.deltaDbb = deltaDbb;
         this.rules = rules;
         this.mst = mst;
-        this.magicProg = magicProg;
     }
 
     @Override
@@ -320,7 +342,7 @@ public class BalbinEvaluation implements Evaluation {
         pRules.addAll(getPRules(qInputAtom, rules));
 
         // Create new BalbinEvaluationContext
-        new BalbinEvaluationContext(db, deltaDbb, qInputAtom, qMagicFacts, pRules, rules, exec, trackedRelations, mst, magicProg)
+        new BalbinEvaluationContext(db, deltaDbb, qInputAtom.getSymbol(), qMagicFactsTerms, pRules, rules, exec, trackedRelations, mst)
                 .evaluate();
     }
 

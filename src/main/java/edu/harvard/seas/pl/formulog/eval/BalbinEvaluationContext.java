@@ -47,20 +47,19 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
     SortedIndexedFactDb deltaDb;
     SortedIndexedFactDb nextDeltaDb;
     RelationSymbol qSymbol;
-    Set<Term[]> qMagicFacts;
+    Set<Term[]> qMagicFactsTerms;
     final CountingFJP exec;
     final Set<RelationSymbol> trackedRelations;
     volatile boolean changed;
     MagicSetTransformer mst;
-    BasicProgram magicProg;
 
     static final int taskSize = Configuration.taskSize;
     static final int smtTaskSize = Configuration.smtTaskSize;
 
     public BalbinEvaluationContext(SortedIndexedFactDb db, IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb,
-                                   RelationSymbol qSymbol, Set<Term[]> qMagicFacts, Iterable<IndexedRule> rules,
+                                   RelationSymbol qSymbol, Set<Term[]> qMagicFactsTerms, Iterable<IndexedRule> rules,
                                    Map<RelationSymbol, Set<IndexedRule>> allRules, CountingFJP exec,
-                                   Set<RelationSymbol> trackedRelations, MagicSetTransformer mst, BasicProgram magicProg) {
+                                   Set<RelationSymbol> trackedRelations, MagicSetTransformer mst) {
         super(rules);
         this.rules = rules;
         this.allRules = allRules;
@@ -69,11 +68,10 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
         this.deltaDb = deltaDbb.build();
         this.nextDeltaDb = deltaDbb.build();
         this.qSymbol = qSymbol;
-        this.qMagicFacts = qMagicFacts;
+        this.qMagicFactsTerms = qMagicFactsTerms;
         this.exec = exec;
         this.trackedRelations = trackedRelations;
         this.mst = mst;
-        this.magicProg = magicProg;
 
         addQMagicFactsToDb(db);
         addQMagicFactsToDb(deltaDb);
@@ -84,7 +82,7 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
 
             @Override
             public void doTask() throws EvaluationException {
-                for (Term[] tup : qMagicFacts) {
+                for (Term[] tup : qMagicFactsTerms) {
                     try {
                         db.add(qSymbol, Terms.normalize(tup, new SimpleSubstitution()));
                     } catch (EvaluationException e) {
@@ -328,10 +326,10 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
                                         pRules.addAll(BalbinEvaluation.getPRules(newLInputAtom, allRules));
 
                                         // Evaluate a new context
-                                        Set<Term[]> newQMagicFacts = null;
-                                        newQMagicFacts.add(newLInputAtom.getArgs());
-                                        new BalbinEvaluationContext(db, deltaDbb, newLInputAtom.getSymbol(), newQMagicFacts, pRules, allRules,
-                                                exec, trackedRelations, mst, magicProg).evaluate();
+                                        Set<Term[]> newQMagicFactsTerms = null;
+                                        newQMagicFactsTerms.add(newLInputAtom.getArgs());
+                                        new BalbinEvaluationContext(db, deltaDbb, newLInputAtom.getSymbol(), newQMagicFactsTerms, pRules, allRules,
+                                                exec, trackedRelations, mst).evaluate();
                                     } else {
                                         if (!tups.hasNext()) {
                                             pos++;
@@ -450,10 +448,10 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
                                     pRules.addAll(BalbinEvaluation.getPRules(newLInputAtom, allRules));
 
                                     // Evaluate a new context
-                                    Set<Term[]> newQMagicFacts = null;
-                                    newQMagicFacts.add(newLInputAtom.getArgs());
-                                    new BalbinEvaluationContext(db, deltaDbb, newLInputAtom.getSymbol(), newQMagicFacts, pRules, allRules,
-                                            exec, trackedRelations, mst, magicProg).evaluate();
+                                    Set<Term[]> newQMagicFactsTerms = null;
+                                    newQMagicFactsTerms.add(newLInputAtom.getArgs());
+                                    new BalbinEvaluationContext(db, deltaDbb, newLInputAtom.getSymbol(), newQMagicFactsTerms, pRules, allRules,
+                                            exec, trackedRelations, mst).evaluate();
                                 } else {
                                     if (lookup(rule, pos, s).iterator().hasNext()) {
                                         return;
