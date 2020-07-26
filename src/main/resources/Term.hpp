@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <vector>
 
-#include <tbb/concurrent_hash_map.h>
+#include <tbb/concurrent_unordered_map.h>
 
 #include "Symbol.hpp"
 
@@ -17,7 +17,7 @@
 namespace flg {
 
 using namespace std;
-using tbb::concurrent_hash_map;
+using tbb::concurrent_unordered_map;
 
 struct Term;
 
@@ -106,20 +106,22 @@ inline const term_ptr max_term =
 
 // Concurrency-safe cache for BaseTerm values
 template <typename T, Symbol S> class BaseTermCache {
-  typedef concurrent_hash_map<T, term_ptr> map_t;
+  typedef concurrent_unordered_map<T, term_ptr> map_t;
   inline static map_t cache;
 
   public:
   static term_ptr get(const T& val) {
-    typename map_t::const_accessor a1;
-    if (cache.find(a1, val)) {
-      return a1->second;
+    auto it = cache.find(val);
+    if (it != cache.end()) {
+      return it->second;
     }
-    typename map_t::accessor a2;
-    if (!cache.insert(a2, val)) {
-      return a2->second;
+    auto ptr = new BaseTerm<T>(S, val);
+    auto result = cache.insert({val, ptr});
+    if (!result.second) {
+      // Term was not successfully inserted
+      delete ptr;
     }
-    return a2->second = new BaseTerm<T>(S, val);
+    return result.first->second;
   }
 };
 
