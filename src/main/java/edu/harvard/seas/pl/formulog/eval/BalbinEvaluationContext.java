@@ -43,6 +43,7 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
     Iterable<IndexedRule> rules;
     Map<RelationSymbol, Set<IndexedRule>> allRules;
     final SortedIndexedFactDb db;
+    IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb;
     SortedIndexedFactDb deltaDb;
     SortedIndexedFactDb nextDeltaDb;
     UserPredicate qInputAtom;
@@ -64,6 +65,7 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
         this.rules = rules;
         this.allRules = allRules;
         this.db = db;
+        this.deltaDbb = deltaDbb;
         this.deltaDb = deltaDbb.build();
         this.nextDeltaDb = deltaDbb.build();
         this.qInputAtom = qInputAtom;
@@ -330,7 +332,6 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
                                         pRules.addAll(BalbinEvaluation.getPRules(newLInputAtom, allRules));
 
                                         // Evaluate a new context
-                                        IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb = null;
                                         Set<UserPredicate> newQMagicFacts = null;
                                         newQMagicFacts.add(newLInputAtom);
                                         new BalbinEvaluationContext(db, deltaDbb, newLInputAtom, newQMagicFacts, pRules, allRules,
@@ -452,10 +453,9 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
                                     pRules.addAll(BalbinEvaluation.getPRules(newLInputAtom, allRules));
 
                                     // Evaluate a new context
-                                    IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb = null;
                                     Set<UserPredicate> newQMagicFacts = null;
                                     newQMagicFacts.add(newLInputAtom);
-                                    new BalbinEvaluationContext(db, deltaDbb, qInputAtom, newQMagicFacts, pRules, allRules,
+                                    new BalbinEvaluationContext(db, deltaDbb, newLInputAtom, newQMagicFacts, pRules, allRules,
                                             exec, trackedRelations, mst, magicProg).evaluate();
                                 } else {
                                     if (lookup(rule, pos, s).iterator().hasNext()) {
