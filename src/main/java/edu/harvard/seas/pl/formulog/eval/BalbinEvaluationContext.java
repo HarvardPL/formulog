@@ -43,7 +43,6 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
     Iterable<IndexedRule> rules;
     Map<RelationSymbol, Set<IndexedRule>> allRules;
     final SortedIndexedFactDb db;
-//    IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb;
     SortedIndexedFactDb deltaDb;
     SortedIndexedFactDb nextDeltaDb;
     UserPredicate qInputAtom;
@@ -65,7 +64,6 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
         this.rules = rules;
         this.allRules = allRules;
         this.db = db;
-//        this.deltaDbb = deltaDbb;
         this.deltaDb = deltaDbb.build();
         this.nextDeltaDb = deltaDbb.build();
         this.qInputAtom = qInputAtom;
@@ -104,8 +102,6 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
 
     @Override
     public void evaluate() throws EvaluationException {
-        this.deltaDb.clear();
-        this.nextDeltaDb.clear();
         int round = 0;
         StopWatch watch = recordRoundStart(round);
 
@@ -337,7 +333,7 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
                                         IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb = null;
                                         Set<UserPredicate> newQMagicFacts = null;
                                         newQMagicFacts.add(newLInputAtom);
-                                        new BalbinEvaluationContext(db, deltaDbb, qInputAtom, newQMagicFacts, pRules, allRules,
+                                        new BalbinEvaluationContext(db, deltaDbb, newLInputAtom, newQMagicFacts, pRules, allRules,
                                                 exec, trackedRelations, mst, magicProg).evaluate();
                                     } else {
                                         if (!tups.hasNext()) {
@@ -497,13 +493,7 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
     UserPredicate applySubstitutionToNegLiteralWithNegArc(RelationSymbol sym, Term[] args, Substitution s) {
         Term[] newArgs = new Term[args.length];
         for (int i = 0; i < args.length; ++i) {
-            newArgs[i] = args[i].applySubstitution(s);
-        }
-        if (!db.hasFact(sym, newArgs) && nextDeltaDb.add(sym, newArgs)) {
-            changed = true;
-            if (trackedRelations.contains(sym)) {
-                System.err.println("[TRACKED] " + UserPredicate.make(sym, newArgs, false));
-            }
+            newArgs[i] = args[i].normalize(s);
         }
         return UserPredicate.make(sym, newArgs, true);
     }
