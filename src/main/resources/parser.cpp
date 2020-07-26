@@ -192,10 +192,22 @@ inline term_ptr TermParser::take_constructor() {
     {"fp64_pos_infinity", Term::make<double>(INFINITY)},
     {"fp64_neg_infinity", Term::make<double>(-INFINITY)},
   };
-  static const regex name_re(R"(^[a-z][a-zA-Z0-9_]*)");
-  auto match = take_regex(name_re);
-  assert(match);
-  string name = match->str();
+  string name;
+  while (pos < buffer.size()) {
+    char c = buffer[pos];
+    if (
+      ('a' <= c && c <= 'z') ||
+      ('A' <= c && c <= 'Z') ||
+      ('0' <= c && c <= '9') ||
+      (c == '_')
+    ) {
+      name += c;
+      ++pos;
+    }
+    else {
+      break;
+    }
+  }
   const auto it = literals.find(name);
   if (it != literals.end()) {
     return it->second;
@@ -222,11 +234,14 @@ inline term_ptr TermParser::take_string() {
   //   impossible to create strings with the characters \", \n, \t, \r, etc.
   assert(buffer[pos] == '"');
   ++pos;
-  static const regex string_re(R"(^[^"]*")");
-  auto match = take_regex(string_re);
-  if (!match) {
+  string contents;
+  while (pos < buffer.size() && buffer[pos] != '"') {
+    contents += buffer[pos++];
+  }
+  if (pos == buffer.size()) {
     throw parsing_error("Could not detect end of string literal");
   }
+  ++pos;
   string contents = match->str();
   contents.pop_back(); // Remove trailing " character
   return Term::make<string>(contents);
