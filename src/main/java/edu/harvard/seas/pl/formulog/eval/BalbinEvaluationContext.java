@@ -490,7 +490,7 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
         }
     }
 
-    UserPredicate applySubstitutionToNegLiteralWithNegArc(RelationSymbol sym, Term[] args, Substitution s) {
+    UserPredicate applySubstitutionToNegLiteralWithNegArc(RelationSymbol sym, Term[] args, Substitution s) throws EvaluationException {
         Term[] newArgs = new Term[args.length];
         for (int i = 0; i < args.length; ++i) {
             newArgs[i] = args[i].normalize(s);
