@@ -25,25 +25,19 @@ import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 
-public class InterpretedSemiNaiveTester extends AbstractTester<SemiNaiveEvaluation> {
-	
-	private final SemiNaiveEvaluation.EvalType evalType;
-	
-	public InterpretedSemiNaiveTester(SemiNaiveEvaluation.EvalType evalType) {
-		this.evalType = evalType;
+public class BalbinTester extends AbstractTester<BalbinEvaluation> {
+
+	@Override
+	protected BalbinEvaluation setup(WellTypedProgram prog) throws InvalidProgramException {
+		return BalbinEvaluation.setup(prog, 2);
 	}
 
 	@Override
-	protected SemiNaiveEvaluation setup(WellTypedProgram prog) throws InvalidProgramException {
-		return SemiNaiveEvaluation.setup(prog, 2, evalType);
-	}
-
-	@Override
-	protected boolean evaluate(SemiNaiveEvaluation eval) throws EvaluationException {
+	protected boolean evaluate(BalbinEvaluation eval) throws EvaluationException {
 		eval.run();
 		EvaluationResult res = eval.getResult();
 		RelationSymbol sym;
-		if (eval.hasQuery()) {
+		if (eval.hasQuery()) { // For now, BalbinEvaluation tests will always have a query
 			sym = eval.getQuery().getSymbol();
 		} else {
 			sym = (RelationSymbol) eval.getInputProgram().getSymbolManager().lookupSymbol("ok");
