@@ -28,16 +28,7 @@ public class BalbinEvaluationTest extends AbstractEvaluationTest {
 		super(new BalbinTester());
 	}
 
-//	@Test
-//	public void test001() { test("semi-inflationary/test001_ok.flg"); }
-
-//	@Test
-//	public void test002() { test("semi-inflationary/test002_ok.flg"); }
-
-//	@Test
-//	public void test003() { test("semi-inflationary/test003_ok.flg"); }
-
-//	@Test
-//	public void test004() { test("semi-inflationary/test004_ok.flg"); }
+	@Test
+	public void test001() { test("balbin/test001_ok.flg"); }
 
 }

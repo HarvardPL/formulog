@@ -42,9 +42,11 @@ public class InterpretedSemiNaiveTester extends AbstractTester<SemiNaiveEvaluati
 	protected boolean evaluate(SemiNaiveEvaluation eval) throws EvaluationException {
 		eval.run();
 		EvaluationResult res = eval.getResult();
+//		System.out.println(res);
 		RelationSymbol sym;
 		if (eval.hasQuery()) {
 			sym = eval.getQuery().getSymbol();
+//			System.out.println("has query: " + sym);
 		} else {
 			sym = (RelationSymbol) eval.getInputProgram().getSymbolManager().lookupSymbol("ok");
 		}

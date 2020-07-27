@@ -27,6 +27,8 @@ import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 
 public class BalbinTester extends AbstractTester<BalbinEvaluation> {
 
+	public BalbinTester() { }
+
 	@Override
 	protected BalbinEvaluation setup(WellTypedProgram prog) throws InvalidProgramException {
 		return BalbinEvaluation.setup(prog, 2);
