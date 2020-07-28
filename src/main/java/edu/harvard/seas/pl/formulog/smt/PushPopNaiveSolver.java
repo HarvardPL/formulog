@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog;
+package edu.harvard.seas.pl.formulog.smt;
 
 /*-
  * #%L
@@ -23,9 +23,9 @@ package edu.harvard.seas.pl.formulog;
 import java.util.Collection;
 
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
+import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.smt.AbstractSmtLibSolver;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
 public class PushPopNaiveSolver extends AbstractSmtLibSolver {

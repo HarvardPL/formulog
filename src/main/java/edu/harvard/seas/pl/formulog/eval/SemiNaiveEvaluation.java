@@ -31,7 +31,6 @@ import java.util.Set;
 import java.util.function.BiFunction;
 
 import edu.harvard.seas.pl.formulog.Configuration;
-import edu.harvard.seas.pl.formulog.PushPopNaiveSolver;
 import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
@@ -53,6 +52,7 @@ import edu.harvard.seas.pl.formulog.smt.CheckSatAssumingSolver;
 import edu.harvard.seas.pl.formulog.smt.DoubleCheckingSolver;
 import edu.harvard.seas.pl.formulog.smt.NotThreadSafeQueueSmtManager;
 import edu.harvard.seas.pl.formulog.smt.PerThreadSmtManager;
+import edu.harvard.seas.pl.formulog.smt.PushPopNaiveSolver;
 import edu.harvard.seas.pl.formulog.smt.PushPopSolver;
 import edu.harvard.seas.pl.formulog.smt.QueueSmtManager;
 import edu.harvard.seas.pl.formulog.smt.SingleShotSolver;
