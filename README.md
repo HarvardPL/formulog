@@ -108,7 +108,7 @@ You can set the following system properties (using the `-D` flag, as in
 * `smtSolver=SOLVER` - set the external SMT solver to use; current options are
   `z3` (default), `cvc4`, and `yices`
 * `smtDeclareAdts` - whether to declare Formulog algebraic data types to the
-  SMT solver upon initialization; set this to false for solvers that do not
+  SMT solver upon initialization; set this to false for logics that do not
   support ADTs (defaults to true)
 
 For example, to run the test program above with SMT debug information and 3
