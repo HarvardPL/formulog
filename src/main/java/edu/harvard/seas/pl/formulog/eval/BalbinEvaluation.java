@@ -85,9 +85,6 @@ public class BalbinEvaluation implements Evaluation {
         // Get query q
         UserPredicate q = null;
         for (BasicRule basicRule : newQRules) {
-            ComplexLiteral head = basicRule.getHead();
-            UserPredicate headPred = getUserPredicate(head);
-            RelationSymbol headPredSymbol = headPred.getSymbol();
             for (int i = 0; i < basicRule.getBodySize(); i++) {
                 ComplexLiteral l = basicRule.getBody(i);
                 q = getUserPredicate(l);
@@ -98,20 +95,16 @@ public class BalbinEvaluation implements Evaluation {
         }
         assert q != null : "Balbin evaluation: Could not get query";
 
-        // Get set of magic facts for q
+        // Get the magic fact for q, which has body `true = true`
         UserPredicate qInputAtom = MagicSetTransformer.createInputAtom(q);
-        RelationSymbol qSymbol = qInputAtom.getSymbol();
-        Set<BasicRule> qRules = magicProg.getRules(qSymbol);
         Set<UserPredicate> qMagicFacts = null;
         UnificationPredicate magicFactMatch = UnificationPredicate.make(BoolTerm.mkTrue(), BoolTerm.mkTrue(), false);
-        for (BasicRule basicRule : qRules) {
-            // Determine whether basicRule is a magic fact
-            UnificationPredicate unificationPredicate = null;
-            for (int i = 0; i < basicRule.getBodySize(); i++) {
-                unificationPredicate = getUnificationPredicate(basicRule.getBody(i));
-                if (unificationPredicate.equals(magicFactMatch)) {
-                    qMagicFacts.add(getUserPredicate(basicRule.getHead()));
-                    break;
+        for (RelationSymbol relationSymbol : magicProg.getRuleSymbols()) {
+            if (relationSymbol instanceof MagicSetTransformer.InputSymbol) {
+                for (BasicRule basicRule : magicProg.getRules(relationSymbol)) {
+                    if (basicRule.getBody(0).equals(magicFactMatch)) {
+                        qMagicFacts.add(basicRule.getHead());
+                    }
                 }
             }
         }
