@@ -49,7 +49,7 @@ public class BalbinEvaluation implements Evaluation {
 
     private final SortedIndexedFactDb db;
     private final IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb;
-    private final UserPredicate q;
+//    private final UserPredicate q;
     private final UserPredicate qInputAtom;
     private final Set<UserPredicate> qMagicFacts;
     private final Set<Term[]> qMagicFactsTerms;
@@ -66,7 +66,7 @@ public class BalbinEvaluation implements Evaluation {
             throws InvalidProgramException {
         FunctionDefValidation.validate(prog);
         MagicSetTransformer mst = new MagicSetTransformer(prog);
-        BasicProgram magicProg = mst.transform(Configuration.useDemandTransformation,
+        BasicProgram magicProg = mst.transform(false,
                 MagicSetTransformer.RestoreStratification.FALSE_AND_NO_MAGIC_RULES_FOR_NEG_LITERALS);
         Set<RelationSymbol> allRelations = new HashSet<>(magicProg.getFactSymbols());
         allRelations.addAll(magicProg.getRuleSymbols());
@@ -83,34 +83,37 @@ public class BalbinEvaluation implements Evaluation {
         Set<BasicRule> newQRules = magicProg.getRules(newQSymbol);
 
         // Get query q
-        UserPredicate q = null;
-        for (BasicRule basicRule : newQRules) {
-            for (int i = 0; i < basicRule.getBodySize(); i++) {
-                ComplexLiteral l = basicRule.getBody(i);
-                q = getUserPredicate(l);
-                if (q != null) {
-                    break;
-                }
-            }
-        }
-        assert q != null : "Balbin evaluation: Could not get query";
+//        UserPredicate q = null;
+//        for (BasicRule basicRule : newQRules) {
+//            for (int i = 0; i < basicRule.getBodySize(); i++) {
+//                ComplexLiteral l = basicRule.getBody(i);
+//                q = getUserPredicate(l);
+//                if (q != null) {
+//                    break;
+//                }
+//            }
+//        }
+//        assert q != null : "Balbin evaluation: Could not get query";
 
         // Get the magic fact for q, which has body `true = true`
-        UserPredicate qInputAtom = MagicSetTransformer.createInputAtom(q);
-        Set<UserPredicate> qMagicFacts = null;
+//        UserPredicate qInputAtom = MagicSetTransformer.createInputAtom(q);
+        Set<UserPredicate> qMagicFacts = new HashSet<>();
         UnificationPredicate magicFactMatch = UnificationPredicate.make(BoolTerm.mkTrue(), BoolTerm.mkTrue(), false);
+        UserPredicate qInputAtom = null;
         for (RelationSymbol relationSymbol : magicProg.getRuleSymbols()) {
             if (relationSymbol instanceof MagicSetTransformer.InputSymbol) {
                 for (BasicRule basicRule : magicProg.getRules(relationSymbol)) {
                     if (basicRule.getBody(0).equals(magicFactMatch)) {
-                        qMagicFacts.add(basicRule.getHead());
+                        qInputAtom = basicRule.getHead();
+                        qMagicFacts.add(qInputAtom);
                     }
                 }
             }
         }
+        assert qMagicFacts != null : "Balbin evaluation: Could not get initial magic fact";
 
         // Normalize the args of qMagicFacts
-        Set<Term[]> qMagicFactsTerms = null;
+        Set<Term[]> qMagicFactsTerms = new HashSet<>();
         try {
             qMagicFactsTerms = applySubstitution(qMagicFacts);
         } catch (EvaluationException e) {
@@ -186,12 +189,12 @@ public class BalbinEvaluation implements Evaluation {
             exec.shutdown();
             throw new InvalidProgramException(exec.getFailureCause());
         }
-        return new BalbinEvaluation(prog, db, deltaDbb, rules, q, qInputAtom, qMagicFacts, qMagicFactsTerms, exec,
+        return new BalbinEvaluation(prog, db, deltaDbb, rules, qInputAtom, qMagicFacts, qMagicFactsTerms, exec,
                 getTrackedRelations(magicProg.getSymbolManager()), mst);
     }
 
     private static Set<Term[]> applySubstitution(Set<UserPredicate> qMagicFacts) throws EvaluationException {
-        Set<Term[]> qMagicFactsTerms = null;
+        Set<Term[]> qMagicFactsTerms = new HashSet<>();
         for (UserPredicate userPredicate : qMagicFacts) {
             Term[] args = userPredicate.getArgs();
             Term[] newArgs = new Term[args.length];
@@ -283,12 +286,11 @@ public class BalbinEvaluation implements Evaluation {
 
     BalbinEvaluation(WellTypedProgram inputProgram, SortedIndexedFactDb db,
                      IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb, Map<RelationSymbol, Set<IndexedRule>> rules,
-                     UserPredicate q, UserPredicate qInputAtom, Set<UserPredicate> qMagicFacts,
-                     Set<Term[]> qMagicFactsTerms, CountingFJP exec, Set<RelationSymbol> trackedRelations,
-                     MagicSetTransformer mst) {
+                     UserPredicate qInputAtom, Set<UserPredicate> qMagicFacts, Set<Term[]> qMagicFactsTerms,
+                     CountingFJP exec, Set<RelationSymbol> trackedRelations, MagicSetTransformer mst) {
         this.inputProgram = inputProgram;
         this.db = db;
-        this.q = q;
+//        this.q = q;
         this.qInputAtom = qInputAtom;
         this.qMagicFacts = qMagicFacts;
         this.qMagicFactsTerms = qMagicFactsTerms;
@@ -335,7 +337,8 @@ public class BalbinEvaluation implements Evaluation {
         pRules.addAll(getPRules(qInputAtom, rules));
 
         // Create new BalbinEvaluationContext
-        new BalbinEvaluationContext(db, deltaDbb, qInputAtom.getSymbol(), qMagicFactsTerms, pRules, rules, exec, trackedRelations, mst)
+        MagicSetTransformer.InputSymbol qInputSymbol = (MagicSetTransformer.InputSymbol) qInputAtom.getSymbol();
+        new BalbinEvaluationContext(db, deltaDbb, qInputSymbol.getBaseSymbol(), qMagicFactsTerms, pRules, rules, exec, trackedRelations, mst)
                 .evaluate();
     }
 
@@ -404,7 +407,7 @@ public class BalbinEvaluation implements Evaluation {
 
     // - prules (with IndexedRule)
     public static Set<IndexedRule> getPRules(UserPredicate q, Map<RelationSymbol, Set<IndexedRule>> rules) {
-        Set<IndexedRule> db = null;
+        Set<IndexedRule> db = new HashSet<>();
         for (Map.Entry<RelationSymbol, Set<IndexedRule>> entry : rules.entrySet()) {
             db.addAll(entry.getValue());
         }
@@ -559,10 +562,10 @@ public class BalbinEvaluation implements Evaluation {
 
             @Override
             public Iterable<UserPredicate> getQueryAnswer() {
-                if (q == null) {
+                if (qInputAtom == null) {
                     return null;
                 }
-                RelationSymbol querySym = q.getSymbol();
+                RelationSymbol querySym = qInputAtom.getSymbol();
                 return new Iterable<UserPredicate>() {
 
                     @Override
@@ -605,12 +608,12 @@ public class BalbinEvaluation implements Evaluation {
 
     @Override
     public boolean hasQuery() {
-        return q != null;
+        return qInputAtom != null;
     }
 
     @Override
     public UserPredicate getQuery() {
-        return q;
+        return qInputAtom;
     }
 
     public SortedIndexedFactDb getDb() {

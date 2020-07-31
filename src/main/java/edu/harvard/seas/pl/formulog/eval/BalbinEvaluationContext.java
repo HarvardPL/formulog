@@ -326,7 +326,7 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
                                         pRules.addAll(BalbinEvaluation.getPRules(newLInputAtom, allRules));
 
                                         // Evaluate a new context
-                                        Set<Term[]> newQMagicFactsTerms = null;
+                                        Set<Term[]> newQMagicFactsTerms = new HashSet<>();
                                         newQMagicFactsTerms.add(newLInputAtom.getArgs());
                                         new BalbinEvaluationContext(db, deltaDbb, newLInputAtom.getSymbol(), newQMagicFactsTerms, pRules, allRules,
                                                 exec, trackedRelations, mst).evaluate();
@@ -448,7 +448,7 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
                                     pRules.addAll(BalbinEvaluation.getPRules(newLInputAtom, allRules));
 
                                     // Evaluate a new context
-                                    Set<Term[]> newQMagicFactsTerms = null;
+                                    Set<Term[]> newQMagicFactsTerms = new HashSet<>();
                                     newQMagicFactsTerms.add(newLInputAtom.getArgs());
                                     new BalbinEvaluationContext(db, deltaDbb, newLInputAtom.getSymbol(), newQMagicFactsTerms, pRules, allRules,
                                             exec, trackedRelations, mst).evaluate();
