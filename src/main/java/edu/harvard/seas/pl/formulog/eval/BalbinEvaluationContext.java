@@ -24,6 +24,7 @@ import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.*;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDbBuilder;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
+import edu.harvard.seas.pl.formulog.magic.AdornedSymbol;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.unification.OverwriteSubstitution;
@@ -75,6 +76,7 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
         this.mst = mst;
         this.maxPathLength = maxPathLength;
 
+        assert qSymbol instanceof AdornedSymbol : "Balbin evaluation context: Query must be adorned";
         addQMagicFactsToDb(db);
         addQMagicFactsToDb(deltaDb);
     }

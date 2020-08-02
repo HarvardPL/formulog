@@ -27,7 +27,7 @@ import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.WrappedRelationSymbol;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 
-class AdornedSymbol implements WrappedRelationSymbol<RelationSymbol> {
+public class AdornedSymbol implements WrappedRelationSymbol<RelationSymbol> {
 
 	private final RelationSymbol baseSymbol;
 	private final boolean[] adornment;

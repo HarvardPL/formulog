@@ -86,7 +86,6 @@ public class BalbinEvaluation implements Evaluation {
         int maxPathLength = magicProg.getRuleSymbols().size() + magicProg.getFactSymbols().size() + 1;
 
         // Get the magic fact for q, which has body `true = true`
-//        UserPredicate qInputAtom = MagicSetTransformer.createInputAtom(q);
         Set<UserPredicate> qMagicFacts = new HashSet<>();
         UnificationPredicate magicFactMatch = UnificationPredicate.make(BoolTerm.mkTrue(), BoolTerm.mkTrue(), false);
         UserPredicate qInputAtom = null;
