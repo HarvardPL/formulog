@@ -361,11 +361,13 @@ public class BalbinEvaluation implements Evaluation {
             for (int i = 0; i < indexedRule.getBodySize(); i++) {
                 // Not going to work for ML functions that refer to predicates
                 SimplePredicate bodyIPred = getSimplePredicate(indexedRule.getBody(i));
-                RelationSymbol bodyIPredSymbol = bodyIPred.getSymbol();
-                g.addVertex(bodyIPredSymbol);
+                if (bodyIPred != null) {
+                    RelationSymbol bodyIPredSymbol = bodyIPred.getSymbol();
+                    g.addVertex(bodyIPredSymbol);
 
-                EdgeType edgeType = bodyIPred.isNegated() ? EdgeType.NEGATIVE : EdgeType.POSITIVE;
-                g.addEdge(bodyIPredSymbol, headPredSymbol, new DependencyTypeWrapper(edgeType));
+                    EdgeType edgeType = bodyIPred.isNegated() ? EdgeType.NEGATIVE : EdgeType.POSITIVE;
+                    g.addEdge(bodyIPredSymbol, headPredSymbol, new DependencyTypeWrapper(edgeType));
+                }
             }
         }
 
@@ -385,7 +387,6 @@ public class BalbinEvaluation implements Evaluation {
             for (GraphPath graphPath : allPaths) {
                 List<DependencyTypeWrapper> edgeList = graphPath.getEdgeList();
                 for (DependencyTypeWrapper e : edgeList) {
-//                    DependencyTypeWrapper eDependencyTypeWrapper = (DependencyTypeWrapper) e;
                     EdgeType edgeType = e.get();
                     if (edgeType == EdgeType.NEGATIVE) {
                         foundNegativeEdge = true;
