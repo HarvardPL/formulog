@@ -50,7 +50,7 @@ public class BalbinEvaluation implements Evaluation {
 
     private final SortedIndexedFactDb db;
     private final IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb;
-//    private final UserPredicate q;
+    private final UserPredicate q;
     private final UserPredicate qInputAtom;
     private final Set<UserPredicate> qMagicFacts;
     private final Set<Term[]> qMagicFactsTerms;
@@ -78,10 +78,8 @@ public class BalbinEvaluation implements Evaluation {
 
         Map<RelationSymbol, Set<IndexedRule>> rules = new HashMap<>();
 
-        // Get query newQ created for magicProg by MagicSetTransformer
-        UserPredicate newQ = magicProg.getQuery();
-        RelationSymbol newQSymbol = newQ.getSymbol();
-        Set<BasicRule> newQRules = magicProg.getRules(newQSymbol);
+        // Get query q created for magicProg by MagicSetTransformer
+        UserPredicate q = magicProg.getQuery();
 
         // Get the magic fact for q, which has body `true = true`
 //        UserPredicate qInputAtom = MagicSetTransformer.createInputAtom(q);
@@ -177,7 +175,7 @@ public class BalbinEvaluation implements Evaluation {
             exec.shutdown();
             throw new InvalidProgramException(exec.getFailureCause());
         }
-        return new BalbinEvaluation(prog, db, deltaDbb, rules, qInputAtom, qMagicFacts, qMagicFactsTerms, exec,
+        return new BalbinEvaluation(prog, db, deltaDbb, rules, q, qInputAtom, qMagicFacts, qMagicFactsTerms, exec,
                 getTrackedRelations(magicProg.getSymbolManager()), mst);
     }
 
@@ -274,11 +272,12 @@ public class BalbinEvaluation implements Evaluation {
 
     BalbinEvaluation(WellTypedProgram inputProgram, SortedIndexedFactDb db,
                      IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb, Map<RelationSymbol, Set<IndexedRule>> rules,
-                     UserPredicate qInputAtom, Set<UserPredicate> qMagicFacts, Set<Term[]> qMagicFactsTerms,
-                     CountingFJP exec, Set<RelationSymbol> trackedRelations, MagicSetTransformer mst) {
+                     UserPredicate q, UserPredicate qInputAtom, Set<UserPredicate> qMagicFacts,
+                     Set<Term[]> qMagicFactsTerms, CountingFJP exec, Set<RelationSymbol> trackedRelations,
+                     MagicSetTransformer mst) {
         this.inputProgram = inputProgram;
         this.db = db;
-//        this.q = q;
+        this.q = q;
         this.qInputAtom = qInputAtom;
         this.qMagicFacts = qMagicFacts;
         this.qMagicFactsTerms = qMagicFactsTerms;
@@ -551,10 +550,10 @@ public class BalbinEvaluation implements Evaluation {
 
             @Override
             public Iterable<UserPredicate> getQueryAnswer() {
-                if (qInputAtom == null) {
+                if (q == null) {
                     return null;
                 }
-                RelationSymbol querySym = qInputAtom.getSymbol();
+                RelationSymbol querySym = q.getSymbol();
                 return new Iterable<UserPredicate>() {
 
                     @Override
@@ -597,12 +596,12 @@ public class BalbinEvaluation implements Evaluation {
 
     @Override
     public boolean hasQuery() {
-        return qInputAtom != null;
+        return q != null;
     }
 
     @Override
     public UserPredicate getQuery() {
-        return qInputAtom;
+        return q;
     }
 
     public SortedIndexedFactDb getDb() {
