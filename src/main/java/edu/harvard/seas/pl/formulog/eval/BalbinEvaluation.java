@@ -31,6 +31,7 @@ import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
+import edu.harvard.seas.pl.formulog.unification.EmptySubstitution;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.util.*;
 import edu.harvard.seas.pl.formulog.validating.FunctionDefValidation;
@@ -81,19 +82,6 @@ public class BalbinEvaluation implements Evaluation {
         UserPredicate newQ = magicProg.getQuery();
         RelationSymbol newQSymbol = newQ.getSymbol();
         Set<BasicRule> newQRules = magicProg.getRules(newQSymbol);
-
-        // Get query q
-//        UserPredicate q = null;
-//        for (BasicRule basicRule : newQRules) {
-//            for (int i = 0; i < basicRule.getBodySize(); i++) {
-//                ComplexLiteral l = basicRule.getBody(i);
-//                q = getUserPredicate(l);
-//                if (q != null) {
-//                    break;
-//                }
-//            }
-//        }
-//        assert q != null : "Balbin evaluation: Could not get query";
 
         // Get the magic fact for q, which has body `true = true`
 //        UserPredicate qInputAtom = MagicSetTransformer.createInputAtom(q);
@@ -199,7 +187,7 @@ public class BalbinEvaluation implements Evaluation {
             Term[] args = userPredicate.getArgs();
             Term[] newArgs = new Term[args.length];
             for (int i = 0; i < args.length; ++i) {
-                newArgs[i] = args[i].normalize(new SimpleSubstitution());
+                newArgs[i] = args[i].normalize(EmptySubstitution.INSTANCE);
             }
             qMagicFactsTerms.add(newArgs);
         }
@@ -430,6 +418,7 @@ public class BalbinEvaluation implements Evaluation {
             // Construct dependency graph g for Case 2
             g.addVertex(headPredSymbol);
             for (int i = 0; i < indexedRule.getBodySize(); i++) {
+                // Not going to work for ML functions that refer to predicates
                 SimplePredicate bodyIPred = getSimplePredicate(indexedRule.getBody(i));
                 RelationSymbol bodyIPredSymbol = bodyIPred.getSymbol();
                 g.addVertex(bodyIPredSymbol);
