@@ -52,6 +52,7 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
     final Set<RelationSymbol> trackedRelations;
     volatile boolean changed;
     MagicSetTransformer mst;
+    int maxPathLength;
 
     static final int taskSize = Configuration.taskSize;
     static final int smtTaskSize = Configuration.smtTaskSize;
@@ -59,7 +60,7 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
     public BalbinEvaluationContext(SortedIndexedFactDb db, IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb,
                                    RelationSymbol qSymbol, Set<Term[]> qMagicFactsTerms, Iterable<IndexedRule> rules,
                                    Map<RelationSymbol, Set<IndexedRule>> allRules, CountingFJP exec,
-                                   Set<RelationSymbol> trackedRelations, MagicSetTransformer mst) {
+                                   Set<RelationSymbol> trackedRelations, MagicSetTransformer mst, int maxPathLength) {
         super(rules);
         this.rules = rules;
         this.allRules = allRules;
@@ -72,6 +73,7 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
         this.exec = exec;
         this.trackedRelations = trackedRelations;
         this.mst = mst;
+        this.maxPathLength = maxPathLength;
 
         addQMagicFactsToDb(db);
         addQMagicFactsToDb(deltaDb);
@@ -323,13 +325,13 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
                                         RelationSymbol newLInputSymbol = newLInputAtom.getSymbol();
                                         // Get prules
                                         List<IndexedRule> pRules = new ArrayList<>();
-                                        pRules.addAll(BalbinEvaluation.getPRules(newLInputAtom, allRules));
+                                        pRules.addAll(BalbinEvaluation.getPRules(newLInputAtom, allRules, maxPathLength));
 
                                         // Evaluate a new context
                                         Set<Term[]> newQMagicFactsTerms = new HashSet<>();
                                         newQMagicFactsTerms.add(newLInputAtom.getArgs());
                                         new BalbinEvaluationContext(db, deltaDbb, newLInputAtom.getSymbol(), newQMagicFactsTerms, pRules, allRules,
-                                                exec, trackedRelations, mst).evaluate();
+                                                exec, trackedRelations, mst, maxPathLength).evaluate();
                                     } else {
                                         if (!tups.hasNext()) {
                                             pos++;
@@ -445,13 +447,13 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
                                     RelationSymbol newLInputSymbol = newLInputAtom.getSymbol();
                                     // Get prules
                                     List<IndexedRule> pRules = new ArrayList<>();
-                                    pRules.addAll(BalbinEvaluation.getPRules(newLInputAtom, allRules));
+                                    pRules.addAll(BalbinEvaluation.getPRules(newLInputAtom, allRules, maxPathLength));
 
                                     // Evaluate a new context
                                     Set<Term[]> newQMagicFactsTerms = new HashSet<>();
                                     newQMagicFactsTerms.add(newLInputAtom.getArgs());
                                     new BalbinEvaluationContext(db, deltaDbb, newLInputAtom.getSymbol(), newQMagicFactsTerms, pRules, allRules,
-                                            exec, trackedRelations, mst).evaluate();
+                                            exec, trackedRelations, mst, maxPathLength).evaluate();
                                 } else {
                                     if (lookup(rule, pos, s).iterator().hasNext()) {
                                         return;

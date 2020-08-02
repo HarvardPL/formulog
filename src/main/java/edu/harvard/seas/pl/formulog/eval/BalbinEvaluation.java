@@ -59,6 +59,7 @@ public class BalbinEvaluation implements Evaluation {
     private final WellTypedProgram inputProgram;
     private final Map<RelationSymbol, Set<IndexedRule>> rules;
     private final MagicSetTransformer mst;
+    private final int maxPathLength;
 
     static final boolean sequential = System.getProperty("sequential") != null;
 
@@ -80,6 +81,9 @@ public class BalbinEvaluation implements Evaluation {
 
         // Get query q created for magicProg by MagicSetTransformer
         UserPredicate q = magicProg.getQuery();
+
+        // For getPRules()
+        int maxPathLength = magicProg.getRuleSymbols().size() + magicProg.getFactSymbols().size() + 1;
 
         // Get the magic fact for q, which has body `true = true`
 //        UserPredicate qInputAtom = MagicSetTransformer.createInputAtom(q);
@@ -176,7 +180,7 @@ public class BalbinEvaluation implements Evaluation {
             throw new InvalidProgramException(exec.getFailureCause());
         }
         return new BalbinEvaluation(prog, db, deltaDbb, rules, q, qInputAtom, qMagicFacts, qMagicFactsTerms, exec,
-                getTrackedRelations(magicProg.getSymbolManager()), mst);
+                getTrackedRelations(magicProg.getSymbolManager()), mst, maxPathLength);
     }
 
     private static Set<Term[]> applySubstitution(Set<UserPredicate> qMagicFacts) throws EvaluationException {
@@ -274,7 +278,7 @@ public class BalbinEvaluation implements Evaluation {
                      IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb, Map<RelationSymbol, Set<IndexedRule>> rules,
                      UserPredicate q, UserPredicate qInputAtom, Set<UserPredicate> qMagicFacts,
                      Set<Term[]> qMagicFactsTerms, CountingFJP exec, Set<RelationSymbol> trackedRelations,
-                     MagicSetTransformer mst) {
+                     MagicSetTransformer mst, int maxPathLength) {
         this.inputProgram = inputProgram;
         this.db = db;
         this.q = q;
@@ -286,6 +290,7 @@ public class BalbinEvaluation implements Evaluation {
         this.deltaDbb = deltaDbb;
         this.rules = rules;
         this.mst = mst;
+        this.maxPathLength = maxPathLength;
     }
 
     @Override
@@ -321,79 +326,16 @@ public class BalbinEvaluation implements Evaluation {
     // Balbin, Algorithm 7 - eval
     private void eval() throws EvaluationException {
         List<IndexedRule> pRules = new ArrayList<>();
-        pRules.addAll(getPRules(qInputAtom, rules));
+        pRules.addAll(getPRules(qInputAtom, rules, maxPathLength));
 
         // Create new BalbinEvaluationContext
         MagicSetTransformer.InputSymbol qInputSymbol = (MagicSetTransformer.InputSymbol) qInputAtom.getSymbol();
-        new BalbinEvaluationContext(db, deltaDbb, qInputSymbol.getBaseSymbol(), qMagicFactsTerms, pRules, rules, exec, trackedRelations, mst)
+        new BalbinEvaluationContext(db, deltaDbb, qInputSymbol.getBaseSymbol(), qMagicFactsTerms, pRules, rules, exec, trackedRelations, mst, maxPathLength)
                 .evaluate();
     }
 
-    // Balbin, Definition 29 - prules (with BasicRule)
-//    public static Set<BasicRule> getPRules(UserPredicate q, Set<BasicRule> db) {
-//        RelationSymbol qSymbol = q.getSymbol();
-//        Set<BasicRule> prules = new HashSet<>();
-//
-//        // DefaultDirectedGraph; assuming no recursive negation
-//        Graph<RelationSymbol, EdgeType> g = new DefaultDirectedGraph<>(EdgeType.class);
-//        g.addVertex(qSymbol);
-//
-//        for (BasicRule basicRule : db) {
-//            // Case 1 - q = pred(p0), where p0 is the head of a rule
-//            ComplexLiteral head = basicRule.getHead();
-//            UserPredicate headPred = getUserPredicate(head);
-//            RelationSymbol headPredSymbol = headPred.getSymbol();
-//            if (qSymbol.equals(headPredSymbol)) {
-//                prules.add(basicRule);
-//            }
-//
-//            // Construct dependency graph g for Case 2
-//            g.addVertex(headPredSymbol);
-//            for (int i = 0; i < basicRule.getBodySize(); i++) {
-//                UserPredicate bodyIPred = getUserPredicate(basicRule.getBody(i));
-//                RelationSymbol bodyIPredSymbol = bodyIPred.getSymbol();
-//                g.addVertex(bodyIPredSymbol);
-//
-//                EdgeType edgeType = bodyIPred.isNegated() ? EdgeType.NEGATIVE : EdgeType.POSITIVE;
-//                g.addEdge(bodyIPredSymbol, headPredSymbol, edgeType);
-//            }
-//        }
-//
-//        // Case 2 - q <--(+) pred(p0), where p0 is the head of a rule
-//        AllDirectedPaths<RelationSymbol, EdgeType> allPathsG = new AllDirectedPaths<RelationSymbol, EdgeType>(g);
-//        List<GraphPath<RelationSymbol, EdgeType>> allPaths = null;
-//        for (BasicRule basicRule : db) {
-//            ComplexLiteral head = basicRule.getHead();
-//            UserPredicate headPred = getUserPredicate(head);
-//            RelationSymbol headPredSymbol = headPred.getSymbol();
-//
-//            // Get all paths from headPredSymbol to qSymbol
-//            // Todo: Check that getAllPaths is working as expected (i.e. for cycles)
-//            allPaths = allPathsG.getAllPaths(headPredSymbol, qSymbol, false, null);
-//
-//            // Only add basicRule to prules if every edge in every path of allPaths is positive
-//            boolean foundNegativeEdge = false;
-//            for (GraphPath graphPath : allPaths) {
-//                List<EdgeType> edgeList = graphPath.getEdgeList();
-//                for (EdgeType edgeType : edgeList) {
-//                    if (edgeType == EdgeType.NEGATIVE) {
-//                        foundNegativeEdge = true;
-//                        break;
-//                    }
-//                }
-//                if (foundNegativeEdge) {
-//                    break;
-//                }
-//            }
-//            if (!foundNegativeEdge) {
-//                prules.add(basicRule);
-//            }
-//        }
-//        return prules;
-//    }
-
     // - prules (with IndexedRule)
-    public static Set<IndexedRule> getPRules(UserPredicate q, Map<RelationSymbol, Set<IndexedRule>> rules) {
+    public static Set<IndexedRule> getPRules(UserPredicate q, Map<RelationSymbol, Set<IndexedRule>> rules, int maxPathLength) {
         Set<IndexedRule> db = new HashSet<>();
         for (Map.Entry<RelationSymbol, Set<IndexedRule>> entry : rules.entrySet()) {
             db.addAll(entry.getValue());
@@ -403,7 +345,7 @@ public class BalbinEvaluation implements Evaluation {
         Set<IndexedRule> prules = new HashSet<>();
 
         // DefaultDirectedGraph; assuming no recursive negation
-        Graph<RelationSymbol, EdgeType> g = new DefaultDirectedGraph<>(EdgeType.class);
+        Graph<RelationSymbol, DependencyTypeWrapper> g = new DefaultDirectedGraph<>(DependencyTypeWrapper.class);
         g.addVertex(qSymbol);
 
         for (IndexedRule indexedRule : db) {
@@ -423,26 +365,28 @@ public class BalbinEvaluation implements Evaluation {
                 g.addVertex(bodyIPredSymbol);
 
                 EdgeType edgeType = bodyIPred.isNegated() ? EdgeType.NEGATIVE : EdgeType.POSITIVE;
-                g.addEdge(bodyIPredSymbol, headPredSymbol, edgeType);
+                g.addEdge(bodyIPredSymbol, headPredSymbol, new DependencyTypeWrapper(edgeType));
             }
         }
 
         // Case 2 - q <--(+) pred(p0), where p0 is the head of a rule
-        AllDirectedPaths<RelationSymbol, EdgeType> allPathsG = new AllDirectedPaths<RelationSymbol, EdgeType>(g);
-        List<GraphPath<RelationSymbol, EdgeType>> allPaths = null;
+        AllDirectedPaths<RelationSymbol, DependencyTypeWrapper> allPathsG = new AllDirectedPaths<>(g);
+        List<GraphPath<RelationSymbol, DependencyTypeWrapper>> allPaths = null;
         for (IndexedRule indexedRule : db) {
             SimplePredicate headPred = indexedRule.getHead();
             RelationSymbol headPredSymbol = headPred.getSymbol();
 
             // Get all paths from headPredSymbol to qSymbol
             // Todo: Check that getAllPaths is working as expected (i.e. for cycles)
-            allPaths = allPathsG.getAllPaths(headPredSymbol, qSymbol, false, null);
+            allPaths = allPathsG.getAllPaths(headPredSymbol, qSymbol, false, maxPathLength);
 
             // Only add basicRule to prules if every edge in every path of allPaths is positive
             boolean foundNegativeEdge = false;
             for (GraphPath graphPath : allPaths) {
-                List<EdgeType> edgeList = graphPath.getEdgeList();
-                for (EdgeType edgeType : edgeList) {
+                List<DependencyTypeWrapper> edgeList = graphPath.getEdgeList();
+                for (DependencyTypeWrapper e : edgeList) {
+//                    DependencyTypeWrapper eDependencyTypeWrapper = (DependencyTypeWrapper) e;
+                    EdgeType edgeType = e.get();
                     if (edgeType == EdgeType.NEGATIVE) {
                         foundNegativeEdge = true;
                         break;
@@ -462,6 +406,21 @@ public class BalbinEvaluation implements Evaluation {
     private static enum EdgeType {
         NEGATIVE,
         POSITIVE
+    }
+
+    // Needed because edges need to have unique objects as labels...
+    private static class DependencyTypeWrapper {
+
+        private final EdgeType e;
+
+        public DependencyTypeWrapper(EdgeType e) {
+            this.e = e;
+        }
+
+        public EdgeType get() {
+            return e;
+        }
+
     }
 
     // Balbin, Definition 1 - pred(p) (for UserPredicate)
