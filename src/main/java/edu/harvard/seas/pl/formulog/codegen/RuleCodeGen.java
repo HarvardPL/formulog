@@ -30,7 +30,7 @@ import java.util.function.Function;
 
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.codegen.LiteralCodeGen.Result;
-import edu.harvard.seas.pl.formulog.codegen.LiteralCodeGen.ResultType;
+import edu.harvard.seas.pl.formulog.codegen.LiteralCodeGen.CodeShape;
 import edu.harvard.seas.pl.formulog.eval.IndexedRule;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
@@ -194,7 +194,7 @@ public class RuleCodeGen {
 					k = res.getK();
 				}
 				// The literal code gen tells us whether it has generated a parallelized loop
-				doingParallelEval |= res.getResType() == ResultType.PARALLEL_LOOP;
+				doingParallelEval |= res.getCodeShape() == CodeShape.PARALLEL_LOOP;
 				env = res.getNewEnv();
 				final Function<CppStmt, CppStmt> k2 = continuation;
 				continuation = s -> k2.apply(k.apply(s));

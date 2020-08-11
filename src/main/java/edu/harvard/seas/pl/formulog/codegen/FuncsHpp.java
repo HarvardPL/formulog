@@ -39,7 +39,7 @@ import edu.harvard.seas.pl.formulog.ast.BindingType;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.codegen.LiteralCodeGen.Result;
-import edu.harvard.seas.pl.formulog.codegen.LiteralCodeGen.ResultType;
+import edu.harvard.seas.pl.formulog.codegen.LiteralCodeGen.CodeShape;
 import edu.harvard.seas.pl.formulog.functions.DummyFunctionDef;
 import edu.harvard.seas.pl.formulog.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.functions.PredicateFunctionDef;
@@ -435,7 +435,7 @@ public class FuncsHpp {
 			SimplePredicate pred = SimplePredicate.make(predSym, args, bindingsForIndex, false);
 			int index = def.getIndex();
 			Result res = lcg.gen(pred, index, false, env);
-			if (res.getResType() == ResultType.LOOKUP) {
+			if (res.getCodeShape() == CodeShape.LOOKUP) {
 				genLookup(res).println(out, 1);
 			} else {
 				pred = SimplePredicate.make(predSym, args, funcSym.getBindings(), false);
@@ -452,13 +452,13 @@ public class FuncsHpp {
 		}
 
 		private CppStmt genLookup(Result res) {
-			assert res.getResType() == ResultType.LOOKUP;
+			assert res.getCodeShape() == CodeShape.LOOKUP;
 			CppStmt ifTrue = res.getK().apply(CppReturn.mk(CppFuncCall.mk("Term::make<bool>", CppConst.mkTrue())));
 			return CppSeq.mk(ifTrue, CppReturn.mk(CppFuncCall.mk("Term::make<bool>", CppConst.mkFalse())));
 		}
 
 		private CppStmt genLoop(SimplePredicate pred, Result res) {
-			assert res.getResType() == ResultType.LOOP;
+			assert res.getCodeShape() == CodeShape.LOOP;
 			List<CppStmt> acc = new ArrayList<>();
 			String listId = ctx.newId("list");
 			CppExpr nil = tcg.mkComplex(acc, BuiltInConstructorSymbol.NIL);
