@@ -286,13 +286,6 @@ public class PatternMatchTree {
 				PatternMatchingComputation k = new PatternMatchingComputation(newSchema, p.snd());
 				l2.add(new Pair<>(edge, k));
 			}
-//			System.out.println(l2);
-//			try {
-//				System.in.read();
-//			} catch (IOException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
 			return l2;
 		}
 
