@@ -1,11 +1,10 @@
+fun foo(Xs: i32 list) : i32 =
+  match Xs with
+  | [1, 2] => 0
+  | [X, 3] => X
+  | [1, 3] => 2
+  end
+
 output ok
 
-ok :-
-  is_sat(`bv_to_int(42) #= int_const(42)`),
-  is_sat(`int_to_bv(int_const(42)) #= 42`),
-  some(M) =
-    get_model([
-      `int_gt(#x[int], int_const(0))`,
-      `int_lt(#x[int], int_const(2))`,
-      `int_to_bv(#x[int]) #= #y[i32]`], none),
-  query_model(#y[i32], M) = some(1).
+ok :- foo([1, 3]) = 1.

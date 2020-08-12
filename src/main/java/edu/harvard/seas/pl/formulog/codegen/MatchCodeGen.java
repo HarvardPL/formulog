@@ -21,11 +21,12 @@ package edu.harvard.seas.pl.formulog.codegen;
  */
 
 import java.io.PrintWriter;
-
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Expr;
@@ -50,8 +51,11 @@ import edu.harvard.seas.pl.formulog.codegen.PatternMatchTree.VarEdge;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.Pair;
-import edu.harvard.seas.pl.formulog.util.Util;
 
+/**
+ * This class is used to generate C++ code corresponding to a ML-style match
+ * expression.
+ */
 public class MatchCodeGen {
 
 	private final CodeGenContext ctx;
@@ -62,29 +66,65 @@ public class MatchCodeGen {
 		tcg = new TermCodeGen(ctx);
 	}
 
+	/**
+	 * Generate C++ code computing a match expression.
+	 * 
+	 * @param match
+	 *            The match expression
+	 * @param env
+	 *            The current variable environment
+	 * @return A pair of the C++ code for the match expression and an expression
+	 *         representing the result of the match
+	 */
 	public Pair<CppStmt, CppExpr> gen(MatchExpr match, Map<Var, CppExpr> env) {
 		return new Worker(new HashMap<>(env)).go(match);
 	}
 
+	/**
+	 * This class actually does all the work of generating the C++ code. It has a
+	 * few "globals" that are available throughout the pattern-matching computation:
+	 * a variable {@link #res res} to store the result of the pattern matching
+	 * computation, and a label {@link #end end} to jump to after the pattern
+	 * matching computation is complete.
+	 * 
+	 * It essentially generates a bunch of nested if statements; the innermost code
+	 * jumps to {@link #end end} after assigning to {@link #res res}. Backtracking
+	 * is implemented by falling through to the next case.
+	 */
 	private class Worker {
 
 		private final Map<Var, CppExpr> env;
 		private final List<CppStmt> acc = new ArrayList<>();
+		/**
+		 * A variable to store the result of the pattern match in.
+		 */
 		private final String res = ctx.newId("res");
+		/**
+		 * A label to jump to once the match expression has been computed.
+		 */
 		private final String end = ctx.newId("end");
 
 		public Worker(Map<Var, CppExpr> env) {
 			this.env = env;
 		}
 
+		/**
+		 * Generate the C++ code for a match expression.
+		 * 
+		 * @param match
+		 *            The match expression
+		 * @return A pair of the code and an expression holding the result of the match
+		 *         computation
+		 */
 		public Pair<CppStmt, CppExpr> go(MatchExpr match) {
 			acc.add(CppCtor.mk("term_ptr", res));
 			Pair<CppStmt, CppExpr> p = tcg.gen(match.getMatchee(), env);
 			acc.add(p.fst());
 			CppExpr scrutinee = p.snd();
-			List<Pair<Term, Term>> clauses = renameVariables(match.getClauses());
+			List<Pair<Term, Term>> clauses = preprocess(match.getClauses());
 			PatternMatchTree tree = new PatternMatchTree(clauses);
 			acc.add(processTree(scrutinee, tree));
+			/* Generate some code that dies if no pattern has been matched. */
 			acc.add(new CppStmt() {
 
 				@Override
@@ -104,16 +144,31 @@ public class MatchCodeGen {
 			return new Pair<>(CppSeq.mk(acc), CppVar.mk(res));
 		}
 
-		private List<Pair<Term, Term>> renameVariables(List<MatchClause> clauses) {
+		/**
+		 * Preprocess a list of match clauses, i.e., (pattern => expression) pairs.
+		 * 
+		 * @param clauses
+		 *            The match clauses
+		 * @return The updated (pattern => expression) pairs
+		 */
+		private List<Pair<Term, Term>> preprocess(List<MatchClause> clauses) {
 			List<Pair<Term, Term>> l = new ArrayList<>();
 			Substitution s = new SimpleSubstitution();
-			Map<Integer, Var> vars = new HashMap<>();
+			Set<Var> vars = new HashSet<>();
+			/*
+			 * Rename variables in patterns, to ensure that patterns do not share variables
+			 * with each other.
+			 */
 			for (MatchClause clause : clauses) {
-				Term pat = renameVars(clause.getLhs(), new int[] { 0 }, vars, s);
+				Pair<Term, Set<Var>> p = renameVars(clause.getLhs(), s);
 				Term rhs = clause.getRhs().applySubstitution(s);
-				l.add(new Pair<>(pat, rhs));
+				l.add(new Pair<>(p.fst(), rhs));
+				vars.addAll(p.snd());
 			}
-			for (Var x : vars.values()) {
+			/*
+			 * Declare all the variables used in patterns.
+			 */
+			for (Var x : vars) {
 				String id = ctx.newId("y");
 				CppVar cppX = CppVar.mk(id);
 				env.put(x, cppX);
@@ -122,12 +177,26 @@ public class MatchCodeGen {
 			return l;
 		}
 
-		private Term renameVars(Term t, int[] idx, Map<Integer, Var> vars, Substitution s) {
-			return t.accept(new TermVisitor<Void, Term>() {
+		/**
+		 * Rename the variables in a term.
+		 * 
+		 * @param t
+		 *            The term
+		 * @param s
+		 *            A substitution to update with bindings from old variables to new
+		 *            ones
+		 * @return A pair of the new term and the set of variables in that term
+		 */
+		private Pair<Term, Set<Var>> renameVars(Term t, Substitution s) {
+			Set<Var> seen = new HashSet<>();
+			Set<Var> newVars = new HashSet<>();
+			Term newT = t.accept(new TermVisitor<Void, Term>() {
 
 				@Override
 				public Term visit(Var old, Void in) {
-					Var renamed = Util.lookupOrCreate(vars, idx[0]++, () -> Var.fresh());
+					assert seen.add(old) : "Cannot handle patterns with multiple uses of the same variable: " + t;
+					Var renamed = Var.fresh();
+					newVars.add(renamed);
 					s.put(old, renamed);
 					return renamed;
 				}
@@ -153,12 +222,27 @@ public class MatchCodeGen {
 				}
 
 			}, null);
+			return new Pair<>(newT, newVars);
 		}
 
+		/**
+		 * Given a C++ expression representing the scrutinee of a match expression and a
+		 * pattern-matching tree encoding the match expression's logic, generate C++
+		 * code implementing the match expression.
+		 * 
+		 * @param scrutinee
+		 *            The scrutinee
+		 * @param tree
+		 *            The pattern-matching tree
+		 * @return The generated C++ code
+		 */
 		private CppStmt processTree(CppExpr scrutinee, PatternMatchTree tree) {
 			return new TreeProcessor(scrutinee, tree).go();
 		}
 
+		/**
+		 * This class is used to turn a pattern-matching tree into C++ code.
+		 */
 		private class TreeProcessor {
 
 			private final Map<SymbolicTerm, CppExpr> symMap = new HashMap<>();
@@ -170,17 +254,37 @@ public class MatchCodeGen {
 				this.tree = tree;
 			}
 
+			/**
+			 * Generate the C++ code encoding the pattern-matching logic of this object's
+			 * pattern-matching tree.
+			 * 
+			 * @return The generated C++ code
+			 */
 			public CppStmt go() {
 				return go(tree.getRoot());
 			}
 
+			/**
+			 * Generate the C++ code corresponding to a node in the pattern matching tree.
+			 * 
+			 * @param node
+			 *            The node
+			 * @return
+			 */
 			private CppStmt go(Node node) {
 				return node.accept(new NodeVisitor<Void, CppStmt>() {
 
 					@Override
 					public CppStmt visit(InternalNode node, Void in) {
+						/*
+						 * You're at an internal node that is associated with a symbolic term (derived
+						 * from the scrutinee). Generate a C++ expression for the symbolic term, and
+						 * then generate code for checking that term against each outgoing edge of that
+						 * node.
+						 */
 						List<CppStmt> stmts = new ArrayList<>();
 						SymbolicTerm symTerm = node.getSymbolicTerm();
+						/* Generate the C++ expression for the symbolic term. */
 						CppExpr expr;
 						if (symTerm == BaseSymbolicTerm.INSTANCE) {
 							expr = scrutinee;
@@ -194,14 +298,20 @@ public class MatchCodeGen {
 						}
 						assert !(symMap.containsKey(symTerm));
 						symMap.put(symTerm, expr);
-						for (Map.Entry<Edge<?>, Node> e : tree.getOutgoingEdges(node).entrySet()) {
-							stmts.add(go(expr, e.getKey(), e.getValue()));
+						/* Handle the outgoing edges. */
+						for (Pair<Edge<?>, Node> p : tree.getOutgoingEdges(node)) {
+							stmts.add(go(expr, p.fst(), p.snd()));
 						}
 						return CppSeq.mk(stmts);
 					}
 
 					@Override
 					public CppStmt visit(Leaf node, Void in) {
+						/*
+						 * You've reached a leaf, so you've successfully matched the scrutinee against a
+						 * pattern. Evaluate the expression on the right-hand side of that pattern,
+						 * assign it to the result variable, and jump to the end label.
+						 */
 						Pair<CppStmt, CppExpr> p = tcg.gen(node.getTerm(), env);
 						CppStmt assign = CppBinop.mkAssign(CppVar.mk(res), p.snd()).toStmt();
 						CppStmt jump = CppGoto.mk(end);
@@ -211,6 +321,20 @@ public class MatchCodeGen {
 				}, null);
 			}
 
+			/**
+			 * Given a C++ expression representing the current sub-scrutinee, generate C++
+			 * code implementing the pattern-matching logic encoded by the given edge and
+			 * the rest of the tree it leads to.
+			 * 
+			 * @param expr
+			 *            The sub-scrutinee
+			 * @param edge
+			 *            The edge encoding the next step of pattern-matching logic
+			 * @param dest
+			 *            The destination of the edge, which leads to subsequent
+			 *            pattern-matching logic
+			 * @return The generated C++ code
+			 */
 			private CppStmt go(CppExpr expr, Edge<?> edge, Node dest) {
 				return edge.accept(new EdgeVisitor<Void, CppStmt>() {
 
@@ -234,7 +358,7 @@ public class MatchCodeGen {
 						CppExpr rhs = p.snd();
 						CppExpr guard = CppUnop.mkNot(CppFuncCall.mk("Term::compare", lhs, rhs));
 						CppStmt body = go(dest);
-						return CppSeq.mk(p.fst(), CppIf.mk(guard, body));
+						return CppIf.mk(guard, body);
 					}
 
 					@Override

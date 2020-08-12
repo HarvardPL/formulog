@@ -20,36 +20,54 @@ package edu.harvard.seas.pl.formulog.codegen;
  * #L%
  */
 
-
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import edu.harvard.seas.pl.formulog.util.Pair;
 
 public class CppIf implements CppStmt {
 
-	private final CppExpr guard;
-	private final CppStmt thenBranch;
+	private final List<Pair<CppExpr, CppStmt>> cases;
 	private final CppStmt elseBranch;
 
-	private CppIf(CppExpr guard, CppStmt thenBranch, CppStmt elseBranch) {
-		this.guard = guard;
-		this.thenBranch = thenBranch;
+	private CppIf(List<Pair<CppExpr, CppStmt>> cases, CppStmt elseBranch) {
+		if (cases.isEmpty()) {
+			throw new IllegalArgumentException("Need to have at least one case in an if statement");
+		}
+		this.cases = cases;
 		this.elseBranch = elseBranch;
 	}
 
 	public static CppIf mk(CppExpr guard, CppStmt thenBranch) {
 		return mk(guard, thenBranch, null);
 	}
-	
+
 	public static CppIf mk(CppExpr guard, CppStmt thenBranch, CppStmt elseBranch) {
-		return new CppIf(guard, thenBranch, elseBranch);
+		return new CppIf(Collections.singletonList(new Pair<>(guard, thenBranch)), elseBranch);
+	}
+
+	public static CppIf mk(List<Pair<CppExpr, CppStmt>> cases) {
+		return new CppIf(new ArrayList<>(cases), null);
 	}
 
 	@Override
 	public void println(PrintWriter out, int indent) {
-		CodeGenUtil.printIndent(out, indent);
-		out.print("if (");
-		guard.print(out);
-		out.println(") {");
-		thenBranch.println(out, indent + 1);
+		boolean first = true;
+		for (Pair<CppExpr, CppStmt> p : cases) {
+			CppExpr guard = p.fst();
+			CppStmt code = p.snd();
+			CodeGenUtil.printIndent(out, indent);
+			if (!first) {
+				out.print("} else ");
+			}
+			out.print("if (");
+			guard.print(out);
+			out.println(") {");
+			code.println(out, indent + 1);
+			first = false;
+		}
 		CodeGenUtil.printIndent(out, indent);
 		if (elseBranch == null) {
 			out.println("}");
