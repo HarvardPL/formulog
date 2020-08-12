@@ -242,8 +242,8 @@ inline term_ptr TermParser::take_string() {
     throw parsing_error("Could not detect end of string literal");
   }
   ++pos;
-  string contents = match->str();
-  contents.pop_back(); // Remove trailing " character
+//  string contents = match->str();
+//  contents.pop_back(); // Remove trailing " character
   return Term::make<string>(contents);
 }
 

@@ -22,15 +22,13 @@ package edu.harvard.seas.pl.formulog.codegen;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Deque;
-
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Expr;
@@ -40,7 +38,6 @@ import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
-import edu.harvard.seas.pl.formulog.util.Util;
 
 /**
  * The class turns an ML-style pattern match expression into a tree that encodes
@@ -67,11 +64,11 @@ import edu.harvard.seas.pl.formulog.util.Util;
  * evaluate the expression associated with that leaf. If you are at an internal
  * node, then you instantiate the symbolic term at that node with the concrete
  * scrutinee and try to match it against each edge in order. You then travel
- * along the first edge that matches. No backtracking is necessary.
+ * along the first edge that matches, backtracking if necessary.
  */
 public class PatternMatchTree {
 
-	private final Map<Node, Map<Edge<?>, Node>> m = new HashMap<>();
+	private final Map<Node, List<Pair<Edge<?>, Node>>> m = new HashMap<>();
 	private final Node root;
 
 	/**
@@ -102,8 +99,8 @@ public class PatternMatchTree {
 	 *            The node
 	 * @return Map with the outgoing edges
 	 */
-	public Map<Edge<?>, Node> getOutgoingEdges(Node node) {
-		return Collections.unmodifiableMap(m.get(node));
+	public Iterable<Pair<Edge<?>, Node>> getOutgoingEdges(Node node) {
+		return m.get(node);
 	}
 
 	@Override
@@ -128,9 +125,9 @@ public class PatternMatchTree {
 			return new Leaf(k.getFinalTerm());
 		}
 		Node node = new InternalNode(k.getCurrentSymbolicTerm());
-		Map<Edge<?>, Node> outgoing = new LinkedHashMap<>();
-		for (Map.Entry<Edge<?>, PatternMatchingComputation> e : k.stepComputation().entrySet()) {
-			outgoing.put(e.getKey(), build(e.getValue()));
+		List<Pair<Edge<?>, Node>> outgoing = new ArrayList<>();
+		for (Pair<Edge<?>, PatternMatchingComputation> p : k.stepComputation()) {
+			outgoing.add(new Pair<>(p.fst(), build(p.snd())));
 		}
 		m.put(node, outgoing);
 		return node;
@@ -153,7 +150,7 @@ public class PatternMatchTree {
 
 		@Override
 		public String toString() {
-			return "BaseSymbolicTerm";
+			return "B";
 		}
 
 	}
@@ -182,7 +179,7 @@ public class PatternMatchTree {
 
 		@Override
 		public String toString() {
-			return "DerivedSymbolicTerm(" + base + ", " + index + ")";
+			return base + "[" + index + "]";
 		}
 
 	}
@@ -243,27 +240,37 @@ public class PatternMatchTree {
 		/**
 		 * Return the pattern-matching logic that follows the current logic.
 		 * 
-		 * @return A map from edges to pattern-matching computations. The edges are in
-		 *         order of priority (high to low); the pattern-matching computation for
-		 *         an edge represents the computation that follows the logic represented
-		 *         by that edge.
+		 * @return An iterable of pairs of edges and pattern-matching computations. The
+		 *         pairs are in order of priority (high to low); the pattern-matching
+		 *         computation for an edge represents the computation that follows the
+		 *         logic represented by that edge.
 		 */
-		public Map<Edge<?>, PatternMatchingComputation> stepComputation() {
+		public Iterable<Pair<Edge<?>, PatternMatchingComputation>> stepComputation() {
 			assert !isFinished();
 			/* First, create new edges corresponding to the next step of the computation. */
-			Map<Edge<?>, Set<Pair<Deque<Term>, Term>>> m = new LinkedHashMap<>();
+			List<Pair<Edge<?>, Set<Pair<Deque<Term>, Term>>>> l = new ArrayList<>();
+			Edge<?> lastEdge = null;
+			Set<Pair<Deque<Term>, Term>> lastSet = null;
 			for (Pair<Deque<Term>, Term> p : continuation) {
 				Deque<Term> d = new ArrayDeque<>(p.fst());
 				Edge<?> edge = step(d);
 				p = new Pair<>(d, p.snd());
-				Util.lookupOrCreate(m, edge, () -> new LinkedHashSet<>()).add(p);
+				if (edge.equals(lastEdge)) {
+					lastSet.add(p);
+				} else {
+					lastEdge = edge;
+					lastSet = new LinkedHashSet<>();
+					lastSet.add(p);
+					l.add(new Pair<>(lastEdge, lastSet));
+				}
 			}
 			/*
 			 * Second, create new pattern-matching computations representing the rest of the
 			 * work to do along each edge.
 			 */
-			Map<Edge<?>, PatternMatchingComputation> m2 = new LinkedHashMap<>();
-			for (Edge<?> edge : m.keySet()) {
+			List<Pair<Edge<?>, PatternMatchingComputation>> l2 = new ArrayList<>();
+			for (Pair<Edge<?>, Set<Pair<Deque<Term>, Term>>> p : l) {
+				Edge<?> edge = p.fst();
 				Deque<SymbolicTerm> newSchema = new ArrayDeque<>(schema);
 				SymbolicTerm base = newSchema.removeFirst();
 				if (edge instanceof CtorEdge) {
@@ -276,10 +283,17 @@ public class PatternMatchTree {
 						newSchema.addFirst(new DerivedSymbolicTerm(base, i));
 					}
 				}
-				PatternMatchingComputation k = new PatternMatchingComputation(newSchema, m.get(edge));
-				m2.put(edge, k);
+				PatternMatchingComputation k = new PatternMatchingComputation(newSchema, p.snd());
+				l2.add(new Pair<>(edge, k));
 			}
-			return m2;
+//			System.out.println(l2);
+//			try {
+//				System.in.read();
+//			} catch (IOException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+			return l2;
 		}
 
 		/**
@@ -337,6 +351,11 @@ public class PatternMatchTree {
 			return continuation.iterator().next().snd();
 		}
 
+		@Override
+		public String toString() {
+			return "PatternMatchingComputation [schema=" + schema + ", continuation=" + continuation + "]";
+		}
+
 	}
 
 	/**
@@ -390,7 +409,10 @@ public class PatternMatchTree {
 	 */
 	public static class InternalNode implements Node {
 
+		private static AtomicInteger cnt = new AtomicInteger();
+		
 		private final SymbolicTerm symbolicTerm;
+		private final int id = cnt.getAndIncrement();
 
 		public InternalNode(SymbolicTerm symbolicTerm) {
 			this.symbolicTerm = symbolicTerm;
@@ -407,7 +429,7 @@ public class PatternMatchTree {
 
 		@Override
 		public String toString() {
-			return "InternalNode(" + symbolicTerm + ")";
+			return "Node#" + id + "(" + symbolicTerm + ")";
 		}
 
 	}
