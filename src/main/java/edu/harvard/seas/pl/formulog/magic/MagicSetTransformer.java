@@ -472,10 +472,11 @@ public class MagicSetTransformer {
 
 				@Override
 				public List<ComplexLiteral> visit(UserPredicate userPredicate, List<ComplexLiteral> l) {
-					if (restoreStratification == RestoreStratification.FALSE_AND_NO_MAGIC_RULES_FOR_NEG_LITERALS
-							&& userPredicate.isNegated()) {
-						return null;
-					}
+//					if (restoreStratification == RestoreStratification.FALSE_AND_NO_MAGIC_RULES_FOR_NEG_LITERALS
+//							&& userPredicate.isNegated()) {
+//						l.add(a);
+//						return l;
+//					}
 					RelationSymbol sym = userPredicate.getSymbol();
 					if (exploreTopDown(sym)) {
 						Set<Var> supVars = a.varSet().stream().filter(curLiveVars::contains)
