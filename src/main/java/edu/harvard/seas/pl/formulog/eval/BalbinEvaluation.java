@@ -326,6 +326,8 @@ public class BalbinEvaluation implements Evaluation {
     private void eval() throws EvaluationException {
         List<IndexedRule> pRules = new ArrayList<>();
         pRules.addAll(getPRules(qInputAtom, rules, maxPathLength));
+        System.out.println("pRules:");
+        System.out.println(pRules);
 
         // Create new BalbinEvaluationContext
         MagicSetTransformer.InputSymbol qInputSymbol = (MagicSetTransformer.InputSymbol) qInputAtom.getSymbol();
@@ -335,6 +337,8 @@ public class BalbinEvaluation implements Evaluation {
 
     // - prules (with IndexedRule)
     public static Set<IndexedRule> getPRules(UserPredicate q, Map<RelationSymbol, Set<IndexedRule>> rules, int maxPathLength) {
+        System.out.print("q: ");
+        System.out.println(q);
         Set<IndexedRule> db = new HashSet<>();
         for (Map.Entry<RelationSymbol, Set<IndexedRule>> entry : rules.entrySet()) {
             db.addAll(entry.getValue());
@@ -353,10 +357,14 @@ public class BalbinEvaluation implements Evaluation {
             RelationSymbol headPredSymbol = headPred.getSymbol();
             if (qSymbol.equals(headPredSymbol)) {
                 prules.add(indexedRule);
+//                System.out.print("case 1 - add rule: ");
+//                System.out.println(indexedRule);
             }
 
             // Construct dependency graph g for Case 2
             g.addVertex(headPredSymbol);
+            System.out.print("symbol " + headPredSymbol + " in g: ");
+            System.out.println(g.containsVertex(headPredSymbol));
             for (int i = 0; i < indexedRule.getBodySize(); i++) {
                 // Not going to work for ML functions that refer to predicates
                 SimplePredicate bodyIPred = getSimplePredicate(indexedRule.getBody(i));
@@ -364,6 +372,9 @@ public class BalbinEvaluation implements Evaluation {
                     RelationSymbol bodyIPredSymbol = bodyIPred.getSymbol();
                     g.addVertex(bodyIPredSymbol);
 
+//                    System.out.print("bodyIPred: ");
+//                    System.out.print(bodyIPred + ", ");
+//                    System.out.println(bodyIPred.isNegated());
                     EdgeType edgeType = bodyIPred.isNegated() ? EdgeType.NEGATIVE : EdgeType.POSITIVE;
                     g.addEdge(bodyIPredSymbol, headPredSymbol, new DependencyTypeWrapper(edgeType));
                 }
@@ -372,6 +383,8 @@ public class BalbinEvaluation implements Evaluation {
 
         // Case 2 - q <--(+) pred(p0), where p0 is the head of a rule
         AllDirectedPaths<RelationSymbol, DependencyTypeWrapper> allPathsG = new AllDirectedPaths<>(g);
+        System.out.print("allPathsG: ");
+        System.out.println(allPathsG);
         List<GraphPath<RelationSymbol, DependencyTypeWrapper>> allPaths = null;
         for (IndexedRule indexedRule : db) {
             SimplePredicate headPred = indexedRule.getHead();
@@ -379,12 +392,18 @@ public class BalbinEvaluation implements Evaluation {
 
             // Get all paths from headPredSymbol to qSymbol
             // Todo: Check that getAllPaths is working as expected (i.e. for cycles)
+            // Todo (error): getAllPaths is returning empty; it's possible that headPredSymbol is represented differently
+            //  when that symbol is in the body of a rule. See line 379 where edges are being added.
             allPaths = allPathsG.getAllPaths(headPredSymbol, qSymbol, false, maxPathLength);
+            System.out.print("allPaths: ");
+            System.out.println(allPaths);
 
             // Only add basicRule to prules if every edge in every path of allPaths is positive
             boolean foundNegativeEdge = false;
             for (GraphPath graphPath : allPaths) {
                 List<DependencyTypeWrapper> edgeList = graphPath.getEdgeList();
+                System.out.print("edgeList: ");
+                System.out.println(edgeList);
                 for (DependencyTypeWrapper e : edgeList) {
                     EdgeType edgeType = e.get();
                     if (edgeType == EdgeType.NEGATIVE) {
@@ -398,6 +417,8 @@ public class BalbinEvaluation implements Evaluation {
             }
             if (!foundNegativeEdge) {
                 prules.add(indexedRule);
+//                System.out.print("case 2 - add rule: ");
+//                System.out.println(indexedRule);
             }
         }
         return prules;
