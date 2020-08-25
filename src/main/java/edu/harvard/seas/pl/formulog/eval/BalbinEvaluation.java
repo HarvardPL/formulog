@@ -331,6 +331,7 @@ public class BalbinEvaluation implements Evaluation {
 
         // Create new BalbinEvaluationContext
         MagicSetTransformer.InputSymbol qInputSymbol = (MagicSetTransformer.InputSymbol) qInputAtom.getSymbol();
+        System.out.println("CALLING");
         new BalbinEvaluationContext(db, deltaDbb, qInputSymbol.getBaseSymbol(), qMagicFactsTerms, pRules, rules, exec, trackedRelations, mst, maxPathLength)
                 .evaluate();
     }
@@ -350,6 +351,7 @@ public class BalbinEvaluation implements Evaluation {
         // DefaultDirectedGraph; assuming no recursive negation
         Graph<RelationSymbol, DependencyTypeWrapper> g = new DefaultDirectedGraph<>(DependencyTypeWrapper.class);
         g.addVertex(qSymbol);
+//        System.out.println("qSymbol: " + qSymbol);
 
         for (IndexedRule indexedRule : db) {
             // Case 1 - q = pred(p0), where p0 is the head of a rule
@@ -362,14 +364,23 @@ public class BalbinEvaluation implements Evaluation {
             }
 
             // Construct dependency graph g for Case 2
+//            System.out.println("headPredSymbol: " + headPredSymbol);
+//            RelationSymbol x = ((SemiNaiveRule.DeltaSymbol) headPredSymbol).getBaseSymbol();
+//            System.out.println("after getBaseSymbol: " + x);
             g.addVertex(headPredSymbol);
-            System.out.print("symbol " + headPredSymbol + " in g: ");
-            System.out.println(g.containsVertex(headPredSymbol));
+//            System.out.print("symbol " + headPredSymbol + " in g: "); // These shouldn't be delta symbols
+//            System.out.println(g.containsVertex(headPredSymbol));
             for (int i = 0; i < indexedRule.getBodySize(); i++) {
                 // Not going to work for ML functions that refer to predicates
                 SimplePredicate bodyIPred = getSimplePredicate(indexedRule.getBody(i));
                 if (bodyIPred != null) {
                     RelationSymbol bodyIPredSymbol = bodyIPred.getSymbol();
+//                    System.out.println("bodyIPredSymbol: " + bodyIPredSymbol);
+                    if (bodyIPredSymbol instanceof SemiNaiveRule.DeltaSymbol) {
+                        bodyIPredSymbol = ((SemiNaiveRule.DeltaSymbol) bodyIPredSymbol).getBaseSymbol();
+//                        System.out.println("after getBaseSymbol: " + bodyIPredSymbol);
+                    }
+
                     g.addVertex(bodyIPredSymbol);
 
 //                    System.out.print("bodyIPred: ");
@@ -377,14 +388,17 @@ public class BalbinEvaluation implements Evaluation {
 //                    System.out.println(bodyIPred.isNegated());
                     EdgeType edgeType = bodyIPred.isNegated() ? EdgeType.NEGATIVE : EdgeType.POSITIVE;
                     g.addEdge(bodyIPredSymbol, headPredSymbol, new DependencyTypeWrapper(edgeType));
+                    System.out.println("Added edge from " + bodyIPredSymbol + " to " + headPredSymbol + " with edge type " + edgeType);
                 }
             }
         }
 
+        System.out.println("VERTEX SET: " + g.vertexSet());
+
         // Case 2 - q <--(+) pred(p0), where p0 is the head of a rule
         AllDirectedPaths<RelationSymbol, DependencyTypeWrapper> allPathsG = new AllDirectedPaths<>(g);
-        System.out.print("allPathsG: ");
-        System.out.println(allPathsG);
+//        System.out.print("allPathsG: ");
+//        System.out.println(allPathsG);
         List<GraphPath<RelationSymbol, DependencyTypeWrapper>> allPaths = null;
         for (IndexedRule indexedRule : db) {
             SimplePredicate headPred = indexedRule.getHead();
@@ -394,7 +408,9 @@ public class BalbinEvaluation implements Evaluation {
             // Todo: Check that getAllPaths is working as expected (i.e. for cycles)
             // Todo (error): getAllPaths is returning empty; it's possible that headPredSymbol is represented differently
             //  when that symbol is in the body of a rule. See line 379 where edges are being added.
-            allPaths = allPathsG.getAllPaths(headPredSymbol, qSymbol, false, maxPathLength);
+            System.out.println("headPredSymbol: " + headPredSymbol);
+            System.out.println("qSymbol: " + qSymbol);
+            allPaths = allPathsG.getAllPaths(qSymbol, headPredSymbol, false, maxPathLength);
             System.out.print("allPaths: ");
             System.out.println(allPaths);
 
@@ -402,8 +418,10 @@ public class BalbinEvaluation implements Evaluation {
             boolean foundNegativeEdge = false;
             for (GraphPath graphPath : allPaths) {
                 List<DependencyTypeWrapper> edgeList = graphPath.getEdgeList();
-                System.out.print("edgeList: ");
-                System.out.println(edgeList);
+//                System.out.print("edgeList: ");
+//                for (DependencyTypeWrapper e : edgeList) {
+//                    System.out.println(e.get());
+//                }
                 for (DependencyTypeWrapper e : edgeList) {
                     EdgeType edgeType = e.get();
                     if (edgeType == EdgeType.NEGATIVE) {
@@ -417,8 +435,8 @@ public class BalbinEvaluation implements Evaluation {
             }
             if (!foundNegativeEdge) {
                 prules.add(indexedRule);
-//                System.out.print("case 2 - add rule: ");
-//                System.out.println(indexedRule);
+                System.out.print("case 2 - add rule: ");
+                System.out.println(indexedRule);
             }
         }
         return prules;

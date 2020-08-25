@@ -76,6 +76,7 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
         this.mst = mst;
         this.maxPathLength = maxPathLength;
 
+        System.out.println("HELLO");
         assert qSymbol instanceof AdornedSymbol : "Balbin evaluation context: Query must be adorned";
         addQMagicFactsToDb(db);
         addQMagicFactsToDb(deltaDb);
@@ -328,6 +329,8 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
                                         // Get prules
                                         List<IndexedRule> pRules = new ArrayList<>();
                                         pRules.addAll(BalbinEvaluation.getPRules(newLInputAtom, allRules, maxPathLength));
+                                        System.out.println("newLInputAtom: " + newLInputAtom);
+                                        System.out.println("pRules: " + pRules);
 
                                         // Evaluate a new context
                                         Set<Term[]> newQMagicFactsTerms = new HashSet<>();
