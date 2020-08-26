@@ -332,7 +332,7 @@ public class BalbinEvaluation implements Evaluation {
         // Create new BalbinEvaluationContext
         MagicSetTransformer.InputSymbol qInputSymbol = (MagicSetTransformer.InputSymbol) qInputAtom.getSymbol();
         System.out.println("CALLING");
-        new BalbinEvaluationContext(db, deltaDbb, qInputSymbol.getBaseSymbol(), qMagicFactsTerms, pRules, rules, exec, trackedRelations, mst, maxPathLength)
+        new BalbinEvaluationContext(db, deltaDbb, qInputSymbol, qMagicFactsTerms, pRules, rules, exec, trackedRelations, mst, maxPathLength)
                 .evaluate();
     }
 
