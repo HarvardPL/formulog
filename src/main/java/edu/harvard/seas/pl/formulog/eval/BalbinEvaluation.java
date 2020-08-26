@@ -67,7 +67,7 @@ public class BalbinEvaluation implements Evaluation {
     public static BalbinEvaluation setup(WellTypedProgram prog, int parallelism)
             throws InvalidProgramException {
         FunctionDefValidation.validate(prog);
-        MagicSetTransformer mst = new MagicSetTransformer(prog);
+        MagicSetTransformer mst = new MagicSetTransformer(prog, false);
         BasicProgram magicProg = mst.transform(false,
                 MagicSetTransformer.RestoreStratification.FALSE_AND_NO_MAGIC_RULES_FOR_NEG_LITERALS);
         Set<RelationSymbol> allRelations = new HashSet<>(magicProg.getFactSymbols());

@@ -102,7 +102,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 	public static SemiNaiveEvaluation setup(WellTypedProgram prog, int parallelism, EvalType evalType)
 			throws InvalidProgramException {
 		FunctionDefValidation.validate(prog);
-		MagicSetTransformer mst = new MagicSetTransformer(prog);
+		MagicSetTransformer mst = new MagicSetTransformer(prog, true);
 		BasicProgram magicProg = mst.transform(Configuration.useDemandTransformation,
 				MagicSetTransformer.RestoreStratification.TRUE);
 		Set<RelationSymbol> allRelations = new HashSet<>(magicProg.getFactSymbols());

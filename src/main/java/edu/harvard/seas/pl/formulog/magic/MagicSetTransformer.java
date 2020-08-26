@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.magic;
  * #L%
  */
 
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -51,12 +50,11 @@ import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
-import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
-import edu.harvard.seas.pl.formulog.functions.FunctionDef;
-import edu.harvard.seas.pl.formulog.functions.UserFunctionDef;
 import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
+import edu.harvard.seas.pl.formulog.functions.FunctionDef;
+import edu.harvard.seas.pl.formulog.functions.UserFunctionDef;
 import edu.harvard.seas.pl.formulog.symbols.AbstractWrappedRelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
@@ -77,18 +75,18 @@ import edu.harvard.seas.pl.formulog.validating.Stratum;
 public class MagicSetTransformer {
 
 	public enum RestoreStratification {
-		TRUE,
-		FALSE,
-		FALSE_AND_NO_MAGIC_RULES_FOR_NEG_LITERALS
+		TRUE, FALSE, FALSE_AND_NO_MAGIC_RULES_FOR_NEG_LITERALS
 	}
 
 	private final Program<UserPredicate, BasicRule> origProg;
 	private boolean topDownIsDefault;
+	private final boolean useSupPredicates;
 
 	private static final boolean debug = Configuration.debugMst;
 
-	public MagicSetTransformer(Program<UserPredicate, BasicRule> prog) {
+	public MagicSetTransformer(Program<UserPredicate, BasicRule> prog, boolean useSupPredicates) {
 		this.origProg = prog;
+		this.useSupPredicates = useSupPredicates;
 	}
 
 	public BasicProgram transform(boolean useDemandTransformation, RestoreStratification restoreStratification)
@@ -116,7 +114,7 @@ public class MagicSetTransformer {
 	}
 
 	private BasicProgram transformForQuery(UserPredicate query, boolean useDemandTransformation,
-										   RestoreStratification restoreStratification) throws InvalidProgramException {
+			RestoreStratification restoreStratification) throws InvalidProgramException {
 		topDownIsDefault = true;
 		if (query.isNegated()) {
 			throw new InvalidProgramException("Query cannot be negated");
@@ -132,7 +130,8 @@ public class MagicSetTransformer {
 			BasicRule queryRule = makeQueryRule(adornedQuery);
 			UserPredicate newQuery = queryRule.getHead();
 			BasicProgram magicProg = new ProgramImpl(magicRules, newQuery);
-			if (restoreStratification == RestoreStratification.TRUE && !isStratified(magicProg) && isStratified(origProg)) {
+			if (restoreStratification == RestoreStratification.TRUE && !isStratified(magicProg)
+					&& isStratified(origProg)) {
 				magicProg = stratify(magicProg, Pair.map(adRules, (rule, num) -> rule));
 			}
 			((ProgramImpl) magicProg).rules.put(newQuery.getSymbol(), Collections.singleton(queryRule));
@@ -176,7 +175,7 @@ public class MagicSetTransformer {
 			public boolean isTopDown() {
 				return false;
 			}
-			
+
 			@Override
 			public boolean isExternal() {
 				return false;
@@ -297,8 +296,9 @@ public class MagicSetTransformer {
 		Set<Pair<BasicRule, Integer>> adRules = adorn(bottomUpSymbols);
 
 		/*
-		 * Won't be called with restoreStratification == RestoreStratification.FALSE_AND_NO_MAGIC_RULES_FOR_NEG_LITERALS
-		 * due to InvalidProgramException thrown in transform
+		 * Won't be called with restoreStratification ==
+		 * RestoreStratification.FALSE_AND_NO_MAGIC_RULES_FOR_NEG_LITERALS due to
+		 * InvalidProgramException thrown in transform
 		 */
 		Set<BasicRule> magicRules = makeMagicRules(adRules, restoreStratification);
 
@@ -428,7 +428,8 @@ public class MagicSetTransformer {
 		return adRules;
 	}
 
-	private Set<BasicRule> makeMagicRules(Set<Pair<BasicRule, Integer>> adornedRules, RestoreStratification restoreStratification) {
+	private Set<BasicRule> makeMagicRules(Set<Pair<BasicRule, Integer>> adornedRules,
+			RestoreStratification restoreStratification) {
 		Set<BasicRule> magicRules = new HashSet<>();
 		for (Pair<BasicRule, Integer> p : adornedRules) {
 			magicRules.addAll(makeMagicRules(p.fst(), p.snd(), restoreStratification));
@@ -472,24 +473,24 @@ public class MagicSetTransformer {
 
 				@Override
 				public List<ComplexLiteral> visit(UserPredicate userPredicate, List<ComplexLiteral> l) {
-//					if (restoreStratification == RestoreStratification.FALSE_AND_NO_MAGIC_RULES_FOR_NEG_LITERALS
-//							&& userPredicate.isNegated()) {
-//						l.add(a);
-//						return l;
-//					}
 					RelationSymbol sym = userPredicate.getSymbol();
 					if (exploreTopDown(sym)) {
-						Set<Var> supVars = a.varSet().stream().filter(curLiveVars::contains)
-								.collect(Collectors.toSet());
-						supVars.addAll(nextLiveVars);
-						UserPredicate supAtom = createSupAtom(supVars, number, supCount[0], head.getSymbol());
-						magicRules.add(BasicRule.make(supAtom, l));
-						magicRules.add(
-								BasicRule.make(createInputAtom(userPredicate), Collections.singletonList(supAtom)));
-						l = new ArrayList<>();
-						l.add(supAtom);
-						l.add(a);
-						supCount[0]++;
+						if (useSupPredicates) {
+							Set<Var> supVars = a.varSet().stream().filter(curLiveVars::contains)
+									.collect(Collectors.toSet());
+							supVars.addAll(nextLiveVars);
+							UserPredicate supAtom = createSupAtom(supVars, number, supCount[0], head.getSymbol());
+							magicRules.add(BasicRule.make(supAtom, l));
+							magicRules.add(
+									BasicRule.make(createInputAtom(userPredicate), Collections.singletonList(supAtom)));
+							l = new ArrayList<>();
+							l.add(supAtom);
+							l.add(a);
+							supCount[0]++;
+						} else {
+							magicRules.add(BasicRule.make(createInputAtom(userPredicate), new ArrayList<>(l)));
+							l.add(a);
+						}
 					} else {
 						l.add(a);
 					}
@@ -531,7 +532,7 @@ public class MagicSetTransformer {
 			public int compare(Term o1, Term o2) {
 				return o1.toString().compareTo(o2.toString());
 			}
-			
+
 		});
 		Term[] args = l.toArray(new Term[0]);
 		SupSymbol supSym = new SupSymbol(ruleNum, supCount, args.length);
@@ -612,7 +613,7 @@ public class MagicSetTransformer {
 		public boolean isIdbSymbol() {
 			return true;
 		}
-		
+
 		@Override
 		public boolean isExternal() {
 			return false;
@@ -891,7 +892,7 @@ public class MagicSetTransformer {
 				}
 				return null;
 			}
-			
+
 			@Override
 			public Void visit(LetFunExpr funcDef, Set<RelationSymbol> in) {
 				throw new AssertionError("impossible");
