@@ -74,7 +74,9 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 	
 	I32_SHL("i32_shl", 2),
 	
-	I32_SHR("i32_shr", 2),
+	I32_SSHR("i32_sshr", 2),
+	
+	I32_USHR("i32_ushr", 2),
 
 	// i64 operations
 
@@ -110,7 +112,9 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 	
 	I64_SHL("i64_shl", 2),
 	
-	I64_SHR("i64_shr", 2),
+	I64_SSHR("i64_sshr", 2),
+	
+	I64_USHR("i64_ushr", 2),
 
 	// fp32 operations
 
@@ -290,7 +294,8 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 		case I32_SUB:
 		case I32_XOR:
 		case I32_SHL:
-		case I32_SHR:
+		case I32_SSHR:
+		case I32_USHR:
 			return new FunctorType(i32, i32, i32);
 		case I32_GE:
 		case I32_GT:
@@ -311,7 +316,8 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 		case I64_SUB:
 		case I64_XOR:
 		case I64_SHL:
-		case I64_SHR:
+		case I64_SSHR:
+		case I64_USHR:
 			return new FunctorType(i64, i64, i64);
 		case I64_GE:
 		case I64_GT:
