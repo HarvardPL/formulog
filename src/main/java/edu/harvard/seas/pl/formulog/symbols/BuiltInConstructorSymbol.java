@@ -103,6 +103,10 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 
 	BV_XOR("bv_xor", 2, SOLVER_EXPR),
 	
+	BV_SHL("bv_shl", 2, SOLVER_EXPR),
+	
+	BV_LSHR("bv_lshr", 2, SOLVER_EXPR),
+	
 	// Floating point
 
 	FP_NEG("fp_neg", 1, SOLVER_EXPR),
@@ -235,6 +239,8 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 		case BV_UREM:
 		case BV_SUB:
 		case BV_XOR:
+		case BV_SHL:
+		case BV_LSHR:
 			return makeType(smt(bv(a)), smt(bv(a)), smt(bv(a)));
 		case BV_NEG:
 			return makeType(smt(bv(a)), smt(bv(a)));

@@ -97,16 +97,16 @@ public final class BuiltInFunctionDefFactory {
 			return I32Lte.INSTANCE;
 		case I32_SHL:
 			return i32Shl;
-		case I32_SSHR:
-			return i32Sshr;
-		case I32_USHR:
-			return i32Ushr;
+		case I32_ASHR:
+			return i32Ashr;
+		case I32_LSHR:
+			return i32Lshr;
 		case I64_SHL:
 			return i64Shl;
-		case I64_SSHR:
-			return i64Sshr;
-		case I64_USHR:
-			return i64Ushr;
+		case I64_ASHR:
+			return i64Ashr;
+		case I64_LSHR:
+			return i64Lshr;
 		case I64_ADD:
 			return I64Add.INSTANCE;
 		case I64_SUB:
@@ -500,11 +500,11 @@ public final class BuiltInFunctionDefFactory {
 		
 	};
 	
-	private static final FunctionDef i32Sshr = new FunctionDef() {
+	private static final FunctionDef i32Ashr = new FunctionDef() {
 
 		@Override
 		public FunctionSymbol getSymbol() {
-			return BuiltInFunctionSymbol.I32_SSHR;
+			return BuiltInFunctionSymbol.I32_ASHR;
 		}
 
 		@Override
@@ -516,11 +516,11 @@ public final class BuiltInFunctionDefFactory {
 		
 	};
 	
-	private static final FunctionDef i32Ushr = new FunctionDef() {
+	private static final FunctionDef i32Lshr = new FunctionDef() {
 
 		@Override
 		public FunctionSymbol getSymbol() {
-			return BuiltInFunctionSymbol.I32_USHR;
+			return BuiltInFunctionSymbol.I32_LSHR;
 		}
 
 		@Override
@@ -548,11 +548,11 @@ public final class BuiltInFunctionDefFactory {
 		
 	};
 	
-	private static final FunctionDef i64Sshr = new FunctionDef() {
+	private static final FunctionDef i64Ashr = new FunctionDef() {
 
 		@Override
 		public FunctionSymbol getSymbol() {
-			return BuiltInFunctionSymbol.I64_SSHR;
+			return BuiltInFunctionSymbol.I64_ASHR;
 		}
 
 		@Override
@@ -564,11 +564,11 @@ public final class BuiltInFunctionDefFactory {
 		
 	};
 	
-	private static final FunctionDef i64Ushr = new FunctionDef() {
+	private static final FunctionDef i64Lshr = new FunctionDef() {
 
 		@Override
 		public FunctionSymbol getSymbol() {
-			return BuiltInFunctionSymbol.I64_USHR;
+			return BuiltInFunctionSymbol.I64_LSHR;
 		}
 
 		@Override
