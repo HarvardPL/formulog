@@ -212,7 +212,7 @@ public class FuncsHpp {
 			case I32_AND:
 				ctx.register(sym, "__bitwise_and<int32_t>");
 				break;
-			case I32_DIV:
+			case I32_SDIV:
 				ctx.register(sym, "__div<int32_t>");
 				break;
 			case I32_GE:
@@ -236,7 +236,7 @@ public class FuncsHpp {
 			case I32_OR:
 				ctx.register(sym, "__bitwise_or<int32_t>");
 				break;
-			case I32_REM:
+			case I32_SREM:
 				ctx.register(sym, "__rem<int32_t>");
 				break;
 			case I32_SCMP:
@@ -257,7 +257,7 @@ public class FuncsHpp {
 			case I64_AND:
 				ctx.register(sym, "__bitwise_and<int64_t>");
 				break;
-			case I64_DIV:
+			case I64_SDIV:
 				ctx.register(sym, "__div<int64_t>");
 				break;
 			case I64_GE:
@@ -281,7 +281,7 @@ public class FuncsHpp {
 			case I64_OR:
 				ctx.register(sym, "__bitwise_or<int64_t>");
 				break;
-			case I64_REM:
+			case I64_SREM:
 				ctx.register(sym, "__rem<int64_t>");
 				break;
 			case I64_SCMP:

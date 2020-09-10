@@ -75,10 +75,14 @@ public final class BuiltInFunctionDefFactory {
 			return I32Sub.INSTANCE;
 		case I32_MUL:
 			return I32Mul.INSTANCE;
-		case I32_DIV:
-			return I32Div.INSTANCE;
-		case I32_REM:
-			return I32Rem.INSTANCE;
+		case I32_SDIV:
+			return I32Sdiv.INSTANCE;
+		case I32_SREM:
+			return I32Srem.INSTANCE;
+		case I32_UDIV:
+			return i32Udiv;
+		case I32_UREM:
+			return i32Urem;
 		case I32_NEG:
 			return I32Neg.INSTANCE;
 		case I32_AND:
@@ -113,10 +117,14 @@ public final class BuiltInFunctionDefFactory {
 			return I64Sub.INSTANCE;
 		case I64_MUL:
 			return I64Mul.INSTANCE;
-		case I64_DIV:
-			return I64Div.INSTANCE;
-		case I64_REM:
-			return I64Rem.INSTANCE;
+		case I64_SDIV:
+			return I64Sdiv.INSTANCE;
+		case I64_SREM:
+			return I64Srem.INSTANCE;
+		case I64_UDIV:
+			return i64Udiv;
+		case I64_UREM:
+			return i64Urem;
 		case I64_NEG:
 			return I64Neg.INSTANCE;
 		case I64_AND:
@@ -299,13 +307,13 @@ public final class BuiltInFunctionDefFactory {
 
 	}
 
-	private enum I32Div implements FunctionDef {
+	private enum I32Sdiv implements FunctionDef {
 
 		INSTANCE;
 
 		@Override
 		public FunctionSymbol getSymbol() {
-			return BuiltInFunctionSymbol.I32_DIV;
+			return BuiltInFunctionSymbol.I32_SDIV;
 		}
 
 		@Override
@@ -320,13 +328,13 @@ public final class BuiltInFunctionDefFactory {
 
 	}
 
-	private enum I32Rem implements FunctionDef {
+	private enum I32Srem implements FunctionDef {
 
 		INSTANCE;
 
 		@Override
 		public FunctionSymbol getSymbol() {
-			return BuiltInFunctionSymbol.I32_REM;
+			return BuiltInFunctionSymbol.I32_SREM;
 		}
 
 		@Override
@@ -340,6 +348,44 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 	}
+	
+	private static final FunctionDef i32Udiv = new FunctionDef() {
+
+		@Override
+		public FunctionSymbol getSymbol() {
+			return BuiltInFunctionSymbol.I32_UDIV;
+		}
+
+		@Override
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I32 arg1 = (I32) args[0];
+			I32 arg2 = (I32) args[1];
+			if (arg2.getVal() == 0) {
+				throw new EvaluationException("Division by zero");
+			}
+			return I32.make(Integer.divideUnsigned(arg1.getVal(), arg2.getVal()));
+		}
+
+	};
+
+	private static final FunctionDef i32Urem = new FunctionDef() {
+
+		@Override
+		public FunctionSymbol getSymbol() {
+			return BuiltInFunctionSymbol.I32_UREM;
+		}
+
+		@Override
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I32 arg1 = (I32) args[0];
+			I32 arg2 = (I32) args[1];
+			if (arg2.getVal() == 0) {
+				throw new EvaluationException("Remainder by zero");
+			}
+			return I32.make(Integer.remainderUnsigned(arg1.getVal(), arg2.getVal()));
+		}
+
+	};
 
 	private enum I32Gt implements FunctionDef {
 
@@ -634,13 +680,13 @@ public final class BuiltInFunctionDefFactory {
 
 	}
 
-	private enum I64Div implements FunctionDef {
+	private enum I64Sdiv implements FunctionDef {
 
 		INSTANCE;
 
 		@Override
 		public FunctionSymbol getSymbol() {
-			return BuiltInFunctionSymbol.I64_DIV;
+			return BuiltInFunctionSymbol.I64_SDIV;
 		}
 
 		@Override
@@ -655,13 +701,13 @@ public final class BuiltInFunctionDefFactory {
 
 	}
 
-	private enum I64Rem implements FunctionDef {
+	private enum I64Srem implements FunctionDef {
 
 		INSTANCE;
 
 		@Override
 		public FunctionSymbol getSymbol() {
-			return BuiltInFunctionSymbol.I64_REM;
+			return BuiltInFunctionSymbol.I64_SREM;
 		}
 
 		@Override
@@ -675,6 +721,44 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 	}
+	
+	private static final FunctionDef i64Udiv = new FunctionDef() {
+
+		@Override
+		public FunctionSymbol getSymbol() {
+			return BuiltInFunctionSymbol.I64_UDIV;
+		}
+
+		@Override
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I64 arg1 = (I64) args[0];
+			I64 arg2 = (I64) args[1];
+			if (arg2.getVal() == 0) {
+				throw new EvaluationException("Division by zero");
+			}
+			return I64.make(Long.divideUnsigned(arg1.getVal(), arg2.getVal()));
+		}
+
+	};
+
+	private static final FunctionDef i64Urem = new FunctionDef() {
+
+		@Override
+		public FunctionSymbol getSymbol() {
+			return BuiltInFunctionSymbol.I64_UREM;
+		}
+
+		@Override
+		public Term evaluate(Term[] args) throws EvaluationException {
+			I64 arg1 = (I64) args[0];
+			I64 arg2 = (I64) args[1];
+			if (arg2.getVal() == 0) {
+				throw new EvaluationException("Remainder by zero");
+			}
+			return I64.make(Long.remainderUnsigned(arg1.getVal(), arg2.getVal()));
+		}
+
+	};
 
 	private enum I64Gt implements FunctionDef {
 

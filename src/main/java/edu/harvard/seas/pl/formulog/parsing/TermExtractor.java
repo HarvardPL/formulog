@@ -434,9 +434,9 @@ class TermExtractor {
 			case FormulogParser.MUL:
 				return BuiltInFunctionSymbol.I32_MUL;
 			case FormulogParser.DIV:
-				return BuiltInFunctionSymbol.I32_DIV;
+				return BuiltInFunctionSymbol.I32_SDIV;
 			case FormulogParser.REM:
-				return BuiltInFunctionSymbol.I32_REM;
+				return BuiltInFunctionSymbol.I32_SREM;
 			case FormulogParser.PLUS:
 				return BuiltInFunctionSymbol.I32_ADD;
 			case FormulogParser.MINUS:

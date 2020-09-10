@@ -48,9 +48,13 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 
 	I32_MUL("i32_mul",2),
 
-	I32_DIV("i32_div",2),
+	I32_SDIV("i32_sdiv",2),
 
-	I32_REM("i32_rem",2),
+	I32_SREM("i32_srem",2),
+
+	I32_UDIV("i32_udiv",2),
+
+	I32_UREM("i32_urem",2),
 
 	I32_NEG("i32_neg", 1),
 
@@ -86,9 +90,13 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 
 	I64_MUL("i64_mul",2),
 
-	I64_DIV("i64_div",2),
+	I64_SDIV("i64_sdiv",2),
 
-	I64_REM("i64_rem",2),
+	I64_SREM("i64_srem",2),
+
+	I64_UDIV("i64_udiv",2),
+
+	I64_UREM("i64_urem",2),
 
 	I64_NEG("i64_neg", 1),
 
@@ -287,10 +295,12 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 			return new FunctorType(i32, i32);
 		case I32_ADD:
 		case I32_AND:
-		case I32_DIV:
+		case I32_SDIV:
 		case I32_MUL:
 		case I32_OR:
-		case I32_REM:
+		case I32_SREM:
+		case I32_UDIV:
+		case I32_UREM:
 		case I32_SUB:
 		case I32_XOR:
 		case I32_SHL:
@@ -309,10 +319,12 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 			return new FunctorType(i64, i64);
 		case I64_ADD:
 		case I64_AND:
-		case I64_DIV:
+		case I64_SDIV:
 		case I64_MUL:
 		case I64_OR:
-		case I64_REM:
+		case I64_SREM:
+		case I64_UDIV:
+		case I64_UREM:
 		case I64_SUB:
 		case I64_XOR:
 		case I64_SHL:
