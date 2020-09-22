@@ -24,8 +24,10 @@ package edu.harvard.seas.pl.formulog.parsing;
 import static edu.harvard.seas.pl.formulog.util.Util.map;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.harvard.seas.pl.formulog.ast.Var;
@@ -91,7 +93,7 @@ final class ParsingUtil {
 		Type retType = typeExtractor.extract(ctx.retType);
 		FunctionSymbol sym = pc.symbolManager().createFunctionSymbol(name, argTypes.size(),
 				new FunctorType(argTypes, retType));
-		List<Var> args = map(ctx.args.VAR(), x -> Var.make(x.getText()));
+		List<Var> args = map(ctx.args.VAR(), x -> Var.fresh(x.getText()));
 		if (args.size() != new HashSet<>(args).size()) {
 			throw new RuntimeException(
 					"Cannot use the same variable multiple times in a function declaration: " + name);
@@ -102,6 +104,14 @@ final class ParsingUtil {
 	public static List<Pair<FunctionSymbol, List<Var>>> extractFunDeclarations(ParsingContext pc,
 			List<FunDefLHSContext> ctxs, boolean isNested) {
 		return map(ctxs, ctx -> extractFunDeclaration(pc, ctx, isNested));
+	}
+	
+	public static Map<String, Identifier> varsToIds(Iterable<Var> vars) {
+		Map<String, Identifier> m = new HashMap<>();
+		for (Var x : vars) {
+			m.put(x.getName(), Identifier.make(x));
+		}
+		return m;
 	}
 
 }

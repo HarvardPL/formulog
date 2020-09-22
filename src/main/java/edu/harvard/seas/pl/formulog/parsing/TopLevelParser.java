@@ -117,11 +117,13 @@ class TopLevelParser {
 		@Override
 		public Void visitFunDecl(FunDeclContext ctx) {
 			List<Pair<FunctionSymbol, List<Var>>> ps = ParsingUtil.extractFunDeclarations(pc, ctx.funDefs().funDefLHS(), false);
-			Iterator<Term> bodies = termExtractor.extractList(ctx.funDefs().term()).iterator();
+			Iterator<TermContext> bodies = ctx.funDefs().term().iterator();
 			for (Pair<FunctionSymbol, List<Var>> p : ps) {
 				FunctionSymbol sym = p.fst();
 				List<Var> args = p.snd();
-				Term body = bodies.next();
+				termExtractor.pushIds(ParsingUtil.varsToIds(args));
+				Term body = termExtractor.extract(bodies.next());
+				termExtractor.popIds();
 				try {
 					Term newBody = varChecker.checkFunction(args, body);
 					pc.functionDefManager().register(UserFunctionDef.get(sym, args, newBody));

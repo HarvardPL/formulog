@@ -23,7 +23,6 @@ package edu.harvard.seas.pl.formulog.ast;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
@@ -34,8 +33,6 @@ import edu.harvard.seas.pl.formulog.util.Util;
 
 public class Var extends AbstractTerm implements Term {
 
-	private static final Map<String, Var> memo = new ConcurrentHashMap<>();
-	
 	static final AtomicInteger cnt = new AtomicInteger();
 	
 	private final String name;
@@ -44,20 +41,20 @@ public class Var extends AbstractTerm implements Term {
 		this.name = name;
 	}
 	
-	public static Var make(String name) {
-		return Util.lookupOrCreate(memo, name, () -> new Var(name));
+	public static Var fresh(String name) {
+		return new Var(name);
 	}
 	
 	public static Var fresh() {
 		return new Var("$" + cnt.getAndIncrement());
 	}
 	
-	public static Var fresh(String prefix) {
-		return new Var(prefix + "$" + cnt.getAndIncrement());
-	}
-	
 	public boolean isUnderscore() {
 		return name.equals("_");
+	}
+	
+	public String getName() {
+		return name;
 	}
 	
 	@Override
@@ -111,9 +108,11 @@ public class Var extends AbstractTerm implements Term {
 		int n = Util.lookupOrCreate(counts, this, () -> 0);
 		counts.put(this, n + 1);
 	}
+
+	private static final Var hole = new Var("??");
 	
 	public static Var makeHole() {
-		return make("??");
+		return hole;
 	}
 	
 }

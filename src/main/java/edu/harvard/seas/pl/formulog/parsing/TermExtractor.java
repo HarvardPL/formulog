@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.parsing;
  * #L%
  */
 
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -107,9 +106,11 @@ import edu.harvard.seas.pl.formulog.util.StackMap;
 class TermExtractor {
 
 	private final ParsingContext pc;
+	private final StackMap<String, Identifier> env = new StackMap<>();
 
 	public TermExtractor(ParsingContext parsingContext) {
 		pc = parsingContext;
+		env.push(new HashMap<>());
 	}
 
 	public synchronized Term extract(TermContext ctx) {
@@ -134,10 +135,17 @@ class TermExtractor {
 		return terms;
 	}
 
+	public synchronized void pushIds(Map<String, Identifier> ids) {
+		env.push(ids);
+	}
+
+	public synchronized Map<String, Identifier> popIds() {
+		return env.pop();
+	}
+
 	private final FormulogVisitor<Term> visitor = new FormulogBaseVisitor<Term>() {
 
 		private boolean inFormula;
-		private final StackMap<String, FunctionSymbol> nestedFunctions = new StackMap<>();
 
 		private void assertNotInFormula(String msg) {
 			if (inFormula) {
@@ -157,7 +165,13 @@ class TermExtractor {
 		@Override
 		public Term visitVarTerm(VarTermContext ctx) {
 			String name = ctx.VAR().getText();
-			return Var.make(name);
+			Identifier id = env.get(name);
+			if (id == null) {
+				id = Identifier.make(Var.fresh(name));
+				env.put(name, id);
+			}
+			assert id.isVar();
+			return id.asVar();
 		}
 
 		@Override
@@ -179,8 +193,14 @@ class TermExtractor {
 				return parseBool(ctx);
 			}
 			List<Param> params = ParsingUtil.extractParams(pc, ctx.parameterList());
-			Symbol sym = nestedFunctions.get(name);
+			Identifier id = env.get(name);
 			Term[] args = extractArray(ctx.termArgs().term());
+			if (id != null && id.isVar()) {
+				if (args.length > 0) {
+					throw new RuntimeException("Cannot apply a variable " + name + " to arguments.");
+				}
+				return id.asVar();
+			}
 			if (name.charAt(0) == '#' && args.length == 0) {
 				if (params.size() != 1) {
 					throw new IllegalArgumentException("Expected a single parameter to solver variable: " + name);
@@ -188,9 +208,7 @@ class TermExtractor {
 				Type ty = params.get(0).getType();
 				return extractSolverSymbol(StringTerm.make(name.substring(1)), ty);
 			}
-			if (sym == null) {
-				sym = pc.symbolManager().lookupSymbol(name);
-			}
+			Symbol sym = id != null ? id.asFunctionSymbol() : pc.symbolManager().lookupSymbol(name);
 			if (sym instanceof ParameterizedSymbol) {
 				sym = ((ParameterizedSymbol) sym).copyWithNewArgs(params);
 			} else if (!params.isEmpty()) {
@@ -213,7 +231,7 @@ class TermExtractor {
 			}
 			return t;
 		}
-		
+
 		private Term parseBool(IndexedFunctorContext ctx) {
 			String name = ctx.id.getText();
 			assert name.equals("true") || name.equals("false");
@@ -252,10 +270,11 @@ class TermExtractor {
 		public Term visitFoldTerm(FoldTermContext ctx) {
 			assertNotInFormula("Cannot invoke a fold from within a formula: " + ctx.getText());
 			String name = ctx.ID().getText();
-			Symbol sym = nestedFunctions.get(name);
-			if (sym == null) {
-				sym = pc.symbolManager().lookupSymbol(name);
+			Identifier id = env.get(name);
+			if (id != null && id.isVar()) {
+				throw new RuntimeException("Cannot use a variable as the function to fold: " + name);
 			}
+			Symbol sym = id != null ? id.asFunctionSymbol() : pc.symbolManager().lookupSymbol(name);
 			if (!(sym instanceof FunctionSymbol)) {
 				throw new RuntimeException("Cannot fold over non-function: " + sym);
 			}
@@ -596,7 +615,7 @@ class TermExtractor {
 				return Constructors.make(sym, Terms.singletonArray(makeEnterFormula(pat)));
 			});
 		}
-		
+
 		private Term parseFormulaVarList(NonEmptyTermListContext ctx) {
 			return parseNonEmptyTermList(ctx, var -> {
 				ConstructorSymbol sym = (ConstructorSymbol) pc.symbolManager()
@@ -634,7 +653,8 @@ class TermExtractor {
 		}
 
 		private Term extractSolverSymbol(Term id, Type type) {
-			ParameterizedConstructorSymbol sym = GlobalSymbolManager.getParameterizedSymbol(BuiltInConstructorSymbolBase.SMT_VAR);
+			ParameterizedConstructorSymbol sym = GlobalSymbolManager
+					.getParameterizedSymbol(BuiltInConstructorSymbolBase.SMT_VAR);
 			sym = sym.copyWithNewArgs(Param.wildCard(), new Param(type, ParamKind.PRE_SMT_TYPE));
 			return makeExitFormula(Constructors.make(sym, Terms.singletonArray(id)));
 		}
@@ -703,20 +723,22 @@ class TermExtractor {
 			List<Pair<FunctionSymbol, List<Var>>> signatures = ParsingUtil.extractFunDeclarations(pc,
 					ctx.funDefs().funDefLHS(), true);
 			Iterator<Pair<FunctionSymbol, List<Var>>> sigIt = signatures.iterator();
-			HashMap<String, FunctionSymbol> m = new HashMap<>();
+			HashMap<String, Identifier> m = new HashMap<>();
 			for (String name : names) {
-				m.put(name, sigIt.next().fst());
+				m.put(name, Identifier.make(sigIt.next().fst()));
 			}
-			nestedFunctions.push(m);
-			List<Term> funBodies = extractList(ctx.funDefs().term());
-			Term letBody = extract(ctx.letFunBody);
-			nestedFunctions.pop();
+			env.push(m);
 			sigIt = signatures.iterator();
 			Set<NestedFunctionDef> defs = new HashSet<>();
-			for (Term body : funBodies) {
+			for (TermContext bodyCtx : ctx.funDefs().term()) {
 				Pair<FunctionSymbol, List<Var>> p = sigIt.next();
-				defs.add(NestedFunctionDef.make(p.fst(), p.snd(), body));
+				List<Var> params = p.snd();
+				env.push(ParsingUtil.varsToIds(params));
+				defs.add(NestedFunctionDef.make(p.fst(), params, extract(bodyCtx)));
+				env.pop();
 			}
+			Term letBody = extract(ctx.letFunBody);
+			env.pop();
 			return LetFunExpr.make(defs, letBody);
 		}
 
