@@ -1,14 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.4.0] - 2020-09-22
 ### Added
 - Eager semi-naive evaluation algorithm.
 - SMT manager that uses push and pop.
 - Naive SMT manager that does not do any form of caching.
 - Optimal index selection.
 - Ability to interface with different solvers and set logic.
-- Ability to use alternate solvers (CVC4, Yices 2, Boolector).
 
 ### Changed
 - Accept .tsv fact files instead of .csv files.
