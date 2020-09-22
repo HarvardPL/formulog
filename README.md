@@ -139,3 +139,8 @@ mvn license:download-licenses
 
 The generated content can be found in the `target/generated-resources/`
 directory.
+
+## TODO
+
+* Standardize names of command-line options
+* Add support for configuration files

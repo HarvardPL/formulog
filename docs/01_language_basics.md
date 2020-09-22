@@ -170,8 +170,7 @@ p :- foo(X), X = true.
 ### External input relations
 
 It is possible to specify that an input relation is enumerated externally in
-(tab-separated) CSV files by annotating an input relation declaration with
-`@external`, as in
+TSV files by annotating an input relation declaration with `@external`, as in
 
 ```
 @external
@@ -182,7 +181,7 @@ input bar(string)
 ```
 
 The Formulog runtime will look in the current directory for files called
-`foo.csv` and `bar.csv`. The former might look like:
+`foo.tsv` and `bar.tsv`. The former might look like:
 
 ```
 42  0 ["x"]

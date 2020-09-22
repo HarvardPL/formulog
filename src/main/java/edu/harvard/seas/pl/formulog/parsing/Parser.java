@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.parsing;
 
+import java.io.FileNotFoundException;
+
 /*-
  * #%L
  * Formulog
@@ -114,11 +116,13 @@ public class Parser {
 	}
 
 	private void readEdbFromFile(ParsingContext pc, RelationSymbol sym, Path inputDir, Set<Term[]> acc) throws ParseException {
-		Path path = inputDir.resolve(sym.toString() + ".csv");
+		Path path = inputDir.resolve(sym.toString() + ".tsv");
 		try (FileReader fr = new FileReader(path.toFile())) {
 			FormulogParser parser = getParser(fr, true);
 			FactFileParser fpp = new FactFileParser(pc);
 			fpp.loadFacts(parser.tsvFile(), sym.getArity(), acc);
+		} catch (FileNotFoundException e) {
+			throw new ParseException("Could not find external fact file: " + path);
 		} catch (Exception e) {
 			throw new ParseException("Exception when extracting facts from " + path + ": " + e.getMessage());
 		}
