@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Ability to use alternate solvers (CVC4, Yices 2, Boolector).
 
 ### Changed
+- Allow ML variables to be lowercase.
 - The `debugSmt` option logs SMT calls to separate files by solver, instead of
   printing them to same stream.
 - Removed `is_valid_opt` and changed signature of `is_sat_opt` to take a list

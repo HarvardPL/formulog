@@ -55,11 +55,17 @@ constructorType
 	ID typeList
 ;
 
+var
+:
+	VAR
+	| ID
+;
+
 varTypeList
 :
-	'(' VAR ':' type
+	'(' var ':' type
 	(
-		',' VAR ':' type
+		',' var ':' type
 	)* ')'
 	| // can be empty
 

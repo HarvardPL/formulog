@@ -88,7 +88,14 @@ public class SymbolManager {
 	}
 
 	public boolean hasName(String name) {
-		return memo.containsKey(name);
+		return memo.containsKey(name) || GlobalSymbolManager.hasName(name);
+	}
+	
+	public boolean hasConstructorSymbolWithName(String name) {
+		if (!hasName(name)) {
+			return false;
+		}
+		return lookupSymbol(name) instanceof ConstructorSymbol;
 	}
 
 	public Symbol lookupSymbol(String name) {

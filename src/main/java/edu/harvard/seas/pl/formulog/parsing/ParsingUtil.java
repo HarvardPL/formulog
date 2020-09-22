@@ -84,6 +84,9 @@ final class ParsingUtil {
 	public static Pair<FunctionSymbol, List<Var>> extractFunDeclaration(ParsingContext pc, FunDefLHSContext ctx,
 			boolean isNested) {
 		String name = ctx.ID().getText();
+		if (pc.symbolManager().hasConstructorSymbolWithName(name)) {
+			throw new RuntimeException("Cannot create a function with name of constructor: " + name);
+		}
 		if (isNested) {
 			AtomicInteger cnt = Util.lookupOrCreate(pc.nestedFunctionCounters(), name, () -> new AtomicInteger());
 			name += "$" + cnt.getAndIncrement();
@@ -93,7 +96,7 @@ final class ParsingUtil {
 		Type retType = typeExtractor.extract(ctx.retType);
 		FunctionSymbol sym = pc.symbolManager().createFunctionSymbol(name, argTypes.size(),
 				new FunctorType(argTypes, retType));
-		List<Var> args = map(ctx.args.VAR(), x -> Var.fresh(x.getText()));
+		List<Var> args = map(ctx.args.var(), x -> Var.fresh(x.getText()));
 		if (args.size() != new HashSet<>(args).size()) {
 			throw new RuntimeException(
 					"Cannot use the same variable multiple times in a function declaration: " + name);

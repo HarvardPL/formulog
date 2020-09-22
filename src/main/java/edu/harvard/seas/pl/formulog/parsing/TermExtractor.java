@@ -146,6 +146,7 @@ class TermExtractor {
 	private final FormulogVisitor<Term> visitor = new FormulogBaseVisitor<Term>() {
 
 		private boolean inFormula;
+		private boolean inPattern;
 
 		private void assertNotInFormula(String msg) {
 			if (inFormula) {
@@ -193,8 +194,12 @@ class TermExtractor {
 				return parseBool(ctx);
 			}
 			List<Param> params = ParsingUtil.extractParams(pc, ctx.parameterList());
-			Identifier id = env.get(name);
 			Term[] args = extractArray(ctx.termArgs().term());
+			if (inPattern && args.length == 0 && !pc.symbolManager().hasConstructorSymbolWithName(name)) {
+				Var x = Var.fresh(name);
+				env.put(name, Identifier.make(x));
+			}
+			Identifier id = env.get(name);
 			if (id != null && id.isVar()) {
 				if (args.length > 0) {
 					throw new RuntimeException("Cannot apply a variable " + name + " to arguments.");
@@ -682,9 +687,13 @@ class TermExtractor {
 			Term guard = ctx.term().accept(this);
 			List<MatchClause> matches = new ArrayList<>();
 			for (MatchClauseContext mcc : ctx.matchClause()) {
-				Term rhs = extract(mcc.rhs);
 				for (TermContext pc : mcc.patterns().term()) {
+					env.push(new HashMap<>());
+					inPattern = true;
 					Term pattern = extract(pc);
+					inPattern = false;
+					Term rhs = extract(mcc.rhs);
+					env.pop();
 					matches.add(MatchClause.make(pattern, rhs));
 				}
 			}
@@ -693,15 +702,22 @@ class TermExtractor {
 
 		@Override
 		public Term visitLetExpr(LetExprContext ctx) {
-			List<Term> ts = extractList(ctx.letBind().term());
+			Term assign = ctx.assign.accept(this);
+			env.push(new HashMap<>());
+			inPattern = true;
+			List<Term> ts = new ArrayList<>();
+			for (TermContext termCtx : ctx.lhs.term()) {
+				ts.add(extract(termCtx));
+			}
 			Term t;
 			if (ts.size() > 1) {
 				t = Constructors.make(GlobalSymbolManager.lookupTupleSymbol(ts.size()), ts.toArray(Terms.emptyArray()));
 			} else {
 				t = ts.get(0);
 			}
-			Term assign = ctx.assign.accept(this);
+			inPattern = false;
 			Term body = ctx.body.accept(this);
+			env.pop();
 			MatchClause m = MatchClause.make(t, body);
 			return MatchExpr.make(assign, Collections.singletonList(m));
 		}

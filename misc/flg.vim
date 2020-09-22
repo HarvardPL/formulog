@@ -33,7 +33,7 @@ syn keyword keywords type input output match let if then else end fun in with un
 syn keyword todo contained TODO XXX FIXME
 syn region comment start="(\*" end="\*)" fold contains=todo,comment
 syn keyword typeKeywords i32 i64 fp32 fp64 list bool option cmp string smt bv fp sym int array
-syn match variable "\v<[A-Z_][a-zA-Z0-9_]*>"
+syn match variable "\v<[A-Z][a-zA-Z0-9_]*>"
 syn match keywords "#let"
 syn match keywords "#if"
 syn match annotation "@\v<[a-zA-Z0-9_]+>"

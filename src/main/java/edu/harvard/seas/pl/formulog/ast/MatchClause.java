@@ -53,18 +53,18 @@ public class MatchClause {
 		return pat.accept(varsDistinct, new HashSet<>());
 	}
 	
-	private static TermVisitor<Set<Var>, Boolean> varsDistinct = new TermVisitor<Set<Var>, Boolean>() {
+	private static TermVisitor<Set<String>, Boolean> varsDistinct = new TermVisitor<Set<String>, Boolean>() {
 
 		@Override
-		public Boolean visit(Var x, Set<Var> in) {
+		public Boolean visit(Var x, Set<String> in) {
 			if (x.isUnderscore()) {
 				return true;
 			}
-			return in.add(x);
+			return in.add(x.getName());
 		}
 
 		@Override
-		public Boolean visit(Constructor c, Set<Var> in) {
+		public Boolean visit(Constructor c, Set<String> in) {
 			boolean ok = true;
 			for (Term t : c.getArgs()) {
 				ok &= t.accept(this, in);
@@ -73,12 +73,12 @@ public class MatchClause {
 		}
 
 		@Override
-		public Boolean visit(Primitive<?> p, Set<Var> in) {
+		public Boolean visit(Primitive<?> p, Set<String> in) {
 			return true;
 		}
 
 		@Override
-		public Boolean visit(Expr e, Set<Var> in) {
+		public Boolean visit(Expr e, Set<String> in) {
 			throw new AssertionError("Shouldn't be expressions in patterns");
 		}
 		
