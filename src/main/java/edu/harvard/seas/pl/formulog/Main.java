@@ -64,7 +64,7 @@ public final class Main {
 					Configuration.eagerSemiNaive);
 			long start = System.currentTimeMillis();
 			eval.run();
-			printResults(System.currentTimeMillis() - start);
+			printResults(i, System.currentTimeMillis() - start);
 		}
 	}
 
@@ -87,7 +87,8 @@ public final class Main {
 		throw new AssertionError("impossible");
 	}
 
-	private void printResults(long time) {
+	private void printResults(int run, long time) {
+		System.out.print("formulog: run " + run + ": ");
 		System.out.print(time);
 		System.out.print("," + (long) (Configuration.smtEvalStats.computeSum() / 1e6));
 		Dataset smtCacheReuse = getSmtCacheReuseData();
