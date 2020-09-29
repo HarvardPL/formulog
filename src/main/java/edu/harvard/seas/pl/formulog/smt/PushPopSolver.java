@@ -48,9 +48,7 @@ public class PushPopSolver extends AbstractSmtLibSolver {
 			it.next();
 		}
 		growCache(it);
-		if (Configuration.timeSmt) {
-			Configuration.recordPushPopSolverStats(solverId, baseSize, pops, cache.size() - i);
-		}
+		Configuration.recordPushPopSolverStats(solverId, baseSize, pops, cache.size() - i);
 		return emptyCollectionPair;
 	}
 

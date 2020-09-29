@@ -57,6 +57,10 @@ public final class Configuration {
 		throw new AssertionError("impossible");
 	}
 
+	public static int stealCount = 0;
+	public static int externalSubmissions = 0;
+	public static final int numRuns = getIntProp("numRuns", 1);
+	
 	public static final boolean recordFuncDiagnostics = propIsSet("timeFuncs");
 	private static final Map<FunctionSymbol, AtomicLong> funcTimes = new ConcurrentHashMap<>();
 
@@ -69,7 +73,7 @@ public final class Configuration {
 	public static final boolean timeSmt = propIsSet("timeSmt");
 	public static final boolean smtMemoize = propIsSet("smtMemoize", true);
 	private static final Map<SmtLibSolver, Dataset> perProcessSmtEvalStats = new ConcurrentHashMap<>();
-	private static final Dataset smtEvalStats = new Dataset();
+	public static final Dataset smtEvalStats = new Dataset();
 	private static final AtomicLong smtDeclGlobalsTime = new AtomicLong();
 	private static final AtomicLong smtEncodeTime = new AtomicLong();
 	private static final AtomicLong smtDeclTime = new AtomicLong();
@@ -129,14 +133,14 @@ public final class Configuration {
 	public static final boolean smtCheckSuccess = propIsSet("smtCheckSuccess", false);
 
 	private static final Dataset pushPopStackSize = new Dataset();
-	private static final Dataset pushPopStackReuse = new Dataset();
+	public static final Dataset pushPopStackReuse = new Dataset();
 	private static final Dataset pushPopStackPushes = new Dataset();
 	private static final Dataset pushPopStackPops = new Dataset();
 	private static final Dataset pushPopStackDelta = new Dataset();
 	private static final Dataset csaCacheHitRate = new Dataset();
 	private static final Dataset csaCacheUseRate = new Dataset();
 	private static final Dataset csaCacheSize = new Dataset();
-	private static final Dataset csaCacheHits = new Dataset();
+	public static final Dataset csaCacheHits = new Dataset();
 	private static final Dataset csaCacheMisses = new Dataset();
 	private static final AtomicInteger csaCacheClears = new AtomicInteger();
 	private static final Dataset csaEvalStats = new Dataset();

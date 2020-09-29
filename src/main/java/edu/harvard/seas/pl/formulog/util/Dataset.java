@@ -46,8 +46,11 @@ public class Dataset {
 	}
 
 	public double computeMean() {
-		assert size() > 0;
-		return computeSum() / size();
+		int n = size();
+		if (n <= 0) {
+			return 0;
+		}
+		return computeSum() / n;
 	}
 
 	public double computeStdDev() {
@@ -63,6 +66,9 @@ public class Dataset {
 	public List<Double> computeMinMedianMax() {
 		List<Datum> points = data.stream().sorted().collect(Collectors.toList());
 		int n = size();
+		if (n == 0) {
+			return null;
+		}
 		double min = points.get(0).val;
 		double max = points.get(n - 1).val;
 		int mid = n / 2;
@@ -71,6 +77,14 @@ public class Dataset {
 			median = (median + points.get(mid - 1).val) / 2;
 		}
 		return Arrays.asList(min, median, max);
+	}
+	
+	public double computeMedian() {
+		List<Double> mmm = computeMinMedianMax();
+		if (mmm == null) {
+			return 0;
+		}
+		return mmm.get(1);
 	}
 
 	public String getStatsString(double multiplier) {
@@ -100,6 +114,10 @@ public class Dataset {
 			return Double.compare(val, o.val);
 		}
 
+	}
+
+	public void clear() {
+		data.clear();
 	}
 
 }

@@ -35,6 +35,7 @@ public class CountingFJPImpl implements CountingFJP {
 	private final ForkJoinPool exec;
 	private final AtomicInteger taskCount = new AtomicInteger();
 	private volatile EvaluationException failureCause;
+	private final AtomicInteger externalSubmissions = new AtomicInteger();
 
 	public CountingFJPImpl(int parallelism) {
 		this.exec = new ForkJoinPool(parallelism, ForkJoinPool.defaultForkJoinWorkerThreadFactory,
@@ -49,6 +50,7 @@ public class CountingFJPImpl implements CountingFJP {
 	}
 
 	public void externallyAddTask(AbstractFJPTask w) {
+		externalSubmissions.incrementAndGet();
 		taskCount.incrementAndGet();
 		try {
 			exec.execute(w);
@@ -117,6 +119,11 @@ public class CountingFJPImpl implements CountingFJP {
 	@Override
 	public long getStealCount() {
 		return exec.getStealCount();
+	}
+
+	@Override
+	public int getExternalSubmissions() {
+		return externalSubmissions.get();
 	}
 
 }

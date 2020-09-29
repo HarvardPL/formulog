@@ -29,10 +29,12 @@ import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 public class MockCountingFJP implements CountingFJP {
 
 	private volatile EvaluationException failureCause;
+	private int externalSubmissions;
 	
 	private final Deque<AbstractFJPTask> workItems = new ArrayDeque<>();
 
 	public synchronized void externallyAddTask(AbstractFJPTask w) {
+		externalSubmissions++;
 		workItems.addLast(w);
 	}
 
@@ -73,4 +75,9 @@ public class MockCountingFJP implements CountingFJP {
 		return 0;
 	}
 
+	@Override
+	public int getExternalSubmissions() {
+		return externalSubmissions;
+	}
+	
 }

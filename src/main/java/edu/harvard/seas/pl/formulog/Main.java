@@ -22,220 +22,96 @@ package edu.harvard.seas.pl.formulog;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.PrintStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.time.StopWatch;
-
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
-import edu.harvard.seas.pl.formulog.codegen.CodeGen;
-import edu.harvard.seas.pl.formulog.eval.Evaluation;
-import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.eval.EvaluationResult;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
 import edu.harvard.seas.pl.formulog.parsing.ParseException;
 import edu.harvard.seas.pl.formulog.parsing.Parser;
-import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
-import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
-import edu.harvard.seas.pl.formulog.types.TypeException;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
-import edu.harvard.seas.pl.formulog.util.Util;
-import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
+import edu.harvard.seas.pl.formulog.util.Dataset;
 
 public final class Main {
 
 	private final String file;
-	private final StopWatch clock = new StopWatch();
-	private volatile boolean interrupted = true;
-
-	private static final boolean exnStackTrace = System.getProperty("exnStackTrace") != null;
 
 	private Main(String file) {
 		this.file = file;
 	}
 
-	private void go() {
+	private void clearGlobalStats() {
+		Configuration.smtEvalStats.clear();
+		Configuration.csaCacheHits.clear();
+		Configuration.pushPopStackReuse.clear();
+		Configuration.stealCount = 0;
+		Configuration.externalSubmissions = 0;
+	}
+
+	private void go() throws Exception {
 		Program<UserPredicate, BasicRule> prog = parse();
-		WellTypedProgram typedProg = typeCheck(prog);
-		Evaluation eval = setup(typedProg);
-		Runtime.getRuntime().addShutdownHook(new Thread() {
-
-			@Override
-			public void run() {
-				if (interrupted) {
-					printResults(eval);
-				}
-			}
-
-		}
-
-		);
-		evaluate(eval);
-		interrupted = false;
-		printResults(eval);
-	}
-
-	private Program<UserPredicate, BasicRule> parse() {
-		System.out.println("Parsing...");
-		clock.start();
-		try {
-			List<Path> factDirs = Configuration.factDirs.stream().map(Paths::get).collect(Collectors.toList());
-			if (factDirs.isEmpty()) {
-				factDirs = Collections.singletonList(Paths.get(""));
-			}
-			FileReader reader = new FileReader(file);
-			Program<UserPredicate, BasicRule> prog = new Parser().parse(reader, factDirs);
-			clock.stop();
-			System.out.println("Finished parsing (" + clock.getTime() / 1000.0 + "s)");
-			return prog;
-		} catch (ParseException | FileNotFoundException e) {
-			handleException("Error while parsing!", e);
-			throw new AssertionError("impossible");
-		}
-	}
-
-	private WellTypedProgram typeCheck(Program<UserPredicate, BasicRule> prog) {
-		System.out.println("Type checking...");
-		clock.reset();
-		clock.start();
-		try {
-			WellTypedProgram prog2 = new TypeChecker(prog).typeCheck();
-			clock.stop();
-			System.out.println("Finished type checking (" + clock.getTime() / 1000.0 + "s)");
-			return prog2;
-		} catch (TypeException e) {
-			handleException("Error while typechecking the program!", e);
-			throw new AssertionError("impossible");
-		}
-	}
-
-	private Evaluation setup(WellTypedProgram prog) {
-		System.out.println("Rewriting and validating...");
-		clock.reset();
-		clock.start();
-		try {
-			Evaluation eval = SemiNaiveEvaluation.setup(prog, Configuration.parallelism, Configuration.eagerSemiNaive);
-			clock.stop();
-			System.out.println("Finished rewriting and validating (" + clock.getTime() / 1000.0 + "s)");
-			return eval;
-		} catch (InvalidProgramException e) {
-			handleException("Error while rewriting/validation!", e);
-			throw new AssertionError("impossible");
-		}
-	}
-
-	private void evaluate(Evaluation eval) {
-		System.out.println("Evaluating...");
-		clock.reset();
-		clock.start();
-		try {
+		WellTypedProgram typedProg = new TypeChecker(prog).typeCheck();
+		for (int i = 0; i < Configuration.numRuns; ++i) {
+			typedProg.getFunctionCallFactory().clearCache();
+			clearGlobalStats();
+			SemiNaiveEvaluation eval = SemiNaiveEvaluation.setup(typedProg, Configuration.parallelism,
+					Configuration.eagerSemiNaive);
+			long start = System.currentTimeMillis();
 			eval.run();
-			clock.stop();
-			System.out.println("Finished evaluating (" + clock.getTime() / 1000.0 + "s)");
-		} catch (EvaluationException e) {
-			handleException("Error while evaluating the program!", e);
+			printResults(System.currentTimeMillis() - start);
 		}
 	}
 
-	private void printResults(Evaluation eval) {
-		PrintStream out = System.out;
-		EvaluationResult res = eval.getResult();
-		switch (Configuration.printResultsPreference) {
-		case ALL:
-			printEdb(res, out);
-			out.println();
-			printIdb(res, out);
-			break;
-		case EDB:
-			printEdb(res, out);
-			break;
-		case IDB:
-			printIdb(res, out);
-			break;
-		case QUERY:
-			printQueryResults(res, out);
-			break;
-		case SOME:
-			printSelectedResults(res, eval.getInputProgram().getSymbolManager(), out);
-			break;
-		case NONE:
-			break;
+	private Dataset getSmtCacheReuseData() {
+		switch (Configuration.smtStrategy.getTag()) {
+		case NAIVE:
+		case PER_THREAD_NAIVE:
+			return new Dataset();
+		case PER_THREAD_PUSH_POP:
+		case PER_THREAD_PUSH_POP_NAIVE:
+		case PUSH_POP:
+		case PUSH_POP_NAIVE:
+			return Configuration.pushPopStackReuse;
+		case PER_THREAD_BEST_MATCH:
+		case PER_THREAD_QUEUE:
+		case BEST_MATCH:
+		case QUEUE:
+			return Configuration.csaCacheHits;
 		}
+		throw new AssertionError("impossible");
 	}
 
-	public void printEdb(EvaluationResult res, PrintStream out) {
-		out.println("Extensional database:");
-		for (RelationSymbol sym : res.getSymbols()) {
-			if (sym.isEdbSymbol()) {
-				Util.printSortedFacts(res.getAll(sym), out);
-			}
-		}
+	private void printResults(long time) {
+		System.out.print(time);
+		System.out.print("," + (long) (Configuration.smtEvalStats.computeSum() / 1e6));
+		Dataset smtCacheReuse = getSmtCacheReuseData();
+		System.out.printf(",%.1f", smtCacheReuse.computeMean());
+		System.out.printf(",%.1f", smtCacheReuse.computeMedian());
+		System.out.print("," + (Configuration.stealCount - Configuration.externalSubmissions));
+		System.out.println();
 	}
 
-	public void printIdb(EvaluationResult res, PrintStream out) {
-		out.println("Intensional database:");
-		for (RelationSymbol sym : res.getSymbols()) {
-			if (sym.isIdbSymbol()) {
-				Util.printSortedFacts(res.getAll(sym), out);
-			}
+	private Program<UserPredicate, BasicRule> parse() throws FileNotFoundException, ParseException {
+		List<Path> factDirs = Configuration.factDirs.stream().map(Paths::get).collect(Collectors.toList());
+		if (factDirs.isEmpty()) {
+			factDirs = Collections.singletonList(Paths.get(""));
 		}
-	}
-
-	public void printQueryResults(EvaluationResult res, PrintStream out) {
-		out.println("Query results:");
-		Iterable<UserPredicate> ans = res.getQueryAnswer();
-		if (ans == null) {
-			out.println("[there was no query]");
-		} else {
-			Util.printSortedFacts(res.getQueryAnswer(), out);
-		}
-	}
-
-	public void printSelectedResults(EvaluationResult res, SymbolManager sm, PrintStream out) {
-		out.println("Selected results:");
-		for (String name : Configuration.getSelectedRelsToPrint()) {
-			if (!sm.hasName(name)) {
-				out.println("[ignoring unrecognized symbol: " + name + "]");
-				continue;
-			}
-			Symbol sym = sm.lookupSymbol(name);
-			if (!(sym instanceof RelationSymbol)) {
-				out.println("[ignoring symbol " + name + " (not a relation symbol)]");
-			}
-		}
-		for (RelationSymbol sym : res.getSymbols()) {
-			if (Configuration.getSelectedRelsToPrint().contains(sym.toString())) {
-				Util.printSortedFacts(res.getAll(sym), out);
-			}
-		}
+		FileReader reader = new FileReader(file);
+		Program<UserPredicate, BasicRule> prog = new Parser().parse(reader, factDirs);
+		return prog;
 	}
 
 	public static void main(String[] args) throws Exception {
-		if (Configuration.codeGen) {
-			CodeGen.main(args);
-		} else {
-			if (args.length != 1) {
-				throw new IllegalArgumentException("Excepted a single Formulog file as an argument.");
-			}
-			new Main(args[0]).go();
+		if (args.length != 1) {
+			throw new IllegalArgumentException("Excepted a single Formulog file as an argument.");
 		}
-	}
-
-	private static void handleException(String msg, Exception e) {
-		System.out.println(msg);
-		System.out.println(e.getMessage());
-		if (exnStackTrace) {
-			e.printStackTrace(System.out);
-		}
-		System.exit(1);
+		new Main(args[0]).go();
 	}
 
 }

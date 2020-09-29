@@ -212,4 +212,8 @@ public final class FunctionCallFactory {
 
 	}
 
+	public void clearCache() {
+		callMemo.clear();
+	}
+
 }

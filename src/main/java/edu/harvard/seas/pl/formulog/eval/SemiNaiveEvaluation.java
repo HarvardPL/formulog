@@ -87,6 +87,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 	private final WellTypedProgram inputProgram;
 	private final Map<RelationSymbol, Set<IndexedRule>> rules;
 	private final boolean eagerEval;
+	public final int numFacts;
 
 	static final boolean sequential = System.getProperty("sequential") != null;
 	static final boolean debugRounds = Configuration.debugRounds;
@@ -180,8 +181,12 @@ public class SemiNaiveEvaluation implements Evaluation {
 			exec.shutdown();
 			throw new InvalidProgramException(exec.getFailureCause());
 		}
+		int numFacts = 0;
+		for (RelationSymbol sym : magicProg.getFactSymbols()) {
+			numFacts += db.countDistinct(sym);
+		}
 		return new SemiNaiveEvaluation(prog, db, deltaDbb, rules, magicProg.getQuery(), strata, exec,
-				getTrackedRelations(magicProg.getSymbolManager()), eagerEval);
+				getTrackedRelations(magicProg.getSymbolManager()), eagerEval, numFacts);
 	}
 
 	private static Rule<UserPredicate, ComplexLiteral> tweakRule(Rule<UserPredicate, ComplexLiteral> r,
@@ -453,7 +458,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 	SemiNaiveEvaluation(WellTypedProgram inputProgram, SortedIndexedFactDb db,
 			IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb, Map<RelationSymbol, Set<IndexedRule>> rules,
 			UserPredicate query, List<Stratum> strata, CountingFJP exec, Set<RelationSymbol> trackedRelations,
-			boolean eagerEval) {
+			boolean eagerEval, int numFacts) {
 		this.inputProgram = inputProgram;
 		this.db = db;
 		this.query = query;
@@ -464,6 +469,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 		this.nextDeltaDb = deltaDbb.build();
 		this.rules = rules;
 		this.eagerEval = eagerEval;
+		this.numFacts = numFacts;
 	}
 
 	@Override
@@ -500,6 +506,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 		for (Stratum stratum : strata) {
 			evaluateStratum(stratum);
 		}
+		Configuration.stealCount += exec.getStealCount();
+		Configuration.externalSubmissions += exec.getExternalSubmissions();
 	}
 
 	private void evaluateStratum(Stratum stratum) throws EvaluationException {

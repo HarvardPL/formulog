@@ -116,7 +116,7 @@ public class Parser {
 	}
 
 	private void readEdbFromFile(ParsingContext pc, RelationSymbol sym, Path inputDir, Set<Term[]> acc) throws ParseException {
-		Path path = inputDir.resolve(sym.toString() + ".tsv");
+		Path path = inputDir.resolve(sym.toString() + ".csv");
 		try (FileReader fr = new FileReader(path.toFile())) {
 			FormulogParser parser = getParser(fr, true);
 			FactFileParser fpp = new FactFileParser(pc);
