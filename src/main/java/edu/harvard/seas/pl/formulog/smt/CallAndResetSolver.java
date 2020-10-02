@@ -43,6 +43,7 @@ public class CallAndResetSolver extends AbstractSmtLibSolver {
 	@Override
 	protected void cleanup() throws EvaluationException {
 		shim.reset();
+		shim.makeDeclarations();
 	}
 
 	@Override
