@@ -91,6 +91,7 @@ public final class Main {
 		System.out.print("formulog: run " + run + ": ");
 		System.out.print(time);
 		System.out.print("," + (long) (Configuration.smtEvalStats.computeSum() / 1e6));
+		System.out.print("," + Configuration.smtEvalStats.size());
 		Dataset smtCacheReuse = getSmtCacheReuseData();
 		System.out.printf(",%.1f", smtCacheReuse.computeMean());
 		System.out.printf(",%.1f", smtCacheReuse.computeMedian());
