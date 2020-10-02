@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+### Fixed
+- Bug in the naive (call-reset) SMT solver strategy.
+
 ## [0.4.0] - 2020-09-22
 ### Added
 - Eager semi-naive evaluation algorithm.
