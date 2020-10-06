@@ -1564,7 +1564,7 @@ public final class BuiltInFunctionDefFactory {
 
 	}
 
-	private static final Map<Triple<Set<SmtLibTerm>, Boolean, Integer>, Future<SmtResult>> smtMemo = new ConcurrentHashMap<>();
+	public static Map<Triple<Set<SmtLibTerm>, Boolean, Integer>, Future<SmtResult>> smtMemo = new ConcurrentHashMap<>();
 
 	private Pair<SmtStatus, Model> querySmt(SmtLibTerm assertions, boolean getModel) throws EvaluationException {
 		return querySmt(assertions, getModel, Integer.MAX_VALUE);
