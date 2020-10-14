@@ -388,12 +388,12 @@ public class BalbinEvaluation implements Evaluation {
 //                    System.out.println(bodyIPred.isNegated());
                     EdgeType edgeType = bodyIPred.isNegated() ? EdgeType.NEGATIVE : EdgeType.POSITIVE;
                     g.addEdge(bodyIPredSymbol, headPredSymbol, new DependencyTypeWrapper(edgeType));
-                    System.out.println("Added edge from " + bodyIPredSymbol + " to " + headPredSymbol + " with edge type " + edgeType);
+//                    System.out.println("Added edge from " + bodyIPredSymbol + " to " + headPredSymbol + " with edge type " + edgeType);
                 }
             }
         }
 
-        System.out.println("VERTEX SET: " + g.vertexSet());
+//        System.out.println("VERTEX SET: " + g.vertexSet());
 
         // Case 2 - q <--(+) pred(p0), where p0 is the head of a rule
         AllDirectedPaths<RelationSymbol, DependencyTypeWrapper> allPathsG = new AllDirectedPaths<>(g);
@@ -408,11 +408,11 @@ public class BalbinEvaluation implements Evaluation {
             // Todo: Check that getAllPaths is working as expected (i.e. for cycles)
             // Todo (error): getAllPaths is returning empty; it's possible that headPredSymbol is represented differently
             //  when that symbol is in the body of a rule. See line 379 where edges are being added.
-            System.out.println("headPredSymbol: " + headPredSymbol);
-            System.out.println("qSymbol: " + qSymbol);
+//            System.out.println("headPredSymbol: " + headPredSymbol);
+//            System.out.println("qSymbol: " + qSymbol);
             allPaths = allPathsG.getAllPaths(qSymbol, headPredSymbol, false, maxPathLength);
-            System.out.print("allPaths: ");
-            System.out.println(allPaths);
+//            System.out.print("allPaths: ");
+//            System.out.println(allPaths);
 
             // Only add basicRule to prules if every edge in every path of allPaths is positive
             boolean foundNegativeEdge = false;

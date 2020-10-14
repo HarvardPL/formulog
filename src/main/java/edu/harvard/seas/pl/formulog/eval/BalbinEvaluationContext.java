@@ -76,7 +76,6 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
         this.mst = mst;
         this.maxPathLength = maxPathLength;
 
-        System.out.println("HELLO");
         assert qSymbol instanceof MagicSetTransformer.InputSymbol : "Balbin evaluation context: Query must be an InputSymbol";
         addQMagicFactsToDb(db);
         addQMagicFactsToDb(deltaDb);
