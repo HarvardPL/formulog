@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+
+### Changed
+- Signature of `get_model` (takes a list of propositions now)
+
 ### Fixed
 - Bug in the naive (call-reset) SMT solver strategy.
 

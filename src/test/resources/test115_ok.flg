@@ -2,6 +2,6 @@
 
 output ok.
 ok :-
-  some(M1) = get_model(`~(#x[bv[32]] #= #y[bv[32]])`, none),
-  some(M2) = get_model(`~(#x[bv[32]] #= #y[bv[32]])`, none),
+  some(M1) = get_model([`~(#x[bv[32]] #= #y[bv[32]])`], none),
+  some(M2) = get_model([`~(#x[bv[32]] #= #y[bv[32]])`], none),
   M1 = M2.

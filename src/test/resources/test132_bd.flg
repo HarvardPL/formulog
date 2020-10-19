@@ -1,5 +1,5 @@
 output not_ok.
 not_ok :-
-  X = get_model(`true`, none),
+  X = get_model([`true`], none),
   Y = [none, X],
   _ = `#is_nil(Y)`.

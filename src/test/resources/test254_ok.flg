@@ -1,4 +1,4 @@
 output ok
 ok :-
 	X = #x[string],
-	some(_) = get_model(`X #= "!@#$%^&*-+/"`, none).
+	some(_) = get_model([`X #= "!@#$%^&*-+/"`], none).

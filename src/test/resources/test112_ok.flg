@@ -1,4 +1,4 @@
 output ok.
 ok :-
-  some(M) = get_model(`#is_nil(#x[bv[16] list])`, none),
+  some(M) = get_model([`#is_nil(#x[bv[16] list])`], none),
   query_model(#x[bv[16] list], M) = none.

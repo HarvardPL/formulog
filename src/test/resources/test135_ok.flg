@@ -6,6 +6,6 @@ output ok.
 ok :-
 	X = #x[typ],
 	Y = #y[bool],
-	some(M) = get_model(`subtyp(X, X) /\ Y`, none),
+	some(M) = get_model([`subtyp(X, X)`, `Y`], none),
 	query_model(X, M) = none,
 	query_model(Y, M) = some(true).

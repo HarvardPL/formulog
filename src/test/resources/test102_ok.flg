@@ -1,5 +1,5 @@
 output ok.
 ok :-
-  some(M) = get_model(`(#x[fp32] #= 42F) /\ (#y[fp32] #= fp_neg(#x[fp32]))`, none),
+  some(M) = get_model([`#x[fp32] #= 42F`, `#y[fp32] #= fp_neg(#x[fp32])`], none),
   query_model(#x[fp32], M) = some(42F),
   query_model(#y[fp32], M) = some(-42F).

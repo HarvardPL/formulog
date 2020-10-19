@@ -1,5 +1,5 @@
 output ok.
 ok :-
-  some(M) = get_model(`#is_nil(#x[i32 list]) /\ ~#is_nil(#y[i32 list])`, none),
+  some(M) = get_model([`#is_nil(#x[i32 list])`, `~#is_nil(#y[i32 list])`], none),
   query_model(#x[i32 list], M) = some([]),
   query_model(#y[i32 list], M) = some(_ :: _).

@@ -1761,10 +1761,10 @@ public final class BuiltInFunctionDefFactory {
 
 		@Override
 		public Term evaluate(Term[] args) throws EvaluationException {
-			SmtLibTerm formula = (SmtLibTerm) args[0];
+			List<SmtLibTerm> assertions = Terms.termToTermList((SmtLibTerm) args[0]);
 			Constructor timeoutOpt = (Constructor) args[1];
 			Integer timeout = extractOptionalTimeout(timeoutOpt);
-			Pair<SmtStatus, Model> p = querySmt(formula, true, timeout);
+			Pair<SmtStatus, Model> p = querySmt(assertions, true, timeout);
 			Model model = p.snd();
 			return model == null ? none : some(model);
 		}

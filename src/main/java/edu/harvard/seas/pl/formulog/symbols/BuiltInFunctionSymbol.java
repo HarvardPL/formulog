@@ -290,7 +290,7 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 		case FP64_LT:
 			return new FunctorType(fp64, fp64, bool);
 		case GET_MODEL:
-			return new FunctorType(smt(bool), option(i32), option(model));
+			return new FunctorType(list(smt(bool)), option(i32), option(model));
 		case I32_NEG:
 			return new FunctorType(i32, i32);
 		case I32_ADD:

@@ -54,7 +54,7 @@ entity("World").
 output greeting(string)
 greeting(Y) :-
   entity(X),
-  some(M) = get_model(`#y[string] #= str_concat("Hello, ", X)`, none),
+  some(M) = get_model([`#y[string] #= str_concat("Hello, ", X)`], none),
   some(Y) = query_model(#y[string], M).
 ```
 

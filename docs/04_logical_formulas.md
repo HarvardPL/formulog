@@ -433,7 +433,7 @@ formulas:
 is_sat       : bool smt -> bool
 is_sat_opt   : [bool smt list, i32 option] -> bool option
 is_valid     : bool smt -> bool
-get_model    : [bool smt, i32 option] -> model option
+get_model    : [bool smt list, i32 option] -> model option
 query_model  : ['a sym, model] -> 'a option
 substitute   : ['a sym, 'a smt, 'b smt] -> 'b smt
 is_free      : ['a sym, 'b smt] -> bool
@@ -441,12 +441,13 @@ is_free      : ['a sym, 'b smt] -> bool
 
 The functions `is_sat` and `is_valid` check the satisfiability and validity,
 resp., of their argument and throw an exception if the SMT solver returns
-`unknown`. The functions `is_sat_opt` returns `none` in this
-case; it also takes an argument for an optional timeout.
+`unknown`. The function `is_sat_opt` takes a list of propositions and checks
+for the satisfiability of their conjunction, returning `none` in the case of
+`unknown`; it also takes an argument for an optional timeout.
 
-The function takes a proposition and an optional timeout and returns a model
-for that proposition if the SMT solver finds one in time; it returns `none`
-otherwise.
+The function `get_model` takes a list of propositions and an optional timeout
+and returns a model for the conjunction of those propositions if the SMT solver
+finds one in time; it returns `none` otherwise.
 Variables in a model can be inspected using `query_model`, which will return
 `none` if a variable is not present in the model or if it is of a type that
 cannot be concretely represented in Formulog (for example, Formulog does not

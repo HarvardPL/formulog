@@ -1,5 +1,5 @@
 output ok.
 ok :-
-  some(M) = get_model(`(#x[i64] #= 42L) /\ (#y[i64] #= bv_neg(#x[i64]))`),
+  some(M) = get_model([`#x[i64] #= 42L`, `#y[i64] #= bv_neg(#x[i64])`]),
   query_model(#x[i64], M) = some(42L),
   query_model(#y[i64], M) = some(-42L).
