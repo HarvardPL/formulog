@@ -334,8 +334,19 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
                                         // Evaluate a new context
                                         Set<Term[]> newQMagicFactsTerms = new HashSet<>();
                                         newQMagicFactsTerms.add(newLInputAtom.getArgs());
-                                        new BalbinEvaluationContext(db, deltaDbb, newLInputAtom.getSymbol(), newQMagicFactsTerms, pRules, allRules,
-                                                exec, trackedRelations, mst, maxPathLength).evaluate();
+
+                                        // Found new fact; will have to fix this conditional for multithreaded evaluation
+                                        if (!db.hasFact(newLInputSymbol, newQMagicFactsTerms.iterator().next())) {
+                                            new BalbinEvaluationContext(db, deltaDbb, newLInputAtom.getSymbol(), newQMagicFactsTerms, pRules, allRules,
+                                                    exec, trackedRelations, mst, maxPathLength).evaluate();
+                                        } else {
+                                            if (!tups.hasNext()) {
+                                                pos++;
+                                            } else {
+                                                pos--;
+                                                movingRight = false;
+                                            }
+                                        }
                                     } else {
                                         if (!tups.hasNext()) {
                                             pos++;
