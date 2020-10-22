@@ -26,6 +26,7 @@ import edu.harvard.seas.pl.formulog.ast.*;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDbBuilder;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
+import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer.InputSymbol;
 import edu.harvard.seas.pl.formulog.smt.*;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
@@ -346,6 +347,10 @@ public class BalbinEvaluation implements Evaluation {
         }
 
         RelationSymbol qSymbol = q.getSymbol();
+        assert qSymbol instanceof InputSymbol;
+        if (qSymbol instanceof InputSymbol) {
+        	qSymbol = ((InputSymbol) qSymbol).getBaseSymbol();
+        }
         Set<IndexedRule> prules = new HashSet<>();
 
         // DefaultDirectedGraph; assuming no recursive negation
