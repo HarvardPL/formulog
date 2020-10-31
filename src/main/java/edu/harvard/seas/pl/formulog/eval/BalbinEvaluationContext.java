@@ -328,8 +328,11 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
                                         // Get prules
                                         List<IndexedRule> pRules = new ArrayList<>();
                                         pRules.addAll(BalbinEvaluation.getPRules(newLInputAtom, allRules, maxPathLength));
-                                        System.out.println("newLInputAtom: " + newLInputAtom);
-                                        System.out.println("pRules: " + pRules);
+//                                        System.out.println("newLInputAtom: " + newLInputAtom);
+//                                        System.out.println("pRules:");
+//                                        for (IndexedRule pRule: pRules) {
+//                                            System.out.println(pRule);
+//                                        }
 
                                         // Evaluate a new context
                                         Set<Term[]> newQMagicFactsTerms = new HashSet<>();

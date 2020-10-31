@@ -328,20 +328,21 @@ public class BalbinEvaluation implements Evaluation {
     private void eval() throws EvaluationException {
         List<IndexedRule> pRules = new ArrayList<>();
         pRules.addAll(getPRules(qInputAtom, rules, maxPathLength));
-        System.out.println("pRules:");
-        System.out.println(pRules);
+//        System.out.println("pRules:");
+//        for (IndexedRule pRule: pRules) {
+//            System.out.println(pRule);
+//        }
 
         // Create new BalbinEvaluationContext
         MagicSetTransformer.InputSymbol qInputSymbol = (MagicSetTransformer.InputSymbol) qInputAtom.getSymbol();
-        System.out.println("CALLING");
         new BalbinEvaluationContext(db, deltaDbb, qInputSymbol, qMagicFactsTerms, pRules, rules, exec, trackedRelations, mst, maxPathLength)
                 .evaluate();
     }
 
     // - prules (with IndexedRule)
     public static Set<IndexedRule> getPRules(UserPredicate q, Map<RelationSymbol, Set<IndexedRule>> rules, int maxPathLength) {
-        System.out.print("q: ");
-        System.out.println(q);
+//        System.out.print("q: ");
+//        System.out.println(q);
         Set<IndexedRule> db = new HashSet<>();
         for (Map.Entry<RelationSymbol, Set<IndexedRule>> entry : rules.entrySet()) {
             db.addAll(entry.getValue());
@@ -403,22 +404,15 @@ public class BalbinEvaluation implements Evaluation {
 
         // Case 2 - q <--(+) pred(p0), where p0 is the head of a rule
         AllDirectedPaths<RelationSymbol, DependencyTypeWrapper> allPathsG = new AllDirectedPaths<>(g);
-//        System.out.print("allPathsG: ");
-//        System.out.println(allPathsG);
         List<GraphPath<RelationSymbol, DependencyTypeWrapper>> allPaths = null;
         for (IndexedRule indexedRule : db) {
             SimplePredicate headPred = indexedRule.getHead();
             RelationSymbol headPredSymbol = headPred.getSymbol();
 
             // Get all paths from headPredSymbol to qSymbol
-            // Todo: Check that getAllPaths is working as expected (i.e. for cycles)
-            // Todo (error): getAllPaths is returning empty; it's possible that headPredSymbol is represented differently
-            //  when that symbol is in the body of a rule. See line 379 where edges are being added.
 //            System.out.println("headPredSymbol: " + headPredSymbol);
 //            System.out.println("qSymbol: " + qSymbol);
             allPaths = allPathsG.getAllPaths(qSymbol, headPredSymbol, false, maxPathLength);
-//            System.out.print("allPaths: ");
-//            System.out.println(allPaths);
 
             // Only add basicRule to prules if every edge in every path of allPaths is positive
             boolean foundNegativeEdge = false;
@@ -441,8 +435,8 @@ public class BalbinEvaluation implements Evaluation {
             }
             if (!foundNegativeEdge) {
                 prules.add(indexedRule);
-                System.out.print("case 2 - add rule: ");
-                System.out.println(indexedRule);
+//                System.out.print("case 2 - add rule: ");
+//                System.out.println(indexedRule);
             }
         }
         return prules;
