@@ -149,11 +149,12 @@ public class BalbinEvaluation implements Evaluation {
         prog.getFunctionCallFactory().getDefManager().loadBuiltInFunctions(smt);
 
         CountingFJP exec;
-        if (sequential) {
-            exec = new MockCountingFJP();
-        } else {
-            exec = new CountingFJPImpl(parallelism);
-        }
+        exec = new MockCountingFJP();
+//        if (sequential) {
+//            exec = new MockCountingFJP();
+//        } else {
+//            exec = new CountingFJPImpl(parallelism);
+//        }
 
         for (RelationSymbol sym : magicProg.getFactSymbols()) {
             for (Iterable<Term[]> tups : Util.splitIterable(magicProg.getFacts(sym), Configuration.taskSize)) {
