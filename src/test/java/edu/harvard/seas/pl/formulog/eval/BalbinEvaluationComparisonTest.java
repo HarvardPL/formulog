@@ -22,22 +22,21 @@ package edu.harvard.seas.pl.formulog.eval;
 
 import org.junit.Test;
 
-public class SemiInflationaryEvaluationTest extends AbstractEvaluationTest {
+public class BalbinEvaluationComparisonTest extends AbstractEvaluationTest {
 
-    public SemiInflationaryEvaluationTest() {
-        super(new InterpretedSemiNaiveTester(SemiNaiveEvaluation.EvalType.SEMI_INFLATIONARY));
-    }
+	public BalbinEvaluationComparisonTest() {
+		super(new BalbinComparisonTester());
+	}
 
-    @Test
-    public void test001() { test("semi_inflationary/test001_ok.flg"); }
+	// TODO: Update tests
 
-    @Test
-    public void test002() { test("semi_inflationary/test002_ok.flg"); }
+//	@Test
+//	public void test001() { test("balbin_comparison/test001_ok.flg"); }
 
-    @Test
-    public void test003() { test("semi_inflationary/test003_ok.flg"); }
-
-    @Test
-    public void test004() { test("semi_inflationary/test004_ok.flg"); }
+	@Test
+	public void test002() { test("balbin_comparison/test002_ok.flg"); }
+//
+//	@Test
+//	public void test003() { test("balbin_comparison/test003_ok.flg"); }
 
 }

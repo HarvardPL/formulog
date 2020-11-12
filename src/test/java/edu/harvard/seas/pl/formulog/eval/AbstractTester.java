@@ -77,6 +77,6 @@ public abstract class AbstractTester<T extends Evaluation> implements Tester<T> 
 
 	protected abstract T setup(WellTypedProgram prog) throws InvalidProgramException, EvaluationException;
 	
-	protected abstract boolean evaluate(T eval) throws EvaluationException;
+	protected abstract boolean evaluate(T eval) throws InvalidProgramException, EvaluationException;
 
 }
