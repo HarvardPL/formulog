@@ -142,7 +142,7 @@ directory.
 
 ## TODO
 
-This project is very much still under-development and there are quite a few
+This project is very much still under development and there are quite a few
 rough edges. Some of them will hopefully get smoothed out soon.
 
 * Standardize names of command-line options
