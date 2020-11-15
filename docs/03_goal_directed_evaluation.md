@@ -38,6 +38,16 @@ also be stratified. However, the transformation can turn a program that
 terminates into a program that does not terminate. Also, it cannot be used with
 predicates that are "invoked" from the functional fragment of Formulog.
 
+## Query syntax
+
+Queries are in the form `:- A.` where `A` is a positive (non-negated) atom. The
+typical rules about variable usage apply (see the "Anonymous variables" section
+of the Program Safety document). If you want to have a query consisting of
+multiple atoms, write a rule defining a new relation and then query that
+relation. For example, the hypothetical query `:- A, B.` could be rewritten as
+the rule `R :- A, B.` and query `:- R.`. There can be only one query per
+program.
+
 ## Partial goal-directed evaluation
 
 It is also possible to only use goal-directed evaluation for part of a program.

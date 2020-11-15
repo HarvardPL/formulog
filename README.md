@@ -149,3 +149,4 @@ rough edges. Some of them will hopefully get smoothed out soon.
 * Add support for configuration files
 * Better error messages
 * Faster parser
+* Interactive query mode
