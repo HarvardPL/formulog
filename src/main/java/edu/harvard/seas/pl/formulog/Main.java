@@ -230,7 +230,8 @@ public final class Main {
 			CodeGen.main(args);
 		} else {
 			if (args.length != 1) {
-				throw new IllegalArgumentException("Excepted a single Formulog file as an argument.");
+				System.out.println("Expected a single Formulog file as an argument.");
+				System.exit(1);
 			}
 			new Main(args[0]).go();
 		}
