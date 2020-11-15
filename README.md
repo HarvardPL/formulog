@@ -150,3 +150,4 @@ rough edges. Some of them will hopefully get smoothed out soon.
 * Better error messages
 * Faster parser
 * Interactive query mode
+* Tutorial
