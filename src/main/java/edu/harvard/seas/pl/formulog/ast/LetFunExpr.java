@@ -60,7 +60,12 @@ public class LetFunExpr implements Expr {
 
 	@Override
 	public boolean isGround() {
-		throw new UnsupportedOperationException();
+		for (NestedFunctionDef def : defs) {
+			if (!def.getBody().isGround()) {
+				return false;
+			}
+		}
+		return letBody.isGround();
 	}
 
 	@Override
