@@ -65,25 +65,25 @@ public class VariableCheckPass {
 		this.sm = sm;
 	}
 
-	public Term checkFunction(Iterable<Var> arguments, Term body) throws ParseException {
+	public Term checkFunction(Iterable<Var> arguments, Term body) throws VariableCheckPassException {
 		PassContext ctx = new PassContext(arguments);
 		Term newBody = ctx.checkTerm(body);
 		ctx.checkCounts();
 		return newBody;
 	}
 
-	public BasicRule checkRule(BasicRule r) throws ParseException {
+	public BasicRule checkRule(BasicRule r) throws VariableCheckPassException {
 		PassContext ctx = new PassContext();
 		BasicRule newR = ctx.checkRule(r);
 		try {
 			ctx.checkCounts();
-		} catch (ParseException e) {
-			throw new ParseException("Variable usage error in rule: " + e.getMessage() + "\n\n" + r);
+		} catch (VariableCheckPassException e) {
+			throw new VariableCheckPassException("Variable usage error in rule: " + e.getMessage() + "\n\n" + r);
 		}
 		return newR;
 	}
 
-	public Term[] checkFact(Term[] fact) throws ParseException {
+	public Term[] checkFact(Term[] fact) throws VariableCheckPassException {
 		PassContext ctx = new PassContext();
 		Term[] newArgs = new Term[fact.length];
 		for (int i = 0; i < fact.length; ++i) {
@@ -91,8 +91,8 @@ public class VariableCheckPass {
 		}
 		try {
 			ctx.checkCounts();
-		} catch (ParseException e) {
-			throw new ParseException("Variable usage error in fact: " + e.getMessage());
+		} catch (VariableCheckPassException e) {
+			throw new VariableCheckPassException("Variable usage error in fact: " + e.getMessage());
 		}
 		return newArgs;
 	}
@@ -255,20 +255,20 @@ public class VariableCheckPass {
 			return new Pair<>(sym, args);
 		}
 
-		public void checkCounts() throws ParseException {
+		public void checkCounts() throws VariableCheckPassException {
 			for (Map.Entry<Var, Integer> e : cnts.entrySet()) {
 				Var x = e.getKey();
 				int cnt = e.getValue();
 				if (looksLikeHole(x) && cnt > 0) {
-					throw new ParseException("Can only use hole ?? as an argument to a predicate aggregate function.");
+					throw new VariableCheckPassException("Can only use hole ?? as an argument to a predicate aggregate function.");
 				} else if (looksLikeQuasiAnonymousVar(x) && cnt > 1) {
-					throw new ParseException("Quasi-anonymous variable " + x + " occurs more than once.");
+					throw new VariableCheckPassException("Quasi-anonymous variable " + x + " occurs more than once.");
 				} else if (!looksAnonymous(x) && cnt == 1) {
-					throw new ParseException("Named variable " + x + " only occurs once.");
+					throw new VariableCheckPassException("Named variable " + x + " only occurs once.");
 				}
 			}
 		}
-
+		
 	}
 
 	private static boolean looksLikeHole(Var x) {

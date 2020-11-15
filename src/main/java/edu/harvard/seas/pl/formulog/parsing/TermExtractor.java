@@ -114,13 +114,19 @@ class TermExtractor {
 	}
 
 	public synchronized Term extract(TermContext ctx) {
-		return visitor.visit(ctx);
+		try {
+			return visitor.visit(ctx);
+		} catch (UncheckedParseException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new UncheckedParseException(ctx.start.getLine(), e.getMessage());
+		}
 	}
 
 	public synchronized List<Term> extractList(List<TermContext> ctxs) {
 		List<Term> terms = new ArrayList<>();
 		for (TermContext ctx : ctxs) {
-			terms.add(visitor.visit(ctx));
+			terms.add(extract(ctx));
 		}
 		return terms;
 	}
@@ -148,9 +154,9 @@ class TermExtractor {
 		private boolean inFormula;
 		private boolean inPattern;
 
-		private void assertNotInFormula(String msg) {
+		private void assertNotInFormula(int lineNo, String msg) {
 			if (inFormula) {
-				throw new RuntimeException(msg);
+				throw new UncheckedParseException(lineNo, msg);
 			}
 		}
 
@@ -202,7 +208,8 @@ class TermExtractor {
 			Identifier id = env.get(name);
 			if (id != null && id.isVar()) {
 				if (args.length > 0) {
-					throw new RuntimeException("Cannot apply a variable " + name + " to arguments.");
+					throw new UncheckedParseException(ctx.start.getLine(),
+							"Cannot apply a variable " + name + " to arguments.");
 				}
 				return id.asVar();
 			}
@@ -217,9 +224,9 @@ class TermExtractor {
 			if (sym instanceof ParameterizedSymbol) {
 				sym = ((ParameterizedSymbol) sym).copyWithNewArgs(params);
 			} else if (!params.isEmpty()) {
-				throw new RuntimeException("Symbol " + sym + " is not parametric.");
+				throw new UncheckedParseException(ctx.start.getLine(), "Symbol " + sym + " is not parametric.");
 			}
-			Term t = makeFunctor(sym, args);
+			Term t = makeFunctor(ctx.start.getLine(), sym, args);
 			// For a couple constructors, we want to make sure that their arguments are
 			// forced to be non-formula types. For example, the constructor bv_const needs
 			// to take something of type i32, not i32 expr.
@@ -242,15 +249,17 @@ class TermExtractor {
 			assert name.equals("true") || name.equals("false");
 			boolean val = name.equals("true");
 			if (!ctx.parameterList().parameter().isEmpty()) {
-				throw new RuntimeException("Boolean value " + val + " cannot be parameterized");
+				throw new UncheckedParseException(ctx.start.getLine(),
+						"Boolean value " + val + " cannot be parameterized");
 			}
 			if (!ctx.termArgs().term().isEmpty()) {
-				throw new RuntimeException("Boolean value " + val + " cannot be applied to arguments");
+				throw new UncheckedParseException(ctx.start.getLine(),
+						"Boolean value " + val + " cannot be applied to arguments");
 			}
 			return BoolTerm.mk(val);
 		}
 
-		private Term makeFunctor(Symbol sym, Term[] args) {
+		private Term makeFunctor(int lineNo, Symbol sym, Term[] args) {
 			if (sym instanceof RelationSymbol) {
 				FunctionSymbol newSym = pc.symbolManager()
 						.createPredicateFunctionSymbolPlaceholder((RelationSymbol) sym);
@@ -258,7 +267,7 @@ class TermExtractor {
 			} else if (sym instanceof FunctionSymbol) {
 				Term t = pc.functionCallFactory().make((FunctionSymbol) sym, args);
 				if (sym.getArity() > 0) {
-					assertNotInFormula("Cannot invoke a non-nullary function from within a formula: " + t);
+					assertNotInFormula(lineNo, "Cannot invoke a non-nullary function from within a formula: " + t);
 				}
 				return t;
 			} else if (sym instanceof ConstructorSymbol) {
@@ -266,25 +275,26 @@ class TermExtractor {
 				Term t = Constructors.make(csym, args);
 				return t;
 			} else {
-				throw new RuntimeException(
+				throw new UncheckedParseException(lineNo,
 						"Cannot create a term with non-constructor, non-function symbol " + sym + ".");
 			}
 		}
 
 		@Override
 		public Term visitFoldTerm(FoldTermContext ctx) {
-			assertNotInFormula("Cannot invoke a fold from within a formula: " + ctx.getText());
+			assertNotInFormula(ctx.start.getLine(), "Cannot invoke a fold from within a formula: " + ctx.getText());
 			String name = ctx.ID().getText();
 			Identifier id = env.get(name);
 			if (id != null && id.isVar()) {
-				throw new RuntimeException("Cannot use a variable as the function to fold: " + name);
+				throw new UncheckedParseException(ctx.start.getLine(),
+						"Cannot use a variable as the function to fold: " + name);
 			}
 			Symbol sym = id != null ? id.asFunctionSymbol() : pc.symbolManager().lookupSymbol(name);
 			if (!(sym instanceof FunctionSymbol)) {
-				throw new RuntimeException("Cannot fold over non-function: " + sym);
+				throw new UncheckedParseException(ctx.start.getLine(), "Cannot fold over non-function: " + sym);
 			}
 			if (sym.getArity() != 2) {
-				throw new RuntimeException(
+				throw new UncheckedParseException(ctx.start.getLine(),
 						"Can only fold over a binary function, but " + sym + " has arity " + sym.getArity());
 			}
 			Term[] args = extractArray(ctx.termArgs().term());
@@ -362,7 +372,8 @@ class TermExtractor {
 			Map<Integer, Term> argMap = p.snd();
 			Term[] args = new Term[csym.getArity()];
 			if (args.length != argMap.keySet().size()) {
-				throw new RuntimeException("Missing label(s) when creating record of type " + csym);
+				throw new UncheckedParseException(ctx.start.getLine(),
+						"Missing label(s) when creating record of type " + csym);
 			}
 			for (int i = 0; i < args.length; i++) {
 				args[i] = argMap.get(i);
@@ -396,16 +407,17 @@ class TermExtractor {
 				Symbol label = pc.symbolManager().lookupSymbol(entry.ID().getText());
 				Pair<AlgebraicDataType, Integer> p = pc.recordLabels().get(label);
 				if (p == null) {
-					throw new RuntimeException(label + " is not a record label");
+					throw new UncheckedParseException(entry.start.getLine(), label + " is not a record label");
 				}
 				AlgebraicDataType type2 = p.fst();
 				if (type == null) {
 					type = type2;
 				} else if (!type.equals(type2)) {
-					throw new RuntimeException("Cannot use label " + label + " in a record of type " + type);
+					throw new UncheckedParseException(entry.start.getLine(),
+							"Cannot use label " + label + " in a record of type " + type);
 				}
 				if (argMap.putIfAbsent(p.snd(), extract(entry.term())) != null) {
-					throw new RuntimeException(
+					throw new UncheckedParseException(entry.start.getLine(),
 							"Cannot use the same label " + label + " multiple times when creating a record");
 				}
 			}
@@ -425,7 +437,7 @@ class TermExtractor {
 			if (t == null) {
 				throw new AssertionError("Unrecognized unop: " + ctx.getText());
 			}
-			assertNotInFormula("Cannot invoke a unop from within a formula: " + ctx.getText());
+			assertNotInFormula(ctx.start.getLine(), "Cannot invoke a unop from within a formula: " + ctx.getText());
 			return t;
 		}
 
@@ -510,7 +522,7 @@ class TermExtractor {
 			if (t == null) {
 				throw new AssertionError("Unrecognized binop: " + ctx.getText());
 			}
-			assertNotInFormula("Cannot invoke a binop from within a formula: " + ctx.getText());
+			assertNotInFormula(ctx.start.getLine(), "Cannot invoke a binop from within a formula: " + ctx.getText());
 			return t;
 		}
 
@@ -540,7 +552,7 @@ class TermExtractor {
 
 		@Override
 		public Term visitFormulaTerm(FormulaTermContext ctx) {
-			assertNotInFormula("Cannot nest a formula within a formula: " + ctx.getText());
+			assertNotInFormula(ctx.start.getLine(), "Cannot nest a formula within a formula: " + ctx.getText());
 			toggleInFormula();
 			Term t = extract(ctx.term());
 			t = Constructors.make(BuiltInConstructorSymbol.ENTER_FORMULA, Terms.singletonArray(t));
@@ -667,7 +679,8 @@ class TermExtractor {
 		public Term visitOutermostCtor(OutermostCtorContext ctx) {
 			Symbol sym = pc.symbolManager().lookupSymbol(ctx.ID().getText());
 			if (!(sym instanceof ConstructorSymbol)) {
-				throw new RuntimeException("Cannot use non-constructor symbol " + sym + " in a `not` term.");
+				throw new UncheckedParseException(ctx.start.getLine(),
+						"Cannot use non-constructor symbol " + sym + " in a `not` term.");
 			}
 
 			Term[] vars = new Term[sym.getArity()];
@@ -725,13 +738,14 @@ class TermExtractor {
 		@Override
 		public Term visitLetFunExpr(LetFunExprContext ctx) {
 			if (inFormula) {
-				throw new RuntimeException("Cannot define a function from within a formula:\n" + ctx.getText());
+				throw new UncheckedParseException(ctx.start.getLine(),
+						"Cannot define a function from within a formula:\n" + ctx.getText());
 			}
 			List<String> names = new ArrayList<>();
 			for (FunDefLHSContext f : ctx.funDefs().funDefLHS()) {
 				String name = f.ID().getText();
 				if (!names.add(name)) {
-					throw new RuntimeException(
+					throw new UncheckedParseException(ctx.start.getLine(),
 							"Cannot use the same name more than once in a mutually-recursive function definition "
 									+ name);
 				}

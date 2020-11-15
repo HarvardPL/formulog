@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.parsing;
  * #L%
  */
 
-
 import static edu.harvard.seas.pl.formulog.util.Util.map;
 
 import java.util.ArrayList;
@@ -53,7 +52,13 @@ class TypeExtractor {
 	}
 
 	public Type extract(TypeContext ctx) {
-		return ctx.accept(typeExtractor);
+		try {
+			return ctx.accept(typeExtractor);
+		} catch (UncheckedParseException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new UncheckedParseException(ctx.start.getLine(), e.getMessage());
+		}
 	}
 
 	public List<Type> extract(List<TypeContext> ctxs) {
@@ -95,34 +100,39 @@ class TypeExtractor {
 			switch (s) {
 			case "i32":
 				if (typeArgs.size() != 0) {
-					throw new RuntimeException("Built in type i32 does not have any type parameters.");
+					throw new UncheckedParseException(ctx.start.getLine(),
+							"Built in type i32 does not have any type parameters.");
 				}
 				return BuiltInTypes.i32;
 			case "i64":
 				if (typeArgs.size() != 0) {
-					throw new RuntimeException("Built in type i64 does not have any type parameters.");
+					throw new UncheckedParseException(ctx.start.getLine(),
+							"Built in type i64 does not have any type parameters.");
 				}
 				return BuiltInTypes.i64;
 			case "fp32":
 				if (typeArgs.size() != 0) {
-					throw new RuntimeException("Built in type fp32 does not have any type parameters.");
+					throw new UncheckedParseException(ctx.start.getLine(),
+							"Built in type fp32 does not have any type parameters.");
 				}
 				return BuiltInTypes.fp32;
 			case "fp64":
 				if (typeArgs.size() != 0) {
-					throw new RuntimeException("Built in type fp64 does not have any type parameters.");
+					throw new UncheckedParseException(ctx.start.getLine(),
+							"Built in type fp64 does not have any type parameters.");
 				}
 				return BuiltInTypes.fp64;
 			case "string":
 				if (typeArgs.size() != 0) {
-					throw new RuntimeException("Built in type string does not have any type parameters.");
+					throw new UncheckedParseException(ctx.start.getLine(),
+							"Built in type string does not have any type parameters.");
 				}
 				return BuiltInTypes.string;
 			default:
 				String name = ctx.ID().getText();
 				Symbol sym = pc.symbolManager().lookupSymbol(name);
 				if (!(sym instanceof TypeSymbol)) {
-					throw new RuntimeException("Not a type symbol: " + sym);
+					throw new UncheckedParseException(ctx.start.getLine(), "Not a type symbol: " + sym);
 				}
 				for (Param param : params) {
 					typeArgs.add(param.getType());

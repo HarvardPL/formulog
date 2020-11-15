@@ -29,9 +29,6 @@ import java.io.InputStreamReader;
 
 import org.junit.Test;
 
-import edu.harvard.seas.pl.formulog.parsing.ParseException;
-import edu.harvard.seas.pl.formulog.parsing.Parser;
-
 public class ParsingTest {
 
 	void test(String file) {
@@ -48,7 +45,7 @@ public class ParsingTest {
 			}
 			return;
 		} catch (Exception e) {
-			fail("Unexpected exception: " + e.getMessage());
+			fail("Unexpected exception: " + e.getMessage() + " " + e.getClass());
 		}
 		if (isBad) {
 			fail("Test succeeded for a bad program");

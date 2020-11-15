@@ -22,7 +22,6 @@ import java.io.FileNotFoundException;
  * #L%
  */
 
-
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -60,7 +59,7 @@ public class Parser {
 			TokenStream tokens = isTsv ? new BufferedTokenStream(lexer) : new CommonTokenStream(lexer);
 			return new FormulogParser(tokens);
 		} catch (IOException e) {
-			throw new ParseException(e.getMessage());
+			throw new ParseException(0, e.getMessage());
 		}
 	}
 
@@ -77,8 +76,8 @@ public class Parser {
 			BasicProgram prog = p.fst();
 			loadExternalEdbs(pc, prog, p.snd(), inputDirs);
 			return prog;
-		} catch (Exception e) {
-			throw new ParseException(e);
+		} catch (UncheckedParseException e) {
+			throw new ParseException(e.getLineNo(), e.getMessage());
 		}
 	}
 
@@ -98,7 +97,7 @@ public class Parser {
 						try {
 							readEdbFromFile(pc, sym, inputDir, prog.getFacts(sym));
 						} catch (ParseException e) {
-							throw new RuntimeException(e);
+							throw new UncheckedParseException(e.getLineNo(), e.getMessage());
 						}
 					}
 
@@ -111,20 +110,23 @@ public class Parser {
 				task.get();
 			}
 		} catch (InterruptedException | ExecutionException e) {
-			throw new ParseException(e);
+			throw new ParseException(0, e.getMessage());
 		}
 	}
 
-	private void readEdbFromFile(ParsingContext pc, RelationSymbol sym, Path inputDir, Set<Term[]> acc) throws ParseException {
+	private void readEdbFromFile(ParsingContext pc, RelationSymbol sym, Path inputDir, Set<Term[]> acc)
+			throws ParseException {
 		Path path = inputDir.resolve(sym.toString() + ".tsv");
 		try (FileReader fr = new FileReader(path.toFile())) {
 			FormulogParser parser = getParser(fr, true);
 			FactFileParser fpp = new FactFileParser(pc);
 			fpp.loadFacts(parser.tsvFile(), sym.getArity(), acc);
 		} catch (FileNotFoundException e) {
-			throw new ParseException("Could not find external fact file: " + path);
-		} catch (Exception e) {
-			throw new ParseException("Exception when extracting facts from " + path + ": " + e.getMessage());
+			throw new ParseException(0, "Could not find external fact file: " + path);
+		} catch (IOException e) {
+			throw new ParseException(0, e.getMessage());
+		} catch (UncheckedParseException e) {
+			throw new ParseException(path.toString(), e.getLineNo(), e.getMessage());
 		}
 	}
 

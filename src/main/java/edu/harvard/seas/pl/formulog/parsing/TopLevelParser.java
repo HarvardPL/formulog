@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.parsing;
  * #L%
  */
 
-
 import static edu.harvard.seas.pl.formulog.util.Util.map;
 
 import java.util.ArrayList;
@@ -91,20 +90,20 @@ import edu.harvard.seas.pl.formulog.util.Util;
 class TopLevelParser {
 
 	private final ParsingContext pc;
-	
+
 	public TopLevelParser(ParsingContext parsingContext) {
 		pc = parsingContext;
 	}
-	
+
 	public Pair<BasicProgram, Set<RelationSymbol>> parse(ProgContext ctx) throws ParseException {
 		TopLevelVisitor visitor = new TopLevelVisitor();
 		ctx.accept(visitor);
 		BasicProgram prog = visitor.program();
 		return new Pair<>(prog, visitor.externalEdbs);
 	}
-	
+
 	private final class TopLevelVisitor extends FormulogBaseVisitor<Void> {
-		
+
 		private final VariableCheckPass varChecker = new VariableCheckPass(pc.symbolManager());
 		private final TermExtractor termExtractor = new TermExtractor(pc);
 		private final TypeExtractor typeExtractor = new TypeExtractor(pc);
@@ -116,7 +115,8 @@ class TopLevelParser {
 
 		@Override
 		public Void visitFunDecl(FunDeclContext ctx) {
-			List<Pair<FunctionSymbol, List<Var>>> ps = ParsingUtil.extractFunDeclarations(pc, ctx.funDefs().funDefLHS(), false);
+			List<Pair<FunctionSymbol, List<Var>>> ps = ParsingUtil.extractFunDeclarations(pc, ctx.funDefs().funDefLHS(),
+					false);
 			Iterator<TermContext> bodies = ctx.funDefs().term().iterator();
 			for (Pair<FunctionSymbol, List<Var>> p : ps) {
 				FunctionSymbol sym = p.fst();
@@ -127,8 +127,8 @@ class TopLevelParser {
 				try {
 					Term newBody = varChecker.checkFunction(args, body);
 					pc.functionDefManager().register(UserFunctionDef.get(sym, args, newBody));
-				} catch (ParseException e) {
-					throw new RuntimeException(
+				} catch (VariableCheckPassException e) {
+					throw new UncheckedParseException(ctx.start.getLine(),
 							"Error in definition for function " + sym + ": " + e.getMessage() + "\n" + body);
 				}
 			}
@@ -140,7 +140,8 @@ class TopLevelParser {
 			String name = ctx.ID().getText();
 			List<Type> types = typeExtractor.extract(ctx.typeList().type());
 			if (!Types.getTypeVars(types).isEmpty()) {
-				throw new RuntimeException("Cannot use type variables in the signature of a relation: " + name);
+				throw new UncheckedParseException(ctx.start.getLine(),
+						"Cannot use type variables in the signature of a relation: " + name);
 			}
 			boolean isIdb = ctx.relType.getType() == FormulogLexer.OUTPUT;
 			MutableRelationSymbol sym = pc.symbolManager().createRelationSymbol(name, types.size(), isIdb,
@@ -149,25 +150,29 @@ class TopLevelParser {
 				switch (actx.getText()) {
 				case "@bottomup":
 					if (!sym.isIdbSymbol()) {
-						throw new RuntimeException("Annotation @bottomup not relevant for non-IDB predicate " + sym);
+						throw new UncheckedParseException(ctx.start.getLine(),
+								"Annotation @bottomup not relevant for non-IDB predicate " + sym);
 					}
 					sym.setBottomUp();
 					break;
 				case "@topdown":
 					if (!sym.isIdbSymbol()) {
-						throw new RuntimeException("Annotation @bottomup not relevant for non-IDB predicate " + sym);
+						throw new UncheckedParseException(ctx.start.getLine(),
+								"Annotation @bottomup not relevant for non-IDB predicate " + sym);
 					}
 					sym.setTopDown();
 					break;
 				case "@external":
 					if (!sym.isEdbSymbol()) {
-						throw new RuntimeException("Annotation @external cannot be used for non-EDB predicate " + sym);
+						throw new UncheckedParseException(ctx.start.getLine(),
+								"Annotation @external cannot be used for non-EDB predicate " + sym);
 					}
 					externalEdbs.add(sym);
 					sym.setExternal();
 					break;
 				default:
-					throw new RuntimeException("Unrecognized annotation for predicate " + sym + ": " + actx.getText());
+					throw new UncheckedParseException(ctx.start.getLine(),
+							"Unrecognized annotation for predicate " + sym + ": " + actx.getText());
 				}
 			}
 			if (sym.isEdbSymbol()) {
@@ -185,7 +190,7 @@ class TopLevelParser {
 			List<TypeVar> typeVars = p.snd();
 			Type type = typeExtractor.extract(ctx.type());
 			if (!typeVars.containsAll(Types.getTypeVars(type))) {
-				throw new RuntimeException("Unbound type variable in definition of " + sym);
+				throw new UncheckedParseException(ctx.start.getLine(), "Unbound type variable in definition of " + sym);
 			}
 			pc.typeManager().registerAlias(new TypeAlias(sym, typeVars, type));
 			return null;
@@ -217,7 +222,8 @@ class TopLevelParser {
 				ConstructorSymbol csym = pc.symbolManager().createConstructorSymbol(ctc.ID().getText(), typeArgs.size(),
 						ConstructorSymbolType.VANILLA_CONSTRUCTOR, new FunctorType(typeArgs, type));
 				if (!typeVars.containsAll(Types.getTypeVars(typeArgs))) {
-					throw new RuntimeException("Unbound type variable in definition of " + csym);
+					throw new UncheckedParseException(ctx.start.getLine(),
+							"Unbound type variable in definition of " + csym);
 				}
 				pc.symbolManager().createConstructorSymbol("#is_" + csym.toString(), 1,
 						ConstructorSymbolType.SOLVER_CONSTRUCTOR_TESTER, new FunctorType(type, BuiltInTypes.bool));
@@ -254,7 +260,7 @@ class TopLevelParser {
 			}
 			TypeSymbol sym = type.getSymbol();
 			if (!typeVars.containsAll(Types.getTypeVars(entryTypes))) {
-				throw new RuntimeException("Unbound type variable in definition of " + sym);
+				throw new UncheckedParseException(ctx.start.getLine(), "Unbound type variable in definition of " + sym);
 			}
 			FunctorType ctype = new FunctorType(entryTypes, type);
 			RecordSymbol csym = pc.symbolManager().createRecordSymbol("_rec_" + sym, entryTypes.size(), ctype, labels);
@@ -267,7 +273,7 @@ class TopLevelParser {
 			List<TypeVar> typeVars = map(ctx.TYPEVAR(), t -> TypeVar.get(t.getText()));
 			TypeSymbol sym = pc.symbolManager().createTypeSymbol(ctx.ID().getText(), typeVars.size(), symType);
 			if (typeVars.size() != (new HashSet<>(typeVars)).size()) {
-				throw new RuntimeException(
+				throw new UncheckedParseException(ctx.start.getLine(),
 						"Cannot use the same type variable multiple times in a type declaration: " + sym);
 			}
 			return new Pair<>(sym, typeVars);
@@ -290,11 +296,12 @@ class TopLevelParser {
 			allTypes.add(type);
 			for (Type ty : allTypes) {
 				if (!hasSmtType(ty)) {
-					throw new RuntimeException("Uninterpreted function must have an "
+					throw new UncheckedParseException(ctx.start.getLine(), "Uninterpreted function must have an "
 							+ BuiltInTypeSymbol.SMT_TYPE.toString() + " type: " + csym);
 				}
 				if (!Types.getTypeVars(ty).isEmpty()) {
-					throw new RuntimeException("Uninterpreted functions cannot have type variables: " + csym);
+					throw new UncheckedParseException(ctx.start.getLine(),
+							"Uninterpreted functions cannot have type variables: " + csym);
 				}
 			}
 			uninterpFuncSymbols.add(csym);
@@ -311,33 +318,35 @@ class TopLevelParser {
 		public Void visitClauseStmt(ClauseStmtContext ctx) {
 			List<ComplexLiteral> head = termsToLiterals(ctx.clause().head.term());
 			List<ComplexLiteral> body = termsToLiterals(ctx.clause().body.term());
-			List<BasicRule> newRules = makeRules(head, body);
+			List<BasicRule> newRules = makeRules(ctx.start.getLine(), head, body);
 			for (BasicRule rule : newRules) {
 				RelationSymbol sym = rule.getHead().getSymbol();
 				if (!sym.isIdbSymbol()) {
-					throw new RuntimeException("Cannot define a rule for a non-IDB symbol: " + sym);
+					throw new UncheckedParseException(ctx.start.getLine(),
+							"Cannot define a rule for a non-IDB symbol: " + sym);
 				}
 				Util.lookupOrCreate(rules, sym, () -> new HashSet<>()).add(rule);
 			}
 			return null;
 		}
 
-		private BasicRule makeRule(ComplexLiteral head, List<ComplexLiteral> body) {
+		private BasicRule makeRule(int lineNo, ComplexLiteral head, List<ComplexLiteral> body) {
 			List<ComplexLiteral> newBody = new ArrayList<>(body);
 			if (!(head instanceof UserPredicate)) {
-				throw new RuntimeException("Cannot create rule with non-user predicate in head: " + head);
+				throw new UncheckedParseException(lineNo,
+						"Cannot create rule with non-user predicate in head: " + head);
 			}
 			try {
 				return varChecker.checkRule((BasicRule.make((UserPredicate) head, newBody)));
-			} catch (ParseException e) {
-				throw new RuntimeException(e);
+			} catch (VariableCheckPassException e) {
+				throw new UncheckedParseException(lineNo, e.getMessage());
 			}
 		}
 
-		private List<BasicRule> makeRules(List<ComplexLiteral> head, List<ComplexLiteral> body) {
+		private List<BasicRule> makeRules(int lineNo, List<ComplexLiteral> head, List<ComplexLiteral> body) {
 			List<BasicRule> rules = new ArrayList<>();
 			for (ComplexLiteral hd : head) {
-				rules.add(makeRule(hd, body));
+				rules.add(makeRule(lineNo, hd, body));
 			}
 			return rules;
 		}
@@ -346,19 +355,20 @@ class TopLevelParser {
 		public Void visitFactStmt(FactStmtContext ctx) {
 			ComplexLiteral lit = termToLiteral(ctx.fact().term());
 			if (!(lit instanceof UserPredicate)) {
-				throw new RuntimeException("Facts must be user-defined predicates: " + ctx.getText());
+				throw new UncheckedParseException(ctx.start.getLine(),
+						"Facts must be user-defined predicates: " + ctx.getText());
 			}
 			UserPredicate fact = (UserPredicate) lit;
 			RelationSymbol sym = fact.getSymbol();
 			if (sym.isIdbSymbol()) {
-				BasicRule rule = makeRule(fact, Collections.emptyList());
+				BasicRule rule = makeRule(ctx.start.getLine(), fact, Collections.emptyList());
 				rules.get(sym).add(rule);
 			} else {
 				try {
 					Term[] args = varChecker.checkFact(fact.getArgs());
 					initialFacts.get(sym).add(args);
-				} catch (ParseException e) {
-					throw new RuntimeException(e);
+				} catch (VariableCheckPassException e) {
+					throw new UncheckedParseException(ctx.start.getLine(), e.getMessage());
 				}
 			}
 			return null;
@@ -368,16 +378,19 @@ class TopLevelParser {
 		public Void visitQueryStmt(QueryStmtContext ctx) {
 			ComplexLiteral a = termToLiteral(ctx.query().term());
 			if (!(a instanceof UserPredicate)) {
-				throw new RuntimeException("Query must be for a user-defined predicate: " + a);
+				throw new UncheckedParseException(ctx.start.getLine(),
+						"Query must be for a user-defined predicate: " + a);
 			}
 			if (query != null) {
-				throw new RuntimeException("Cannot have multiple queries in the same program: " + query + " and " + a);
+				throw new UncheckedParseException(ctx.start.getLine(),
+						"Cannot have multiple queries in the same program: " + query + " and " + a);
 			}
 			UserPredicate q = (UserPredicate) a;
 			try {
 				query = UserPredicate.make(q.getSymbol(), varChecker.checkFact(q.getArgs()), q.isNegated());
-			} catch (ParseException e) {
-				throw new RuntimeException("Problem with query " + query + ": " + e.getMessage());
+			} catch (VariableCheckPassException e) {
+				throw new UncheckedParseException(ctx.start.getLine(),
+						"Problem with query " + query + ": " + e.getMessage());
 			}
 			return null;
 		}
@@ -389,7 +402,7 @@ class TopLevelParser {
 			}
 			return l;
 		}
-		
+
 		private ComplexLiteral termToLiteral(TermContext ctx) {
 			Term t = termExtractor.extract(ctx);
 			if (!(t instanceof FunctionCall)) {
@@ -421,7 +434,7 @@ class TopLevelParser {
 			}
 			return ComplexLiterals.unifyWithBool(t, !negated);
 		}
-		
+
 		public BasicProgram program() throws ParseException {
 			return new BasicProgram() {
 
@@ -499,7 +512,7 @@ class TopLevelParser {
 
 			};
 		}
-		
+
 	}
 
 }

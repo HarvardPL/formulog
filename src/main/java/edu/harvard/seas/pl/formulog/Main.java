@@ -96,10 +96,17 @@ public final class Main {
 			clock.stop();
 			System.out.println("Finished parsing (" + clock.getTime() / 1000.0 + "s)");
 			return prog;
-		} catch (ParseException | FileNotFoundException e) {
+		} catch (FileNotFoundException e) {
 			handleException("Error while parsing!", e);
-			throw new AssertionError("impossible");
+		} catch (ParseException e) {
+			String msg = "Error while parsing ";
+			if (e.getFileName() != null) {
+				msg += e.getFileName() + ", ";
+			}
+			msg += "line " + e.getLineNo() + ":";
+			handleException(msg, e);
 		}
+		throw new AssertionError("impossible");
 	}
 
 	private WellTypedProgram typeCheck(Program<UserPredicate, BasicRule> prog) {

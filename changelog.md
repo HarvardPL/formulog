@@ -2,12 +2,15 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Added
+- Give line numbers with parse exceptions.
 
 ### Changed
 - Signature of `get_model` (takes a list of propositions now)
 
 ### Fixed
 - Bug in the naive (call-reset) SMT solver strategy.
+- Bug in `let fun` expressions.
 
 ## [0.4.0] - 2020-09-22
 ### Added

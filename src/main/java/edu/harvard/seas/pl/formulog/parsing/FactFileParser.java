@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.parsing;
  * #L%
  */
 
-
 import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.Term;
@@ -38,20 +37,18 @@ class FactFileParser {
 	public void loadFacts(TsvFileContext ctx, int expectedArity, Set<Term[]> acc) throws ParseException {
 		TermExtractor termExtractor = new TermExtractor(pc);
 		VariableCheckPass varChecker = new VariableCheckPass(pc.symbolManager());
-		int line = 1;
-		try {
-			for (TabSeparatedTermLineContext l : ctx.tabSeparatedTermLine()) {
-				Term[] args = termExtractor.extractArray(l.term());
-				if (args.length != expectedArity) {
-					throw new ParseException(
-							"Arity mismatch: expected " + expectedArity + " terms, but got " + args.length);
-				}
-				args = varChecker.checkFact(args);
-				acc.add(args);
-				line++;
+		for (TabSeparatedTermLineContext l : ctx.tabSeparatedTermLine()) {
+			Term[] args = termExtractor.extractArray(l.term());
+			if (args.length != expectedArity) {
+				throw new ParseException(l.start.getLine(),
+						"Arity mismatch: expected " + expectedArity + " terms, but got " + args.length);
 			}
-		} catch (ParseException e) {
-			throw new ParseException("(line " + line + ") " + e.getMessage());
+			try {
+				args = varChecker.checkFact(args);
+			} catch (VariableCheckPassException e) {
+				throw new ParseException(l.start.getLine(), e.getMessage());
+			}
+			acc.add(args);
 		}
 	}
 
