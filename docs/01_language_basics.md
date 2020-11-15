@@ -292,21 +292,33 @@ with manipulating primitives):
     * addition (`*_add`), as in `fp32_add`
     * subtraction (`*_sub`)
     * multiplication (`*_mul`)
+    * negation (`*_neg`)
+* bit vector operations for types `i32` and `i64`:
+    * bitwise and (`*_and`),
+    * bitwise or (`*_or`)
+    * bitwise exclusive or (`*_xor`), for types `i32` and `i64`;
+    * signed division (`*_sdiv`)
+    * signed remainder (`*_srem`)
+    * unsigned division (`*_udiv`)
+    * unsigned remainder (`*_urem`)
+    * shift left (`*_shl`)
+    * shift right (`*_shr`)
+    * arithmetic shift right (`*_ashr`)
+* float operations for types `fp32` and `fp64`:
+    * equality (`*_eq`; this is floating point equality, as opposed to
+      structural equality via the predicate `=`);
     * division (`*_div`)
     * remainder (`*_rem`)
-    * negation (`*_neg`);
-* functions for bitwise "and" (`*_and`), "or" (`*_or`), and "exclusive or"
-  (`*_xor`), for types `i32` and `i64`;
-* comparison operations `*_lt`, `*_le`, `*_gt`, `*_ge` for types `i32`, `i64`,
-  `fp32`, and `fp64`;
-* comparison operation `*_eq` for types `fp32` and `fp64` (this is floating
-  point equality, as opposed to structural equality via the predicate `=`);
-* boolean operators `!`, `&&`, and `||`;
+* Comparison operations `*_lt`, `*_le`, `*_gt`, `*_ge` for types `i32`, `i64`,
+  `fp32`, and `fp64` (the bit vector ones are implicitly for signed comparison)
+* Signed compare (`*_scmp`) and unsigned compare (`*_ucmp`) operators for types
+  `i32` and `i64`; these return a term of type `cmp` (described above)
+* boolean operators `!`, `&&`, and `||`
 * numeric primitive conversion operations, in the form `*_to_*` (e.g.,
   `i32_to_fp64`).
 
-Standard arithmetic notation can be used for `i32` operations. For example,
-`38 + 12 / 3` is shorthand for `i32_add(38, i32_div(12, 3))`.
+Standard arithmetic notation can be used for signed `i32` operations. For
+example, `38 + 12 / 3` is shorthand for `i32_add(38, i32_sdiv(12, 3))`.
 
 Formulog supplies some `string` manipulation functions:
 
