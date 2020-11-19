@@ -1,11 +1,19 @@
-input r.
-output q.
-output p.
+input g(i32).
+input b(i32, i32).
+input k(i32).
+input j(i32, i32).
+output s(i32).
+output i(i32).
 output ok.
 
-p :- q.
-q :- r.
-r.
+s(X) :- g(X).
+s(X) :- b(X, Y), s(Y).
+i(X) :- k(X).
+i(X) :- !s(X), j(X, Y), i(Y).
+g(0).
+g(2).
+b(0, 1).
+k(0).
+j(0, 1).
 
-ok :- p, q, r.
-:- ok.
+:- s(_).

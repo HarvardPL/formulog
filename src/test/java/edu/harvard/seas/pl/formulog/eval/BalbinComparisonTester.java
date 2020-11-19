@@ -26,7 +26,9 @@ import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 public class BalbinComparisonTester extends AbstractTester<BalbinEvaluation> {
 
@@ -41,9 +43,29 @@ public class BalbinComparisonTester extends AbstractTester<BalbinEvaluation> {
 		return SemiNaiveEvaluation.setup(prog, 2, SemiNaiveEvaluation.EvalType.NORMAL);
 	}
 
-	// TODO: Compare the outputs of BalbinEvaluation and SemiNaiveEvaluation
-	protected boolean compare(EvaluationResult res, EvaluationResult resSNE) {
-		return false;
+	protected boolean compare(BalbinEvaluation eval, EvaluationResult res, SemiNaiveEvaluation evalSNE, EvaluationResult resSNE) {
+		// Add the BalbinEvaluation results to a set
+		RelationSymbol sym = eval.getQuery().getSymbol();
+		Iterator<UserPredicate> resIt = res.getAll(sym).iterator();
+		Set<String> resSet = new HashSet<String>();
+		while (resIt.hasNext()) {
+			UserPredicate elt = resIt.next();
+			resSet.add(elt.toString());
+			System.out.println("BE elt: " + elt.toString());
+		}
+
+		// Add the SemiNaiveEvaluation results to a set
+		RelationSymbol symSNE = evalSNE.getQuery().getSymbol();
+		Iterator<UserPredicate> resItSNE = resSNE.getAll(symSNE).iterator();
+		Set<String> resSetSNE = new HashSet<String>();
+		while (resItSNE.hasNext()) {
+			UserPredicate eltSNE = resItSNE.next();
+			resSetSNE.add(eltSNE.toString());
+			System.out.println("SNE elt: " + eltSNE.toString());
+		}
+
+		// Compare the evaluation results
+		return resSet.equals(resSetSNE);
 	}
 
 	@Override
@@ -57,17 +79,7 @@ public class BalbinComparisonTester extends AbstractTester<BalbinEvaluation> {
 		evalSNE.run();
 		EvaluationResult resSNE = evalSNE.getResult();
 
-		// TODO: Move this into the compare function
-		RelationSymbol sym = sym = eval.getQuery().getSymbol();
-//		RelationSymbol sym = (RelationSymbol) eval.getInputProgram().getSymbolManager().lookupSymbol("ok");
-		System.out.println("res");
-		Iterator<UserPredicate> resIt = res.getAll(sym).iterator();
-		while (resIt.hasNext()) {
-			UserPredicate elt = resIt.next();
-			System.out.println("elt: " + elt);
-		}
-
-		return compare(res, resSNE);
+		return compare(eval, res, evalSNE, resSNE);
 	}
 
 }

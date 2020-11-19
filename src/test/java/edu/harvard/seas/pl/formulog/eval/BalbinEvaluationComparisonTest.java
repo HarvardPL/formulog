@@ -28,14 +28,14 @@ public class BalbinEvaluationComparisonTest extends AbstractEvaluationTest {
 		super(new BalbinComparisonTester());
 	}
 
-	// TODO: Update tests
+	// TODO: Add tests
 
-//	@Test
-//	public void test001() { test("balbin_comparison/test001_ok.flg"); }
+	@Test
+	public void test001() { test("balbin_comparison/test001_ok.flg"); }
 
 	@Test
 	public void test002() { test("balbin_comparison/test002_ok.flg"); }
-//
+
 //	@Test
 //	public void test003() { test("balbin_comparison/test003_ok.flg"); }
 
