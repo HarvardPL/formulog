@@ -169,8 +169,8 @@ p :- foo(X), X = true.
 
 ### External input relations
 
-It is possible to specify that an input relation is enumerated externally in
-TSV files by annotating an input relation declaration with `@external`, as in
+It is possible to specify that an input relation should be read from an
+external file by annotating its declaration with `@external`, as in
 
 ```
 @external
@@ -181,15 +181,28 @@ input bar(string)
 ```
 
 The Formulog runtime will look in the current directory for files called
-`foo.tsv` and `bar.tsv`. The former might look like:
+`foo.tsv` and `bar.tsv`. As suggested by the `.tsv` extension, these files
+should contain rows of tab-separated terms, where each row corresponds to one
+input fact, and each column corresponds to an argument position. 
+
+So, a file `foo.tsv` might look like this
 
 ```
-42  0 ["x"]
-24  1 ["", " "]
-100 -1 []
+42	0	["x"]
+24	1	["", " "]
+100	-1	[]
 ```
 
-The latter might look like:
+(note that the terms on a line are separated by tabs, *not* spaces); it would
+correspond to the facts
+
+```
+foo(42, 0, ["x"]).
+foo(24, 1, ["", " "]).
+foo(100, -1, []).
+```
+
+Similarly, a `bar.tsv` file looking like this
 
 ```
 "hello"
@@ -198,9 +211,18 @@ The latter might look like:
 "aloha"
 ```
 
+would correspond to the facts
+
+```
+bar("hello").
+bar("goodbye").
+bar("ciao").
+bar("aloha").
+```
+
 You can specify alternate directories to look in using the
-`-DfactDirs=dir_1,...,dir_N` command line option. Every fact directory must
-have a CSV file for _every_ external input relation (the file can be empty).
+`-DfactDirs=DIR_1,...,DIR_N` command line option. Every fact directory must
+have a `.tsv` file for _every_ external input relation (the file can be empty).
 
 ## Functions
 
