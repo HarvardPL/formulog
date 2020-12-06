@@ -11,8 +11,11 @@ A Formulog program consists of three main components:
 
 ## Types
 
-Formulog has a strong, static type system. Formulog has five built-in primitive
-types:
+Formulog has a strong, static type system.
+
+### Built-in types
+
+Formulog has five built-in primitive types:
 
 * booleans (`bool`), i.e., `true` and `false`;
 * signed 32-bit integers (`i32` or equivalently `bv[32]`), as in `42`;
@@ -23,28 +26,8 @@ types:
   or `42.0D`; and
 * string constants (`string`), as in `"hello"`.
 
-In addition to these primitive types, Formulog allows users to define their own
-(polymorphic) algebraic data types. For instance, this defines the standard
-`list` type:
-
-```
-type 'a list =
-  | nil
-  | cons('a, 'a list)
-```
-
-Like types, constructors must begin with a lowercase letter.
-
-Formulog also has support for tuple types, such as the type `i32 * string`, and
-users can also define type aliases, such as this one that defines a map to be
-an association list:
-
-```
-type ('k, 'v) map = ('k * 'v) list
-```
-
-Formulog currently has these algebraic types built-in (plus the types that
-represent logical formulas, to be presented later):
+Beyond these primitive types, Formulog provides the following built-in
+algebraic data types:
 
 ```
 type 'a list =
@@ -61,6 +44,41 @@ type cmp =
   | cmp_gt
 ```
 
+It also has built-in types representing logical formulas, but a discussion of
+these is delayed until the section on logical formulas.
+
+#### List notation
+
+Formulog provides special notation for terms of the `list` type. The infix
+notation `::` is used to "cons" an element onto a list; i.e., `X :: Y` is
+shorthand for `cons(X, Y)`. Lists can also be written as comma-separated
+elements between a pair of square brackets. For example, the term `[X, Y, Z]`
+is shorthand for `cons(X, cons(Y, cons(Z, nil)))`. The term `[]` is `nil`, the
+empty list.
+
+Both notations can be used in pattern matching (described below).
+
+### User-defined types
+
+Formulog allows users to define their own (polymorphic) algebraic data types.
+For instance, this defines a list-like type:
+
+```
+type 'a my_list =
+  | my_nil
+  | my_cons('a, 'a my_list)
+```
+
+Like types, constructors must begin with a lowercase letter.
+
+Formulog also has support for tuple types, such as the type `i32 * string`, and
+users can also define type aliases, such as this one that defines a map to be
+an association list:
+
+```
+type ('k, 'v) map = ('k * 'v) my_list
+```
+
 Mutually recursive types are written using `and`:
 
 ```
@@ -73,6 +91,7 @@ and bar =
 ```
 
 You can also define records, as here:
+
 ```
 type 'a linked_list = {
   val  : 'a;
@@ -89,7 +108,9 @@ extracts the relevant value from the record. For example, in the case of
 val  : 'a linked_list -> 'a
 next : 'a linked_list -> 'a linked_list option
 ```
+
 Formulog also supports OCaml-style functional record update, as in this example:
+
 ```
 type point3d = { x : i32; y : i32; z : i32 }
 fun foo : i32 =
@@ -97,13 +118,16 @@ fun foo : i32 =
   let Y = { X with x = -1; z = 0 } in
   x(Y) + y(Y) + z(Y)
 ```
+
 A call `foo` would evaluate to the value `1`.
 
 ## Relations
 
-In Formulog, there are three types of Datalog-style relations. The first type is
-an `input` relation (also known as an extensional database or EDB relation).
-This type of relation is enumerated explicitly.
+In Formulog, there are three types of Datalog-style relations: `input`
+relations, `output` relations, and built-in predicates.
+
+An `input` relation (also known as an extensional database or EDB relation) is
+enumerated explicitly.
 
 ```
 type node = string
@@ -113,9 +137,9 @@ edge("b", "c").
 edge("c", "b").
 ```
 
-On the other hand, an `output` relation is defined using rules. For instance,
-this predicate computes transitive closure over the previously defined `edge`
-predicate:
+On the other hand, an `output` relation (also known as an intensional database
+or IDB relation) is defined using rules. For instance, this predicate computes
+transitive closure over the previously defined `edge` predicate:
 
 ```
 output tc(node, node)
