@@ -49,12 +49,12 @@ these is delayed until the section on logical formulas.
 
 #### List notation
 
-Formulog provides special notation for terms of the `list` type. The infix
-notation `::` is used to "cons" an element onto a list; i.e., `X :: Y` is
-shorthand for `cons(X, Y)`. Lists can also be written as comma-separated
-elements between a pair of square brackets. For example, the term `[X, Y, Z]`
-is shorthand for `cons(X, cons(Y, cons(Z, nil)))`. The term `[]` is `nil`, the
-empty list.
+Formulog provides special notation for terms of the `list` type. The `cons`
+constructor can be written using the infix notation `::`; i.e., `X :: Y` is
+shorthand for `cons(X, Y)`. A list can also be written as a sequence of
+comma-separated elements between a pair of square brackets. For example, the
+term `[X, Y, Z]` is shorthand for `cons(X, cons(Y, cons(Z, nil)))`. The term
+`[]` is `nil`, the empty list.
 
 Both notations can be used in pattern matching (described below).
 
