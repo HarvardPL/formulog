@@ -351,8 +351,9 @@ int_to_bv[k]  : int smt -> bv[k] smt
 bv_to_int[k]  : bv[k] smt -> int smt
 ```
 
-Note that `int_to_bv[k]` and `bv_to_int[k]` are not part of the SMT-LIB
-standard, and might not be supported by all solvers.
+Note that `int_to_bv[k]` and `bv_to_int[k]` do not correspond to any operations
+in the SMT-LIB standard. These are serialized as `int2bv` and `bv2int`
+operations, which are supported by Z3, but not by some other solvers.
 
 #### Arrays
 
