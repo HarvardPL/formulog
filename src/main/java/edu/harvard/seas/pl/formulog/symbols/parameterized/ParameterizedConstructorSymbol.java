@@ -28,6 +28,7 @@ import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.fp32;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.fp64;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.i32;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.i64;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.int_;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.smt;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.smtPattern;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.smtWrappedVar;
@@ -81,6 +82,8 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 		case SMT_PAT:
 		case SMT_WRAP_VAR:
 		case SMT_VAR:
+		case BV_TO_INT:
+		case INT_TO_BV:
 			break;
 		case FP_BIG_CONST:
 		case FP_CONST:
@@ -179,6 +182,10 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 			Type width = types.get(0);
 			return mkType(i32, bv(width));
 		}
+		case INT_TO_BV:
+			return mkType(int_, bv(types.get(0)));
+		case BV_TO_INT:
+			return mkType(bv(types.get(0)), int_);
 		case BV_SGE:
 		case BV_SGT:
 		case BV_SLE:

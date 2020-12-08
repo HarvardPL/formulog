@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -541,6 +540,10 @@ public final class Constructors {
 			return makeBVConst(sym, args);
 		case BV_BIG_CONST:
 			return makeBVBigConst(sym, args);
+		case INT_TO_BV:
+			return makeIntToBv(sym, args);
+		case BV_TO_INT:
+			return makeSolverOp.apply("bv2int");
 		case FP_BIG_CONST:
 		case FP_CONST:
 			return makeConstant(sym, args);
@@ -569,17 +572,7 @@ public final class Constructors {
 				I32 arg = (I32) args[0];
 				int width = nat(sym.getArgs().get(0));
 				String s = Integer.toBinaryString(arg.getVal());
-				int len = s.length();
-				if (width > len) {
-					String pad = "";
-					for (int w = len; w < width; w++) {
-						pad += "0";
-					}
-					s = pad + s;
-				} else if (width < len) {
-					s = s.substring(len - width, len);
-				}
-				shim.print("#b" + s);
+				shim.print(formatBitString(s, width));
 			}
 
 		});
@@ -593,19 +586,36 @@ public final class Constructors {
 				I64 arg = (I64) args[0];
 				int width = nat(sym.getArgs().get(0));
 				String s = Long.toBinaryString(arg.getVal());
-				int len = s.length();
-				if (width > len) {
-					String pad = "";
-					for (int w = len; w < width; w++) {
-						pad += "0";
-					}
-					s = pad + s;
-				} else if (width < len) {
-					s = s.substring(len - width, len);
-				}
-				shim.print("#b" + s);
+				shim.print(formatBitString(s, width));
 			}
 
+		});
+	}
+
+	private static String formatBitString(String bitString, int width) {
+		int len = bitString.length();
+		if (width > len) {
+			String pad = "";
+			for (int w = len; w < width; w++) {
+				pad += "0";
+			}
+			bitString = pad + bitString;
+		} else if (width < len) {
+			bitString = bitString.substring(len - width, len);
+		}
+		return "#b" + bitString;
+	}
+
+	private static Constructor makeIntToBv(ParameterizedConstructorSymbol sym, Term[] args) {
+		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor<ParameterizedConstructorSymbol>(sym, args) {
+			@Override
+			public void toSmtLib(SmtLibShim shim) {
+				shim.print("((_ int2bv ");
+				int width = nat(sym.getArgs().get(0));
+				shim.print(width + ") ");
+				((SmtLibTerm) args[0]).toSmtLib(shim);
+				shim.print(")");
+			}
 		});
 	}
 
@@ -873,7 +883,7 @@ public final class Constructors {
 
 		private static final AtomicInteger cnt = new AtomicInteger();
 		private final int id = cnt.getAndIncrement();
-		
+
 		public SolverVariable(ParameterizedConstructorSymbol sym, Term[] args) {
 			super(sym, args);
 		}
@@ -882,7 +892,7 @@ public final class Constructors {
 		public void toSmtLib(SmtLibShim shim) {
 			shim.print(this);
 		}
-		
+
 		public int getId() {
 			return id;
 		}
