@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+### Added
+- Support for `bv_to_int` and `int_to_bv` formula constructors.
+
+### Fixed
+- Incorrect (non-`smt`) types for formula constructors.
+- Various lacunae in documentation.
+
 ## [0.5.0] - 2020-11-15
 ### Added
 - Give line numbers with parse exceptions.

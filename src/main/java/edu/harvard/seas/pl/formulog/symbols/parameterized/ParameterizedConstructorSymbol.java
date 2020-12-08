@@ -167,25 +167,25 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 		case ARRAY_DEFAULT: {
 			Type a = types.get(0);
 			Type b = TypeVar.fresh();
-			return mkType(array(a, b), b);
+			return mkType(smt(array(a, b)), smt(b));
 		}
 		case ARRAY_SELECT: {
 			Type a = types.get(0);
 			Type b = TypeVar.fresh();
-			return mkType(array(a, b), a, b);
+			return mkType(smt(array(a, b)), smt(a), smt(b));
 		}
 		case BV_BIG_CONST: {
 			Type width = types.get(0);
-			return mkType(i64, bv(width));
+			return mkType(i64, smt(bv(width)));
 		}
 		case BV_CONST: {
 			Type width = types.get(0);
-			return mkType(i32, bv(width));
+			return mkType(i32, smt(bv(width)));
 		}
 		case INT_TO_BV:
-			return mkType(int_, bv(types.get(0)));
+			return mkType(smt(int_), smt(bv(types.get(0))));
 		case BV_TO_INT:
-			return mkType(bv(types.get(0)), int_);
+			return mkType(smt(bv(types.get(0))), smt(int_));
 		case BV_SGE:
 		case BV_SGT:
 		case BV_SLE:
@@ -195,29 +195,29 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 		case BV_ULE:
 		case BV_ULT: {
 			Type width = types.get(0);
-			return mkType(bv(width), bv(width), bool);
+			return mkType(smt(bv(width)), smt(bv(width)), smt(bool));
 		}
 		case BV_TO_BV_SIGNED:
 		case BV_TO_BV_UNSIGNED: {
 			Type fromWidth = types.get(0);
 			Type toWidth = types.get(1);
-			return mkType(bv(fromWidth), bv(toWidth));
+			return mkType(smt(bv(fromWidth)), smt(bv(toWidth)));
 		}
 		case BV_TO_FP: {
 			Type width = types.get(0);
 			Type exponent = types.get(1);
 			Type significand = types.get(2);
-			return mkType(bv(width), fp(exponent, significand));
+			return mkType(smt(bv(width)), smt(fp(exponent, significand)));
 		}
 		case FP_BIG_CONST: {
 			Type exponent = types.get(0);
 			Type significand = types.get(1);
-			return mkType(fp64, fp(exponent, significand));
+			return mkType(fp64, smt(fp(exponent, significand)));
 		}
 		case FP_CONST: {
 			Type exponent = types.get(0);
 			Type significand = types.get(1);
-			return mkType(fp32, fp(exponent, significand));
+			return mkType(fp32, smt(fp(exponent, significand)));
 		}
 		case FP_EQ:
 		case FP_GE:
@@ -227,26 +227,26 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 			Type exponent = types.get(0);
 			Type significand = types.get(1);
 			Type fp = fp(exponent, significand);
-			return mkType(fp, fp, bool);
+			return mkType(smt(fp), smt(fp), smt(bool));
 		}
 		case FP_IS_NAN: {
 			Type exponent = types.get(0);
 			Type significand = types.get(1);
-			return mkType(fp(exponent, significand), bool);
+			return mkType(smt(fp(exponent, significand)), smt(bool));
 		}
 		case FP_TO_SBV:
 		case FP_TO_UBV: {
 			Type exponent = types.get(0);
 			Type significand = types.get(1);
 			Type width = types.get(2);
-			return mkType(fp(exponent, significand), bv(width));
+			return mkType(smt(fp(exponent, significand)), smt(bv(width)));
 		}
 		case FP_TO_FP: {
 			Type exp1 = types.get(0);
 			Type sig1 = types.get(1);
 			Type exp2 = types.get(2);
 			Type sig2 = types.get(3);
-			return mkType(fp(exp1, sig1), fp(exp2, sig2));
+			return mkType(smt(fp(exp1, sig1)), smt(fp(exp2, sig2)));
 		}
 		case SMT_EQ: {
 			Type ty = types.get(0);
