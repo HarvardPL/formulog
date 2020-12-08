@@ -58,6 +58,10 @@ public enum BuiltInConstructorSymbolBase implements FunctorBase {
 	
 	FP_TO_UBV("fp_to_ubv", 1, ParamKind.NAT, ParamKind.NAT, ParamKind.NAT),
 	
+	INT_TO_BV("int_to_bv", 1, ParamKind.NAT),
+	
+	BV_TO_INT("bv_to_int", 1, ParamKind.NAT),
+	
 	// Floating point
 	
 	FP_EQ("fp_eq", 2, ParamKind.NAT, ParamKind.NAT),
