@@ -36,7 +36,7 @@ public class BalbinEvaluationComparisonTest extends AbstractEvaluationTest {
 	@Test
 	public void test002() { test("balbin_comparison/test002_ok.flg"); }
 
-//	@Test
-//	public void test003() { test("balbin_comparison/test003_ok.flg"); }
+	@Test
+	public void test003() { test("balbin_comparison/test003_ok.flg"); }
 
 }

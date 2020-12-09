@@ -340,6 +340,13 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
 
                                         // Found new fact; will have to fix this conditional for multithreaded evaluation
                                         if (!db.hasFact(newLInputSymbol, newQMagicFactsTerms.iterator().next())) {
+//                                            System.out.println("Evaluating context for symbol " + newLInputAtom.getSymbol());
+//                                            System.out.println("prules for symbol " + newLInputAtom.getSymbol());
+//                                            for (IndexedRule pRule: pRules) {
+//                                                System.out.println(pRule);
+//                                            }
+//                                            System.out.println();
+
                                             new BalbinEvaluationContext(db, deltaDbb, newLInputAtom.getSymbol(), newQMagicFactsTerms, pRules, allRules,
                                                     exec, trackedRelations, mst, maxPathLength).evaluate();
                                         } else {

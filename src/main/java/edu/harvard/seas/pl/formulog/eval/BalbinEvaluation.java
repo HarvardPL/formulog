@@ -335,6 +335,14 @@ public class BalbinEvaluation implements Evaluation {
 
         // Create new BalbinEvaluationContext
         MagicSetTransformer.InputSymbol qInputSymbol = (MagicSetTransformer.InputSymbol) qInputAtom.getSymbol();
+
+//        System.out.println("Evaluating 1st context for symbol " + qInputSymbol);
+//        System.out.println("prules for symbol " + qInputSymbol);
+//        for (IndexedRule pRule: pRules) {
+//            System.out.println(pRule);
+//        }
+//        System.out.println();
+
         new BalbinEvaluationContext(db, deltaDbb, qInputSymbol, qMagicFactsTerms, pRules, rules, exec, trackedRelations, mst, maxPathLength)
                 .evaluate();
     }
@@ -395,10 +403,12 @@ public class BalbinEvaluation implements Evaluation {
 //                    System.out.println(bodyIPred.isNegated());
                     EdgeType edgeType = bodyIPred.isNegated() ? EdgeType.NEGATIVE : EdgeType.POSITIVE;
                     g.addEdge(bodyIPredSymbol, headPredSymbol, new DependencyTypeWrapper(edgeType));
-//                    System.out.println("Added edge from " + bodyIPredSymbol + " to " + headPredSymbol + " with edge type " + edgeType);
+                    System.out.println("Added edge from " + bodyIPredSymbol + " to " + headPredSymbol + " with edge type " + edgeType);
                 }
             }
         }
+        System.out.println("DONE");
+        System.out.println("");
 
 //        System.out.println("VERTEX SET: " + g.vertexSet());
 
