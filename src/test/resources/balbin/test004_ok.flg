@@ -1,0 +1,8 @@
+output i(i32)
+output s(i32)
+
+s(1).
+
+i(X) :- !s(X).
+
+:- i(1).
