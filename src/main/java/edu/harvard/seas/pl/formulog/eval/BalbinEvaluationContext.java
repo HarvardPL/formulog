@@ -79,6 +79,10 @@ public final class BalbinEvaluationContext extends AbstractStratumEvaluator {
         assert qSymbol instanceof MagicSetTransformer.InputSymbol : "Balbin evaluation context: Query must be an InputSymbol";
         addQMagicFactsToDb(db);
         addQMagicFactsToDb(deltaDb);
+        System.out.println("NEW CONTEXT FOR " + qSymbol);
+        for (Rule<?, ?> r : rules) {
+        	System.out.println(r);
+        }
     }
 
     private void addQMagicFactsToDb(SortedIndexedFactDb db) {
