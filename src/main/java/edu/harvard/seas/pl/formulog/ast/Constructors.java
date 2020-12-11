@@ -537,13 +537,17 @@ public final class Constructors {
 		case FP_TO_UBV:
 			return makeFpToBv(sym, args, false);
 		case BV_CONST:
-			return makeBVConst(sym, args);
+			return makeBvConst(sym, args);
 		case BV_BIG_CONST:
-			return makeBVBigConst(sym, args);
+			return makeBvBigConst(sym, args);
 		case INT_TO_BV:
 			return makeIntToBv(sym, args);
 		case BV_TO_INT:
 			return makeSolverOp.apply("bv2int");
+		case BV_CONCAT:
+			return makeSolverOp.apply("concat");
+		case BV_EXTRACT:
+			return makeBvExtract(sym, args);
 		case FP_BIG_CONST:
 		case FP_CONST:
 			return makeConstant(sym, args);
@@ -564,7 +568,7 @@ public final class Constructors {
 		return nat(sym.getArgs().get(idx));
 	}
 
-	private static Constructor makeBVConst(ParameterizedConstructorSymbol sym, Term[] args) {
+	private static Constructor makeBvConst(ParameterizedConstructorSymbol sym, Term[] args) {
 		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor<ParameterizedConstructorSymbol>(sym, args) {
 
 			@Override
@@ -578,7 +582,7 @@ public final class Constructors {
 		});
 	}
 
-	private static Constructor makeBVBigConst(ParameterizedConstructorSymbol sym, Term[] args) {
+	private static Constructor makeBvBigConst(ParameterizedConstructorSymbol sym, Term[] args) {
 		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor<ParameterizedConstructorSymbol>(sym, args) {
 
 			@Override
@@ -613,6 +617,18 @@ public final class Constructors {
 				shim.print("((_ int2bv ");
 				int width = nat(sym.getArgs().get(0));
 				shim.print(width + ") ");
+				((SmtLibTerm) args[0]).toSmtLib(shim);
+				shim.print(")");
+			}
+		});
+	}
+	
+	private static Constructor makeBvExtract(ParameterizedConstructorSymbol sym, Term[] args) {
+		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor<ParameterizedConstructorSymbol>(sym, args) {
+			@Override
+			public void toSmtLib(SmtLibShim shim) {
+				shim.print("((_ extract ");
+				shim.print(args[2] + " " + args[1] + ") ");
 				((SmtLibTerm) args[0]).toSmtLib(shim);
 				shim.print(")");
 			}

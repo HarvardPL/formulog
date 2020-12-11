@@ -279,18 +279,25 @@ bv_to_bv_signed[j,k]   : bv[j] smt -> bv[k] smt
 bv_to_bv_unsigned[j,k] : bv[j] smt -> bv[k] smt
 fp_to_sbv[i,j,k]       : fp[i,j] smt -> bv[k] smt
 fp_to_ubv[i,j,k]       : fp[i,j] smt -> bv[k] smt
-bv_slt[k]               : [bv[k] smt, bv[k] smt] -> bool smt
-bv_sle[k]               : [bv[k] smt, bv[k] smt] -> bool smt
-bv_sgt[k]               : [bv[k] smt, bv[k] smt] -> bool smt
-bv_sge[k]               : [bv[k] smt, bv[k] smt] -> bool smt
-bv_ult[k]               : [bv[k] smt, bv[k] smt] -> bool smt
-bv_ule[k]               : [bv[k] smt, bv[k] smt] -> bool smt
-bv_ugt[k]               : [bv[k] smt, bv[k] smt] -> bool smt
-bv_uge[k]               : [bv[k] smt, bv[k] smt] -> bool smt
+bv_slt[k]              : [bv[k] smt, bv[k] smt] -> bool smt
+bv_sle[k]              : [bv[k] smt, bv[k] smt] -> bool smt
+bv_sgt[k]              : [bv[k] smt, bv[k] smt] -> bool smt
+bv_sge[k]              : [bv[k] smt, bv[k] smt] -> bool smt
+bv_ult[k]              : [bv[k] smt, bv[k] smt] -> bool smt
+bv_ule[k]              : [bv[k] smt, bv[k] smt] -> bool smt
+bv_ugt[k]              : [bv[k] smt, bv[k] smt] -> bool smt
+bv_uge[k]              : [bv[k] smt, bv[k] smt] -> bool smt
+bv_extract[j,k]        : [bv[j] smt, i32, i32] -> bv[k] smt
+bv_concat[i,j,k]       : [bv[i] smt, bv[j] smt] -> bv[k] smt
 ```
 
 Note that in some cases the bit vector width is a parameter to the constructor;
 as noted previously, parameters can often be inferred.
+
+The `bv_extract` and `bv_concat` constructors currently do not enforce some
+constraints on their parameters (for example, with `bv_concat[i,j,k]`, it must
+be that `i + j = k`). Illegal parameter choices are therefore not caught by the
+type system, and might lead to SMT solver crashes at runtime.
 
 #### Floating point
 

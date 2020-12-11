@@ -3,7 +3,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Added
-- Support for `bv_to_int` and `int_to_bv` formula constructors.
+- Support for `bv_to_int`, `int_to_bv`, `bv_extract`, and `bv_concat` formula
+  constructors.
 
 ### Fixed
 - Incorrect (non-`smt`) types for formula constructors.

@@ -49,6 +49,10 @@ public enum BuiltInConstructorSymbolBase implements FunctorBase {
 	BV_CONST("bv_const", 1, ParamKind.NAT),
 
 	BV_BIG_CONST("bv_big_const", 1, ParamKind.NAT),
+	
+	BV_EXTRACT("bv_extract", 3, ParamKind.NAT, ParamKind.NAT),
+	
+	BV_CONCAT("bv_concat", 2, ParamKind.NAT, ParamKind.NAT, ParamKind.NAT),
 
 	BV_TO_BV_SIGNED("bv_to_bv_signed", 1, ParamKind.NAT, ParamKind.NAT),
 

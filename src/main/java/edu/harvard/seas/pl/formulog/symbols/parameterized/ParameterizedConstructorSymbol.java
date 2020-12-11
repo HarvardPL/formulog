@@ -77,6 +77,8 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 		case BV_UGT:
 		case BV_ULE:
 		case BV_ULT:
+		case BV_CONCAT:
+		case BV_EXTRACT:
 		case SMT_EQ:
 		case SMT_LET:
 		case SMT_PAT:
@@ -181,6 +183,17 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 		case BV_CONST: {
 			Type width = types.get(0);
 			return mkType(i32, smt(bv(width)));
+		}
+		case BV_CONCAT: {
+			Type w1 = types.get(0);
+			Type w2 = types.get(1);
+			Type w3 = types.get(2);
+			return mkType(smt(bv(w1)), smt(bv(w2)), smt(bv(w3)));
+		}
+		case BV_EXTRACT: {
+			Type w1 = types.get(0);
+			Type w2 = types.get(1);
+			return mkType(smt(bv(w1)), i32, i32, smt(bv(w2)));
 		}
 		case INT_TO_BV:
 			return mkType(smt(int_), smt(bv(types.get(0))));
