@@ -348,7 +348,7 @@ with manipulating primitives):
     * unsigned division (`*_udiv`)
     * unsigned remainder (`*_urem`)
     * shift left (`*_shl`)
-    * shift right (`*_shr`)
+    * logical shift right (`*_lshr`)
     * arithmetic shift right (`*_ashr`)
 * float operations for types `fp32` and `fp64`:
     * equality (`*_eq`; this is floating point equality, as opposed to
