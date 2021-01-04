@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Support for `bv_to_int`, `int_to_bv`, `bv_extract`, and `bv_concat` formula
   constructors.
+- More string manipulation and inspection functions (`substring`,
+  `string_length`, `char_at`, `string_to_list`, and `list_to_string`).
 
 ### Fixed
 - Incorrect (non-`smt`) types for formula constructors.

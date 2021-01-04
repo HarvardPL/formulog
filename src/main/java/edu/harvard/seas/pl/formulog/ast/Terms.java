@@ -21,11 +21,10 @@ package edu.harvard.seas.pl.formulog.ast;
  */
 
 import java.util.ArrayList;
-import java.util.Collections;
-
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -67,7 +66,7 @@ public final class Terms {
 		}
 		return ys;
 	}
-	
+
 	public static Term[] normalize(Term[] ts, Substitution s) throws EvaluationException {
 		Term[] newTs = new Term[ts.length];
 		for (int i = 0; i < ts.length; ++i) {
@@ -143,18 +142,6 @@ public final class Terms {
 		}, null);
 		return vars;
 	}
-	
-	public static List<Term> listTermToList(Term listTerm) {
-		List<Term> l = new ArrayList<>();
-		Constructor c = (Constructor) listTerm;
-		while (c.getSymbol().equals(BuiltInConstructorSymbol.CONS)) {
-			Term[] args = c.getArgs();
-			l.add(args[0]);
-			c = (Constructor) args[1];
-		}
-		assert c.getSymbol().equals(BuiltInConstructorSymbol.NIL);
-		return l;
-	}
 
 	public static interface TermVisitor<I, O> {
 
@@ -179,19 +166,19 @@ public final class Terms {
 		O visit(Expr e, I in) throws E;
 
 	}
-	
+
 	public static final Term minTerm = new DummyTerm(Integer.MIN_VALUE);
-	
+
 	public static final Term maxTerm = new DummyTerm(Integer.MAX_VALUE);
-	
+
 	private static class DummyTerm implements Term {
-		
+
 		private final int id;
-		
+
 		public DummyTerm(int id) {
 			this.id = id;
 		}
-		
+
 		@Override
 		public <I, O> O accept(TermVisitor<I, O> v, I in) {
 			throw new UnsupportedOperationException();
@@ -236,24 +223,24 @@ public final class Terms {
 		public void updateVarCounts(Map<Var, Integer> counts) {
 			throw new UnsupportedOperationException();
 		}
-		
+
 		@Override
 		public String toString() {
 			return "DummyTerm(" + id + ")";
 		}
-		
+
 	}
-	
+
 	public static Term makeDummyTerm(int id) {
 		return new DummyTerm(id);
 	}
-	
+
 	private static final AtomicInteger idCnt = new AtomicInteger(0);
-	
+
 	public static int nextId() {
 		return idCnt.incrementAndGet();
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public static <T extends Term> List<T> termToTermList(Term t) {
 		List<T> xs = new ArrayList<>();
@@ -264,8 +251,15 @@ public final class Terms {
 			c = (Constructor) args[1];
 		}
 		assert c.getSymbol() == BuiltInConstructorSymbol.NIL;
-		Collections.reverse(xs);
-		return Collections.unmodifiableList(xs);
+		return xs;
 	}
-	
+
+	public static <T extends Term> Term termListToTerm(List<T> l) {
+		Term acc = Constructors.nil();
+		for (ListIterator<T> it = l.listIterator(l.size()); it.hasPrevious();) {
+			acc = Constructors.cons(it.previous(), acc);
+		}
+		return acc;
+	}
+
 }

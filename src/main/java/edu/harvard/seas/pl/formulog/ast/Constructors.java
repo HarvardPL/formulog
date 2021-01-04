@@ -98,6 +98,10 @@ public final class Constructors {
 	public static Constructor nil() {
 		return nil;
 	}
+	
+	public static Constructor cons(Term hd, Term tl) {
+		return make(BuiltInConstructorSymbol.CONS, new Term[] { hd, tl } );
+	}
 
 	private static Constructor lookupOrCreateBuiltInConstructor(BuiltInConstructorSymbol sym, Term[] args) {
 		Function<String, Constructor> makeSolverOp = op -> memo.lookupOrCreate(sym, args,
@@ -375,14 +379,14 @@ public final class Constructors {
 
 		protected List<List<Term>> getPatterns() {
 			List<List<Term>> l = new ArrayList<>();
-			for (Term pat : Terms.listTermToList(args[2])) {
-				l.add(Terms.listTermToList(pat));
+			for (Term pat : Terms.termToTermList(args[2])) {
+				l.add(Terms.termToTermList(pat));
 			}
 			return l;
 		}
 
 		private List<SolverVariable> getBoundVars() {
-			List<Term> wrappedVars = Terms.listTermToList(args[0]);
+			List<Term> wrappedVars = Terms.termToTermList(args[0]);
 			List<SolverVariable> vars = new ArrayList<>();
 			for (Term wrappedVar : wrappedVars) {
 				SolverVariable var = (SolverVariable) ((Constructor) wrappedVar).getArgs()[0];

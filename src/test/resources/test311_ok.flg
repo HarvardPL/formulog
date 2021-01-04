@@ -1,0 +1,49 @@
+output ok1
+output ok2
+output ok3
+output ok4
+output ok5
+output ok
+
+ok1 :-
+  string_to_list("") = [],
+  string_to_list("a") = [97],
+  string_to_list("abc") = [97, 98, 99].
+
+ok2 :-
+  list_to_string([]) = "",
+  list_to_string([97]) = "a",
+  list_to_string([97, 98, 99]) = "abc".
+
+ok3 :-
+  char_at("", 0) = none,
+  char_at("a", 0) = some(97),
+  char_at("a", 1) = none,
+  char_at("abc", 0) = some(97),
+  char_at("abc", 1) = some(98),
+  char_at("abc", 2) = some(99),
+  char_at("abc", 3) = none,
+  char_at("abc", 42) = none,
+  char_at("abc", -42) = none.
+
+ok4 :-
+  substring("", 0, 0) = some(""),
+  substring("", 0, 1) = none,
+  substring("", -1, 1) = none,
+  substring("abc", 0, 0) = some(""),
+  substring("abc", 0, 1) = some("a"),
+  substring("abc", 0, 2) = some("ab"),
+  substring("abc", 0, 3) = some("abc"),
+  substring("abc", 0, 4) = none.
+
+ok5 :-
+  string_length("") = 0,
+  string_length("a") = 1,
+  string_length("abc") = 3.
+
+ok :-
+  ok1,
+  ok2,
+  ok3,
+  ok4,
+  ok5.

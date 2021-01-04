@@ -191,6 +191,16 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 	STRING_STARTS_WITH("string_starts_with", 2),
 	
 	TO_STRING("to_string", 1),
+	
+	STRING_TO_LIST("string_to_list", 1),
+	
+	LIST_TO_STRING("list_to_string", 1),
+	
+	CHAR_AT("char_at", 2),
+	
+	SUBSTRING("substring", 3),
+	
+	STRING_LENGTH("string_length", 1),
 
 	// Constraint solving
 
@@ -360,6 +370,16 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 			return new FunctorType(a, string);
 		case STRING_STARTS_WITH:
 			return new FunctorType(string, string, bool);
+		case STRING_TO_LIST:
+			return new FunctorType(string, list(i32));
+		case LIST_TO_STRING:
+			return new FunctorType(list(i32), string);
+		case CHAR_AT:
+			return new FunctorType(string, i32, option(i32));
+		case SUBSTRING:
+			return new FunctorType(string, i32, i32, option(string));
+		case STRING_LENGTH:
+			return new FunctorType(string, i32);
 		case SUBSTITUTE:
 			return new FunctorType(sym(a), smt(a), smt(b), smt(b));
 		case fp32ToFp64:

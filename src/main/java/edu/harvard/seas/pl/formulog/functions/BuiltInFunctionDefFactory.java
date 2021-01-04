@@ -209,6 +209,16 @@ public final class BuiltInFunctionDefFactory {
 			return stringMatches;
 		case STRING_STARTS_WITH:
 			return stringStartsWith;
+		case STRING_TO_LIST:
+			return stringToList;
+		case LIST_TO_STRING:
+			return listToString;
+		case CHAR_AT:
+			return charAt;
+		case SUBSTRING:
+			return substring;
+		case STRING_LENGTH:
+			return stringLength;
 		case IS_SAT:
 			return isSat;
 		case IS_SAT_OPT:
@@ -1522,6 +1532,100 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 	};
+	
+	private static final FunctionDef stringToList = new FunctionDef() {
+
+		@Override
+		public FunctionSymbol getSymbol() {
+			return BuiltInFunctionSymbol.STRING_TO_LIST;
+		}
+
+		@Override
+		public Term evaluate(Term[] args) throws EvaluationException {
+			String s = ((StringTerm) args[0]).getVal();
+			List<I32> l = new ArrayList<>();
+			for (int i = 0; i < s.length(); ++i) {
+				l.add(I32.make(s.charAt(i)));
+			}
+			return Terms.termListToTerm(l);
+		}
+		
+	};
+	
+	private static final FunctionDef listToString = new FunctionDef() {
+
+		@Override
+		public FunctionSymbol getSymbol() {
+			return BuiltInFunctionSymbol.LIST_TO_STRING;
+		}
+
+		@Override
+		public Term evaluate(Term[] args) throws EvaluationException {
+			List<I32> l = Terms.termToTermList(args[0]);
+			char[] cs = new char[l.size()];
+			int i = 0;
+			for (I32 c : l) {
+				cs[i] = (char) c.getVal().intValue();
+				i++;
+			}
+			return StringTerm.make(new String(cs));
+		}
+		
+	};
+	
+	private static final FunctionDef charAt = new FunctionDef() {
+
+		@Override
+		public FunctionSymbol getSymbol() {
+			return BuiltInFunctionSymbol.CHAR_AT;
+		}
+
+		@Override
+		public Term evaluate(Term[] args) throws EvaluationException {
+			String s = ((StringTerm) args[0]).getVal();
+			int i = ((I32) args[1]).getVal();
+			if (i < 0 || i >= s.length()) {
+				return none;
+			}
+			return some(I32.make(s.charAt(i)));
+		}
+		
+	};
+	
+	private static final FunctionDef substring = new FunctionDef() {
+
+		@Override
+		public FunctionSymbol getSymbol() {
+			return BuiltInFunctionSymbol.SUBSTRING;
+		}
+
+		@Override
+		public Term evaluate(Term[] args) throws EvaluationException {
+			String s = ((StringTerm) args[0]).getVal();
+			int i = ((I32) args[1]).getVal();
+			int j = ((I32) args[2]).getVal();
+			if (i < 0 || j > s.length() || i > j) {
+				return none;
+			}
+			return some(StringTerm.make(s.substring(i, j)));
+		}
+		
+	};
+	
+	private static final FunctionDef stringLength = new FunctionDef() {
+
+		@Override
+		public FunctionSymbol getSymbol() {
+			return BuiltInFunctionSymbol.STRING_LENGTH;
+		}
+
+		@Override
+		public Term evaluate(Term[] args) throws EvaluationException {
+			String s = ((StringTerm) args[0]).getVal();
+			return I32.make(s.length());
+		}
+		
+	};
 
 	private enum Substitute implements FunctionDef {
 
@@ -1705,6 +1809,7 @@ public final class BuiltInFunctionDefFactory {
 		public Term evaluate(Term[] args) throws EvaluationException {
 			SmtLibTerm formula = (SmtLibTerm) args[0];
 			List<SmtLibTerm> assertions = Terms.termToTermList(formula);
+			Collections.reverse(assertions);
 			Constructor timeoutOpt = (Constructor) args[1];
 			Integer timeout = extractOptionalTimeout(timeoutOpt);
 			Pair<SmtStatus, Model> p = querySmt(assertions, false, timeout);
@@ -1762,6 +1867,7 @@ public final class BuiltInFunctionDefFactory {
 		@Override
 		public Term evaluate(Term[] args) throws EvaluationException {
 			List<SmtLibTerm> assertions = Terms.termToTermList((SmtLibTerm) args[0]);
+			Collections.reverse(assertions);
 			Constructor timeoutOpt = (Constructor) args[1];
 			Integer timeout = extractOptionalTimeout(timeoutOpt);
 			Pair<SmtStatus, Model> p = querySmt(assertions, true, timeout);

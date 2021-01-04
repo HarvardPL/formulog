@@ -373,13 +373,25 @@ string_concat      : [string, string] -> string
 string_cmp         : [string, string] -> cmp
 string_matches     : [string, string] -> bool
 string_starts_with : [string, string] -> bool
+substring          : [string, i32, i32] -> string option
+string_length      : [string] -> i32
+char_at            : [string] -> i32 option
+string_to_list     : [string] -> i32 list
+list_to_string     : [i32 list] -> string
 to_string          : 'a -> string
 ```
 
 The function `string_matches` returns `true` when its first argument matches its
 second argument, which can be a regular expression. The function
 `string_starts_with` returns `true` when its second argument is a prefix of its
-first argument.
+first argument. The function `substring(s, i, j)` extracts the substring of `s`
+starting at index `i` and ending at index `j - 1`; it returns `none` for
+inappropriate `i` or `j`.
+
+The functions `char_at`, `string_to_list`, and `list_to_string` can be used to
+treat a string as a list of characters. We represent characters as terms of
+type `i32`. We currently do not guarantee any particular behavior if an integer
+less than 0 or greater than 255 is used as a character.
 
 Finally, for the purposes of debugging, Formulog supplies a `print` function of
 type `'a -> bool`; it always evaluates to `true`.
