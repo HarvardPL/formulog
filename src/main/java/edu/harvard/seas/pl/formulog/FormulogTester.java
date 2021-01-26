@@ -28,11 +28,12 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -40,7 +41,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import edu.harvard.seas.pl.formulog.ast.Term;
+import edu.harvard.seas.pl.formulog.eval.Evaluation;
+import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.eval.EvaluationResult;
+import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
 import edu.harvard.seas.pl.formulog.parsing.ParseException;
 import edu.harvard.seas.pl.formulog.parsing.Parser;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
@@ -52,16 +56,9 @@ import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 import edu.harvard.seas.pl.formulog.util.sexp.SExp;
 import edu.harvard.seas.pl.formulog.util.sexp.SExpException;
 import edu.harvard.seas.pl.formulog.util.sexp.SExpParser;
+import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 
 public class FormulogTester {
-
-	/*
-	 * How this is going to work: - Get a program and JSON file - Parse (with no
-	 * external directories) and type check program - Get initial facts; these will
-	 * be the same in each test - Then loop through tests in JSON file, extracting
-	 * new facts as necessary - Will need to update pc in Parser to be an instance
-	 * field - Parser will also need a parseExternalFacts(RelationSymbol) method
-	 */
 
 	private boolean initialized;
 	private final List<FormulogTest> tests = new ArrayList<>();
@@ -97,14 +94,14 @@ public class FormulogTester {
 			}
 		}
 		try {
-			Function<EvaluationResult, Optional<String>> logic = parseBoolLogic(test.get("logic").asText());
+			Function<EvaluationResult, List<String>> logic = parseBoolLogic(test.get("logic").asText());
 			return new FormulogTest(name, m, logic);
 		} catch (ParseException e) {
 			throw new ParseException(-1, "Trouble parsing logic for test " + name + ": " + e.getMessage());
 		}
 	}
 
-	private Function<EvaluationResult, Optional<String>> parseBoolLogic(String s) throws ParseException {
+	private Function<EvaluationResult, List<String>> parseBoolLogic(String s) throws ParseException {
 		Reader r = new StringReader(s);
 		SExpParser p = new SExpParser(r);
 		SExp sexp;
@@ -116,7 +113,7 @@ public class FormulogTester {
 		return parseBoolLogic(sexp);
 	}
 
-	private Function<EvaluationResult, Optional<String>> parseBoolLogic(SExp sexp) throws ParseException {
+	private Function<EvaluationResult, List<String>> parseBoolLogic(SExp sexp) throws ParseException {
 		if (sexp.isAtom()) {
 			return parseBoolAtom(sexp.asAtom());
 		} else {
@@ -124,16 +121,16 @@ public class FormulogTester {
 		}
 	}
 
-	private Function<EvaluationResult, Optional<String>> parseBoolAtom(String atom) throws ParseException {
+	private Function<EvaluationResult, List<String>> parseBoolAtom(String atom) throws ParseException {
 		switch (atom) {
 		case "true":
-			return r -> Optional.empty();
+			return r -> Collections.emptyList();
 		default:
 			throw new ParseException(-1, "Unrecognized boolean constant: " + atom);
 		}
 	}
 
-	private Function<EvaluationResult, Optional<String>> parseBoolList(List<SExp> l) throws ParseException {
+	private Function<EvaluationResult, List<String>> parseBoolList(List<SExp> l) throws ParseException {
 		if (l.isEmpty()) {
 			throw new ParseException(-1, "Unexpected empty list");
 		}
@@ -155,34 +152,24 @@ public class FormulogTester {
 				int v1 = f1.apply(r);
 				int v2 = f2.apply(r);
 				if (v1 == v2) {
-					return Optional.empty();
+					return Collections.emptyList();
 				} else {
-					return Optional.of(
+					return Collections.singletonList(
 							"Failed equality: " + sexp1 + " has value " + v1 + ", but " + sexp2 + " has value " + v2);
 				}
 			};
 		}
 		case "and": {
-			List<Function<EvaluationResult, Optional<String>>> fs = new ArrayList<>();
+			List<Function<EvaluationResult, List<String>>> fs = new ArrayList<>();
 			for (Iterator<SExp> it = l.listIterator(1); it.hasNext();) {
 				fs.add(parseBoolLogic(it.next()));
 			}
 			return r -> {
-				String s = "";
-				for (Function<EvaluationResult, Optional<String>> f : fs) {
-					Optional<String> o = f.apply(r);
-					if (o.isPresent()) {
-						if (!s.isEmpty()) {
-							s += "\n";
-						}
-						s += o.get();
-					}
+				List<String> errors = new ArrayList<>();
+				for (Function<EvaluationResult, List<String>> f : fs) {
+					errors.addAll(f.apply(r));
 				}
-				if (s.isEmpty()) {
-					return Optional.empty();
-				} else {
-					return Optional.of(s);
-				}
+				return errors;
 			};
 		}
 		default:
@@ -241,19 +228,49 @@ public class FormulogTester {
 		}
 	}
 
-	synchronized void runTests() {
+	synchronized void runTests() throws InvalidProgramException, EvaluationException {
 		if (!initialized) {
 			throw new IllegalStateException("Need to set up tests first.");
+		}
+		// Need to get the EDBs that are hard-coded into the program.
+		Map<RelationSymbol, Set<Term[]>> hardCodedFacts = new HashMap<>();
+		for (RelationSymbol sym : prog.getFactSymbols()) {
+			hardCodedFacts.put(sym, new HashSet<>(prog.getFacts(sym)));
+		}
+		for (FormulogTest test : tests) {
+			runTest(test, hardCodedFacts);
+		}
+	}
+
+	private void runTest(FormulogTest test, Map<RelationSymbol, Set<Term[]>> hardCodedFacts) throws InvalidProgramException, EvaluationException {
+		for (RelationSymbol sym : prog.getFactSymbols()) {
+			Set<Term[]> s = prog.getFacts(sym);
+			s.clear();
+			s.addAll(hardCodedFacts.get(sym));
+			s.addAll(test.testInputs.get(sym));
+		}
+		// This would be better if we could setup the program, and then load the
+		// external facts, so we do not need to do the set up each time.
+		Evaluation e = SemiNaiveEvaluation.setup(prog, 1, false);
+		e.run();
+		List<String> errors = test.testLogic.apply(e.getResult());
+		if (errors.isEmpty()) {
+			System.err.println("Test " + test.name + ": PASSED");
+		} else {
+			System.err.println("Test " + test.name + ": FAILED");
+			for (String error : errors) {
+				System.err.println(">>> " + error);
+			}
 		}
 	}
 
 	private static class FormulogTest {
 		public final String name;
 		public final Map<RelationSymbol, Set<Term[]>> testInputs;
-		public final Function<EvaluationResult, Optional<String>> testLogic;
+		public final Function<EvaluationResult, List<String>> testLogic;
 
 		public FormulogTest(String name, Map<RelationSymbol, Set<Term[]>> testInputs,
-				Function<EvaluationResult, Optional<String>> testLogic) {
+				Function<EvaluationResult, List<String>> testLogic) {
 			this.name = name;
 			this.testInputs = testInputs;
 			this.testLogic = testLogic;
