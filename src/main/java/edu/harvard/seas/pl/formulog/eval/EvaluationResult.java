@@ -34,4 +34,6 @@ public interface EvaluationResult {
 	
 	Set<RelationSymbol> getSymbols();
 	
+	int getCount(RelationSymbol sym);
+	
 }

@@ -28,6 +28,7 @@ import java.io.Reader;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -43,7 +44,10 @@ import org.antlr.v4.runtime.TokenStream;
 
 import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.BasicProgram;
+import edu.harvard.seas.pl.formulog.ast.BasicRule;
+import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.Term;
+import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogLexer;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ProgContext;
@@ -52,6 +56,8 @@ import edu.harvard.seas.pl.formulog.util.Pair;
 
 public class Parser {
 
+	private final ParsingContext pc = new ParsingContext();
+	
 	private FormulogParser getParser(Reader r, boolean isTsv) throws ParseException {
 		try {
 			CharStream chars = CharStreams.fromReader(r);
@@ -70,20 +76,27 @@ public class Parser {
 	public BasicProgram parse(Reader r, List<Path> inputDirs) throws ParseException {
 		try {
 			FormulogParser parser = getParser(r, false);
-			ParsingContext pc = new ParsingContext();
 			ProgContext progCtx = parser.prog();
 			Pair<BasicProgram, Set<RelationSymbol>> p = new TopLevelParser(pc).parse(progCtx);
 			BasicProgram prog = p.fst();
-			loadExternalEdbs(pc, prog, p.snd(), inputDirs);
+			loadExternalEdbs(prog, p.snd(), inputDirs);
 			return prog;
 		} catch (UncheckedParseException e) {
 			throw new ParseException(e.getLineNo(), e.getMessage());
 		}
 	}
-
-	private void loadExternalEdbs(ParsingContext pc, BasicProgram prog, Set<RelationSymbol> rels, List<Path> inputDirs)
+	
+	public Set<Term[]> parseFacts(RelationSymbol sym, Reader factStream) throws ParseException {
+		Set<Term[]> facts = new HashSet<>();
+		FormulogParser parser = getParser(factStream, true);
+		FactFileParser fpp = new FactFileParser(pc);
+		fpp.loadFacts(parser.tsvFile(), sym.getArity(), facts);
+		return facts;
+	}
+	
+	private void loadExternalEdbs(Program<UserPredicate, BasicRule> prog, Set<RelationSymbol> rels, List<Path> inputDirs)
 			throws ParseException {
-		if (rels.isEmpty()) {
+		if (rels.isEmpty() || inputDirs.isEmpty()) {
 			return;
 		}
 		ExecutorService exec = Executors.newFixedThreadPool(Configuration.parallelism);
@@ -95,7 +108,7 @@ public class Parser {
 					@Override
 					public void run() {
 						try {
-							readEdbFromFile(pc, sym, inputDir, prog.getFacts(sym));
+							readEdbFromFile(sym, inputDir, prog.getFacts(sym));
 						} catch (ParseException e) {
 							throw new UncheckedParseException(e.getLineNo(), e.getMessage());
 						}
@@ -114,7 +127,7 @@ public class Parser {
 		}
 	}
 
-	private void readEdbFromFile(ParsingContext pc, RelationSymbol sym, Path inputDir, Set<Term[]> acc)
+	private void readEdbFromFile(RelationSymbol sym, Path inputDir, Set<Term[]> acc)
 			throws ParseException {
 		Path path = inputDir.resolve(sym.toString() + ".tsv");
 		try (FileReader fr = new FileReader(path.toFile())) {

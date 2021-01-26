@@ -559,6 +559,11 @@ public class SemiNaiveEvaluation implements Evaluation {
 				return Collections.unmodifiableSet(db.getSymbols());
 			}
 
+			@Override
+			public int getCount(RelationSymbol sym) {
+				return db.countDistinct(sym);
+			}
+
 		};
 	}
 

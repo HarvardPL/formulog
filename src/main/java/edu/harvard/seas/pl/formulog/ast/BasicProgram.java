@@ -22,5 +22,5 @@ package edu.harvard.seas.pl.formulog.ast;
 
 
 public interface BasicProgram extends Program<UserPredicate, BasicRule> {
-
+	
 }
