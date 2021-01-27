@@ -155,7 +155,7 @@ public class FormulogTester {
 					return Collections.emptyList();
 				} else {
 					return Collections.singletonList(
-							"Failed equality: " + sexp1 + " has value " + v1 + ", but " + sexp2 + " has value " + v2);
+							"Failed equality: (= " + sexp1 + " " + sexp2 + ") reduces to (= " + v1 + " " + v2 + ")");
 				}
 			};
 		}
@@ -208,7 +208,7 @@ public class FormulogTester {
 			if (l.size() != 2) {
 				throw new ParseException(-1, "Wrong number of arguments for size operator: " + l.size());
 			}
-			SExp sexp1 = l.get(0);
+			SExp sexp1 = l.get(1);
 			if (sexp1.isList()) {
 				throw new ParseException(-1, "size operator expects a relation symbol, but got a list: " + sexp1);
 			}
@@ -228,7 +228,7 @@ public class FormulogTester {
 		}
 	}
 
-	synchronized void runTests() throws InvalidProgramException, EvaluationException {
+	synchronized boolean runTests() throws InvalidProgramException, EvaluationException {
 		if (!initialized) {
 			throw new IllegalStateException("Need to set up tests first.");
 		}
@@ -237,12 +237,14 @@ public class FormulogTester {
 		for (RelationSymbol sym : prog.getFactSymbols()) {
 			hardCodedFacts.put(sym, new HashSet<>(prog.getFacts(sym)));
 		}
+		boolean ok = true;
 		for (FormulogTest test : tests) {
-			runTest(test, hardCodedFacts);
+			ok &= runTest(test, hardCodedFacts);
 		}
+		return ok;
 	}
 
-	private void runTest(FormulogTest test, Map<RelationSymbol, Set<Term[]>> hardCodedFacts) throws InvalidProgramException, EvaluationException {
+	private boolean runTest(FormulogTest test, Map<RelationSymbol, Set<Term[]>> hardCodedFacts) throws InvalidProgramException, EvaluationException {
 		for (RelationSymbol sym : prog.getFactSymbols()) {
 			Set<Term[]> s = prog.getFacts(sym);
 			s.clear();
@@ -255,12 +257,14 @@ public class FormulogTester {
 		e.run();
 		List<String> errors = test.testLogic.apply(e.getResult());
 		if (errors.isEmpty()) {
-			System.err.println("Test " + test.name + ": PASSED");
+			System.out.println(test.name + ": PASSED");
+			return true;
 		} else {
-			System.err.println("Test " + test.name + ": FAILED");
+			System.out.println(test.name + ": FAILED");
 			for (String error : errors) {
-				System.err.println(">>> " + error);
+				System.out.println(">>> " + error);
 			}
+			return false;
 		}
 	}
 
@@ -275,6 +279,20 @@ public class FormulogTester {
 			this.testInputs = testInputs;
 			this.testLogic = testLogic;
 		}
+	}
+	
+	public static void main(String[] args) throws Exception {
+		if (args.length != 1) {
+			System.out.println("Expected a single Formulog file as an input.");
+			System.exit(1);
+		}
+		FormulogTester tester = new FormulogTester();
+		if (Configuration.testFile == null) {
+			System.out.println("Must specify a JSON test file.");
+			System.exit(1);
+		}
+		tester.setup(new FileReader(args[0]), new File(Configuration.testFile));
+		System.exit(tester.runTests() ? 0 : 1);
 	}
 
 }

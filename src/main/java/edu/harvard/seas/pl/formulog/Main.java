@@ -226,7 +226,13 @@ public final class Main {
 	}
 
 	public static void main(String[] args) throws Exception {
-		if (Configuration.codeGen) {
+		if (Configuration.runTests) {
+			try {
+			FormulogTester.main(args);
+			} catch (Exception e) {
+				handleException("Problem running test suite", e);
+			}
+		} else if (Configuration.codeGen) {
 			CodeGen.main(args);
 		} else {
 			if (args.length != 1) {

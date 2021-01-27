@@ -25,7 +25,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -179,24 +178,21 @@ public final class Util {
 
 	public static void assertBinaryOnPath(String exec) {
 		String os = System.getProperty("os.name");
-		String cmd = "";
-		if (os.startsWith("Windows")) {
-			cmd += "where";
-		} else {
-			cmd += "which";
-		}
-		cmd += " " + exec;
+		String util = os.startsWith("Windows") ? "where" : "which";
+		String[] cmd = { util, exec };
+		String strCmd = util + " " + exec;
 		try {
 			Process p = Runtime.getRuntime().exec(cmd);
 			if (p.waitFor() != 0) {
-				throw new AssertionError(
-						"Cannot find " + exec + " executable on path (`" + cmd + "` returned a non-zero exit code).");
+				throw new AssertionError("Cannot find " + exec + " executable on path (`" + strCmd
+						+ "` returned a non-zero exit code).");
 			}
 		} catch (IOException | InterruptedException e) {
-			throw new AssertionError("Command checking for presence of " + exec + " executable failed: " + cmd);
+			throw new AssertionError("Command checking for presence of " + exec + " executable failed: " + strCmd + "\n"
+					+ e.getMessage());
 		}
 	}
-	
+
 	public static <V, E> void printGraph(PrintStream out, Graph<V, E> g) {
 		out.println("{");
 		for (Iterator<V> it = g.vertexSet().iterator(); it.hasNext();) {

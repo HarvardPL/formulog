@@ -57,6 +57,9 @@ public final class Configuration {
 		throw new AssertionError("impossible");
 	}
 
+	public static final boolean runTests = propIsSet("runTests");
+	public static final String testFile = System.getProperty("testFile");
+	
 	public static final boolean recordFuncDiagnostics = propIsSet("timeFuncs");
 	private static final Map<FunctionSymbol, AtomicLong> funcTimes = new ConcurrentHashMap<>();
 
