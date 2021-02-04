@@ -94,10 +94,10 @@ public class FormulogTester {
 			}
 		}
 		try {
-			Function<EvaluationResult, List<String>> logic = parseBoolLogic(test.get("logic").asText());
+			Function<EvaluationResult, List<String>> logic = parseBoolLogic(test.get("spec").asText());
 			return new FormulogTest(name, m, logic);
 		} catch (ParseException e) {
-			throw new ParseException(-1, "Trouble parsing logic for test " + name + ": " + e.getMessage());
+			throw new ParseException(-1, "Trouble parsing spec for test " + name + ": " + e.getMessage());
 		}
 	}
 
