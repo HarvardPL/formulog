@@ -228,7 +228,7 @@ public final class Main {
 	public static void main(String[] args) throws Exception {
 		if (Configuration.runTests) {
 			try {
-			FormulogTester.main(args);
+				FormulogTester.main(args);
 			} catch (Exception e) {
 				handleException("Problem running test suite", e);
 			}

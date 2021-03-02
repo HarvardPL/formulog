@@ -66,6 +66,10 @@ public final class FunctionCallFactory {
 	public FunctionDefManager getDefManager() {
 		return defManager;
 	}
+	
+	public void clearMemoCache() {
+		callMemo.clear();
+	}
 
 	public class FunctionCall extends AbstractTerm implements Functor<FunctionSymbol>, Expr {
 

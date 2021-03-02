@@ -45,8 +45,11 @@ import edu.harvard.seas.pl.formulog.eval.Evaluation;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.eval.EvaluationResult;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
+import edu.harvard.seas.pl.formulog.functions.DummyFunctionDef;
+import edu.harvard.seas.pl.formulog.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.parsing.ParseException;
 import edu.harvard.seas.pl.formulog.parsing.Parser;
+import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
@@ -244,13 +247,28 @@ public class FormulogTester {
 		return ok;
 	}
 
+	private void clearCachedState() {
+		// Need to clear memoized function calls
+		prog.getFunctionCallFactory().clearMemoCache();
+		// Need to reset predicate functions
+		for (FunctionSymbol sym : prog.getFunctionSymbols()) {
+			FunctionDef def = prog.getDef(sym);
+			if (def instanceof DummyFunctionDef) {
+				((DummyFunctionDef) def).setDef(null);
+			}
+		}
+	}
+	
 	private boolean runTest(FormulogTest test, Map<RelationSymbol, Set<Term[]>> hardCodedFacts) throws InvalidProgramException, EvaluationException {
 		for (RelationSymbol sym : prog.getFactSymbols()) {
-			Set<Term[]> s = prog.getFacts(sym);
-			s.clear();
-			s.addAll(hardCodedFacts.get(sym));
-			s.addAll(test.testInputs.get(sym));
+			if (sym.isExternal()) {
+				Set<Term[]> s = prog.getFacts(sym);
+				s.clear();
+				s.addAll(hardCodedFacts.get(sym));
+				s.addAll(test.testInputs.get(sym));
+			}
 		}
+		clearCachedState();
 		// This would be better if we could setup the program, and then load the
 		// external facts, so we do not need to do the set up each time.
 		Evaluation e = SemiNaiveEvaluation.setup(prog, 1, false);
