@@ -154,6 +154,8 @@ public final class Constructors {
 			return makeSolverOp.apply("bvxor");
 		case BV_SHL:
 			return makeSolverOp.apply("bvshl");
+		case BV_ASHR:
+			return makeSolverOp.apply("bvashr");
 		case BV_LSHR:
 			return makeSolverOp.apply("bvlshr");
 		case FP_ADD:
