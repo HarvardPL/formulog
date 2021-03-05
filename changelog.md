@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
   constructors.
 - More string manipulation and inspection functions (`substring`,
   `string_length`, `char_at`, `string_to_list`, and `list_to_string`).
+- Test suite framework.
 
 ### Fixed
 - Incorrect (non-`smt`) types for formula constructors.
