@@ -260,6 +260,10 @@ class TermExtractor {
 		}
 
 		private Term makeFunctor(int lineNo, Symbol sym, Term[] args) {
+			if (sym.getArity() != args.length) {
+				throw new UncheckedParseException(lineNo, "Symbol " + sym + " has arity " + sym.getArity()
+						+ ", but applied to " + args.length + " arg(s): " + Arrays.toString(args));
+			}
 			if (sym instanceof RelationSymbol) {
 				FunctionSymbol newSym = pc.symbolManager()
 						.createPredicateFunctionSymbolPlaceholder((RelationSymbol) sym);
