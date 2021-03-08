@@ -199,6 +199,19 @@ class TermExtractor {
 			if (name.equals("true") || name.equals("false")) {
 				return parseBool(ctx);
 			}
+			boolean parsingFormulaConstantCtor =
+			name.equals(BuiltInConstructorSymbolBase.BV_CONST.toString())
+					|| name.equals(BuiltInConstructorSymbolBase.BV_BIG_CONST.toString())
+					|| name.equals(BuiltInConstructorSymbolBase.FP_CONST.toString())
+					|| name.equals(BuiltInConstructorSymbolBase.FP_BIG_CONST.toString())
+					|| name.equals(BuiltInConstructorSymbol.INT_CONST.toString())
+					|| name.equals(BuiltInConstructorSymbol.INT_BIG_CONST.toString());
+			boolean inFormulaTmp = inFormula;
+			/*
+			if (parsingFormulaConstantCtor) {
+				inFormula = false;
+			}
+			*/
 			List<Param> params = ParsingUtil.extractParams(pc, ctx.parameterList());
 			Term[] args = extractArray(ctx.termArgs().term());
 			if (inPattern && args.length == 0 && !pc.symbolManager().hasConstructorSymbolWithName(name)) {
@@ -230,16 +243,9 @@ class TermExtractor {
 			// For a couple constructors, we want to make sure that their arguments are
 			// forced to be non-formula types. For example, the constructor bv_const needs
 			// to take something of type i32, not i32 expr.
-			if (sym instanceof ParameterizedConstructorSymbol) {
-				switch (((ParameterizedConstructorSymbol) sym).getBase()) {
-				case BV_BIG_CONST:
-				case BV_CONST:
-				case FP_BIG_CONST:
-				case FP_CONST:
-					t = makeExitFormula(t);
-				default:
-					break;
-				}
+			if (parsingFormulaConstantCtor) {
+				t = makeExitFormula(t);
+				inFormula = inFormulaTmp;
 			}
 			return t;
 		}
@@ -559,7 +565,7 @@ class TermExtractor {
 			assertNotInFormula(ctx.start.getLine(), "Cannot nest a formula within a formula: " + ctx.getText());
 			toggleInFormula();
 			Term t = extract(ctx.term());
-			t = Constructors.make(BuiltInConstructorSymbol.ENTER_FORMULA, Terms.singletonArray(t));
+			t = makeEnterFormula(t);
 			toggleInFormula();
 			return t;
 		}

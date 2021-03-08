@@ -1,6 +1,6 @@
 output ok
 
 ok :-
-  X = `bv_extract[32, 16](#x[?], 0, 15)`,
-  Y = `bv_extract[32, 16](#x[?], 16, 31)`,
+  X = `bv_extract[32, 15, 0, 16](#x[?])`,
+  Y = `bv_extract[32, 31, 16, 16](#x[?])`,
   is_valid(`bv_concat(Y, X) #= #x[i32]`).

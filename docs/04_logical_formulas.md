@@ -287,7 +287,7 @@ bv_ult[k]              : [bv[k] smt, bv[k] smt] -> bool smt
 bv_ule[k]              : [bv[k] smt, bv[k] smt] -> bool smt
 bv_ugt[k]              : [bv[k] smt, bv[k] smt] -> bool smt
 bv_uge[k]              : [bv[k] smt, bv[k] smt] -> bool smt
-bv_extract[j,k]        : [bv[j] smt, i32, i32] -> bv[k] smt
+bv_extract[m,i,j,n]    : bv[m] smt -> bv[n] smt
 bv_concat[i,j,k]       : [bv[i] smt, bv[j] smt] -> bv[k] smt
 ```
 
@@ -297,7 +297,11 @@ as noted previously, parameters can often be inferred.
 The `bv_extract` and `bv_concat` constructors currently do not enforce some
 constraints on their parameters (for example, with `bv_concat[i,j,k]`, it must
 be that `i + j = k`). Illegal parameter choices are therefore not caught by the
-type system, and might lead to SMT solver crashes at runtime.
+type system, and might lead to SMT solver crashes at runtime. The parameter
+order for `bv_extract` follows the SMT-LIB standard: `bv_extract[m,i,j,n]`
+means take a slice of a bit vector of width `m` ending at `i` and starting at
+`j` (0-indexed), to form a bit vector of size `n`. For example,
+`bv_extract[32,15,0,16](42)` would extract the lower 16 bits of `42`.
 
 #### Floating point
 

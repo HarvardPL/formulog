@@ -634,7 +634,7 @@ public final class Constructors {
 			@Override
 			public void toSmtLib(SmtLibShim shim) {
 				shim.print("((_ extract ");
-				shim.print(args[2] + " " + args[1] + ") ");
+				shim.print(nat(sym, 1) + " " + nat(sym, 2) + ") ");
 				((SmtLibTerm) args[0]).toSmtLib(shim);
 				shim.print(")");
 			}
