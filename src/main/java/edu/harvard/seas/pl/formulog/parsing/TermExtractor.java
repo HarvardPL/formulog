@@ -226,22 +226,44 @@ class TermExtractor {
 			} else if (!params.isEmpty()) {
 				throw new UncheckedParseException(ctx.start.getLine(), "Symbol " + sym + " is not parametric.");
 			}
+			adjustFunctorArgs(sym, args);
 			Term t = makeFunctor(ctx.start.getLine(), sym, args);
 			// For a couple constructors, we want to make sure that their arguments are
 			// forced to be non-formula types. For example, the constructor bv_const needs
-			// to take something of type i32, not i32 expr.
+			// to take something of type i32, not i32 smt.
 			if (sym instanceof ParameterizedConstructorSymbol) {
 				switch (((ParameterizedConstructorSymbol) sym).getBase()) {
 				case BV_BIG_CONST:
 				case BV_CONST:
+				case BV_EXTRACT:
 				case FP_BIG_CONST:
 				case FP_CONST:
 					t = makeExitFormula(t);
 				default:
 					break;
 				}
+			} else if (sym instanceof BuiltInConstructorSymbol) {
+				switch ((BuiltInConstructorSymbol) sym) {
+				case INT_BIG_CONST:
+				case INT_CONST:
+					t = makeExitFormula(t);
+				default:
+					break;
+				}
 			}
 			return t;
+		}
+		
+		private void adjustFunctorArgs(Symbol sym, Term[] args) {
+			if (sym instanceof ParameterizedConstructorSymbol) {
+				switch (((ParameterizedConstructorSymbol) sym).getBase()) {
+				case BV_EXTRACT:
+					args[0] = makeEnterFormula(args[0]);
+					break;
+				default:
+					break;
+				}
+			}
 		}
 
 		private Term parseBool(IndexedFunctorContext ctx) {
@@ -559,7 +581,7 @@ class TermExtractor {
 			assertNotInFormula(ctx.start.getLine(), "Cannot nest a formula within a formula: " + ctx.getText());
 			toggleInFormula();
 			Term t = extract(ctx.term());
-			t = Constructors.make(BuiltInConstructorSymbol.ENTER_FORMULA, Terms.singletonArray(t));
+			t = makeEnterFormula(t);
 			toggleInFormula();
 			return t;
 		}

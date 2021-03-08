@@ -1,0 +1,3 @@
+output not_ok
+
+not_ok :- `int_const(#x[i32])` = _.

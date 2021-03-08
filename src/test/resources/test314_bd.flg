@@ -1,0 +1,3 @@
+output not_ok
+
+not_ok :- `bv_extract[32,16](42, 0, #x[i32])` = _.
