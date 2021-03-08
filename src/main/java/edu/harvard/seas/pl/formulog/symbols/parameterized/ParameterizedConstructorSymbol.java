@@ -192,8 +192,8 @@ public class ParameterizedConstructorSymbol extends AbstractParameterizedSymbol<
 		}
 		case BV_EXTRACT: {
 			Type w1 = types.get(0);
-			Type w2 = types.get(3);
-			return mkType(smt(bv(w1)), smt(bv(w2)));
+			Type w2 = types.get(1);
+			return mkType(smt(bv(w1)), i32, i32, smt(bv(w2)));
 		}
 		case INT_TO_BV:
 			return mkType(smt(int_), smt(bv(types.get(0))));
