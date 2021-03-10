@@ -1,3 +1,3 @@
 output not_ok
 
-not_ok :- `int_const(#x[i32])` = _.
+not_ok :- `int_big_const(#x[i64])` = _.

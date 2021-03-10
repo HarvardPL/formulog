@@ -1,3 +1,0 @@
-output not_ok
-
-not_ok :- `int_big_const(#x[i64])` = _.

@@ -201,7 +201,7 @@ public class TypeChecker {
 		try {
 			return Util.fillMapWithFutures(futures, new HashMap<>());
 		} catch (InterruptedException | ExecutionException e) {
-			throw new TypeException(e.getMessage());
+			throw new TypeException(e);
 		}
 	}
 

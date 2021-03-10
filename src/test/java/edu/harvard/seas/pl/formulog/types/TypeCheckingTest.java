@@ -222,6 +222,11 @@ public class TypeCheckingTest {
 	}
 	
 	@Test
+	public void test312() {
+		test("test312_bd.flg");
+	}
+	
+	@Test
 	public void test313() {
 		test("test313_bd.flg");
 	}
@@ -229,6 +234,11 @@ public class TypeCheckingTest {
 	@Test
 	public void test314() {
 		test("test314_bd.flg");
+	}
+	
+	@Test
+	public void test315() {
+		test("test315_bd.flg");
 	}
 	
 }
