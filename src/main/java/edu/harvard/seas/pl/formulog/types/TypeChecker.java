@@ -20,6 +20,7 @@ package edu.harvard.seas.pl.formulog.types;
  * #L%
  */
 
+
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -200,7 +201,7 @@ public class TypeChecker {
 		try {
 			return Util.fillMapWithFutures(futures, new HashMap<>());
 		} catch (InterruptedException | ExecutionException e) {
-			throw new TypeException(e);
+			throw new TypeException(e.getMessage());
 		}
 	}
 
@@ -740,45 +741,7 @@ public class TypeChecker {
 						|| sym.equals(BuiltInConstructorSymbol.EXIT_FORMULA)) {
 					return newArgs[0];
 				}
-				if (sym instanceof ParameterizedConstructorSymbol) {
-					return simplifyParameterizedConstructor((ParameterizedConstructorSymbol) sym, newArgs);
-				} else {
-					return Constructors.make(sym, newArgs);
-				}
-			}
-
-			Term simplifyParameterizedConstructor(ParameterizedConstructorSymbol sym, Term[] args) {
-				switch (sym.getBase()) {
-				case BV_CONST: {
-					TypeIndex w = (TypeIndex) sym.getArgs().get(0).getType();
-					if (w.getIndex() == 32) {
-						return args[0];
-					}
-				} break;
-				case BV_BIG_CONST: {
-					TypeIndex w = (TypeIndex) sym.getArgs().get(0).getType();
-					if (w.getIndex() == 64) {
-						return args[0];
-					}
-				} break;
-				case FP_CONST: {
-					TypeIndex exp = (TypeIndex) sym.getArgs().get(0).getType();
-					TypeIndex sig = (TypeIndex) sym.getArgs().get(1).getType();
-					if (exp.getIndex() == 8 && sig.getIndex() == 24) {
-						return args[0];
-					}
-				} break;
-				case FP_BIG_CONST: {
-					TypeIndex exp = (TypeIndex) sym.getArgs().get(0).getType();
-					TypeIndex sig = (TypeIndex) sym.getArgs().get(1).getType();
-					if (exp.getIndex() == 11 && sig.getIndex() == 53) {
-						return args[0];
-					}
-				} break;
-				default:
-					break;
-				}
-				return Constructors.make(sym, args);
+				return Constructors.make(sym, newArgs);
 			}
 
 			@Override
