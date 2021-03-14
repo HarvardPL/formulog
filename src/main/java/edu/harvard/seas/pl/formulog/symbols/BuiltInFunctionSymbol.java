@@ -248,6 +248,10 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 	
 	PRINT("print", 1),
 	
+	// Formula normalization
+	
+	toFormulaNormalForm("_to_formula_normal_form", 1),
+	
 	;
 
 	private final String name;
@@ -406,6 +410,8 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 			return new FunctorType(i64, fp64);
 		case i64ToI32:
 			return new FunctorType(i64, i32);
+		case toFormulaNormalForm:
+			return new FunctorType(a, a);
 		}
 		throw new AssertionError("impossible");
 	}

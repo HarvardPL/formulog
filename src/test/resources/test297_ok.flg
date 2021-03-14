@@ -14,5 +14,5 @@ output ok
 
 ok :-
   buz(X),
-  baz(`bar(X)`),
+  baz(`bar(bv_const(X))`),
   X + 1 = 42.

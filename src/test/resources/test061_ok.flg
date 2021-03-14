@@ -1,20 +1,20 @@
 output ok1.
 ok1 :-
- 	X = #x[bv[32]],
+  X = #x[bv[32]],
   Y = #y[bv[32]],
- 	Z = #z[bv[32]],
+  Z = #z[bv[32]],
   E1 = `42 #= bv_add(X, Y)`,
   E2 = `42 #= bv_add(Z, Y)`,
- 	substitute(X, `Z`, E1) = E2. 
+  substitute(X, `Z`, E1) = E2. 
  	
 output ok2.
 ok2 :-
- 	X = "x",
+  X = "x",
   Y = "y",
- 	Z = "z",
+  Z = "z",
   E1 = `42 #= bv_add(#{X}[bv[32]], #{Y}[bv[32]])`,
   E2 = `42 #= bv_add(#{Z}[bv[32]], #{Y}[bv[32]])`,
- 	substitute(#{X}[bv[32]], `#{Z}[bv[32]]`, E1) = E2.
+  substitute(#{X}[bv[32]], `#{Z}[bv[32]]`, E1) = E2.
 
 output ok3.
 ok3 :-

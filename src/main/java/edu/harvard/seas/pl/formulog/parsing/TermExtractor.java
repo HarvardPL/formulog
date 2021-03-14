@@ -193,11 +193,51 @@ class TermExtractor {
 			return Constructors.make(BuiltInConstructorSymbol.CONS, args);
 		}
 
+		private boolean isSpecialFormulaCtor(String name) {
+			if (pc.symbolManager().hasName(name)) {
+				Symbol sym = pc.symbolManager().lookupSymbol(name);
+				return sym instanceof ConstructorSymbol && isSpecialFormulaCtor((ConstructorSymbol) sym);
+			}
+			return false;
+		}
+		
+		// For a couple constructors, we want to make sure that their arguments are
+		// forced to be non-formula types. For example, the constructor bv_const needs
+		// to take something of type i32, not i32 smt.
+		private boolean isSpecialFormulaCtor(ConstructorSymbol sym) {
+			if (sym instanceof ParameterizedConstructorSymbol) {
+				switch (((ParameterizedConstructorSymbol) sym).getBase()) {
+				case BV_BIG_CONST:
+				case BV_CONST:
+				case BV_EXTRACT:
+				case FP_BIG_CONST:
+				case FP_CONST:
+					return true;
+				default:
+					break;
+				}
+			} else if (sym instanceof BuiltInConstructorSymbol) {
+				switch ((BuiltInConstructorSymbol) sym) {
+				case INT_BIG_CONST:
+				case INT_CONST:
+					return true;
+				default:
+					break;
+				}
+			}
+			return false;
+		}
+		
 		@Override
 		public Term visitIndexedFunctor(IndexedFunctorContext ctx) {
 			String name = ctx.id.getText();
 			if (name.equals("true") || name.equals("false")) {
 				return parseBool(ctx);
+			}
+			boolean wasInFormula = inFormula;
+			boolean isSpecial = isSpecialFormulaCtor(name);
+			if (isSpecial) {
+				inFormula = false;
 			}
 			List<Param> params = ParsingUtil.extractParams(pc, ctx.parameterList());
 			Term[] args = extractArray(ctx.termArgs().term());
@@ -228,29 +268,10 @@ class TermExtractor {
 			}
 			adjustFunctorArgs(sym, args);
 			Term t = makeFunctor(ctx.start.getLine(), sym, args);
-			// For a couple constructors, we want to make sure that their arguments are
-			// forced to be non-formula types. For example, the constructor bv_const needs
-			// to take something of type i32, not i32 smt.
-			if (sym instanceof ParameterizedConstructorSymbol) {
-				switch (((ParameterizedConstructorSymbol) sym).getBase()) {
-				case BV_BIG_CONST:
-				case BV_CONST:
-				case BV_EXTRACT:
-				case FP_BIG_CONST:
-				case FP_CONST:
-					t = makeExitFormula(t);
-				default:
-					break;
-				}
-			} else if (sym instanceof BuiltInConstructorSymbol) {
-				switch ((BuiltInConstructorSymbol) sym) {
-				case INT_BIG_CONST:
-				case INT_CONST:
-					t = makeExitFormula(t);
-				default:
-					break;
-				}
+			if (isSpecial) {
+				t = makeExitFormula(t);
 			}
+			inFormula = wasInFormula;
 			return t;
 		}
 		
@@ -621,7 +642,10 @@ class TermExtractor {
 		public Term visitLetFormula(LetFormulaContext ctx) {
 			ConstructorSymbol sym = (ConstructorSymbol) pc.symbolManager()
 					.getParameterizedSymbol(BuiltInConstructorSymbolBase.SMT_LET);
+			boolean wasInFormula = inFormula;
+			inFormula = false;
 			Term[] args = extractArray(ctx.term());
+			inFormula = wasInFormula;
 			args[1] = makeEnterFormula(args[1]);
 			args[2] = makeEnterFormula(args[2]);
 			return makeExitFormula(Constructors.make(sym, args));

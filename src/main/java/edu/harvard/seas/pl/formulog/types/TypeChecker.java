@@ -737,10 +737,6 @@ public class TypeChecker {
 				for (int i = 0; i < args.length; ++i) {
 					newArgs[i] = args[i].accept(this, subst);
 				}
-				if (sym.equals(BuiltInConstructorSymbol.ENTER_FORMULA)
-						|| sym.equals(BuiltInConstructorSymbol.EXIT_FORMULA)) {
-					return newArgs[0];
-				}
 				return Constructors.make(sym, newArgs);
 			}
 

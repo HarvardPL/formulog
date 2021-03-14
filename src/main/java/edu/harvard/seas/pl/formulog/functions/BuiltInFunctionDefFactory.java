@@ -41,6 +41,7 @@ import edu.harvard.seas.pl.formulog.ast.Constructors;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.FP32;
 import edu.harvard.seas.pl.formulog.ast.FP64;
+import edu.harvard.seas.pl.formulog.ast.FormulaRewriter;
 import edu.harvard.seas.pl.formulog.ast.I32;
 import edu.harvard.seas.pl.formulog.ast.I64;
 import edu.harvard.seas.pl.formulog.ast.Model;
@@ -259,6 +260,8 @@ public final class BuiltInFunctionDefFactory {
 			return PrimitiveConversions.i64ToI32;
 		case PRINT:
 			return Print.INSTANCE;
+		case toFormulaNormalForm:
+			return toFormulaNormalForm;
 		}
 		throw new AssertionError();
 	}
@@ -358,7 +361,7 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 	}
-	
+
 	private static final FunctionDef i32Udiv = new FunctionDef() {
 
 		@Override
@@ -539,7 +542,7 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 	}
-	
+
 	private static final FunctionDef i32Shl = new FunctionDef() {
 
 		@Override
@@ -553,9 +556,9 @@ public final class BuiltInFunctionDefFactory {
 			I32 arg2 = (I32) args[1];
 			return I32.make(arg1.getVal() << arg2.getVal());
 		}
-		
+
 	};
-	
+
 	private static final FunctionDef i32Ashr = new FunctionDef() {
 
 		@Override
@@ -569,9 +572,9 @@ public final class BuiltInFunctionDefFactory {
 			I32 arg2 = (I32) args[1];
 			return I32.make(arg1.getVal() >> arg2.getVal());
 		}
-		
+
 	};
-	
+
 	private static final FunctionDef i32Lshr = new FunctionDef() {
 
 		@Override
@@ -585,9 +588,9 @@ public final class BuiltInFunctionDefFactory {
 			I32 arg2 = (I32) args[1];
 			return I32.make(arg1.getVal() >>> arg2.getVal());
 		}
-		
+
 	};
-	
+
 	private static final FunctionDef i64Shl = new FunctionDef() {
 
 		@Override
@@ -601,9 +604,9 @@ public final class BuiltInFunctionDefFactory {
 			I64 arg2 = (I64) args[1];
 			return I64.make(arg1.getVal() << arg2.getVal());
 		}
-		
+
 	};
-	
+
 	private static final FunctionDef i64Ashr = new FunctionDef() {
 
 		@Override
@@ -617,9 +620,9 @@ public final class BuiltInFunctionDefFactory {
 			I64 arg2 = (I64) args[1];
 			return I64.make(arg1.getVal() >> arg2.getVal());
 		}
-		
+
 	};
-	
+
 	private static final FunctionDef i64Lshr = new FunctionDef() {
 
 		@Override
@@ -633,7 +636,7 @@ public final class BuiltInFunctionDefFactory {
 			I64 arg2 = (I64) args[1];
 			return I64.make(arg1.getVal() >>> arg2.getVal());
 		}
-		
+
 	};
 
 	private enum I64Add implements FunctionDef {
@@ -731,7 +734,7 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 	}
-	
+
 	private static final FunctionDef i64Udiv = new FunctionDef() {
 
 		@Override
@@ -1532,7 +1535,7 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 	};
-	
+
 	private static final FunctionDef stringToList = new FunctionDef() {
 
 		@Override
@@ -1549,9 +1552,9 @@ public final class BuiltInFunctionDefFactory {
 			}
 			return Terms.termListToTerm(l);
 		}
-		
+
 	};
-	
+
 	private static final FunctionDef listToString = new FunctionDef() {
 
 		@Override
@@ -1570,9 +1573,9 @@ public final class BuiltInFunctionDefFactory {
 			}
 			return StringTerm.make(new String(cs));
 		}
-		
+
 	};
-	
+
 	private static final FunctionDef charAt = new FunctionDef() {
 
 		@Override
@@ -1589,9 +1592,9 @@ public final class BuiltInFunctionDefFactory {
 			}
 			return some(I32.make(s.charAt(i)));
 		}
-		
+
 	};
-	
+
 	private static final FunctionDef substring = new FunctionDef() {
 
 		@Override
@@ -1609,9 +1612,9 @@ public final class BuiltInFunctionDefFactory {
 			}
 			return some(StringTerm.make(s.substring(i, j)));
 		}
-		
+
 	};
-	
+
 	private static final FunctionDef stringLength = new FunctionDef() {
 
 		@Override
@@ -1624,7 +1627,7 @@ public final class BuiltInFunctionDefFactory {
 			String s = ((StringTerm) args[0]).getVal();
 			return I32.make(s.length());
 		}
-		
+
 	};
 
 	private enum Substitute implements FunctionDef {
@@ -1895,6 +1898,20 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 	}
+
+	private static final FunctionDef toFormulaNormalForm = new FunctionDef() {
+
+		@Override
+		public FunctionSymbol getSymbol() {
+			return BuiltInFunctionSymbol.toFormulaNormalForm;
+		}
+
+		@Override
+		public Term evaluate(Term[] args) throws EvaluationException {
+			return new FormulaRewriter(null).rewrite(args[0], false);
+		}
+
+	};
 
 	private static final Term none = Constructors.makeZeroAry(BuiltInConstructorSymbol.NONE);
 

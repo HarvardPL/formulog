@@ -1,0 +1,15 @@
+output ok
+
+input foo(i32 smt)
+
+foo(`42`).
+
+ok :-
+  foo(`42`),
+  foo(`bv_const(42)`),
+  foo(X),
+  X = `42`,
+  X = `bv_const(42)`,
+  X = `bv_const(Y)`,
+  Y = 42.
+  

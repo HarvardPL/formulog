@@ -1,0 +1,43 @@
+output ok1
+output ok2
+output ok3
+output ok4
+output ok5
+output ok
+
+ok1 :-
+  X = 42,
+  match `X` with
+  | bv_const(42) => true
+  | _ => false
+  end.	
+
+ok2 :-
+  X = 42L,
+  match `X` with
+  | bv_big_const(42L) => true
+  | _ => false
+  end.
+
+ok3 :-
+  X = 42F,
+  match `X` with
+  | fp_const(42F) => true
+  | _ => false
+  end.
+  
+ok4 :-
+  X = 42D,
+  match `X` with
+  | fp_big_const(42D) => true
+  | _ => false
+  end.
+  
+ok5 :-
+  X = "hello",
+  match `X` with
+  | `"hello"` => true
+  | _ => false
+  end.
+
+ok :- ok1, ok2, ok3, ok4, ok5.

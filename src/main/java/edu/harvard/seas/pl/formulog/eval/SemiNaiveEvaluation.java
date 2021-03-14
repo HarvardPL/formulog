@@ -35,6 +35,7 @@ import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralVisitor;
+import edu.harvard.seas.pl.formulog.ast.FormulaRewriter;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Terms;
@@ -45,6 +46,9 @@ import edu.harvard.seas.pl.formulog.db.IndexedFactDbBuilder;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb.SortedIndexedFactDbBuilder;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
+import edu.harvard.seas.pl.formulog.functions.FunctionDef;
+import edu.harvard.seas.pl.formulog.functions.FunctionDefManager;
+import edu.harvard.seas.pl.formulog.functions.UserFunctionDef;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
 import edu.harvard.seas.pl.formulog.smt.BestMatchSmtManager;
 import edu.harvard.seas.pl.formulog.smt.CallAndResetSolver;
@@ -58,6 +62,7 @@ import edu.harvard.seas.pl.formulog.smt.QueueSmtManager;
 import edu.harvard.seas.pl.formulog.smt.SingleShotSolver;
 import edu.harvard.seas.pl.formulog.smt.SmtLibSolver;
 import edu.harvard.seas.pl.formulog.smt.SmtStrategy;
+import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
@@ -119,7 +124,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 						ValidRule vr = ValidRule.make(tweakRule(snr, eagerEval), score);
 						checkRule(vr, eagerEval);
 						predFuncs.preprocess(vr);
-						SimpleRule sr = SimpleRule.make(vr);
+						SimpleRule sr = SimpleRule.make(vr, magicProg.getFunctionCallFactory());
 						IndexedRule ir = IndexedRule.make(sr, p -> {
 							RelationSymbol psym = p.getSymbol();
 							if (psym instanceof DeltaSymbol) {
@@ -147,7 +152,16 @@ public class SemiNaiveEvaluation implements Evaluation {
 		} catch (EvaluationException e) {
 			throw new InvalidProgramException("Problem initializing SMT shims: " + e.getMessage());
 		}
-		prog.getFunctionCallFactory().getDefManager().loadBuiltInFunctions(smt);
+		FunctionDefManager defManager = magicProg.getFunctionCallFactory().getDefManager();
+		defManager.loadBuiltInFunctions(smt);
+		FormulaRewriter fr = new FormulaRewriter(magicProg.getFunctionCallFactory());
+		for (FunctionSymbol sym : defManager.getFunctionSymbols()) {
+			FunctionDef def = defManager.lookup(sym);
+			if (def instanceof UserFunctionDef) {
+				UserFunctionDef udef = (UserFunctionDef) def;
+				udef.setBody(fr.rewrite(udef.getBody(), false));
+			}
+		}
 
 		CountingFJP exec;
 		if (sequential) {
@@ -155,15 +169,19 @@ public class SemiNaiveEvaluation implements Evaluation {
 		} else {
 			exec = new CountingFJPImpl(parallelism);
 		}
-
+		
 		for (RelationSymbol sym : magicProg.getFactSymbols()) {
 			for (Iterable<Term[]> tups : Util.splitIterable(magicProg.getFacts(sym), Configuration.taskSize)) {
 				exec.externallyAddTask(new AbstractFJPTask(exec) {
 
 					@Override
 					public void doTask() throws EvaluationException {
+						FormulaRewriter fr = new FormulaRewriter(magicProg.getFunctionCallFactory());
 						for (Term[] tup : tups) {
 							try {
+								for (int i = 0; i < tup.length; ++i) {
+									tup[i] = fr.rewrite(tup[i], false);
+								}
 								db.add(sym, Terms.normalize(tup, new SimpleSubstitution()));
 							} catch (EvaluationException e) {
 								UserPredicate p = UserPredicate.make(sym, tup, false);

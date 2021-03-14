@@ -22,8 +22,6 @@ package edu.harvard.seas.pl.formulog.functions;
 
 import java.util.List;
 
-
-import edu.harvard.seas.pl.formulog.ast.Expr;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
@@ -35,7 +33,7 @@ public class UserFunctionDef implements FunctionDef {
 
 	private final FunctionSymbol sym;
 	private final List<Var> params;
-	private volatile Term body;
+	private Term body;
 
 	private UserFunctionDef(FunctionSymbol sym, List<Var> params, Term body) {
 		this.sym = sym;
@@ -51,7 +49,7 @@ public class UserFunctionDef implements FunctionDef {
 		return body;
 	}
 
-	public void setBody(Expr newBody) {
+	public void setBody(Term newBody) {
 		this.body = newBody;
 	}
 
