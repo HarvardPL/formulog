@@ -1,0 +1,38 @@
+output ok1
+output ok2
+output ok3
+output ok4
+output ok5
+output ok
+
+ok1 :-
+  match (let x = 42 in `x`) with
+  | `bv_const(42)` => true
+  | _ => false
+  end.
+  
+ok2 :-
+  match (let x = 42L in `x`) with
+  | `bv_big_const(42L)` => true
+  | _ => false
+  end.
+  
+ok3 :-
+  match (let x = 42F in `x`) with
+  | `fp_const(42F)` => true
+  | _ => false
+  end.
+  
+ok4 :-
+  match (let x = 42D in `x`) with
+  | `fp_big_const(42D)` => true
+  | _ => false
+  end.
+  
+ok5 :-
+  match (let x = "hello" in `x`) with
+  | `"hello"` => true
+  | _ => false
+  end.
+ 
+ ok :- ok1, ok2, ok3, ok4, ok5. 

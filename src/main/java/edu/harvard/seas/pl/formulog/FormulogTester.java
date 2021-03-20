@@ -269,16 +269,17 @@ public class FormulogTester {
 			}
 		}
 		clearCachedState();
-		// This would be better if we could setup the program, and then load the
-		// external facts, so we do not need to do the set up each time.
+		// This would be better if we could set up the program, and then load
+		// the external facts, so we do not need to do the setup each time.
 		Evaluation e = SemiNaiveEvaluation.setup(prog, 1, false);
+		System.out.print(test.name + "... ");
 		e.run();
 		List<String> errors = test.testLogic.apply(e.getResult());
 		if (errors.isEmpty()) {
-			System.out.println(test.name + ": PASSED");
+			System.out.println("PASSED");
 			return true;
 		} else {
-			System.out.println(test.name + ": FAILED");
+			System.out.println("FAILED");
 			for (String error : errors) {
 				System.out.println(">>> " + error);
 			}

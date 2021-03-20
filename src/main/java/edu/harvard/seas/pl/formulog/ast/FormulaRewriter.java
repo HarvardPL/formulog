@@ -47,22 +47,22 @@ public class FormulaRewriter {
 	}
 
 	public Term rewrite(Term t, boolean inPattern) {
+		return rewrite(t, inPattern, false);
+	}
+
+	public Term rewrite(Term t, boolean inPattern, boolean inFormula) {
+		this.inFormula = inFormula;
 		return t.accept(termRewriter, inPattern);
 	}
 
 	private final TermVisitor<Boolean, Term> termRewriter = new TermVisitor<Boolean, Term>() {
 
-		@Override
-		public Term visit(Var t, Boolean inPattern) {
-			return t;
-		}
-
-		@Override
-		public Term visit(Constructor ctor, Boolean inPattern) {
-			ConstructorSymbol sym = ctor.getSymbol();
+		private Term handleBuiltInConstructor(Constructor ctor, boolean inPattern) {
+			BuiltInConstructorSymbol sym = (BuiltInConstructorSymbol) ctor.getSymbol();
 			Term[] args = ctor.getArgs();
-
-			if (sym == BuiltInConstructorSymbol.ENTER_FORMULA) {
+			Term[] newArgs = new Term[args.length];
+			switch (sym) {
+			case ENTER_FORMULA: {
 				boolean wasInFormula = inFormula;
 				inFormula = true;
 				Term t = args[0].accept(this, inPattern);
@@ -72,15 +72,76 @@ public class FormulaRewriter {
 				}
 				return t;
 			}
-
-			if (sym == BuiltInConstructorSymbol.EXIT_FORMULA) {
+			case EXIT_FORMULA: {
 				boolean wasInFormula = inFormula;
 				inFormula = false;
 				Term arg = args[0].accept(this, inPattern);
 				inFormula = wasInFormula;
 				return arg;
 			}
+			case INT_CONST:
+			case INT_BIG_CONST: {
+				assert args.length == 1;
+				boolean wasInFormula = inFormula;
+				inFormula = false;
+				newArgs[0] = args[0].accept(this, inPattern);
+				inFormula = wasInFormula;
+			} break;
+			default:
+				for (int i = 0; i < args.length; ++i) {
+					newArgs[i] = args[i].accept(this, inPattern);
+				}
+			}
+			return ctor.copyWithNewArgs(newArgs);
+		}
 
+		private Term handleParameterizedConstructor(Constructor ctor, boolean inPattern) {
+			ParameterizedConstructorSymbol sym = (ParameterizedConstructorSymbol) ctor.getSymbol();
+			Term[] args = ctor.getArgs();
+			Term[] newArgs = new Term[args.length];
+			switch (((ParameterizedConstructorSymbol) sym).getBase()) {
+			case BV_CONST:
+			case BV_BIG_CONST:
+			case FP_CONST:
+			case FP_BIG_CONST: {
+				assert args.length == 1;
+				boolean wasInFormula = inFormula;
+				inFormula = false;
+				newArgs[0] = args[0].accept(this, inPattern);
+				inFormula = wasInFormula;
+			} break;
+			case BV_EXTRACT: {
+				assert args.length == 3;
+				newArgs[0] = args[0].accept(this, inPattern);
+				boolean wasInFormula = inFormula;
+				inFormula = false;
+				newArgs[1] = args[1].accept(this, inPattern);
+				newArgs[2] = args[2].accept(this, inPattern);
+				inFormula = wasInFormula;
+			} break;
+			default:
+				for (int i = 0; i < args.length; ++i) {
+					newArgs[i] = args[i].accept(this, inPattern);
+				}
+			}
+			return ctor.copyWithNewArgs(newArgs);
+		}
+
+		@Override
+		public Term visit(Var t, Boolean inPattern) {
+			return t;
+		}
+
+		@Override
+		public Term visit(Constructor ctor, Boolean inPattern) {
+			ConstructorSymbol sym = ctor.getSymbol();
+			if (sym instanceof BuiltInConstructorSymbol) {
+				return handleBuiltInConstructor(ctor, inPattern);
+			} else if (sym instanceof ParameterizedConstructorSymbol) {
+				return handleParameterizedConstructor(ctor, inPattern);
+			}
+
+			Term[] args = ctor.getArgs();
 			Term[] newArgs = new Term[args.length];
 			for (int i = 0; i < args.length; ++i) {
 				newArgs[i] = args[i].accept(this, inPattern);

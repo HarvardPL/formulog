@@ -1908,7 +1908,7 @@ public final class BuiltInFunctionDefFactory {
 
 		@Override
 		public Term evaluate(Term[] args) throws EvaluationException {
-			return new FormulaRewriter(null).rewrite(args[0], false);
+			return new FormulaRewriter(null).rewrite(args[0], false, true);
 		}
 
 	};
