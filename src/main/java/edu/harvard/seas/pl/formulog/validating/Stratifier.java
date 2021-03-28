@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.validating;
  * #L%
  */
 
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -109,7 +108,9 @@ public class Stratifier {
 			for (DependencyTypeWrapper dw : component.edgeSet()) {
 				DependencyType d = dw.get();
 				if (d.equals(DependencyType.NEG_OR_AGG_IN_FUN)) {
-					throw new InvalidProgramException("Not stratified...");
+					throw new InvalidProgramException("Not stratified: the relation " + component.getEdgeSource(dw)
+							+ " is treated as an aggregate expression in the definition of relation "
+							+ component.getEdgeTarget(dw));
 				}
 				hasRecursiveNegationOrAggregation |= d.equals(DependencyType.NEG_OR_AGG_IN_REL);
 			}
@@ -294,6 +295,11 @@ public class Stratifier {
 
 		public DependencyType get() {
 			return d;
+		}
+
+		@Override
+		public String toString() {
+			return d.toString();
 		}
 
 	}
