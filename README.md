@@ -97,7 +97,7 @@ You can set the following system properties (using the `-D` flag, as in
 * `parallelism=N` - run interpreter with `N` threads (defaults to 4)
 * `printRelSizes` - print final relation sizes (defaults to false)
 * `printFinalRules` - print the final, transformed rules (defaults to false)
-* `factDirs=DIR_1,...,DIR_n` - directories for CSV files of input facts
+* `factDirs=DIR_1,...,DIR_n` - directories for TSV files of input facts
   (defaults to the current directory)
 * `trackedRelations=REL_1,...,REL_n` - print facts from listed relations as
   they are derived (defaults to the empty list)
