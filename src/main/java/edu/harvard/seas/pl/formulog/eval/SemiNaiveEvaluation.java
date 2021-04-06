@@ -101,7 +101,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 			throws InvalidProgramException {
 		FunctionDefValidation.validate(prog);
 		MagicSetTransformer mst = new MagicSetTransformer(prog);
-		BasicProgram magicProg = mst.transform(Configuration.useDemandTransformation, true);
+		BasicProgram magicProg = mst.transform(Configuration.useDemandTransformation,
+				Configuration.restoreStratification);
 		Set<RelationSymbol> allRelations = new HashSet<>(magicProg.getFactSymbols());
 		allRelations.addAll(magicProg.getRuleSymbols());
 		SortedIndexedFactDbBuilder dbb = new SortedIndexedFactDbBuilder(allRelations);

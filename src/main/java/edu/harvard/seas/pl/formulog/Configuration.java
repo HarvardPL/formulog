@@ -149,12 +149,16 @@ public final class Configuration {
 	public static final int parallelism = getIntProp("parallelism", 4);
 
 	public static final boolean useDemandTransformation = propIsSet("useDemandTransformation", true);
+	public static final boolean restoreStratification = propIsSet("restoreStratification", true);
 
 	public static final List<String> trackedRelations = getListProp("trackedRelations");
 
 	public static final List<String> factDirs = getListProp("factDirs");
 
 	public static final boolean debugMst = propIsSet("debugMst");
+	public static final boolean debugStratification = propIsSet("debugStratification");
+	public static final String debugStratificationOutDir = getStringProp("debugStratificationOutDir",
+			"stratification_graphs");
 
 	public static final PrintPreference printResultsPreference = getPrintResultsPreference();
 

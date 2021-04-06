@@ -1,5 +1,12 @@
 package edu.harvard.seas.pl.formulog.validating;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 /*-
  * #%L
  * Formulog
@@ -34,6 +41,7 @@ import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.traverse.TopologicalOrderIterator;
 
+import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralVisitor;
@@ -94,6 +102,7 @@ public class Stratifier {
 				condensation);
 		List<Stratum> strata = new ArrayList<>();
 		int rank = 0;
+		InvalidProgramException exn = null;
 		while (topo.hasNext()) {
 			boolean hasRecursiveNegationOrAggregation = false;
 			Graph<RelationSymbol, DependencyTypeWrapper> component = topo.next();
@@ -107,17 +116,47 @@ public class Stratifier {
 			}
 			for (DependencyTypeWrapper dw : component.edgeSet()) {
 				DependencyType d = dw.get();
-				if (d.equals(DependencyType.NEG_OR_AGG_IN_FUN)) {
-					throw new InvalidProgramException("Not stratified: the relation " + component.getEdgeSource(dw)
+				if (d.equals(DependencyType.NEG_OR_AGG_IN_FUN) && exn == null) {
+					exn = new InvalidProgramException("Not stratified: the relation " + component.getEdgeSource(dw)
 							+ " is treated as an aggregate expression in the definition of relation "
 							+ component.getEdgeTarget(dw));
 				}
 				hasRecursiveNegationOrAggregation |= d.equals(DependencyType.NEG_OR_AGG_IN_REL);
 			}
 			strata.add(new Stratum(rank, component.vertexSet(), hasRecursiveNegationOrAggregation));
+			if (Configuration.debugStratification) {
+				toDot(rank, component);
+			}
 			rank++;
 		}
+		if (exn != null) {
+			throw exn;
+		}
 		return strata;
+	}
+
+	private static void toDot(int stratumNumber, Graph<RelationSymbol, DependencyTypeWrapper> component) {
+		try {
+			Path base = Files.createDirectories(Paths.get(Configuration.debugStratificationOutDir));
+			String name = "stratum_" + stratumNumber;
+			File out = base.resolve(name + ".dot").toFile();
+			try (PrintWriter pw = new PrintWriter(out)) {
+				pw.println("digraph " + name + " {");
+				for (RelationSymbol sym : component.vertexSet()) {
+					pw.println("\t" + sym + ";");
+				}
+				for (DependencyTypeWrapper e : component.edgeSet()) {
+					pw.print("\t");
+					pw.print(component.getEdgeSource(e));
+					pw.print(" -> ");
+					pw.print(component.getEdgeTarget(e));
+					pw.println(" [label=" + e + "];");
+				}
+				pw.println("}");
+			}
+		} catch (IOException e) {
+			System.err.println("Error while writing stratification debug info");
+		}
 	}
 
 	private class DependencyFinder implements Iterable<RelationSymbol> {

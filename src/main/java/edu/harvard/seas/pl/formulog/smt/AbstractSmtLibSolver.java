@@ -26,6 +26,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
@@ -80,11 +81,7 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 		PrintWriter w = null;
 		if (Configuration.debugSmt) {
 			try {
-				Path path = Paths.get(Configuration.debugSmtOutDir);
-				File dir = path.toFile();
-				if (!dir.exists()) {
-					dir.mkdirs();
-				}
+				Path path = Files.createDirectories(Paths.get(Configuration.debugSmtOutDir));
 				File log = path.resolve("solver" + solverId + ".log.smt2").toFile();
 				w = new PrintWriter(new FileWriter(log));
 			} catch (IOException e) {
