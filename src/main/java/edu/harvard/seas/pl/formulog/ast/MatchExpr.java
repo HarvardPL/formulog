@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;

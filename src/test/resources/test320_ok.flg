@@ -1,0 +1,13 @@
+(* This recreates a bug having to do with let fun expressions inside match
+   expressions. *)
+
+output ok
+
+fun foo(x: 'a) : 'a =
+  match true with
+  | true =>
+  	let fun id(x: 'a) : 'a = x in
+  	id(x)
+  end
+
+ok :- foo(42) = 42. 

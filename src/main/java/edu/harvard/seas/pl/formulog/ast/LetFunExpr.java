@@ -84,12 +84,16 @@ public class LetFunExpr implements Expr {
 
 	@Override
 	public void varSet(Set<Var> acc) {
-		throw new UnsupportedOperationException();
+		for (NestedFunctionDef def : defs) {
+			Set<Var> vars = def.getBody().varSet();
+			vars.removeAll(def.getParams());
+			acc.addAll(vars);
+		}
 	}
 
 	@Override
 	public void updateVarCounts(Map<Var, Integer> counts) {
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("LetFunExpr.updateVarCounts() unimplemented");
 	}
 
 	@Override

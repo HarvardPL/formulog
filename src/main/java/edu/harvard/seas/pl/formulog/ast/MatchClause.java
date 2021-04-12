@@ -40,6 +40,7 @@ public class MatchClause {
 		if (!checkForRepeatVariables(lhs)) {
 			throw new IllegalArgumentException("Cannot repeat variables in patterns: " + lhs);
 		}
+		/* XXX Is this necessary? Seems expensive. */
 		Substitution s = new SimpleSubstitution();
 		for (Var x : lhs.varSet()) {
 			if (!x.isUnderscore()) {

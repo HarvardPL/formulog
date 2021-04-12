@@ -115,7 +115,8 @@ class TermExtractor {
 
 	public synchronized Term extract(TermContext ctx) {
 		try {
-			return visitor.visit(ctx);
+			Term t = visitor.visit(ctx);
+			return t;
 		} catch (UncheckedParseException e) {
 			throw e;
 		} catch (Exception e) {
@@ -757,7 +758,8 @@ class TermExtractor {
 					inPattern = false;
 					Term rhs = extract(mcc.rhs);
 					env.pop();
-					matches.add(MatchClause.make(pattern, rhs));
+					MatchClause clause = MatchClause.make(pattern, rhs);
+					matches.add(clause);
 				}
 			}
 			return MatchExpr.make(guard, matches);
@@ -781,6 +783,7 @@ class TermExtractor {
 			inPattern = false;
 			Term body = ctx.body.accept(this);
 			env.pop();
+			
 			MatchClause m = MatchClause.make(t, body);
 			return MatchExpr.make(assign, Collections.singletonList(m));
 		}

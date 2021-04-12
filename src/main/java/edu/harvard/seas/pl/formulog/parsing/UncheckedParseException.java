@@ -30,6 +30,11 @@ public class UncheckedParseException extends RuntimeException {
 		this.lineNo = lineNo;
 	}
 	
+	public UncheckedParseException(int lineNo, Throwable cause) {
+		super(cause);
+		this.lineNo = lineNo;
+	}
+	
 	public int getLineNo() {
 		return lineNo;
 	}
