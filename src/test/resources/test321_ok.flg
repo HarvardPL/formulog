@@ -1,0 +1,16 @@
+(* This makes sure that variable usage checks work correctly in the presence of
+   rules with multiple head predicates. *)
+
+input foobar(i32, string)
+
+foobar(42, "hello").
+
+output foo(i32)
+
+output bar(string)
+
+foo(X), bar(Y) :- foobar(X, Y).
+
+output ok
+
+ok :- foo(42), bar("hello").

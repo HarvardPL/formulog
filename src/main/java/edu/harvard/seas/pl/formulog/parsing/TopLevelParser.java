@@ -318,7 +318,7 @@ class TopLevelParser {
 		public Void visitClauseStmt(ClauseStmtContext ctx) {
 			List<ComplexLiteral> head = termsToLiterals(ctx.clause().head.term());
 			List<ComplexLiteral> body = termsToLiterals(ctx.clause().body.term());
-			List<BasicRule> newRules = makeRules(ctx.start.getLine(), head, body);
+			Set<BasicRule> newRules = makeRules(ctx.start.getLine(), head, body);
 			for (BasicRule rule : newRules) {
 				RelationSymbol sym = rule.getHead().getSymbol();
 				if (!sym.isIdbSymbol()) {
@@ -330,25 +330,25 @@ class TopLevelParser {
 			return null;
 		}
 
-		private BasicRule makeRule(int lineNo, ComplexLiteral head, List<ComplexLiteral> body) {
-			List<ComplexLiteral> newBody = new ArrayList<>(body);
-			if (!(head instanceof UserPredicate)) {
-				throw new UncheckedParseException(lineNo,
-						"Cannot create rule with non-user predicate in head: " + head);
+		private Set<BasicRule> makeRules(int lineNo, ComplexLiteral head) {
+			return makeRules(lineNo, Collections.singletonList(head), Collections.emptyList());
+		}
+		
+		private Set<BasicRule> makeRules(int lineNo, List<ComplexLiteral> heads, List<ComplexLiteral> body) {
+			List<UserPredicate> processedHeads = new ArrayList<>();
+			for (ComplexLiteral hd : heads) {
+				if (hd instanceof UserPredicate) {
+					processedHeads.add((UserPredicate) hd);
+				} else {
+					throw new UncheckedParseException(lineNo,
+							"Cannot create rule with non-user predicate in head: " + hd);
+				}
 			}
 			try {
-				return varChecker.checkRule((BasicRule.make((UserPredicate) head, newBody)));
+				return varChecker.checkRule(processedHeads, body);
 			} catch (VariableCheckPassException e) {
 				throw new UncheckedParseException(lineNo, e.getMessage());
 			}
-		}
-
-		private List<BasicRule> makeRules(int lineNo, List<ComplexLiteral> head, List<ComplexLiteral> body) {
-			List<BasicRule> rules = new ArrayList<>();
-			for (ComplexLiteral hd : head) {
-				rules.add(makeRule(lineNo, hd, body));
-			}
-			return rules;
 		}
 
 		@Override
@@ -361,8 +361,8 @@ class TopLevelParser {
 			UserPredicate fact = (UserPredicate) lit;
 			RelationSymbol sym = fact.getSymbol();
 			if (sym.isIdbSymbol()) {
-				BasicRule rule = makeRule(ctx.start.getLine(), fact, Collections.emptyList());
-				rules.get(sym).add(rule);
+				Set<BasicRule> rs = makeRules(ctx.start.getLine(), fact);
+				rules.get(sym).addAll(rs);
 			} else {
 				try {
 					Term[] args = varChecker.checkFact(fact.getArgs());

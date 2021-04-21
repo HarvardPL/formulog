@@ -72,15 +72,32 @@ public class VariableCheckPass {
 		return newBody;
 	}
 
-	public BasicRule checkRule(BasicRule r) throws VariableCheckPassException {
+	public Set<BasicRule> checkRule(List<UserPredicate> heads, List<ComplexLiteral> body) throws VariableCheckPassException {
 		PassContext ctx = new PassContext();
-		BasicRule newR = ctx.checkRule(r);
+		Set<BasicRule> r = ctx.checkRule(heads, body);
 		try {
 			ctx.checkCounts();
 		} catch (VariableCheckPassException e) {
-			throw new VariableCheckPassException("Variable usage error in rule: " + e.getMessage() + "\n\n" + r);
+			String message = "Variable usage error in rule: " + e.getMessage() + "\n\n";
+			for (int i = 0; i < heads.size(); ++i) {
+				message += heads.get(i);
+				if (i < heads.size() - 1) {
+					message += ",\n";
+				}
+			}
+			if (body.size() > 0) {
+				message += " :-\n";
+			}
+			for (int i = 0; i < body.size(); ++i) {
+				message += "\t" + body.get(i);
+				if (i < body.size() - 1) {
+					message += ",\n";
+				}
+			}
+			message += ".";
+			throw new VariableCheckPassException(message);
 		}
-		return newR;
+		return r;
 	}
 
 	public Term[] checkFact(Term[] fact) throws VariableCheckPassException {
@@ -113,13 +130,17 @@ public class VariableCheckPass {
 
 		}
 
-		public BasicRule checkRule(BasicRule r) {
-			UserPredicate head = (UserPredicate) checkLiteral(r.getHead());
-			List<ComplexLiteral> body = new ArrayList<>();
-			for (ComplexLiteral l : r) {
-				body.add(checkLiteral(l));
+		public Set<BasicRule> checkRule(List<UserPredicate> heads, List<ComplexLiteral> body) {
+			List<ComplexLiteral> newBody = new ArrayList<>();
+			for (ComplexLiteral l : body) {
+				newBody.add(checkLiteral(l));
 			}
-			return BasicRule.make(head, body);
+			Set<BasicRule> s = new HashSet<>();
+			for (UserPredicate head : heads) {
+				head = (UserPredicate) checkLiteral(head);
+				s.add(BasicRule.make(head, newBody));
+			}
+			return s;
 		}
 
 		public ComplexLiteral checkLiteral(ComplexLiteral l) {
