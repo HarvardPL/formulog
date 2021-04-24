@@ -27,7 +27,7 @@ metadata
 	(
 		INPUT
 		| OUTPUT
-	) ID typeList '.'? # relDecl
+	) ID maybeAnnotatedTypeList '.'? # relDecl
 	| 'type' typeDefLHS EQ type '.'? # typeAlias
 	| 'type' typeDefLHS EQ typeDefRHS
 	(
@@ -35,6 +35,12 @@ metadata
 	)* '.'? # typeDecl
 	| 'uninterpreted' 'fun' constructorType ':' type '.'? # uninterpFunDecl
 	| 'uninterpreted' 'sort' typeDefLHS '.'? # uninterpSortDecl
+;
+
+maybeAnnotatedTypeList
+:
+	'(' (var ':')? type (',' (var ':')? type)* ')'
+	| // can be empty
 ;
 
 funDefLHS

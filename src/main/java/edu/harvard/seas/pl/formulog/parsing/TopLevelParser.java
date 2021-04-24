@@ -138,7 +138,7 @@ class TopLevelParser {
 		@Override
 		public Void visitRelDecl(RelDeclContext ctx) {
 			String name = ctx.ID().getText();
-			List<Type> types = typeExtractor.extract(ctx.typeList().type());
+			List<Type> types = typeExtractor.extract(ctx.maybeAnnotatedTypeList().type());
 			if (!Types.getTypeVars(types).isEmpty()) {
 				throw new UncheckedParseException(ctx.start.getLine(),
 						"Cannot use type variables in the signature of a relation: " + name);

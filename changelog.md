@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - More string manipulation and inspection functions (`substring`,
   `string_length`, `char_at`, `string_to_list`, and `list_to_string`).
 - Test suite framework.
+- Allow argument annotations in relation declarations.
 
 ### Fixed
 - Incorrect (non-`smt`) types for formula constructors.
