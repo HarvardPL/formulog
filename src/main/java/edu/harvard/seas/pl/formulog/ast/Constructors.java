@@ -103,6 +103,16 @@ public final class Constructors {
 		return make(BuiltInConstructorSymbol.CONS, new Term[] { hd, tl } );
 	}
 
+	private static final Constructor none = makeZeroAry(BuiltInConstructorSymbol.NONE);
+	
+	public static final Term none() {
+		return none;
+	}
+
+	public static Term some(Term arg) {
+		return make(BuiltInConstructorSymbol.SOME, Terms.singletonArray(arg));
+	}
+
 	private static Constructor lookupOrCreateBuiltInConstructor(BuiltInConstructorSymbol sym, Term[] args) {
 		Function<String, Constructor> makeSolverOp = op -> memo.lookupOrCreate(sym, args,
 				() -> new SolverOperation(sym, args, op));

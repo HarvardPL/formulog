@@ -851,4 +851,9 @@ public abstract class CommonEvaluationTest<T extends Evaluation> extends Abstrac
 		test("test323_ok.flg");
 	}
 	
+	@Test
+	public void test324() {
+		test("test324_ok.flg");
+	}
+	
 }

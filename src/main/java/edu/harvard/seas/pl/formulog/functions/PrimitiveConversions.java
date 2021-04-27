@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.functions;
 
+import edu.harvard.seas.pl.formulog.ast.Constructors;
+
 /*-
  * #%L
  * Formulog
@@ -25,6 +27,7 @@ import edu.harvard.seas.pl.formulog.ast.FP32;
 import edu.harvard.seas.pl.formulog.ast.FP64;
 import edu.harvard.seas.pl.formulog.ast.I32;
 import edu.harvard.seas.pl.formulog.ast.I64;
+import edu.harvard.seas.pl.formulog.ast.StringTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
@@ -212,6 +215,25 @@ public final class PrimitiveConversions {
 		public Term evaluate(Term[] args) throws EvaluationException {
 			FP64 x = (FP64) args[0];
 			return FP32.make(x.getVal().floatValue());
+		}
+		
+	};
+
+	public static final FunctionDef stringToI32 = new FunctionDef() {
+
+		@Override
+		public FunctionSymbol getSymbol() {
+			return BuiltInFunctionSymbol.stringToI32;
+		}
+
+		@Override
+		public Term evaluate(Term[] args) throws EvaluationException {
+			try {
+				int val = Integer.decode(((StringTerm) args[0]).getVal());
+				return Constructors.some(I32.make(val));
+			} catch (NumberFormatException e) {
+				return Constructors.none();
+			}
 		}
 		
 	};

@@ -244,6 +244,8 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 
 	fp64ToFp32("fp64_to_fp32", 1),
 	
+	stringToI32("string_to_i32", 1),
+	
 	// Debugging
 	
 	PRINT("print", 1),
@@ -410,6 +412,8 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 			return new FunctorType(i64, fp64);
 		case i64ToI32:
 			return new FunctorType(i64, i32);
+		case stringToI32:
+			return new FunctorType(string, option(i32));
 		case toFormulaNormalForm:
 			return new FunctorType(a, a);
 		}

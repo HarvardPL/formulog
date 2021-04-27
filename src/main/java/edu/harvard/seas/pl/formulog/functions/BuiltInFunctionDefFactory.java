@@ -258,6 +258,8 @@ public final class BuiltInFunctionDefFactory {
 			return PrimitiveConversions.i64ToFp64;
 		case i64ToI32:
 			return PrimitiveConversions.i64ToI32;
+		case stringToI32:
+			return PrimitiveConversions.stringToI32;
 		case PRINT:
 			return Print.INSTANCE;
 		case toFormulaNormalForm:
@@ -1588,9 +1590,9 @@ public final class BuiltInFunctionDefFactory {
 			String s = ((StringTerm) args[0]).getVal();
 			int i = ((I32) args[1]).getVal();
 			if (i < 0 || i >= s.length()) {
-				return none;
+				return Constructors.none();
 			}
-			return some(I32.make(s.charAt(i)));
+			return Constructors.some(I32.make(s.charAt(i)));
 		}
 
 	};
@@ -1608,9 +1610,9 @@ public final class BuiltInFunctionDefFactory {
 			int i = ((I32) args[1]).getVal();
 			int j = ((I32) args[2]).getVal();
 			if (i < 0 || j > s.length() || i > j) {
-				return none;
+				return Constructors.none();
 			}
-			return some(StringTerm.make(s.substring(i, j)));
+			return Constructors.some(StringTerm.make(s.substring(i, j)));
 		}
 
 	};
@@ -1818,11 +1820,11 @@ public final class BuiltInFunctionDefFactory {
 			Pair<SmtStatus, Model> p = querySmt(assertions, false, timeout);
 			switch (p.fst()) {
 			case SATISFIABLE:
-				return some(trueTerm);
+				return Constructors.some(trueTerm);
 			case UNKNOWN:
-				return none;
+				return Constructors.none();
 			case UNSATISFIABLE:
-				return some(falseTerm);
+				return Constructors.some(falseTerm);
 			}
 			throw new AssertionError("impossible");
 		}
@@ -1875,7 +1877,7 @@ public final class BuiltInFunctionDefFactory {
 			Integer timeout = extractOptionalTimeout(timeoutOpt);
 			Pair<SmtStatus, Model> p = querySmt(assertions, true, timeout);
 			Model model = p.snd();
-			return model == null ? none : some(model);
+			return model == null ? Constructors.none() : Constructors.some(model);
 		}
 
 	};
@@ -1894,7 +1896,7 @@ public final class BuiltInFunctionDefFactory {
 			SolverVariable x = (SolverVariable) args[0];
 			Model m = (Model) args[1];
 			Term t = m.getVal().get(x);
-			return t == null ? none : some(t);
+			return t == null ? Constructors.none() : Constructors.some(t);
 		}
 
 	}
@@ -1912,12 +1914,6 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 	};
-
-	private static final Term none = Constructors.makeZeroAry(BuiltInConstructorSymbol.NONE);
-
-	private static Term some(Term arg) {
-		return Constructors.make(BuiltInConstructorSymbol.SOME, Terms.singletonArray(arg));
-	}
 
 	private static final Term trueTerm = BoolTerm.mkTrue();
 	private static final Term falseTerm = BoolTerm.mkFalse();

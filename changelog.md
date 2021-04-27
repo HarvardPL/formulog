@@ -6,7 +6,8 @@ All notable changes to this project will be documented in this file.
 - Support for `bv_to_int`, `int_to_bv`, `bv_extract`, and `bv_concat` formula
   constructors.
 - More string manipulation and inspection functions (`substring`,
-  `string_length`, `char_at`, `string_to_list`, and `list_to_string`).
+  `string_length`, `char_at`, `string_to_list`, `list_to_string`, and
+  `string_to_i32`).
 - Test suite framework.
 - Allow argument annotations in relation declarations.
 
