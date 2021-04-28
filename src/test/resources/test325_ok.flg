@@ -1,0 +1,17 @@
+output ok
+
+ok :-
+  string_to_i64("42") = some(42L),
+  string_to_i64("+42") = some(42L),
+  string_to_i64("-42") = some(-42L),
+  string_to_i64("0x2a") = some(42L),
+  string_to_i64("0xffffffffffffffff") = some(-1L),
+  
+  string_to_i64("42f") = none,
+  string_to_i64("42d") = none,
+  string_to_i64("42l") = none,
+  string_to_i64("42F") = none,
+  string_to_i64("42D") = none,
+  string_to_i64("42L") = none,
+  string_to_i64("42.") = none,
+  string_to_i64("0x10000000000000000") = none.

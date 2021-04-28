@@ -2,22 +2,10 @@ output ok
 
 ok :-
   string_to_i32("42") = some(42),
-  string_to_i32("0x2a") = some(42),
-  string_to_i32("0X2a") = some(42),
-  string_to_i32("#2a") = some(42),
-  string_to_i32("052") = some(42),
-  
   string_to_i32("+42") = some(42),
-  string_to_i32("+0x2a") = some(42),
-  string_to_i32("+0X2a") = some(42),
-  string_to_i32("+#2a") = some(42),
-  string_to_i32("+052") = some(42),
-  
   string_to_i32("-42") = some(-42),
-  string_to_i32("-0x2a") = some(-42),
-  string_to_i32("-0X2a") = some(-42),
-  string_to_i32("-#2a") = some(-42),
-  string_to_i32("-052") = some(-42),
+  string_to_i32("0x2a") = some(42),
+  string_to_i32("0xffffffff") = some(-1),
   
   string_to_i32("42f") = none,
   string_to_i32("42d") = none,
@@ -25,4 +13,5 @@ ok :-
   string_to_i32("42F") = none,
   string_to_i32("42D") = none,
   string_to_i32("42L") = none,
-  string_to_i32("42.") = none.
+  string_to_i32("42.") = none,
+  string_to_i32("0x100000000") = none.

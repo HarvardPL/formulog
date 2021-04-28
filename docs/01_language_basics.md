@@ -361,12 +361,13 @@ with manipulating primitives):
   `i32` and `i64`; these return a term of type `cmp` (described above)
 * boolean operators `!`, `&&`, and `||`
 * numeric primitive conversion operations, in the form `*_to_*` (e.g.,
-  `i32_to_fp64`).
-* the operator `string_to_i32`, which converts the string representation of an
-  integer to a term of type `i32 option`. The string should match the format
-  `[+-]?(0x|0X|#|0)?\d+`, where the prefixes `0x`, `0X`, and `#` signify hex
-  numbers, and the prefix `0` signifies octal numbers. The operation returns
-  `none` if the string is not in the proper format. 
+  `i32_to_fp64`)
+* the operators `string_to_i32` and `string_to_i64`, which convert the string
+  representation of an integer to a term of type `i32 option` and `i64 option`,
+  respectively. The string should either be a decimal integer preceded
+  optionally by `-` or `+`, or a hexadecimal integer preceded by `0x`. The
+  operations return `none` if the string is not in the proper format or
+  represents an integer too large to fit in 32/64 bits. 
 
 Standard arithmetic notation can be used for signed `i32` operations. For
 example, `38 + 12 / 3` is shorthand for `i32_add(38, i32_sdiv(12, 3))`.

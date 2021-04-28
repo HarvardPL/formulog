@@ -260,6 +260,8 @@ public final class BuiltInFunctionDefFactory {
 			return PrimitiveConversions.i64ToI32;
 		case stringToI32:
 			return PrimitiveConversions.stringToI32;
+		case stringToI64:
+			return PrimitiveConversions.stringToI64;
 		case PRINT:
 			return Print.INSTANCE;
 		case toFormulaNormalForm:

@@ -246,13 +246,15 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 	
 	stringToI32("string_to_i32", 1),
 	
+	stringToI64("string_to_i64", 1),
+	
 	// Debugging
 	
 	PRINT("print", 1),
 	
 	// Formula normalization
 	
-	toFormulaNormalForm("_to_formula_normal_form", 1),
+	toFormulaNormalForm("_to_formula_normal_form", 1), 
 	
 	;
 
@@ -414,6 +416,8 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 			return new FunctorType(i64, i32);
 		case stringToI32:
 			return new FunctorType(string, option(i32));
+		case stringToI64:
+			return new FunctorType(string, option(i64));
 		case toFormulaNormalForm:
 			return new FunctorType(a, a);
 		}

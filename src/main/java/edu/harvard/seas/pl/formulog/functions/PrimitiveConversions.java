@@ -1,5 +1,8 @@
 package edu.harvard.seas.pl.formulog.functions;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import edu.harvard.seas.pl.formulog.ast.Constructors;
 
 /*-
@@ -219,6 +222,8 @@ public final class PrimitiveConversions {
 		
 	};
 
+	private static final Pattern hex = Pattern.compile("0x([0-9a-fA-F]+)");
+	
 	public static final FunctionDef stringToI32 = new FunctionDef() {
 
 		@Override
@@ -229,8 +234,41 @@ public final class PrimitiveConversions {
 		@Override
 		public Term evaluate(Term[] args) throws EvaluationException {
 			try {
-				int val = Integer.decode(((StringTerm) args[0]).getVal());
-				return Constructors.some(I32.make(val));
+				String s = ((StringTerm) args[0]).getVal();
+				Matcher m = hex.matcher(s);
+				Integer i;
+				if (m.matches()) {
+					i = Integer.parseUnsignedInt(m.group(1), 16);
+				} else {
+					i = Integer.parseInt(s);
+				}
+				return Constructors.some(I32.make(i));
+			} catch (NumberFormatException e) {
+				return Constructors.none();
+			}
+		}
+		
+	};
+	
+	public static final FunctionDef stringToI64 = new FunctionDef() {
+
+		@Override
+		public FunctionSymbol getSymbol() {
+			return BuiltInFunctionSymbol.stringToI64;
+		}
+
+		@Override
+		public Term evaluate(Term[] args) throws EvaluationException {
+			try {
+				String s = ((StringTerm) args[0]).getVal();
+				Matcher m = hex.matcher(s);
+				Long i;
+				if (m.matches()) {
+					i = Long.parseUnsignedLong(m.group(1), 16);
+				} else {
+					i = Long.parseLong(s);
+				}
+				return Constructors.some(I64.make(i));
 			} catch (NumberFormatException e) {
 				return Constructors.none();
 			}
