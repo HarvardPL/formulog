@@ -47,6 +47,12 @@ public class ParseException extends Exception {
 		this(null, lineNo, message);
 	}
 
+	public ParseException(UncheckedParseException e) {
+		super(e.getMessage());
+		this.fileName = e.getFileName();
+		this.lineNo = e.getLineNo();
+	}
+
 	public String getFileName() {
 		return fileName;
 	}

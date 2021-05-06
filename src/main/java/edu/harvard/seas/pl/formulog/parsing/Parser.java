@@ -82,7 +82,7 @@ public class Parser {
 			loadExternalEdbs(prog, p.snd(), inputDirs);
 			return prog;
 		} catch (UncheckedParseException e) {
-			throw new ParseException(e.getLineNo(), e.getMessage());
+			throw new ParseException(e);
 		}
 	}
 	
@@ -110,7 +110,7 @@ public class Parser {
 						try {
 							readEdbFromFile(sym, inputDir, prog.getFacts(sym));
 						} catch (ParseException e) {
-							throw new UncheckedParseException(e.getLineNo(), e.getMessage());
+							throw new UncheckedParseException(e);
 						}
 					}
 
@@ -122,7 +122,13 @@ public class Parser {
 			for (Future<?> task : tasks) {
 				task.get();
 			}
-		} catch (InterruptedException | ExecutionException e) {
+		} catch (InterruptedException e) {
+			throw new ParseException(0, e.getMessage());
+		} catch (ExecutionException e) {
+			Throwable cause = e.getCause();
+			if (cause instanceof UncheckedParseException) {
+				throw new ParseException((UncheckedParseException) cause);
+			}
 			throw new ParseException(0, e.getMessage());
 		}
 	}
@@ -137,8 +143,10 @@ public class Parser {
 		} catch (FileNotFoundException e) {
 			throw new ParseException(0, "Could not find external fact file: " + path);
 		} catch (IOException e) {
-			throw new ParseException(0, e.getMessage());
+			throw new ParseException(path.toString(), 0, e.getMessage());
 		} catch (UncheckedParseException e) {
+			throw new ParseException(path.toString(), e.getLineNo(), e.getMessage());
+		} catch (ParseException e) {
 			throw new ParseException(path.toString(), e.getLineNo(), e.getMessage());
 		}
 	}
