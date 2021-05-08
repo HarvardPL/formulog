@@ -146,10 +146,14 @@ public final class FunctionCallFactory {
 				System.err.println(msg);
 			}
 			Term r;
-			if (memoizeThreshold > -1 && !hasSideEffects()) {
-				r = computeWithMemoization(newArgs);
-			} else {
-				r = computeWithoutMemoization(newArgs);
+			try {
+				if (memoizeThreshold > -1 && !hasSideEffects()) {
+					r = computeWithMemoization(newArgs);
+				} else {
+					r = computeWithoutMemoization(newArgs);
+				}
+			} catch (Throwable e) {
+				throw new EvaluationException(e);
 			}
 			if (debug) {
 				String msg = "END CALL #" + id + "\n";

@@ -70,7 +70,7 @@ public class UserFunctionDef implements FunctionDef {
 		try {
 			return body.normalize(s);
 		} catch (EvaluationException e) {
-			throw new EvaluationException("Error evaluating function " + sym + ": " + e.getMessage());
+			throw new EvaluationException("Error evaluating function " + sym + ":\n" + e.getMessage());
 		}
 	}
 
