@@ -1,0 +1,5 @@
+output not_ok
+
+not_ok :-
+  S = opaque_set_singleton(42),
+  is_sat(`S #= S`).

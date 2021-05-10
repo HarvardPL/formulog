@@ -266,6 +266,26 @@ public final class BuiltInFunctionDefFactory {
 			return Print.INSTANCE;
 		case toFormulaNormalForm:
 			return toFormulaNormalForm;
+		case OPAQUE_SET_CHOOSE:
+			return OpaqueSetOps.choose;
+		case OPAQUE_SET_DIFF:
+			return OpaqueSetOps.diff;
+		case OPAQUE_SET_EMPTY:
+			return OpaqueSetOps.empty;
+		case OPAQUE_SET_MINUS:
+			return OpaqueSetOps.minus;
+		case OPAQUE_SET_PLUS:
+			return OpaqueSetOps.plus;
+		case OPAQUE_SET_SIZE:
+			return OpaqueSetOps.size;
+		case OPAQUE_SET_UNION:
+			return OpaqueSetOps.union;
+		case OPAQUE_SET_MEMBER:
+			return OpaqueSetOps.member;
+		case OPAQUE_SET_SINGLETON:
+			return OpaqueSetOps.singleton;
+		case OPAQUE_SET_SUBSET:
+			return OpaqueSetOps.subset;
 		}
 		throw new AssertionError();
 	}

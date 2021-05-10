@@ -552,7 +552,7 @@ public class TypeChecker {
 		}
 
 		private void genConstraintsForPrimitive(Primitive<?> t, Type ttype, boolean inFormula) {
-			addConstraint(t, ttype, t.getType(), inFormula);
+			addConstraint(t, ttype, t.getType().freshen(), inFormula);
 		}
 
 		private void genConstraintsForConstructor(Constructor t, Type ttype, Map<Var, Type> subst, boolean inFormula) {

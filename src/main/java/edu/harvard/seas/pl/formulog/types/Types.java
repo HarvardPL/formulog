@@ -192,6 +192,7 @@ public final class Types {
 				case SMT_PATTERN_TYPE:
 				case SMT_WRAPPED_VAR_TYPE:
 				case STRING_TYPE:
+				case OPAQUE_SET:
 					break;
 				case BV:
 				case FP:
@@ -668,6 +669,7 @@ public final class Types {
 					case STRING_TYPE:
 					case SYM_TYPE:
 						break;
+					case OPAQUE_SET:
 					case MODEL_TYPE:
 					case SMT_PATTERN_TYPE:
 					case SMT_WRAPPED_VAR_TYPE:
@@ -720,6 +722,7 @@ public final class Types {
 					case OPTION_TYPE:
 					case STRING_TYPE:
 						break;
+					case OPAQUE_SET:
 					case MODEL_TYPE:
 					case SMT_PATTERN_TYPE:
 					case SMT_TYPE:
