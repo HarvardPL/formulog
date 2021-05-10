@@ -36,6 +36,7 @@ import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.FP;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.INT_TYPE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.LIST_TYPE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.MODEL_TYPE;
+import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.OPAQUE_SET;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.OPTION_TYPE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.SMT_PATTERN_TYPE;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol.SMT_TYPE;
@@ -49,6 +50,7 @@ import java.util.List;
 
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorGetterSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
+import edu.harvard.seas.pl.formulog.symbols.GlobalSymbolManager;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType.ConstructorScheme;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
@@ -142,6 +144,14 @@ public final class BuiltInTypes {
 
 	public static AlgebraicDataType array(Type a, Type b) {
 		return AlgebraicDataType.make(ARRAY_TYPE, Arrays.asList(a, b));
+	}
+	
+	public static AlgebraicDataType opaqueSet(Type a) {
+		return AlgebraicDataType.make(OPAQUE_SET, a);
+	}
+	
+	public static AlgebraicDataType pair(Type a, Type b) {
+		return AlgebraicDataType.make(GlobalSymbolManager.lookupTupleTypeSymbol(2), a, b);
 	}
 
 }

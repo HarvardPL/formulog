@@ -668,6 +668,7 @@ public class SmtLibShim {
 				case FP:
 				case SMT_PATTERN_TYPE:
 				case SMT_WRAPPED_VAR_TYPE:
+				case OPAQUE_SET:
 					return false;
 				case CMP_TYPE:
 				case LIST_TYPE:
@@ -727,7 +728,7 @@ public class SmtLibShim {
 
 				@Override
 				public Type visit(Primitive<?> p, Void in) {
-					return p.getType();
+					return p.getType().freshen();
 				}
 
 				@Override

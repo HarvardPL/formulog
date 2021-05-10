@@ -39,6 +39,7 @@ import edu.harvard.seas.pl.formulog.smt.SmtLibShim;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
+import edu.harvard.seas.pl.formulog.symbols.GlobalSymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.GlobalSymbolManager.TupleSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RecordSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInConstructorSymbolBase;
@@ -112,6 +113,12 @@ public final class Constructors {
 	public static Term some(Term arg) {
 		return make(BuiltInConstructorSymbol.SOME, Terms.singletonArray(arg));
 	}
+	
+	public static Term tuple(Term... args) {
+		return make(GlobalSymbolManager.lookupTupleSymbol(args.length), args);
+	}
+	
+	
 
 	private static Constructor lookupOrCreateBuiltInConstructor(BuiltInConstructorSymbol sym, Term[] args) {
 		Function<String, Constructor> makeSolverOp = op -> memo.lookupOrCreate(sym, args,

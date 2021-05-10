@@ -47,6 +47,8 @@ public enum BuiltInTypeSymbol implements TypeSymbol {
 	
 	FP("fp", 2),
 	
+	OPAQUE_SET("opaque_set", 1),
+	
 	SMT_PATTERN_TYPE("smt_pattern", 0),
 	
 	SMT_WRAPPED_VAR_TYPE("smt_wrapped_var", 0),

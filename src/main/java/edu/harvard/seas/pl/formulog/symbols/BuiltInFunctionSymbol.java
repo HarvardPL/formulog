@@ -31,7 +31,9 @@ import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.i32;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.i64;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.list;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.model;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.opaqueSet;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.option;
+import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.pair;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.smt;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.string;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.sym;
@@ -217,6 +219,28 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 	SUBSTITUTE("substitute", 3),
 	
 	IS_FREE("is_free", 2),
+	
+	// Opaque datatypes
+	
+	OPAQUE_SET_EMPTY("opaque_set_empty", 0),
+	
+	OPAQUE_SET_PLUS("opaque_set_plus", 2),
+	
+	OPAQUE_SET_MINUS("opaque_set_minus", 2),
+
+	OPAQUE_SET_UNION("opaque_set_union", 2),
+	
+	OPAQUE_SET_DIFF("opaque_set_diff", 2),
+	
+	OPAQUE_SET_CHOOSE("opaque_set_choose", 1),
+	
+	OPAQUE_SET_SIZE("opaque_set_size", 1),
+	
+	OPAQUE_SET_MEMBER("opaque_set_member", 2),
+	
+	OPAQUE_SET_SINGLETON("opaque_set_singleton", 1),
+	
+	OPAQUE_SET_SUBSET("opaque_set_subset", 2),
 	
 	// Primitive conversion
 
@@ -420,6 +444,26 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 			return new FunctorType(string, option(i64));
 		case toFormulaNormalForm:
 			return new FunctorType(a, a);
+		case OPAQUE_SET_CHOOSE:
+			return new FunctorType(opaqueSet(a), option(pair(a, opaqueSet(a))));
+		case OPAQUE_SET_DIFF:
+			return new FunctorType(opaqueSet(a), opaqueSet(a), opaqueSet(a));
+		case OPAQUE_SET_EMPTY:
+			return new FunctorType(opaqueSet(a));
+		case OPAQUE_SET_PLUS:
+			return new FunctorType(a, opaqueSet(a), opaqueSet(a));
+		case OPAQUE_SET_MINUS:
+			return new FunctorType(a, opaqueSet(a), opaqueSet(a));
+		case OPAQUE_SET_UNION:
+			return new FunctorType(opaqueSet(a), opaqueSet(a), opaqueSet(a));
+		case OPAQUE_SET_SIZE:
+			return new FunctorType(opaqueSet(a), i32);
+		case OPAQUE_SET_MEMBER:
+			return new FunctorType(a, opaqueSet(a), bool);
+		case OPAQUE_SET_SINGLETON:
+			return new FunctorType(a, opaqueSet(a));
+		case OPAQUE_SET_SUBSET:
+			return new FunctorType(opaqueSet(a), opaqueSet(a), bool);
 		}
 		throw new AssertionError("impossible");
 	}

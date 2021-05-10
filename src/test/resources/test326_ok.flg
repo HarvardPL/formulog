@@ -1,0 +1,69 @@
+output empty_ok
+output plus_ok
+output minus_ok
+output union_ok
+output diff_ok
+output singleton_ok
+output choose_ok
+output size_ok
+output subset_ok
+output ok
+
+fun opaque_set_id(s: 'a opaque_set) : 'a opaque_set = s
+
+fun from_list(xs: 'a list) : 'a opaque_set =
+  match xs with
+  | [] => opaque_set_empty
+  | h :: t => opaque_set_plus(h, from_list(t))
+  end
+
+empty_ok :-
+  opaque_set_empty = opaque_set_id(opaque_set_empty).  
+
+plus_ok :-
+  from_list([1, 2, 3]) = from_list([3, 1, 2]),
+  from_list([1, 2, 3]) != from_list([1, 2]).
+
+minus_ok :-
+  opaque_set_minus(2, from_list([1, 2, 3])) = from_list([1, 3]).
+
+union_ok :-
+  opaque_set_union(from_list([1, 2]), from_list([3, 4])) =
+    from_list([1, 2, 3, 4]).
+
+diff_ok :-
+  opaque_set_diff(from_list([1, 2, 3, 4]), from_list([2, 3])) =
+    from_list([1, 4]).
+
+singleton_ok :-
+  opaque_set_singleton(42) = from_list([42]).
+
+choose_ok :-
+  S1 = from_list([1, 2]),
+  some((X, S2)) = opaque_set_choose(S1),
+  some((Y, S3)) = opaque_set_choose(S2),
+  none = opaque_set_choose(S3),
+  X != Y,
+  X = 1 || Y = 1,
+  X = 2 || Y = 2.
+
+size_ok :-
+  opaque_set_size(opaque_set_empty) = 0,
+  opaque_set_size(opaque_set_singleton("hello")) = 1,
+  opaque_set_size(from_list([1, 2, 3, 4])) = 4.
+
+subset_ok :-
+  opaque_set_subset(from_list([2, 4]), from_list([1, 2, 3, 4])),
+  !opaque_set_subset(from_list([2, 4]), from_list([1, 2, 3, 5])).
+
+ok :-
+  empty_ok,
+  plus_ok,
+  minus_ok,
+  union_ok,
+  diff_ok,
+  singleton_ok,
+  choose_ok,
+  size_ok,
+  subset_ok,
+  true.
