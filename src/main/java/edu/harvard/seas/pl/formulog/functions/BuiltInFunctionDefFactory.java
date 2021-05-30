@@ -1978,7 +1978,7 @@ public final class BuiltInFunctionDefFactory {
 		}
 
 		@Override
-		public Term evaluate(Term[] args) throws EvaluationException {
+		public synchronized Term evaluate(Term[] args) throws EvaluationException {
 			Term key = args[0];
 			Term val = args[1];
 			int size = Configuration.heavyHitterSize;
