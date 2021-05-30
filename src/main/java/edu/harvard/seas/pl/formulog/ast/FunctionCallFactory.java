@@ -174,7 +174,7 @@ public final class FunctionCallFactory {
 	}
 	
 	private boolean doSideEffectAnalysis(FunctionSymbol sym) {
-		// Put in a place holder to make sure the analysis does not loop indefinitely.
+		// Put in a placeholder to make sure the analysis does not loop indefinitely.
 		FunctionDef def = defManager.lookup(sym);
 		if (def instanceof UserFunctionDef) {
 			Boolean pre = purityCheckCache.put(sym, false);
