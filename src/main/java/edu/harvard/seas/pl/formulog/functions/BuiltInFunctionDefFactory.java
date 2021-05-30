@@ -59,6 +59,7 @@ import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Triple;
+import edu.harvard.seas.pl.formulog.util.Util;
 
 public final class BuiltInFunctionDefFactory {
 
@@ -264,6 +265,8 @@ public final class BuiltInFunctionDefFactory {
 			return PrimitiveConversions.stringToI64;
 		case PRINT:
 			return Print.INSTANCE;
+		case HEAVY_HITTER:
+			return heavyHitter;
 		case toFormulaNormalForm:
 			return toFormulaNormalForm;
 		case OPAQUE_SET_CHOOSE:
@@ -1963,6 +1966,68 @@ public final class BuiltInFunctionDefFactory {
 			return trueTerm;
 		}
 
+	}
+	
+	private static final ConcurrentHashMap<Term, Object[]> hhs = new ConcurrentHashMap<>();
+	
+	private static final FunctionDef heavyHitter = new FunctionDef() {
+		
+		@Override
+		public FunctionSymbol getSymbol() {
+			return BuiltInFunctionSymbol.HEAVY_HITTER;
+		}
+
+		@Override
+		public Term evaluate(Term[] args) throws EvaluationException {
+			Term key = args[0];
+			Term val = args[1];
+			int size = Configuration.heavyHitterSize;
+			Object[] l = Util.lookupOrCreate(hhs, key, () -> new Object[size]);
+			for (int i = 0; i < size; ++i) {
+				@SuppressWarnings("unchecked")
+				Pair<Term, int[]> p = (Pair<Term, int[]>) l[i];
+				if (p == null || p.snd()[0] == 0) {
+					p = new Pair<>(val, new int[] { 0 });
+					l[i] = p;
+				}
+				if (p.fst().equals(val)) {
+					p.snd()[0]++;
+					return trueTerm;
+				}
+			}
+			for (int i = 0; i < size; ++i) {
+				@SuppressWarnings("unchecked")
+				Pair<Term, int[]> p = (Pair<Term, int[]>) l[i];
+				p.snd()[0]--;
+			}
+			return trueTerm;
+		}
+
+	};
+	
+	static {
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+
+			@Override
+			public void run() {
+				if (Configuration.printHeavyHitters) {
+					synchronized (System.err) {
+						for (Map.Entry<Term, Object[]> e : hhs.entrySet()) {
+							System.err.println("[HEAVY HITTERS] key=" + e.getKey());
+							for (Object o : e.getValue()) {
+								if (o != null) {
+									@SuppressWarnings("unchecked")
+									Pair<Term, int[]> p = (Pair<Term, int[]>) o;
+									System.err.println("[HEAVY HITTERS] " + p.fst() + "=" + p.snd()[0]);
+								}
+							}
+						}
+					}
+
+				}
+			}
+
+		});
 	}
 
 	private static <T> Term makeCmp(T x, T y, BiFunction<T, T, Integer> cmp) {
