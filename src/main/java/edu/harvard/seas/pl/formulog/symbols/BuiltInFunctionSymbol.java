@@ -276,6 +276,8 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 	
 	PRINT("print", 1),
 	
+	HEAVY_HITTER("heavy_hitter", 2),
+	
 	// Formula normalization
 	
 	toFormulaNormalForm("_to_formula_normal_form", 1), 
@@ -390,6 +392,8 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 			return new FunctorType(list(smt(bool)), option(i32), option(bool));
 		case PRINT:
 			return new FunctorType(a, bool);
+		case HEAVY_HITTER:
+			return new FunctorType(a, b, bool);
 		case QUERY_MODEL:
 			return new FunctorType(sym(a), model, option(a));
 		case STRING_CONCAT:

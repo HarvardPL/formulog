@@ -66,6 +66,11 @@ public final class Configuration {
 	public static final boolean recordRuleDiagnostics = propIsSet("timeRules");
 	private static final Map<Rule<?, ?>, Pair<AtomicLong, AtomicLong>> ruleTimes = new ConcurrentHashMap<>();
 
+	public static final boolean printHeavyHitters = propIsSet("printHeavyHitters");
+	public static final int heavyHitterSize = getIntProp("heavyHitterSize", 10);
+
+	public static final boolean doSideEffectAnalysis = propIsSet("doSideEffectAnalysis");
+	
 	public static final boolean debugSmt = propIsSet("debugSmt");
 	public static final String debugSmtOutDir = getStringProp("debugSmtOutDir", "solver_logs");
 

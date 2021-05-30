@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -30,8 +29,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitorExn;
+import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
+import edu.harvard.seas.pl.formulog.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.functions.FunctionDefManager;
+import edu.harvard.seas.pl.formulog.functions.UserFunctionDef;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
@@ -53,6 +55,16 @@ public final class FunctionCallFactory {
 
 	public FunctionCallFactory(FunctionDefManager defManager) {
 		this.defManager = defManager;
+		for (BuiltInFunctionSymbol sym : BuiltInFunctionSymbol.values()) {
+			switch (sym) {
+			case PRINT:
+			case HEAVY_HITTER:
+				purityCheckCache.put(sym, true);
+				break;
+			default:
+				purityCheckCache.put(sym, false);
+			}
+		}
 	}
 
 	public FunctionCall make(FunctionSymbol sym, Term[] args) {
@@ -66,9 +78,113 @@ public final class FunctionCallFactory {
 	public FunctionDefManager getDefManager() {
 		return defManager;
 	}
-	
+
 	public void clearMemoCache() {
 		callMemo.clear();
+	}
+
+	private final Map<FunctionSymbol, Boolean> purityCheckCache = new ConcurrentHashMap<>();
+
+	private final TermVisitor<Void, Boolean> termSideEffectVisitor = new TermVisitor<Void, Boolean>() {
+
+		@Override
+		public Boolean visit(Var t, Void in) {
+			return false;
+		}
+
+		@Override
+		public Boolean visit(Constructor c, Void in) {
+			boolean hasSideEffect = false;
+			for (Term arg : c.getArgs()) {
+				hasSideEffect |= arg.accept(this, in);
+			}
+			return hasSideEffect;
+		}
+
+		@Override
+		public Boolean visit(Primitive<?> p, Void in) {
+			return false;
+		}
+
+		@Override
+		public Boolean visit(Expr e, Void in) {
+			return e.accept(exprSideEffectVisitor, in);
+		}
+
+	};
+
+	private final ExprVisitor<Void, Boolean> exprSideEffectVisitor = new ExprVisitor<Void, Boolean>() {
+
+		@Override
+		public Boolean visit(MatchExpr matchExpr, Void in) {
+			if (matchExpr.getMatchee().accept(termSideEffectVisitor, in)) {
+				return true;
+			}
+			for (MatchClause cl : matchExpr) {
+				if (cl.getRhs().accept(termSideEffectVisitor, in)) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		@Override
+		public Boolean visit(FunctionCall funcCall, Void in) {
+			if (hasSideEffects(funcCall.getSymbol())) {
+				return true;
+			}
+			boolean hasSideEffects = false;
+			for (Term arg : funcCall.getArgs()) {
+				hasSideEffects |= arg.accept(termSideEffectVisitor, in);
+			}
+			return hasSideEffects;
+		}
+
+		@Override
+		public Boolean visit(LetFunExpr funcDefs, Void in) {
+			throw new AssertionError("impossible - lef fun expressions do not exist at runtime");
+		}
+
+		@Override
+		public Boolean visit(Fold fold, Void in) {
+			if (hasSideEffects(fold.getFunction())) {
+				return true;
+			}
+			for (Term arg : fold.getArgs()) {
+				if (arg.accept(termSideEffectVisitor, in)) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+	};
+
+	private boolean hasSideEffects(FunctionSymbol sym) {
+		Boolean hasSideEffect = purityCheckCache.get(sym);
+		if (hasSideEffect == null) {
+			if (Configuration.doSideEffectAnalysis) {
+				hasSideEffect = doSideEffectAnalysis(sym);
+			} else {
+				hasSideEffect = false;
+			}
+			purityCheckCache.put(sym, hasSideEffect);
+		}
+		return hasSideEffect;
+	}
+	
+	private boolean doSideEffectAnalysis(FunctionSymbol sym) {
+		// Put in a place holder to make sure the analysis does not loop indefinitely.
+		FunctionDef def = defManager.lookup(sym);
+		if (def instanceof UserFunctionDef) {
+			Boolean pre = purityCheckCache.put(sym, false);
+			assert pre == null;
+			Boolean res = ((UserFunctionDef) def).getBody().accept(termSideEffectVisitor, null);
+			assert res != null;
+			purityCheckCache.remove(sym);
+			return res;
+		}
+		return false;
 	}
 
 	public class FunctionCall extends AbstractTerm implements Functor<FunctionSymbol>, Expr {
@@ -147,7 +263,7 @@ public final class FunctionCallFactory {
 			}
 			Term r;
 			try {
-				if (memoizeThreshold > -1 && !hasSideEffects()) {
+				if (memoizeThreshold > -1 && !hasSideEffects(sym)) {
 					r = computeWithMemoization(newArgs);
 				} else {
 					r = computeWithoutMemoization(newArgs);
@@ -164,13 +280,6 @@ public final class FunctionCallFactory {
 				System.err.println(msg);
 			}
 			return r;
-		}
-		
-		private boolean hasSideEffects() {
-			// XXX This is rough, since it doesn't take into account the call
-			// graph (i.e., A could call B which is side effecting, but this
-			// would say that A is not).
-			return sym.equals(BuiltInFunctionSymbol.PRINT);
 		}
 
 		private Term computeWithMemoization(Term[] newArgs) throws EvaluationException {
@@ -203,7 +312,7 @@ public final class FunctionCallFactory {
 			}
 			return r;
 		}
-		
+
 		public FunctionCallFactory getFactory() {
 			return FunctionCallFactory.this;
 		}
