@@ -172,16 +172,14 @@ public final class FunctionCallFactory {
 		}
 		return hasSideEffect;
 	}
-	
+
 	private boolean doSideEffectAnalysis(FunctionSymbol sym) {
-		// Put in a placeholder to make sure the analysis does not loop indefinitely.
 		FunctionDef def = defManager.lookup(sym);
 		if (def instanceof UserFunctionDef) {
-			Boolean pre = purityCheckCache.put(sym, false);
-			assert pre == null;
+			// Put in a placeholder to make sure the analysis does not loop indefinitely.
+			purityCheckCache.putIfAbsent(sym, false);
 			Boolean res = ((UserFunctionDef) def).getBody().accept(termSideEffectVisitor, null);
 			assert res != null;
-			purityCheckCache.remove(sym);
 			return res;
 		}
 		return false;
