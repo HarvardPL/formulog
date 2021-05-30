@@ -69,8 +69,9 @@ public class ValidRule extends AbstractRule<UserPredicate, ComplexLiteral> {
 	public static void order(List<ComplexLiteral> atoms, BiFunction<ComplexLiteral, Set<Var>, Integer> score,
 			Set<Var> boundVars, Map<Var, Integer> varCounts) throws InvalidProgramException {
 		List<ComplexLiteral> newList = new ArrayList<>();
-		// Using a linked hash set ensures the sort is stable.
-		Set<ComplexLiteral> unplaced = new LinkedHashSet<>(atoms);
+		// If we use a set here, then we remove redundant literals, which we
+		// don't want to do if there are side effects
+		List<ComplexLiteral> unplaced = new ArrayList<>(atoms);
 		while (!unplaced.isEmpty()) {
 			ComplexLiteral bestLit = null;
 			int bestScore = -1;
