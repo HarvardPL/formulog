@@ -38,6 +38,9 @@ solver is Z3; to set another one, you need to use a command-line option (see
 below). For each solver, the relevant binary needs to be on your path: `z3` for
 Z3, `boolector` for Boolector, `cvc4` for CVC4, and `yices-smt2` for Yices.
 
+Z3's textual interface can change even between patch versions. Z3 4.8.7 is 
+known to work with Formulog.
+
 ## Running Formulog
 
 The executable Formulog JAR that you have either downloaded or built expects a
