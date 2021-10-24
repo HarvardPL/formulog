@@ -1,4 +1,6 @@
 # Formulog 
+[![Build Status](https://app.travis-ci.com/HarvardPL/formulog.svg?branch=master)](https://app.travis-ci.com/HarvardPL/formulog)
+
 Datalog with support for SMT queries.
 
 ## Setup
