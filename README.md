@@ -3,6 +3,20 @@ Datalog with support for SMT queries.
 
 ## Setup
 
+### Zenodo artifact (Docker)
+
+[![Zenodo DOI 10.5281/zenodo.4039085](https://zenodo.org/badge/DOI/10.5281/zenodo.4039085.svg)](https://doi.org/10.5281/zenodo.4039085)
+
+You can [download the Docker image tarball](https://zenodo.org/record/4039085/files/formulog-artifact-image.tar.gz?download=1) and load it using Docker:
+
+```ShellSession
+$ curl "https://zenodo.org/record/4039085/files/formulog-artifact-image.tar.gz?download=1" -o formulog-artifact-image.tar.gz
+$ docker load < formulog-artifact-image.tar.gz # may require sudo
+$ docker run -it formulog-artifact             # may require sudo
+```
+
+You can replicate our evaluation from the [OOPSLA 2020 paper](https://dl.acm.org/doi/10.1145/3428209) following the [instructions on Zenodo](https://zenodo.org/record/4039085).
+
 ### Prepackaged JAR
 
 Dependencies:
