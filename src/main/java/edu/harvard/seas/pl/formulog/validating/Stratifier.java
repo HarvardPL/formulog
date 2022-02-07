@@ -78,8 +78,8 @@ public class Stratifier {
 	public List<Stratum> stratify() throws InvalidProgramException {
 		Graph<RelationSymbol, DependencyTypeWrapper> g = new DefaultDirectedGraph<>(DependencyTypeWrapper.class);
 		for (RelationSymbol sym : prog.getRuleSymbols()) {
+			DependencyFinder depends = new DependencyFinder();
 			for (BasicRule r : prog.getRules(sym)) {
-				DependencyFinder depends = new DependencyFinder();
 				for (ComplexLiteral bd : r) {
 					depends.processAtom(bd);
 				}
@@ -87,12 +87,11 @@ public class Stratifier {
 				for (Term t : hd.getArgs()) {
 					depends.processTerm(t);
 				}
-				RelationSymbol hdSym = hd.getSymbol();
-				g.addVertex(hdSym);
-				for (RelationSymbol bdSym : depends) {
-					g.addVertex(bdSym);
-					g.addEdge(bdSym, hdSym, new DependencyTypeWrapper(depends.getDependencyType(bdSym)));
-				}
+			}
+			g.addVertex(sym);
+			for (RelationSymbol bdSym : depends) {
+				g.addVertex(bdSym);
+				g.addEdge(bdSym, sym, new DependencyTypeWrapper(depends.getDependencyType(bdSym)));
 			}
 		}
 		StrongConnectivityAlgorithm<RelationSymbol, DependencyTypeWrapper> k = new KosarajuStrongConnectivityInspector<>(
