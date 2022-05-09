@@ -1,0 +1,6 @@
+output ok
+
+ok :-
+	F = [`#x[?] #= 42`, `#y[?] #= 13`],
+	is_set_sat(opaque_set_from_list(F), none) = some(true),
+	is_set_sat(opaque_set_from_list(`#x[i32] #= #y[?]` :: F), none) = some(false).

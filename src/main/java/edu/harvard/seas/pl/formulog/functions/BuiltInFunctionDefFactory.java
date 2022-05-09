@@ -21,6 +21,7 @@ package edu.harvard.seas.pl.formulog.functions;
  */
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -45,6 +46,7 @@ import edu.harvard.seas.pl.formulog.ast.FormulaRewriter;
 import edu.harvard.seas.pl.formulog.ast.I32;
 import edu.harvard.seas.pl.formulog.ast.I64;
 import edu.harvard.seas.pl.formulog.ast.Model;
+import edu.harvard.seas.pl.formulog.ast.OpaqueSet;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.StringTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
@@ -224,6 +226,8 @@ public final class BuiltInFunctionDefFactory {
 			return isSat;
 		case IS_SAT_OPT:
 			return isSatOpt;
+		case IS_SET_SAT:
+			return isSetSat;
 		case IS_VALID:
 			return isValid;
 		case GET_MODEL:
@@ -286,6 +290,8 @@ public final class BuiltInFunctionDefFactory {
 			return OpaqueSetOps.singleton;
 		case OPAQUE_SET_SUBSET:
 			return OpaqueSetOps.subset;
+		case OPAQUE_SET_FROM_LIST:
+			return OpaqueSetOps.fromList;
 		}
 		throw new AssertionError();
 	}
@@ -1749,7 +1755,7 @@ public final class BuiltInFunctionDefFactory {
 		return (SmtLibTerm) Constructors.make(BuiltInConstructorSymbol.SMT_NOT, Terms.singletonArray(t));
 	}
 
-	private Pair<SmtStatus, Model> querySmt(List<SmtLibTerm> assertions, boolean getModel, int timeout)
+	private Pair<SmtStatus, Model> querySmt(Collection<SmtLibTerm> assertions, boolean getModel, int timeout)
 			throws EvaluationException {
 		long start = System.nanoTime();
 		try {
@@ -1840,6 +1846,33 @@ public final class BuiltInFunctionDefFactory {
 			Constructor timeoutOpt = (Constructor) args[1];
 			Integer timeout = extractOptionalTimeout(timeoutOpt);
 			Pair<SmtStatus, Model> p = querySmt(assertions, false, timeout);
+			switch (p.fst()) {
+			case SATISFIABLE:
+				return Constructors.some(trueTerm);
+			case UNKNOWN:
+				return Constructors.none();
+			case UNSATISFIABLE:
+				return Constructors.some(falseTerm);
+			}
+			throw new AssertionError("impossible");
+		}
+
+	};
+	
+	private final FunctionDef isSetSat = new FunctionDef() {
+
+		@Override
+		public FunctionSymbol getSymbol() {
+			return BuiltInFunctionSymbol.IS_SET_SAT;
+		}
+
+		@Override
+		public Term evaluate(Term[] args) throws EvaluationException {
+			OpaqueSet formula = (OpaqueSet) args[0];
+			Constructor timeoutOpt = (Constructor) args[1];
+			Integer timeout = extractOptionalTimeout(timeoutOpt);
+			@SuppressWarnings({ "unchecked", "rawtypes" })
+			Pair<SmtStatus, Model> p = querySmt((Collection) formula.getCollection(), false, timeout);
 			switch (p.fst()) {
 			case SATISFIABLE:
 				return Constructors.some(trueTerm);

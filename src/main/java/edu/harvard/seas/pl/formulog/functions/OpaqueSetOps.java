@@ -25,6 +25,7 @@ import edu.harvard.seas.pl.formulog.ast.Constructors;
 import edu.harvard.seas.pl.formulog.ast.I32;
 import edu.harvard.seas.pl.formulog.ast.OpaqueSet;
 import edu.harvard.seas.pl.formulog.ast.Term;
+import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
@@ -187,6 +188,20 @@ public final class OpaqueSetOps {
 			OpaqueSet s1 = (OpaqueSet) args[0];
 			OpaqueSet s2 = (OpaqueSet) args[1];
 			return BoolTerm.mk(s2.containsAll(s1));
+		}
+		
+	};
+
+	public static final FunctionDef fromList = new FunctionDef() {
+
+		@Override
+		public FunctionSymbol getSymbol() {
+			return BuiltInFunctionSymbol.OPAQUE_SET_SUBSET;
+		}
+
+		@Override
+		public Term evaluate(Term[] args) throws EvaluationException {
+			return OpaqueSet.fromCollection(Terms.termToTermList(args[0]));
 		}
 		
 	};

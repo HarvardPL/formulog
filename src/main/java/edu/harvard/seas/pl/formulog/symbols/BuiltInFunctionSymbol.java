@@ -220,6 +220,8 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 	
 	IS_FREE("is_free", 2),
 	
+	IS_SET_SAT("is_set_sat", 2),
+	
 	// Opaque datatypes
 	
 	OPAQUE_SET_EMPTY("opaque_set_empty", 0),
@@ -241,6 +243,8 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 	OPAQUE_SET_SINGLETON("opaque_set_singleton", 1),
 	
 	OPAQUE_SET_SUBSET("opaque_set_subset", 2),
+	
+	OPAQUE_SET_FROM_LIST("opaque_set_from_list", 1),
 	
 	// Primitive conversion
 
@@ -386,6 +390,8 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 		case IS_SAT:
 		case IS_VALID:
 			return new FunctorType(smt(bool), bool);
+		case IS_SET_SAT:
+			return new FunctorType(opaqueSet(smt(bool)), option(i32), option(bool));
 		case IS_SAT_OPT:
 			return new FunctorType(list(smt(bool)), option(i32), option(bool));
 		case PRINT:
@@ -464,6 +470,8 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 			return new FunctorType(a, opaqueSet(a));
 		case OPAQUE_SET_SUBSET:
 			return new FunctorType(opaqueSet(a), opaqueSet(a), bool);
+		case OPAQUE_SET_FROM_LIST:
+			return new FunctorType(list(a), opaqueSet(a));
 		}
 		throw new AssertionError("impossible");
 	}

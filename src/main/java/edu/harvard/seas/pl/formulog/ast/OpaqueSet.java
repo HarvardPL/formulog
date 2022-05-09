@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.ast;
 
+import java.util.Collection;
+
 /*-
  * #%L
  * Formulog
@@ -59,8 +61,20 @@ public class OpaqueSet extends AbstractTerm implements Primitive<Set<Term>> {
 		return empty.plus(t);
 	}
 	
+	public static OpaqueSet fromCollection(Collection<Term> c) {
+		PSet<Term> s = MapPSet.from(HashPMap.empty(IntTreePMap.empty()));
+		for (Term t : c) {
+			s = s.plus(t);
+		}
+		return make(s);
+	}
+	
 	private static OpaqueSet make(PSet<Term> s) {
 		return Util.lookupOrCreate(memo, s, () -> new OpaqueSet(s));
+	}
+	
+	public Collection<Term> getCollection() {
+		return s;
 	}
 	
 	public boolean member(Term t) {
