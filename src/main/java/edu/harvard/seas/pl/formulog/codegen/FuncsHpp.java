@@ -26,6 +26,7 @@ import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.codegen.LiteralCodeGen.CodeShape;
 import edu.harvard.seas.pl.formulog.codegen.LiteralCodeGen.Result;
+import edu.harvard.seas.pl.formulog.codegen.ast.cpp.*;
 import edu.harvard.seas.pl.formulog.functions.*;
 import edu.harvard.seas.pl.formulog.symbols.*;
 import edu.harvard.seas.pl.formulog.util.Pair;

@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.codegen;
+package edu.harvard.seas.pl.formulog.codegen.ast.cpp;
 
 /*-
  * #%L
@@ -9,9 +9,9 @@ package edu.harvard.seas.pl.formulog.codegen;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,35 +20,32 @@ package edu.harvard.seas.pl.formulog.codegen;
  * #L%
  */
 
+import edu.harvard.seas.pl.formulog.codegen.CodeGenUtil;
 
 import java.io.PrintWriter;
-import java.util.Arrays;
-import java.util.List;
 
-public class CppFuncCall implements CppExpr {
+/**
+ * Generates an unnamed block, useful for scoping local variables.
+ */
+public class CppBlock implements CppStmt {
 
-	private final String func;
-	private final List<CppExpr> args;
-	
-	private CppFuncCall(String func, List<CppExpr> args) {
-		this.func = func;
-		this.args = args;
-	}
-	
-	public static CppFuncCall mk(String func, List<CppExpr> args) {
-		return new CppFuncCall(func, args);
-	}
-	
-	public static CppFuncCall mk(String func, CppExpr... args) {
-		return mk(func, Arrays.asList(args));
-	}
+    private final CppStmt stmt;
 
-	@Override
-	public void print(PrintWriter out) {
-		out.print(func);
-		out.print("(");
-		CodeGenUtil.printSeparated(args, ", ", out);
-		out.print(")");
-	}
+    private CppBlock(CppStmt stmt) {
+        this.stmt = stmt;
+    }
+
+    public static CppBlock mk(CppStmt stmt) {
+        return new CppBlock(stmt);
+    }
+
+    @Override
+    public void println(PrintWriter out, int indent) {
+        CodeGenUtil.printIndent(out, indent);
+        out.println("{");
+        stmt.println(out, indent + 1);
+        CodeGenUtil.printIndent(out, indent);
+        out.println("}");
+    }
 
 }

@@ -20,6 +20,7 @@ package edu.harvard.seas.pl.formulog.codegen;
  * #L%
  */
 
+import edu.harvard.seas.pl.formulog.codegen.ast.cpp.*;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.GlobalSymbolManager.TupleSymbol;
 

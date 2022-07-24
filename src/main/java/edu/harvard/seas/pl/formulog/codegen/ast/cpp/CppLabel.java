@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.codegen;
+package edu.harvard.seas.pl.formulog.codegen.ast.cpp;
 
 /*-
  * #%L
@@ -9,9 +9,9 @@ package edu.harvard.seas.pl.formulog.codegen;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,28 +21,26 @@ package edu.harvard.seas.pl.formulog.codegen;
  */
 
 
+import edu.harvard.seas.pl.formulog.codegen.CodeGenUtil;
+
 import java.io.PrintWriter;
 
-public class CppSubscript implements CppExpr {
+public class CppLabel implements CppStmt {
 
-	private final CppExpr val;
-	private final CppExpr idx;
-	
-	private CppSubscript(CppExpr val, CppExpr idx) {
-		this.val = val;
-		this.idx = idx;
-	}
-	
-	public static CppSubscript mk(CppExpr val, CppExpr idx) {
-		return new CppSubscript(val, idx);
-	}
+    private final String label;
 
-	@Override
-	public void print(PrintWriter out) {
-		val.print(out);
-		out.print("[");
-		idx.print(out);
-		out.print("]");
-	}
+    public CppLabel(String label) {
+        this.label = label;
+    }
+
+    public static CppLabel mk(String label) {
+        return new CppLabel(label);
+    }
+
+    @Override
+    public void println(PrintWriter out, int indent) {
+        CodeGenUtil.printIndent(out, indent);
+        out.println(label + ":");
+    }
 
 }

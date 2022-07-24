@@ -23,9 +23,9 @@ package edu.harvard.seas.pl.formulog.codegen;
 import java.io.*;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Iterator;
 
+import edu.harvard.seas.pl.formulog.codegen.ast.cpp.*;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 
 public final class CodeGenUtil {

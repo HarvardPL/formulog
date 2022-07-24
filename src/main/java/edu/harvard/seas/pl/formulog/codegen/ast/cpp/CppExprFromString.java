@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.codegen;
+package edu.harvard.seas.pl.formulog.codegen.ast.cpp;
 
 /*-
  * #%L
@@ -9,9 +9,9 @@ package edu.harvard.seas.pl.formulog.codegen;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,32 +23,21 @@ package edu.harvard.seas.pl.formulog.codegen;
 
 import java.io.PrintWriter;
 
-public class CppReturn implements CppStmt {
+public class CppExprFromString implements CppExpr {
 
-	private final CppExpr val;
-	
-	private CppReturn(CppExpr val) {
-		this.val = val;
-	}
-	
-	public static CppReturn mk(CppExpr val) {
-		return new CppReturn(val);
-	}
-	
-	public static CppReturn mk() {
-		return new CppReturn(null);
-	}
+    private final String s;
 
-	@Override
-	public void println(PrintWriter out, int indent) {
-		CodeGenUtil.printIndent(out, indent);
-		if (val == null) {
-			out.println("return;");
-			return;
-		}
-		out.print("return ");
-		val.print(out);
-		out.println(";");
-	}
+    private CppExprFromString(String s) {
+        this.s = s;
+    }
+
+    public static CppExprFromString mk(String s) {
+        return new CppExprFromString(s);
+    }
+
+    @Override
+    public void print(PrintWriter out) {
+        out.print(s);
+    }
 
 }

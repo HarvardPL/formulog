@@ -21,6 +21,10 @@ package edu.harvard.seas.pl.formulog.codegen;
  */
 
 
+import edu.harvard.seas.pl.formulog.codegen.ast.cpp.CppExpr;
+import edu.harvard.seas.pl.formulog.codegen.ast.cpp.CppReturn;
+import edu.harvard.seas.pl.formulog.codegen.ast.cpp.CppSeq;
+import edu.harvard.seas.pl.formulog.codegen.ast.cpp.CppStmt;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
