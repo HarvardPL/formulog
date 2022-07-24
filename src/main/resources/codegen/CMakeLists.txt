@@ -33,3 +33,7 @@ if (OpenMP_CXX_FOUND)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 endif ()
 
+if (DEFINED ENV{FLG_DEV})
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFLG_DEV")
+endif ()
+
