@@ -1,30 +1,30 @@
-package edu.harvard.seas.pl.formulog.souffle;
+package edu.harvard.seas.pl.formulog.codegen;
 
-import edu.harvard.seas.pl.formulog.ast.BasicProgram;
+import edu.harvard.seas.pl.formulog.codegen.CodeGenContext;
+import edu.harvard.seas.pl.formulog.codegen.CodeGenException;
 import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SFunctorBody;
+import edu.harvard.seas.pl.formulog.souffle.SouffleGenUtil;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
 import java.io.*;
 
 public class FunctorGenerator {
 
-    private final BasicProgram prog;
-    private final Context ctx;
+    private final CodeGenContext ctx;
 
     private final static String headerName = "functors.h";
     private final static String sourceName = "functors.cpp";
 
-    public FunctorGenerator(BasicProgram prog_, Context ctx_) {
-        prog = prog_;
-        ctx = ctx_;
+    public FunctorGenerator(CodeGenContext ctx) {
+        this.ctx = ctx;
     }
 
-    public void emitFunctors(File directory) throws SouffleGenException {
+    public void emitFunctors(File directory) throws CodeGenException {
         emitHeader(directory);
         emitSource(directory);
     }
 
-    private void emitHeader(File directory) throws SouffleGenException {
+    private void emitHeader(File directory) throws CodeGenException {
         File inHeader = new File("souffle").toPath().resolve("src").resolve(headerName).toFile();
         File outHeader = directory.toPath().resolve(headerName).toFile();
         try (InputStream is = getClass().getClassLoader().getResourceAsStream(inHeader.getPath())) {
@@ -41,7 +41,7 @@ public class FunctorGenerator {
                 SouffleGenUtil.copyOverUntilInsertPoint(br, out);
             }
         } catch (IOException e) {
-            throw new SouffleGenException(e);
+            throw new CodeGenException(e);
         }
     }
 
@@ -72,7 +72,7 @@ public class FunctorGenerator {
     }
      */
 
-    private void emitSource(File directory) throws SouffleGenException {
+    private void emitSource(File directory) throws CodeGenException {
         File inSource = new File("souffle").toPath().resolve("src").resolve(sourceName).toFile();
         File outSource = directory.toPath().resolve(sourceName).toFile();
         try (InputStream is = getClass().getClassLoader().getResourceAsStream(inSource.getPath())) {
@@ -84,7 +84,7 @@ public class FunctorGenerator {
                 new SourceWorker(out).emitFunctors();
             }
         } catch (IOException e) {
-            throw new SouffleGenException(e);
+            throw new CodeGenException(e);
         }
     }
 

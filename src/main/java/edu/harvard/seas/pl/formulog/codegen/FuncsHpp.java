@@ -65,14 +65,14 @@ public class FuncsHpp extends TemplateSrcFile {
         }
 
         private void makeDeclarations() {
-            for (FunctionSymbol sym : ctx.getEval().getInputProgram().getFunctionSymbols()) {
+            for (FunctionSymbol sym : ctx.getProgram().getFunctionSymbols()) {
                 if (sym instanceof BuiltInFunctionSymbol) {
                     registerBuiltInFunction((BuiltInFunctionSymbol) sym);
                 } else if (sym instanceof PredicateFunctionSymbol) {
                     predFunctions.add((PredicateFunctionSymbol) sym);
                     declareFunction(sym);
                 } else {
-                    FunctionDef def = ctx.getEval().getInputProgram().getDef(sym);
+                    FunctionDef def = ctx.getProgram().getDef(sym);
                     if (def instanceof UserFunctionDef) {
                         userDefinedFunctions.add(sym);
                         declareFunction(sym);
@@ -355,7 +355,7 @@ public class FuncsHpp extends TemplateSrcFile {
         }
 
         private void makeDefinitionForUserDefinedFunc(FunctionSymbol sym) {
-            UserFunctionDef def = (UserFunctionDef) ctx.getEval().getInputProgram().getDef(sym);
+            UserFunctionDef def = (UserFunctionDef) ctx.getProgram().getDef(sym);
             out.println();
             out.print("term_ptr " + ctx.lookupRepr(sym) + "(");
             Map<Var, CppExpr> env = new HashMap<>();
@@ -419,7 +419,7 @@ public class FuncsHpp extends TemplateSrcFile {
         }
 
         private PredicateFunctionDef getDef(PredicateFunctionSymbol sym) {
-            DummyFunctionDef dummy = (DummyFunctionDef) ctx.getEval().getInputProgram().getDef(sym);
+            DummyFunctionDef dummy = (DummyFunctionDef) ctx.getProgram().getDef(sym);
             PredicateFunctionDef def = (PredicateFunctionDef) dummy.getDef();
             assert def != null : sym;
             return def;

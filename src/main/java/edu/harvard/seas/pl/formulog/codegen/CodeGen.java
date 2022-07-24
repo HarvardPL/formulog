@@ -27,16 +27,14 @@ import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import edu.harvard.seas.pl.formulog.Configuration;
+import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
-import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
+import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
 import edu.harvard.seas.pl.formulog.parsing.Parser;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
@@ -44,22 +42,24 @@ import edu.harvard.seas.pl.formulog.util.Util;
 
 public class CodeGen {
 
-    private final SemiNaiveEvaluation eval;
+    private final BasicProgram prog;
     private final File outDir;
 
-    public CodeGen(SemiNaiveEvaluation eval, File outDir) {
-        this.eval = eval;
+    public CodeGen(BasicProgram prog, File outDir) {
+        this.prog = prog;
         this.outDir = outDir;
     }
 
     public void go() throws IOException, URISyntaxException {
+        /*
         if (Configuration.minIndex) {
             throw new UnsupportedOperationException(
                     "We do not currently support code gen and optimal index selection (use flag -DminIndex=false).");
         }
+         */
         //copy("Makefile");
         copy("CMakeLists.txt");
-        CodeGenContext ctx = new CodeGenContext(eval);
+        CodeGenContext ctx = new CodeGenContext(prog);
         new RelsHpp(ctx).gen(outDir);
         new FuncsHpp(ctx).gen(outDir);
         new MainCpp(ctx).gen(outDir);
@@ -123,12 +123,14 @@ public class CodeGen {
             prog = new Parser().parse(fr);
         }
         WellTypedProgram wtp = new TypeChecker(prog).typeCheck();
-        SemiNaiveEvaluation eval = SemiNaiveEvaluation.setup(wtp, 4, false);
+        MagicSetTransformer mst = new MagicSetTransformer(wtp);
+        BasicProgram magicProg = mst.transform(Configuration.useDemandTransformation,
+                Configuration.restoreStratification);
         File dir = new File("codegen");
         File srcDir = dir.toPath().resolve("src").toFile();
         srcDir.mkdirs();
         Util.clean(srcDir, false);
-        new CodeGen(eval, dir).go();
+        new CodeGen(magicProg, dir).go();
     }
 
 }

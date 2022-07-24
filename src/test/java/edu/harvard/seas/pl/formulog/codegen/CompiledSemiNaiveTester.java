@@ -9,9 +9,9 @@ package edu.harvard.seas.pl.formulog.codegen;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,25 +42,26 @@ import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 
 public class CompiledSemiNaiveTester extends AbstractTester<SemiNaiveEvaluation> {
 
-	private List<String> inputDirs = Collections.emptyList();
+    private List<String> inputDirs = Collections.emptyList();
 
-	@Override
-	public void test(String file, List<String> inputDirs) {
-		this.inputDirs = inputDirs;
-		super.test(file, Collections.emptyList());
-	}
+    @Override
+    public void test(String file, List<String> inputDirs) {
+        this.inputDirs = inputDirs;
+        super.test(file, Collections.emptyList());
+    }
 
-	@Override
-	protected SemiNaiveEvaluation setup(WellTypedProgram prog) throws InvalidProgramException, EvaluationException {
-		return SemiNaiveEvaluation.setup(prog, 2, false);
-	}
+    @Override
+    protected SemiNaiveEvaluation setup(WellTypedProgram prog) throws InvalidProgramException, EvaluationException {
+        return SemiNaiveEvaluation.setup(prog, 2, false);
+    }
 
-	@Override
-	protected boolean evaluate(SemiNaiveEvaluation eval) throws EvaluationException {
-		File dir = new File("codegen");
-		Util.clean(dir, false);
-		dir.mkdirs();
-		Path path = dir.toPath();
+    @Override
+    protected boolean evaluate(SemiNaiveEvaluation eval) throws EvaluationException {
+        File dir = new File("codegen");
+        Util.clean(dir, false);
+        dir.mkdirs();
+        Path path = dir.toPath();
+		/*
 		CodeGen cg = new CodeGen(eval, dir);
 		try {
 			cg.go();
@@ -93,14 +94,16 @@ public class CompiledSemiNaiveTester extends AbstractTester<SemiNaiveEvaluation>
 		} catch (IOException | URISyntaxException | InterruptedException e) {
 			throw new EvaluationException(e);
 		}
-	}
+		 */
+        return false;
+    }
 
-	private static void printToStdErr(InputStream is) throws IOException {
-		BufferedReader br = new BufferedReader(new InputStreamReader(is));
-		String line;
-		while ((line = br.readLine()) != null) {
-			System.err.println(line);
-		}
-	}
+    private static void printToStdErr(InputStream is) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(is));
+        String line;
+        while ((line = br.readLine()) != null) {
+            System.err.println(line);
+        }
+    }
 
 }

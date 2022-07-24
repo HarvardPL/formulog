@@ -80,7 +80,7 @@ public class SmtCpp extends TemplateSrcFile {
 
         public void copyDeclarations() {
             SmtLibShim shim = new SmtLibShim(null, out);
-            shim.initialize(ctx.getEval().getInputProgram(), true);
+            shim.initialize(ctx.getProgram(), true);
             try {
                 shim.setLogic(Configuration.smtLogic);
                 shim.makeDeclarations();

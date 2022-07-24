@@ -1,6 +1,5 @@
-package edu.harvard.seas.pl.formulog.souffle;
+package edu.harvard.seas.pl.formulog.codegen;
 
-import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SDestructorBody;
 import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SExprBody;
 import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SFunctorBody;
@@ -36,39 +35,38 @@ public class SouffleGenerator {
      - [ ] Handle aggregates
      */
 
-    private final BasicProgram prog;
+    private final CodeGenContext ctx;
 
-    public SouffleGenerator(BasicProgram prog_) {
-        prog = prog_;
+    public SouffleGenerator(CodeGenContext ctx) {
+        this.ctx = ctx;
     }
 
-    public void emitCode(File directory) throws SouffleGenException {
+    public void emitCode(File directory) throws CodeGenException {
         if (!directory.exists()) {
             boolean ok = directory.mkdirs();
             if (!ok) {
-                throw new SouffleGenException("Unable to create directory " + directory.getName());
+                throw new CodeGenException("Unable to create directory " + directory.getName());
             }
         }
         if (!directory.isDirectory()) {
-            throw new SouffleGenException(directory.getName() + " is not a directory");
+            throw new CodeGenException(directory.getName() + " is not a directory");
         }
         Util.clean(directory, false);
 
-        Context ctx = new Context();
-        List<SRule> rules = new RuleTranslator(ctx).translate(prog);
+        List<SRule> rules = new RuleTranslator(ctx).translate(ctx.getProgram());
 
         File dlFile = directory.toPath().resolve("formulog.dl").toFile();
         emitDlFile(dlFile, ctx, rules);
 
-        new FunctorGenerator(prog, ctx).emitFunctors(directory);
+        // new FunctorGenerator(ctx.getProgram(), ctx).emitFunctors(directory);
     }
 
-    private void emitDlFile(File dlFile, Context ctx, List<SRule> rules) throws SouffleGenException {
+    private void emitDlFile(File dlFile, CodeGenContext ctx, List<SRule> rules) throws CodeGenException {
         PrintWriter writer;
         try {
             writer = new PrintWriter(dlFile);
         } catch (FileNotFoundException e) {
-            throw new SouffleGenException(e);
+            throw new CodeGenException(e);
         }
         Worker worker = new Worker(writer, ctx);
         worker.declareTypes();
@@ -86,11 +84,11 @@ public class SouffleGenerator {
     private class Worker {
 
         private final PrintWriter writer;
-        private final Context ctx;
+        private final CodeGenContext ctx;
 
-        public Worker(PrintWriter writer_, Context ctx_) {
-            writer = writer_;
-            ctx = ctx_;
+        public Worker(PrintWriter writer, CodeGenContext ctx) {
+            this.writer = writer;
+            this.ctx = ctx;
         }
 
         public void declareTypes() {
@@ -98,15 +96,15 @@ public class SouffleGenerator {
         }
 
         public void declareRelations() {
-            for (RelationSymbol sym : prog.getFactSymbols()) {
+            for (RelationSymbol sym : ctx.getProgram().getFactSymbols()) {
                 declareRelation(sym);
                 writer.print(".input ");
-                writer.println(ctx.lookupRelation(sym));
+                writer.println(ctx.lookupRepr(sym));
             }
-            for (RelationSymbol sym : prog.getRuleSymbols()) {
+            for (RelationSymbol sym : ctx.getProgram().getRuleSymbols()) {
                 declareRelation(sym);
                 writer.print(".output ");
-                writer.println(ctx.lookupRelation(sym));
+                writer.println(ctx.lookupRepr(sym));
             }
         }
 

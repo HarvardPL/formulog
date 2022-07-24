@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Context {
 
+    /*
     private final Map<String, AtomicInteger> funcSuffixMemo = new ConcurrentHashMap<>();
     private static final String functionPrefix = "formulog::functions::";
     private final Map<Term, Integer> constantMemo = new LinkedHashMap<>();
@@ -69,5 +70,7 @@ public class Context {
     private String mangle(Symbol sym) {
         return sym.toString().replaceAll("<>,:", "_") + "_";
     }
+
+     */
 
 }

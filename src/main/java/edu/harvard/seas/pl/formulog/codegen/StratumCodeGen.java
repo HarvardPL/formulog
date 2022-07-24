@@ -59,6 +59,7 @@ public class StratumCodeGen {
      */
     public CppStmt gen(Stratum stratum) {
         List<CppStmt> stmts = new ArrayList<>();
+        /*
         stmts.add(CppDecl.mk("changed", CppConst.mkFalse()));
         RuleCodeGen rcg = new RuleCodeGen(ctx);
         // Split rules into first-round rules (which refer to predicates from only lower
@@ -77,6 +78,7 @@ public class StratumCodeGen {
         }
         stmts.add(genFirstRound(stratum, firstRoundRules, rcg));
         stmts.add(genLoop(stratum, laterRoundRules, rcg));
+         */
         return CppSeq.mk(stmts);
     }
 

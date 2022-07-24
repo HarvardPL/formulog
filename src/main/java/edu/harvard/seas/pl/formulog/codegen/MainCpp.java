@@ -45,6 +45,7 @@ public class MainCpp extends TemplateSrcFile {
     }
 
     public void gen(BufferedReader br, PrintWriter out) throws IOException {
+        /*
         Worker pr = new Worker(out);
         CodeGenUtil.copyOver(br, out, 0);
         pr.loadExternalEdbs();
@@ -56,9 +57,11 @@ public class MainCpp extends TemplateSrcFile {
         pr.evaluate();
         CodeGenUtil.copyOver(br, out, 4);
         pr.printResults();
+         */
         CodeGenUtil.copyOver(br, out, -1);
     }
 
+    /*
     private class Worker {
 
         private final SortedIndexedFactDb db = ctx.getEval().getDb();
@@ -140,5 +143,6 @@ public class MainCpp extends TemplateSrcFile {
         }
 
     }
+     */
 
 }

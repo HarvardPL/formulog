@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.souffle;
+package edu.harvard.seas.pl.formulog.codegen;
 
 import edu.harvard.seas.pl.formulog.ast.*;
 import edu.harvard.seas.pl.formulog.codegen.ast.souffle.*;
@@ -16,13 +16,13 @@ import java.util.stream.Collectors;
 
 public class RuleTranslator {
 
-    private final Context ctx;
+    private final CodeGenContext ctx;
 
-    public RuleTranslator(Context ctx_) {
-        ctx = ctx_;
+    public RuleTranslator(CodeGenContext ctx) {
+        this.ctx = ctx;
     }
 
-    public List<SRule> translate(BasicProgram prog) throws SouffleGenException {
+    public List<SRule> translate(BasicProgram prog) throws CodeGenException {
         checkStratification(prog);
         List<SRule> l = new ArrayList<>();
         for (RelationSymbol sym : prog.getRuleSymbols()) {
@@ -33,28 +33,28 @@ public class RuleTranslator {
         return l;
     }
 
-    private void checkStratification(BasicProgram prog) throws SouffleGenException {
+    private void checkStratification(BasicProgram prog) throws CodeGenException {
         Stratifier stratifier = new Stratifier(prog);
         List<Stratum> strats;
         try {
             strats = stratifier.stratify();
         } catch (InvalidProgramException e) {
-            throw new SouffleGenException(e);
+            throw new CodeGenException(e);
         }
         for (Stratum strat : strats) {
             if (strat.hasRecursiveNegationOrAggregation()) {
-                throw new SouffleGenException("Cannot handle recursive negation or aggregation: " + strat);
+                throw new CodeGenException("Cannot handle recursive negation or aggregation: " + strat);
             }
         }
     }
 
-    private SRule translate(BasicRule br, BasicProgram prog) throws SouffleGenException {
+    private SRule translate(BasicRule br, BasicProgram prog) throws CodeGenException {
         SimpleRule sr;
         try {
             ValidRule vr = ValidRule.make(br, (_lit, _vars) -> 1);
             sr = SimpleRule.make(vr, prog.getFunctionCallFactory());
         } catch (InvalidProgramException e) {
-            throw new SouffleGenException(e);
+            throw new CodeGenException(e);
         }
         SLit head = translate(sr.getHead());
         List<SLit> body = new ArrayList<>();
@@ -96,7 +96,7 @@ public class RuleTranslator {
 
             @Override
             public SLit visit(SimplePredicate predicate, Void input) {
-                String symbol = ctx.lookupRelation(predicate.getSymbol());
+                String symbol = ctx.lookupRepr(predicate.getSymbol());
                 List<STerm> args = Arrays.stream(predicate.getArgs()).map(RuleTranslator.this::translate).
                         collect(Collectors.toList());
                 return new SAtom(symbol, args, predicate.isNegated());
@@ -104,9 +104,11 @@ public class RuleTranslator {
         }, null);
     }
 
+    /*
     private SInt translateConstant(Term t) {
         return new SInt(ctx.lookupConstant(t));
     }
+     */
 
     private SFunctorCall translateNonConstant(Term t) {
         String functor = ctx.freshFunctionName("expr");
@@ -125,15 +127,20 @@ public class RuleTranslator {
 
             @Override
             public STerm visit(Constructor c, Void in) {
+                /*
                 if (c.isGround() && !c.containsUnevaluatedTerm()) {
                     return translateConstant(c);
                 }
+                 */
                 return translateNonConstant(c);
             }
 
             @Override
             public STerm visit(Primitive<?> p, Void in) {
+                /*
                 return translateConstant(p);
+                 */
+                return translateNonConstant(p);
             }
 
             @Override
