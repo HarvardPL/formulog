@@ -9,9 +9,9 @@ package edu.harvard.seas.pl.formulog.eval;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,11 +26,11 @@ import java.util.Arrays;
 import org.junit.Test;
 
 public abstract class CommonEvaluationTest<T extends Evaluation> extends AbstractEvaluationTest<T> {
-	
+
 	public CommonEvaluationTest(Tester<T> tester) {
 		super(tester);
 	}
-	
+
 	@Test
 	public void test018() {
 		test("test018_ok.flg");
@@ -575,42 +575,42 @@ public abstract class CommonEvaluationTest<T extends Evaluation> extends Abstrac
 	public void test240() {
 		test("test240_ok.flg");
 	}
-	
+
 	@Test
 	public void test241() {
 		test("test241_ok.flg");
 	}
-	
+
 	@Test
 	public void test242() {
 		test("test242_ok.flg");
 	}
-	
+
 	@Test
 	public void test243() {
 		test("test243_ok.flg");
 	}
-	
+
 	@Test
 	public void test244() {
 		test("test244_ok.flg");
 	}
-	
+
 	@Test
 	public void test245() {
 		test("test245_ok.flg");
 	}
-	
+
 	@Test
 	public void test254() {
 		test("test254_ok.flg");
 	}
-	
+
 	@Test
 	public void test256() {
 		test("test256_ok.flg");
 	}
-	
+
 	@Test
 	public void test258() {
 		test("test258_ok.flg");
@@ -650,225 +650,235 @@ public abstract class CommonEvaluationTest<T extends Evaluation> extends Abstrac
 	public void test265() {
 		test("test265_ok.flg");
 	}
-	
+
 	@Test
 	public void test267() {
 		test("test267_ok.flg");
 	}
-	
+
 	@Test
 	public void test273() {
 		test("test273_ok.flg");
 	}
-	
+
 	@Test
 	public void test274() {
 		test("test274_ok.flg");
 	}
-	
+
 	@Test
 	public void test275() {
 		test("test275_ok.flg");
 	}
-	
+
 	@Test
 	public void test276() {
 		test("test276_ok.flg", Arrays.asList("test276_inputA", "test276_inputB"));
 	}
-	
+
 	@Test
 	public void test277() {
 		test("test277_ok.flg");
 	}
-	
+
 	@Test
 	public void test278() {
 		test("test278_ok.flg");
 	}
-	
+
 	@Test
 	public void test279() {
 		test("test279_ok.flg");
 	}
-	
+
 	@Test
 	public void test280() {
 		test("test280_ok.flg");
 	}
-	
+
 	@Test
 	public void test281() {
 		test("test281_ok.flg");
 	}
-	
+
 	@Test
 	public void test282() {
 		test("test282_ok.flg");
 	}
-	
+
 	@Test
 	public void test283() {
 		test("test283_ok.flg");
 	}
-	
+
 	@Test
 	public void test284() {
 		test("test284_ok.flg");
 	}
-	
+
 	@Test
 	public void test285() {
 		test("test285_ok.flg");
 	}
-	
+
 	@Test
 	public void test286() {
 		test("test286_ok.flg");
 	}
-	
+
 	@Test
 	public void test287() {
 		test("test287_ok.flg");
 	}
-	
+
 	@Test
 	public void test288() {
 		test("test288_ok.flg");
 	}
-	
+
 	@Test
 	public void test289() {
 		test("test289_ok.flg");
 	}
-	
+
 	@Test
 	public void test290() {
 		test("test290_ok.flg");
 	}
-	
+
 	@Test
 	public void test291() {
 		test("test291_ok.flg");
 	}
-	
+
 	@Test
 	public void test292() {
 		test("test292_ok.flg");
 	}
-	
+
 	@Test
 	public void test297() {
 		test("test297_ok.flg");
 	}
-	
+
 	@Test
 	public void test298() {
 		test("test298_ok.flg");
 	}
-	
+
 	@Test
 	public void test299() {
 		test("test299_ok.flg");
 	}
-	
+
 	@Test
 	public void test300() {
 		test("test300_ok.flg");
 	}
-	
+
 	@Test
 	public void test301() {
 		test("test301_ok.flg");
 	}
-	
+
 	@Test
 	public void test304() {
 		test("test304_ok.flg");
 	}
-	
+
 	@Test
 	public void test305() {
 		test("test305_ok.flg");
 	}
-	
+
 	@Test
 	public void test306() {
 		test("test306_ok.flg");
 	}
-	
+
 	@Test
 	public void test308() {
 		test("test308_ok.flg");
 	}
-	
+
 	@Test
 	public void test309() {
 		test("test309_ok.flg");
 	}
-	
+
 	@Test
 	public void test310() {
 		test("test310_ok.flg");
 	}
-	
+
 	@Test
 	public void test311() {
 		test("test311_ok.flg");
 	}
-	
+
 	@Test
 	public void test316() {
 		test("test316_ok.flg");
 	}
-	
+
 	@Test
 	public void test317() {
 		test("test317_ok.flg");
 	}
-	
+
 	@Test
 	public void test318() {
 		test("test318_ok.flg");
 	}
-	
+
 	@Test
 	public void test319() {
 		test("test319_ok.flg");
 	}
-	
+
 	@Test
 	public void test320() {
 		test("test320_ok.flg");
 	}
-	
+
 	@Test
 	public void test321() {
 		test("test321_ok.flg");
 	}
-	
+
 	@Test
 	public void test323() {
 		test("test323_ok.flg");
 	}
-	
+
 	@Test
 	public void test324() {
 		test("test324_ok.flg");
 	}
-	
+
 	@Test
 	public void test325() {
 		test("test325_ok.flg");
 	}
-	
+
 	@Test
 	public void test326() {
 		test("test326_ok.flg");
 	}
-	
+
 	@Test
 	public void test328() {
 		test("test328_ok.flg");
 	}
-	
+
+	@Test
+	public void test329() {
+		test("test329_ok.flg");
+	}
+
+	@Test
+	public void test330() {
+		test("test330_ok.flg");
+	}
+
 }
