@@ -43,3 +43,5 @@ target/
 
 # Formulog stuff
 /codegen/
+
+.idea/

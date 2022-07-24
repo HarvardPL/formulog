@@ -9,9 +9,9 @@ package edu.harvard.seas.pl.formulog.codegen;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,35 +20,24 @@ package edu.harvard.seas.pl.formulog.codegen;
  * #L%
  */
 
+import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
+
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.Set;
 
-import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
-
-public class ParserCpp {
-
-    private final CodeGenContext ctx;
+public class ParserCpp extends TemplateSrcFile {
 
     public ParserCpp(CodeGenContext ctx) {
-        this.ctx = ctx;
+        super("parser.cpp", ctx);
     }
 
-    public void print(File outDir) throws IOException {
-        try (InputStream is = getClass().getClassLoader().getResourceAsStream("parser.cpp");
-                InputStreamReader isr = new InputStreamReader(is);
-                BufferedReader br = new BufferedReader(isr);
-                PrintWriter out = new PrintWriter(outDir.toPath().resolve("parser.cpp").toFile())) {
-            Worker w = new Worker(out);
-            CodeGenUtil.copyOver(br, out, 0);
-            w.defineParser();
-            CodeGenUtil.copyOver(br, out, -1);
-            out.flush();
-        }
+    public void gen(BufferedReader br, PrintWriter out) throws IOException {
+        Worker w = new Worker(out);
+        CodeGenUtil.copyOver(br, out, 0);
+        w.defineParser();
+        CodeGenUtil.copyOver(br, out, -1);
     }
 
     private class Worker {
