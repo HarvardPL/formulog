@@ -22,10 +22,9 @@ package edu.harvard.seas.pl.formulog.codegen;
 
 
 import edu.harvard.seas.pl.formulog.ast.BindingType;
+import edu.harvard.seas.pl.formulog.ast.Literal;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.codegen.LiteralCodeGen.CodeShape;
-import edu.harvard.seas.pl.formulog.codegen.LiteralCodeGen.Result;
 import edu.harvard.seas.pl.formulog.codegen.ast.cpp.*;
 import edu.harvard.seas.pl.formulog.functions.*;
 import edu.harvard.seas.pl.formulog.symbols.*;
@@ -58,7 +57,8 @@ public class FuncsHpp extends TemplateSrcFile {
         private final Set<FunctionSymbol> userDefinedFunctions = new HashSet<>();
         private final Set<PredicateFunctionSymbol> predFunctions = new HashSet<>();
         private final TermCodeGen tcg = new TermCodeGen(ctx);
-        private final LiteralCodeGen lcg = new LiteralCodeGen(ctx);
+        private final LiteralCodeGen lcg = new LiteralCodeGen();
+        //private final LiteralCodeGen lcg = new LiteralCodeGen(ctx);
 
         public Worker(PrintWriter out) {
             this.out = out;
@@ -379,6 +379,7 @@ public class FuncsHpp extends TemplateSrcFile {
         }
 
         private void makeDefinitionForPredFunc(PredicateFunctionSymbol funcSym) {
+            /*
             out.println();
             out.print("term_ptr " + ctx.lookupRepr(funcSym) + "(");
             RelationSymbol predSym = funcSym.getPredicateSymbol();
@@ -416,6 +417,8 @@ public class FuncsHpp extends TemplateSrcFile {
                 genLoop(pred, res).println(out, 1);
             }
             out.println("}");
+             */
+            throw new AssertionError("Not supporting predicate functions yet");
         }
 
         private PredicateFunctionDef getDef(PredicateFunctionSymbol sym) {
@@ -425,6 +428,7 @@ public class FuncsHpp extends TemplateSrcFile {
             return def;
         }
 
+        /*
         private CppStmt genLookup(Result res) {
             assert res.getCodeShape() == CodeShape.LOOKUP;
             CppStmt ifTrue = res.getK().apply(CppReturn.mk(CppFuncCall.mk("Term::make<bool>", CppConst.mkTrue())));
@@ -453,6 +457,7 @@ public class FuncsHpp extends TemplateSrcFile {
             return CppSeq.mk(body);
         }
 
+
         private CppExpr genTuple(List<CppExpr> args, List<CppStmt> acc) {
             int n = args.size();
             if (n == 1) {
@@ -465,6 +470,7 @@ public class FuncsHpp extends TemplateSrcFile {
                 return CppVar.mk(id);
             }
         }
+         */
 
         private int nbound(BindingType[] bindings) {
             int n = 0;

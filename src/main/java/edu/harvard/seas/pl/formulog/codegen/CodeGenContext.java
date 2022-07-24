@@ -67,11 +67,13 @@ public class CodeGenContext {
         new Worker().go();
     }
 
+    /*
     public Relation lookupRelation(RelationSymbol sym) {
         Relation rel = rels.get(sym);
         assert rel != null : sym;
         return rel;
     }
+     */
 
     public BasicProgram getProgram() {
         return prog;

@@ -34,12 +34,16 @@ public class RelsHpp extends TemplateSrcFile {
     }
 
     public void gen(BufferedReader br, PrintWriter out) throws IOException {
+        /*
         Worker pr = new Worker(out);
         CodeGenUtil.copyOver(br, out, 0);
         pr.defineRelations();
+
+         */
         CodeGenUtil.copyOver(br, out, -1);
     }
 
+    /*
     private class Worker {
 
         private final PrintWriter out;
@@ -67,5 +71,6 @@ public class RelsHpp extends TemplateSrcFile {
         }
 
     }
+     */
 
 }

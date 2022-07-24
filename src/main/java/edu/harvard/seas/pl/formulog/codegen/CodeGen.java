@@ -50,7 +50,7 @@ public class CodeGen {
         this.outDir = outDir;
     }
 
-    public void go() throws IOException, URISyntaxException {
+    public void go() throws IOException, URISyntaxException, CodeGenException {
         /*
         if (Configuration.minIndex) {
             throw new UnsupportedOperationException(
@@ -74,6 +74,7 @@ public class CodeGen {
         copySrc("parser.hpp");
         new ParserCpp(ctx).gen(outDir);
         //new RulesMk().print(outDir);
+        new SouffleGenerator(ctx).gen(outDir);
     }
 
     private void copy(String name) throws IOException {

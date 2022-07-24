@@ -10,7 +10,9 @@ import edu.harvard.seas.pl.formulog.util.Util;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Path;
 import java.util.List;
 
 public class SouffleGenerator {
@@ -41,23 +43,10 @@ public class SouffleGenerator {
         this.ctx = ctx;
     }
 
-    public void emitCode(File directory) throws CodeGenException {
-        if (!directory.exists()) {
-            boolean ok = directory.mkdirs();
-            if (!ok) {
-                throw new CodeGenException("Unable to create directory " + directory.getName());
-            }
-        }
-        if (!directory.isDirectory()) {
-            throw new CodeGenException(directory.getName() + " is not a directory");
-        }
-        Util.clean(directory, false);
-
+    public void gen(File directory) throws CodeGenException, IOException {
         List<SRule> rules = new RuleTranslator(ctx).translate(ctx.getProgram());
-
-        File dlFile = directory.toPath().resolve("formulog.dl").toFile();
+        File dlFile = directory.toPath().resolve(Path.of("src", "formulog.dl")).toFile();
         emitDlFile(dlFile, ctx, rules);
-
         // new FunctorGenerator(ctx.getProgram(), ctx).emitFunctors(directory);
     }
 
@@ -110,7 +99,7 @@ public class SouffleGenerator {
 
         private void declareRelation(RelationSymbol sym) {
             writer.print(".decl ");
-            writer.print(ctx.lookupRelation(sym));
+            writer.print(ctx.lookupRepr(sym));
             writer.print("(");
             for (int i = 0; i < sym.getArity(); ++i) {
                 writer.print("x");

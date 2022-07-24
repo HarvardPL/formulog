@@ -3,9 +3,13 @@ project(codegen)
 
 set(CMAKE_CXX_STANDARD 17)
 
-set(CMAKE_CXX_FLAGS "-O3 -march=native -Wall -Wno-unused-variable -Wno-unused-but-set-variable -Wno-c++11-narrowing")
+set(CMAKE_CXX_FLAGS "-D__EMBEDDED_SOUFFLE__ -O3 -march=native -Wall -Wno-unused-variable -Wno-unused-but-set-variable -Wno-c++11-narrowing")
 
 add_executable(flg "")
+
+add_custom_command(OUTPUT formulog.cpp
+        COMMAND souffle ${CMAKE_CURRENT_SOURCE_DIR}/src/formulog.dl -w -g formulog.cpp
+        DEPENDS src/formulog.dl)
 
 target_sources(flg PRIVATE
         src/funcs.hpp
@@ -21,6 +25,7 @@ target_sources(flg PRIVATE
         src/Term.hpp
         src/Tuple.hpp
         src/Type.hpp
+        formulog.cpp
         )
 
 find_package(Boost 1.79 REQUIRED COMPONENTS filesystem system program_options)
@@ -36,4 +41,3 @@ endif ()
 if (DEFINED ENV{FLG_DEV})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFLG_DEV")
 endif ()
-
