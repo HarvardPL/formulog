@@ -1,18 +1,16 @@
 package edu.harvard.seas.pl.formulog.souffle;
 
 import edu.harvard.seas.pl.formulog.ast.BasicProgram;
-import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.souffle.ast.SDestructorBody;
-import edu.harvard.seas.pl.formulog.souffle.ast.SExprBody;
-import edu.harvard.seas.pl.formulog.souffle.ast.SFunctorBody;
-import edu.harvard.seas.pl.formulog.souffle.ast.SRule;
+import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SDestructorBody;
+import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SExprBody;
+import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SFunctorBody;
+import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SRule;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 

@@ -1,13 +1,10 @@
 package edu.harvard.seas.pl.formulog.souffle;
 
 import edu.harvard.seas.pl.formulog.ast.BasicProgram;
-import edu.harvard.seas.pl.formulog.ast.Term;
-import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.souffle.ast.*;
+import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SFunctorBody;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
 import java.io.*;
-import java.util.*;
 
 public class FunctorGenerator {
 
@@ -37,7 +34,8 @@ public class FunctorGenerator {
                  PrintWriter out = new PrintWriter(outHeader)) {
                 SouffleGenUtil.copyOverUntilInsertPoint(br, out);
                 for (Pair<String, SFunctorBody> p : ctx.getFunctors()) {
-                    emitSignature(p.fst(), p.snd(), out);
+                    // FIXME
+                    // emitSignature(p.fst(), p.snd(), out);
                     out.println(";");
                 }
                 SouffleGenUtil.copyOverUntilInsertPoint(br, out);
@@ -47,6 +45,7 @@ public class FunctorGenerator {
         }
     }
 
+    /*
     private Map<Var, CVar> emitSignature(String functor, SFunctorBody body, PrintWriter out) {
         out.print("souffle::RamDomain ");
         out.print(functor);
@@ -71,6 +70,7 @@ public class FunctorGenerator {
         out.print(")");
         return m;
     }
+     */
 
     private void emitSource(File directory) throws SouffleGenException {
         File inSource = new File("souffle").toPath().resolve("src").resolve(sourceName).toFile();
@@ -97,12 +97,15 @@ public class FunctorGenerator {
         }
 
         public void emitFunctors() {
+            /*
             for (Pair<String, SFunctorBody> p : ctx.getFunctors()) {
                 emitFunctor(p.fst(), p.snd());
                 out.println();
             }
+             */
         }
 
+        /*
         private void emitFunctor(String functor, SFunctorBody body) {
             Map<Var, CVar> params = emitSignature(functor, body, out);
             out.print(" ");
@@ -138,6 +141,7 @@ public class FunctorGenerator {
             return new Pair<>(p.fst(), pack);
         }
 
+         */
     }
 
 }

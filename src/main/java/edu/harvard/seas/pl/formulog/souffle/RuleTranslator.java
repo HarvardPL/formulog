@@ -1,7 +1,7 @@
 package edu.harvard.seas.pl.formulog.souffle;
 
 import edu.harvard.seas.pl.formulog.ast.*;
-import edu.harvard.seas.pl.formulog.souffle.ast.*;
+import edu.harvard.seas.pl.formulog.codegen.ast.souffle.*;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 import edu.harvard.seas.pl.formulog.validating.Stratifier;

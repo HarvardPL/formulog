@@ -2,14 +2,10 @@ package edu.harvard.seas.pl.formulog.souffle;
 
 import edu.harvard.seas.pl.formulog.ast.BoolTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
-import edu.harvard.seas.pl.formulog.ast.Var;
-import edu.harvard.seas.pl.formulog.souffle.ast.SFunctorBody;
-import edu.harvard.seas.pl.formulog.souffle.ast.SRule;
-import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
+import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SFunctorBody;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
-import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
 

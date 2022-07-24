@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.souffle.ast;
+package edu.harvard.seas.pl.formulog.codegen.ast.souffle;
 
 public class SInt implements STerm {
 

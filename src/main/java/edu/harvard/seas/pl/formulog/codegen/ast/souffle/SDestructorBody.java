@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.souffle.ast;
+package edu.harvard.seas.pl.formulog.codegen.ast.souffle;
 
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Var;

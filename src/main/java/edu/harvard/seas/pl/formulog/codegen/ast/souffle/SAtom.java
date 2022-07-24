@@ -1,22 +1,26 @@
-package edu.harvard.seas.pl.formulog.souffle.ast;
+package edu.harvard.seas.pl.formulog.codegen.ast.souffle;
 
 import java.util.List;
 
-public class SFunctorCall implements STerm {
+public class SAtom implements SLit {
 
-    private final String func;
+    private final String pred;
     private final List<STerm> args;
+    private final boolean isNegated;
 
-    public SFunctorCall(String func_, List<STerm> args_) {
-        func = func_;
+    public SAtom(String symbol_, List<STerm> args_, boolean isNegated_) {
+        pred = symbol_;
         args = args_;
+        isNegated = isNegated_;
     }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("@");
-        sb.append(func);
+        if (isNegated) {
+            sb.append("!");
+        }
+        sb.append(pred);
         sb.append("(");
         for (int i = 0; i < args.size(); ++i) {
             sb.append(args.get(i));

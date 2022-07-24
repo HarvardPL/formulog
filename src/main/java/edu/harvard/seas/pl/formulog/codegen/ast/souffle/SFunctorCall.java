@@ -1,26 +1,21 @@
-package edu.harvard.seas.pl.formulog.souffle.ast;
+package edu.harvard.seas.pl.formulog.codegen.ast.souffle;
 
-import java.util.Arrays;
 import java.util.List;
 
-public class CFuncCall implements CExpr {
+public class SFunctorCall implements STerm {
 
     private final String func;
-    private final List<CExpr> args;
+    private final List<STerm> args;
 
-    public CFuncCall(String func_, List<CExpr> args_) {
+    public SFunctorCall(String func_, List<STerm> args_) {
         func = func_;
         args = args_;
-    }
-
-    public CFuncCall(String func_, CExpr... args_) {
-        func = func_;
-        args = Arrays.asList(args_);
     }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
+        sb.append("@");
         sb.append(func);
         sb.append("(");
         for (int i = 0; i < args.size(); ++i) {
