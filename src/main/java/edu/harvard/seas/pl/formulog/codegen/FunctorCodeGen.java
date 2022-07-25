@@ -124,7 +124,7 @@ public class FunctorCodeGen {
             int i = 0;
             for (Map.Entry<Var, CppVar> e : params.entrySet()) {
                 String x = "x" + i;
-                CppExpr call = TermCodeGen.genIntizeTerm(e.getValue());
+                CppExpr call = TermCodeGen.genUnintizeTerm(e.getValue());
                 CppStmt stmt = CppDecl.mkRef(x, call);
                 stmts.add(stmt);
                 env.put(e.getKey(), CppVar.mk(x));

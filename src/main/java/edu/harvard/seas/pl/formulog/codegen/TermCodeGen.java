@@ -272,7 +272,7 @@ public class TermCodeGen {
     }
 
     public static CppExpr genIntizeTerm(CppExpr term) {
-        return CppMethodCall.mk(CppUnop.mkDeref(term), "intize");
+        return CppMethodCall.mkThruPtr(term, "intize");
     }
 
     public static CppExpr genUnintizeTerm(CppExpr id) {

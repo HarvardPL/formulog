@@ -45,8 +45,8 @@ public class MainCpp extends TemplateSrcFile {
     }
 
     public void gen(BufferedReader br, PrintWriter out) throws IOException {
-        /*
         Worker pr = new Worker(out);
+        /*
         CodeGenUtil.copyOver(br, out, 0);
         pr.loadExternalEdbs();
         CodeGenUtil.copyOver(br, out, 1);
@@ -57,20 +57,20 @@ public class MainCpp extends TemplateSrcFile {
         pr.evaluate();
         CodeGenUtil.copyOver(br, out, 4);
         pr.printResults();
-         */
+        */
         CodeGenUtil.copyOver(br, out, -1);
     }
 
-    /*
     private class Worker {
 
-        private final SortedIndexedFactDb db = ctx.getEval().getDb();
+        //    private final SortedIndexedFactDb db = ctx.getEval().getDb();
         private final PrintWriter out;
 
         public Worker(PrintWriter out) {
             this.out = out;
         }
 
+    /*
         public void loadExternalEdbs() {
             for (RelationSymbol sym : db.getSymbols()) {
                 if (sym.isExternal()) {
@@ -131,18 +131,25 @@ public class MainCpp extends TemplateSrcFile {
             }
         }
 
+     */
+
         public void printResults() {
-            for (RelationSymbol sym : db.getSymbols()) {
+            for (RelationSymbol sym : ctx.getProgram().getRuleSymbols()) {
                 out.print("  cout << \"");
                 out.print(sym);
                 out.print(": \" << ");
-                ctx.lookupRelation(sym).mkSize().print(out);
+                genRelationSize(sym).print(out);
                 out.println(" << endl;");
-                CppIf.mk(CppVar.mk("dump"), ctx.lookupRelation(sym).mkPrint()).println(out, 1);
+                //CppIf.mk(CppVar.mk("dump"), ctx.lookupRelation(sym).mkPrint()).println(out, 1);
             }
         }
 
+        private CppExpr genRelationSize(RelationSymbol sym) {
+            String repr = ctx.lookupRepr(sym);
+            CppExpr rel = CppMethodCall.mk(CppVar.mk("prog"), "getRelation", CppString.mk(repr));
+            return CppMethodCall.mkThruPtr(rel, "size");
+        }
+
     }
-     */
 
 }

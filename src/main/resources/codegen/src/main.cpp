@@ -61,10 +61,25 @@ void evaluate() {
 /* INSERT 3 */
 }
 
-void printResults(bool dump) {
-/* INSERT 4 */
+void printResults(const souffle::SouffleProgram &prog, bool dump) {
+    for (auto rel: prog.getOutputRelations()) {
+        std::string name = rel->getName();
+        name = name.substr(0, name.size() - 1);
+        std::cout << name << ": " << rel->size() << std::endl;
+        if (dump) {
+            for (auto &tup: *rel) {
+                std::cout << name << "(";
+                for (size_t i = 0; i < rel->getPrimaryArity(); ++i) {
+                    std::cout << Term::unintize(tup[i]);
+                    if (i < rel->getPrimaryArity() - 1) {
+                        std::cout << ", ";
+                    }
+                }
+                std::cout << ")" << std::endl;
+            }
+        }
+    }
 }
-
 
 namespace std {
 std::ostream &operator<<(std::ostream &os, const std::vector<std::string> &vec) {
@@ -103,9 +118,18 @@ int main(int argc, char **argv) {
     }
 
     initialize_symbols();
-    omp_set_num_threads(parallelism);
+    //omp_set_num_threads(parallelism);
     loadEdbs(vm["fact-dir"].as<vector<string>>(), parallelism);
-    evaluate();
-    printResults(!vm.count("no-dump"));
+    //evaluate();
+    auto prog = souffle::ProgramFactory::newInstance("formulog");
+    if (!prog) {
+        cout << "Unable to load Souffle program" << endl;
+        exit(1);
+    }
+    prog->setNumThreads(parallelism);
+    prog->run();
+    // TODO create directory first
+    // prog->printAll("souffle_out");
+    printResults(*prog, !vm.count("no-dump"));
     return 0;
 }
