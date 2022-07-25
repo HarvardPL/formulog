@@ -1,3 +1,4 @@
+#include <fstream>
 #include <iostream>
 #include <vector>
 #include <string>
@@ -8,7 +9,7 @@
 #include <omp.h>
 
 #include "parser.hpp"
-#include "funcs.hpp"
+#include "functors.h"
 
 using namespace flg;
 using namespace std;

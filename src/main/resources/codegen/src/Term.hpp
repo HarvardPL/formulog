@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <vector>
 
+#include <souffle/SouffleInterface.h>
 #include <tbb/concurrent_unordered_map.h>
 
 #include "Symbol.hpp"
@@ -22,6 +23,7 @@ using tbb::concurrent_unordered_map;
 struct Term;
 
 typedef Term *term_ptr;
+typedef const Term *const_term_ptr;
 
 template<typename T>
 struct BaseTerm;
@@ -63,8 +65,34 @@ struct Term {
     // Convert a Lisp-style list term into a vector
     inline static vector<term_ptr> vectorize_list_term(Term *t);
 
+    souffle::RamDomain intize() {
+        auto it = term_int_map.find(this);
+        if (it != term_int_map.end()) {
+            return it->second;
+        }
+        auto id = int_cnt++;
+        auto result = term_int_map.emplace(this, id);
+        if (!result.second) {
+            return result.first->second;
+        }
+        auto result2 = int_term_map.emplace(id, this);
+        assert(result2.second);
+        return id;
+    }
+
+    static term_ptr unintize(souffle::RamDomain id) {
+        auto it = int_term_map.find(id);
+        assert(it != int_term_map.end());
+        return it->second;
+    }
+
 protected:
     Term(Symbol sym_) : sym{sym_} {}
+
+private:
+    inline static concurrent_unordered_map<souffle::RamDomain, term_ptr> int_term_map;
+    inline static concurrent_unordered_map<term_ptr, souffle::RamDomain> term_int_map;
+    inline static std::atomic<souffle::RamDomain> int_cnt{0};
 };
 
 struct ComplexTerm : public Term {

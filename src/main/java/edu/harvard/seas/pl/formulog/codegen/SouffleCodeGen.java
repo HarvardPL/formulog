@@ -6,7 +6,6 @@ import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SFunctorBody;
 import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SRule;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
-import edu.harvard.seas.pl.formulog.util.Util;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -15,7 +14,7 @@ import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.util.List;
 
-public class SouffleGenerator {
+public class SouffleCodeGen {
     /*
     TODO:
     - [X] Define AST for terms
@@ -39,7 +38,7 @@ public class SouffleGenerator {
 
     private final CodeGenContext ctx;
 
-    public SouffleGenerator(CodeGenContext ctx) {
+    public SouffleCodeGen(CodeGenContext ctx) {
         this.ctx = ctx;
     }
 
@@ -47,7 +46,7 @@ public class SouffleGenerator {
         List<SRule> rules = new RuleTranslator(ctx).translate(ctx.getProgram());
         File dlFile = directory.toPath().resolve(Path.of("src", "formulog.dl")).toFile();
         emitDlFile(dlFile, ctx, rules);
-        // new FunctorGenerator(ctx.getProgram(), ctx).emitFunctors(directory);
+        new FunctorCodeGen(ctx).emitFunctors(directory);
     }
 
     private void emitDlFile(File dlFile, CodeGenContext ctx, List<SRule> rules) throws CodeGenException {
@@ -57,7 +56,7 @@ public class SouffleGenerator {
         } catch (FileNotFoundException e) {
             throw new CodeGenException(e);
         }
-        Worker worker = new Worker(writer, ctx);
+        Worker worker = new Worker(writer);
         worker.declareTypes();
         writer.println();
         worker.declareRelations();
@@ -73,11 +72,9 @@ public class SouffleGenerator {
     private class Worker {
 
         private final PrintWriter writer;
-        private final CodeGenContext ctx;
 
-        public Worker(PrintWriter writer, CodeGenContext ctx) {
+        public Worker(PrintWriter writer) {
             this.writer = writer;
-            this.ctx = ctx;
         }
 
         public void declareTypes() {

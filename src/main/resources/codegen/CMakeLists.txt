@@ -13,6 +13,8 @@ add_custom_command(OUTPUT formulog.cpp
 
 target_sources(flg PRIVATE
         src/funcs.hpp
+        src/functors.cpp
+        src/functors.h
         src/main.cpp
         src/parser.cpp
         src/parser.hpp

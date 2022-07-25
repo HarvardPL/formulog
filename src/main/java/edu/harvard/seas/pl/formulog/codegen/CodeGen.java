@@ -74,7 +74,7 @@ public class CodeGen {
         copySrc("parser.hpp");
         new ParserCpp(ctx).gen(outDir);
         //new RulesMk().print(outDir);
-        new SouffleGenerator(ctx).gen(outDir);
+        new SouffleCodeGen(ctx).gen(outDir);
     }
 
     private void copy(String name) throws IOException {

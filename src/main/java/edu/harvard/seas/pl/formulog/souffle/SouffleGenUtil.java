@@ -10,11 +10,11 @@ public class SouffleGenUtil {
         throw new AssertionError("impossible");
     }
 
-    public static void copyOverUntilInsertPoint(BufferedReader in, PrintWriter out) throws IOException {
-        String line;
-        while ((line = in.readLine()) != null && !line.matches("[ \t]*/\\* INSERT HERE \\*/")) {
-            out.println(line);
-        }
-    }
+//    public static void copyOverUntilInsertPoint(BufferedReader in, PrintWriter out) throws IOException {
+//        String line;
+//        while ((line = in.readLine()) != null && !line.matches("[ \t]*/\\* INSERT HERE \\*/")) {
+//            out.println(line);
+//        }
+//    }
 
 }
