@@ -285,9 +285,6 @@ public class FuncsHpp extends TemplateSrcFile {
                 case PRINT:
                     ctx.register(sym, "print");
                     break;
-                case QUERY_MODEL:
-                    // XXX
-                    break;
                 case STRING_CONCAT:
                     ctx.register(sym, "string_concat");
                     break;
@@ -302,9 +299,6 @@ public class FuncsHpp extends TemplateSrcFile {
                     break;
                 case TO_STRING:
                     ctx.register(sym, "to_string");
-                    break;
-                case SUBSTITUTE:
-                    // XXX
                     break;
                 case fp32ToFp64:
                     ctx.register(sym, "__conv<float, double>");
@@ -342,6 +336,11 @@ public class FuncsHpp extends TemplateSrcFile {
                 case i64ToI32:
                     ctx.register(sym, "__conv<int64_t, int32_t>");
                     break;
+                case toFormulaNormalForm:
+                    ctx.register(sym, "to_formula_normal_form");
+                    break;
+                default:
+                    System.err.println("unhandled built-in function symbol: " + sym);
             }
         }
 

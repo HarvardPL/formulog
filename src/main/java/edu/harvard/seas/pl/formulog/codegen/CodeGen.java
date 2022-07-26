@@ -63,18 +63,18 @@ public class CodeGen {
         new RelsHpp(ctx).gen(outDir);
         new FuncsHpp(ctx).gen(outDir);
         new MainCpp(ctx).gen(outDir);
+        new SouffleCodeGen(ctx).gen(outDir);
         copySrc("smt.hpp");
         new SmtCpp(ctx).gen(outDir);
         new TypeHpp(ctx).gen(outDir);
-        new SymbolHpp(ctx).gen(outDir);
-        new SymbolCpp(ctx).gen(outDir);
         copySrc("Term.hpp");
         new TermCpp(ctx).gen(outDir);
         copySrc("Tuple.hpp");
         copySrc("parser.hpp");
         new ParserCpp(ctx).gen(outDir);
         //new RulesMk().print(outDir);
-        new SouffleCodeGen(ctx).gen(outDir);
+        new SymbolHpp(ctx).gen(outDir);
+        new SymbolCpp(ctx).gen(outDir);
     }
 
     private void copy(String name) throws IOException {

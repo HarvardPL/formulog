@@ -230,6 +230,13 @@ term_ptr is_sat_opt(term_ptr t1, term_ptr t2) {
     }
     __builtin_unreachable();
 }
+
+term_ptr to_formula_normal_form(term_ptr t) {
+    if (t->sym == Symbol::enter_formula || t->sym == Symbol::exit_formula) {
+        return to_formula_normal_form(t->as_complex().val[0]);
+    }
+    return t;
+}
 /* INSERT 0 */
 
 } // namespace funcs

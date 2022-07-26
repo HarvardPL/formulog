@@ -16,6 +16,10 @@ enum class Symbol {
     boxed_fp32,
     boxed_fp64,
     boxed_string,
+#ifdef FLG_DEV
+    enter_formula,
+    exit_formula,
+#endif
 /* INSERT 0 */
 };
 
