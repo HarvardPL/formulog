@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_CXX_FLAGS "-D__EMBEDDED_SOUFFLE__ -O3 -march=native -Wall -Wno-unused-variable -Wno-unused-but-set-variable -Wno-c++11-narrowing")
 
-add_executable(flg "")
+add_executable(flg "" src/globals.h src/globals.cpp)
 
 add_custom_command(OUTPUT formulog.cpp
         COMMAND souffle ${CMAKE_CURRENT_SOURCE_DIR}/src/formulog.dl -w -g formulog.cpp

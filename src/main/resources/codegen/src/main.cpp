@@ -10,6 +10,7 @@
 
 #include "parser.hpp"
 #include "functors.h"
+#include "globals.h"
 
 using namespace flg;
 using namespace std;
@@ -24,8 +25,7 @@ private:
 
     void loadEdbs(const string &dir);
 
-    template<typename T>
-    void loadEdbs(const string &dir, const string &file, T &rel);
+    void loadEdbs(const string &dir, const string &file, souffle::Relation &rel);
 };
 
 void ExternalEdbLoader::go(const vector<string> &dirs) {
@@ -39,8 +39,7 @@ void ExternalEdbLoader::loadEdbs(const string &dir) {
 /* INSERT 0 */
 }
 
-template<typename T>
-void ExternalEdbLoader::loadEdbs(const string &dir, const string &file, T &rel) {
+void ExternalEdbLoader::loadEdbs(const string &dir, const string &file, souffle::Relation &rel) {
     boost::filesystem::path path{dir};
     path /= file;
     string pathstr = path.string();
@@ -61,8 +60,8 @@ void evaluate() {
 /* INSERT 3 */
 }
 
-void printResults(const souffle::SouffleProgram &prog, bool dump) {
-    for (auto rel: prog.getOutputRelations()) {
+void printResults(bool dump) {
+    for (auto rel: globals::program->getOutputRelations()) {
         std::string name = rel->getName();
         name = name.substr(0, name.size() - 1);
         std::cout << name << ": " << rel->size() << std::endl;
@@ -118,18 +117,16 @@ int main(int argc, char **argv) {
     }
 
     initialize_symbols();
-    //omp_set_num_threads(parallelism);
-    loadEdbs(vm["fact-dir"].as<vector<string>>(), parallelism);
-    //evaluate();
-    auto prog = souffle::ProgramFactory::newInstance("formulog");
-    if (!prog) {
+    globals::program = souffle::ProgramFactory::newInstance("formulog");
+    if (!globals::program) {
         cout << "Unable to load Souffle program" << endl;
         exit(1);
     }
-    prog->setNumThreads(parallelism);
-    prog->run();
+    loadEdbs(vm["fact-dir"].as<vector<string>>(), parallelism);
+    globals::program->setNumThreads(parallelism);
+    globals::program->run();
     // TODO create directory first
     // prog->printAll("souffle_out");
-    printResults(*prog, !vm.count("no-dump"));
+    printResults(!vm.count("no-dump"));
     return 0;
 }

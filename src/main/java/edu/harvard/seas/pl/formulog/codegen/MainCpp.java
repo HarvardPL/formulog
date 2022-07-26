@@ -46,9 +46,9 @@ public class MainCpp extends TemplateSrcFile {
 
     public void gen(BufferedReader br, PrintWriter out) throws IOException {
         Worker pr = new Worker(out);
-        /*
         CodeGenUtil.copyOver(br, out, 0);
         pr.loadExternalEdbs();
+        /*
         CodeGenUtil.copyOver(br, out, 1);
         pr.loadEdbs();
         CodeGenUtil.copyOver(br, out, 2);
@@ -70,9 +70,8 @@ public class MainCpp extends TemplateSrcFile {
             this.out = out;
         }
 
-    /*
         public void loadExternalEdbs() {
-            for (RelationSymbol sym : db.getSymbols()) {
+            for (RelationSymbol sym : ctx.getProgram().getFactSymbols()) {
                 if (sym.isExternal()) {
                     loadExternalEdbs(sym);
                 }
@@ -80,13 +79,15 @@ public class MainCpp extends TemplateSrcFile {
         }
 
         public void loadExternalEdbs(RelationSymbol sym) {
-            Relation rel = ctx.lookupRelation(sym);
-            String func = "loadEdbs<" + rel.getStruct().getName() + ">";
-            CppExpr file = CppConst.mkString(sym + ".csv");
+            String func = "loadEdbs";
+            CppExpr file = CppConst.mkString(sym + ".tsv");
+            CppExpr repr = CppConst.mkString(ctx.lookupRepr(sym));
+            CppExpr rel = CppMethodCall.mkThruPtr(CppVar.mk("globals::program"), "getRelation", repr);
             CppExpr call = CppFuncCall.mk(func, CppVar.mk("dir"), file, CppUnop.mkDeref(rel));
             call.toStmt().println(out, 1);
         }
 
+        /*
         public void loadEdbs() {
             for (RelationSymbol sym : db.getSymbols()) {
                 if (sym.isEdbSymbol()) {
@@ -146,7 +147,7 @@ public class MainCpp extends TemplateSrcFile {
 
         private CppExpr genRelationSize(RelationSymbol sym) {
             String repr = ctx.lookupRepr(sym);
-            CppExpr rel = CppMethodCall.mk(CppVar.mk("prog"), "getRelation", CppString.mk(repr));
+            CppExpr rel = CppMethodCall.mk(CppVar.mk("prog"), "getRelation", CppConst.mkString(repr));
             return CppMethodCall.mkThruPtr(rel, "size");
         }
 

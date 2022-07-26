@@ -16,32 +16,33 @@ using namespace std;
 
 // Exception class thrown when parsing facts
 class parsing_error : public logic_error {
-  using logic_error::logic_error;
+    using logic_error::logic_error;
 };
 
-term_ptr parse_term(const string& term);
+term_ptr parse_term(const string &term);
 
-template <typename T>
-inline void parse_facts(istream& in, T& rel) {
-  // Parse each fact of the stream on a new line
-  string line;
-  while (getline(in, line)) {
-    istringstream ss(line);
-    Tuple<T::arity> value;
-    // Tab-separated term format
-    string term;
-    size_t count = 0;
-    while (getline(ss, term, '\t')) {
-      if (count >= T::arity) {
-        throw parsing_error("Too many terms in tab-separated line");
-      }
-      value[count++] = parse_term(term);
+inline void parse_facts(istream &in, souffle::Relation &rel) {
+    // Parse each fact of the stream on a new line
+    size_t arity = rel.getPrimaryArity();
+    string line;
+    while (getline(in, line)) {
+        istringstream ss(line);
+        souffle::tuple tup(&rel);
+        // Tab-separated term format
+        string term;
+        size_t count = 0;
+        while (getline(ss, term, '\t')) {
+            if (count >= arity) {
+                throw parsing_error("Too many terms in tab-separated line");
+            }
+            tup << parse_term(term)->intize();
+            count++;
+        }
+        if (count != arity) {
+            throw parsing_error("Too few terms in tab-separated line");
+        }
+        rel.insert(tup);
     }
-    if (count != T::arity) {
-      throw parsing_error("Too few terms in tab-separated line");
-    }
-    rel.insert(value);
-  }
 }
 
 } // namespace parser
