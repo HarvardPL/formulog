@@ -2,7 +2,9 @@ package edu.harvard.seas.pl.formulog.codegen;
 
 import edu.harvard.seas.pl.formulog.ast.*;
 import edu.harvard.seas.pl.formulog.codegen.ast.souffle.*;
+import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
+import edu.harvard.seas.pl.formulog.unification.EmptySubstitution;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 import edu.harvard.seas.pl.formulog.validating.Stratifier;
 import edu.harvard.seas.pl.formulog.validating.Stratum;
@@ -39,8 +41,16 @@ public class RuleTranslator {
         return l;
     }
 
-    private SRule translateFact(RelationSymbol sym, Term[] tup) {
-        var pred = SimplePredicate.make(sym, tup, null, false);
+    private SRule translateFact(RelationSymbol sym, Term[] tup) throws CodeGenException {
+        FormulaRewriter fr = new FormulaRewriter(ctx.getProgram().getFunctionCallFactory());
+        Term[] mapped;
+        try {
+            mapped = Terms.mapExn(tup, t -> fr.rewrite(t, false).normalize(EmptySubstitution.INSTANCE));
+        } catch (EvaluationException e) {
+            var atom = UserPredicate.make(sym, tup, false);
+            throw new CodeGenException("Could not normalize fact: " + atom + "\n" + e.getMessage());
+        }
+        var pred = SimplePredicate.make(sym, mapped, null, false);
         var l = translate(pred);
         assert l.size() == 1;
         return new SRule(l.get(0));
