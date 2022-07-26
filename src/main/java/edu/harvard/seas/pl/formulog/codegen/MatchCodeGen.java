@@ -52,6 +52,8 @@ import edu.harvard.seas.pl.formulog.codegen.ast.cpp.*;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.Pair;
+import org.pcollections.HashPMap;
+import org.pcollections.HashTreePMap;
 
 /**
  * This class is used to generate C++ code corresponding to a ML-style match
@@ -238,7 +240,6 @@ public class MatchCodeGen {
          */
         private class TreeProcessor {
 
-            private final Map<SymbolicTerm, CppExpr> symMap = new HashMap<>();
             private final CppExpr scrutinee;
             private final PatternMatchTree tree;
 
@@ -254,7 +255,7 @@ public class MatchCodeGen {
              * @return The generated C++ code
              */
             public CppStmt go() {
-                return go(tree.getRoot());
+                return go(tree.getRoot(), HashTreePMap.empty());
             }
 
             /**
@@ -263,7 +264,7 @@ public class MatchCodeGen {
              * @param node The node
              * @return
              */
-            private CppStmt go(Node node) {
+            private CppStmt go(Node node, HashPMap<SymbolicTerm, CppExpr> symMap) {
                 return node.accept(new NodeVisitor<Void, CppStmt>() {
 
                     @Override
@@ -289,10 +290,10 @@ public class MatchCodeGen {
                             expr = CppVar.mk(id);
                         }
                         assert !(symMap.containsKey(symTerm));
-                        symMap.put(symTerm, expr);
+                        var newMap = symMap.plus(symTerm, expr);
                         /* Handle the outgoing edges. */
                         for (Pair<Edge<?>, Node> p : tree.getOutgoingEdges(node)) {
-                            stmts.add(go(expr, p.fst(), p.snd()));
+                            stmts.add(go(expr, p.fst(), p.snd(), newMap));
                         }
                         return CppSeq.mk(stmts);
                     }
@@ -324,7 +325,7 @@ public class MatchCodeGen {
              *             pattern-matching logic
              * @return The generated C++ code
              */
-            private CppStmt go(CppExpr expr, Edge<?> edge, Node dest) {
+            private CppStmt go(CppExpr expr, Edge<?> edge, Node dest, HashPMap<SymbolicTerm, CppExpr> symMap) {
                 return edge.accept(new EdgeVisitor<Void, CppStmt>() {
 
                     @Override
@@ -333,7 +334,7 @@ public class MatchCodeGen {
                         assert x instanceof CppVar;
                         // Here, the enclosing `CppBlock` is necessary so that possible variable
                         // initializations aren't in the outside scope, due to limitations of `goto`
-                        return CppBlock.mk(CppSeq.mk(CppBinop.mkAssign(x, expr).toStmt(), go(dest)));
+                        return CppBlock.mk(CppSeq.mk(CppBinop.mkAssign(x, expr).toStmt(), go(dest, symMap)));
                     }
 
                     @Override
@@ -343,10 +344,9 @@ public class MatchCodeGen {
                         // enclosing scope and cause a compilation error, since `goto` can't jump over
                         // variable initializations in C++
                         assert CodeGenUtil.toString(p.fst(), 0).isEmpty();
-                        CppExpr lhs = expr;
                         CppExpr rhs = p.snd();
-                        CppExpr guard = CppUnop.mkNot(CppFuncCall.mk("Term::compare", lhs, rhs));
-                        CppStmt body = go(dest);
+                        CppExpr guard = CppUnop.mkNot(CppFuncCall.mk("Term::compare", expr, rhs));
+                        CppStmt body = go(dest, symMap);
                         return CppIf.mk(guard, body);
                     }
 
@@ -354,7 +354,7 @@ public class MatchCodeGen {
                     public CppStmt visit(CtorEdge e, Void in) {
                         CppExpr symbol = CppVar.mk(ctx.lookupRepr(e.getLabel()));
                         CppExpr guard = CppBinop.mkEq(CppAccess.mkThruPtr(expr, "sym"), symbol);
-                        CppStmt body = go(dest);
+                        CppStmt body = go(dest, symMap);
                         return CppIf.mk(guard, body);
                     }
 
