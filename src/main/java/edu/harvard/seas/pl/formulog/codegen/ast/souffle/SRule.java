@@ -1,5 +1,6 @@
 package edu.harvard.seas.pl.formulog.codegen.ast.souffle;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class SRule {
@@ -7,9 +8,13 @@ public class SRule {
     private final SLit head;
     private final List<SLit> body;
 
-    public SRule(SLit head_, List<SLit> body_) {
-        head = head_;
-        body = body_;
+    public SRule(SLit head, List<SLit> body) {
+        this.head = head;
+        this.body = body;
+    }
+
+    public SRule(SLit head, SLit... body) {
+        this(head, Arrays.asList(body));
     }
 
     @Override

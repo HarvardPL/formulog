@@ -26,12 +26,24 @@ public class RuleTranslator {
     public List<SRule> translate(BasicProgram prog) throws CodeGenException {
         checkStratification(prog);
         List<SRule> l = new ArrayList<>();
+        for (RelationSymbol sym : prog.getFactSymbols()) {
+            for (Term[] tup : prog.getFacts(sym)) {
+                l.add(translateFact(sym, tup));
+            }
+        }
         for (RelationSymbol sym : prog.getRuleSymbols()) {
             for (BasicRule r : prog.getRules(sym)) {
                 l.add(translate(r, prog));
             }
         }
         return l;
+    }
+
+    private SRule translateFact(RelationSymbol sym, Term[] tup) {
+        var pred = SimplePredicate.make(sym, tup, null, false);
+        var l = translate(pred);
+        assert l.size() == 1;
+        return new SRule(l.get(0));
     }
 
     private void checkStratification(BasicProgram prog) throws CodeGenException {

@@ -70,7 +70,7 @@ void printResults(const souffle::SouffleProgram &prog, bool dump) {
             for (auto &tup: *rel) {
                 std::cout << name << "(";
                 for (size_t i = 0; i < rel->getPrimaryArity(); ++i) {
-                    std::cout << Term::unintize(tup[i]);
+                    std::cout << *Term::unintize(tup[i]);
                     if (i < rel->getPrimaryArity() - 1) {
                         std::cout << ", ";
                     }
