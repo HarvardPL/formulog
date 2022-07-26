@@ -12,4 +12,8 @@ public interface SFunctorBody {
 
     List<Var> getArgs();
 
+    SType getRetType();
+
+    boolean isStateful();
+
 }

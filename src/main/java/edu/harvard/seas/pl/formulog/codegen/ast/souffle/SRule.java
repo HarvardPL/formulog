@@ -18,7 +18,12 @@ public class SRule {
         sb.append(head);
         if (!body.isEmpty()) {
             sb.append(" :- ");
+            String sep = "";
+            if (body.size() > 1) {
+                sep = "\n\t";
+            }
             for (int i = 0; i < body.size(); ++i) {
+                sb.append(sep);
                 sb.append(body.get(i));
                 if (i < body.size() - 1) {
                     sb.append(", ");

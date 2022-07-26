@@ -23,6 +23,16 @@ public class SDestructorBody implements SFunctorBody {
         return args;
     }
 
+    @Override
+    public SType getRetType() {
+        return SIntType.INSTANCE;
+    }
+
+    @Override
+    public boolean isStateful() {
+        return true;
+    }
+
     public Term getScrutinee() {
         return scrutinee;
     }

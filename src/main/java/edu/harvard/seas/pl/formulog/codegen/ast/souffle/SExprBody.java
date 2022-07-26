@@ -24,4 +24,14 @@ public class SExprBody implements SFunctorBody {
         return args;
     }
 
+    @Override
+    public SType getRetType() {
+        return SIntType.INSTANCE;
+    }
+
+    @Override
+    public boolean isStateful() {
+        return false;
+    }
+
 }

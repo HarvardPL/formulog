@@ -50,7 +50,7 @@ public class FunctorCodeGen {
         out.print("souffle::RamDomain ");
         out.print(functor);
         out.print("(");
-        if (body instanceof SDestructorBody) {
+        if (body.isStateful()) {
             out.print("souffle::SymbolTable *st, souffle::RecordTable *rt");
             if (body.getArity() > 0) {
                 out.print(", ");
@@ -111,7 +111,7 @@ public class FunctorCodeGen {
                 p2 = genTermBody(((SExprBody) body).getBody(), p1.snd());
             } else {
                 assert body instanceof SDestructorBody;
-                p2 = new Pair<>(CppSeq.skip(), CppConst.mkInt(42));
+                p2 = genDtorBody((SDestructorBody) body, p1.snd());
             }
             CppStmt ret = CppReturn.mk(p2.snd());
             CppStmt block = CppBlock.mk(CppSeq.mk(p1.fst(), p2.fst(), ret));
@@ -125,7 +125,7 @@ public class FunctorCodeGen {
             for (Map.Entry<Var, CppVar> e : params.entrySet()) {
                 String x = "x" + i;
                 CppExpr call = TermCodeGen.genUnintizeTerm(e.getValue());
-                CppStmt stmt = CppDecl.mkRef(x, call);
+                CppStmt stmt = CppDecl.mk(x, call);
                 stmts.add(stmt);
                 env.put(e.getKey(), CppVar.mk(x));
             }
@@ -137,6 +137,13 @@ public class FunctorCodeGen {
             Pair<CppStmt, CppExpr> p = tcg.gen(t, env);
             CppExpr pack = TermCodeGen.genIntizeTerm(p.snd());
             return new Pair<>(p.fst(), pack);
+        }
+
+        private Pair<CppStmt, CppExpr> genDtorBody(SDestructorBody body, Map<Var, CppExpr> env) {
+            Pair<CppStmt, CppExpr> p = new TermCodeGen(ctx).gen(body.getScrutinee(), env);
+            String func = "dtor<" + ctx.lookupRepr(body.getSymbol()) + ">";
+            CppExpr call = CppFuncCall.mk(func, CppVar.mk("rt"), p.snd());
+            return new Pair<>(p.fst(), call);
         }
 
     }

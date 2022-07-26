@@ -1,9 +1,6 @@
 package edu.harvard.seas.pl.formulog.codegen;
 
-import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SDestructorBody;
-import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SExprBody;
-import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SFunctorBody;
-import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SRule;
+import edu.harvard.seas.pl.formulog.codegen.ast.souffle.*;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
@@ -45,11 +42,11 @@ public class SouffleCodeGen {
     public void gen(File directory) throws CodeGenException, IOException {
         List<SRule> rules = new RuleTranslator(ctx).translate(ctx.getProgram());
         File dlFile = directory.toPath().resolve(Path.of("src", "formulog.dl")).toFile();
-        emitDlFile(dlFile, ctx, rules);
+        emitDlFile(dlFile, rules);
         new FunctorCodeGen(ctx).emitFunctors(directory);
     }
 
-    private void emitDlFile(File dlFile, CodeGenContext ctx, List<SRule> rules) throws CodeGenException {
+    private void emitDlFile(File dlFile, List<SRule> rules) throws CodeGenException {
         PrintWriter writer;
         try {
             writer = new PrintWriter(dlFile);
@@ -78,7 +75,12 @@ public class SouffleCodeGen {
         }
 
         public void declareTypes() {
-            writer.println(".type IntList = [x: number, xs: IntList]");
+            for (SIntListType ty : ctx.getSouffleTypes()) {
+                writer.print(".type ");
+                writer.print(ty.getName());
+                writer.print(" = ");
+                writer.println(ty.getDef());
+            }
         }
 
         public void declareRelations() {
@@ -110,31 +112,29 @@ public class SouffleCodeGen {
         }
 
         public void declareFunctors() {
+            writer.println(".functor nth(n:number, ref:number, arity:number):number stateful");
             for (Pair<String, SFunctorBody> p : ctx.getFunctors()) {
                 String name = p.fst();
                 SFunctorBody body = p.snd();
-                boolean isDestructor = body instanceof SDestructorBody;
-                assert isDestructor || body instanceof SExprBody;
-                String retType = isDestructor ? "IntList" : "number";
-                declareFunctor(name, body.getArity(), retType, isDestructor);
+                declareFunctor(name, body);
             }
         }
 
-        private void declareFunctor(String name, int arity, String retType, boolean isStateful) {
+        private void declareFunctor(String name, SFunctorBody body) {
             writer.print(".functor ");
             writer.print(name);
             writer.print("(");
-            for (int i = 0; i < arity; ++i) {
+            for (int i = 0; i < body.getArity(); ++i) {
                 writer.print("x");
                 writer.print(i);
                 writer.print(":number");
-                if (i < arity - 1) {
+                if (i < body.getArity() - 1) {
                     writer.print(", ");
                 }
             }
             writer.print("):");
-            writer.print(retType);
-            if (isStateful) {
+            writer.print(body.getRetType());
+            if (body.isStateful()) {
                 writer.print(" stateful");
             }
             writer.println();

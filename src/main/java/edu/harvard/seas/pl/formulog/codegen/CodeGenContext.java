@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SFunctorBody;
+import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SIntListType;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb.IndexInfo;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
@@ -59,6 +60,7 @@ public class CodeGenContext {
     private final AtomicInteger id = new AtomicInteger();
     private final Map<String, SFunctorBody> functorBody = new ConcurrentHashMap<>();
     private final Map<String, AtomicInteger> funcSuffixMemo = new ConcurrentHashMap<>();
+    private final Set<SIntListType> souffleTypes = new HashSet<>();
 
     private final BasicProgram prog;
 
@@ -124,6 +126,14 @@ public class CodeGenContext {
     public synchronized void register(FunctionSymbol sym, String repr) {
         String repr2 = funcSymToRepr.put(sym, repr);
         assert repr2 == null || repr2.equals(repr);
+    }
+
+    public synchronized void register(SIntListType type) {
+        souffleTypes.add(type);
+    }
+
+    public synchronized Set<SIntListType> getSouffleTypes() {
+        return Collections.unmodifiableSet(souffleTypes);
     }
 
     public String newId(String prefix) {

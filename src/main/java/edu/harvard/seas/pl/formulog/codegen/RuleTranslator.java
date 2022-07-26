@@ -11,6 +11,7 @@ import edu.harvard.seas.pl.formulog.validating.ast.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -56,50 +57,61 @@ public class RuleTranslator {
         } catch (InvalidProgramException e) {
             throw new CodeGenException(e);
         }
-        SLit head = translate(sr.getHead());
+        List<SLit> headTrans = translate(sr.getHead());
+        assert headTrans.size() == 1;
+        SLit head = headTrans.get(0);
         List<SLit> body = new ArrayList<>();
         for (int i = 0; i < sr.getBodySize(); ++i) {
-            body.add(translate(sr.getBody(i)));
+            body.addAll(translate(sr.getBody(i)));
         }
         return new SRule(head, body);
     }
 
-    private SLit translate(SimpleLiteral lit) {
-        return lit.accept(new SimpleLiteralVisitor<Void, SLit>() {
+    private List<SLit> translate(SimpleLiteral lit) {
+        return lit.accept(new SimpleLiteralVisitor<Void, List<SLit>>() {
             @Override
-            public SLit visit(Assignment assignment, Void input) {
+            public List<SLit> visit(Assignment assignment, Void input) {
                 STerm lhs = translate(assignment.getDef());
                 STerm rhs = translate(assignment.getVal());
-                return new SInfixBinaryOpAtom(lhs, "=", rhs);
+                return Collections.singletonList(new SInfixBinaryOpAtom(lhs, "=", rhs));
             }
 
             @Override
-            public SLit visit(Check check, Void input) {
+            public List<SLit> visit(Check check, Void input) {
                 STerm lhs = translate(check.getLhs());
                 STerm rhs = translate(check.getRhs());
-                return new SInfixBinaryOpAtom(lhs, check.isNegated() ? "!=" : "=", rhs);
+                return Collections.singletonList(new SInfixBinaryOpAtom(lhs, check.isNegated() ? "!=" : "=", rhs));
             }
 
             @Override
-            public SLit visit(Destructor destructor, Void input) {
+            public List<SLit> visit(Destructor destructor, Void input) {
                 Term scrutinee = destructor.getScrutinee();
                 List<Var> args = new ArrayList<>(scrutinee.varSet());
                 String functor = ctx.freshFunctionName("dtor");
-                ctx.registerFunctorBody(functor, new SDestructorBody(args, scrutinee, destructor.getSymbol()));
+                var dtor = new SDestructorBody(args, scrutinee, destructor.getSymbol());
+                ctx.registerFunctorBody(functor, dtor);
+                // ctx.register(dtor.getRetType());
                 List<STerm> translatedArgs = args.stream().map(RuleTranslator.this::translate).collect(Collectors.toList());
                 STerm lhs = new SFunctorCall(functor, translatedArgs);
+                SVar recRef = new SVar(Var.fresh());
+                List<SLit> l = new ArrayList<>();
+                l.add(new SInfixBinaryOpAtom(lhs, "=", recRef));
+                l.add(new SInfixBinaryOpAtom(recRef, "!=", new SInt(0)));
+                int arity = destructor.getSymbol().getArity();
                 Var[] bindings = destructor.getBindings();
-                List<STerm> vars = Arrays.stream(bindings).map(RuleTranslator.this::translate).collect(Collectors.toList());
-                SList rhs = new SList(vars);
-                return new SInfixBinaryOpAtom(lhs, "=", rhs);
+                for (int i = 0; i < arity; ++i) {
+                    SFunctorCall call = new SFunctorCall("nth", new SInt(i), recRef, new SInt(arity));
+                    l.add(new SInfixBinaryOpAtom(translate(bindings[i]), "=", call));
+                }
+                return l;
             }
 
             @Override
-            public SLit visit(SimplePredicate predicate, Void input) {
+            public List<SLit> visit(SimplePredicate predicate, Void input) {
                 String symbol = ctx.lookupRepr(predicate.getSymbol());
                 List<STerm> args = Arrays.stream(predicate.getArgs()).map(RuleTranslator.this::translate).
                         collect(Collectors.toList());
-                return new SAtom(symbol, args, predicate.isNegated());
+                return Collections.singletonList(new SAtom(symbol, args, predicate.isNegated()));
             }
         }, null);
     }

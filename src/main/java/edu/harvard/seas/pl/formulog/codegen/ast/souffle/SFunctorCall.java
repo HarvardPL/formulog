@@ -1,5 +1,6 @@
 package edu.harvard.seas.pl.formulog.codegen.ast.souffle;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class SFunctorCall implements STerm {
@@ -7,9 +8,13 @@ public class SFunctorCall implements STerm {
     private final String func;
     private final List<STerm> args;
 
-    public SFunctorCall(String func_, List<STerm> args_) {
-        func = func_;
-        args = args_;
+    public SFunctorCall(String func, List<STerm> args) {
+        this.func = func;
+        this.args = args;
+    }
+
+    public SFunctorCall(String func, STerm... args) {
+        this(func, Arrays.asList(args));
     }
 
     @Override
