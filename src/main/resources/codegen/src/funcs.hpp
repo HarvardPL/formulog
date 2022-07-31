@@ -251,13 +251,15 @@ term_ptr _relation_contains(const std::string &relname, const std::vector<term_p
         }
     }
     for (auto &tup: *rel) {
+        bool found = true;
         for (unsigned i = 0; i < arity; ++i) {
-            if (key[i] && intKey[i] != tup[i]) {
-                return Term::make(false);
-            }
+            found &= !key[i] || intKey[i] == tup[i];
+        }
+        if (found) {
+            return Term::make(true);
         }
     }
-    return Term::make(true);
+    return Term::make(false);
 }
 /* INSERT 0 */
 
