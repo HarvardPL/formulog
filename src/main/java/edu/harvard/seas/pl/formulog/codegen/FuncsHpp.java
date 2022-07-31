@@ -35,6 +35,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class FuncsHpp extends TemplateSrcFile {
 
@@ -337,7 +338,7 @@ public class FuncsHpp extends TemplateSrcFile {
                     ctx.register(sym, "__conv<int64_t, int32_t>");
                     break;
                 case toFormulaNormalForm:
-                    ctx.register(sym, "to_formula_normal_form");
+                    ctx.register(sym, "_to_formula_normal_form");
                     break;
                 default:
                     System.err.println("unhandled built-in function symbol: " + sym);
@@ -345,7 +346,8 @@ public class FuncsHpp extends TemplateSrcFile {
         }
 
         private void makeDefinitions() {
-            for (FunctionSymbol sym : userDefinedFunctions) {
+            var sorted = userDefinedFunctions.stream().sorted(Comparator.comparing(Object::toString)).collect(Collectors.toList());
+            for (FunctionSymbol sym : sorted) {
                 makeDefinitionForUserDefinedFunc(sym);
             }
             for (PredicateFunctionSymbol funcSym : predFunctions) {
@@ -378,34 +380,53 @@ public class FuncsHpp extends TemplateSrcFile {
         }
 
         private void makeDefinitionForPredFunc(PredicateFunctionSymbol funcSym) {
-            /*
             out.println();
             out.print("term_ptr " + ctx.lookupRepr(funcSym) + "(");
             RelationSymbol predSym = funcSym.getPredicateSymbol();
             int n = predSym.getArity();
-            Term[] args = new Term[n];
+            //Term[] args = new Term[n];
             BindingType[] bindings = funcSym.getBindings();
             int j = 0;
             int nbound = nbound(bindings);
-            Map<Var, CppExpr> env = new HashMap<>();
+            int nret = 0;
+            // Map<Var, CppExpr> env = new HashMap<>();
+            CppVar[] args = new CppVar[bindings.length];
             for (int i = 0; i < n; ++i) {
-                Var x = Var.fresh();
-                args[i] = x;
+                //Var x = Var.fresh();
+                //args[i] = x;
                 if (bindings[i].isBound()) {
                     String id = ctx.newId("x");
                     CppVar var = CppVar.mk(id);
-                    env.put(x, var);
+                    args[i] = var;
+                    //env.put(x, var);
                     out.print("term_ptr ");
                     var.print(out);
                     if (j < nbound - 1) {
                         out.print(", ");
                     }
                     j++;
+                } else if (bindings[i].isFree()) {
+                    nret++;
                 }
             }
-            out.println(") {");
+            out.println(") ");
+            Pair<CppStmt, CppExpr> p;
+            if (nret == 0) {
+                p = genRelationContains(predSym, args);
+            } else {
+                // TODO
+                throw new UnsupportedOperationException("aggregates");
+            }
+            CppStmt ret = CppReturn.mk(p.snd());
+            CppBlock.mk(CppSeq.mk(p.fst(), ret)).println(out, 0);
+            /*
+            System.out.println(funcSym.getCompileTimeType());
+            System.out.println(Arrays.toString(bindings));
             PredicateFunctionDef def = getDef(funcSym);
             BindingType[] bindingsForIndex = def.getBindingsForIndex();
+            System.out.println(Arrays.toString(bindingsForIndex));
+             */
+            /*
             SimplePredicate pred = SimplePredicate.make(predSym, args, bindingsForIndex, false);
             int index = def.getIndex();
             Result res = lcg.gen(pred, index, false, env);
@@ -415,9 +436,15 @@ public class FuncsHpp extends TemplateSrcFile {
                 pred = SimplePredicate.make(predSym, args, funcSym.getBindings(), false);
                 genLoop(pred, res).println(out, 1);
             }
-            out.println("}");
              */
-            throw new AssertionError("Not supporting predicate functions yet");
+        }
+
+        private Pair<CppStmt, CppExpr> genRelationContains(RelationSymbol predSym, CppVar[] args) {
+            CppExpr name = CppConst.mkString(ctx.lookupRepr(predSym));
+            var cppArgs = Arrays.stream(args).map(x -> x == null ? CppNullptr.INSTANCE : x).collect(Collectors.toList());
+            CppExpr vec = CppVectorLiteral.mk(cppArgs);
+            CppExpr call = CppFuncCall.mk("_relation_contains", name, vec);
+            return new Pair<>(CppSeq.skip(), call);
         }
 
         private PredicateFunctionDef getDef(PredicateFunctionSymbol sym) {

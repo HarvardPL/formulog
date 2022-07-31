@@ -6,6 +6,7 @@
 #include <sstream>
 #include <regex>
 
+#include "globals.h"
 #include "Term.hpp"
 #include "smt.hpp"
 #include "rels.hpp"
@@ -231,11 +232,32 @@ term_ptr is_sat_opt(term_ptr t1, term_ptr t2) {
     __builtin_unreachable();
 }
 
-term_ptr to_formula_normal_form(term_ptr t) {
+term_ptr _to_formula_normal_form(term_ptr t) {
     if (t->sym == Symbol::enter_formula || t->sym == Symbol::exit_formula) {
-        return to_formula_normal_form(t->as_complex().val[0]);
+        return _to_formula_normal_form(t->as_complex().val[0]);
     }
     return t;
+}
+
+term_ptr _relation_contains(const std::string &relname, const std::vector<term_ptr> &key) {
+    auto rel = globals::program->getRelation(relname);
+    assert(rel);
+    size_t arity = rel->getPrimaryArity();
+    assert(arity == key.size());
+    std::vector<souffle::RamDomain> intKey{arity};
+    for (unsigned i = 0; i < arity; ++i) {
+        if (key[i]) {
+            intKey[i] = key[i]->intize();
+        }
+    }
+    for (auto &tup: *rel) {
+        for (unsigned i = 0; i < arity; ++i) {
+            if (key[i] && intKey[i] != tup[i]) {
+                return Term::make(false);
+            }
+        }
+    }
+    return Term::make(true);
 }
 /* INSERT 0 */
 

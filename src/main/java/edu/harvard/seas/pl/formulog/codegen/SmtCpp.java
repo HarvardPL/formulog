@@ -337,9 +337,12 @@ public class SmtCpp extends TemplateSrcFile {
         }
 
         private CppStmt genSerializeBitString(int n, boolean big) {
+            CppExpr array = CppAccess.mk(CppMethodCall.mkThruPtr(CppVar.mk("t"), "as_complex"), "val");
+            CppExpr base = CppSubscript.mk(array, CppConst.mkInt(0));
             String type = big ? "int64_t" : "int32_t";
             String func = "serialize_bit_string<" + type + ", " + n + ">";
-            return mkCall(func);
+            CppExpr arg = CppAccess.mk(CppMethodCall.mkThruPtr(base, "as_base<" + type + ">"), "val");
+            return CppFuncCall.mk(func, arg).toStmt();
         }
 
         private CppStmt genSerializeBvToBv(int from, int to, boolean signed) {

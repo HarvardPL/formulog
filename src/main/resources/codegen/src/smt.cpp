@@ -51,11 +51,13 @@ struct SmtWorker {
     ostream& out;
 
     static Term* arg0(Term* t);
-    void serialize(const std::string& repr, const ComplexTerm& t);
-    template<typename T, size_t N>
-      void serialize_bit_string(Term* t);
-    template<size_t From, size_t To, bool Signed>
-      void serialize_bv_to_bv(Term* t);
+    void serialize(const std::string &repr, const ComplexTerm &t);
+
+      template<typename T, size_t N>
+      void serialize_bit_string(T val);
+
+      template<size_t From, size_t To, bool Signed>
+      void serialize_bv_to_bv(Term *t);
     template <size_t E, size_t S>
       void serialize_bv_to_fp(Term* t);
     template <typename T, size_t E, size_t S>
@@ -314,9 +316,9 @@ void SmtWorker::Serializer::serialize(const std::string& repr, const ComplexTerm
   }
 }
 
-template <typename T, size_t N>
-void SmtWorker::Serializer::serialize_bit_string(Term* t) {
-  out << "#b" << bitset<N>(t->as_base<T>().val).to_string();
+template<typename T, size_t N>
+void SmtWorker::Serializer::serialize_bit_string(T val) {
+    out << "#b" << bitset<N>(val).to_string();
 }
 
 template <size_t From, size_t To, bool Signed>

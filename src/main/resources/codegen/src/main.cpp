@@ -25,7 +25,7 @@ private:
 
     void loadEdbs(const string &dir);
 
-    void loadEdbs(const string &dir, const string &file, souffle::Relation &rel);
+    void loadEdbs(const string &dir, const string &file, souffle::Relation *rel);
 };
 
 void ExternalEdbLoader::go(const vector<string> &dirs) {
@@ -39,13 +39,14 @@ void ExternalEdbLoader::loadEdbs(const string &dir) {
 /* INSERT 0 */
 }
 
-void ExternalEdbLoader::loadEdbs(const string &dir, const string &file, souffle::Relation &rel) {
+void ExternalEdbLoader::loadEdbs(const string &dir, const string &file, souffle::Relation *rel) {
+	assert(rel);
     boost::filesystem::path path{dir};
     path /= file;
     string pathstr = path.string();
-    boost::asio::post(pool, [pathstr, &rel]() {
+    boost::asio::post(pool, [pathstr, rel]() {
         ifstream stream(pathstr);
-        parse_facts(stream, rel);
+        parse_facts(stream, *rel);
     });
 }
 

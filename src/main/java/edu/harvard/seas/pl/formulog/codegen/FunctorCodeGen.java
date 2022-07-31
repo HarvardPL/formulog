@@ -121,9 +121,8 @@ public class FunctorCodeGen {
         private Pair<CppStmt, Map<Var, CppExpr>> unpackParams(Map<Var, CppVar> params) {
             List<CppStmt> stmts = new ArrayList<>();
             Map<Var, CppExpr> env = new HashMap<>();
-            int i = 0;
             for (Map.Entry<Var, CppVar> e : params.entrySet()) {
-                String x = "x" + i;
+                String x = ctx.newId("x");
                 CppExpr call = TermCodeGen.genUnintizeTerm(e.getValue());
                 CppStmt stmt = CppDecl.mk(x, call);
                 stmts.add(stmt);

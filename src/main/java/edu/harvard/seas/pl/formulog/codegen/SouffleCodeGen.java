@@ -1,5 +1,6 @@
 package edu.harvard.seas.pl.formulog.codegen;
 
+import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.codegen.ast.souffle.*;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
@@ -9,6 +10,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class SouffleCodeGen {
@@ -34,6 +37,8 @@ public class SouffleCodeGen {
      */
 
     private final CodeGenContext ctx;
+    private static final String non_existent_input = "impossible_inX";
+    private static final String non_existent_output = "impossible_outX";
 
     public SouffleCodeGen(CodeGenContext ctx) {
         this.ctx = ctx;
@@ -41,6 +46,7 @@ public class SouffleCodeGen {
 
     public void gen(File directory) throws CodeGenException, IOException {
         List<SRule> rules = new RuleTranslator(ctx).translate(ctx.getProgram());
+        rules.addAll(genRulesForRetainingInputRelations());
         File dlFile = directory.toPath().resolve(Path.of("src", "formulog.dl")).toFile();
         emitDlFile(dlFile, rules);
         new FunctorCodeGen(ctx).emitFunctors(directory);
@@ -64,6 +70,21 @@ public class SouffleCodeGen {
             writer.println(rule);
         }
         writer.close();
+    }
+
+    List<SRule> genRulesForRetainingInputRelations() {
+        List<SRule> l = new ArrayList<>();
+        SAtom head = new SAtom(non_existent_output, Collections.emptyList(), false);
+        SAtom guard = new SAtom(non_existent_input, Collections.emptyList(), false);
+        for (RelationSymbol sym : ctx.getProgram().getFactSymbols()) {
+            List<STerm> args = new ArrayList<>();
+            for (int i = 0; i < sym.getArity(); ++i) {
+                args.add(new SVar(Var.fresh("x" + i)));
+            }
+            SAtom atom = new SAtom(ctx.lookupRepr(sym), args, false);
+            l.add(new SRule(head, guard, atom));
+        }
+        return l;
     }
 
     private class Worker {
@@ -94,6 +115,10 @@ public class SouffleCodeGen {
                 writer.print(".output ");
                 writer.println(ctx.lookupRepr(sym));
             }
+            writer.println(".decl " + non_existent_input + "()");
+            writer.println(".input " + non_existent_input);
+            writer.println(".decl " + non_existent_output + "()");
+            writer.println(".output " + non_existent_output);
         }
 
         private void declareRelation(RelationSymbol sym) {

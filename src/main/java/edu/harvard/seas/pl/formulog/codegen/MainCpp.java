@@ -83,7 +83,7 @@ public class MainCpp extends TemplateSrcFile {
             CppExpr file = CppConst.mkString(sym + ".tsv");
             CppExpr repr = CppConst.mkString(ctx.lookupRepr(sym));
             CppExpr rel = CppMethodCall.mkThruPtr(CppVar.mk("globals::program"), "getRelation", repr);
-            CppExpr call = CppFuncCall.mk(func, CppVar.mk("dir"), file, CppUnop.mkDeref(rel));
+            CppExpr call = CppFuncCall.mk(func, CppVar.mk("dir"), file, rel);
             call.toStmt().println(out, 1);
         }
 

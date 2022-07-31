@@ -20,81 +20,112 @@ package edu.harvard.seas.pl.formulog.codegen;
  * #L%
  */
 
-import java.io.BufferedReader;
-import java.io.File;
+import java.io.*;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import edu.harvard.seas.pl.formulog.Configuration;
+import edu.harvard.seas.pl.formulog.ast.BasicProgram;
+import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.eval.AbstractTester;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
+import edu.harvard.seas.pl.formulog.eval.Tester;
+import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
+import edu.harvard.seas.pl.formulog.parsing.Parser;
+import edu.harvard.seas.pl.formulog.types.TypeChecker;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 
-public class CompiledSemiNaiveTester extends AbstractTester<SemiNaiveEvaluation> {
+import static org.junit.Assert.fail;
+
+public class CompiledSemiNaiveTester implements Tester {
 
     private List<String> inputDirs = Collections.emptyList();
 
     @Override
     public void test(String file, List<String> inputDirs) {
-        this.inputDirs = inputDirs;
-        super.test(file, Collections.emptyList());
+        boolean isBad = file.matches("test\\d\\d\\d_bd.flg");
+        try {
+            InputStream is = getClass().getClassLoader().getResourceAsStream(file);
+            if (is == null) {
+                throw new FileNotFoundException(file + " not found");
+            }
+            List<Path> dirs = new ArrayList<>();
+            for (String inputDir : inputDirs) {
+                URL dir = getClass().getClassLoader().getResource(inputDir);
+                dirs.add(Paths.get(dir.toURI()));
+            }
+            BasicProgram prog = new Parser().parse(new InputStreamReader(is), dirs);
+            WellTypedProgram wtp = new TypeChecker(prog).typeCheck();
+            MagicSetTransformer mst = new MagicSetTransformer(wtp);
+            BasicProgram magicProg = mst.transform(true, true);
+            boolean ok = evaluate(magicProg);
+            if (!ok && !isBad) {
+                String msg = "Test failed for a good program";
+                fail(msg);
+            }
+            if (ok && isBad) {
+                fail("Test succeeded for a bad program");
+            }
+        } catch (Exception e) {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            PrintStream out = new PrintStream(baos);
+            out.println("Unexpected exception:");
+            e.printStackTrace(out);
+            fail(baos.toString());
+        }
     }
 
-    @Override
-    protected SemiNaiveEvaluation setup(WellTypedProgram prog) throws InvalidProgramException, EvaluationException {
-        return SemiNaiveEvaluation.setup(prog, 2, false);
-    }
-
-    @Override
-    protected boolean evaluate(SemiNaiveEvaluation eval) throws EvaluationException {
+    private boolean evaluate(BasicProgram prog) throws Exception {
         File dir = new File("codegen");
-        Util.clean(dir, false);
-        dir.mkdirs();
-        Path path = dir.toPath();
-		/*
-		CodeGen cg = new CodeGen(eval, dir);
-		try {
-			cg.go();
-			Process proc = Runtime.getRuntime().exec(new String[] { "make", "-C", path.toString(), "-j",
-					String.valueOf(Configuration.parallelism), "FLAGS=-O0" });
-			if (proc.waitFor() != 0) {
-				System.err.println("Could not compile test");
-				printToStdErr(proc.getErrorStream());
-				return false;
-			}
-			String cmd = path.resolve("flg").toString();
-			for (String inputDir : inputDirs) {
-				Path p = Paths.get(getClass().getClassLoader().getResource(inputDir).toURI());
-				cmd += " --fact-dir " + p;
-			}
-			proc = Runtime.getRuntime().exec(cmd);
-			if (proc.waitFor() != 0) {
-				System.err.println("Evaluation error");
-				printToStdErr(proc.getErrorStream());
-				return false;
-			}
-			BufferedReader br = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-			String line;
-			while ((line = br.readLine()) != null) {
-				if (line.equals("ok: 1")) {
-					return true;
-				}
-			}
-			return false;
-		} catch (IOException | URISyntaxException | InterruptedException e) {
-			throw new EvaluationException(e);
-		}
-		 */
+        File srcDir = dir.toPath().resolve("src").toFile();
+        srcDir.mkdirs();
+        Util.clean(srcDir, false);
+        Path topPath = dir.toPath();
+        Path buildPath = topPath.resolve("build");
+        CodeGen cg = new CodeGen(prog, dir);
+        cg.go();
+        Process cmake = Runtime.getRuntime().exec(new String[]{"cmake", "-B", buildPath.toString(),
+                "-S", topPath.toString(), "-DCMAKE_BUILD_TYPE=Debug",
+                "-DCMAKE_CXX_COMPILER=/usr/local/opt/llvm/bin/clang++"});
+        if (cmake.waitFor() != 0) {
+            System.err.println("Could not cmake test");
+            printToStdErr(cmake.getErrorStream());
+            return false;
+        }
+        Process make = Runtime.getRuntime().exec(new String[]{"cmake", "--build", buildPath.toString(),
+                "-j", String.valueOf(Configuration.parallelism)});
+        if (make.waitFor() != 0) {
+            System.err.println("Could not make test");
+            printToStdErr(make.getErrorStream());
+            return false;
+        }
+        String cmd = topPath.resolve("build").resolve("flg").toString();
+        for (String inputDir : inputDirs) {
+            Path p = Paths.get(getClass().getClassLoader().getResource(inputDir).toURI());
+            cmd += " --fact-dir " + p;
+        }
+        Process flg = Runtime.getRuntime().exec(cmd);
+        if (flg.waitFor() != 0) {
+            System.err.println("Evaluation error");
+            printToStdErr(flg.getErrorStream());
+            return false;
+        }
+        BufferedReader br = new BufferedReader(new InputStreamReader(flg.getInputStream()));
+        String line;
+        while ((line = br.readLine()) != null) {
+            if (line.equals("ok: 1")) {
+                return true;
+            }
+        }
         return false;
     }
 
