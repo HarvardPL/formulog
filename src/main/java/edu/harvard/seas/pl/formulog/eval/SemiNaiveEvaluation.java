@@ -9,9 +9,9 @@ package edu.harvard.seas.pl.formulog.eval;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -155,6 +155,8 @@ public class SemiNaiveEvaluation implements Evaluation {
 		}
 		FunctionDefManager defManager = magicProg.getFunctionCallFactory().getDefManager();
 		defManager.loadBuiltInFunctions(smt);
+		/*
+		XXX
 		FormulaRewriter fr = new FormulaRewriter(magicProg.getFunctionCallFactory());
 		for (FunctionSymbol sym : defManager.getFunctionSymbols()) {
 			FunctionDef def = defManager.lookup(sym);
@@ -163,6 +165,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 				udef.setBody(fr.rewrite(udef.getBody(), false));
 			}
 		}
+		 */
 
 		CountingFJP exec;
 		if (sequential) {
@@ -170,19 +173,26 @@ public class SemiNaiveEvaluation implements Evaluation {
 		} else {
 			exec = new CountingFJPImpl(parallelism);
 		}
-		
+
 		for (RelationSymbol sym : magicProg.getFactSymbols()) {
 			for (Iterable<Term[]> tups : Util.splitIterable(magicProg.getFacts(sym), Configuration.taskSize)) {
 				exec.externallyAddTask(new AbstractFJPTask(exec) {
 
 					@Override
 					public void doTask() throws EvaluationException {
+						/*
+						XXX
 						FormulaRewriter fr = new FormulaRewriter(magicProg.getFunctionCallFactory());
+						 */
 						for (Term[] tup : tups) {
 							try {
+								/*
+								XXX
 								for (int i = 0; i < tup.length; ++i) {
 									tup[i] = fr.rewrite(tup[i], false);
 								}
+
+								 */
 								db.add(sym, Terms.normalize(tup, new SimpleSubstitution()));
 							} catch (EvaluationException e) {
 								UserPredicate p = UserPredicate.make(sym, tup, false);
@@ -204,7 +214,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 	}
 
 	private static Rule<UserPredicate, ComplexLiteral> tweakRule(Rule<UserPredicate, ComplexLiteral> r,
-			boolean eagerEval) {
+																 boolean eagerEval) {
 		if (!eagerEval) {
 			return r;
 		}
@@ -275,41 +285,41 @@ public class SemiNaiveEvaluation implements Evaluation {
 	private static SmtLibSolver getSmtManager() {
 		SmtStrategy strategy = Configuration.smtStrategy;
 		switch (strategy.getTag()) {
-		case QUEUE: {
-			int size = (int) strategy.getMetadata();
-			return new QueueSmtManager(size, () -> maybeDoubleCheckSolver(new CheckSatAssumingSolver()));
-		}
-		case NAIVE:
-			return maybeDoubleCheckSolver(makeNaiveSolver());
-		case PUSH_POP:
-			return new PushPopSolver();
-		case PUSH_POP_NAIVE:
-			return new PushPopNaiveSolver();
-		case BEST_MATCH: {
-			int size = (int) strategy.getMetadata();
-			return maybeDoubleCheckSolver(new BestMatchSmtManager(size));
-		}
-		case PER_THREAD_QUEUE: {
-			int size = (int) strategy.getMetadata();
-			return new PerThreadSmtManager(() -> new NotThreadSafeQueueSmtManager(size,
-					() -> maybeDoubleCheckSolver(new CheckSatAssumingSolver())));
-		}
-		case PER_THREAD_BEST_MATCH: {
-			int size = (int) strategy.getMetadata();
-			return new PerThreadSmtManager(() -> maybeDoubleCheckSolver(new BestMatchSmtManager(size)));
-		}
-		case PER_THREAD_PUSH_POP: {
-			return new PerThreadSmtManager(() -> new PushPopSolver());
-		}
-		case PER_THREAD_PUSH_POP_NAIVE: {
-			return new PerThreadSmtManager(() -> new PushPopNaiveSolver());
-		}
-		case PER_THREAD_NAIVE: {
-			return new PerThreadSmtManager(() -> maybeDoubleCheckSolver(
-					Configuration.smtUseSingleShotSolver ? new SingleShotSolver() : new CallAndResetSolver()));
-		}
-		default:
-			throw new UnsupportedOperationException("Cannot support SMT strategy: " + strategy);
+			case QUEUE: {
+				int size = (int) strategy.getMetadata();
+				return new QueueSmtManager(size, () -> maybeDoubleCheckSolver(new CheckSatAssumingSolver()));
+			}
+			case NAIVE:
+				return maybeDoubleCheckSolver(makeNaiveSolver());
+			case PUSH_POP:
+				return new PushPopSolver();
+			case PUSH_POP_NAIVE:
+				return new PushPopNaiveSolver();
+			case BEST_MATCH: {
+				int size = (int) strategy.getMetadata();
+				return maybeDoubleCheckSolver(new BestMatchSmtManager(size));
+			}
+			case PER_THREAD_QUEUE: {
+				int size = (int) strategy.getMetadata();
+				return new PerThreadSmtManager(() -> new NotThreadSafeQueueSmtManager(size,
+						() -> maybeDoubleCheckSolver(new CheckSatAssumingSolver())));
+			}
+			case PER_THREAD_BEST_MATCH: {
+				int size = (int) strategy.getMetadata();
+				return new PerThreadSmtManager(() -> maybeDoubleCheckSolver(new BestMatchSmtManager(size)));
+			}
+			case PER_THREAD_PUSH_POP: {
+				return new PerThreadSmtManager(() -> new PushPopSolver());
+			}
+			case PER_THREAD_PUSH_POP_NAIVE: {
+				return new PerThreadSmtManager(() -> new PushPopNaiveSolver());
+			}
+			case PER_THREAD_NAIVE: {
+				return new PerThreadSmtManager(() -> maybeDoubleCheckSolver(
+						Configuration.smtUseSingleShotSolver ? new SingleShotSolver() : new CallAndResetSolver()));
+			}
+			default:
+				throw new UnsupportedOperationException("Cannot support SMT strategy: " + strategy);
 		}
 	}
 
@@ -336,19 +346,19 @@ public class SemiNaiveEvaluation implements Evaluation {
 			return SemiNaiveEvaluation::score4;
 		}
 		switch (Configuration.optimizationSetting) {
-		case 0:
-			return SemiNaiveEvaluation::score0;
-		case 1:
-			return SemiNaiveEvaluation::score1;
-		case 2:
-			return SemiNaiveEvaluation::score2;
-		case 3:
-			return SemiNaiveEvaluation::score3;
-		case 4:
-			return SemiNaiveEvaluation::score4;
-		default:
-			throw new IllegalArgumentException(
-					"Unrecognized optimization setting: " + Configuration.optimizationSetting);
+			case 0:
+				return SemiNaiveEvaluation::score0;
+			case 1:
+				return SemiNaiveEvaluation::score1;
+			case 2:
+				return SemiNaiveEvaluation::score2;
+			case 3:
+				return SemiNaiveEvaluation::score3;
+			case 4:
+				return SemiNaiveEvaluation::score4;
+			default:
+				throw new IllegalArgumentException(
+						"Unrecognized optimization setting: " + Configuration.optimizationSetting);
 		}
 	}
 
@@ -470,9 +480,9 @@ public class SemiNaiveEvaluation implements Evaluation {
 	}
 
 	SemiNaiveEvaluation(WellTypedProgram inputProgram, SortedIndexedFactDb db,
-			IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb, Map<RelationSymbol, Set<IndexedRule>> rules,
-			UserPredicate query, List<Stratum> strata, CountingFJP exec, Set<RelationSymbol> trackedRelations,
-			boolean eagerEval) {
+						IndexedFactDbBuilder<SortedIndexedFactDb> deltaDbb, Map<RelationSymbol, Set<IndexedRule>> rules,
+						UserPredicate query, List<Stratum> strata, CountingFJP exec, Set<RelationSymbol> trackedRelations,
+						boolean eagerEval) {
 		this.inputProgram = inputProgram;
 		this.db = db;
 		this.query = query;

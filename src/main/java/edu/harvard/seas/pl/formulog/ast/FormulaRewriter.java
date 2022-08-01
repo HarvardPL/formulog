@@ -20,10 +20,7 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
@@ -35,15 +32,24 @@ import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInConstructorSymb
 import edu.harvard.seas.pl.formulog.symbols.parameterized.Param;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParamKind;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedConstructorSymbol;
+import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
+import edu.harvard.seas.pl.formulog.types.Types;
 import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
+import edu.harvard.seas.pl.formulog.unification.Substitution;
 
 public class FormulaRewriter {
 
     private final FunctionCallFactory funcFactory;
+    private final Map<Var, Types.Type> env;
     private boolean inFormula;
 
-    public FormulaRewriter(FunctionCallFactory funcFactory) {
+    public FormulaRewriter(FunctionCallFactory funcFactory, Map<Var, Types.Type> env) {
         this.funcFactory = funcFactory;
+        this.env = env;
+    }
+
+    public Term rewrite(Term t) {
+        return rewrite(t, false, false);
     }
 
     public Term rewrite(Term t, boolean inPattern) {
@@ -67,9 +73,6 @@ public class FormulaRewriter {
                     inFormula = true;
                     Term t = args[0].accept(this, inPattern);
                     inFormula = wasInFormula;
-                    if (!inPattern) {
-                        t = toFormulaNormalForm(t);
-                    }
                     return t;
                 }
                 case EXIT_FORMULA: {
@@ -131,8 +134,39 @@ public class FormulaRewriter {
         }
 
         @Override
-        public Term visit(Var t, Boolean inPattern) {
-            return t;
+        public Term visit(Var x, Boolean inPattern) {
+            if (inFormula) {
+                Types.Type ty = env.get(x);
+                assert ty != null;
+                assert !ty.isVar();
+                return lift(x, ty);
+            }
+            return x;
+        }
+
+        private Term lift(Term t, Types.Type ty) {
+            assert inFormula;
+            BuiltInConstructorSymbolBase base;
+            List<Param> params = new ArrayList<>();
+            if (ty.equals(BuiltInTypes.i32)) {
+                base = BuiltInConstructorSymbolBase.BV_CONST;
+                params.add(new Param(TypeIndex.make(32), ParamKind.NAT));
+            } else if (ty.equals(BuiltInTypes.i64)) {
+                base = BuiltInConstructorSymbolBase.BV_BIG_CONST;
+                params.add(new Param(TypeIndex.make(64), ParamKind.NAT));
+            } else if (ty.equals(BuiltInTypes.fp32)) {
+                base = BuiltInConstructorSymbolBase.FP_CONST;
+                params.add(new Param(TypeIndex.make(8), ParamKind.NAT));
+                params.add(new Param(TypeIndex.make(24), ParamKind.NAT));
+            } else if (ty.equals(BuiltInTypes.fp64)) {
+                base = BuiltInConstructorSymbolBase.FP_BIG_CONST;
+                params.add(new Param(TypeIndex.make(11), ParamKind.NAT));
+                params.add(new Param(TypeIndex.make(53), ParamKind.NAT));
+            } else {
+                return t;
+            }
+            ConstructorSymbol sym = ParameterizedConstructorSymbol.mk(base, params);
+            return Constructors.make(sym, Terms.singletonArray(t));
         }
 
         @Override
@@ -234,9 +268,5 @@ public class FormulaRewriter {
         }
 
     };
-
-    private Term toFormulaNormalForm(Term t) {
-        return funcFactory.make(BuiltInFunctionSymbol.toFormulaNormalForm, Terms.singletonArray(t));
-    }
 
 }
