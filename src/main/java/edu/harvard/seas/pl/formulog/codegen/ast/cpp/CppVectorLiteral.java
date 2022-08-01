@@ -19,7 +19,7 @@ public class CppVectorLiteral implements CppExpr {
     public void print(PrintWriter out) {
         out.print("{");
         for (int i = 0; i < elts.size(); ++i) {
-            out.print(elts.get(i));
+            elts.get(i).print(out);
             if (i < elts.size() - 1) {
                 out.print(", ");
             }

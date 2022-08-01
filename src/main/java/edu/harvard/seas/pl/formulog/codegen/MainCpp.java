@@ -23,17 +23,17 @@ package edu.harvard.seas.pl.formulog.codegen;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.codegen.ast.cpp.*;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
+import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
+import edu.harvard.seas.pl.formulog.unification.EmptySubstitution;
+import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.validating.Stratum;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 public class MainCpp extends TemplateSrcFile {
 
@@ -44,13 +44,13 @@ public class MainCpp extends TemplateSrcFile {
         this.tcg = new TermCodeGen(ctx);
     }
 
-    public void gen(BufferedReader br, PrintWriter out) throws IOException {
+    public void gen(BufferedReader br, PrintWriter out) throws IOException, CodeGenException {
         Worker pr = new Worker(out);
         CodeGenUtil.copyOver(br, out, 0);
         pr.loadExternalEdbs();
-        /*
         CodeGenUtil.copyOver(br, out, 1);
-        pr.loadEdbs();
+        pr.loadExplicitFacts();
+        /*
         CodeGenUtil.copyOver(br, out, 2);
         pr.printStratumFuncs();
         CodeGenUtil.copyOver(br, out, 3);
@@ -85,6 +85,34 @@ public class MainCpp extends TemplateSrcFile {
             CppExpr rel = CppMethodCall.mkThruPtr(CppVar.mk("globals::program"), "getRelation", repr);
             CppExpr call = CppFuncCall.mk(func, CppVar.mk("dir"), file, rel);
             call.toStmt().println(out, 1);
+        }
+
+        public void loadExplicitFacts() throws CodeGenException {
+            var prog = ctx.getProgram();
+            for (RelationSymbol sym : prog.getFactSymbols()) {
+                for (Term[] tup : prog.getFacts(sym)) {
+                    loadExplicitFact(sym, tup);
+                }
+            }
+        }
+
+        public void loadExplicitFact(RelationSymbol sym, Term[] tup) throws CodeGenException {
+            List<CppExpr> args = new ArrayList<>();
+            List<CppStmt> stmts = new ArrayList<>();
+            TermCodeGen tcg = new TermCodeGen(ctx);
+            for (Term t : tup) {
+                try {
+                    t = t.normalize(EmptySubstitution.INSTANCE);
+                } catch (EvaluationException e) {
+                    throw new CodeGenException("Could not normalize term occurring in fact: " + t);
+                }
+                Pair<CppStmt, CppExpr> p = tcg.gen(t, Collections.emptyMap());
+                stmts.add(p.fst());
+                args.add(p.snd());
+            }
+            CppExpr rel = CppConst.mkString(ctx.lookupRepr(sym));
+            stmts.add(CppFuncCall.mk("loadFact", rel, CppVectorLiteral.mk(args)).toStmt());
+            CppSeq.mk(stmts).println(out, 1);
         }
 
         /*

@@ -40,7 +40,7 @@ void ExternalEdbLoader::loadEdbs(const string &dir) {
 }
 
 void ExternalEdbLoader::loadEdbs(const string &dir, const string &file, souffle::Relation *rel) {
-	assert(rel);
+    assert(rel);
     boost::filesystem::path path{dir};
     path /= file;
     string pathstr = path.string();
@@ -48,6 +48,16 @@ void ExternalEdbLoader::loadEdbs(const string &dir, const string &file, souffle:
         ifstream stream(pathstr);
         parse_facts(stream, *rel);
     });
+}
+
+void loadFact(const string &relname, vector<term_ptr> args) {
+    auto rel = globals::program->getRelation(relname);
+    assert(rel);
+    souffle::tuple tup(rel);
+    for (auto arg: args) {
+        tup << arg->intize();
+    }
+    rel->insert(tup);
 }
 
 void loadEdbs(const vector<string> &dirs, size_t nthreads) {

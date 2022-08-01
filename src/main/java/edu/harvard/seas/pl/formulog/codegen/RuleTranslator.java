@@ -28,32 +28,12 @@ public class RuleTranslator {
     public List<SRule> translate(BasicProgram prog) throws CodeGenException {
         checkStratification(prog);
         List<SRule> l = new ArrayList<>();
-        for (RelationSymbol sym : prog.getFactSymbols()) {
-            for (Term[] tup : prog.getFacts(sym)) {
-                l.add(translateFact(sym, tup));
-            }
-        }
         for (RelationSymbol sym : prog.getRuleSymbols()) {
             for (BasicRule r : prog.getRules(sym)) {
                 l.add(translate(r, prog));
             }
         }
         return l;
-    }
-
-    private SRule translateFact(RelationSymbol sym, Term[] tup) throws CodeGenException {
-        FormulaRewriter fr = new FormulaRewriter(ctx.getProgram().getFunctionCallFactory());
-        Term[] mapped;
-        try {
-            mapped = Terms.mapExn(tup, t -> fr.rewrite(t, false).normalize(EmptySubstitution.INSTANCE));
-        } catch (EvaluationException e) {
-            var atom = UserPredicate.make(sym, tup, false);
-            throw new CodeGenException("Could not normalize fact: " + atom + "\n" + e.getMessage());
-        }
-        var pred = SimplePredicate.make(sym, mapped, null, false);
-        var l = translate(pred);
-        assert l.size() == 1;
-        return new SRule(l.get(0));
     }
 
     private void checkStratification(BasicProgram prog) throws CodeGenException {

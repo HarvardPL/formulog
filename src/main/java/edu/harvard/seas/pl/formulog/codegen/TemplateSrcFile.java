@@ -12,7 +12,7 @@ public abstract class TemplateSrcFile {
         this.ctx = ctx;
     }
 
-    void gen(File outDir) throws IOException {
+    void gen(File outDir) throws IOException, CodeGenException {
         try (InputStream is = CodeGenUtil.inputSrcFile(name);
              InputStreamReader isr = new InputStreamReader(is);
              BufferedReader br = new BufferedReader(isr);
@@ -22,6 +22,6 @@ public abstract class TemplateSrcFile {
         }
     }
 
-    abstract void gen(BufferedReader br, PrintWriter out) throws IOException;
+    abstract void gen(BufferedReader br, PrintWriter out) throws IOException, CodeGenException;
 
 }
