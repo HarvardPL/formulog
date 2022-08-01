@@ -232,13 +232,6 @@ term_ptr is_sat_opt(term_ptr t1, term_ptr t2) {
     __builtin_unreachable();
 }
 
-term_ptr _to_formula_normal_form(term_ptr t) {
-    if (t->sym == Symbol::enter_formula || t->sym == Symbol::exit_formula) {
-        return _to_formula_normal_form(t->as_complex().val[0]);
-    }
-    return t;
-}
-
 term_ptr _relation_contains(const std::string &relname, const std::vector<term_ptr> &key) {
     auto rel = globals::program->getRelation(relname);
     assert(rel);

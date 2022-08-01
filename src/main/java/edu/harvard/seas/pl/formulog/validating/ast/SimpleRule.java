@@ -66,20 +66,7 @@ public class SimpleRule extends AbstractRule<SimplePredicate, SimpleLiteral> {
         Term[] headArgs = head.getArgs();
         BindingType[] pat = computeBindingPattern(headArgs, boundVars, varCounts);
         SimplePredicate newHead = SimplePredicate.make(head.getSymbol(), head.getArgs(), pat, head.isNegated());
-		/*
-		XXX
-		FormulaRewriter fr = new FormulaRewriter(funcFactory);
-		newHead = (SimplePredicate) rewriteFormulas(newHead, fr);
-		 */
-        List<SimpleLiteral> conjuncts = new ArrayList<>();
-        for (SimpleLiteral lit : simplifier.getConjuncts()) {
-			/*
-			XXX
-			conjuncts.add(rewriteFormulas(lit, fr));
-			 */
-            conjuncts.add(lit);
-        }
-        return new SimpleRule(newHead, conjuncts);
+        return new SimpleRule(newHead, simplifier.getConjuncts());
     }
 
     // XXX This isn't great because it doesn't check to make sure the invariants of

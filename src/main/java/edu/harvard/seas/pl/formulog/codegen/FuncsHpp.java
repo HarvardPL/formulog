@@ -337,9 +337,6 @@ public class FuncsHpp extends TemplateSrcFile {
                 case i64ToI32:
                     ctx.register(sym, "__conv<int64_t, int32_t>");
                     break;
-                case toFormulaNormalForm:
-                    ctx.register(sym, "_to_formula_normal_form");
-                    break;
                 default:
                     System.err.println("unhandled built-in function symbol: " + sym);
             }

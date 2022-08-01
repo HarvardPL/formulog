@@ -20,37 +20,9 @@ package edu.harvard.seas.pl.formulog.functions;
  * #L%
  */
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.function.BiFunction;
-
-import org.pcollections.HashTreePMap;
-
 import edu.harvard.seas.pl.formulog.Configuration;
-import edu.harvard.seas.pl.formulog.ast.BoolTerm;
-import edu.harvard.seas.pl.formulog.ast.Constructor;
-import edu.harvard.seas.pl.formulog.ast.Constructors;
+import edu.harvard.seas.pl.formulog.ast.*;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
-import edu.harvard.seas.pl.formulog.ast.FP32;
-import edu.harvard.seas.pl.formulog.ast.FP64;
-import edu.harvard.seas.pl.formulog.ast.FormulaRewriter;
-import edu.harvard.seas.pl.formulog.ast.I32;
-import edu.harvard.seas.pl.formulog.ast.I64;
-import edu.harvard.seas.pl.formulog.ast.Model;
-import edu.harvard.seas.pl.formulog.ast.OpaqueSet;
-import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
-import edu.harvard.seas.pl.formulog.ast.StringTerm;
-import edu.harvard.seas.pl.formulog.ast.Term;
-import edu.harvard.seas.pl.formulog.ast.Terms;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.smt.SmtLibSolver;
 import edu.harvard.seas.pl.formulog.smt.SmtResult;
@@ -61,6 +33,14 @@ import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Triple;
+import org.pcollections.HashTreePMap;
+
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.function.BiFunction;
 
 public final class BuiltInFunctionDefFactory {
 
@@ -268,8 +248,6 @@ public final class BuiltInFunctionDefFactory {
                 return PrimitiveConversions.stringToI64;
             case PRINT:
                 return Print.INSTANCE;
-            case toFormulaNormalForm:
-                return toFormulaNormalForm;
             case OPAQUE_SET_CHOOSE:
                 return OpaqueSetOps.choose;
             case OPAQUE_SET_DIFF:
@@ -1955,21 +1933,6 @@ public final class BuiltInFunctionDefFactory {
         }
 
     }
-
-    private static final FunctionDef toFormulaNormalForm = new FunctionDef() {
-
-        @Override
-        public FunctionSymbol getSymbol() {
-            return BuiltInFunctionSymbol.toFormulaNormalForm;
-        }
-
-        @Override
-        public Term evaluate(Term[] args) throws EvaluationException {
-            throw new EvaluationException("shouldn't appear");
-            //return new FormulaRewriter(null).rewrite(args[0], false, true);
-        }
-
-    };
 
     private static final Term trueTerm = BoolTerm.mkTrue();
     private static final Term falseTerm = BoolTerm.mkFalse();
