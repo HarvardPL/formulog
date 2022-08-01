@@ -20,30 +20,15 @@ package edu.harvard.seas.pl.formulog.validating.ast;
  * #L%
  */
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import edu.harvard.seas.pl.formulog.Configuration;
-import edu.harvard.seas.pl.formulog.ast.AbstractRule;
-import edu.harvard.seas.pl.formulog.ast.BindingType;
-import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
+import edu.harvard.seas.pl.formulog.ast.*;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralExnVisitor;
-import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
-import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
-import edu.harvard.seas.pl.formulog.ast.Constructor;
-import edu.harvard.seas.pl.formulog.ast.FormulaRewriter;
-import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory;
-import edu.harvard.seas.pl.formulog.ast.Term;
-import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
-import edu.harvard.seas.pl.formulog.ast.UserPredicate;
-import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 import edu.harvard.seas.pl.formulog.validating.ValidRule;
+
+import java.util.*;
 
 public class SimpleRule extends AbstractRule<SimplePredicate, SimpleLiteral> {
 
@@ -77,47 +62,6 @@ public class SimpleRule extends AbstractRule<SimplePredicate, SimpleLiteral> {
 
     private SimpleRule(SimplePredicate head, List<SimpleLiteral> body) {
         super(head, body);
-    }
-
-    private static SimpleLiteral rewriteFormulas(SimpleLiteral lit, FormulaRewriter fr) {
-        return lit.accept(new SimpleLiteralVisitor<Void, SimpleLiteral>() {
-
-            @Override
-            public SimpleLiteral visit(Assignment assignment, Void input) {
-                Term newVal = fr.rewrite(assignment.getVal(), false);
-                return Assignment.make(assignment.getDef(), newVal);
-            }
-
-            @Override
-            public SimpleLiteral visit(Check check, Void input) {
-                Term newLhs = fr.rewrite(check.getLhs(), false);
-                Term newRhs = fr.rewrite(check.getRhs(), false);
-                return Check.make(newLhs, newRhs, check.isNegated());
-            }
-
-            @Override
-            public SimpleLiteral visit(Destructor destructor, Void input) {
-                Term newScrutinee = fr.rewrite(destructor.getScrutinee(), false);
-                ConstructorSymbol sym = destructor.getSymbol();
-                Var[] bindings = destructor.getBindings();
-                if (sym == BuiltInConstructorSymbol.ENTER_FORMULA || sym == BuiltInConstructorSymbol.EXIT_FORMULA) {
-                    assert bindings.length == 1;
-                    return Assignment.make(bindings[0], newScrutinee);
-                }
-                return Destructor.make(newScrutinee, sym, bindings);
-            }
-
-            @Override
-            public SimpleLiteral visit(SimplePredicate pred, Void input) {
-                Term[] args = pred.getArgs();
-                Term[] newArgs = new Term[args.length];
-                for (int i = 0; i < args.length; ++i) {
-                    newArgs[i] = fr.rewrite(args[i], false);
-                }
-                return SimplePredicate.make(pred.getSymbol(), newArgs, pred.getBindingPattern(), pred.isNegated());
-            }
-
-        }, null);
     }
 
     private static BindingType[] computeBindingPattern(Term[] args, Set<Var> boundVars, Map<Var, Integer> counts) {

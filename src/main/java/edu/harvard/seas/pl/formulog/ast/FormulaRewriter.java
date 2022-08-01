@@ -20,13 +20,10 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-import java.util.*;
-
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
-import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInConstructorSymbolBase;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.Param;
@@ -35,13 +32,13 @@ import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedConstruct
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.Types;
 import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
-import edu.harvard.seas.pl.formulog.unification.Substitution;
+
+import java.util.*;
 
 public class FormulaRewriter {
 
     private final FunctionCallFactory funcFactory;
     private final Map<Var, Types.Type> env;
-    private boolean inFormula;
 
     public FormulaRewriter(FunctionCallFactory funcFactory, Map<Var, Types.Type> env) {
         this.funcFactory = funcFactory;
@@ -49,57 +46,37 @@ public class FormulaRewriter {
     }
 
     public Term rewrite(Term t) {
-        return rewrite(t, false, false);
+        return t.accept(termRewriter, false);
     }
 
-    public Term rewrite(Term t, boolean inPattern) {
-        return rewrite(t, inPattern, false);
-    }
+    private final TermVisitor<Boolean, Term> termRewriter = new TermVisitor<>() {
 
-    public Term rewrite(Term t, boolean inPattern, boolean inFormula) {
-        this.inFormula = inFormula;
-        return t.accept(termRewriter, inPattern);
-    }
-
-    private final TermVisitor<Boolean, Term> termRewriter = new TermVisitor<Boolean, Term>() {
-
-        private Term handleBuiltInConstructor(Constructor ctor, boolean inPattern) {
+        private Term handleBuiltInConstructor(Constructor ctor, boolean inFormula) {
             BuiltInConstructorSymbol sym = (BuiltInConstructorSymbol) ctor.getSymbol();
             Term[] args = ctor.getArgs();
             Term[] newArgs = new Term[args.length];
             switch (sym) {
                 case ENTER_FORMULA: {
-                    boolean wasInFormula = inFormula;
-                    inFormula = true;
-                    Term t = args[0].accept(this, inPattern);
-                    inFormula = wasInFormula;
-                    return t;
+                    return args[0].accept(this, true);
                 }
                 case EXIT_FORMULA: {
-                    boolean wasInFormula = inFormula;
-                    inFormula = false;
-                    Term arg = args[0].accept(this, inPattern);
-                    inFormula = wasInFormula;
-                    return arg;
+                    return args[0].accept(this, false);
                 }
                 case INT_CONST:
                 case INT_BIG_CONST: {
                     assert args.length == 1;
-                    boolean wasInFormula = inFormula;
-                    inFormula = false;
-                    newArgs[0] = args[0].accept(this, inPattern);
-                    inFormula = wasInFormula;
+                    newArgs[0] = args[0].accept(this, false);
                 }
                 break;
                 default:
                     for (int i = 0; i < args.length; ++i) {
-                        newArgs[i] = args[i].accept(this, inPattern);
+                        newArgs[i] = args[i].accept(this, inFormula);
                     }
             }
             return ctor.copyWithNewArgs(newArgs);
         }
 
-        private Term handleParameterizedConstructor(Constructor ctor, boolean inPattern) {
+        private Term handleParameterizedConstructor(Constructor ctor, boolean inFormula) {
             ParameterizedConstructorSymbol sym = (ParameterizedConstructorSymbol) ctor.getSymbol();
             Term[] args = ctor.getArgs();
             Term[] newArgs = new Term[args.length];
@@ -109,32 +86,26 @@ public class FormulaRewriter {
                 case FP_CONST:
                 case FP_BIG_CONST: {
                     assert args.length == 1;
-                    boolean wasInFormula = inFormula;
-                    inFormula = false;
-                    newArgs[0] = args[0].accept(this, inPattern);
-                    inFormula = wasInFormula;
+                    newArgs[0] = args[0].accept(this, false);
                 }
                 break;
                 case BV_EXTRACT: {
                     assert args.length == 3;
-                    newArgs[0] = args[0].accept(this, inPattern);
-                    boolean wasInFormula = inFormula;
-                    inFormula = false;
-                    newArgs[1] = args[1].accept(this, inPattern);
-                    newArgs[2] = args[2].accept(this, inPattern);
-                    inFormula = wasInFormula;
+                    newArgs[0] = args[0].accept(this, inFormula);
+                    newArgs[1] = args[1].accept(this, false);
+                    newArgs[2] = args[2].accept(this, false);
                 }
                 break;
                 default:
                     for (int i = 0; i < args.length; ++i) {
-                        newArgs[i] = args[i].accept(this, inPattern);
+                        newArgs[i] = args[i].accept(this, inFormula);
                     }
             }
             return ctor.copyWithNewArgs(newArgs);
         }
 
         @Override
-        public Term visit(Var x, Boolean inPattern) {
+        public Term visit(Var x, Boolean inFormula) {
             if (inFormula) {
                 Types.Type ty = env.get(x);
                 assert ty != null;
@@ -145,7 +116,6 @@ public class FormulaRewriter {
         }
 
         private Term lift(Term t, Types.Type ty) {
-            assert inFormula;
             BuiltInConstructorSymbolBase base;
             List<Param> params = new ArrayList<>();
             if (ty.equals(BuiltInTypes.i32)) {
@@ -170,67 +140,47 @@ public class FormulaRewriter {
         }
 
         @Override
-        public Term visit(Constructor ctor, Boolean inPattern) {
+        public Term visit(Constructor ctor, Boolean inFormula) {
             ConstructorSymbol sym = ctor.getSymbol();
             if (sym instanceof BuiltInConstructorSymbol) {
-                return handleBuiltInConstructor(ctor, inPattern);
+                return handleBuiltInConstructor(ctor, inFormula);
             } else if (sym instanceof ParameterizedConstructorSymbol) {
-                return handleParameterizedConstructor(ctor, inPattern);
+                return handleParameterizedConstructor(ctor, inFormula);
             }
 
             Term[] args = ctor.getArgs();
             Term[] newArgs = new Term[args.length];
             for (int i = 0; i < args.length; ++i) {
-                newArgs[i] = args[i].accept(this, inPattern);
+                newArgs[i] = args[i].accept(this, inFormula);
             }
             return ctor.copyWithNewArgs(newArgs);
         }
 
         @Override
-        public Term visit(Primitive<?> p, Boolean inPattern) {
+        public Term visit(Primitive<?> p, Boolean inFormula) {
             if (!inFormula) {
                 return p;
             }
-            BuiltInConstructorSymbolBase base;
-            List<Param> params = new ArrayList<>();
-            if (p instanceof I32) {
-                base = BuiltInConstructorSymbolBase.BV_CONST;
-                params.add(new Param(TypeIndex.make(32), ParamKind.NAT));
-            } else if (p instanceof I64) {
-                base = BuiltInConstructorSymbolBase.BV_BIG_CONST;
-                params.add(new Param(TypeIndex.make(64), ParamKind.NAT));
-            } else if (p instanceof FP32) {
-                base = BuiltInConstructorSymbolBase.FP_CONST;
-                params.add(new Param(TypeIndex.make(8), ParamKind.NAT));
-                params.add(new Param(TypeIndex.make(24), ParamKind.NAT));
-            } else if (p instanceof FP64) {
-                base = BuiltInConstructorSymbolBase.FP_BIG_CONST;
-                params.add(new Param(TypeIndex.make(11), ParamKind.NAT));
-                params.add(new Param(TypeIndex.make(53), ParamKind.NAT));
-            } else {
-                return p;
-            }
-            ConstructorSymbol sym = ParameterizedConstructorSymbol.mk(base, params);
-            return Constructors.make(sym, Terms.singletonArray(p));
+            return lift(p, p.getType());
         }
 
         @Override
-        public Term visit(Expr e, Boolean inPattern) {
-            assert !inPattern;
+        public Term visit(Expr e, Boolean inFormula) {
+            assert !inFormula || (e instanceof FunctionCall && ((FunctionCall) e).getArgs().length == 0);
             return e.accept(exprRewriter, null);
         }
 
     };
 
-    private final ExprVisitor<Void, Term> exprRewriter = new ExprVisitor<Void, Term>() {
+    private final ExprVisitor<Void, Term> exprRewriter = new ExprVisitor<>() {
 
         @Override
         public Term visit(MatchExpr matchExpr, Void in) {
-            Term newScrutinee = matchExpr.getMatchee().accept(termRewriter, false);
+            Term newScrutinee = rewrite(matchExpr.getMatchee());
             List<MatchClause> newClauses = new ArrayList<>();
             for (MatchClause cl : matchExpr) {
-                Term newLhs = cl.getLhs().accept(termRewriter, true);
-                Term newRhs = cl.getRhs().accept(termRewriter, false);
+                Term newLhs = rewrite(cl.getLhs());
+                Term newRhs = rewrite(cl.getRhs());
                 newClauses.add(MatchClause.make(newLhs, newRhs));
             }
             return MatchExpr.make(newScrutinee, newClauses);
@@ -241,7 +191,7 @@ public class FormulaRewriter {
             Term[] args = funcCall.getArgs();
             Term[] newArgs = new Term[args.length];
             for (int i = 0; i < args.length; ++i) {
-                newArgs[i] = args[i].accept(termRewriter, false);
+                newArgs[i] = rewrite(args[i]);
             }
             return funcCall.copyWithNewArgs(newArgs);
         }
@@ -251,9 +201,9 @@ public class FormulaRewriter {
             Set<NestedFunctionDef> newDefs = new HashSet<>();
             for (NestedFunctionDef def : funcDefs.getDefs()) {
                 newDefs.add(NestedFunctionDef.make(def.getSymbol(), def.getParams(),
-                        def.getBody().accept(termRewriter, false)));
+                        rewrite(def.getBody())));
             }
-            Term newBody = funcDefs.getLetBody().accept(termRewriter, false);
+            Term newBody = rewrite(funcDefs.getLetBody());
             return LetFunExpr.make(newDefs, newBody);
         }
 
@@ -262,7 +212,7 @@ public class FormulaRewriter {
             Term[] args = fold.getArgs();
             Term[] newArgs = new Term[args.length];
             for (int i = 0; i < args.length; ++i) {
-                newArgs[i] = args[i].accept(termRewriter, false);
+                newArgs[i] = rewrite(args[i]);
             }
             return Fold.mk(fold.getFunction(), newArgs, funcFactory);
         }
