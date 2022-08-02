@@ -1,4 +1,4 @@
-package edu.harvard.seas.pl.formulog.ast;
+package edu.harvard.seas.pl.formulog.types;
 
 /*-
  * #%L
@@ -20,6 +20,7 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
+import edu.harvard.seas.pl.formulog.ast.*;
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
@@ -29,8 +30,6 @@ import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInConstructorSymb
 import edu.harvard.seas.pl.formulog.symbols.parameterized.Param;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParamKind;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedConstructorSymbol;
-import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
-import edu.harvard.seas.pl.formulog.types.Types;
 import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
 
 import java.util.*;
