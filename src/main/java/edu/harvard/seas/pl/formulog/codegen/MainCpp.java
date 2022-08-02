@@ -24,6 +24,7 @@ import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.codegen.ast.cpp.*;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
+import edu.harvard.seas.pl.formulog.smt.PushPopSolver;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.unification.EmptySubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
@@ -89,6 +90,7 @@ public class MainCpp extends TemplateSrcFile {
 
         public void loadExplicitFacts() throws CodeGenException {
             var prog = ctx.getProgram();
+            prog.getFunctionCallFactory().getDefManager().loadBuiltInFunctions(new PushPopSolver());
             for (RelationSymbol sym : prog.getFactSymbols()) {
                 for (Term[] tup : prog.getFacts(sym)) {
                     loadExplicitFact(sym, tup);
