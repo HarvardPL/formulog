@@ -71,7 +71,7 @@ public class CodeGen {
         new TermCpp(ctx).gen(outDir);
         copySrc("Tuple.hpp");
         copySrc("parser.hpp");
-        new ParserCpp(ctx).gen(outDir);
+        copySrc("parser.cpp");
         //new RulesMk().print(outDir);
         new SymbolHpp(ctx).gen(outDir);
         new SymbolCpp(ctx).gen(outDir);

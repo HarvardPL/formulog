@@ -232,27 +232,89 @@ term_ptr is_sat_opt(term_ptr t1, term_ptr t2) {
     __builtin_unreachable();
 }
 
-term_ptr _relation_contains(const std::string &relname, const std::vector<term_ptr> &key) {
-    auto rel = globals::program->getRelation(relname);
-    assert(rel);
-    size_t arity = rel->getPrimaryArity();
-    assert(arity == key.size());
-    std::vector<souffle::RamDomain> intKey{arity};
+std::vector<souffle::RamDomain> make_int_key(std::vector<term_ptr> key) {
+    unsigned arity = key.size();
+    std::vector<souffle::RamDomain> intKey(arity);
     for (unsigned i = 0; i < arity; ++i) {
         if (key[i]) {
             intKey[i] = key[i]->intize();
         }
     }
+    return intKey;
+}
+
+term_ptr _relation_contains(const std::string &relname, const std::vector<term_ptr> &key) {
+    auto rel = globals::program->getRelation(relname);
+    assert(rel);
+    size_t arity = rel->getPrimaryArity();
+    assert(arity == key.size());
+    std::vector<souffle::RamDomain> intKey = make_int_key(key);
     for (auto &tup: *rel) {
-        bool found = true;
+        bool match = true;
         for (unsigned i = 0; i < arity; ++i) {
-            found &= !key[i] || intKey[i] == tup[i];
+            match &= !key[i] || intKey[i] == tup[i];
         }
-        if (found) {
+        if (match) {
             return Term::make(true);
         }
     }
     return Term::make(false);
+}
+
+term_ptr vec_to_term_list(const std::vector<term_ptr> &v) {
+    term_ptr acc = Term::make<Symbol::nil>();
+    for (auto it = v.rbegin(); it != v.rend(); ++it) {
+        acc = Term::make<Symbol::cons>(*it, acc);
+    }
+    return acc;
+}
+
+term_ptr _relation_agg_mono(const std::string &relname, const std::vector<term_ptr> &key, unsigned pos) {
+    auto rel = globals::program->getRelation(relname);
+    assert(rel);
+    size_t arity = rel->getPrimaryArity();
+    assert(arity == key.size());
+    assert(pos < arity);
+    std::vector<souffle::RamDomain> intKey = make_int_key(key);
+    std::vector<term_ptr> v;
+    for (auto &tup: *rel) {
+        bool match = true;
+        for (unsigned i = 0; i < arity; ++i) {
+            match &= !key[i] || intKey[i] == tup[i];
+        }
+        if (match) {
+            v.push_back(Term::unintize(tup[pos]));
+        }
+    }
+    return vec_to_term_list(v);
+}
+
+template<Symbol S>
+term_ptr
+_relation_agg_poly(const std::string &relname, const std::vector<term_ptr> &key, const std::vector<bool> &projection) {
+    auto rel = globals::program->getRelation(relname);
+    assert(rel);
+    size_t arity = rel->getPrimaryArity();
+    assert(arity == key.size());
+    assert(projection.size() == arity);
+    std::vector<souffle::RamDomain> intKey = make_int_key(key);
+    std::vector<term_ptr> v;
+    for (auto &tup: *rel) {
+        bool match = true;
+        for (unsigned i = 0; i < arity; ++i) {
+            match &= !key[i] || intKey[i] == tup[i];
+        }
+        if (match) {
+            std::vector<term_ptr> args;
+            for (unsigned i = 0; i < arity; ++i) {
+                if (projection[i]) {
+                    args.push_back(Term::unintize(tup[i]));
+                }
+            }
+            v.push_back(Term::make_generic(S, args));
+        }
+    }
+    return vec_to_term_list(v);
 }
 /* INSERT 0 */
 

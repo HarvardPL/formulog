@@ -223,15 +223,37 @@ template <Symbol S> class ComplexTermCache {
       // Term was not successfully inserted
       delete ptr;
     }
-    return result.first->second;
+      return result.first->second;
   }
 };
 
-template <Symbol S, typename... T>
+template<Symbol S, typename... T>
 term_ptr Term::make(T... val) {
-  return ComplexTermCache<S>::get(val...);
+    return ComplexTermCache<S>::get(val...);
 }
 
 /* INSERT 0 */
+
+term_ptr Term::make_generic(Symbol sym, const vector<term_ptr> &terms) {
+    if (symbol_arity(sym) != terms.size()) {
+        string message = "Expected arity ";
+        message += to_string(symbol_arity(sym));
+        message += " for symbol (ID ";
+        message += to_string(static_cast<int>(sym));
+        message += "), got arity ";
+        message += to_string(terms.size());
+        throw std::runtime_error(message);
+    }
+    switch (sym) {
+/* INSERT 1 */
+        default:
+            throw std::runtime_error(
+                    "Invalid symbol (ID " +
+                    to_string(static_cast<int>(sym)) +
+                    ") used to construct term"
+            );
+    }
+}
+
 
 }

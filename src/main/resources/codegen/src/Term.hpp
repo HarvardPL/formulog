@@ -86,6 +86,8 @@ struct Term {
         return it->second;
     }
 
+    static term_ptr make_generic(Symbol sym, const vector<term_ptr> &terms);
+
 protected:
     Term(Symbol sym_) : sym{sym_} {}
 

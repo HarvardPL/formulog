@@ -38,6 +38,8 @@ public class TermCpp extends TemplateSrcFile {
         Worker w = new Worker(out);
         CodeGenUtil.copyOver(br, out, 0);
         w.declareExplicitTemplateInstantiations();
+        CodeGenUtil.copyOver(br, out, 1);
+        w.declareMakeGenericCases();
         CodeGenUtil.copyOver(br, out, -1);
     }
 
@@ -59,6 +61,18 @@ public class TermCpp extends TemplateSrcFile {
                     out.print(", " + args);
                 }
                 out.println(">(" + args + ");");
+            }
+        }
+
+        void declareMakeGenericCases() {
+            for (ConstructorSymbol sym : symbols) {
+                String symName = ctx.lookupRepr(sym);
+                int arity = sym.getArity();
+                String[] args = new String[arity];
+                for (int i = 0; i < arity; i++)
+                    args[i] = "terms[" + i + "]";
+                out.printf("    case %s:\n", symName);
+                out.printf("      return Term::make<%s>(%s);\n", symName, String.join(", ", args));
             }
         }
 

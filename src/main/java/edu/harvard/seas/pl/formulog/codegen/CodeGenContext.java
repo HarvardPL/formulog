@@ -20,29 +20,10 @@ package edu.harvard.seas.pl.formulog.codegen;
  * #L%
  */
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-
-
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SFunctorBody;
 import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SIntListType;
-import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
-import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb.IndexInfo;
-import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
-import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
-import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
-import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
-import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
-import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
-import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
+import edu.harvard.seas.pl.formulog.symbols.*;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.SymbolBase;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
@@ -50,13 +31,15 @@ import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType.ConstructorSch
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
 
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class CodeGenContext {
 
     private final Map<ConstructorSymbol, String> ctorSymToRepr = new HashMap<>();
     private final Map<FunctionSymbol, String> funcSymToRepr = new HashMap<>();
     private final Map<SymbolBase, AtomicInteger> cnts = new HashMap<>();
-    private final Map<RelationSymbol, Relation> rels = new HashMap<>();
-    private final Set<RelationStruct> relStructs = new HashSet<>();
     private final AtomicInteger id = new AtomicInteger();
     private final Map<String, SFunctorBody> functorBody = new ConcurrentHashMap<>();
     private final Map<String, AtomicInteger> funcSuffixMemo = new ConcurrentHashMap<>();
@@ -69,24 +52,8 @@ public class CodeGenContext {
         new Worker().go();
     }
 
-    /*
-    public Relation lookupRelation(RelationSymbol sym) {
-        Relation rel = rels.get(sym);
-        assert rel != null : sym;
-        return rel;
-    }
-     */
-
     public BasicProgram getProgram() {
         return prog;
-    }
-
-    public Set<RelationStruct> getRelationStructs() {
-        return Collections.unmodifiableSet(relStructs);
-    }
-
-    public Set<RelationSymbol> getRelationSymbols() {
-        return Collections.unmodifiableSet(rels.keySet());
     }
 
     public Set<ConstructorSymbol> getConstructorSymbols() {
@@ -170,40 +137,6 @@ public class CodeGenContext {
                 lookupRepr(sym);
             }
         }
-
-        /*
-        private void processRelations(SortedIndexedFactDb db) {
-            for (Iterator<RelationSymbol> it = db.getSymbols().iterator(); it.hasNext(); ) {
-                processRelation(db, it.next());
-            }
-        }
-
-        private void processRelation(SortedIndexedFactDb db, RelationSymbol sym) {
-            RelationStruct struct = new BTreeRelationStruct(sym.getArity(), db.getMasterIndex(sym),
-                    mkIndexInfo(sym, db));
-            relStructs.add(struct);
-            if (db == deltaDb) {
-                registerRelation(struct, new DeltaSymbol(sym));
-                registerRelation(struct, new NewSymbol(sym));
-            } else {
-                registerRelation(struct, sym);
-            }
-        }
-
-        private void registerRelation(RelationStruct struct, RelationSymbol sym) {
-            Relation rel = struct.mkRelation(sym);
-            rels.put(sym, rel);
-        }
-
-        private Map<Integer, IndexInfo> mkIndexInfo(RelationSymbol sym, SortedIndexedFactDb db) {
-            Map<Integer, IndexInfo> m = new HashMap<>();
-            int n = db.numIndices(sym);
-            for (int i = 0; i < n; ++i) {
-                m.put(i, db.getIndexInfo(sym, i));
-            }
-            return m;
-        }
-        */
 
         private void processTypes(Set<TypeSymbol> typeSymbols) {
             for (TypeSymbol sym : typeSymbols) {

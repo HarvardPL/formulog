@@ -15,27 +15,6 @@ namespace parser {
 
 using boost::optional;
 
-term_ptr construct_generic_term(Symbol sym, const vector<term_ptr> &terms) {
-    if (symbol_arity(sym) != terms.size()) {
-        string message = "Expected arity ";
-        message += to_string(symbol_arity(sym));
-        message += " for symbol (ID ";
-        message += to_string(static_cast<int>(sym));
-        message += "), got arity ";
-        message += to_string(terms.size());
-        throw parsing_error(message);
-    }
-    switch (sym) {
-/* INSERT 0 */
-        default:
-            throw parsing_error(
-                    "Invalid symbol (ID " +
-                    to_string(static_cast<int>(sym)) +
-                    ") used to construct term"
-            );
-    }
-}
-
 // A class that represents the intermediate parsing state of a term
 class TermParser {
     const string &buffer;
@@ -92,7 +71,7 @@ inline optional<smatch> TermParser::take_regex(const regex &rgx) {
         pos += m.length();
         return m;
     }
-    return optional<smatch>();
+    return {};
 }
 
 inline char TermParser::peek() {
@@ -167,7 +146,7 @@ inline term_ptr TermParser::take_tuple_or_parens() {
     }
     // Tuple case
     auto sym = lookup_tuple_symbol(terms.size());
-    return construct_generic_term(sym, terms);
+    return Term::make_generic(sym, terms);
 }
 
 inline term_ptr TermParser::take_list() {
@@ -240,7 +219,7 @@ inline term_ptr TermParser::take_constructor() {
         }
         ++pos;
     }
-    return construct_generic_term(sym, terms);
+    return Term::make_generic(sym, terms);
 }
 
 inline term_ptr TermParser::take_string() {

@@ -22,7 +22,6 @@ package edu.harvard.seas.pl.formulog.codegen;
 
 
 import edu.harvard.seas.pl.formulog.ast.BindingType;
-import edu.harvard.seas.pl.formulog.ast.Literal;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.codegen.ast.cpp.*;
@@ -381,21 +380,16 @@ public class FuncsHpp extends TemplateSrcFile {
             out.print("term_ptr " + ctx.lookupRepr(funcSym) + "(");
             RelationSymbol predSym = funcSym.getPredicateSymbol();
             int n = predSym.getArity();
-            //Term[] args = new Term[n];
             BindingType[] bindings = funcSym.getBindings();
             int j = 0;
-            int nbound = nbound(bindings);
-            int nret = 0;
-            // Map<Var, CppExpr> env = new HashMap<>();
+            int nbound = numBound(bindings);
+            List<Integer> free = new ArrayList<>();
             CppVar[] args = new CppVar[bindings.length];
             for (int i = 0; i < n; ++i) {
-                //Var x = Var.fresh();
-                //args[i] = x;
                 if (bindings[i].isBound()) {
                     String id = ctx.newId("x");
                     CppVar var = CppVar.mk(id);
                     args[i] = var;
-                    //env.put(x, var);
                     out.print("term_ptr ");
                     var.print(out);
                     if (j < nbound - 1) {
@@ -403,43 +397,57 @@ public class FuncsHpp extends TemplateSrcFile {
                     }
                     j++;
                 } else if (bindings[i].isFree()) {
-                    nret++;
+                    free.add(i);
                 }
             }
             out.println(") ");
             Pair<CppStmt, CppExpr> p;
-            if (nret == 0) {
+            if (free.isEmpty()) {
                 p = genRelationContains(predSym, args);
+            } else if (free.size() == 1) {
+                p = genRelationAggMono(predSym, args, free.get(0));
             } else {
-                // TODO
-                throw new UnsupportedOperationException("aggregates");
+                p = genRelationAggPoly(predSym, args, free);
             }
             CppStmt ret = CppReturn.mk(p.snd());
             CppBlock.mk(CppSeq.mk(p.fst(), ret)).println(out, 0);
-            /*
-            System.out.println(funcSym.getCompileTimeType());
-            System.out.println(Arrays.toString(bindings));
-            PredicateFunctionDef def = getDef(funcSym);
-            BindingType[] bindingsForIndex = def.getBindingsForIndex();
-            System.out.println(Arrays.toString(bindingsForIndex));
-             */
-            /*
-            SimplePredicate pred = SimplePredicate.make(predSym, args, bindingsForIndex, false);
-            int index = def.getIndex();
-            Result res = lcg.gen(pred, index, false, env);
-            if (res.getCodeShape() == CodeShape.LOOKUP) {
-                genLookup(res).println(out, 1);
-            } else {
-                pred = SimplePredicate.make(predSym, args, funcSym.getBindings(), false);
-                genLoop(pred, res).println(out, 1);
+        }
+
+        private CppExpr mkArgsVec(CppVar[] args) {
+            var cppArgs = Arrays.stream(args).map(x -> x == null ? CppNullptr.INSTANCE : x).collect(Collectors.toList());
+            return CppVectorLiteral.mk(cppArgs);
+        }
+
+        private Pair<CppStmt, CppExpr> genRelationAggMono(RelationSymbol predSym, CppVar[] args, int pos) {
+            CppExpr name = CppConst.mkString(ctx.lookupRepr(predSym));
+            CppExpr vec = mkArgsVec(args);
+            CppExpr call = CppFuncCall.mk("_relation_agg_mono", name, vec, CppConst.mkInt(pos));
+            return new Pair<>(CppSeq.skip(), call);
+        }
+
+        private Pair<CppStmt, CppExpr> genRelationAggPoly(RelationSymbol predSym, CppVar[] args, List<Integer> free) {
+            CppExpr name = CppConst.mkString(ctx.lookupRepr(predSym));
+            CppExpr vec = mkArgsVec(args);
+            List<CppExpr> projection = new ArrayList<>();
+            int pos = 0;
+            for (int i = 0; i < predSym.getArity(); ++i) {
+                if (i == free.get(pos)) {
+                    projection.add(CppConst.mkTrue());
+                    pos++;
+                } else {
+                    projection.add(CppConst.mkFalse());
+                }
             }
-             */
+            assert pos == free.size();
+            ConstructorSymbol tupleSym = GlobalSymbolManager.lookupTupleSymbol(free.size());
+            String funcName = "_relation_agg_poly<" + ctx.lookupRepr(tupleSym) + ">";
+            CppExpr call = CppFuncCall.mk(funcName, name, vec, CppVectorLiteral.mk(projection));
+            return new Pair<>(CppSeq.skip(), call);
         }
 
         private Pair<CppStmt, CppExpr> genRelationContains(RelationSymbol predSym, CppVar[] args) {
             CppExpr name = CppConst.mkString(ctx.lookupRepr(predSym));
-            var cppArgs = Arrays.stream(args).map(x -> x == null ? CppNullptr.INSTANCE : x).collect(Collectors.toList());
-            CppExpr vec = CppVectorLiteral.mk(cppArgs);
+            CppExpr vec = mkArgsVec(args);
             CppExpr call = CppFuncCall.mk("_relation_contains", name, vec);
             return new Pair<>(CppSeq.skip(), call);
         }
@@ -451,51 +459,7 @@ public class FuncsHpp extends TemplateSrcFile {
             return def;
         }
 
-        /*
-        private CppStmt genLookup(Result res) {
-            assert res.getCodeShape() == CodeShape.LOOKUP;
-            CppStmt ifTrue = res.getK().apply(CppReturn.mk(CppFuncCall.mk("Term::make<bool>", CppConst.mkTrue())));
-            return CppSeq.mk(ifTrue, CppReturn.mk(CppFuncCall.mk("Term::make<bool>", CppConst.mkFalse())));
-        }
-
-        private CppStmt genLoop(SimplePredicate pred, Result res) {
-            assert res.getCodeShape() == CodeShape.LOOP;
-            List<CppStmt> acc = new ArrayList<>();
-            String listId = ctx.newId("list");
-            CppExpr nil = tcg.mkComplex(acc, BuiltInConstructorSymbol.NIL);
-            acc.add(CppDecl.mk(listId, nil));
-            CppVar list = CppVar.mk(listId);
-            CppStmt loopBody = genLoopBody(pred, res, list);
-            acc.add(res.getK().apply(CppSeq.mk(loopBody)));
-            acc.add(CppReturn.mk(list));
-            return CppSeq.mk(acc);
-        }
-
-        private CppStmt genLoopBody(SimplePredicate pred, Result res, CppVar list) {
-            List<CppStmt> body = new ArrayList<>();
-            List<CppExpr> cols = tcg.gen(body, getFreeArgs(pred), res.getNewEnv());
-            CppExpr tuple = genTuple(cols, body);
-            CppExpr cons = tcg.mkComplex(body, BuiltInConstructorSymbol.CONS, tuple, list);
-            body.add(CppBinop.mkAssign(list, cons).toStmt());
-            return CppSeq.mk(body);
-        }
-
-
-        private CppExpr genTuple(List<CppExpr> args, List<CppStmt> acc) {
-            int n = args.size();
-            if (n == 1) {
-                return args.get(0);
-            } else {
-                ConstructorSymbol sym = GlobalSymbolManager.lookupTupleSymbol(n);
-                CppExpr tuple = tcg.mkComplex(acc, sym, args);
-                String id = ctx.newId("t");
-                acc.add(CppDecl.mk(id, tuple));
-                return CppVar.mk(id);
-            }
-        }
-         */
-
-        private int nbound(BindingType[] bindings) {
+        private int numBound(BindingType[] bindings) {
             int n = 0;
             for (BindingType binding : bindings) {
                 if (binding.isBound()) {
@@ -503,19 +467,6 @@ public class FuncsHpp extends TemplateSrcFile {
                 }
             }
             return n;
-        }
-
-        private List<Term> getFreeArgs(SimplePredicate pred) {
-            Term[] args = pred.getArgs();
-            List<Term> freeArgs = new ArrayList<>();
-            int i = 0;
-            for (BindingType binding : pred.getBindingPattern()) {
-                if (binding.isFree()) {
-                    freeArgs.add(args[i]);
-                }
-                i++;
-            }
-            return freeArgs;
         }
 
     }

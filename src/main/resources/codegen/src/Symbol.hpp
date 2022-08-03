@@ -17,8 +17,8 @@ enum class Symbol {
     boxed_fp64,
     boxed_string,
 #ifdef FLG_DEV
-    enter_formula,
-    exit_formula,
+    nil,
+    cons,
 #endif
 /* INSERT 0 */
 };
