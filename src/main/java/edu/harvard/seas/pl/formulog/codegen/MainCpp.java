@@ -22,14 +22,11 @@ package edu.harvard.seas.pl.formulog.codegen;
 
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.codegen.ast.cpp.*;
-import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.smt.PushPopSolver;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
-import edu.harvard.seas.pl.formulog.unification.EmptySubstitution;
-import edu.harvard.seas.pl.formulog.unification.Substitution;
+import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.util.Pair;
-import edu.harvard.seas.pl.formulog.validating.Stratum;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -50,7 +47,7 @@ public class MainCpp extends TemplateSrcFile {
         CodeGenUtil.copyOver(br, out, 0);
         pr.loadExternalEdbs();
         CodeGenUtil.copyOver(br, out, 1);
-        pr.loadExplicitFacts();
+        pr.loadStaticFacts();
         /*
         CodeGenUtil.copyOver(br, out, 2);
         pr.printStratumFuncs();
@@ -88,23 +85,23 @@ public class MainCpp extends TemplateSrcFile {
             call.toStmt().println(out, 1);
         }
 
-        public void loadExplicitFacts() throws CodeGenException {
+        public void loadStaticFacts() throws CodeGenException {
             var prog = ctx.getProgram();
             prog.getFunctionCallFactory().getDefManager().loadBuiltInFunctions(new PushPopSolver());
             for (RelationSymbol sym : prog.getFactSymbols()) {
                 for (Term[] tup : prog.getFacts(sym)) {
-                    loadExplicitFact(sym, tup);
+                    loadStaticFact(sym, tup);
                 }
             }
         }
 
-        public void loadExplicitFact(RelationSymbol sym, Term[] tup) throws CodeGenException {
+        public void loadStaticFact(RelationSymbol sym, Term[] tup) throws CodeGenException {
             List<CppExpr> args = new ArrayList<>();
             List<CppStmt> stmts = new ArrayList<>();
             TermCodeGen tcg = new TermCodeGen(ctx);
             for (Term t : tup) {
                 try {
-                    t = t.normalize(EmptySubstitution.INSTANCE);
+                    t = t.normalize(new SimpleSubstitution());
                 } catch (EvaluationException e) {
                     throw new CodeGenException("Could not normalize term occurring in fact: " + t);
                 }
