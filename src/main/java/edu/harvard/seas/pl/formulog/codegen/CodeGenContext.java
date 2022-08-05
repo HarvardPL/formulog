@@ -23,6 +23,7 @@ package edu.harvard.seas.pl.formulog.codegen;
 import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SFunctorBody;
 import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SIntListType;
+import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SRuleMode;
 import edu.harvard.seas.pl.formulog.symbols.*;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.SymbolBase;
@@ -45,7 +46,7 @@ public class CodeGenContext {
     private final Map<String, SFunctorBody> functorBody = new ConcurrentHashMap<>();
     private final Map<String, AtomicInteger> funcSuffixMemo = new ConcurrentHashMap<>();
     private final Set<SIntListType> souffleTypes = new HashSet<>();
-    private final Map<String, Integer> customRelations = new HashMap<>();
+    private final Map<String, Pair<Integer, SRuleMode>> customRelations = new HashMap<>();
 
     private final BasicProgram prog;
 
@@ -128,13 +129,14 @@ public class CodeGenContext {
         return Collections.unmodifiableSet(s);
     }
 
-    public Set<Pair<String, Integer>> getCustomRelations() {
+    public Set<Pair<String, Pair<Integer, SRuleMode>>> getCustomRelations() {
         return customRelations.entrySet().stream().map(e -> new Pair<>(e.getKey(), e.getValue())).collect(Collectors.toSet());
     }
 
-    public void registerCustomRelation(String name, Integer arity) {
-        Integer other = customRelations.put(name, arity);
-        assert other == null || other.equals(arity);
+    public void registerCustomRelation(String name, Integer arity, SRuleMode mode) {
+        var p = new Pair<>(arity, mode);
+        var other = customRelations.put(name, p);
+        assert other == null || other.equals(p);
     }
 
     private class Worker {

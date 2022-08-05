@@ -37,8 +37,8 @@ public class SouffleCodeGen {
      */
 
     private final CodeGenContext ctx;
-    private static final String non_existent_input = "impossible_inX";
-    private static final String non_existent_output = "impossible_outX";
+    private static final String non_existent_input = "CODEGEN_IMPOSSIBLE_IN";
+    private static final String non_existent_output = "CODEGEN_IMPOSSIBLE_OUT";
 
     public SouffleCodeGen(CodeGenContext ctx) {
         this.ctx = ctx;
@@ -73,6 +73,8 @@ public class SouffleCodeGen {
     }
 
     List<SRule> genRulesForRetainingInputRelations() {
+        ctx.registerCustomRelation(non_existent_input, 0, SRuleMode.INPUT);
+        ctx.registerCustomRelation(non_existent_output, 0, SRuleMode.OUTPUT);
         List<SRule> l = new ArrayList<>();
         SAtom head = new SAtom(non_existent_output, Collections.emptyList(), false);
         SAtom guard = new SAtom(non_existent_input, Collections.emptyList(), false);
@@ -106,25 +108,17 @@ public class SouffleCodeGen {
 
         public void declareRelations() {
             for (RelationSymbol sym : ctx.getProgram().getFactSymbols()) {
-                declareRelation(sym);
-                writer.print(".input ");
-                writer.println(ctx.lookupRepr(sym));
+                declareRelation(sym, SRuleMode.INPUT);
             }
             for (RelationSymbol sym : ctx.getProgram().getRuleSymbols()) {
-                declareRelation(sym);
-                writer.print(".output ");
-                writer.println(ctx.lookupRepr(sym));
+                declareRelation(sym, SRuleMode.OUTPUT);
             }
-            writer.println(".decl " + non_existent_input + "()");
-            writer.println(".input " + non_existent_input);
-            writer.println(".decl " + non_existent_output + "()");
-            writer.println(".output " + non_existent_output);
-            for (var e : ctx.getCustomRelations()) {
-                declareRelation(e.fst(), e.snd());
+            for (Pair<String, Pair<Integer, SRuleMode>> e : ctx.getCustomRelations()) {
+                declareRelation(e.fst(), e.snd().fst(), e.snd().snd());
             }
         }
 
-        private void declareRelation(String name, int arity) {
+        private void declareRelation(String name, int arity, SRuleMode mode) {
             writer.print(".decl ");
             writer.print(name);
             writer.print("(");
@@ -137,10 +131,21 @@ public class SouffleCodeGen {
                 }
             }
             writer.println(")");
+            switch (mode) {
+                case INPUT:
+                    writer.print(".input ");
+                    break;
+                case OUTPUT:
+                    writer.print(".output ");
+                    break;
+                case INTERMEDIATE:
+                    return;
+            }
+            writer.println(name);
         }
 
-        private void declareRelation(RelationSymbol sym) {
-            declareRelation(ctx.lookupRepr(sym), sym.getArity());
+        private void declareRelation(RelationSymbol sym, SRuleMode mode) {
+            declareRelation(ctx.lookupRepr(sym), sym.getArity(), mode);
         }
 
         public void declareFunctors() {

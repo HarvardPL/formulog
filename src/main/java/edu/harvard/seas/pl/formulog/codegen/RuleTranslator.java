@@ -159,8 +159,9 @@ public class RuleTranslator {
         }
 
         private String createProjectionSymbol(RelationSymbol sym, List<Boolean> projection) {
-            StringBuilder sb = new StringBuilder(ctx.lookupRepr(sym));
-            sb.append("PROJECT_");
+            StringBuilder sb = new StringBuilder();
+            sb.append("CODEGEN_PROJECT_");
+            sb.append(ctx.lookupRepr(sym));
             for (Boolean retain : projection) {
                 sb.append(retain ? "1" : "0");
             }
@@ -220,7 +221,7 @@ public class RuleTranslator {
             String projSym = createProjectionSymbol(sym, projection);
             SLit head = new SAtom(projSym, headArgs, false);
             SLit bodyAtom = new SAtom(ctx.lookupRepr(sym), bodyArgs, false);
-            ctx.registerCustomRelation(projSym, headArgs.size());
+            ctx.registerCustomRelation(projSym, headArgs.size(), SRuleMode.INTERMEDIATE);
             return new SRule(head, bodyAtom);
         }
     }

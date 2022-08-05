@@ -74,6 +74,9 @@ void evaluate() {
 void printResults(bool dump) {
     for (auto rel: globals::program->getOutputRelations()) {
         std::string name = rel->getName();
+        if (name.find("CODEGEN_") == 0) {
+            continue;
+        }
         name = name.substr(0, name.size() - 1);
         std::cout << name << ": " << rel->size() << std::endl;
         if (dump) {
