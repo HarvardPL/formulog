@@ -119,21 +119,28 @@ public class SouffleCodeGen {
             writer.println(".input " + non_existent_input);
             writer.println(".decl " + non_existent_output + "()");
             writer.println(".output " + non_existent_output);
+            for (var e : ctx.getCustomRelations()) {
+                declareRelation(e.fst(), e.snd());
+            }
         }
 
-        private void declareRelation(RelationSymbol sym) {
+        private void declareRelation(String name, int arity) {
             writer.print(".decl ");
-            writer.print(ctx.lookupRepr(sym));
+            writer.print(name);
             writer.print("(");
-            for (int i = 0; i < sym.getArity(); ++i) {
+            for (int i = 0; i < arity; ++i) {
                 writer.print("x");
                 writer.print(i);
                 writer.print(":number");
-                if (i < sym.getArity() - 1) {
+                if (i < arity - 1) {
                     writer.print(", ");
                 }
             }
             writer.println(")");
+        }
+
+        private void declareRelation(RelationSymbol sym) {
+            declareRelation(ctx.lookupRepr(sym), sym.getArity());
         }
 
         public void declareFunctors() {

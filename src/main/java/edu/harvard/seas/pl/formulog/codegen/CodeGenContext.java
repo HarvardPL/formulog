@@ -34,6 +34,7 @@ import edu.harvard.seas.pl.formulog.util.Util;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class CodeGenContext {
 
@@ -44,6 +45,7 @@ public class CodeGenContext {
     private final Map<String, SFunctorBody> functorBody = new ConcurrentHashMap<>();
     private final Map<String, AtomicInteger> funcSuffixMemo = new ConcurrentHashMap<>();
     private final Set<SIntListType> souffleTypes = new HashSet<>();
+    private final Map<String, Integer> customRelations = new HashMap<>();
 
     private final BasicProgram prog;
 
@@ -124,6 +126,15 @@ public class CodeGenContext {
             s.add(new Pair<>(e.getKey(), e.getValue()));
         }
         return Collections.unmodifiableSet(s);
+    }
+
+    public Set<Pair<String, Integer>> getCustomRelations() {
+        return customRelations.entrySet().stream().map(e -> new Pair<>(e.getKey(), e.getValue())).collect(Collectors.toSet());
+    }
+
+    public void registerCustomRelation(String name, Integer arity) {
+        Integer other = customRelations.put(name, arity);
+        assert other == null || other.equals(arity);
     }
 
     private class Worker {
