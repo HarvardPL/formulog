@@ -210,6 +210,28 @@ term_ptr substring(term_ptr str_term, term_ptr start_term, term_ptr len_term) {
     return _make_some(Term::make(str.substr(start, len)));
 }
 
+term_ptr string_to_i32(term_ptr str_term) {
+    auto str = str_term->as_base<string>().val;
+    static regex dec("[+-]?\\d+");
+    static regex hex("0x[0-9a-fA-F]+");
+    try {
+        if (regex_match(str, dec)) {
+            long r = stol(str);
+            if (r >= INT32_MIN && r <= INT32_MAX) {
+                return _make_some(Term::make((int32_t) r));
+            }
+        } else if (regex_match(str, hex)) {
+            unsigned long r = stoul(str, nullptr, 16);
+            if (r <= UINT32_MAX) {
+                return _make_some(Term::make((int32_t) r));
+            }
+        }
+    } catch (out_of_range &_) {
+        // fall through
+    }
+    return _make_none();
+}
+
 term_ptr to_string(term_ptr t1) {
     if (t1->sym == Symbol::boxed_string) {
         return t1;

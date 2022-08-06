@@ -351,6 +351,9 @@ public class FuncsHpp extends TemplateSrcFile {
                 case SUBSTRING:
                     ctx.register(sym, "substring");
                     break;
+                case stringToI32:
+                    ctx.register(sym, "string_to_i32");
+                    break;
                 default:
                     System.err.println("unhandled built-in function symbol: " + sym);
             }
