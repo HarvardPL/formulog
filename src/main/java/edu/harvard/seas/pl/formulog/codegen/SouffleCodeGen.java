@@ -1,9 +1,9 @@
 package edu.harvard.seas.pl.formulog.codegen;
 
-import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.codegen.ast.souffle.*;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
+import edu.harvard.seas.pl.formulog.validating.Stratum;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -15,38 +15,23 @@ import java.util.Collections;
 import java.util.List;
 
 public class SouffleCodeGen {
-    /*
-    TODO:
-    - [X] Define AST for terms
-    - [X] Output rules
-    - [ ] Output functions
-        - [ ] Output functor declarations (.h file)
-        - [ ] Output functors that Souffle calls (.cpp file)
-        - [ ] Output user-defined functors (.cpp file, namespace formulog::functions::)
-    - [ ] Output main file
-        - [ ] Load program
-        - [ ] Intize constants
-        - [ ] Load relations
-        - [ ] Run program
-     - [ ] Add standard library functions
-        - [ ] SMT stuff
-
-     TODO later:
-     - [ ] Generate SMT ADT declarations
-     - [ ] Handle aggregates
-     */
 
     private final CodeGenContext ctx;
     private static final String non_existent_input = "CODEGEN_IMPOSSIBLE_IN";
     private static final String non_existent_output = "CODEGEN_IMPOSSIBLE_OUT";
+    private static final SAtom non_existent_input_atom = new SAtom(non_existent_input, Collections.emptyList(), false);
 
     public SouffleCodeGen(CodeGenContext ctx) {
         this.ctx = ctx;
     }
 
     public void gen(File directory) throws CodeGenException, IOException {
-        List<SRule> rules = new RuleTranslator(ctx).translate(ctx.getProgram());
-        rules.addAll(genRulesForRetainingInputRelations());
+        Pair<List<SRule>, List<Stratum>> p = new RuleTranslator(ctx).translate(ctx.getProgram());
+        var rules = p.fst();
+        ctx.registerCustomRelation(non_existent_input, 0, SRuleMode.INPUT);
+        ctx.registerCustomRelation(non_existent_output, 0, SRuleMode.OUTPUT);
+        rules.add(genRuleForRetainingInputRelations());
+        rules.addAll(genRulesForEnforcingStratification(p.snd()));
         File dlFile = directory.toPath().resolve(Path.of("src", "formulog.dl")).toFile();
         emitDlFile(dlFile, rules);
         new FunctorCodeGen(ctx).emitFunctors(directory);
@@ -72,21 +57,38 @@ public class SouffleCodeGen {
         writer.close();
     }
 
-    List<SRule> genRulesForRetainingInputRelations() {
-        ctx.registerCustomRelation(non_existent_input, 0, SRuleMode.INPUT);
-        ctx.registerCustomRelation(non_existent_output, 0, SRuleMode.OUTPUT);
-        List<SRule> l = new ArrayList<>();
+    SRule genRuleForRetainingInputRelations() {
         SAtom head = new SAtom(non_existent_output, Collections.emptyList(), false);
-        SAtom guard = new SAtom(non_existent_input, Collections.emptyList(), false);
+        List<SLit> body = new ArrayList<>();
+        body.add(non_existent_input_atom);
         for (RelationSymbol sym : ctx.getProgram().getFactSymbols()) {
-            List<STerm> args = new ArrayList<>();
-            for (int i = 0; i < sym.getArity(); ++i) {
-                args.add(new SVar(Var.fresh("x" + i)));
-            }
-            SAtom atom = new SAtom(ctx.lookupRepr(sym), args, false);
-            l.add(new SRule(head, guard, atom));
+            body.add(makeAtomWithDummyArgs(sym, false));
+        }
+        return new SRule(head, body);
+    }
+
+    private List<SRule> genRulesForEnforcingStratification(List<Stratum> strats) {
+        if (strats.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<SRule> l = new ArrayList<>();
+        RelationSymbol firstRepr = strats.get(0).getPredicateSyms().iterator().next();
+        var prevAtom = makeAtomWithDummyArgs(firstRepr, true);
+        for (int i = 1; i < strats.size(); ++i) {
+            RelationSymbol currRepr = strats.get(i).getPredicateSyms().iterator().next();
+            var currAtom = makeAtomWithDummyArgs(currRepr, false);
+            l.add(new SRule(currAtom, non_existent_input_atom, prevAtom));
+            prevAtom = currAtom;
         }
         return l;
+    }
+
+    private SAtom makeAtomWithDummyArgs(RelationSymbol sym, boolean negated) {
+        List<STerm> args = new ArrayList<>();
+        for (int i = 0; i < sym.getArity(); ++i) {
+            args.add(new SInt(0));
+        }
+        return new SAtom(ctx.lookupRepr(sym), args, negated);
     }
 
     private class Worker {

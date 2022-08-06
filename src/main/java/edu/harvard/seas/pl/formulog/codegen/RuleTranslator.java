@@ -21,8 +21,8 @@ public class RuleTranslator {
         this.ctx = ctx;
     }
 
-    public List<SRule> translate(BasicProgram prog) throws CodeGenException {
-        checkStratification(prog);
+    public Pair<List<SRule>, List<Stratum>> translate(BasicProgram prog) throws CodeGenException {
+        var strats = checkStratification(prog);
         List<SRule> l = new ArrayList<>();
         Worker worker = new Worker(prog);
         for (RelationSymbol sym : prog.getRuleSymbols()) {
@@ -31,10 +31,10 @@ public class RuleTranslator {
             }
         }
         l.addAll(worker.createProjectionRules());
-        return l;
+        return new Pair<>(l, strats);
     }
 
-    private void checkStratification(BasicProgram prog) throws CodeGenException {
+    private List<Stratum> checkStratification(BasicProgram prog) throws CodeGenException {
         Stratifier stratifier = new Stratifier(prog);
         List<Stratum> strats;
         try {
@@ -47,6 +47,7 @@ public class RuleTranslator {
                 throw new CodeGenException("Cannot handle recursive negation or aggregation: " + strat);
             }
         }
+        return strats;
     }
 
     private class Worker {
