@@ -145,6 +145,71 @@ term_ptr string_starts_with(term_ptr t1, term_ptr t2) {
     return Term::make<bool>(res.first == pre.end());
 }
 
+term_ptr _make_some(term_ptr t) {
+#ifdef FLG_DEV
+    return nullptr;
+#else
+    return Term::make<Symbol::some>(t);
+#endif
+}
+
+term_ptr _make_none() {
+#ifdef FLG_DEV
+    return nullptr;
+#else
+    return Term::make<Symbol::none>();
+#endif
+}
+
+term_ptr char_at(term_ptr s, term_ptr i) {
+    auto str = s->as_base<string>().val;
+    auto pos = i->as_base<int32_t>().val;
+    if (pos < 0 || pos >= str.size()) {
+        return _make_none();
+    }
+    return _make_some(Term::make<int32_t>(str[pos]));
+}
+
+term_ptr string_length(term_ptr s) {
+    return Term::make<int32_t>(s->as_base<string>().val.size());
+}
+
+term_ptr vec_to_term_list(const std::vector<term_ptr> &v) {
+    term_ptr acc = Term::make<Symbol::nil>();
+    for (auto it = v.rbegin(); it != v.rend(); ++it) {
+        acc = Term::make<Symbol::cons>(*it, acc);
+    }
+    return acc;
+}
+
+term_ptr string_to_list(term_ptr s) {
+    vector<term_ptr> v;
+    auto str = s->as_base<string>().val;
+    for (char ch: str) {
+        v.push_back(Term::make<int32_t>(ch));
+    }
+    return vec_to_term_list(v);
+}
+
+term_ptr list_to_string(term_ptr l) {
+    vector<term_ptr> v = Term::vectorize_list_term(l);
+    string str;
+    for (auto sub: v) {
+        str += (char) sub->as_base<int32_t>().val;
+    }
+    return Term::make(str);
+}
+
+term_ptr substring(term_ptr str_term, term_ptr start_term, term_ptr len_term) {
+    auto str = str_term->as_base<string>().val;
+    auto start = start_term->as_base<int32_t>().val;
+    auto len = len_term->as_base<int32_t>().val;
+    if (start < 0 || len < 0 || str.size() < start + (size_t) len) {
+        return _make_none();
+    }
+    return _make_some(Term::make(str.substr(start, len)));
+}
+
 term_ptr to_string(term_ptr t1) {
     if (t1->sym == Symbol::boxed_string) {
         return t1;
@@ -189,22 +254,6 @@ term_ptr is_valid(term_ptr t1) {
             abort();
     }
     __builtin_unreachable();
-}
-
-term_ptr _make_some(term_ptr t) {
-#ifdef FLG_DEV
-    return nullptr;
-#else
-    return Term::make<Symbol::some>(t);
-#endif
-}
-
-term_ptr _make_none() {
-#ifdef FLG_DEV
-    return nullptr;
-#else
-    return Term::make<Symbol::none>();
-#endif
 }
 
 int _extract_timeout_from_option(term_ptr o) {
@@ -259,14 +308,6 @@ term_ptr _relation_contains(const std::string &relname, const std::vector<term_p
         }
     }
     return Term::make(false);
-}
-
-term_ptr vec_to_term_list(const std::vector<term_ptr> &v) {
-    term_ptr acc = Term::make<Symbol::nil>();
-    for (auto it = v.rbegin(); it != v.rend(); ++it) {
-        acc = Term::make<Symbol::cons>(*it, acc);
-    }
-    return acc;
 }
 
 term_ptr _relation_agg_mono(const std::string &relname, const std::vector<term_ptr> &key, unsigned pos) {

@@ -336,6 +336,21 @@ public class FuncsHpp extends TemplateSrcFile {
                 case i64ToI32:
                     ctx.register(sym, "__conv<int64_t, int32_t>");
                     break;
+                case CHAR_AT:
+                    ctx.register(sym, "char_at");
+                    break;
+                case STRING_LENGTH:
+                    ctx.register(sym, "string_length");
+                    break;
+                case STRING_TO_LIST:
+                    ctx.register(sym, "string_to_list");
+                    break;
+                case LIST_TO_STRING:
+                    ctx.register(sym, "list_to_string");
+                    break;
+                case SUBSTRING:
+                    ctx.register(sym, "substring");
+                    break;
                 default:
                     System.err.println("unhandled built-in function symbol: " + sym);
             }
