@@ -275,7 +275,7 @@ term_ptr is_sat(term_ptr t1) {
         case SmtStatus::unsat:
             return Term::make<bool>(false);
         case SmtStatus::unknown:
-            abort();
+            throw runtime_error("SMT returned `unknown`");
     }
     __builtin_unreachable();
 }

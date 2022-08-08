@@ -1730,7 +1730,7 @@ public final class BuiltInFunctionDefFactory {
     }
 
     private SmtLibTerm negate(Term t) {
-        return (SmtLibTerm) Constructors.make(BuiltInConstructorSymbol.SMT_NOT, Terms.singletonArray(t));
+        return Constructors.make(BuiltInConstructorSymbol.SMT_NOT, Terms.singletonArray(t));
     }
 
     private Pair<SmtStatus, Model> querySmt(Collection<SmtLibTerm> assertions, boolean getModel, int timeout)

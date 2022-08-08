@@ -13,9 +13,7 @@
 #include "Type.hpp"
 #include "smt.hpp"
 
-namespace flg {
-
-namespace smt {
+namespace flg::smt {
 
 namespace bp = boost::process;
 
@@ -24,99 +22,163 @@ static const auto declarations = R"_(
 )_";
 
 struct SmtWorker {
-  SmtWorker();
-  SmtStatus check(const vector<term_ptr>& assertions,
-                  int timeout=numeric_limits<int>::max());
+    SmtWorker();
 
-  private:
-  bp::opstream z3_in;
-  bp::ipstream z3_out;
-  bp::child z3;
-  map<Term*, string, TermCompare> z3_vars;
-  size_t cnt;
-  vector<Type>::iterator annotations;
+    SmtStatus check(const linked_term_set &assertions,
+                    int timeout = numeric_limits<int>::max());
 
-  void preprocess(const vector<term_ptr>& assertions);
-  void visit(Term* t);
-  void record_var(Term* var);
-  void declare_vars(ostream& out);
-  string lookup_var(Term* var);
+private:
+    bp::opstream z3_in;
+    bp::ipstream z3_out;
+    bp::child z3;
+    map<Term *, string, TermCompare> z3_vars;
+    size_t cnt;
+    vector<Type>::iterator annotations;
 
-  struct Serializer {
-      Serializer(SmtWorker &shim_, ostream &out_) : shim{shim_}, out{out_} {}
+    void preprocess(const linked_term_set &assertions);
 
-      void serialize(Term *assertion);
+    void visit(Term *t);
 
-  private:
-      SmtWorker &shim;
-      ostream &out;
+    void record_var(Term *var);
 
-      static Term *arg0(Term *t);
+    void declare_vars(ostream &out);
 
-      static Term *argn(Term *t, size_t n);
+    string lookup_var(Term *var);
 
-      void serialize(const std::string &repr, const ComplexTerm &t);
+    struct Serializer {
+        Serializer(SmtWorker &shim_, ostream &out_) : shim{shim_}, out{out_} {}
 
-      template<typename T, size_t N>
-      void serialize_bit_string(T val);
+        void serialize(Term *assertion);
 
-      template<size_t From, size_t To, bool Signed>
-      void serialize_bv_to_bv(Term *t);
+    private:
+        SmtWorker &shim;
+        ostream &out;
 
-      void serialize_bv_extract(Term *t);
+        static Term *arg0(Term *t);
 
-      template<size_t E, size_t S>
-      void serialize_bv_to_fp(Term *t);
+        static Term *argn(Term *t, size_t n);
 
-      template<typename T, size_t E, size_t S>
-      void serialize_fp(Term *t);
+        void serialize(const std::string &repr, const ComplexTerm &t);
 
-      template<size_t N, bool Signed>
-      void serialize_fp_to_bv(Term *t);
+        template<typename T, size_t N>
+        void serialize_bit_string(T val);
 
-      template<size_t S, size_t E>
-      void serialize_fp_to_fp(Term *t);
+        template<size_t From, size_t To, bool Signed>
+        void serialize_bv_to_bv(Term *t);
 
-      void serialize_let(Term *t);
+        void serialize_bv_extract(Term *t);
 
-      template<typename T>
-      void serialize_int(Term *t);
+        template<size_t E, size_t S>
+        void serialize_bv_to_fp(Term *t);
 
-      template<bool Exists>
-      void serialize_quantifier(Term *t);
+        template<typename T, size_t E, size_t S>
+        void serialize_fp(Term *t);
 
-      string serialize_sym(Symbol sym);
+        template<size_t N, bool Signed>
+        void serialize_fp_to_bv(Term *t);
 
-      string serialize_tester(Symbol sym);
-  };
+        template<size_t S, size_t E>
+        void serialize_fp_to_fp(Term *t);
+
+        void serialize_let(Term *t);
+
+        template<typename T>
+        void serialize_int(Term *t);
+
+        template<bool Exists>
+        void serialize_quantifier(Term *t);
+
+        string serialize_sym(Symbol sym);
+
+        string serialize_tester(Symbol sym);
+    };
 
 };
 
 struct TypeInferer {
-  vector<Type> go(Term* t);
+    vector<Type> go(Term *t);
 
-  private:
-  vector<Type> annotations;
-  vector<pair<Type, Type>> constraints;
-  TypeSubst subst;
+private:
+    vector<Type> annotations;
+    vector<pair<Type, Type>> constraints;
+    TypeSubst subst;
 
-  Type visit(Term* t);
-  void unify_constraints();
-  void unify(const Type& ty1, const Type& ty2);
+    Type visit(Term *t);
+
+    void unify_constraints();
+
+    void unify(const Type &ty1, const Type &ty2);
 };
 
 SmtShim::SmtShim() : worker(new SmtWorker) {}
 
-SmtStatus SmtShim::check(const vector<term_ptr>& assertions, int timeout) {
-  return worker->check(assertions, timeout);
+SmtStatus SmtShim::check(const vector<term_ptr> &assertions, int timeout) {
+    linked_term_set conjuncts;
+    for (auto assertion: assertions) {
+        break_into_conjuncts(assertion, conjuncts);
+    }
+    unordered_set<term_ptr> s(conjuncts.begin(), conjuncts.end());
+    if (conjuncts.get<1>().find(Term::make(false)) != conjuncts.get<1>().end()) {
+        return SmtStatus::unsat;
+    }
+    conjuncts.remove(Term::make(true));
+    if (conjuncts.empty()) {
+        return SmtStatus::sat;
+    }
+    set key(conjuncts.get<0>().begin(), conjuncts.get<0>().end());
+    SmtStatus res;
+    auto it = s_memo.find(key);
+    if (it == s_memo.end()) {
+        res = worker->check(conjuncts, timeout);
+        auto p = s_memo.emplace(key, res);
+        if (!p.second) {
+            res = p.first->second;
+        }
+    } else {
+        res = it->second;
+    }
+    return res;
 }
 
-bool SmtShim::is_solver_var(Term* t) {
-  switch (t->sym) {
+void SmtShim::break_into_conjuncts(term_ptr t, linked_term_set &acc, bool negated) {
+    if (t->sym == Symbol::smt_and && !negated) {
+        auto &c = t->as_complex();
+        break_into_conjuncts(c.val[0], acc);
+        break_into_conjuncts(c.val[1], acc);
+        return;
+    } else if (t->sym == Symbol::smt_not || negated) {
+        auto tt = t->as_complex().val[0];
+        if (t->sym == Symbol::smt_not && negated) {
+            break_into_conjuncts(tt, acc);
+            return;
+        }
+        if (tt->sym == Symbol::smt_imp) {
+            // Turn ~(A => B) into A /\ ~B
+            auto &c = tt->as_complex();
+            break_into_conjuncts(c.val[0], acc);
+            break_into_conjuncts(c.val[1], acc, true);
+            return;
+        }
+        if (tt->sym == Symbol::smt_or) {
+            // Turn ~(A \/ B) into ~A /\ ~B
+            auto &c = tt->as_complex();
+            break_into_conjuncts(c.val[0], acc, true);
+            break_into_conjuncts(c.val[1], acc, true);
+            return;
+        }
+    }
+    if (negated) {
+        t = Term::make<Symbol::smt_not>(t);
+    }
+    acc.push_back(t);
+}
+
+bool SmtShim::is_solver_var(Term *t) {
+    switch (t->sym) {
 /* INSERT 1 */
-    default:
-      return false;
-  }
+        default:
+            return false;
+    }
 }
 
 bool SmtShim::needs_type_annotation(Symbol sym) {
@@ -189,43 +251,43 @@ SmtWorker::SmtWorker() :
   z3_in.flush();
 }
 
-SmtStatus SmtWorker::check(const vector<term_ptr>& assertions, int timeout) {
-  z3_in << "(pop)" << endl;
-  z3_in << "(push)" << endl;
-  if (timeout < 0) {
-    cerr << "Warning: negative timeout provided to Z3 - ignored" << endl;
-    timeout = numeric_limits<int>::max();
-  }
-  z3_in << "(set-option :timeout " << timeout << ")" << endl;
+SmtStatus SmtWorker::check(const linked_term_set &assertions, int timeout) {
+    z3_in << "(pop)" << endl;
+    z3_in << "(push)" << endl;
+    if (timeout < 0) {
+        cerr << "Warning: negative timeout provided to Z3 - ignored" << endl;
+        timeout = numeric_limits<int>::max();
+    }
+    z3_in << "(set-option :timeout " << timeout << ")" << endl;
 
-  preprocess(assertions);
-  TypeInferer ti;
-  for (term_ptr t : assertions) {
-    z3_in << "(assert ";
-    auto types = ti.go(t);
-    annotations = types.begin();
-    Serializer{*this, z3_in}.serialize(t);
-    assert(annotations == types.end());
-    z3_in << ")" << endl;
-  }
+    preprocess(assertions);
+    TypeInferer ti;
+    for (term_ptr t: assertions) {
+        z3_in << "(assert ";
+        auto types = ti.go(t);
+        annotations = types.begin();
+        Serializer{*this, z3_in}.serialize(t);
+        assert(annotations == types.end());
+        z3_in << ")" << endl;
+    }
 
-  z3_in << "(check-sat)" << endl;
-  z3_in.flush();
-  string line;
-  getline(z3_out, line);
-  SmtStatus res;
-  if (line == "sat") {
-    res = SmtStatus::sat;
-  } else if (line == "unsat") {
-    res = SmtStatus::unsat;
-  } else if (line == "unknown") {
-    res = SmtStatus::unknown;
-  } else {
-    cerr << "Unexpected Z3 response:" << endl;
-    cerr << line << endl;
-    abort();
-  }
-  return res;
+    z3_in << "(check-sat)" << endl;
+    z3_in.flush();
+    string line;
+    getline(z3_out, line);
+    SmtStatus res;
+    if (line == "sat") {
+        res = SmtStatus::sat;
+    } else if (line == "unsat") {
+        res = SmtStatus::unsat;
+    } else if (line == "unknown") {
+        res = SmtStatus::unknown;
+    } else {
+        cerr << "Unexpected Z3 response:" << endl;
+        cerr << line << endl;
+        abort();
+    }
+    return res;
 }
 
 void SmtWorker::visit(Term* t) {
@@ -257,13 +319,13 @@ void SmtWorker::record_var(Term* var) {
   }
 }
 
-void SmtWorker::preprocess(const vector<term_ptr>& assertions) {
-  z3_vars.clear();
-  cnt = 0;
-  for (auto t : assertions) {
-    visit(t);
-  }
-  declare_vars(z3_in);
+void SmtWorker::preprocess(const linked_term_set &assertions) {
+    z3_vars.clear();
+    cnt = 0;
+    for (auto t: assertions) {
+        visit(t);
+    }
+    declare_vars(z3_in);
 }
 
 void SmtWorker::declare_vars(ostream& out) {
@@ -481,7 +543,5 @@ string SmtWorker::Serializer::serialize_tester(Symbol sym) {
   string s = ss.str().substr(4, string::npos);
   return "|is-" + s + "|";
 }
-
-} // namespace smt
 
 } // namespace flg

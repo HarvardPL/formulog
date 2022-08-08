@@ -19,6 +19,10 @@ enum class Symbol {
 #ifdef FLG_DEV
     nil,
     cons,
+    smt_and,
+    smt_not,
+    smt_imp,
+    smt_or,
 #endif
 /* INSERT 0 */
 };
