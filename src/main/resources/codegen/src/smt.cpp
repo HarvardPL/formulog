@@ -43,36 +43,51 @@ struct SmtWorker {
   string lookup_var(Term* var);
 
   struct Serializer {
-    Serializer(SmtWorker& shim_, ostream& out_) : shim{shim_}, out{out_} {}
-    void serialize(Term* assertion);
+      Serializer(SmtWorker &shim_, ostream &out_) : shim{shim_}, out{out_} {}
 
-    private:
-    SmtWorker& shim;
-    ostream& out;
+      void serialize(Term *assertion);
 
-    static Term* arg0(Term* t);
-    void serialize(const std::string &repr, const ComplexTerm &t);
+  private:
+      SmtWorker &shim;
+      ostream &out;
+
+      static Term *arg0(Term *t);
+
+      static Term *argn(Term *t, size_t n);
+
+      void serialize(const std::string &repr, const ComplexTerm &t);
 
       template<typename T, size_t N>
       void serialize_bit_string(T val);
 
       template<size_t From, size_t To, bool Signed>
       void serialize_bv_to_bv(Term *t);
-    template <size_t E, size_t S>
-      void serialize_bv_to_fp(Term* t);
-    template <typename T, size_t E, size_t S>
-      void serialize_fp(Term* t);
-    template <size_t N, bool Signed>
-      void serialize_fp_to_bv(Term* t);
-    template <size_t S, size_t E>
-      void serialize_fp_to_fp(Term* t);
-    void serialize_let(Term* t);
-    template <typename T>
-      void serialize_int(Term* t);
-    template <bool Exists>
-      void serialize_quantifier(Term* t);
-    string serialize_sym(Symbol sym);
-    string serialize_tester(Symbol sym);
+
+      void serialize_bv_extract(Term *t);
+
+      template<size_t E, size_t S>
+      void serialize_bv_to_fp(Term *t);
+
+      template<typename T, size_t E, size_t S>
+      void serialize_fp(Term *t);
+
+      template<size_t N, bool Signed>
+      void serialize_fp_to_bv(Term *t);
+
+      template<size_t S, size_t E>
+      void serialize_fp_to_fp(Term *t);
+
+      void serialize_let(Term *t);
+
+      template<typename T>
+      void serialize_int(Term *t);
+
+      template<bool Exists>
+      void serialize_quantifier(Term *t);
+
+      string serialize_sym(Symbol sym);
+
+      string serialize_tester(Symbol sym);
   };
 
 };
@@ -258,43 +273,47 @@ void SmtWorker::declare_vars(ostream& out) {
   }
 }
 
-string SmtWorker::lookup_var(Term* t) {
-  return z3_vars.find(t)->second;
+string SmtWorker::lookup_var(Term *t) {
+    return z3_vars.find(t)->second;
 }
 
-Term* SmtWorker::Serializer::arg0(Term* t) {
-  return t->as_complex().val[0];
+Term *SmtWorker::Serializer::arg0(Term *t) {
+    return t->as_complex().val[0];
 }
 
-void SmtWorker::Serializer::serialize(Term* t) {
-  switch (t->sym) {
-    case Symbol::boxed_bool:
-    case Symbol::boxed_string: {
-      out << *t;
-      break;
-    }
-    case Symbol::boxed_i32: {
-      out << "#x" << boost::format{"%08x"} % t->as_base<int32_t>().val;
-      break;
-    }
-    case Symbol::boxed_i64: {
-      out << "#x" << boost::format{"%016x"} % t->as_base<int64_t>().val;
-      break;
-    }
-    case Symbol::boxed_fp32: {
-      serialize_fp<float, 8, 24>(t);
-      break;
-    }
-    case Symbol::boxed_fp64: {
-      serialize_fp<double, 11, 53>(t);
-      break;
-    }
+Term *SmtWorker::Serializer::argn(Term *t, size_t n) {
+    return t->as_complex().val[n];
+}
+
+void SmtWorker::Serializer::serialize(Term *t) {
+    switch (t->sym) {
+        case Symbol::boxed_bool:
+        case Symbol::boxed_string: {
+            out << *t;
+            break;
+        }
+        case Symbol::boxed_i32: {
+            out << "#x" << boost::format{"%08x"} % t->as_base<int32_t>().val;
+            break;
+        }
+        case Symbol::boxed_i64: {
+            out << "#x" << boost::format{"%016x"} % t->as_base<int64_t>().val;
+            break;
+        }
+        case Symbol::boxed_fp32: {
+            serialize_fp<float, 8, 24>(t);
+            break;
+        }
+        case Symbol::boxed_fp64: {
+            serialize_fp<double, 11, 53>(t);
+            break;
+        }
 /* INSERT 3 */
-    default:
-      auto& x = t->as_complex();
-      stringstream ss;
-      serialize(serialize_sym(x.sym), x);
-  }
+        default:
+            auto &x = t->as_complex();
+            stringstream ss;
+            serialize(serialize_sym(x.sym), x);
+    }
 }
 
 void SmtWorker::Serializer::serialize(const std::string& repr, const ComplexTerm& t) {
@@ -325,43 +344,49 @@ template <size_t From, size_t To, bool Signed>
 void SmtWorker::Serializer::serialize_bv_to_bv(Term* t) {
   auto arg = arg0(t);
   if (From < To) {
-    out << "((_ " << (Signed ? "sign" : "zero") << "_extend "
-      << (To - From) << ") ";
-    serialize(arg);
-    out << ")";
+      out << "((_ " << (Signed ? "sign" : "zero") << "_extend "
+          << (To - From) << ") ";
+      serialize(arg);
+      out << ")";
   } else if (From > To) {
-    out << "((_ extract " << (To - 1) << " 0) ";
-    serialize(arg);
+      out << "((_ extract " << (To - 1) << " 0) ";
+      serialize(arg);
+      out << ")";
+  } else {
+      serialize(arg);
+  }
+}
+
+void SmtWorker::Serializer::serialize_bv_extract(Term *t) {
+    out << "((_ extract " << *argn(t, 2) << " " << *argn(t, 1) << ") ";
+    serialize(arg0(t));
     out << ")";
-  } else {
-    serialize(arg);
-  }
 }
 
-template <size_t E, size_t S>
-void SmtWorker::Serializer::serialize_bv_to_fp(Term* t) {
-  out << "((_ to_fp " << E << " " << S << ") RNE ";
-  serialize(arg0(t));
-  out << ")";
+template<size_t E, size_t S>
+void SmtWorker::Serializer::serialize_bv_to_fp(Term *t) {
+    out << "((_ to_fp " << E << " " << S << ") RNE ";
+    serialize(arg0(t));
+    out << ")";
 }
 
-template <typename T, size_t E, size_t S>
-void SmtWorker::Serializer::serialize_fp(Term* t) {
-  auto val = t->as_base<T>().val;
-  stringstream ss;
-  ss << E << " " << S;
-  auto s = ss.str();
-  if (isnan(val)) {
-    out << "(_ NaN " << s << ")";
-  } else if (isinf(val)) {
-    if (val > 0) {
-      out << "(_ +oo " << s << ")";
+template<typename T, size_t E, size_t S>
+void SmtWorker::Serializer::serialize_fp(Term *t) {
+    auto val = t->as_base<T>().val;
+    stringstream ss;
+    ss << E << " " << S;
+    auto s = ss.str();
+    if (isnan(val)) {
+        out << "(_ NaN " << s << ")";
+    } else if (isinf(val)) {
+        if (val > 0) {
+            out << "(_ +oo " << s << ")";
+        } else {
+            out << "(_ -oo " << s << ")";
+        }
     } else {
-      out << "(_ -oo " << s << ")";
+        out << "((_ to_fp " << s << ") RNE " << val << ")";
     }
-  } else {
-    out << "((_ to_fp " << s << ") RNE " << val << ")";
-  }
 }
 
 template <size_t N, bool Signed>

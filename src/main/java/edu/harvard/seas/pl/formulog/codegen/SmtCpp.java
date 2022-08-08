@@ -269,6 +269,10 @@ public class SmtCpp extends TemplateSrcFile {
                     return genSerializeBvToBv(index(sym, 0), index(sym, 1), true);
                 case BV_TO_BV_UNSIGNED:
                     return genSerializeBvToBv(index(sym, 0), index(sym, 1), false);
+                case BV_EXTRACT:
+                    return mkCall("serialize_bv_extract");
+                case BV_CONCAT:
+                    return genSerializeOp("concat");
                 case BV_TO_FP: {
                     int exp = index(sym, 1);
                     int sig = index(sym, 2);
