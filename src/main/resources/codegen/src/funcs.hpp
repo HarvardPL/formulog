@@ -232,6 +232,28 @@ term_ptr string_to_i32(term_ptr str_term) {
     return _make_none();
 }
 
+term_ptr string_to_i64(term_ptr str_term) {
+    auto str = str_term->as_base<string>().val;
+    static regex dec("[+-]?\\d+");
+    static regex hex("0x[0-9a-fA-F]+");
+    try {
+        if (regex_match(str, dec)) {
+            long long r = stoll(str);
+            if (r >= INT64_MIN && r <= INT64_MAX) {
+                return _make_some(Term::make((int64_t) r));
+            }
+        } else if (regex_match(str, hex)) {
+            unsigned long long r = stoull(str, nullptr, 16);
+            if (r <= UINT64_MAX) {
+                return _make_some(Term::make((int64_t) r));
+            }
+        }
+    } catch (out_of_range &_) {
+        // fall through
+    }
+    return _make_none();
+}
+
 term_ptr to_string(term_ptr t1) {
     if (t1->sym == Symbol::boxed_string) {
         return t1;

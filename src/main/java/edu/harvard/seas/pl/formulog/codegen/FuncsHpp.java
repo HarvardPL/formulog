@@ -354,6 +354,9 @@ public class FuncsHpp extends TemplateSrcFile {
                 case stringToI32:
                     ctx.register(sym, "string_to_i32");
                     break;
+                case stringToI64:
+                    ctx.register(sym, "string_to_i64");
+                    break;
                 default:
                     System.err.println("unhandled built-in function symbol: " + sym);
             }
