@@ -56,7 +56,7 @@ public final class CodeGenUtil {
     }
 
     public static CppExpr mkComplexTermLookup(CppExpr base, int offset) {
-        CppExpr cast = CppCast.mkReinterpret("ComplexTerm&", CppUnop.mkDeref(base));
+        CppExpr cast = CppCast.mkReinterpret("const ComplexTerm&", CppUnop.mkDeref(base));
         CppExpr access = CppAccess.mk(cast, "val");
         return CppSubscript.mk(access, CppConst.mkInt(offset));
     }

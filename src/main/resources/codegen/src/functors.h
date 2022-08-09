@@ -6,7 +6,7 @@
 namespace flg {
 
 template<flg::Symbol S>
-inline souffle::RamDomain dtor(const_term_ptr t) {
+inline souffle::RamDomain dtor(term_ptr t) {
     return t->sym == S;
 }
 

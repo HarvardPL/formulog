@@ -19,14 +19,12 @@ target_sources(flg PRIVATE
         src/main.cpp
         src/parser.cpp
         src/parser.hpp
-        src/rels.hpp
         src/smt.cpp
         src/smt.hpp
         src/Symbol.cpp
         src/Symbol.hpp
         src/Term.cpp
         src/Term.hpp
-        src/Tuple.hpp
         src/Type.hpp
         formulog.cpp
         )

@@ -39,7 +39,7 @@ struct SmtShim {
 
     static bool needs_type_annotation(Symbol sym);
 
-    static bool is_solver_var(Term *t);
+    static bool is_solver_var(term_ptr t);
 
 private:
     SmtWorker *worker;

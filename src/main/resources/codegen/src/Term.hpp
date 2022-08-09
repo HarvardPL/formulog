@@ -22,8 +22,7 @@ using tbb::concurrent_unordered_map;
 
 struct Term;
 
-typedef Term *term_ptr;
-typedef const Term *const_term_ptr;
+typedef const Term *term_ptr;
 
 template<typename T>
 struct BaseTerm;
@@ -46,13 +45,13 @@ struct Term {
     inline const ComplexTerm &as_complex() const;
 
     // Compare two terms by their memory address -> {-1, 0, 1}
-    inline static int compare(Term *t1, Term *t2);
+    //inline static int compare(Term *t1, Term *t2);
 
     // Compare two terms by their natural order -> {-1, 0, 1}:
     // - if of the different types, then by order in the Symbol enum
     // - if of the same type BaseTerm<T>, then by T::operator<()
     // - if of the same type ComplexTerm, then by lexicographical order
-    static int compare_natural(Term *t1, Term *t2);
+    //static int compare_natural(Term *t1, Term *t2);
 
     // Construct a memoized BaseTerm
     template<typename T>
@@ -63,7 +62,7 @@ struct Term {
     static term_ptr make(T... val);
 
     // Convert a Lisp-style list term into a vector
-    inline static vector<term_ptr> vectorize_list_term(Term *t);
+    inline static vector<term_ptr> vectorize_list_term(term_ptr t);
 
     [[nodiscard]] souffle::RamDomain intize() const {
         return (souffle::RamDomain) (uintptr_t) (void *) this;
@@ -136,8 +135,9 @@ private:
     class BaseTermCache;
 };
 
-ostream &operator<<(ostream &out, Term &t);
+ostream &operator<<(ostream &out, const Term &t);
 
+/*
 inline int Term::compare(Term *t1, Term *t2) {
     return less<>()(t2, t1) - less<>()(t1, t2);
 }
@@ -147,6 +147,7 @@ inline const term_ptr min_term =
         reinterpret_cast<term_ptr>(numeric_limits<uintptr_t>::min());
 inline const term_ptr max_term =
         reinterpret_cast<term_ptr>(numeric_limits<uintptr_t>::max());
+*/
 
 // Concurrency-safe cache for BaseTerm values
 template<typename T, Symbol S>
@@ -225,13 +226,15 @@ const ComplexTerm &Term::as_complex() const {
     return reinterpret_cast<const ComplexTerm &>(*this);
 }
 
+/*
 struct TermCompare {
     inline bool operator()(Term *lhs, Term *rhs) const {
         return Term::compare(lhs, rhs) < 0;
     }
 };
+ */
 
-inline vector<term_ptr> Term::vectorize_list_term(Term *t) {
+inline vector<term_ptr> Term::vectorize_list_term(term_ptr t) {
     vector<term_ptr> v;
 #ifndef FLG_DEV
     while (t->sym == Symbol::cons) {

@@ -37,37 +37,37 @@ int BaseTerm<double>::compare(
   return (t1.val > t2.val) - (t1.val < t2.val);
 }
 
-ostream& operator<<(ostream& out, Term& t) {
-  switch (t.sym) {
-    case Symbol::boxed_bool: {
-      return out << boolalpha << t.as_base<bool>().val << noboolalpha;
-    }
-    case Symbol::boxed_i32: {
-      return out << t.as_base<int32_t>().val;
-    }
-    case Symbol::boxed_i64: {
-      return out << t.as_base<int64_t>().val << "L";
-    }
-    case Symbol::boxed_fp32: {
-      auto val = t.as_base<float>().val;
-      if (isnan(val)) {
-        out << "fp32_nan";
-      } else if (isinf(val)) {
-        if (val > 0) {
-          out << "fp32_pos_infinity";
-        } else {
-          out << "fp32_neg_infinity";
+ostream &operator<<(ostream &out, const Term &t) {
+    switch (t.sym) {
+        case Symbol::boxed_bool: {
+            return out << boolalpha << t.as_base<bool>().val << noboolalpha;
         }
-      } else {
-        out << val << "F";
-      }
-      return out;
-    }
-    case Symbol::boxed_fp64: {
-      auto val = t.as_base<double>().val;
-      if (isnan(val)) {
-        out << "fp64_nan";
-      } else if (isinf(val)) {
+        case Symbol::boxed_i32: {
+            return out << t.as_base<int32_t>().val;
+        }
+        case Symbol::boxed_i64: {
+            return out << t.as_base<int64_t>().val << "L";
+        }
+        case Symbol::boxed_fp32: {
+            auto val = t.as_base<float>().val;
+            if (isnan(val)) {
+                out << "fp32_nan";
+            } else if (isinf(val)) {
+                if (val > 0) {
+                    out << "fp32_pos_infinity";
+                } else {
+                    out << "fp32_neg_infinity";
+                }
+            } else {
+                out << val << "F";
+            }
+            return out;
+        }
+        case Symbol::boxed_fp64: {
+            auto val = t.as_base<double>().val;
+            if (isnan(val)) {
+                out << "fp64_nan";
+            } else if (isinf(val)) {
         if (val > 0) {
           out << "fp64_pos_infinity";
         } else {
@@ -100,6 +100,7 @@ ostream& operator<<(ostream& out, Term& t) {
   }
 }
 
+/*
 int Term::compare_natural(Term* t1, Term* t2) {
   stack<pair<Term*, Term*>> w;
   w.emplace(t1, t2);
@@ -184,6 +185,7 @@ int Term::compare_natural(Term* t1, Term* t2) {
   }
   return 0;
 }
+ */
 
 // Template hash function for arrays of term_ptr's
 template <size_t N>
@@ -216,8 +218,8 @@ template <Symbol S> class ComplexTermCache {
     if (it != cache.end()) {
       return it->second;
     }
-    term_ptr* heap_arr = new term_ptr[arity] { val... };
-    auto ptr = new ComplexTerm(S, arity, heap_arr);
+      auto *heap_arr = new term_ptr[arity]{val...};
+      auto ptr = new ComplexTerm(S, arity, heap_arr);
     auto result = cache.insert({arr, ptr});
     if (!result.second) {
       // Term was not successfully inserted

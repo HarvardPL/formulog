@@ -9,7 +9,6 @@
 #include "globals.h"
 #include "Term.hpp"
 #include "smt.hpp"
-#include "rels.hpp"
 
 namespace flg {
 
@@ -23,11 +22,11 @@ term_ptr __access(term_ptr t1) {
 }
 
 term_ptr beq(term_ptr t1, term_ptr t2) {
-    return Term::make<bool>(!Term::compare(t1, t2));
+    return Term::make<bool>(t1 == t2);
 }
 
 term_ptr bneq(term_ptr t1, term_ptr t2) {
-    return Term::make<bool>(Term::compare(t1, t2));
+    return Term::make<bool>(t1 != t2);
 }
 
 term_ptr bnot(term_ptr t1) {
@@ -175,11 +174,15 @@ term_ptr string_length(term_ptr s) {
 }
 
 term_ptr vec_to_term_list(const std::vector<term_ptr> &v) {
+#ifdef FLG_DEV
+    return nullptr;
+#else
     term_ptr acc = Term::make<Symbol::nil>();
     for (auto it = v.rbegin(); it != v.rend(); ++it) {
         acc = Term::make<Symbol::cons>(*it, acc);
     }
     return acc;
+#endif
 }
 
 term_ptr string_to_list(term_ptr s) {

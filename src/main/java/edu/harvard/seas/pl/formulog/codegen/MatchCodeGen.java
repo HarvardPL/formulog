@@ -345,7 +345,7 @@ public class MatchCodeGen {
                         // variable initializations in C++
                         assert CodeGenUtil.toString(p.fst(), 0).isEmpty();
                         CppExpr rhs = p.snd();
-                        CppExpr guard = CppUnop.mkNot(CppFuncCall.mk("Term::compare", expr, rhs));
+                        CppExpr guard = CppBinop.mkEq(expr, rhs);
                         CppStmt body = go(dest, symMap);
                         return CppIf.mk(guard, body);
                     }
