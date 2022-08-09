@@ -141,7 +141,7 @@ public class FunctorCodeGen {
         private Pair<CppStmt, CppExpr> genDtorBody(SDestructorBody body, Map<Var, CppExpr> env) {
             Pair<CppStmt, CppExpr> p = new TermCodeGen(ctx).gen(body.getScrutinee(), env);
             String func = "dtor<" + ctx.lookupRepr(body.getSymbol()) + ">";
-            CppExpr call = CppFuncCall.mk(func, CppVar.mk("rt"), p.snd());
+            CppExpr call = CppFuncCall.mk(func, p.snd());
             return new Pair<>(p.fst(), call);
         }
 

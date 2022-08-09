@@ -6,25 +6,7 @@
 namespace flg {
 
 template<flg::Symbol S>
-souffle::RamDomain dtor(souffle::RecordTable *rt, const_term_ptr t) {
-    /*
-    if (t && t->sym == S) {
-        return t->intize();
-    }
-    return 0;
-     */
-    /*
-    if (t && t->sym == S) {
-        return t->intize();
-        auto &c = t->as_complex();
-        auto tup = new souffle::RamDomain[c.arity];
-        for (size_t i = 0; i < c.arity; ++i) {
-            tup[i] = c.val[i]->intize();
-        }
-        return rt->pack(tup, c.arity);
-    }
-    return 0;
-    */
+inline souffle::RamDomain dtor(const_term_ptr t) {
     return t->sym == S;
 }
 
@@ -33,8 +15,7 @@ souffle::RamDomain dtor(souffle::RecordTable *rt, const_term_ptr t) {
 extern "C" {
 
 souffle::RamDomain
-nth(souffle::SymbolTable *st, souffle::RecordTable *rt, souffle::RamDomain n, souffle::RamDomain ref,
-    souffle::RamDomain arity);
+nth(souffle::RamDomain n, souffle::RamDomain ref, souffle::RamDomain check);
 
 /* INSERT 0 */
 

@@ -151,7 +151,7 @@ public class SouffleCodeGen {
         }
 
         public void declareFunctors() {
-            writer.println(".functor nth(n:number, ref:number, arity:number):number stateful");
+            writer.println(".functor nth(n:number, ref:number, check:number):number");
             for (Pair<String, SFunctorBody> p : ctx.getFunctors()) {
                 String name = p.fst();
                 SFunctorBody body = p.snd();

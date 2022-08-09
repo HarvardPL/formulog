@@ -30,7 +30,7 @@ public class SDestructorBody implements SFunctorBody {
 
     @Override
     public boolean isStateful() {
-        return true;
+        return false;
     }
 
     public Term getScrutinee() {

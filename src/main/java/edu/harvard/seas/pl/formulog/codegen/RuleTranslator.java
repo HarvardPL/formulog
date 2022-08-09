@@ -124,7 +124,7 @@ public class RuleTranslator {
                     STerm translatedScrutineeVar = new SVar(scrutineeVar);
                     l.add(new SInfixBinaryOpAtom(translatedScrutineeVar, "=", translatedScrutineeExpr));
                     List<Var> args = Collections.singletonList(scrutineeVar);
-                    String functor = ctx.freshFunctionName("dtor");
+                    String functor = ctx.lookupOrCreateFunctorName(destructor.getSymbol());
                     var dtor = new SDestructorBody(args, scrutineeVar, destructor.getSymbol());
                     ctx.registerFunctorBody(functor, dtor);
                     List<STerm> translatedArgs = args.stream().map(Worker.this::translate).collect(Collectors.toList());
@@ -196,7 +196,7 @@ public class RuleTranslator {
         }
 
         private SFunctorCall liftToFunctor(Term t) {
-            String functor = ctx.freshFunctionName("expr");
+            String functor = ctx.lookupOrCreateFunctorName(t);
             List<Var> args = new ArrayList<>(t.varSet());
             ctx.registerFunctorBody(functor, new SExprBody(args, t));
             List<STerm> translatedArgs = args.stream().map(this::translate).collect(Collectors.toList());

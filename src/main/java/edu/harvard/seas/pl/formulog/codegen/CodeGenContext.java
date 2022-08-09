@@ -21,6 +21,7 @@ package edu.harvard.seas.pl.formulog.codegen;
  */
 
 import edu.harvard.seas.pl.formulog.ast.BasicProgram;
+import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SFunctorBody;
 import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SIntListType;
 import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SRuleMode;
@@ -44,9 +45,10 @@ public class CodeGenContext {
     private final Map<SymbolBase, AtomicInteger> cnts = new HashMap<>();
     private final AtomicInteger id = new AtomicInteger();
     private final Map<String, SFunctorBody> functorBody = new ConcurrentHashMap<>();
-    private final Map<String, AtomicInteger> funcSuffixMemo = new ConcurrentHashMap<>();
     private final Set<SIntListType> souffleTypes = new HashSet<>();
     private final Map<String, Pair<Integer, SRuleMode>> customRelations = new HashMap<>();
+    private final Map<Term, String> exprFunctorNames = new HashMap<>();
+    private final Map<ConstructorSymbol, String> dtorFunctorNames = new HashMap<>();
 
     private final BasicProgram prog;
 
@@ -110,15 +112,16 @@ public class CodeGenContext {
         return prefix + id.getAndIncrement();
     }
 
-    public String freshFunctionName(String prefix) {
-        int n = Util.lookupOrCreate(funcSuffixMemo, prefix, AtomicInteger::new).getAndIncrement();
-        return prefix + "_" + n;
+    public synchronized String lookupOrCreateFunctorName(Term t) {
+        return Util.lookupOrCreate(exprFunctorNames, t, () -> "expr_" + id.getAndIncrement());
     }
 
+    public synchronized String lookupOrCreateFunctorName(ConstructorSymbol sym) {
+        return Util.lookupOrCreate(dtorFunctorNames, sym, () -> "dtor_" + id.getAndIncrement());
+    }
 
     public void registerFunctorBody(String functor, SFunctorBody body) {
-        SFunctorBody other = functorBody.putIfAbsent(functor, body);
-        assert other == null;
+        functorBody.put(functor, body);
     }
 
     public Set<Pair<String, SFunctorBody>> getFunctors() {
