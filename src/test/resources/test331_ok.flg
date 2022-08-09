@@ -1,0 +1,11 @@
+output foo(i32)
+output bar(i32 option)
+output ok
+
+bar(none).
+
+foo(X + 1) :- bar(some(X)).
+
+bar(some(42)) :- foo(42).
+
+ok :- !foo(42).

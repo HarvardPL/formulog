@@ -164,7 +164,7 @@ term_ptr _make_none() {
 term_ptr char_at(term_ptr s, term_ptr i) {
     auto str = s->as_base<string>().val;
     auto pos = i->as_base<int32_t>().val;
-    if (pos < 0 || pos >= str.size()) {
+    if (pos < 0 || (size_t) pos >= str.size()) {
         return _make_none();
     }
     return _make_some(Term::make<int32_t>(str[pos]));

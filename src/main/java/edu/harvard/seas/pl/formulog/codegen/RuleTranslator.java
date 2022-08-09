@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 public class RuleTranslator {
 
     private final CodeGenContext ctx;
+    private static final String checkPred = "CODEGEN_CHECK";
 
     public RuleTranslator(CodeGenContext ctx) {
         this.ctx = ctx;
@@ -31,6 +32,7 @@ public class RuleTranslator {
             }
         }
         l.addAll(worker.createProjectionRules());
+        l.add(worker.createCheckRule());
         return new Pair<>(l, strats);
     }
 
@@ -97,21 +99,45 @@ public class RuleTranslator {
 
                 @Override
                 public List<SLit> visit(Destructor destructor, Void input) {
+                    /*
+                    A destructor of the form
+
+                        t -> c(X1, ..., Xn)
+
+                    gets translated as
+
+                        X0 = [[t]],
+                        @dtor_c(X0) = B,
+                        CODEGEN_CHECK(B, B2),
+                        X1 = @nth(0, X0, B2),
+                        ...,
+                        Xn = @nth(n - 1, X0, B2).
+
+                    @dtor_c(...) returns 1 if the term has the symbol c and 0 otherwise.
+                    CODEGEN_CHECK has a single tuple [1, 1]. It is there to make sure that the destructor has been
+                    successful before nth is called.
+                     */
+                    List<SLit> l = new ArrayList<>();
                     Term scrutinee = destructor.getScrutinee();
-                    List<Var> args = new ArrayList<>(scrutinee.varSet());
+                    STerm translatedScrutineeExpr = translate(scrutinee);
+                    Var scrutineeVar = Var.fresh();
+                    STerm translatedScrutineeVar = new SVar(scrutineeVar);
+                    l.add(new SInfixBinaryOpAtom(translatedScrutineeVar, "=", translatedScrutineeExpr));
+                    List<Var> args = Collections.singletonList(scrutineeVar);
                     String functor = ctx.freshFunctionName("dtor");
-                    var dtor = new SDestructorBody(args, scrutinee, destructor.getSymbol());
+                    var dtor = new SDestructorBody(args, scrutineeVar, destructor.getSymbol());
                     ctx.registerFunctorBody(functor, dtor);
                     List<STerm> translatedArgs = args.stream().map(Worker.this::translate).collect(Collectors.toList());
+                    assert translatedArgs.size() == 1 && translatedArgs.get(0) instanceof SVar;
                     STerm lhs = new SFunctorCall(functor, translatedArgs);
                     SVar recRef = new SVar(Var.fresh());
-                    List<SLit> l = new ArrayList<>();
                     l.add(new SInfixBinaryOpAtom(lhs, "=", recRef));
-                    l.add(new SInfixBinaryOpAtom(recRef, "!=", new SInt(0)));
+                    SVar checkOutput = new SVar(Var.fresh());
+                    l.add(new SAtom(checkPred, Arrays.asList(recRef, checkOutput), false));
                     int arity = destructor.getSymbol().getArity();
                     Var[] bindings = destructor.getBindings();
                     for (int i = 0; i < arity; ++i) {
-                        SFunctorCall call = new SFunctorCall("nth", new SInt(i), recRef, new SInt(arity));
+                        SFunctorCall call = new SFunctorCall("nth", new SInt(i), translatedArgs.get(0), checkOutput);
                         l.add(new SInfixBinaryOpAtom(translate(bindings[i]), "=", call));
                     }
                     return l;
@@ -224,6 +250,12 @@ public class RuleTranslator {
             SLit bodyAtom = new SAtom(ctx.lookupRepr(sym), bodyArgs, false);
             ctx.registerCustomRelation(projSym, headArgs.size(), SRuleMode.INTERMEDIATE);
             return new SRule(head, bodyAtom);
+        }
+
+        public SRule createCheckRule() {
+            ctx.registerCustomRelation(checkPred, 2, SRuleMode.INTERMEDIATE);
+            SLit head = new SAtom(checkPred, Arrays.asList(new SInt(1), new SInt(1)), false);
+            return new SRule(head);
         }
     }
 

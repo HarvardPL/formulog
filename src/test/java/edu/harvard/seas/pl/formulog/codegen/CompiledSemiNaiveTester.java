@@ -96,11 +96,13 @@ public class CompiledSemiNaiveTester implements Tester {
         Process cmake = Runtime.getRuntime().exec(new String[]{"cmake", "-B", buildPath.toString(),
                 "-S", topPath.toString(), "-DCMAKE_BUILD_TYPE=Debug",
                 "-DCMAKE_CXX_COMPILER=/usr/local/opt/llvm/bin/clang++"});
+        //"-DCMAKE_CXX_COMPILER=/usr/local/opt/gcc@11/bin/g++-11"
         if (cmake.waitFor() != 0) {
             System.err.println("Could not cmake test");
             printToStdErr(cmake.getErrorStream());
             return false;
         }
+
         Process make = Runtime.getRuntime().exec(new String[]{"cmake", "--build", buildPath.toString(),
                 "-j", String.valueOf(Configuration.parallelism)});
         if (make.waitFor() != 0) {
@@ -108,17 +110,21 @@ public class CompiledSemiNaiveTester implements Tester {
             printToStdErr(make.getErrorStream());
             return false;
         }
+
         String cmd = topPath.resolve("build").resolve("flg").toString();
-        for (String inputDir : inputDirs) {
+        for (
+                String inputDir : inputDirs) {
             Path p = Paths.get(getClass().getClassLoader().getResource(inputDir).toURI());
             cmd += " --fact-dir " + p;
         }
+
         Process flg = Runtime.getRuntime().exec(cmd);
         if (flg.waitFor() != 0) {
             System.err.println("Evaluation error");
             printToStdErr(flg.getErrorStream());
             return false;
         }
+
         BufferedReader br = new BufferedReader(new InputStreamReader(flg.getInputStream()));
         String line;
         while ((line = br.readLine()) != null) {

@@ -3,7 +3,7 @@ project(codegen)
 
 set(CMAKE_CXX_STANDARD 17)
 
-set(CMAKE_CXX_FLAGS "-D__EMBEDDED_SOUFFLE__ -Wall -Wno-unused-variable -Wno-unused-but-set-variable -Wno-c++11-narrowing")
+set(CMAKE_CXX_FLAGS "-D__EMBEDDED_SOUFFLE__ -DRAM_DOMAIN_SIZE=64 -Wall -Wno-unused-variable -Wno-unused-but-set-variable -Wno-c++11-narrowing")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=native")
 
 add_executable(flg "" src/globals.h src/globals.cpp)

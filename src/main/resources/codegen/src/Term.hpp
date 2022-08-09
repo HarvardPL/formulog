@@ -65,7 +65,9 @@ struct Term {
     // Convert a Lisp-style list term into a vector
     inline static vector<term_ptr> vectorize_list_term(Term *t);
 
-    souffle::RamDomain intize() {
+    [[nodiscard]] souffle::RamDomain intize() const {
+        return (souffle::RamDomain) (uintptr_t) (void *) this;
+        /*
         auto it = term_int_map.find(this);
         if (it != term_int_map.end()) {
             return it->second;
@@ -78,12 +80,16 @@ struct Term {
         auto result2 = int_term_map.emplace(id, this);
         assert(result2.second);
         return id;
+         */
     }
 
     static term_ptr unintize(souffle::RamDomain id) {
+        return (term_ptr) (void *) (uintptr_t) id;
+        /*
         auto it = int_term_map.find(id);
         assert(it != int_term_map.end());
         return it->second;
+         */
     }
 
     static term_ptr make_generic(Symbol sym, const vector<term_ptr> &terms);
