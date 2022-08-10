@@ -36,10 +36,10 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TypeHpp extends TemplateSrcFile {
+public class TypeCpp extends TemplateSrcFile {
 
-    public TypeHpp(CodeGenContext ctx) {
-        super("Type.hpp", ctx);
+    public TypeCpp(CodeGenContext ctx) {
+        super("Type.cpp", ctx);
     }
 
     public void gen(BufferedReader br, PrintWriter out) throws IOException {

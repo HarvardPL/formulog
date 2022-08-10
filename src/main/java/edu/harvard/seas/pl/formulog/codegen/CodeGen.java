@@ -51,28 +51,23 @@ public class CodeGen {
     }
 
     public void go() throws IOException, URISyntaxException, CodeGenException {
-        /*
-        if (Configuration.minIndex) {
-            throw new UnsupportedOperationException(
-                    "We do not currently support code gen and optimal index selection (use flag -DminIndex=false).");
-        }
-         */
-        //copy("Makefile");
         copy("CMakeLists.txt");
         CodeGenContext ctx = new CodeGenContext(prog);
         new RelsHpp(ctx).gen(outDir);
         new FuncsHpp(ctx).gen(outDir);
         new MainCpp(ctx).gen(outDir);
         new SouffleCodeGen(ctx).gen(outDir);
-        copySrc("smt.hpp");
-        new SmtCpp(ctx).gen(outDir);
-        new TypeHpp(ctx).gen(outDir);
+        copySrc("smt_solver.h");
+        copySrc("smt_solver.cpp");
+        copySrc("smt_shim.h");
+        new SmtShimCpp(ctx).gen(outDir);
+        copySrc("Type.hpp");
+        new TypeCpp(ctx).gen(outDir);
         copySrc("Term.hpp");
         new TermCpp(ctx).gen(outDir);
         copySrc("Tuple.hpp");
         copySrc("parser.hpp");
         copySrc("parser.cpp");
-        //new RulesMk().print(outDir);
         new SymbolHpp(ctx).gen(outDir);
         new SymbolCpp(ctx).gen(outDir);
         copySrc("globals.h");
@@ -80,13 +75,6 @@ public class CodeGen {
     }
 
     private void copy(String name) throws IOException {
-        /*
-        String ext = name.substring(name.lastIndexOf('.') + 1);
-        if (ext.equals("zip")) {
-            copyZip(name);
-            return;
-        }
-        */
         var inFile = Path.of("codegen", name).toString();
         try (InputStream is = getClass().getClassLoader().getResourceAsStream(inFile)) {
             assert is != null : name;
@@ -97,25 +85,6 @@ public class CodeGen {
     private void copySrc(String name) throws IOException {
         copy(Path.of("src", name).toString());
     }
-
-    /*
-    private void copyZip(String name) throws IOException {
-        try (InputStream is = getClass().getClassLoader().getResourceAsStream(name);
-             ZipInputStream zis = new ZipInputStream(is)) {
-            ZipEntry entry;
-            while ((entry = zis.getNextEntry()) != null) {
-                String fileName = entry.getName();
-                Path dest = outDir.toPath().resolve(fileName);
-                if (entry.isDirectory()) {
-                    dest.toFile().mkdirs();
-                } else {
-                    Files.copy(zis, dest);
-                }
-                zis.closeEntry();
-            }
-        }
-    }
-    */
 
     public static void main(String[] args) throws Exception {
         if (args.length != 1) {

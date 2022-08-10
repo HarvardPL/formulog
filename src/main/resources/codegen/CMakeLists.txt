@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "-D__EMBEDDED_SOUFFLE__ -DRAM_DOMAIN_SIZE=64 -Wall -Wno-unused-variable -Wno-unused-but-set-variable -Wno-c++11-narrowing")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=native")
 
-add_executable(flg "" src/globals.h src/globals.cpp)
+add_executable(flg "")
 
 add_custom_command(OUTPUT formulog.cpp
         COMMAND souffle ${CMAKE_CURRENT_SOURCE_DIR}/src/formulog.dl -w -g formulog.cpp
@@ -19,13 +19,18 @@ target_sources(flg PRIVATE
         src/main.cpp
         src/parser.cpp
         src/parser.hpp
-        src/smt.cpp
-        src/smt.hpp
         src/Symbol.cpp
         src/Symbol.hpp
         src/Term.cpp
         src/Term.hpp
         src/Type.hpp
+        src/Type.cpp
+        src/globals.h
+        src/globals.cpp
+        src/smt_solver.cpp
+        src/smt_solver.h
+        src/smt_shim.cpp
+        src/smt_shim.h
         formulog.cpp
         )
 

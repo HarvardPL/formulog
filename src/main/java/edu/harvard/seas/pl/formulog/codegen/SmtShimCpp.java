@@ -38,10 +38,10 @@ import java.io.PrintWriter;
 import java.util.HashSet;
 import java.util.Set;
 
-public class SmtCpp extends TemplateSrcFile {
+public class SmtShimCpp extends TemplateSrcFile {
 
-    public SmtCpp(CodeGenContext ctx) {
-        super("smt.cpp", ctx);
+    public SmtShimCpp(CodeGenContext ctx) {
+        super("smt_shim.cpp", ctx);
     }
 
     public void gen(BufferedReader br, PrintWriter out) throws IOException {
@@ -324,7 +324,7 @@ public class SmtCpp extends TemplateSrcFile {
                 case SMT_LET:
                     return mkCall("serialize_let");
                 case SMT_VAR: {
-                    CppExpr call = CppMethodCall.mk(CppVar.mk("shim"), "lookup_var", CppVar.mk("t"));
+                    CppExpr call = CppFuncCall.mk("lookup_var", CppVar.mk("t"));
                     return CppBinop.mkShiftLeft(CppVar.mk("out"), call).toStmt();
                 }
                 case SMT_PAT:
