@@ -102,6 +102,22 @@ private:
     void cleanup() override;
 };
 
+class CheckSatAssumingSolver : public AbstractSmtSolver {
+public:
+    NO_COPY_OR_ASSIGN(CheckSatAssumingSolver);
+
+    explicit CheckSatAssumingSolver(std::unique_ptr<SmtShim> &&shim) : AbstractSmtSolver{std::move(shim)} {}
+
+private:
+    std::unordered_map<term_ptr, term_ptr> m_conjuncts_to_vars;
+
+    void initialize() override;
+
+    term_vector_pair make_assertions(const std::vector<term_ptr> &assertions) override;
+
+    void cleanup() override;
+};
+
 inline thread_local TopLevelSmtSolver smt_solver;
 
 }

@@ -36,6 +36,12 @@ import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
 import edu.harvard.seas.pl.formulog.parsing.Parser;
+import edu.harvard.seas.pl.formulog.symbols.GlobalSymbolManager;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.BuiltInConstructorSymbolBase;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.Param;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.ParamKind;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedConstructorSymbol;
+import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 import edu.harvard.seas.pl.formulog.util.Util;
@@ -51,8 +57,16 @@ public class CodeGen {
     }
 
     public void go() throws IOException, URISyntaxException, CodeGenException {
-        copy("CMakeLists.txt");
         CodeGenContext ctx = new CodeGenContext(prog);
+        // Make sure that we generate a symbol for SMT variables (assumed in the C++ runtime code)
+        ParameterizedConstructorSymbol sym = GlobalSymbolManager
+                .getParameterizedSymbol(BuiltInConstructorSymbolBase.SMT_VAR)
+                .copyWithNewArgs(new Param(BuiltInTypes.bool, ParamKind.ANY_TYPE),
+                        new Param(BuiltInTypes.bool, ParamKind.PRE_SMT_TYPE));
+        String repr = ctx.lookupRepr(sym);
+        assert repr.equals("Symbol::smt_var_0") : repr;
+
+        copy("CMakeLists.txt");
         new RelsHpp(ctx).gen(outDir);
         new FuncsHpp(ctx).gen(outDir);
         new MainCpp(ctx).gen(outDir);

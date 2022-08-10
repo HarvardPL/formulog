@@ -213,18 +213,18 @@ template <Symbol S> class ComplexTermCache {
   template <typename... T,
             typename = enable_if_t<sizeof...(T) == arity>>
   static term_ptr get(T... val) {
-    array<term_ptr, arity> arr = { val... };
-    auto it = cache.find(arr);
-    if (it != cache.end()) {
-      return it->second;
-    }
+      array<term_ptr, arity> arr = {val...};
+      auto it = cache.find(arr);
+      if (it != cache.end()) {
+          return it->second;
+      }
       auto *heap_arr = new term_ptr[arity]{val...};
       auto ptr = new ComplexTerm(S, arity, heap_arr);
-    auto result = cache.insert({arr, ptr});
-    if (!result.second) {
-      // Term was not successfully inserted
-      delete ptr;
-    }
+      auto result = cache.insert({arr, ptr});
+      if (!result.second) {
+          // Term was not successfully inserted
+          delete ptr;
+      }
       return result.first->second;
   }
 };
@@ -235,6 +235,14 @@ term_ptr Term::make(T... val) {
 }
 
 /* INSERT 0 */
+
+term_ptr ComplexTerm::fresh_smt_var() {
+#ifdef FLG_DEV
+    return nullptr;
+#else
+    return new ComplexTerm(Symbol::smt_var_0, 0, nullptr);
+#endif
+}
 
 term_ptr Term::make_generic(Symbol sym, const vector<term_ptr> &terms) {
     if (symbol_arity(sym) != terms.size()) {

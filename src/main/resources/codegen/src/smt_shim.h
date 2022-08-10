@@ -54,8 +54,33 @@ public:
     check_sat_assuming(const std::vector<term_ptr> &onVars, const std::vector<term_ptr> &offVars, int timeout) override;
 
 private:
+    class Logger {
+    public:
+        Logger(boost::process::opstream &&in) : m_in{std::move(in)} {}
+
+        template<typename T>
+        Logger &operator<<(const T &val) {
+            m_in << val;
+            /*
+            std::cerr << val;
+            std::cerr.flush();
+             */
+            return *this;
+        }
+
+        void flush() {
+            m_in.flush();
+            /*
+            std::cerr.flush();
+             */
+        }
+
+    private:
+        boost::process::opstream m_in;
+    };
+
     boost::process::child m_proc;
-    boost::process::opstream out;
+    Logger m_in;
     boost::process::ipstream m_out;
 
     std::unordered_map<term_ptr, string> m_solver_vars;

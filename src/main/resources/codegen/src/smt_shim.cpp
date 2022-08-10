@@ -100,18 +100,18 @@ void MyTypeInferer::unify(const Type &ty1, const Type &ty2) {
 }
 
 SmtLibShim::SmtLibShim(boost::process::child &&proc, boost::process::opstream &&in, boost::process::ipstream &&out)
-        : m_proc{std::move(proc)}, out{std::move(in)}, m_out{std::move(out)} {
+        : m_proc{std::move(proc)}, m_in{std::move(in)}, m_out{std::move(out)} {
     m_symbols_by_stack_pos.emplace_back(std::unordered_set<term_ptr>());
 }
 
 void SmtLibShim::declare_vars(term_ptr t) {
-    if (is_solver_var(t)) {
+    if (is_solver_var(t) && m_solver_vars.find(t) == m_solver_vars.end()) {
         std::stringstream ss;
         ss << "x" << m_cnt++;
         auto s = ss.str();
         m_solver_vars.emplace(t, s);
         m_symbols_by_stack_pos.back().emplace(t);
-        out << "(declare-fun " << s << " () " << Type::lookup(t->sym).second << ")\n";
+        m_in << "(declare-fun " << s << " () " << Type::lookup(t->sym).second << ")\n";
         return;
     }
     switch (t->sym) {
@@ -131,16 +131,16 @@ void SmtLibShim::declare_vars(term_ptr t) {
 }
 
 void SmtLibShim::make_declarations() {
-    out << declarations << std::endl;
+    m_in << declarations << "\n";
 }
 
 void SmtLibShim::push() {
-    out << "(push 1)\n";
+    m_in << "(push 1)\n";
     m_symbols_by_stack_pos.emplace_back(std::unordered_set<term_ptr>());
 }
 
 void SmtLibShim::pop(unsigned int n) {
-    out << "(pop " << n << ")\n";
+    m_in << "(pop " << n << ")\n";
     for (unsigned i = 0; i < n; ++i) {
         for (auto var: m_symbols_by_stack_pos.back()) {
             m_solver_vars.erase(var);
@@ -152,9 +152,9 @@ void SmtLibShim::pop(unsigned int n) {
 void SmtLibShim::make_assertion(term_ptr assertion) {
     declare_vars(assertion);
     m_annotations = MyTypeInferer().go(assertion);
-    out << "(assert ";
+    m_in << "(assert ";
     serialize(assertion);
-    out << ")\n";
+    m_in << ")\n";
     assert(m_annotations.empty());
 }
 
@@ -164,21 +164,21 @@ SmtResult SmtLibShim::check_sat_assuming(const std::vector<term_ptr> &onVars, co
         cerr << "Warning: ignoring negative timeout provided to SMT" << endl;
         timeout = numeric_limits<int>::max();
     }
-    out << "(set-option :timeout " << timeout << ")" << endl;
+    m_in << "(set-option :timeout " << timeout << ")\n";
 
     if (onVars.empty() && offVars.empty()) {
-        out << "(check-sat)\n";
+        m_in << "(check-sat)\n";
     } else {
-        out << "(check-sat-assuming (";
+        m_in << "(check-sat-assuming (";
         for (auto var: onVars) {
-            out << lookup_var(var) << " ";
+            m_in << lookup_var(var) << " ";
         }
         for (auto var: offVars) {
-            out << "(not " << lookup_var(var) << ") ";
+            m_in << "(not " << lookup_var(var) << ") ";
         }
-        out << "))\n";
+        m_in << "))\n";
     }
-    out.flush();
+    m_in.flush();
 
     string line;
     getline(m_out, line);
@@ -201,15 +201,15 @@ void SmtLibShim::serialize(term_ptr t) {
     switch (t->sym) {
         case Symbol::boxed_bool:
         case Symbol::boxed_string: {
-            out << *t;
+            m_in << *t;
             break;
         }
         case Symbol::boxed_i32: {
-            out << "#x" << boost::format{"%08x"} % t->as_base<int32_t>().val;
+            m_in << "#x" << boost::format{"%08x"} % t->as_base<int32_t>().val;
             break;
         }
         case Symbol::boxed_i64: {
-            out << "#x" << boost::format{"%016x"} % t->as_base<int64_t>().val;
+            m_in << "#x" << boost::format{"%016x"} % t->as_base<int64_t>().val;
             break;
         }
         case Symbol::boxed_fp32: {
@@ -231,55 +231,55 @@ void SmtLibShim::serialize(term_ptr t) {
 void SmtLibShim::serialize(const std::string &repr, const ComplexTerm &t) {
     size_t n = t.arity;
     if (n > 0) {
-        out << "(";
+        m_in << "(";
     }
     if (needs_type_annotation(t.sym)) {
-        out << "(as " << repr << " " << next_annotation() << ")";
+        m_in << "(as " << repr << " " << next_annotation() << ")";
     } else {
-        out << repr;
+        m_in << repr;
     }
     for (size_t i = 0; i < n; ++i) {
-        out << " ";
+        m_in << " ";
         serialize(t.val[i]);
     }
     if (n > 0) {
-        out << ")";
+        m_in << ")";
     }
 }
 
 template<typename T, size_t N>
 void SmtLibShim::serialize_bit_string(T val) {
-    out << "#b" << std::bitset<N>(val).to_string();
+    m_in << "#b" << std::bitset<N>(val).to_string();
 }
 
 template<size_t From, size_t To, bool Signed>
 void SmtLibShim::serialize_bv_to_bv(term_ptr t) {
     auto arg = arg0(t);
     if (From < To) {
-        out << "((_ " << (Signed ? "sign" : "zero") << "_extend "
-            << (To - From) << ") ";
+        m_in << "((_ " << (Signed ? "sign" : "zero") << "_extend "
+             << (To - From) << ") ";
         serialize(arg);
-        out << ")";
+        m_in << ")";
     } else if (From > To) {
-        out << "((_ extract " << (To - 1) << " 0) ";
+        m_in << "((_ extract " << (To - 1) << " 0) ";
         serialize(arg);
-        out << ")";
+        m_in << ")";
     } else {
         serialize(arg);
     }
 }
 
 void SmtLibShim::serialize_bv_extract(term_ptr t) {
-    out << "((_ extract " << *argn(t, 2) << " " << *argn(t, 1) << ") ";
+    m_in << "((_ extract " << *argn(t, 2) << " " << *argn(t, 1) << ") ";
     serialize(arg0(t));
-    out << ")";
+    m_in << ")";
 }
 
 template<size_t E, size_t S>
 void SmtLibShim::serialize_bv_to_fp(term_ptr t) {
-    out << "((_ to_fp " << E << " " << S << ") RNE ";
+    m_in << "((_ to_fp " << E << " " << S << ") RNE ";
     serialize(arg0(t));
-    out << ")";
+    m_in << ")";
 }
 
 template<typename T, size_t E, size_t S>
@@ -289,92 +289,92 @@ void SmtLibShim::serialize_fp(term_ptr t) {
     ss << E << " " << S;
     auto s = ss.str();
     if (isnan(val)) {
-        out << "(_ NaN " << s << ")";
+        m_in << "(_ NaN " << s << ")";
     } else if (isinf(val)) {
         if (val > 0) {
-            out << "(_ +oo " << s << ")";
+            m_in << "(_ +oo " << s << ")";
         } else {
-            out << "(_ -oo " << s << ")";
+            m_in << "(_ -oo " << s << ")";
         }
     } else {
-        out << "((_ to_fp " << s << ") RNE " << val << ")";
+        m_in << "((_ to_fp " << s << ") RNE " << val << ")";
     }
 }
 
 template<size_t N, bool Signed>
 void SmtLibShim::serialize_fp_to_bv(term_ptr t) {
-    out << "((_ " << (Signed ? "fp.to_sbv" : "fp.to_ubv") << " " << N << ") RNE ";
+    m_in << "((_ " << (Signed ? "fp.to_sbv" : "fp.to_ubv") << " " << N << ") RNE ";
     serialize(arg0(t));
-    out << ")";
+    m_in << ")";
 }
 
 template<size_t E, size_t S>
 void SmtLibShim::serialize_fp_to_fp(term_ptr t) {
-    out << "((_ to_fp " << E << " " << S << ") RNE ";
+    m_in << "((_ to_fp " << E << " " << S << ") RNE ";
     serialize(arg0(t));
-    out << ")";
+    m_in << ")";
 }
 
 void SmtLibShim::serialize_let(term_ptr t) {
     auto &x = t->as_complex();
-    out << "(let ((";
+    m_in << "(let ((";
     serialize(x.val[0]);
-    out << " ";
+    m_in << " ";
     serialize(x.val[1]);
-    out << ")) ";
+    m_in << ")) ";
     serialize(x.val[2]);
-    out << ")";
+    m_in << ")";
 }
 
 template<typename T>
 void SmtLibShim::serialize_int(term_ptr t) {
-    out << arg0(t)->as_base<T>().val;
+    m_in << arg0(t)->as_base<T>().val;
 }
 
 template<bool Exists>
 void SmtLibShim::serialize_quantifier(term_ptr t) {
     auto &x = t->as_complex();
-    out << "(" << (Exists ? "exists (" : "forall (");
+    m_in << "(" << (Exists ? "exists (" : "forall (");
     for (auto &v: Term::vectorize_list_term(x.val[0])) {
         // Consume annotation for cons
         next_annotation();
         auto var = arg0(v);
-        out << "(";
+        m_in << "(";
         serialize(var);
-        out << " " << Type::lookup(var->sym).second << ")";
+        m_in << " " << Type::lookup(var->sym).second << ")";
     }
-    out << ") ";
+    m_in << ") ";
     // Consume annotation for nil
     next_annotation();
     auto pats = Term::vectorize_list_term(x.val[2]);
     if (!pats.empty()) {
-        out << "(! ";
+        m_in << "(! ";
     }
     serialize(x.val[1]);
     if (!pats.empty()) {
         for (auto &pat: pats) {
-            out << " :pattern (";
+            m_in << " :pattern (";
             // Consume annotation for cons
             next_annotation();
             bool first{true};
             for (auto &sub: Term::vectorize_list_term(pat)) {
                 if (!first) {
-                    out << " ";
+                    m_in << " ";
                 }
                 first = false;
                 // Consume annotation for cons
                 next_annotation();
                 serialize(arg0(sub));
             }
-            out << ")";
+            m_in << ")";
             // Consume annotation for nil
             next_annotation();
         }
-        out << ")";
+        m_in << ")";
     }
     // Consume annotation for nil
     next_annotation();
-    out << ")";
+    m_in << ")";
 }
 
 string SmtLibShim::serialize_sym(Symbol sym) {

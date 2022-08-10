@@ -325,7 +325,7 @@ public class SmtShimCpp extends TemplateSrcFile {
                     return mkCall("serialize_let");
                 case SMT_VAR: {
                     CppExpr call = CppFuncCall.mk("lookup_var", CppVar.mk("t"));
-                    return CppBinop.mkShiftLeft(CppVar.mk("out"), call).toStmt();
+                    return CppBinop.mkShiftLeft(CppVar.mk("m_in"), call).toStmt();
                 }
                 case SMT_PAT:
                 case SMT_WRAP_VAR:

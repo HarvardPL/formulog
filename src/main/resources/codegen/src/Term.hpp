@@ -108,6 +108,8 @@ struct ComplexTerm : public Term {
 
     NO_COPY_OR_ASSIGN(ComplexTerm);
 
+    static term_ptr fresh_smt_var();
+
 private:
     ComplexTerm(Symbol sym_, size_t arity_, term_ptr *val_) :
             Term{sym_}, arity{arity_}, val{val_} {}

@@ -12,7 +12,7 @@ TopLevelSmtSolver::TopLevelSmtSolver() {
     bp::opstream in;
     bp::child proc("z3 -in", bp::std_in < in, (bp::std_out & bp::std_err) > out);
     auto shim = std::make_unique<SmtLibShim>(std::move(proc), std::move(in), std::move(out));
-    m_delegate = std::make_unique<PushPopNaiveSolver>(std::move(shim));
+    m_delegate = std::make_unique<CheckSatAssumingSolver>(std::move(shim));
 }
 
 SmtResult TopLevelSmtSolver::check(const std::vector<term_ptr> &assertions, bool get_model, int timeout) {
@@ -115,6 +115,33 @@ AbstractSmtSolver::term_vector_pair PushPopNaiveSolver::make_assertions(const st
 
 void PushPopNaiveSolver::cleanup() {
     m_shim->pop(1);
+}
+
+void CheckSatAssumingSolver::initialize() {
+    m_shim->make_declarations();
+}
+
+AbstractSmtSolver::term_vector_pair CheckSatAssumingSolver::make_assertions(const std::vector<term_ptr> &assertions) {
+    std::vector<term_ptr> on_vars;
+    for (auto assertion: assertions) {
+        auto &var = m_conjuncts_to_vars[assertion];
+        if (!var) {
+            var = ComplexTerm::fresh_smt_var();
+        }
+        on_vars.emplace_back(var);
+#ifdef FLG_DEV
+        auto imp = nullptr;
+#else
+        auto imp = Term::make<Symbol::smt_imp>(var, assertion);
+#endif
+        m_shim->make_assertion(imp);
+    }
+    return {on_vars,
+            {}};
+}
+
+void CheckSatAssumingSolver::cleanup() {
+    // do nothing
 }
 
 }
