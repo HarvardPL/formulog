@@ -84,7 +84,8 @@ private:
     boost::process::ipstream m_out;
 
     std::unordered_map<term_ptr, string> m_solver_vars;
-    std::vector<std::unordered_set<term_ptr>> m_symbols_by_stack_pos;
+    std::vector<term_ptr> m_solver_vars_in_order;
+    std::vector<unsigned int> m_stack_positions;
     unsigned int m_cnt{0};
     std::deque<Type> m_annotations;
 

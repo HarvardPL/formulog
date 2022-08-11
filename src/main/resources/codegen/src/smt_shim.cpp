@@ -100,9 +100,7 @@ void MyTypeInferer::unify(const Type &ty1, const Type &ty2) {
 }
 
 SmtLibShim::SmtLibShim(boost::process::child &&proc, boost::process::opstream &&in, boost::process::ipstream &&out)
-        : m_proc{std::move(proc)}, m_in{std::move(in)}, m_out{std::move(out)} {
-    m_symbols_by_stack_pos.emplace_back(std::unordered_set<term_ptr>());
-}
+        : m_proc{std::move(proc)}, m_in{std::move(in)}, m_out{std::move(out)} {}
 
 void SmtLibShim::declare_vars(term_ptr t) {
     if (is_solver_var(t)) {
@@ -111,7 +109,7 @@ void SmtLibShim::declare_vars(term_ptr t) {
             ss << "x" << m_cnt++;
             auto s = ss.str();
             m_solver_vars.emplace(t, s);
-            m_symbols_by_stack_pos.back().emplace(t);
+            m_solver_vars_in_order.push_back(t);
             m_in << "(declare-fun " << s << " () " << Type::lookup(t->sym).second << ")\n";
         }
         return;
@@ -138,16 +136,21 @@ void SmtLibShim::make_declarations() {
 
 void SmtLibShim::push() {
     m_in << "(push 1)\n";
-    m_symbols_by_stack_pos.emplace_back(std::unordered_set<term_ptr>());
+    m_stack_positions.push_back(m_solver_vars_in_order.size());
 }
 
 void SmtLibShim::pop(unsigned int n) {
     m_in << "(pop " << n << ")\n";
-    for (unsigned i = 0; i < n; ++i) {
-        for (auto var: m_symbols_by_stack_pos.back()) {
+    if (n > 0) {
+        unsigned int stack_pos = m_stack_positions.size() - n;
+        unsigned int start_pos = m_stack_positions[stack_pos];
+        m_stack_positions.erase(m_stack_positions.begin() + stack_pos, m_stack_positions.end());
+        unsigned int how_many = m_solver_vars_in_order.size() - start_pos;
+        for (unsigned int i = 0; i < how_many; ++i) {
+            auto var = m_solver_vars_in_order.back();
             m_solver_vars.erase(var);
+            m_solver_vars_in_order.pop_back();
         }
-        m_symbols_by_stack_pos.pop_back();
     }
 }
 
