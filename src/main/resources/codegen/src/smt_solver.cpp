@@ -22,30 +22,31 @@ SmtResult TopLevelSmtSolver::check(const std::vector<term_ptr> &assertions, bool
 
 MemoizingSmtSolver::MemoizingSmtSolver(std::unique_ptr<SmtSolver> &&delegate) : m_delegate{std::move(delegate)} {}
 
-void MemoizingSmtSolver::break_into_conjuncts(term_ptr t, sequenced_term_set &acc, bool negated) {
+void MemoizingSmtSolver::break_into_conjuncts(term_ptr t, std::set<term_ptr> &unordered, std::vector<term_ptr> &ordered,
+                                              bool negated) {
     if (t->sym == Symbol::smt_and && !negated) {
         auto &c = t->as_complex();
-        break_into_conjuncts(c.val[0], acc);
-        break_into_conjuncts(c.val[1], acc);
+        break_into_conjuncts(c.val[0], unordered, ordered);
+        break_into_conjuncts(c.val[1], unordered, ordered);
         return;
     } else if (t->sym == Symbol::smt_not || negated) {
         auto tt = t->as_complex().val[0];
         if (t->sym == Symbol::smt_not && negated) {
-            break_into_conjuncts(tt, acc);
+            break_into_conjuncts(tt, unordered, ordered);
             return;
         }
         if (tt->sym == Symbol::smt_imp) {
             // Turn ~(A => B) into A /\ ~B
             auto &c = tt->as_complex();
-            break_into_conjuncts(c.val[0], acc);
-            break_into_conjuncts(c.val[1], acc, true);
+            break_into_conjuncts(c.val[0], unordered, ordered);
+            break_into_conjuncts(c.val[1], unordered, ordered, true);
             return;
         }
         if (tt->sym == Symbol::smt_or) {
             // Turn ~(A \/ B) into ~A /\ ~B
             auto &c = tt->as_complex();
-            break_into_conjuncts(c.val[0], acc, true);
-            break_into_conjuncts(c.val[1], acc, true);
+            break_into_conjuncts(c.val[0], unordered, ordered, true);
+            break_into_conjuncts(c.val[1], unordered, ordered, true);
             return;
         }
     }
@@ -54,29 +55,33 @@ void MemoizingSmtSolver::break_into_conjuncts(term_ptr t, sequenced_term_set &ac
         t = Term::make<Symbol::smt_not>(t);
 #endif
     }
-    acc.push_back(t);
+    if (t != Term::make(true)) {
+        auto it = unordered.insert(t);
+        if (it.second) {
+            ordered.push_back(t);
+        }
+    }
 }
 
 SmtResult MemoizingSmtSolver::check(const std::vector<term_ptr> &assertions, bool get_model, int timeout) {
     if (get_model) {
         throw std::runtime_error("not supporting models yet");
     }
-    sequenced_term_set conjuncts;
+    std::vector<term_ptr> conjuncts;
+    std::set<term_ptr> key;
     for (auto assertion: assertions) {
-        break_into_conjuncts(assertion, conjuncts);
+        break_into_conjuncts(assertion, key, conjuncts);
     }
-    if (conjuncts.get<1>().find(Term::make(false)) != conjuncts.get<1>().end()) {
-        return SmtResult::unsat;
-    }
-    conjuncts.remove(Term::make(true));
     if (conjuncts.empty()) {
         return SmtResult::sat;
     }
-    std::vector key(conjuncts.get<0>().begin(), conjuncts.get<0>().end());
+    if (key.find(Term::make(false)) != key.end()) {
+        return SmtResult::unsat;
+    }
     SmtResult res;
     auto it = s_memo.find(key);
     if (it == s_memo.end()) {
-        res = m_delegate->check(key, get_model, timeout);
+        res = m_delegate->check(conjuncts, get_model, timeout);
         auto p = s_memo.emplace(key, res);
         if (!p.second) {
             res = p.first->second;

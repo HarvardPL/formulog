@@ -52,17 +52,10 @@ public:
 private:
     std::unique_ptr<SmtSolver> m_delegate;
 
-    using sequenced_term_set =
-    boost::multi_index_container<term_ptr,
-            boost::multi_index::indexed_by<
-                    boost::multi_index::sequenced<>,
-                    boost::multi_index::hashed_unique<boost::multi_index::identity<term_ptr>>
-            >
-    >;
+    static void break_into_conjuncts(term_ptr t, std::set<term_ptr> &unordered, std::vector<term_ptr> &ordered,
+                                     bool negated = false);
 
-    static void break_into_conjuncts(term_ptr t, sequenced_term_set &acc, bool negated = false);
-
-    static inline tbb::concurrent_unordered_map<std::vector<term_ptr>, SmtResult, boost::hash<std::vector<term_ptr>>> s_memo;
+    static inline tbb::concurrent_unordered_map<std::set<term_ptr>, SmtResult, boost::hash<std::set<term_ptr>>> s_memo;
 };
 
 class AbstractSmtSolver : public SmtSolver {
