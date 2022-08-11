@@ -67,7 +67,8 @@ public class CompiledSemiNaiveTester implements Tester {
             WellTypedProgram wtp = new TypeChecker(prog).typeCheck();
             MagicSetTransformer mst = new MagicSetTransformer(wtp);
             BasicProgram magicProg = mst.transform(true, true);
-            boolean ok = evaluate(magicProg);
+            String name = file.substring(0, file.indexOf('.'));
+            boolean ok = evaluate(name, magicProg);
             if (!ok && !isBad) {
                 String msg = "Test failed for a good program";
                 fail(msg);
@@ -84,14 +85,13 @@ public class CompiledSemiNaiveTester implements Tester {
         }
     }
 
-    private boolean evaluate(BasicProgram prog) throws Exception {
-        File dir = new File("codegen");
-        File srcDir = dir.toPath().resolve("src").toFile();
+    private boolean evaluate(String name, BasicProgram prog) throws Exception {
+        Path topPath = Path.of("codegen", "tests", name);
+        File srcDir = topPath.resolve("src").toFile();
         srcDir.mkdirs();
         Util.clean(srcDir, false);
-        Path topPath = dir.toPath();
         Path buildPath = topPath.resolve("build");
-        CodeGen cg = new CodeGen(prog, dir);
+        CodeGen cg = new CodeGen(prog, topPath.toFile());
         cg.go();
         Process cmake = Runtime.getRuntime().exec(new String[]{"cmake", "-B", buildPath.toString(),
                 "-S", topPath.toString(), "-DCMAKE_BUILD_TYPE=Debug",
