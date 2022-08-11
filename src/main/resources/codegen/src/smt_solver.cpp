@@ -12,7 +12,8 @@ TopLevelSmtSolver::TopLevelSmtSolver() {
     bp::opstream in;
     bp::child proc("z3 -in", bp::std_in < in, (bp::std_out & bp::std_err) > out);
     auto shim = std::make_unique<SmtLibShim>(std::move(proc), std::move(in), std::move(out));
-    m_delegate = std::make_unique<CheckSatAssumingSolver>(std::move(shim));
+    auto inner = std::make_unique<CheckSatAssumingSolver>(std::move(shim));
+    m_delegate = std::make_unique<MemoizingSmtSolver>(std::move(inner));
 }
 
 SmtResult TopLevelSmtSolver::check(const std::vector<term_ptr> &assertions, bool get_model, int timeout) {
