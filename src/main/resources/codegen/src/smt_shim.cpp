@@ -105,13 +105,15 @@ SmtLibShim::SmtLibShim(boost::process::child &&proc, boost::process::opstream &&
 }
 
 void SmtLibShim::declare_vars(term_ptr t) {
-    if (is_solver_var(t) && m_solver_vars.find(t) == m_solver_vars.end()) {
-        std::stringstream ss;
-        ss << "x" << m_cnt++;
-        auto s = ss.str();
-        m_solver_vars.emplace(t, s);
-        m_symbols_by_stack_pos.back().emplace(t);
-        m_in << "(declare-fun " << s << " () " << Type::lookup(t->sym).second << ")\n";
+    if (is_solver_var(t)) {
+        if (m_solver_vars.find(t) == m_solver_vars.end()) {
+            std::stringstream ss;
+            ss << "x" << m_cnt++;
+            auto s = ss.str();
+            m_solver_vars.emplace(t, s);
+            m_symbols_by_stack_pos.back().emplace(t);
+            m_in << "(declare-fun " << s << " () " << Type::lookup(t->sym).second << ")\n";
+        }
         return;
     }
     switch (t->sym) {
