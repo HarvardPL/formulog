@@ -26,7 +26,8 @@ import java.nio.file.Path;
 import java.util.Iterator;
 
 import edu.harvard.seas.pl.formulog.codegen.ast.cpp.*;
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
+import edu.harvard.seas.pl.formulog.symbols.*;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedSymbol;
 
 public final class CodeGenUtil {
 
@@ -69,7 +70,17 @@ public final class CodeGenUtil {
     }
 
     public static String mkName(Symbol sym) {
-        return sym.toString().replaceAll("[^A-Za-z0-9_]", "__");
+        boolean isBuiltIn = sym instanceof BuiltInConstructorSymbol;
+        isBuiltIn |= sym instanceof ParameterizedSymbol;
+        isBuiltIn |= sym instanceof BuiltInFunctionSymbol;
+        isBuiltIn |= sym instanceof BuiltInTypeSymbol;
+        isBuiltIn |= sym instanceof BuiltInConstructorTesterSymbol;
+        isBuiltIn |= sym instanceof BuiltInConstructorGetterSymbol;
+        String s = sym.toString().replaceAll("[^A-Za-z0-9_]", "__");
+        if (!isBuiltIn) {
+            s = "FLG_" + s;
+        }
+        return s;
     }
 
     public static String toString(CppStmt stmt, int indent) {
