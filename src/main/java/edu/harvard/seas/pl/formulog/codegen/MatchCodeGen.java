@@ -28,14 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import edu.harvard.seas.pl.formulog.ast.Constructor;
-import edu.harvard.seas.pl.formulog.ast.Expr;
-import edu.harvard.seas.pl.formulog.ast.MatchClause;
-import edu.harvard.seas.pl.formulog.ast.MatchExpr;
-import edu.harvard.seas.pl.formulog.ast.Primitive;
-import edu.harvard.seas.pl.formulog.ast.Term;
+import edu.harvard.seas.pl.formulog.ast.*;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
-import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.codegen.PatternMatchTree.BaseSymbolicTerm;
 import edu.harvard.seas.pl.formulog.codegen.PatternMatchTree.CtorEdge;
 import edu.harvard.seas.pl.formulog.codegen.PatternMatchTree.DerivedSymbolicTerm;
@@ -49,6 +43,7 @@ import edu.harvard.seas.pl.formulog.codegen.PatternMatchTree.PrimEdge;
 import edu.harvard.seas.pl.formulog.codegen.PatternMatchTree.SymbolicTerm;
 import edu.harvard.seas.pl.formulog.codegen.PatternMatchTree.VarEdge;
 import edu.harvard.seas.pl.formulog.codegen.ast.cpp.*;
+import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.Pair;
@@ -80,6 +75,7 @@ public class MatchCodeGen {
     public Pair<CppStmt, CppExpr> gen(MatchExpr match, Map<Var, CppExpr> env) {
         return new Worker(new HashMap<>(env)).go(match);
     }
+
 
     /**
      * This class actually does all the work of generating the C++ code. It has a
@@ -117,8 +113,12 @@ public class MatchCodeGen {
          * computation
          */
         public Pair<CppStmt, CppExpr> go(MatchExpr match) {
+            var p = optimizeIfExpr(match);
+            if (p != null) {
+                return p;
+            }
             acc.add(CppCtor.mk("term_ptr", res));
-            Pair<CppStmt, CppExpr> p = tcg.gen(match.getMatchee(), env);
+            p = tcg.gen(match.getMatchee(), env);
             acc.add(p.fst());
             String scrutineeVar = ctx.newId("scrutinee");
             acc.add(CppDecl.mk(scrutineeVar, p.snd()));
@@ -144,6 +144,50 @@ public class MatchCodeGen {
             });
             acc.add(CppLabel.mk(end));
             return new Pair<>(CppSeq.mk(acc), CppVar.mk(res));
+        }
+
+        private Pair<CppStmt, CppExpr> optimizeIfExpr(MatchExpr match) {
+            var scrutinee = match.getMatchee();
+            if (!(scrutinee instanceof FunctionCallFactory.FunctionCall)) {
+                return null;
+            }
+            var call = (FunctionCallFactory.FunctionCall) scrutinee;
+            var sym = call.getSymbol();
+            if (sym != BuiltInFunctionSymbol.BEQ && sym != BuiltInFunctionSymbol.BNEQ) {
+                return null;
+            }
+            var clauses = match.getClauses();
+            if (clauses.size() != 2) {
+                return null;
+            }
+            if (clauses.get(0).getLhs() != BoolTerm.mkTrue() || clauses.get(1).getLhs() != BoolTerm.mkFalse()) {
+                return null;
+            }
+            var args = call.getArgs();
+            return optimizeIfExpr(sym == BuiltInFunctionSymbol.BEQ, args[0], args[1], clauses.get(0).getRhs(), clauses.get(1).getRhs());
+        }
+
+        private Pair<CppStmt, CppExpr> optimizeIfExpr(boolean equals, Term t1, Term t2, Term ifTrue, Term ifFalse) {
+            List<CppStmt> stmts = new ArrayList<>();
+            var p1 = tcg.gen(t1, env);
+            var p2 = tcg.gen(t2, env);
+            stmts.add(p1.fst());
+            stmts.add(p2.fst());
+            String res = ctx.newId("res");
+            stmts.add(CppCtor.mk("term_ptr", res));
+            CppExpr cond;
+            if (equals) {
+                cond = CppBinop.mkEq(p1.snd(), p2.snd());
+            } else {
+                cond = CppBinop.mkNotEq(p1.snd(), p2.snd());
+            }
+            p1 = tcg.gen(ifTrue, env);
+            p2 = tcg.gen(ifFalse, env);
+            CppExpr resVar = CppVar.mk(res);
+            CppStmt trueBranch = CppSeq.mk(p1.fst(), CppBinop.mkAssign(resVar, p1.snd()).toStmt());
+            CppStmt falseBranch = CppSeq.mk(p2.fst(), CppBinop.mkAssign(resVar, p2.snd()).toStmt());
+            stmts.add(CppIf.mk(cond, trueBranch, falseBranch));
+            return new Pair<>(CppSeq.mk(stmts), resVar);
         }
 
         /**
