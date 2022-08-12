@@ -9,7 +9,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=native")
 add_executable(flg "")
 
 add_custom_command(OUTPUT formulog.cpp
-        COMMAND souffle ${CMAKE_CURRENT_SOURCE_DIR}/src/formulog.dl -w -g formulog.cpp
+        COMMAND souffle ${CMAKE_CURRENT_SOURCE_DIR}/src/formulog.dl -w -j 2 -g formulog.cpp
         DEPENDS src/formulog.dl)
 
 target_sources(flg PRIVATE

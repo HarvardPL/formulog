@@ -111,7 +111,11 @@ private:
     void cleanup() override;
 };
 
-inline thread_local TopLevelSmtSolver smt_solver;
+extern inline TopLevelSmtSolver smt_solver;
+#if defined(_OPENMP)
+#pragma omp threadprivate(smt_solver)
+#endif
+TopLevelSmtSolver smt_solver;
 
 }
 
