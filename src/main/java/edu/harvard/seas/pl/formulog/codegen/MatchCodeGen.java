@@ -120,7 +120,9 @@ public class MatchCodeGen {
             acc.add(CppCtor.mk("term_ptr", res));
             Pair<CppStmt, CppExpr> p = tcg.gen(match.getMatchee(), env);
             acc.add(p.fst());
-            CppExpr scrutinee = p.snd();
+            String scrutineeVar = ctx.newId("scrutinee");
+            acc.add(CppDecl.mk(scrutineeVar, p.snd()));
+            CppExpr scrutinee = CppVar.mk(scrutineeVar);
             List<Pair<Term, Term>> clauses = preprocess(match.getClauses());
             PatternMatchTree tree = new PatternMatchTree(clauses);
             acc.add(processTree(scrutinee, tree));
