@@ -816,6 +816,7 @@ public abstract class CommonEvaluationTest<T extends Evaluation> extends Abstrac
         test("test311_ok.flg");
     }
 
+    /* No longer supporting these semantics
     @Test
     public void test316() {
         test("test316_ok.flg");
@@ -835,6 +836,7 @@ public abstract class CommonEvaluationTest<T extends Evaluation> extends Abstrac
     public void test319() {
         test("test319_ok.flg");
     }
+     */
 
     @Test
     public void test320() {

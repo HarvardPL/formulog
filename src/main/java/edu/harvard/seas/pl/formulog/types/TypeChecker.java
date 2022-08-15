@@ -21,22 +21,6 @@ package edu.harvard.seas.pl.formulog.types;
  */
 
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.stream.Collectors;
-
 import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.*;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralExnVisitor;
@@ -49,26 +33,18 @@ import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitorExn;
 import edu.harvard.seas.pl.formulog.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.functions.FunctionDefManager;
 import edu.harvard.seas.pl.formulog.functions.UserFunctionDef;
-import edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol;
-import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;
-import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
-import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
-import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
-import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
-import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
+import edu.harvard.seas.pl.formulog.symbols.*;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.Param;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedSymbol;
-import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
-import edu.harvard.seas.pl.formulog.types.Types.OpaqueType;
-import edu.harvard.seas.pl.formulog.types.Types.Type;
-import edu.harvard.seas.pl.formulog.types.Types.TypeIndex;
-import edu.harvard.seas.pl.formulog.types.Types.TypeVar;
-import edu.harvard.seas.pl.formulog.types.Types.TypeVisitor;
+import edu.harvard.seas.pl.formulog.types.Types.*;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.Triple;
 import edu.harvard.seas.pl.formulog.util.Util;
+
+import java.util.*;
+import java.util.concurrent.*;
 
 public class TypeChecker {
 
@@ -263,10 +239,8 @@ public class TypeChecker {
         private final Map<TypeVar, Type> typeVars = new HashMap<>();
         private String error;
 
-        private Term rewriteTerm(Term t, Substitution m, Map<Var, Type> env) throws TypeException {
-            var env2 = env.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> lookupType(e.getValue())));
-            FormulaRewriter fr = new FormulaRewriter(prog.getFunctionCallFactory(), env2);
-            return fr.rewrite(t).accept(termRewriter, m);
+        private Term rewriteTerm(Term t, Substitution m) throws TypeException {
+            return t.accept(termRewriter, m);
         }
 
         public Term[] typeCheckFact(RelationSymbol sym, Term[] args) throws TypeException {
@@ -277,7 +251,7 @@ public class TypeChecker {
             }
             Substitution m = makeIndexSubstitution(subst);
             try {
-                return Terms.mapExn(args, t -> rewriteTerm(t, m, subst));
+                return Terms.mapExn(args, t -> rewriteTerm(t, m));
             } catch (TypeException e) {
                 throw new TypeException(
                         "Problem with rewriting fact: " + UserPredicate.make(sym, args, false) + "\n" + e.getMessage());
@@ -287,7 +261,7 @@ public class TypeChecker {
 
         private ComplexLiteral rewriteLiteral(ComplexLiteral l, Substitution m, Map<Var, Type> env) throws TypeException {
             try {
-                Term[] args = Terms.mapExn(l.getArgs(), t -> rewriteTerm(t, m, env));
+                Term[] args = Terms.mapExn(l.getArgs(), t -> rewriteTerm(t, m));
                 return l.accept(new ComplexLiteralExnVisitor<Void, ComplexLiteral, TypeException>() {
 
                     @Override
@@ -368,8 +342,8 @@ public class TypeChecker {
             Substitution m = makeIndexSubstitution(subst);
             try {
                 return UserFunctionDef.get(functionDef.getSymbol(), functionDef.getParams(),
-                        rewriteTerm(functionDef.getBody(), m, subst));
-            } catch (TypeException e) {
+                        rewriteTerm(functionDef.getBody(), m));
+            } catch (Throwable e) {
                 throw new TypeException("Problem with rewriting the function: " + functionDef.getSymbol() + "\n"
                         + functionDef.getBody() + "\n" + e.getMessage());
             }
@@ -713,6 +687,9 @@ public class TypeChecker {
             @Override
             public Term visit(Constructor c, Substitution subst) throws TypeException {
                 ConstructorSymbol sym = c.getSymbol();
+                if (sym.equals(BuiltInConstructorSymbol.ENTER_FORMULA) || sym.equals(BuiltInConstructorSymbol.EXIT_FORMULA)) {
+                    return c.getArgs()[0].accept(this, subst);
+                }
                 if (sym instanceof ParameterizedConstructorSymbol) {
                     try {
                         sym = (ConstructorSymbol) handleParameterizedSymbol((ParameterizedConstructorSymbol) sym);

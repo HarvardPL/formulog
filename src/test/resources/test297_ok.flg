@@ -3,7 +3,7 @@ type foo = bar(i32)
 input baz(foo smt)
 
 baz(`bar(#x[i32])`).
-baz(`bar(41)`).
+baz(`bar(bv_const(41))`).
 
 input buz(i32)
 
