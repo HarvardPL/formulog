@@ -12,7 +12,7 @@ TopLevelSmtSolver::TopLevelSmtSolver() {
     bp::opstream in;
     bp::child proc("z3 -in", bp::std_in < in, (bp::std_out & bp::std_err) > out);
     auto shim = std::make_unique<SmtLibShim>(std::move(proc), std::move(in), std::move(out));
-    auto inner = std::make_unique<CheckSatAssumingSolver>(std::move(shim));
+    auto inner = std::make_unique<PushPopSolver>(std::move(shim));
     m_delegate = std::make_unique<MemoizingSmtSolver>(std::move(inner));
 }
 
@@ -148,6 +148,54 @@ AbstractSmtSolver::term_vector_pair CheckSatAssumingSolver::make_assertions(cons
 
 void CheckSatAssumingSolver::cleanup() {
     // do nothing
+}
+
+void PushPopSolver::initialize() {
+    m_shim->make_declarations();
+}
+
+AbstractSmtSolver::term_vector_pair PushPopSolver::make_assertions(const std::vector<term_ptr> &assertions) {
+    unsigned int pos = find_diff_pos(assertions);
+    shrink_cache(m_set.size() - pos);
+    assert(m_stack.size() == pos && m_set.size() == pos);
+    assert(pos <= assertions.size());
+    for (auto it = assertions.begin() + pos; it != assertions.end(); ++it) {
+        auto elt = *it;
+        if (m_set.insert(elt).second) {
+            m_shim->push();
+            m_shim->make_assertion(elt);
+            m_stack.push_back(elt);
+        }
+    }
+    assert(m_stack.size() == m_set.size());
+    assert(m_stack.size() <= assertions.size());
+    return {{},
+            {}};
+}
+
+void PushPopSolver::cleanup() {
+    // do nothing
+}
+
+unsigned int PushPopSolver::find_diff_pos(const std::vector<term_ptr> &assertions) {
+    unsigned int pos = 0;
+    unsigned int end = std::min(m_stack.size(), assertions.size());
+    while (pos < end) {
+        auto assertion = assertions[pos];
+        if (m_set.find(assertion) == m_set.end() && m_stack[pos] != assertion) {
+            break;
+        }
+        pos++;
+    }
+    return pos;
+}
+
+void PushPopSolver::shrink_cache(unsigned int num_to_pop) {
+    m_shim->pop(num_to_pop);
+    for (unsigned int i = 0; i < num_to_pop; ++i) {
+        m_set.erase(m_stack.back());
+        m_stack.pop_back();
+    }
 }
 
 }

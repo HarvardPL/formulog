@@ -111,6 +111,27 @@ private:
     void cleanup() override;
 };
 
+class PushPopSolver : public AbstractSmtSolver {
+public:
+    NO_COPY_OR_ASSIGN(PushPopSolver);
+
+    explicit PushPopSolver(std::unique_ptr<SmtShim> &&shim) : AbstractSmtSolver{std::move(shim)} {}
+
+private:
+    std::vector<term_ptr> m_stack;
+    std::unordered_set<term_ptr> m_set;
+
+    void initialize() override;
+
+    term_vector_pair make_assertions(const std::vector<term_ptr> &assertions) override;
+
+    void cleanup() override;
+
+    unsigned int find_diff_pos(const std::vector<term_ptr> &assertions);
+
+    void shrink_cache(unsigned int num_to_pop);
+};
+
 extern inline TopLevelSmtSolver smt_solver;
 #if defined(_OPENMP)
 #pragma omp threadprivate(smt_solver)

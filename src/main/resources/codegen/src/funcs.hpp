@@ -317,6 +317,7 @@ int _extract_timeout_from_option(term_ptr o) {
 term_ptr is_sat_opt(term_ptr t1, term_ptr t2) {
     int timeout = _extract_timeout_from_option(t2);
     auto assertions = Term::vectorize_list_term(t1);
+    std::reverse(assertions.begin(), assertions.end());
     switch (smt::smt_solver.check(assertions, false, timeout)) {
         case smt::SmtResult::sat:
             return _make_some(Term::make<bool>(true));
