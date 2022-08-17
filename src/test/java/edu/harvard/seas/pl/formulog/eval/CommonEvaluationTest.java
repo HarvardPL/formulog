@@ -496,10 +496,13 @@ public abstract class CommonEvaluationTest<T extends Evaluation> extends Abstrac
         test("test137_ok.flg");
     }
 
+    /*
+    No longer supporting this semantics
     @Test
     public void test138() {
         test("test138_ok.flg");
     }
+     */
 
     @Test
     public void test139() {

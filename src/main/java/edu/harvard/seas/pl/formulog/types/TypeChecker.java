@@ -45,6 +45,7 @@ import edu.harvard.seas.pl.formulog.util.Util;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 public class TypeChecker {
 
@@ -395,19 +396,39 @@ public class TypeChecker {
             Map<TypeVar, OpaqueType> opaqueTypes = new HashMap<>();
             List<Type> argTypes = scheme.getArgTypes();
             for (Type t : argTypes) {
-                if (t instanceof TypeVar) {
-                    addConstraint(null, t, Util.lookupOrCreate(opaqueTypes, (TypeVar) t, () -> OpaqueType.get()),
-                            false);
-                }
+                addConstraint(null, t, mkTypeVarsOpaque(t, opaqueTypes), false);
             }
             Type r = scheme.getRetType();
-            if (r instanceof TypeVar) {
-                addConstraint(null, r, Util.lookupOrCreate(opaqueTypes, (TypeVar) r, () -> OpaqueType.get()), false);
-            }
+            addConstraint(null, r, mkTypeVarsOpaque(r, opaqueTypes), false);
             for (int i = 0; i < params.size(); ++i) {
                 subst.put(params.get(i), argTypes.get(i));
             }
             genConstraints(body, r, subst, false);
+        }
+
+        private Type mkTypeVarsOpaque(Type t, Map<TypeVar, OpaqueType> subst) {
+            return t.accept(new TypeVisitor<Void, Type>() {
+                @Override
+                public Type visit(TypeVar typeVar, Void in) {
+                    return Util.lookupOrCreate(subst, typeVar, OpaqueType::get);
+                }
+
+                @Override
+                public Type visit(AlgebraicDataType algebraicType, Void in) {
+                    List<Type> newArgs = algebraicType.getTypeArgs().stream().map(t -> t.accept(this, null)).collect(Collectors.toList());
+                    return AlgebraicDataType.make(algebraicType.getSymbol(), newArgs);
+                }
+
+                @Override
+                public Type visit(OpaqueType opaqueType, Void in) {
+                    return opaqueType;
+                }
+
+                @Override
+                public Type visit(TypeIndex typeIndex, Void in) {
+                    return typeIndex;
+                }
+            }, null);
         }
 
         private void genConstraintsForExpr(Expr e, Type exprType, Map<Var, Type> varTypes, boolean inFormula) {
@@ -840,7 +861,7 @@ public class TypeChecker {
         }
     }
 
-    public static Type lookupType(Type t, Map<TypeVar, Type> subst) {
+    public static Type lookupType(Type t, Map<TypeVar, ? extends Type> subst) {
         return t.accept(new TypeVisitor<Void, Type>() {
 
             @Override
