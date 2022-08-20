@@ -2,18 +2,37 @@
 // Created by Aaron Bembenek on 8/9/22.
 //
 
+#include "globals.h"
 #include "smt_solver.h"
 
 namespace flg::smt {
 
 TopLevelSmtSolver::TopLevelSmtSolver() {
+    std::unique_ptr<SmtSolver> inner;
+    switch (globals::smt_solver_mode) {
+        case SmtSolverMode::push_pop_naive:
+            inner = std::make_unique<PushPopNaiveSolver>(make_shim());
+            break;
+        case SmtSolverMode::push_pop:
+            inner = std::make_unique<PushPopSolver>(make_shim());
+            break;
+        case SmtSolverMode::check_sat_assuming:
+            inner = std::make_unique<CheckSatAssumingSolver>(make_shim());
+            if (globals::smt_double_check) {
+                auto checker = std::make_unique<PushPopSolver>(make_shim());
+                inner = std::make_unique<DoubleCheckingSolver>(std::move(inner), std::move(checker));
+            }
+            break;
+    }
+    m_delegate = std::make_unique<MemoizingSmtSolver>(std::move(inner));
+}
+
+std::unique_ptr<SmtShim> TopLevelSmtSolver::make_shim() {
     namespace bp = boost::process;
     bp::ipstream out;
     bp::opstream in;
     bp::child proc("z3 -in", bp::std_in < in, (bp::std_out & bp::std_err) > out);
-    auto shim = std::make_unique<SmtLibShim>(std::move(proc), std::move(in), std::move(out));
-    auto inner = std::make_unique<PushPopSolver>(std::move(shim));
-    m_delegate = std::make_unique<MemoizingSmtSolver>(std::move(inner));
+    return std::make_unique<SmtLibShim>(std::move(proc), std::move(in), std::move(out));
 }
 
 SmtResult TopLevelSmtSolver::check(const std::vector<term_ptr> &assertions, bool get_model, int timeout) {
@@ -196,6 +215,14 @@ void PushPopSolver::shrink_cache(unsigned int num_to_pop) {
         m_set.erase(m_stack.back());
         m_stack.pop_back();
     }
+}
+
+SmtResult DoubleCheckingSolver::check(const std::vector<term_ptr> &assertions, bool get_model, int timeout) {
+    auto res = m_first->check(assertions, get_model, timeout);
+    if (res == SmtResult::unknown) {
+        res = m_second->check(assertions, get_model, timeout);
+    }
+    return res;
 }
 
 }

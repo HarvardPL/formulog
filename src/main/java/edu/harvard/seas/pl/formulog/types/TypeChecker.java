@@ -212,14 +212,13 @@ public class TypeChecker {
         for (FunctionSymbol sym : prog.getFunctionSymbols()) {
             FunctionDef def = prog.getDef(sym);
             if (def instanceof UserFunctionDef) {
-                Future<FunctionDef> fut = exec.submit(new Callable<FunctionDef>() {
-
-                    @Override
-                    public FunctionDef call() throws Exception {
-                        TypeCheckerContext ctx = new TypeCheckerContext();
+                Future<FunctionDef> fut = exec.submit(() -> {
+                    TypeCheckerContext ctx = new TypeCheckerContext();
+                    try {
                         return ctx.typeCheckFunction((UserFunctionDef) def);
+                    } catch (Throwable e) {
+                        throw new TypeException("Problem type checking function: " + sym + "\n" + e.getMessage());
                     }
-
                 });
                 futures.put(sym, fut);
             } else {

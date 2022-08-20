@@ -8,11 +8,13 @@
 #include "smt_shim.h"
 
 #include <boost/container_hash/hash.hpp>
-#include <boost/multi_index_container.hpp>
-#include <boost/multi_index/hashed_index.hpp>
-#include <boost/multi_index/sequenced_index.hpp>
+#include <boost/program_options.hpp>
 
 namespace flg::smt {
+
+enum class SmtSolverMode {
+    push_pop_naive, push_pop, check_sat_assuming
+};
 
 class SmtSolver {
 public:
@@ -39,6 +41,8 @@ public:
 
 private:
     std::unique_ptr<SmtSolver> m_delegate;
+
+    static std::unique_ptr<SmtShim> make_shim();
 };
 
 class MemoizingSmtSolver : public SmtSolver {
@@ -132,11 +136,62 @@ private:
     void shrink_cache(unsigned int num_to_pop);
 };
 
+class DoubleCheckingSolver : public SmtSolver {
+public:
+    NO_COPY_OR_ASSIGN(DoubleCheckingSolver);
+
+    DoubleCheckingSolver(std::unique_ptr<SmtSolver> &&first, std::unique_ptr<SmtSolver> &&second) : m_first(
+            std::move(first)), m_second(std::move(second)) {}
+
+    SmtResult check(const std::vector<term_ptr> &assertions, bool get_model, int timeout) override;
+
+private:
+    std::unique_ptr<SmtSolver> m_first;
+    std::unique_ptr<SmtSolver> m_second;
+};
+
 extern inline TopLevelSmtSolver smt_solver;
 #if defined(_OPENMP)
 #pragma omp threadprivate(smt_solver)
 #endif
 TopLevelSmtSolver smt_solver;
+
+}
+
+namespace std {
+
+inline std::istream &operator>>(std::istream &in, flg::smt::SmtSolverMode &mode) {
+    std::string token;
+    in >> token;
+
+    if (token == "push-pop-naive") {
+        mode = flg::smt::SmtSolverMode::push_pop_naive;
+    } else if (token == "push-pop") {
+        mode = flg::smt::SmtSolverMode::push_pop;
+    } else if (token == "check-sat-assuming") {
+        mode = flg::smt::SmtSolverMode::check_sat_assuming;
+    } else {
+        throw boost::program_options::validation_error(
+                boost::program_options::validation_error::kind_t::invalid_option_value);
+    }
+
+    return in;
+}
+
+inline std::ostream &operator<<(std::ostream &out, const flg::smt::SmtSolverMode &mode) {
+    switch (mode) {
+        case flg::smt::SmtSolverMode::push_pop_naive:
+            out << "push-pop-naive";
+            break;
+        case flg::smt::SmtSolverMode::push_pop:
+            out << "push-pop";
+            break;
+        case flg::smt::SmtSolverMode::check_sat_assuming:
+            out << "check-sat-assuming";
+            break;
+    }
+    return out;
+}
 
 }
 

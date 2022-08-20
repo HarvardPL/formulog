@@ -27,6 +27,7 @@ import java.util.Iterator;
 
 import edu.harvard.seas.pl.formulog.codegen.ast.cpp.*;
 import edu.harvard.seas.pl.formulog.symbols.*;
+import edu.harvard.seas.pl.formulog.symbols.parameterized.Param;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedSymbol;
 
 public final class CodeGenUtil {
@@ -70,14 +71,20 @@ public final class CodeGenUtil {
     }
 
     public static String mkName(Symbol sym) {
-        boolean isBuiltIn = sym instanceof BuiltInConstructorSymbol;
-        isBuiltIn |= sym instanceof ParameterizedSymbol;
-        isBuiltIn |= sym instanceof BuiltInFunctionSymbol;
-        isBuiltIn |= sym instanceof BuiltInTypeSymbol;
-        isBuiltIn |= sym instanceof BuiltInConstructorTesterSymbol;
-        isBuiltIn |= sym instanceof BuiltInConstructorGetterSymbol;
-        String s = sym.toString().replaceAll("[^A-Za-z0-9_]", "__");
-        if (!isBuiltIn) {
+        String s;
+        if (sym instanceof ParameterizedSymbol) {
+            ParameterizedSymbol psym = (ParameterizedSymbol) sym;
+            StringBuilder sb = new StringBuilder(psym.getBase().toString());
+            for (Param p : psym.getArgs()) {
+                sb.append("__");
+                String ty = p.getType().toString().replaceAll("[^A-Za-z0-9_]+", "_");
+                sb.append(ty);
+            }
+            s = sb.toString();
+        } else {
+            s = sym.toString().replaceAll("[^A-Za-z0-9_]+", "_");
+        }
+        if (sym instanceof FunctionSymbol && !(sym instanceof BuiltInFunctionSymbol)) {
             s = "FLG_" + s;
         }
         return s;

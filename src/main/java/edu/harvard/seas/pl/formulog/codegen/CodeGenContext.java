@@ -26,8 +26,6 @@ import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SFunctorBody;
 import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SIntListType;
 import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SRuleMode;
 import edu.harvard.seas.pl.formulog.symbols.*;
-import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedSymbol;
-import edu.harvard.seas.pl.formulog.symbols.parameterized.SymbolBase;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType.ConstructorScheme;
 import edu.harvard.seas.pl.formulog.util.Pair;
@@ -42,7 +40,6 @@ public class CodeGenContext {
 
     private final Map<ConstructorSymbol, String> ctorSymToRepr = new HashMap<>();
     private final Map<FunctionSymbol, String> funcSymToRepr = new HashMap<>();
-    private final Map<SymbolBase, AtomicInteger> cnts = new HashMap<>();
     private final AtomicInteger id = new AtomicInteger();
     private final Map<String, SFunctorBody> functorBody = new ConcurrentHashMap<>();
     private final Set<SIntListType> souffleTypes = new HashSet<>();
@@ -69,12 +66,6 @@ public class CodeGenContext {
         String repr = ctorSymToRepr.get(sym);
         if (repr == null) {
             repr = CodeGenUtil.mkName(sym);
-            if (sym instanceof ParameterizedSymbol) {
-                assert ((ParameterizedSymbol) sym).isGround();
-                SymbolBase base = ((ParameterizedSymbol) sym).getBase();
-                int n = Util.lookupOrCreate(cnts, base, AtomicInteger::new).getAndIncrement();
-                repr = base + "_" + n;
-            }
             String repr2 = ctorSymToRepr.putIfAbsent(sym, repr);
             assert repr2 == null;
         }

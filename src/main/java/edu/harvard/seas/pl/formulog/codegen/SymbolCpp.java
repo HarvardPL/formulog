@@ -67,7 +67,7 @@ public class SymbolCpp extends TemplateSrcFile {
 
         void initializeSymbolTable() {
             for (ConstructorSymbol sym : symbols) {
-                CppExpr access = CppSubscript.mk(CppVar.mk("symbol_table"), CppConst.mkString(sym.toString()));
+                CppExpr access = CppSubscript.mk(CppVar.mk("symbol_table"), CppConst.mkString(CodeGenUtil.mkName(sym)));
                 CppExpr assign = CppBinop.mkAssign(access, CppVar.mk(ctx.lookupRepr(sym)));
                 assign.toStmt().println(out, 1);
             }

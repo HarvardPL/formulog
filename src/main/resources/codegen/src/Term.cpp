@@ -240,7 +240,7 @@ term_ptr ComplexTerm::fresh_smt_var() {
 #ifdef FLG_DEV
     return nullptr;
 #else
-    return new ComplexTerm(Symbol::smt_var_0, 0, nullptr);
+    return new ComplexTerm(Symbol::smt_var__bool__bool, 0, nullptr);
 #endif
 }
 

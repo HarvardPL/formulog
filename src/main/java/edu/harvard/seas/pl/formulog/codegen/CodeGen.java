@@ -64,7 +64,7 @@ public class CodeGen {
                 .copyWithNewArgs(new Param(BuiltInTypes.bool, ParamKind.ANY_TYPE),
                         new Param(BuiltInTypes.bool, ParamKind.PRE_SMT_TYPE));
         String repr = ctx.lookupRepr(sym);
-        assert repr.equals("Symbol::smt_var_0") : repr;
+        assert repr.equals("Symbol::smt_var__bool__bool") : repr;
 
         copy("CMakeLists.txt");
         new RelsHpp(ctx).gen(outDir);

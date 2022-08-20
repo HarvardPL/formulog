@@ -23,7 +23,7 @@ enum class Symbol {
     smt_not,
     smt_imp,
     smt_or,
-    smt_var_0,
+    smt_var__bool__bool,
 #endif
 /* INSERT 0 */
 };

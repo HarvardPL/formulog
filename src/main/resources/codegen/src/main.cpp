@@ -113,7 +113,11 @@ int main(int argc, char **argv) {
              "number of threads to use")
             ("no-dump", "only print sizes of relations, not the database")
             ("fact-dir", po::value<vector<string>>()->default_value({cwd}),
-             "input directory with external EDBs (can be set multiple times)");
+             "input directory with external EDBs (can be set multiple times)")
+            ("smt-solver-mode", po::value<smt::SmtSolverMode>()->default_value(smt::SmtSolverMode::check_sat_assuming),
+             "set interaction strategy between Formulog and the external SMT solver")
+            ("smt-double-check", po::value<bool>()->default_value(true),
+             "double check unknown values returned by SMT solver (using a generally more reliable solver mode)");
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -131,6 +135,8 @@ int main(int argc, char **argv) {
     }
 
     initialize_symbols();
+    globals::smt_solver_mode = vm["smt-solver-mode"].as<smt::SmtSolverMode>();
+    globals::smt_double_check = vm["smt-double-check"].as<bool>();
     globals::program = souffle::ProgramFactory::newInstance("formulog");
     if (!globals::program) {
         cout << "Unable to load Souffle program" << endl;
