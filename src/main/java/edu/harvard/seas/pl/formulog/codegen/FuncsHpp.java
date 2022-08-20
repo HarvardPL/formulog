@@ -22,13 +22,11 @@ package edu.harvard.seas.pl.formulog.codegen;
 
 
 import edu.harvard.seas.pl.formulog.ast.BindingType;
-import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.codegen.ast.cpp.*;
 import edu.harvard.seas.pl.formulog.functions.*;
 import edu.harvard.seas.pl.formulog.symbols.*;
 import edu.harvard.seas.pl.formulog.util.Pair;
-import edu.harvard.seas.pl.formulog.validating.ast.SimplePredicate;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -57,8 +55,6 @@ public class FuncsHpp extends TemplateSrcFile {
         private final Set<FunctionSymbol> userDefinedFunctions = new HashSet<>();
         private final Set<PredicateFunctionSymbol> predFunctions = new HashSet<>();
         private final TermCodeGen tcg = new TermCodeGen(ctx);
-        private final LiteralCodeGen lcg = new LiteralCodeGen();
-        //private final LiteralCodeGen lcg = new LiteralCodeGen(ctx);
 
         public Worker(PrintWriter out) {
             this.out = out;
@@ -177,9 +173,6 @@ public class FuncsHpp extends TemplateSrcFile {
                 case FP64_SUB:
                     ctx.register(sym, "__sub<double>");
                     break;
-                case GET_MODEL:
-                    // XXX
-                    break;
                 case I32_ADD:
                     ctx.register(sym, "__add<int32_t>");
                     break;
@@ -269,9 +262,6 @@ public class FuncsHpp extends TemplateSrcFile {
                     break;
                 case I64_XOR:
                     ctx.register(sym, "__bitwise_xor<int64_t>");
-                    break;
-                case IS_FREE:
-                    // XXX
                     break;
                 case IS_SAT:
                     ctx.register(sym, "is_sat");
@@ -379,6 +369,7 @@ public class FuncsHpp extends TemplateSrcFile {
             Map<Var, CppExpr> env = new HashMap<>();
             Iterator<Var> params = def.getParams().iterator();
             int n = sym.getArity();
+            List<String> cppParams = new ArrayList<>();
             for (int i = 0; i < n; ++i) {
                 String id = ctx.newId("x");
                 CppVar var = CppVar.mk(id);
@@ -388,11 +379,20 @@ public class FuncsHpp extends TemplateSrcFile {
                 if (i < n - 1) {
                     out.print(", ");
                 }
+                cppParams.add(var.toString());
             }
             out.println(") {");
+            out.println("  typedef std::array<term_ptr, " + n + "> Key;");
+            out.println("  static tbb::concurrent_unordered_map<Key, term_ptr, boost::hash<Key>> memo;");
+            out.print("  Key key = {" + String.join(", ", cppParams) + "};");
+            out.println("  auto it = memo.find(key);");
+            out.println("  if (it != memo.end()) { return it->second; }");
             Pair<CppStmt, CppExpr> p = tcg.gen(def.getBody(), env);
-            CppStmt ret = CppReturn.mk(p.snd());
-            CppSeq.mk(p.fst(), ret).println(out, 1);
+            p.fst().println(out, 1);
+            String retVar = ctx.newId("ret");
+            CppDecl.mk(retVar, p.snd()).println(out, 1);
+            out.println("  memo.emplace(key, " + retVar + ");");
+            CppReturn.mk(CppVar.mk(retVar)).println(out, 1);
             out.println("}");
         }
 
@@ -471,13 +471,6 @@ public class FuncsHpp extends TemplateSrcFile {
             CppExpr vec = mkArgsVec(args);
             CppExpr call = CppFuncCall.mk("_relation_contains", name, vec);
             return new Pair<>(CppSeq.skip(), call);
-        }
-
-        private PredicateFunctionDef getDef(PredicateFunctionSymbol sym) {
-            DummyFunctionDef dummy = (DummyFunctionDef) ctx.getProgram().getDef(sym);
-            PredicateFunctionDef def = (PredicateFunctionDef) dummy.getDef();
-            assert def != null : sym;
-            return def;
         }
 
         private int numBound(BindingType[] bindings) {
