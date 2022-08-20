@@ -382,16 +382,30 @@ public class FuncsHpp extends TemplateSrcFile {
                 cppParams.add(var.toString());
             }
             out.println(") {");
-            out.println("  typedef std::array<term_ptr, " + n + "> Key;");
-            out.println("  static tbb::concurrent_unordered_map<Key, term_ptr, boost::hash<Key>> memo;");
-            out.print("  Key key = {" + String.join(", ", cppParams) + "};");
-            out.println("  auto it = memo.find(key);");
-            out.println("  if (it != memo.end()) { return it->second; }");
+            if (n == 0) {
+                out.println("  static std::atomic<term_ptr> memo{nullptr};");
+                out.println("  if (memo) { return memo; }");
+            } else {
+                if (n == 1) {
+                    out.println("  typedef term_ptr Key;");
+                    out.println("  Key key = " + cppParams.get(0) + ";");
+                } else {
+                    out.println("  typedef std::array<term_ptr, " + n + "> Key;");
+                    out.println("  Key key = {" + String.join(", ", cppParams) + "};");
+                }
+                out.println("  static tbb::concurrent_unordered_map<Key, term_ptr, boost::hash<Key>> memo;");
+                out.println("  auto it = memo.find(key);");
+                out.println("  if (it != memo.end()) { return it->second; }");
+            }
             Pair<CppStmt, CppExpr> p = tcg.gen(def.getBody(), env);
             p.fst().println(out, 1);
             String retVar = ctx.newId("ret");
             CppDecl.mk(retVar, p.snd()).println(out, 1);
-            out.println("  memo.emplace(key, " + retVar + ");");
+            if (n == 0) {
+                out.println("  memo = " + retVar + ";");
+            } else {
+                out.println("  memo.emplace(key, " + retVar + ");");
+            }
             CppReturn.mk(CppVar.mk(retVar)).println(out, 1);
             out.println("}");
         }

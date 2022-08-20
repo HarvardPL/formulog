@@ -220,7 +220,7 @@ template <Symbol S> class ComplexTermCache {
       }
       auto *heap_arr = new term_ptr[arity]{val...};
       auto ptr = new ComplexTerm(S, arity, heap_arr);
-      auto result = cache.insert({arr, ptr});
+      auto result = cache.emplace(arr, ptr);
       if (!result.second) {
           // Term was not successfully inserted
           delete ptr;
