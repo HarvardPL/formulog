@@ -9,9 +9,9 @@ package edu.harvard.seas.pl.formulog.eval;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,8 +60,8 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 	static final int smtTaskSize = Configuration.smtTaskSize;
 
 	public RoundBasedStratumEvaluator(int stratumNum, SortedIndexedFactDb db,
-			SortedIndexedFactDb deltaDb, SortedIndexedFactDb nextDeltaDb, Iterable<IndexedRule> rules, CountingFJP exec,
-			Set<RelationSymbol> trackedRelations) {
+									  SortedIndexedFactDb deltaDb, SortedIndexedFactDb nextDeltaDb, Iterable<IndexedRule> rules, CountingFJP exec,
+									  Set<RelationSymbol> trackedRelations) {
 		super(rules);
 		this.stratumNum = stratumNum;
 		this.db = db;
@@ -75,10 +75,16 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 	public void evaluate() throws EvaluationException {
 		this.deltaDb.clear();
 		this.nextDeltaDb.clear();
+		final boolean oneRuleAtATime = Configuration.oneRuleAtATime;
 		int round = 0;
 		StopWatch watch = recordRoundStart(round);
 		for (IndexedRule r : firstRoundRules) {
-			exec.externallyAddTask(new RulePrefixEvaluator(r));
+			var task = new RulePrefixEvaluator(r);
+			if (oneRuleAtATime) {
+				task.doTask();
+			} else {
+				exec.externallyAddTask(task);
+			}
 		}
 		exec.blockUntilFinished();
 		if (exec.hasFailed()) {
@@ -93,7 +99,12 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 			for (RelationSymbol delta : laterRoundRules.keySet()) {
 				if (!deltaDb.isEmpty(delta)) {
 					for (IndexedRule r : laterRoundRules.get(delta)) {
-						exec.externallyAddTask(new RulePrefixEvaluator(r));
+						var task = new RulePrefixEvaluator(r);
+						if (oneRuleAtATime) {
+							task.doTask();
+						} else {
+							exec.externallyAddTask(task);
+						}
 					}
 				}
 			}
@@ -197,7 +208,7 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 		final Iterator<Iterable<Term[]>> it;
 
 		protected RuleSuffixEvaluator(IndexedRule rule, SimplePredicate head, SimpleLiteral[] body, int pos,
-				OverwriteSubstitution s, Iterator<Iterable<Term[]>> it) {
+									  OverwriteSubstitution s, Iterator<Iterable<Term[]>> it) {
 			super(exec);
 			this.rule = rule;
 			this.head = head;
@@ -208,7 +219,7 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 		}
 
 		protected RuleSuffixEvaluator(IndexedRule rule, int pos, OverwriteSubstitution s,
-				Iterator<Iterable<Term[]>> it) {
+									  Iterator<Iterable<Term[]>> it) {
 			super(exec);
 			this.rule = rule;
 			this.head = rule.getHead();
@@ -267,49 +278,49 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 					SimpleLiteral l = body[pos];
 					try {
 						switch (l.getTag()) {
-						case ASSIGNMENT:
-							((Assignment) l).assign(s);
-							pos++;
-							break;
-						case CHECK:
-							if (((Check) l).check(s)) {
+							case ASSIGNMENT:
+								((Assignment) l).assign(s);
 								pos++;
-							} else {
-								pos--;
-								movingRight = false;
-							}
-							break;
-						case DESTRUCTOR:
-							if (((Destructor) l).destruct(s)) {
-								pos++;
-							} else {
-								pos--;
-								movingRight = false;
-							}
-							break;
-						case PREDICATE:
-							Iterator<Iterable<Term[]>> tups = lookup(rule, pos, s).iterator();
-							if (((SimplePredicate) l).isNegated()) {
-								if (!tups.hasNext()) {
+								break;
+							case CHECK:
+								if (((Check) l).check(s)) {
 									pos++;
 								} else {
 									pos--;
 									movingRight = false;
 								}
-							} else {
-								if (tups.hasNext()) {
-									stack[pos] = tups.next().iterator();
-									if (tups.hasNext()) {
-										exec.recursivelyAddTask(
-												new RuleSuffixEvaluator(rule, head, body, pos, s.copy(), tups));
-									}
-									// No need to do anything else: we'll hit the right case on the next iteration.
+								break;
+							case DESTRUCTOR:
+								if (((Destructor) l).destruct(s)) {
+									pos++;
 								} else {
 									pos--;
+									movingRight = false;
 								}
-								movingRight = false;
-							}
-							break;
+								break;
+							case PREDICATE:
+								Iterator<Iterable<Term[]>> tups = lookup(rule, pos, s).iterator();
+								if (((SimplePredicate) l).isNegated()) {
+									if (!tups.hasNext()) {
+										pos++;
+									} else {
+										pos--;
+										movingRight = false;
+									}
+								} else {
+									if (tups.hasNext()) {
+										stack[pos] = tups.next().iterator();
+										if (tups.hasNext()) {
+											exec.recursivelyAddTask(
+													new RuleSuffixEvaluator(rule, head, body, pos, s.copy(), tups));
+										}
+										// No need to do anything else: we'll hit the right case on the next iteration.
+									} else {
+										pos--;
+									}
+									movingRight = false;
+								}
+								break;
 						}
 					} catch (EvaluationException e) {
 						throw new UncheckedEvaluationException(
@@ -374,34 +385,35 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 			int len = rule.getBodySize();
 			int pos = 0;
 			OverwriteSubstitution s = new OverwriteSubstitution();
-			loop: for (; pos < len; ++pos) {
+			loop:
+			for (; pos < len; ++pos) {
 				SimpleLiteral l = rule.getBody(pos);
 				try {
 					switch (l.getTag()) {
-					case ASSIGNMENT:
-						((Assignment) l).assign(s);
-						break;
-					case CHECK:
-						if (!((Check) l).check(s)) {
-							return;
-						}
-						break;
-					case DESTRUCTOR:
-						if (!((Destructor) l).destruct(s)) {
-							return;
-						}
-						break;
-					case PREDICATE:
-						SimplePredicate p = (SimplePredicate) l;
-						if (p.isNegated()) {
-							if (lookup(rule, pos, s).iterator().hasNext()) {
+						case ASSIGNMENT:
+							((Assignment) l).assign(s);
+							break;
+						case CHECK:
+							if (!((Check) l).check(s)) {
 								return;
 							}
-						} else {
-							// Stop on the first positive user predicate.
-							break loop;
-						}
-						break;
+							break;
+						case DESTRUCTOR:
+							if (!((Destructor) l).destruct(s)) {
+								return;
+							}
+							break;
+						case PREDICATE:
+							SimplePredicate p = (SimplePredicate) l;
+							if (p.isNegated()) {
+								if (lookup(rule, pos, s).iterator().hasNext()) {
+									return;
+								}
+							} else {
+								// Stop on the first positive user predicate.
+								break loop;
+							}
+							break;
 					}
 				} catch (EvaluationException e) {
 					throw new EvaluationException(
