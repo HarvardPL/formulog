@@ -26,7 +26,6 @@ target_sources(flg PRIVATE
         src/Type.hpp
         src/Type.cpp
         src/globals.h
-        src/globals.cpp
         src/smt_solver.cpp
         src/smt_solver.h
         src/smt_shim.cpp

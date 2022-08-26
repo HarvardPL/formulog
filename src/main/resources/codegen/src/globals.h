@@ -5,9 +5,9 @@
 
 namespace flg::globals {
 
-extern souffle::SouffleProgram *program;
+inline souffle::SouffleProgram *program{nullptr};
 
-extern flg::smt::SmtSolverMode smt_solver_mode;
+inline smt::SmtSolverMode smt_solver_mode{smt::SmtSolverMode::check_sat_assuming};
 
 inline bool smt_double_check{true};
 

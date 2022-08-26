@@ -85,7 +85,6 @@ public class CodeGen {
         new SymbolHpp(ctx).gen(outDir);
         new SymbolCpp(ctx).gen(outDir);
         copySrc("globals.h");
-        copySrc("globals.cpp");
     }
 
     private void copy(String name) throws IOException {
