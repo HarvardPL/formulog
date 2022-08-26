@@ -358,6 +358,19 @@ term_ptr _relation_contains(const std::string &relname, const std::vector<term_p
     return Term::make(false);
 }
 
+term_ptr _relation_contains_complete(const std::string &relname, const std::vector<term_ptr> &key) {
+    auto rel = globals::program->getRelation(relname);
+    assert(rel);
+    size_t arity = rel->getPrimaryArity();
+    assert(arity == key.size());
+    std::vector<souffle::RamDomain> intKey = make_int_key(key);
+    souffle::tuple tup(rel);
+    for (auto arg: intKey) {
+        tup << arg;
+    }
+    return Term::make(rel->contains(tup));
+}
+
 term_ptr _relation_agg_mono(const std::string &relname, const std::vector<term_ptr> &key, unsigned pos) {
     auto rel = globals::program->getRelation(relname);
     assert(rel);

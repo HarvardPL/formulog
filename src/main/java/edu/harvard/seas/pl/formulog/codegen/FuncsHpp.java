@@ -419,6 +419,7 @@ public class FuncsHpp extends TemplateSrcFile {
             int j = 0;
             int nbound = numBound(bindings);
             List<Integer> free = new ArrayList<>();
+            boolean hasIgnored = false;
             CppVar[] args = new CppVar[bindings.length];
             for (int i = 0; i < n; ++i) {
                 if (bindings[i].isBound()) {
@@ -433,12 +434,17 @@ public class FuncsHpp extends TemplateSrcFile {
                     j++;
                 } else if (bindings[i].isFree()) {
                     free.add(i);
+                } else if (bindings[i].isIgnored()) {
+                    hasIgnored = true;
                 }
+            }
+            if (hasIgnored) {
+                System.err.println("WARNING: relation query " + funcSym + " has ignored attribute; this might lead to slow performance");
             }
             out.println(") ");
             Pair<CppStmt, CppExpr> p;
             if (free.isEmpty()) {
-                p = genRelationContains(predSym, args);
+                p = genRelationContains(predSym, args, hasIgnored);
             } else if (free.size() == 1) {
                 p = genRelationAggMono(predSym, args, free.get(0));
             } else {
@@ -480,10 +486,16 @@ public class FuncsHpp extends TemplateSrcFile {
             return new Pair<>(CppSeq.skip(), call);
         }
 
-        private Pair<CppStmt, CppExpr> genRelationContains(RelationSymbol predSym, CppVar[] args) {
+        private Pair<CppStmt, CppExpr> genRelationContains(RelationSymbol predSym, CppVar[] args, boolean hasIgnored) {
             CppExpr name = CppConst.mkString(ctx.lookupRepr(predSym));
             CppExpr vec = mkArgsVec(args);
-            CppExpr call = CppFuncCall.mk("_relation_contains", name, vec);
+            String func;
+            if (hasIgnored) {
+                func = "_relation_contains";
+            } else {
+                func = "_relation_contains_complete";
+            }
+            CppExpr call = CppFuncCall.mk(func, name, vec);
             return new Pair<>(CppSeq.skip(), call);
         }
 
