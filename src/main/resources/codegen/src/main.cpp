@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
     po::options_description desc("Allowed options");
     string cwd = boost::filesystem::current_path().string();
     desc.add_options()
-            ("help", "produce help message")
+            ("help,h", "produce help message")
             ("parallelism,j", po::value<size_t>()->default_value(1),
              "number of threads to use")
             ("no-dump", "only print sizes of relations, not the database")
@@ -117,7 +117,9 @@ int main(int argc, char **argv) {
             ("smt-solver-mode", po::value<smt::SmtSolverMode>()->default_value(smt::SmtSolverMode::check_sat_assuming),
              "set interaction strategy between Formulog and the external SMT solver")
             ("smt-double-check", po::value<bool>()->default_value(true),
-             "double check unknown values returned by SMT solver (using a generally more reliable solver mode)");
+             "double check unknown values returned by SMT solver (using a generally more reliable solver mode)")
+            ("smt-cache-size", po::value<size_t>()->default_value(100),
+             "how many implications to store for check-sat-assuming solver");
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);

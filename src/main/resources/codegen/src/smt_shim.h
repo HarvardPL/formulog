@@ -30,6 +30,8 @@ public:
 
     virtual void pop(unsigned int n) = 0;
 
+    void pop() { pop(1); }
+
     virtual SmtResult
     check_sat_assuming(const std::vector<term_ptr> &onVars, const std::vector<term_ptr> &offVars, int timeout) = 0;
 
@@ -56,7 +58,7 @@ public:
 private:
     class Logger {
     public:
-        Logger(boost::process::opstream &&in) : m_in{std::move(in)} {}
+        explicit Logger(boost::process::opstream &&in) : m_in{std::move(in)} {}
 
         template<typename T>
         Logger &operator<<(const T &val) {

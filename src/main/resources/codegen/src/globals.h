@@ -11,4 +11,6 @@ extern flg::smt::SmtSolverMode smt_solver_mode;
 
 inline bool smt_double_check{true};
 
+inline size_t smt_cache_size{100};
+
 }

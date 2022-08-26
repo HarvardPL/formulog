@@ -139,11 +139,12 @@ AbstractSmtSolver::term_vector_pair PushPopNaiveSolver::make_assertions(const st
 }
 
 void PushPopNaiveSolver::cleanup() {
-    m_shim->pop(1);
+    m_shim->pop();
 }
 
 void CheckSatAssumingSolver::initialize() {
     m_shim->make_declarations();
+    m_shim->push();
 }
 
 AbstractSmtSolver::term_vector_pair CheckSatAssumingSolver::make_assertions(const std::vector<term_ptr> &assertions) {
@@ -166,7 +167,11 @@ AbstractSmtSolver::term_vector_pair CheckSatAssumingSolver::make_assertions(cons
 }
 
 void CheckSatAssumingSolver::cleanup() {
-    // do nothing
+    if (m_conjuncts_to_vars.size() > globals::smt_cache_size) {
+        m_conjuncts_to_vars.clear();
+        m_shim->pop();
+        m_shim->push();
+    }
 }
 
 void PushPopSolver::initialize() {
