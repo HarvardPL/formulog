@@ -70,13 +70,13 @@ type val =
 type store = (var, val) map
 type state = (store * bool smt)
 
-input fall_thru_succ(node, node)
-input start(node, store)
-input stmt(node, inst)
-output reach(node, state, i32)
-output failed_assert(node, state)
-output stepping_to(node, state, i32)
-input max_steps(i32)
+@edb rel fall_thru_succ(node, node)
+@edb rel start(node, store)
+@edb rel stmt(node, inst)
+rel reach(node, state, i32)
+rel failed_assert(node, state)
+rel stepping_to(node, state, i32)
+@edb rel max_steps(i32)
 
 fun get_store(State:state) : store =
   match State with (Store, _) => Store end
