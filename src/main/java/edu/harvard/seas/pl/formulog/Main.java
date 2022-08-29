@@ -56,13 +56,14 @@ public final class Main implements Callable<Integer> {
     @Spec
     private static Model.CommandSpec spec;
 
-    @Option(names = "--smt-solver-mode", description = "Strategy to use when interacting with external SMT solvers.", converter = SmtModeConverter.class)
+    @Option(names = "--smt-solver-mode", description = "Strategy to use when interacting with external SMT solvers" +
+            "('naive', 'push-pop', or 'check-sat-assuming').", converter = SmtModeConverter.class)
     public static SmtStrategy smtStrategy = Configuration.getSmtStrategy();
 
-    @Option(names = {"-F", "--fact-dir"}, description = "Directory to look for fact .tsv files.")
+    @Option(names = {"-F", "--fact-dir"}, description = "Directory to look for fact .tsv files (default: '.').")
     private List<String> factDirs = Configuration.getListProp("factDirs");
 
-    @Option(names = {"-D", "--output-dir"}, description = "Directory for .tsv output files.")
+    @Option(names = {"-D", "--output-dir"}, description = "Directory for .tsv output files (default: '.').")
     private File outDir = new File(".");
 
     @Option(names = {"-j", "--parallelism"}, description = "Number of threads to use.")
