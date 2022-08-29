@@ -20,14 +20,15 @@ Formulog has five built-in primitive types:
 * booleans (`bool`), i.e., `true` and `false`;
 * signed 32-bit integers (`i32` or equivalently `bv[32]`), as in `42`;
 * signed 64-bit integers (`i64` or equivalently `bv[64]`), as in `42L`;
-* 32-bit floating point numbers (`fp32` or equivalently `fp[32]`), as in
+* 32-bit floating point numbers (`fp32` or equivalently `fp[8,24]`), as in
   `42.0F`;
-* 64-bit floating point numbers (`fp64` or equivalently `fp[64]`), as in `42.0`
+* 64-bit floating point numbers (`fp64` or equivalently `fp[11,53]`), as
+  in `42.0`
   or `42.0D`; and
 * string constants (`string`), as in `"hello"`.
 
-Beyond these primitive types, Formulog provides the following built-in
-algebraic data types:
+Beyond these primitive types, Formulog provides the following built-in algebraic
+data types:
 
 ```
 type 'a list =
@@ -72,8 +73,8 @@ type 'a my_list =
 Like types, constructors must begin with a lowercase letter.
 
 Formulog also has support for tuple types, such as the type `i32 * string`, and
-users can also define type aliases, such as this one that defines a map to be
-an association list:
+users can also define type aliases, such as this one that defines a map to be an
+association list:
 
 ```
 type ('k, 'v) map = ('k * 'v) my_list
@@ -123,26 +124,33 @@ A call `foo` would evaluate to the value `1`.
 
 ## Relations
 
-In Formulog, there are three types of Datalog-style relations: `input`
-relations, `output` relations, and built-in predicates.
-
-An `input` relation (also known as an extensional database or EDB relation) is
-enumerated explicitly.
+In Formulog, relations are declared using the keyword `rel`, followed by the
+name of the relation, and the types of the relation arguments:
 
 ```
 type node = string
-input edge(node, node)
+rel edge(node, node)
 edge("a", "b").
 edge("b", "c").
 edge("c", "b").
 ```
 
-On the other hand, an `output` relation (also known as an intensional database
-or IDB relation) is defined using rules. For instance, this predicate computes
+This code fragment defines a relation relating pairs of nodes; the relation
+consists of three pairs, defined explicitly as facts. Relations like this---that
+consist only of enumerated facts---can be annotated with the `@edb` annotation,
+which tells Formulog to treat them as part of the extensional database (EDB).
+
+```
+@edb rel edge(node, node)
+```
+
+Formulog assumes that every relation not annotated with '@edb' is an intensional
+database (IDB) relation, meaning that it is defined by rules and should be
+treated as an output of the program. For instance, this predicate computes
 transitive closure over the previously defined `edge` predicate:
 
 ```
-output tc(node, node)
+rel tc(node, node)
 tc(X, Y) :- edge(X, Y).
 tc(X, Z) :- tc(X, Y), edge(Y, Z).
 ```
@@ -169,18 +177,18 @@ guide.
 Formulog also has two built-in binary predicates, `=` and `!=`:
 
 ```
-output ok
+rel ok
 ok :- X = "hello", X != "goodbye".
 ```
 
 The first of these predicate is true when its arguments unify to the same term,
 and the second is true when its arguments cannot be unified.
 
-Finally, any Formulog term of type `bool` can be used in place of an atom in
-the rule body, as here:
+Finally, any Formulog term of type `bool` can be used in place of an atom in the
+rule body, as here:
 
 ```
-input foo(bool)
+rel foo(bool)
 output p
 p :- foo(X), X.
 ```
@@ -193,21 +201,20 @@ p :- foo(X), X = true.
 
 ### External input relations
 
-It is possible to specify that an input relation should be read from an
-external file by annotating its declaration with `@external`, as in
+It is possible to specify that an EDB relation should be read from an external
+file by annotating its declaration with `@disk`, as in
 
 ```
-@external
-input foo(i32, i32, string list)
+@disk @edb foo(i32, i32, string list)
 
-@external
-input bar(string)
+@disk @edb bar(string)
 ```
 
-The Formulog runtime will look in the current directory for files called
-`foo.tsv` and `bar.tsv`. As suggested by the `.tsv` extension, these files
-should contain rows of tab-separated terms, where each row corresponds to one
-input fact, and each column corresponds to an argument position. 
+The Formulog runtime will look in the directories specified on the command line
+for files called`foo.tsv` and `bar.tsv` (defaulting to the current directory).
+As suggested by the `.tsv` extension, these files should contain rows of
+tab-separated terms, where each row corresponds to one input fact, and each
+column corresponds to an argument position.
 
 So, a file `foo.tsv` might look like this
 
@@ -244,9 +251,8 @@ bar("ciao").
 bar("aloha").
 ```
 
-You can specify alternate directories to look in using the
-`-DfactDirs=DIR_1,...,DIR_N` command line option. Every fact directory must
-have a `.tsv` file for _every_ external input relation (the file can be empty).
+Every fact directory must have a `.tsv` file for _every_ external input
+relation (the file can be empty).
 
 ## Functions
 
@@ -301,11 +307,19 @@ fun rev(Xs: 'a list) : 'a list =
   fold[cons_wrapper]([], Xs)
 ```
 
-### Lifted predicates and aggregation 
+Top-level nullary functions (i.e., ones that take no arguments) can be
+introduced with the keyword `const` instead of `fun`:
 
-Formulog allows any predicate (i.e., input predicates, output predicates, and
-the built-in predicates `!=` and `=`) to be lifted to a boolean-returning
-function. For instance, we can write code like this:
+```
+const pi : fp64 = 3.14
+(* same as `fun pi : fp64 = 3.14` *)
+```
+
+### Lifted relations and aggregation
+
+Formulog allows any relation (i.e., EDB relations, IDB relations, and the
+built-in relations `!=` and `=`) to be lifted to a boolean-returning function.
+For instance, we can write code like this:
 
 ```
 output bar(i32)
@@ -317,11 +331,12 @@ Here, the function `foo(n)` returns `true` whenever the `bar` relation contains
 `n + 1`.
 
 Formulog supports aggregation through the wild card term `??`, which can be used
-as an argument when "invoking" a predicate as a function. For example, given the
-predicate `p` that relates a `bool` to an `i32`, we have:
+as an argument when "invoking" a relation as a function. For example, given the
+relation `p` that relates a `bool` to an `i32`, we have:
 
 * `p(true, 42)` returns a boolean (whether `true` is related to `42`)
-* `p(true, ??)` returns a list of `i32` terms (the ones that are related to `true`)
+* `p(true, ??)` returns a list of `i32` terms (the ones that are related
+  to `true`)
 * `p(??, 42)` returns a list of `bool` terms (the ones that are related to `42`)
 * `p(??, ??)` returns a list of pairs constituting the relation
 
@@ -367,7 +382,7 @@ with manipulating primitives):
   respectively. The string should either be a decimal integer preceded
   optionally by `-` or `+`, or a hexadecimal integer preceded by `0x`. The
   operations return `none` if the string is not in the proper format or
-  represents an integer too large to fit in 32/64 bits. 
+  represents an integer too large to fit in 32/64 bits.
 
 Standard arithmetic notation can be used for signed `i32` operations. For
 example, `38 + 12 / 3` is shorthand for `i32_add(38, i32_sdiv(12, 3))`.
