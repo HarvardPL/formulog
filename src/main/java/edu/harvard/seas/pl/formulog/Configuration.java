@@ -20,37 +20,24 @@ package edu.harvard.seas.pl.formulog;
  * #L%
  */
 
+import edu.harvard.seas.pl.formulog.ast.Rule;
+import edu.harvard.seas.pl.formulog.db.IndexedFactDb;
+import edu.harvard.seas.pl.formulog.smt.*;
+import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
+import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
+import edu.harvard.seas.pl.formulog.util.Dataset;
+import edu.harvard.seas.pl.formulog.util.Pair;
+import edu.harvard.seas.pl.formulog.util.Util;
+
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import edu.harvard.seas.pl.formulog.ast.Rule;
-import edu.harvard.seas.pl.formulog.db.IndexedFactDb;
-import edu.harvard.seas.pl.formulog.smt.CheckSatAssumingSolver;
-import edu.harvard.seas.pl.formulog.smt.PushPopSolver;
-import edu.harvard.seas.pl.formulog.smt.SmtLibSolver;
-import edu.harvard.seas.pl.formulog.smt.SmtStatus;
-import edu.harvard.seas.pl.formulog.smt.SmtStrategy;
-import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
-import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
-import edu.harvard.seas.pl.formulog.util.Dataset;
-import edu.harvard.seas.pl.formulog.util.Pair;
-import edu.harvard.seas.pl.formulog.util.Util;
-import picocli.CommandLine.*;
 
 public final class Configuration {
 
@@ -159,8 +146,6 @@ public final class Configuration {
     public static final boolean debugStratification = propIsSet("debugStratification");
     public static final String debugStratificationOutDir = getStringProp("debugStratificationOutDir",
             "stratification_graphs");
-
-    public static final PrintPreference printResultsPreference = getPrintResultsPreference();
 
     public static final boolean codeGen = propIsSet("codeGen");
     public static final boolean testCodeGen = propIsSet("testCodeGen");
@@ -548,39 +533,6 @@ public final class Configuration {
             return new SmtStrategy(SmtStrategy.Tag.PER_THREAD_BEST_MATCH, size);
         }
         throw new IllegalArgumentException("Unrecognized SMT strategy: " + val);
-    }
-
-    private static Set<String> selectedRelsToPrint;
-
-    public static Set<String> getSelectedRelsToPrint() {
-        assert printResultsPreference.equals(PrintPreference.SOME);
-        return selectedRelsToPrint;
-    }
-
-    private static PrintPreference getPrintResultsPreference() {
-        String val = System.getProperty("printResults");
-        if (val == null) {
-            val = "all";
-        }
-        if (val.startsWith("some:")) {
-            selectedRelsToPrint = new HashSet<>();
-            breakIntoCollection(val.substring(5), selectedRelsToPrint);
-            return PrintPreference.SOME;
-        }
-        switch (val) {
-            case "all":
-                return PrintPreference.ALL;
-            case "none":
-                return PrintPreference.NONE;
-            case "edb":
-                return PrintPreference.EDB;
-            case "idb":
-                return PrintPreference.IDB;
-            case "query":
-                return PrintPreference.QUERY;
-            default:
-                throw new IllegalArgumentException("Unrecognized print result preference: " + val);
-        }
     }
 
 }
