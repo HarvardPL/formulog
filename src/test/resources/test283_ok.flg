@@ -1,5 +1,5 @@
 fun sum(X: i32, Y: i32) : i32 = X + Y
 fun foo(Xs: i32 list) : i32 = fold[sum](0, Xs)
 
-output ok
+rel ok
 ok :- foo([1, 2, 3]) = 6.

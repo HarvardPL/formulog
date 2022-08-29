@@ -22,7 +22,6 @@ package edu.harvard.seas.pl.formulog.codegen;
 
 import java.io.*;
 
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -30,19 +29,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import edu.harvard.seas.pl.formulog.Configuration;
+import edu.harvard.seas.pl.formulog.Main;
 import edu.harvard.seas.pl.formulog.ast.BasicProgram;
-import edu.harvard.seas.pl.formulog.ast.BasicRule;
-import edu.harvard.seas.pl.formulog.eval.AbstractTester;
-import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
 import edu.harvard.seas.pl.formulog.eval.Tester;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
 import edu.harvard.seas.pl.formulog.parsing.Parser;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 import edu.harvard.seas.pl.formulog.util.Util;
-import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 
 import static org.junit.Assert.fail;
 
@@ -104,7 +98,7 @@ public class CompiledSemiNaiveTester implements Tester {
         }
 
         Process make = Runtime.getRuntime().exec(new String[]{"cmake", "--build", buildPath.toString(),
-                "-j", String.valueOf(Configuration.parallelism)});
+                "-j", String.valueOf(Main.parallelism)});
         if (make.waitFor() != 0) {
             System.err.println("Could not make test");
             printToStdErr(make.getErrorStream());

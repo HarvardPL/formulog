@@ -103,8 +103,12 @@ public class CodeGen {
         if (args.length != 1) {
             throw new IllegalArgumentException("Expected a single argument (the Formulog source file)");
         }
+        main(new File(args[0]));
+    }
+
+    public static void main(File file) throws Exception {
         Program<UserPredicate, BasicRule> prog;
-        try (FileReader fr = new FileReader(args[0])) {
+        try (FileReader fr = new FileReader(file)) {
             prog = new Parser().parse(fr);
         }
         WellTypedProgram wtp = new TypeChecker(prog).typeCheck();
@@ -116,6 +120,7 @@ public class CodeGen {
         srcDir.mkdirs();
         Util.clean(srcDir, false);
         new CodeGen(magicProg, dir).go();
+
     }
 
 }

@@ -21,7 +21,7 @@ package edu.harvard.seas.pl.formulog.types;
  */
 
 
-import edu.harvard.seas.pl.formulog.Configuration;
+import edu.harvard.seas.pl.formulog.Main;
 import edu.harvard.seas.pl.formulog.ast.*;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralExnVisitor;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralVisitor;
@@ -60,7 +60,7 @@ public class TypeChecker {
         if (outputProgram != null) {
             return outputProgram;
         }
-        ExecutorService exec = Executors.newFixedThreadPool(Configuration.parallelism);
+        ExecutorService exec = Executors.newFixedThreadPool(Main.parallelism);
         Map<RelationSymbol, Set<Term[]>> newFacts = typeCheckFacts(exec);
         Map<FunctionSymbol, FunctionDef> newFuncs = typeCheckFunctions(exec);
         FunctionDefManager dm = prog.getFunctionCallFactory().getDefManager();

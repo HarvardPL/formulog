@@ -1,6 +1,6 @@
 type foo = foo1 | foo2(foo, foo).
 
-output ok.
+rel ok.
 ok :-
   A = #a[(foo, foo) array],
   X = #x[foo],

@@ -1,6 +1,6 @@
 @topdown
-output foo
-output bar
+rel foo
+rel bar
 
 fun f : bool = foo
 

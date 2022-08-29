@@ -1,4 +1,4 @@
-input p.
-output fail(i32).
+@edb rel p.
+rel fail(i32).
 
 fail(_X) :- p.

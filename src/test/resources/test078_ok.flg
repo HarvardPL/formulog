@@ -5,7 +5,7 @@ and 'a bar =
   | bar1('a)
   | bar2('a foo).
   
-output ok.
+rel ok.
 ok :-
   X = #x[i32 foo],
   Y = #y[i32 bar],

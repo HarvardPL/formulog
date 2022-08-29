@@ -36,6 +36,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import edu.harvard.seas.pl.formulog.Main;
 import org.antlr.v4.runtime.BufferedTokenStream;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -43,7 +44,6 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.atn.PredictionMode;
 
-import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Program;
@@ -100,7 +100,7 @@ public class Parser {
         if (rels.isEmpty() || inputDirs.isEmpty()) {
             return;
         }
-        ExecutorService exec = Executors.newFixedThreadPool(Configuration.parallelism);
+        ExecutorService exec = Executors.newFixedThreadPool(Main.parallelism);
         List<Future<?>> tasks = new ArrayList<>();
         for (Path inputDir : inputDirs) {
             for (RelationSymbol sym : rels) {

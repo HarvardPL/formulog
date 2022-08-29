@@ -50,6 +50,7 @@ import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.util.Dataset;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
+import picocli.CommandLine.*;
 
 public final class Configuration {
 
@@ -108,7 +109,6 @@ public final class Configuration {
 
     public static final int smtTaskSize = getIntProp("smtTaskSize", 8);
     public static final int smtCacheSize = getIntProp("smtCacheSize", 100);
-    public static final SmtStrategy smtStrategy = getSmtStrategy();
     public static final String smtSolver;
 
     static {
@@ -148,15 +148,12 @@ public final class Configuration {
     private static final Dataset pushPopEvalStats = new Dataset();
     private static final Dataset otherSolverEvalStats = new Dataset();
 
-    public static final int parallelism = getIntProp("parallelism", 4);
     public static final boolean oneRuleAtATime = propIsSet("oneRuleAtATime");
 
     public static final boolean useDemandTransformation = propIsSet("useDemandTransformation", true);
     public static final boolean restoreStratification = propIsSet("restoreStratification", true);
 
     public static final List<String> trackedRelations = getListProp("trackedRelations");
-
-    public static final List<String> factDirs = getListProp("factDirs");
 
     public static final boolean debugMst = propIsSet("debugMst");
     public static final boolean debugStratification = propIsSet("debugStratification");
@@ -462,7 +459,7 @@ public final class Configuration {
         return propIsSet(prop, false);
     }
 
-    private static int getIntProp(String prop, int def) {
+    static int getIntProp(String prop, int def) {
         String val = System.getProperty(prop);
         if (val == null) {
             return def;
@@ -482,7 +479,7 @@ public final class Configuration {
         return val;
     }
 
-    private static List<String> getListProp(String prop) {
+    static List<String> getListProp(String prop) {
         String val = System.getProperty(prop);
         if (val == null || val.equals("")) {
             return Collections.emptyList();
@@ -505,7 +502,7 @@ public final class Configuration {
         acc.add(s);
     }
 
-    private static SmtStrategy getSmtStrategy() {
+    static SmtStrategy getSmtStrategy() {
         String val = System.getProperty("smtStrategy");
         if (val == null) {
             val = "queue-1";

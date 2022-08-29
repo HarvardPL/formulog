@@ -1,7 +1,7 @@
-output q.
+rel q.
 q :- !q.
 
-output ok.
+rel ok.
 ok :- q.
 
 :- ok.

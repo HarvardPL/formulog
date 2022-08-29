@@ -1,6 +1,6 @@
-@external
-input foo(i32) 
+@disk
+@edb rel foo(i32) 
 
-output ok
+rel ok
 
 ok :- foo(0), foo(42).

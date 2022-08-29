@@ -1,6 +1,6 @@
-input rel1(i32, string).
-input rel2(i32, string).
-output join(i32, (string * string)).
+@edb rel rel1(i32, string).
+@edb rel rel2(i32, string).
+rel join(i32, (string * string)).
 
 join(Id, (Str1, Str2)) :- rel1(Id, Str1), rel2(Id, Str2).
 

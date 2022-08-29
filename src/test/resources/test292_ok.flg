@@ -7,5 +7,5 @@ fun foo(Xs: i32 list, M: i32, B: i32) : i32 list =
     and baz(X: i32) : i32 = X + B in
   rev(fold[bar]([], Xs))
   
-output ok
+rel ok
 ok :- foo([1, 2, 3], 2, 1) = [3, 5, 7].

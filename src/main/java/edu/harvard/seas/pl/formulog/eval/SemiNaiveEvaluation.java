@@ -21,6 +21,7 @@ package edu.harvard.seas.pl.formulog.eval;
  */
 
 import edu.harvard.seas.pl.formulog.Configuration;
+import edu.harvard.seas.pl.formulog.Main;
 import edu.harvard.seas.pl.formulog.ast.*;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralVisitor;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDbBuilder;
@@ -223,7 +224,7 @@ public class SemiNaiveEvaluation implements Evaluation {
     }
 
     private static SmtLibSolver getSmtManager() {
-        SmtStrategy strategy = Configuration.smtStrategy;
+        SmtStrategy strategy = Main.smtStrategy;
         switch (strategy.getTag()) {
             case QUEUE: {
                 int size = (int) strategy.getMetadata();

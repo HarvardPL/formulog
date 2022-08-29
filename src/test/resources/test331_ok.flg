@@ -1,6 +1,6 @@
-output foo(i32)
-output bar(i32 option)
-output ok
+rel foo(i32)
+rel bar(i32 option)
+rel ok
 
 bar(none).
 

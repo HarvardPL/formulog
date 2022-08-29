@@ -70,7 +70,7 @@ public class MainCpp extends TemplateSrcFile {
 
         public void loadExternalEdbs() {
             for (RelationSymbol sym : ctx.getProgram().getFactSymbols()) {
-                if (sym.isExternal()) {
+                if (sym.isDisk()) {
                     loadExternalEdbs(sym);
                 }
             }

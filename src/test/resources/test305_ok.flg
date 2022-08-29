@@ -1,4 +1,4 @@
-output ok
+rel ok
 ok :-
   is_sat_opt([`true`], none) = some(true),
   is_sat_opt([`#x[?] #= true`, `true`], none) = some(true),

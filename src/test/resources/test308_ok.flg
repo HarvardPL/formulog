@@ -1,4 +1,4 @@
-output ok
+rel ok
 
 (*
   Check that negative integers are serialized correctly to SMT-LIB

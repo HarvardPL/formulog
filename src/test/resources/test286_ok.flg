@@ -3,5 +3,5 @@ fun foo(Xs: i32 list) : i32 list =
   let fun cons_wrapper(Xs: i32 list, X: i32) : i32 list = X :: Xs in
   fold[cons_wrapper]([], fold[add1]([], Xs))
 
-output ok
+rel ok
 ok :- foo([1, 2, 3]) = [2, 3, 4].

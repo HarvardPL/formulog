@@ -1,6 +1,6 @@
-input foo(i32, bool).
-input bar(i32).
-output ok.
+@edb rel foo(i32, bool).
+@edb rel bar(i32).
+rel ok.
 
 foo(42, true).
 foo(0, false).

@@ -1,5 +1,5 @@
-output foo(i32 list)
+rel foo(i32 list)
 
-output ok.
+rel ok.
 
 ok :- _X = foo([??]).

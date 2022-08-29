@@ -1,8 +1,8 @@
-output base_ok.
-output neg_ok.
-output and_ok.
-output or_ok.
-output ok.
+rel base_ok.
+rel neg_ok.
+rel and_ok.
+rel or_ok.
+rel ok.
 
 base_ok :-
 	is_sat(`true`),

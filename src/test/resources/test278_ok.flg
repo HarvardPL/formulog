@@ -1,6 +1,6 @@
-input foo(bool sym)
+@edb rel foo(bool sym)
 foo(#{41}[bool]).
 foo(#hello[bool]).
 
-output ok
+rel ok
 ok :- foo(#{X}[bool]), X + 1 = 42.

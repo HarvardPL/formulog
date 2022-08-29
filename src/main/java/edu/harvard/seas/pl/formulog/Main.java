@@ -9,9 +9,9 @@ package edu.harvard.seas.pl.formulog;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,21 +20,23 @@ package edu.harvard.seas.pl.formulog;
  * #L%
  */
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.PrintStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
+import edu.harvard.seas.pl.formulog.codegen.CodeGen;
+import edu.harvard.seas.pl.formulog.smt.SmtStrategy;
 import org.apache.commons.lang3.time.StopWatch;
 
 import edu.harvard.seas.pl.formulog.ast.BasicRule;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
-import edu.harvard.seas.pl.formulog.codegen.CodeGen;
 import edu.harvard.seas.pl.formulog.eval.Evaluation;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.eval.EvaluationResult;
@@ -49,207 +51,231 @@ import edu.harvard.seas.pl.formulog.types.TypeException;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
+import picocli.CommandLine;
+import picocli.CommandLine.*;
 
-public final class Main {
+@Command(name = "formulog", mixinStandardHelpOptions = true, version = "Formulog 0.5.0", description = "Runs Formulog.")
+public final class Main implements Callable<Integer> {
 
-	private final String file;
-	private final StopWatch clock = new StopWatch();
-	private volatile boolean interrupted = true;
+    @Spec
+    public static Model.CommandSpec spec;
 
-	private static final boolean exnStackTrace = System.getProperty("exnStackTrace") != null;
+    @Option(names = "--smt-solver-mode", description = "Strategy to use when interacting with external SMT solvers.", converter = SmtModeConverter.class)
+    public static SmtStrategy smtStrategy = Configuration.getSmtStrategy();
 
-	private Main(String file) {
-		this.file = file;
-	}
+    @Option(names = {"-F", "--fact-dir"}, description = "Directory to look for fact .tsv files.")
+    public static List<String> factDirs = Configuration.getListProp("factDirs");
 
-	private void go() {
-		Program<UserPredicate, BasicRule> prog = parse();
-		WellTypedProgram typedProg = typeCheck(prog);
-		Evaluation eval = setup(typedProg);
-		Runtime.getRuntime().addShutdownHook(new Thread() {
+    @Option(names = {"-j", "--parallelism"}, description = "Number of threads to use.")
+    public static int parallelism = Configuration.getIntProp("parallelism", 4);
 
-			@Override
-			public void run() {
-				if (interrupted) {
-					printResults(eval);
-				}
-			}
+    @Option(names = "--dump-all", description = "Print all relations.")
+    private boolean dumpAll;
 
-		}
+    @Option(names = "--dump-idb", description = "Print all IDB relations.")
+    private boolean dumpIdb;
 
-		);
-		evaluate(eval);
-		interrupted = false;
-		printResults(eval);
-	}
+    @Option(names = "--dump", description = "Print selected relations.")
+    private Set<String> relationsToPrint = Collections.emptySet();
 
-	private Program<UserPredicate, BasicRule> parse() {
-		System.out.println("Parsing...");
-		clock.start();
-		try {
-			List<Path> factDirs = Configuration.factDirs.stream().map(Paths::get).collect(Collectors.toList());
-			if (factDirs.isEmpty()) {
-				factDirs = Collections.singletonList(Paths.get(""));
-			}
-			FileReader reader = new FileReader(file);
-			Program<UserPredicate, BasicRule> prog = new Parser().parse(reader, factDirs);
-			clock.stop();
-			System.out.println("Finished parsing (" + clock.getTime() / 1000.0 + "s)");
-			return prog;
-		} catch (FileNotFoundException e) {
-			handleException("Error while parsing!", e);
-		} catch (ParseException e) {
-			String msg = "Error while parsing ";
-			if (e.getFileName() != null) {
-				msg += e.getFileName() + ", ";
-			}
-			msg += "line " + e.getLineNo() + ":";
-			handleException(msg, e);
-		}
-		throw new AssertionError("impossible");
-	}
+    @Option(names = "--dump-query", description = "Print query result.")
+    private boolean dumpQuery;
 
-	private WellTypedProgram typeCheck(Program<UserPredicate, BasicRule> prog) {
-		System.out.println("Type checking...");
-		clock.reset();
-		clock.start();
-		try {
-			WellTypedProgram prog2 = new TypeChecker(prog).typeCheck();
-			clock.stop();
-			System.out.println("Finished type checking (" + clock.getTime() / 1000.0 + "s)");
-			return prog2;
-		} catch (TypeException e) {
-			handleException("Error while typechecking the program!", e);
-			throw new AssertionError("impossible");
-		}
-	}
+    @Option(names = "--dump-sizes", description = "Print relation sizes.")
+    private boolean dumpSizes;
 
-	private Evaluation setup(WellTypedProgram prog) {
-		System.out.println("Rewriting and validating...");
-		clock.reset();
-		clock.start();
-		try {
-			Evaluation eval = SemiNaiveEvaluation.setup(prog, Configuration.parallelism, Configuration.eagerSemiNaive);
-			clock.stop();
-			System.out.println("Finished rewriting and validating (" + clock.getTime() / 1000.0 + "s)");
-			return eval;
-		} catch (InvalidProgramException e) {
-			handleException("Error while rewriting/validation!", e);
-			throw new AssertionError("impossible");
-		}
-	}
+    @Parameters(index = "0", description = "Formulog program file.")
+    private File file;
 
-	private void evaluate(Evaluation eval) {
-		System.out.println("Evaluating...");
-		clock.reset();
-		clock.start();
-		try {
-			eval.run();
-			clock.stop();
-			System.out.println("Finished evaluating (" + clock.getTime() / 1000.0 + "s)");
-		} catch (EvaluationException e) {
-			handleException("Error while evaluating the program!", e);
-		}
-	}
+    private final StopWatch clock = new StopWatch();
+    private volatile boolean interrupted = true;
 
-	private void printResults(Evaluation eval) {
-		PrintStream out = System.out;
-		EvaluationResult res = eval.getResult();
-		switch (Configuration.printResultsPreference) {
-		case ALL:
-			printEdb(res, out);
-			out.println();
-			printIdb(res, out);
-			break;
-		case EDB:
-			printEdb(res, out);
-			break;
-		case IDB:
-			printIdb(res, out);
-			break;
-		case QUERY:
-			printQueryResults(res, out);
-			break;
-		case SOME:
-			printSelectedResults(res, eval.getInputProgram().getSymbolManager(), out);
-			break;
-		case NONE:
-			break;
-		}
-	}
+    private static final boolean exnStackTrace = System.getProperty("exnStackTrace") != null;
 
-	public void printEdb(EvaluationResult res, PrintStream out) {
-		out.println("Extensional database:");
-		for (RelationSymbol sym : res.getSymbols()) {
-			if (sym.isEdbSymbol()) {
-				Util.printSortedFacts(res.getAll(sym), out);
-			}
-		}
-	}
+    private void go() {
+        Program<UserPredicate, BasicRule> prog = parse();
+        WellTypedProgram typedProg = typeCheck(prog);
+        Evaluation eval = setup(typedProg);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                    if (interrupted) {
+                        printResults(eval);
+                    }
+                })
 
-	public void printIdb(EvaluationResult res, PrintStream out) {
-		out.println("Intensional database:");
-		for (RelationSymbol sym : res.getSymbols()) {
-			if (sym.isIdbSymbol()) {
-				Util.printSortedFacts(res.getAll(sym), out);
-			}
-		}
-	}
+        );
+        evaluate(eval);
+        interrupted = false;
+        printResults(eval);
+    }
 
-	public void printQueryResults(EvaluationResult res, PrintStream out) {
-		out.println("Query results:");
-		Iterable<UserPredicate> ans = res.getQueryAnswer();
-		if (ans == null) {
-			out.println("[there was no query]");
-		} else {
-			Util.printSortedFacts(res.getQueryAnswer(), out);
-		}
-	}
+    private Program<UserPredicate, BasicRule> parse() {
+        System.out.println("Parsing...");
+        clock.start();
+        try {
+            List<Path> factDirs = Main.factDirs.stream().map(Paths::get).collect(Collectors.toList());
+            if (factDirs.isEmpty()) {
+                factDirs = Collections.singletonList(Paths.get(""));
+            }
+            FileReader reader = new FileReader(file);
+            Program<UserPredicate, BasicRule> prog = new Parser().parse(reader, factDirs);
+            clock.stop();
+            System.out.println("Finished parsing (" + clock.getTime() / 1000.0 + "s)");
+            return prog;
+        } catch (FileNotFoundException e) {
+            handleException("Error while parsing!", e);
+        } catch (ParseException e) {
+            String msg = "Error while parsing ";
+            if (e.getFileName() != null) {
+                msg += e.getFileName() + ", ";
+            }
+            msg += "line " + e.getLineNo() + ":";
+            handleException(msg, e);
+        }
+        throw new AssertionError("impossible");
+    }
 
-	public void printSelectedResults(EvaluationResult res, SymbolManager sm, PrintStream out) {
-		out.println("Selected results:");
-		for (String name : Configuration.getSelectedRelsToPrint()) {
-			if (!sm.hasName(name)) {
-				out.println("[ignoring unrecognized symbol: " + name + "]");
-				continue;
-			}
-			Symbol sym = sm.lookupSymbol(name);
-			if (!(sym instanceof RelationSymbol)) {
-				out.println("[ignoring symbol " + name + " (not a relation symbol)]");
-			}
-		}
-		for (RelationSymbol sym : res.getSymbols()) {
-			if (Configuration.getSelectedRelsToPrint().contains(sym.toString())) {
-				Util.printSortedFacts(res.getAll(sym), out);
-			}
-		}
-	}
+    private WellTypedProgram typeCheck(Program<UserPredicate, BasicRule> prog) {
+        System.out.println("Type checking...");
+        clock.reset();
+        clock.start();
+        try {
+            WellTypedProgram prog2 = new TypeChecker(prog).typeCheck();
+            clock.stop();
+            System.out.println("Finished type checking (" + clock.getTime() / 1000.0 + "s)");
+            return prog2;
+        } catch (TypeException e) {
+            handleException("Error while typechecking the program!", e);
+            throw new AssertionError("impossible");
+        }
+    }
 
-	public static void main(String[] args) throws Exception {
-		if (Configuration.runTests) {
-			try {
-				FormulogTester.main(args);
-			} catch (Exception e) {
-				handleException("Problem running test suite", e);
-			}
-		} else if (Configuration.codeGen) {
-			CodeGen.main(args);
-		} else {
-			if (args.length != 1) {
-				System.out.println("Expected a single Formulog file as an argument.");
-				System.exit(1);
-			}
-			new Main(args[0]).go();
-		}
-	}
+    private Evaluation setup(WellTypedProgram prog) {
+        System.out.println("Rewriting and validating...");
+        clock.reset();
+        clock.start();
+        try {
+            Evaluation eval = SemiNaiveEvaluation.setup(prog, parallelism, Configuration.eagerSemiNaive);
+            clock.stop();
+            System.out.println("Finished rewriting and validating (" + clock.getTime() / 1000.0 + "s)");
+            return eval;
+        } catch (InvalidProgramException e) {
+            handleException("Error while rewriting/validation!", e);
+            throw new AssertionError("impossible");
+        }
+    }
 
-	private static void handleException(String msg, Exception e) {
-		System.out.println(msg);
-		System.out.println(e.getMessage());
-		if (exnStackTrace) {
-			e.printStackTrace(System.out);
-		}
-		System.exit(1);
-	}
+    private void evaluate(Evaluation eval) {
+        System.out.println("Evaluating...");
+        clock.reset();
+        clock.start();
+        try {
+            eval.run();
+            clock.stop();
+            System.out.println("Finished evaluating (" + clock.getTime() / 1000.0 + "s)");
+        } catch (EvaluationException e) {
+            handleException("Error while evaluating the program!", e);
+        }
+    }
 
+    private String getBanner(String heading) {
+        return "==================== " + heading + " ====================";
+    }
+
+    private String getSmallBanner(String heading) {
+        return "---------- " + heading + " ----------";
+    }
+
+    private void printResults(Evaluation eval) {
+        PrintStream out = System.out;
+        EvaluationResult res = eval.getResult();
+        List<RelationSymbol> allSymbols = res.getSymbols().stream().sorted(Comparator.comparing(Object::toString)).collect(Collectors.toList());
+        Set<String> stringReprs = allSymbols.stream().map(RelationSymbol::toString).collect(Collectors.toSet());
+        for (String sym : relationsToPrint) {
+            if (!stringReprs.contains(sym)) {
+                out.println("\nWARNING: ignoring unrecognized relation " + sym);
+            }
+        }
+        if (dumpSizes) {
+            out.println(getBanner("RELATION SIZES"));
+            for (RelationSymbol sym : allSymbols) {
+                out.println(sym + "\t" + res.getCount(sym));
+            }
+        }
+        if (dumpAll || dumpQuery) {
+            var queryRes = res.getQueryAnswer();
+            if (queryRes != null) {
+                List<UserPredicate> l = new ArrayList<>();
+                queryRes.forEach(l::add);
+                out.println();
+                out.println(getBanner("QUERY RESULTS (" + l.size() + ")"));
+                Util.printSortedFacts(l, out);
+            }
+        }
+        List<RelationSymbol> edbSymbols = allSymbols.stream().
+                filter(sym -> sym.isEdbSymbol() && (dumpAll || relationsToPrint.contains(sym.toString()))).collect(Collectors.toList());
+        printRelations("SELECTED EDB RELATIONS", edbSymbols, res, out);
+        List<RelationSymbol> idbSymbols = allSymbols.stream().
+                filter(sym -> sym.isIdbSymbol() && (dumpAll || dumpIdb || relationsToPrint.contains(sym.toString()))).collect(Collectors.toList());
+        printRelations("SELECTED IDB RELATIONS", idbSymbols, res, out);
+    }
+
+    private void printRelations(String heading, Collection<RelationSymbol> symbols, EvaluationResult res, PrintStream out) {
+        if (symbols.isEmpty()) {
+            return;
+        }
+        out.println();
+        out.println(getBanner(heading));
+        for (RelationSymbol sym : symbols) {
+            out.println();
+            out.println(getSmallBanner(sym + " (" + res.getCount(sym) + ")"));
+            if (res.getCount(sym) < 1000) {
+                Util.printSortedFacts(res.getAll(sym), out);
+            } else {
+                for (var tup : res.getAll(sym)) {
+                    out.println(tup);
+                }
+            }
+        }
+    }
+
+    public static class SmtModeConverter implements ITypeConverter<SmtStrategy> {
+
+        @Override
+        public SmtStrategy convert(String s) throws Exception {
+            switch (s) {
+                case "push-pop":
+                    return new SmtStrategy(SmtStrategy.Tag.PER_THREAD_PUSH_POP, null);
+                case "naive":
+                    return new SmtStrategy(SmtStrategy.Tag.PER_THREAD_PUSH_POP_NAIVE, null);
+                case "check-sat-assuming":
+                    return new SmtStrategy(SmtStrategy.Tag.PER_THREAD_QUEUE, 1);
+            }
+            throw new ParameterException(Main.spec.commandLine(), "Unexpected value for SMT solver mode: " + s +
+                    " (must be one of 'naive', 'push-pop', or 'check-sat-assuming')");
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        int exitCode = new CommandLine(new Main()).execute(args);
+        System.exit(exitCode);
+    }
+
+    private static void handleException(String msg, Exception e) {
+        System.out.println(msg);
+        System.out.println(e.getMessage());
+        if (exnStackTrace) {
+            e.printStackTrace(System.out);
+        }
+        System.exit(1);
+    }
+
+    @Override
+    public Integer call() throws Exception {
+        if (Configuration.codeGen) {
+            CodeGen.main(file);
+        } else {
+            go();
+        }
+        return 0;
+    }
 }

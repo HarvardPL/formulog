@@ -1,6 +1,6 @@
-output something_true.
-output something_false.
-output ok.
+rel something_true.
+rel something_false.
+rel ok.
 
 something_true :-
 	X = #x[fp[64]],

@@ -1,4 +1,4 @@
-output ok.
+rel ok.
 ok :-
   A = #a[bool],
   B = #b[bool],

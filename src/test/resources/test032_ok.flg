@@ -1,16 +1,16 @@
-input foo(fp32).
+@edb rel foo(fp32).
 
 foo(0F).
 foo(-1F).
 
-output add(fp32, fp32, fp32).
+rel add(fp32, fp32, fp32).
 
 add(X, Y, Z) :-
 	foo(X),
 	foo(Y),
 	Z = fp32_add(X, Y).
 
-output ok.
+rel ok.
 ok :-
 	add(0F, 0F, 0F),
 	add(0F, -1F, -1F),

@@ -29,7 +29,7 @@ public interface RelationSymbol extends TypedSymbol {
 		return !isIdbSymbol();
 	}
 	
-	boolean isExternal();
+	boolean isDisk();
 
 	boolean isBottomUp();
 

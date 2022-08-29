@@ -1,5 +1,5 @@
-input foo(i32, i32).
-output ok.
+@edb rel foo(i32, i32).
+rel ok.
 
 fun bar(X:i32) : bool = foo(X, 13).
 

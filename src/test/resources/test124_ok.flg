@@ -1,4 +1,4 @@
-output ok.
+rel ok.
 ok :-
   A = #a[(i32, i32) array],
   X = #x[i32],

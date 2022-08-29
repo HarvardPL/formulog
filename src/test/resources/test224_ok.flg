@@ -1,9 +1,9 @@
-output p
-output q
-output r1
-output r2
-output r3
-output s
+rel p
+rel q
+rel r1
+rel r2
+rel r3
+rel s
 
 p :- !q, r1, r2, r3.
 q :- s.
@@ -16,7 +16,7 @@ r2.
 r3.
 s.
 
-output ok
+rel ok
 ok :- p.
 
 :- ok.

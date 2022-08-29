@@ -1,4 +1,4 @@
-output ok1.
+rel ok1.
 ok1 :-
   X = #x[bv[32]],
   Y = #y[bv[32]],
@@ -7,7 +7,7 @@ ok1 :-
   E2 = `42 #= bv_add(Z, Y)`,
   substitute(X, `Z`, E1) = E2. 
  	
-output ok2.
+rel ok2.
 ok2 :-
   X = "x",
   Y = "y",
@@ -16,7 +16,7 @@ ok2 :-
   E2 = `42 #= bv_add(#{Z}[bv[32]], #{Y}[bv[32]])`,
   substitute(#{X}[bv[32]], `#{Z}[bv[32]]`, E1) = E2.
 
-output ok3.
+rel ok3.
 ok3 :-
   X = #x[bv[32]],
   Y = #y[bv[32]],
@@ -26,7 +26,7 @@ ok3 :-
      bv_add(X, X) #= 84`,
   is_valid(E).
 
-output ok4.
+rel ok4.
 ok4 :-
   X = #x[bv[32]],
   E =
@@ -35,7 +35,7 @@ ok4 :-
   is_valid(substitute(X, `0`, E)).
 
 (* Make sure that we are avoiding variable capture correctly. *)
-output ok5.
+rel ok5.
 ok5 :-
   X = #x[bv[32]],
   Y = #y[bv[32]],
@@ -45,12 +45,12 @@ ok5 :-
   is_sat(substitute(Y, `X`, E)).
 
 (* Make sure that substitute is deterministic. *)
-output ok6.
+rel ok6.
 ok6 :-
   X = #x[bv[32]],
   Y = #y[bv[32]],
   E = `#let X = 42 in bv_add(X, Y)`,
   substitute(Y, `21`, E) = substitute(Y, `21`, E).
  	
-output ok.
+rel ok.
 ok :- ok1, ok2, ok3, ok4, ok5, ok6.

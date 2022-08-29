@@ -1,11 +1,11 @@
 type node = i32.
-input edge(node, node).
-input vertex(node).
-output notWellFormed.
-output reach(node, node).
-output inCycle(node).
-output notInCycle(node).
-output hasOtherNeighbor(node).
+@edb rel edge(node, node).
+@edb rel vertex(node).
+rel notWellFormed.
+rel reach(node, node).
+rel inCycle(node).
+rel notInCycle(node).
+rel hasOtherNeighbor(node).
 
 notWellFormed :- edge(X, _), !vertex(X).
 notWellFormed :- edge(_, X), !vertex(X).

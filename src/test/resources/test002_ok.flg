@@ -1,6 +1,6 @@
 (* okay *)
-output p0.
-output p1(i32).
-output p2(i32, i32).
-output p3(i32, i32, i32).
-output p4(i32, i32, i32, i32).
+rel p0.
+rel p1(i32).
+rel p2(i32, i32).
+rel p3(i32, i32, i32).
+rel p4(i32, i32, i32, i32).

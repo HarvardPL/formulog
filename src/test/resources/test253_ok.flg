@@ -1,11 +1,11 @@
-output foo(i32)
+rel foo(i32)
 foo(42).
 
 fun bar(X: i32) : bool = foo(X)
 
 @topdown
-output baz(i32)
+rel baz(i32)
 baz(X) :- foo(X).
 
-output ok
+rel ok
 ok :- baz(42).

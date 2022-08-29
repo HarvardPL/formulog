@@ -1,9 +1,9 @@
-output ok1
-output ok2
-output ok3
-output ok4
-output ok5
-output ok
+rel ok1
+rel ok2
+rel ok3
+rel ok4
+rel ok5
+rel ok
 
 ok1 :-
   match (let x = 42 in `x`) with

@@ -4,9 +4,9 @@
   `foo` is empty.
 *)
 
-input foo(string)
+@edb rel foo(string)
 
 foo("\\"").
 
-output ok
+rel ok
 ok :- !foo(_).

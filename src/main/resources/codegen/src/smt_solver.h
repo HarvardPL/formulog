@@ -181,7 +181,7 @@ inline std::istream &operator>>(std::istream &in, flg::smt::SmtSolverMode &mode)
 inline std::ostream &operator<<(std::ostream &out, const flg::smt::SmtSolverMode &mode) {
     switch (mode) {
         case flg::smt::SmtSolverMode::push_pop_naive:
-            out << "push-pop-naive";
+            out << "naive";
             break;
         case flg::smt::SmtSolverMode::push_pop:
             out << "push-pop";

@@ -1,15 +1,15 @@
-input entity(string)
+@edb rel entity(string)
 entity("Alice").
 entity("Bob").
 entity("World").
 
-output greeting(string)
+rel greeting(string)
 greeting(Y) :-
   entity(X),
   some(M) = get_model([`#y[string] #= str_concat("Hello, ", X)`], none),
   some(Y) = query_model(#y[string], M).
 
-output ok
+rel ok
 ok :-
   greeting("Hello, World"),
   greeting("Hello, Alice"),

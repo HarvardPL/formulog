@@ -1,6 +1,6 @@
 (* okay *)
-input p0.
-input p1(i32).
-input p2(i32, i32).
-input p3(i32, i32, i32).
-input p4(i32, i32, i32, i32).
+@edb rel p0.
+@edb rel p1(i32).
+@edb rel p2(i32, i32).
+@edb rel p3(i32, i32, i32).
+@edb rel p4(i32, i32, i32, i32).

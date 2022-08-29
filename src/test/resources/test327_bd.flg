@@ -1,4 +1,4 @@
-output not_ok
+rel not_ok
 
 not_ok :-
   S = opaque_set_singleton(42),

@@ -1,6 +1,6 @@
-output ok
+rel ok
 
-input foo(i32 smt)
+@edb rel foo(i32 smt)
 
 foo(`42`).
 

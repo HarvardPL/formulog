@@ -2,7 +2,7 @@ type 'a my_option =
   | my_none
   | my_some('a).
 
-output ok.
+rel ok.
 ok :-
   X = #x[i32 my_option],
   E = `#my_some_1(X) #= 0`,

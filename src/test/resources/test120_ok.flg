@@ -1,6 +1,6 @@
 uninterpreted fun foo(bool smt) : bool smt.
 
-output ok.
+rel ok.
 ok :-
 	X = #x[bool],
 	is_valid(`(forall X : foo(X). foo(X) #= X) ==> foo(true)`).

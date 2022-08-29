@@ -1,7 +1,7 @@
 (* This recreates a bug having to do with let fun expressions inside match
    expressions. *)
 
-output ok
+rel ok
 
 fun foo(x: 'a) : 'a =
   match true with

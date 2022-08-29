@@ -1,35 +1,35 @@
-@external
-input names(string, string).
+@disk
+@edb rel names(string, string).
 
-@external
-input numbers(i32, i32, i32).
+@disk
+@edb rel numbers(i32, i32, i32).
 numbers(100, 200, 300).
 
 type 'a my_list =
   | my_nil
   | my_cons('a, 'a my_list).
 
-@external
-input complex_terms(string my_list, string my_list).
+@disk
+@edb rel complex_terms(string my_list, string my_list).
 
-output ok1.
+rel ok1.
 ok1 :-
   names("jimmy", "hendrix"),
   names("giuseppe", "garibaldi").
 
 fun singleton(X: 'a) : 'a my_list = my_cons(X, my_nil).
 
-output ok2.
+rel ok2.
 ok2 :-
   complex_terms(singleton("jimmy"), singleton("hendrix")),
   complex_terms(singleton("giuseppe"), singleton("garibaldi")).
 
-output ok3.
+rel ok3.
 ok3 :-
   numbers(1, 2, 3),
   numbers(4, 5, 6),
   numbers(7, 8, 9),
   numbers(100, 200, 300).
 
-output ok.
+rel ok.
 ok :- ok1, ok2, ok3.

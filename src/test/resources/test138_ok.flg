@@ -1,6 +1,6 @@
 fun a : ('a, i32) array smt = `array_const(0)`.
 
-output ok.
+rel ok.
 ok :-
   X = #x[string],
   Y = #y[bool],

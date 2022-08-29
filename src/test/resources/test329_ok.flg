@@ -1,4 +1,4 @@
-output ok
+rel ok
 
 ok :-
   is_sat(`bv_to_int(42) #= int_const(42)`),

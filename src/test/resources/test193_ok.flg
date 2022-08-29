@@ -1,16 +1,16 @@
-input nums(i32, i32, i32)
+@edb rel nums(i32, i32, i32)
 nums(1, 2, 3).
 nums(4, 3, 1).
 nums(1, 3, 6).
 
-input num(i32)
+@edb rel num(i32)
 num(6).
 num(12).
 num(18).
 
-input empty
+@edb rel empty
 
-input full
+@edb rel full
 full.
 
 fun sum(Xs: i32 list) : i32 =
@@ -25,15 +25,15 @@ fun mulAndSum(Xs: (i32 * i32 * i32) list) : i32 =
   | (X1, X2, X3) :: Xs => X1 * X2 * X3 + mulAndSum(Xs)
   end
 
-output agg1(i32)
+rel agg1(i32)
 
 agg1(X) :- X = sum(nums(_1, ??, _2)).
 
-output agg2(i32)
+rel agg2(i32)
 
 agg2(X) :- X = sum(nums(_1, 3, ??)).
 
-output ok
+rel ok
 ok :-
   sum(num(??)) = 36,
   mulAndSum(nums(??, ??, ??)) = 36,

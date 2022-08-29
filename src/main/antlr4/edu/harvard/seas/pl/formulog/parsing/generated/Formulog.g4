@@ -23,11 +23,7 @@ tabSeparatedTermLine
 metadata
 :
 	funDefs '.'? # funDecl
-	| annotation* relType =
-	(
-		INPUT
-		| OUTPUT
-	) ID maybeAnnotatedTypeList '.'? # relDecl
+	| annotation* relType = 'rel' ID maybeAnnotatedTypeList '.'? # relDecl
 	| 'type' typeDefLHS EQ type '.'? # typeAlias
 	| 'type' typeDefLHS EQ typeDefRHS
 	(
@@ -406,16 +402,6 @@ NOT
 FORMULA_EQ
 :
 	'#='
-;
-
-INPUT
-:
-	'input'
-;
-
-OUTPUT
-:
-	'output'
 ;
 
 FP32_NAN

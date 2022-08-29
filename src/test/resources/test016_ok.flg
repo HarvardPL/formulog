@@ -6,11 +6,11 @@ type id = (string, i32) union.
 
 fun str2i32(_S:string) : i32 = 42.
 
-input colors(color).
-input ids(id).
+@edb rel colors(color).
+@edb rel ids(id).
 
-output gray(i32, i32).
-output rgb(i32, i32, i32, i32).
+rel gray(i32, i32).
+rel rgb(i32, i32, i32, i32).
 
 gray(Id, Color) :- ids(inj_r(Id)), colors(inj_l(Color)).
 gray(Id, Color) :- ids(inj_l(Id_str)), colors(inj_l(Color)), Id = str2i32(Id_str).

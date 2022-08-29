@@ -1,4 +1,4 @@
-input edge(i32, i32, bool smt)
+@edb rel edge(i32, i32, bool smt)
 
 edge(3,	0,	`array_select[bv[4]](array_store(#C[(bv[4], bool) array], #B[bv[4]], #E[bool]), bv_big_const[4](-39L))`).
 edge(3,	9,	`smt_eq[(bv[4], bv[4]) array](array_store(array_store(#A[(bv[4], bv[4]) array], bv_const[4](6), array_select[bv[4]](array_store(#A[(bv[4], bv[4]) array], bv_const[4](-49), #C[bv[4]]), #A[bv[4]])), #D[bv[4]], array_select[bv[8]](array_store(#E[(bv[8], bv[4]) array], #D[bv[8]], #A[bv[4]]), bv_or(bv_and(bv_big_const[8](-10L), #A[bv[8]]), bv_big_const[8](45L)))), array_store(array_store(array_store(array_store(#D[(bv[4], bv[4]) array], #D[bv[4]], #B[bv[4]]), bv_big_const[4](-19L), bv_to_bv_signed[8,4](#D[bv[8]])), bv_mul(bv_big_const[4](-38L), bv_srem(#D[bv[4]], #A[bv[4]])), bv_add(bv_big_const[4](6L), bv_xor(bv_const[4](24), #E[bv[4]]))), #A[bv[4]], bv_add(#B[bv[4]], bv_const[4](-9))))`).

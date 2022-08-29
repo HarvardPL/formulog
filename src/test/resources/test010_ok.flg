@@ -1,11 +1,11 @@
-input p0.
+@edb rel p0.
 type 'a alias = 'a.
 type i32_alias = i32 alias.
 type string_alias = string alias.
-input p_i32(i32_alias).
-input p_i32_2x(i32_alias, i32_alias).
-input p_string(string_alias).
-input p_string_2x(string_alias, string_alias).
+@edb rel p_i32(i32_alias).
+@edb rel p_i32_2x(i32_alias, i32_alias).
+@edb rel p_string(string_alias).
+@edb rel p_string_2x(string_alias, string_alias).
 
 p0.
 
