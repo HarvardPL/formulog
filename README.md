@@ -8,13 +8,13 @@ Datalog with support for SMT queries and first-order functional programming.
 
 ### Prepackaged JAR
 
+You can find a prepackaged JAR file in the Releases section of the GitHub
+repository.
+
 Dependencies:
 
 * JRE 11+
 * A supported SMT solver (see discussion below)
-
-You can find a prepackaged JAR file in the Releases section of the GitHub
-repository.
 
 ### Docker
 
@@ -73,19 +73,17 @@ Z3, `boolector` for Boolector, `cvc4` for CVC4, and `yices-smt2` for Yices.
 
 [![Zenodo DOI 10.5281/zenodo.4039085](https://zenodo.org/badge/DOI/10.5281/zenodo.4039085.svg)](https://doi.org/10.5281/zenodo.4039085)
 
-You
-can [download the Docker image tarball](https://zenodo.org/record/4039085/files/formulog-artifact-image.tar.gz?download=1)
-and load it using Docker:
+You can replicate our evaluation from
+the [OOPSLA'20 paper](https://dl.acm.org/doi/10.1145/3428209) following
+the [instructions on Zenodo](https://zenodo.org/record/4039085). To start,
+[download the Docker image tarball](https://zenodo.org/record/4039085/files/formulog-artifact-image.tar.gz?download=1)
+for the artifact and load it using Docker:
 
 ```ShellSession
 $ curl "https://zenodo.org/record/4039085/files/formulog-artifact-image.tar.gz?download=1" -o formulog-artifact-image.tar.gz
 $ docker load < formulog-artifact-image.tar.gz # may require sudo
 $ docker run -it formulog-artifact             # may require sudo
 ```
-
-You can replicate our evaluation from
-the [OOPSLA 2020 paper](https://dl.acm.org/doi/10.1145/3428209) following
-the [instructions on Zenodo](https://zenodo.org/record/4039085).
 
 ## Running Formulog
 
@@ -164,8 +162,8 @@ the properties are not yet documented; many are defined in the
 class `edu.harvard.seas.pl.formulog.Configuration`; some of the most useful ones
 are:
 
-* `debugSmt` - log debugging information related to SMT calls (defaults to
-  false)
+* `debugSmt` - log debugging information related to SMT calls to
+  the `solver_logs/` directory (defaults to false)
 * `debugMst` - print debugging information related to the magic set
   transformation (defaults to false)
 * `debugRounds` - print statistics for each round of seminaive evaluation
