@@ -68,6 +68,7 @@ public class SemiNaiveEvaluation implements Evaluation {
                 Configuration.restoreStratification);
         Set<RelationSymbol> allRelations = new HashSet<>(magicProg.getFactSymbols());
         allRelations.addAll(magicProg.getRuleSymbols());
+        allRelations.addAll(prog.getRuleSymbols());
         SortedIndexedFactDbBuilder dbb = new SortedIndexedFactDbBuilder(allRelations);
         SortedIndexedFactDbBuilder deltaDbb = new SortedIndexedFactDbBuilder(magicProg.getRuleSymbols());
         PredicateFunctionSetter predFuncs = new PredicateFunctionSetter(
@@ -441,10 +442,6 @@ public class SemiNaiveEvaluation implements Evaluation {
         return inputProgram;
     }
 
-    public List<Stratum> getStrata() {
-        return strata;
-    }
-
     @Override
     public synchronized void run() throws EvaluationException {
         if (Configuration.printRelSizes) {
@@ -485,10 +482,6 @@ public class SemiNaiveEvaluation implements Evaluation {
         }
     }
 
-    public Set<IndexedRule> getRules(RelationSymbol sym) {
-        return Collections.unmodifiableSet(rules.get(sym));
-    }
-
     @Override
     public synchronized EvaluationResult getResult() {
         return new EvaluationResult() {
@@ -498,14 +491,7 @@ public class SemiNaiveEvaluation implements Evaluation {
                 if (!db.getSymbols().contains(sym)) {
                     throw new IllegalArgumentException("Unrecognized relation symbol " + sym);
                 }
-                return new Iterable<UserPredicate>() {
-
-                    @Override
-                    public Iterator<UserPredicate> iterator() {
-                        return new FactIterator(sym, db.getAll(sym).iterator());
-                    }
-
-                };
+                return () -> new FactIterator(sym, db.getAll(sym).iterator());
             }
 
             @Override
@@ -514,14 +500,7 @@ public class SemiNaiveEvaluation implements Evaluation {
                     return null;
                 }
                 RelationSymbol querySym = query.getSymbol();
-                return new Iterable<UserPredicate>() {
-
-                    @Override
-                    public Iterator<UserPredicate> iterator() {
-                        return new FactIterator(querySym, db.getAll(querySym).iterator());
-                    }
-
-                };
+                return () -> new FactIterator(querySym, db.getAll(querySym).iterator());
             }
 
             @Override
@@ -571,10 +550,6 @@ public class SemiNaiveEvaluation implements Evaluation {
 
     public SortedIndexedFactDb getDb() {
         return db;
-    }
-
-    public SortedIndexedFactDb getDeltaDb() {
-        return deltaDb;
     }
 
 }

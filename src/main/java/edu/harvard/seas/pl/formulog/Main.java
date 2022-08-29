@@ -20,23 +20,20 @@ package edu.harvard.seas.pl.formulog;
  * #L%
  */
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.PrintStream;
+import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import edu.harvard.seas.pl.formulog.ast.*;
 import edu.harvard.seas.pl.formulog.codegen.CodeGen;
 import edu.harvard.seas.pl.formulog.smt.SmtStrategy;
 import org.apache.commons.lang3.time.StopWatch;
 
-import edu.harvard.seas.pl.formulog.ast.BasicRule;
-import edu.harvard.seas.pl.formulog.ast.Program;
-import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.eval.Evaluation;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.eval.EvaluationResult;
@@ -44,8 +41,6 @@ import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
 import edu.harvard.seas.pl.formulog.parsing.ParseException;
 import edu.harvard.seas.pl.formulog.parsing.Parser;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
-import edu.harvard.seas.pl.formulog.symbols.Symbol;
-import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
 import edu.harvard.seas.pl.formulog.types.TypeException;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
@@ -53,18 +48,22 @@ import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 import picocli.CommandLine;
 import picocli.CommandLine.*;
+import picocli.CommandLine.Model;
 
-@Command(name = "formulog", mixinStandardHelpOptions = true, version = "Formulog 0.5.0", description = "Runs Formulog.")
+@Command(name = "formulog", mixinStandardHelpOptions = true, version = "Formulog 0.6.0", description = "Runs Formulog.")
 public final class Main implements Callable<Integer> {
 
     @Spec
-    public static Model.CommandSpec spec;
+    private static Model.CommandSpec spec;
 
     @Option(names = "--smt-solver-mode", description = "Strategy to use when interacting with external SMT solvers.", converter = SmtModeConverter.class)
     public static SmtStrategy smtStrategy = Configuration.getSmtStrategy();
 
     @Option(names = {"-F", "--fact-dir"}, description = "Directory to look for fact .tsv files.")
-    public static List<String> factDirs = Configuration.getListProp("factDirs");
+    private List<String> factDirs = Configuration.getListProp("factDirs");
+
+    @Option(names = {"-D", "--output-dir"}, description = "Directory for .tsv output files.")
+    private File outDir = new File(".");
 
     @Option(names = {"-j", "--parallelism"}, description = "Number of threads to use.")
     public static int parallelism = Configuration.getIntProp("parallelism", 4);
@@ -93,31 +92,37 @@ public final class Main implements Callable<Integer> {
     private static final boolean exnStackTrace = System.getProperty("exnStackTrace") != null;
 
     private void go() {
-        Program<UserPredicate, BasicRule> prog = parse();
+        if (!outDir.mkdirs() && !outDir.exists() || !outDir.isDirectory()) {
+            System.out.println("Unable to create output directory: " + outDir);
+            System.exit(1);
+        }
+        BasicProgram prog = parse();
         WellTypedProgram typedProg = typeCheck(prog);
         Evaluation eval = setup(typedProg);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                     if (interrupted) {
-                        printResults(eval);
+                        dumpResults(eval.getResult());
                     }
                 })
 
         );
         evaluate(eval);
         interrupted = false;
-        printResults(eval);
+        var res = eval.getResult();
+        dumpResults(res);
+        dumpResultsToDisk(res);
     }
 
-    private Program<UserPredicate, BasicRule> parse() {
+    private BasicProgram parse() {
         System.out.println("Parsing...");
         clock.start();
         try {
-            List<Path> factDirs = Main.factDirs.stream().map(Paths::get).collect(Collectors.toList());
-            if (factDirs.isEmpty()) {
-                factDirs = Collections.singletonList(Paths.get(""));
+            List<Path> factPaths = factDirs.stream().map(Paths::get).collect(Collectors.toList());
+            if (factPaths.isEmpty()) {
+                factPaths = Collections.singletonList(Paths.get(""));
             }
             FileReader reader = new FileReader(file);
-            Program<UserPredicate, BasicRule> prog = new Parser().parse(reader, factDirs);
+            BasicProgram prog = new Parser().parse(reader, factPaths);
             clock.stop();
             System.out.println("Finished parsing (" + clock.getTime() / 1000.0 + "s)");
             return prog;
@@ -185,9 +190,57 @@ public final class Main implements Callable<Integer> {
         return "---------- " + heading + " ----------";
     }
 
-    private void printResults(Evaluation eval) {
+    private static class FactFileDumper implements Runnable {
+
+        private final Iterable<UserPredicate> facts;
+        private final PrintStream out;
+
+        public FactFileDumper(Iterable<UserPredicate> facts, PrintStream out) {
+            this.facts = facts;
+            this.out = out;
+        }
+
+        @Override
+        public void run() {
+            for (var fact : facts) {
+                Term[] args = fact.getArgs();
+                for (int i = 0; i < args.length; ++i) {
+                    out.print(args[i]);
+                    if (i < args.length - 1) {
+                        out.print("\t");
+                    }
+                }
+                out.println();
+            }
+            out.close();
+        }
+
+    }
+
+    private void dumpResultsToDisk(EvaluationResult res) {
+        var pool = Executors.newFixedThreadPool(parallelism);
+        try {
+            for (RelationSymbol sym : res.getSymbols()) {
+                if (sym.isIdbSymbol() && sym.isDisk()) {
+                    File outFile = outDir.toPath().resolve(sym + ".tsv").toFile();
+                    boolean ok = outFile.createNewFile();
+                    if (!ok && !outFile.exists()) {
+                        throw new IOException("Cannot create output file " + outFile.getName());
+                    }
+                    pool.submit(new FactFileDumper(res.getAll(sym), new PrintStream(outFile)));
+                }
+            }
+            pool.shutdown();
+            while (!pool.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS)) {
+                // do nothing
+            }
+        } catch (Exception e) {
+            handleException("Problem writing output to disk", e);
+        }
+    }
+
+    private void dumpResults(EvaluationResult res) {
         PrintStream out = System.out;
-        EvaluationResult res = eval.getResult();
         List<RelationSymbol> allSymbols = res.getSymbols().stream().sorted(Comparator.comparing(Object::toString)).collect(Collectors.toList());
         Set<String> stringReprs = allSymbols.stream().map(RelationSymbol::toString).collect(Collectors.toSet());
         for (String sym : relationsToPrint) {
@@ -213,13 +266,13 @@ public final class Main implements Callable<Integer> {
         }
         List<RelationSymbol> edbSymbols = allSymbols.stream().
                 filter(sym -> sym.isEdbSymbol() && (dumpAll || relationsToPrint.contains(sym.toString()))).collect(Collectors.toList());
-        printRelations("SELECTED EDB RELATIONS", edbSymbols, res, out);
+        dumpRelations("SELECTED EDB RELATIONS", edbSymbols, res, out);
         List<RelationSymbol> idbSymbols = allSymbols.stream().
                 filter(sym -> sym.isIdbSymbol() && (dumpAll || dumpIdb || relationsToPrint.contains(sym.toString()))).collect(Collectors.toList());
-        printRelations("SELECTED IDB RELATIONS", idbSymbols, res, out);
+        dumpRelations("SELECTED IDB RELATIONS", idbSymbols, res, out);
     }
 
-    private void printRelations(String heading, Collection<RelationSymbol> symbols, EvaluationResult res, PrintStream out) {
+    private void dumpRelations(String heading, Collection<RelationSymbol> symbols, EvaluationResult res, PrintStream out) {
         if (symbols.isEmpty()) {
             return;
         }

@@ -897,7 +897,7 @@ public class MagicSetTransformer {
             HiddenPredicateFinder hpf = new HiddenPredicateFinder(origProg);
             for (BasicRule r : rs) {
                 RelationSymbol headSym = r.getHead().getSymbol();
-                Util.lookupOrCreate(rules, headSym, () -> new HashSet<>()).add(r);
+                Util.lookupOrCreate(rules, headSym, HashSet::new).add(r);
                 sm.registerSymbol(headSym);
                 for (ComplexLiteral l : r) {
                     if (l instanceof UserPredicate) {

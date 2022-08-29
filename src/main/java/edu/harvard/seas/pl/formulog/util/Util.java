@@ -166,6 +166,9 @@ public final class Util {
     }
 
     public static void clean(File f, boolean deleteTopLevel) {
+        if (!f.exists()) {
+            return;
+        }
         if (f.isDirectory()) {
             for (File ff : f.listFiles()) {
                 clean(ff, true);
