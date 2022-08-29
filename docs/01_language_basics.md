@@ -125,7 +125,16 @@ A call `foo` would evaluate to the value `1`.
 ## Relations
 
 In Formulog, relations are declared using the keyword `rel`, followed by the
-name of the relation, and the types of the relation arguments:
+name of the relation, and the types of the relation arguments. Relation
+arguments can also be given labels (as documentation):
+
+```
+rel foo(i32, string)
+rel pair(first: i32, second: i32) (* `first` and `second` are labels *)
+```
+
+Some relations are defined only in terms of explicitly enumerated facts. This
+one relates pairs of nodes and consists of three pairs:
 
 ```
 type node = string
@@ -135,16 +144,15 @@ edge("b", "c").
 edge("c", "b").
 ```
 
-This code fragment defines a relation relating pairs of nodes; the relation
-consists of three pairs, defined explicitly as facts. Relations like this---that
-consist only of enumerated facts---can be annotated with the `@edb` annotation,
-which tells Formulog to treat them as part of the extensional database (EDB).
+Relations like this—that consist only of enumerated facts—can be annotated with
+the `@edb` annotation, which tells Formulog to treat them as part of the
+extensional database (EDB).
 
 ```
 @edb rel edge(node, node)
 ```
 
-Formulog assumes that every relation not annotated with '@edb' is an intensional
+Formulog assumes that every relation not annotated with `@edb` is an intensional
 database (IDB) relation, meaning that it is defined by rules and should be
 treated as an output of the program. For instance, this predicate computes
 transitive closure over the previously defined `edge` predicate:
@@ -199,7 +207,7 @@ where the rule is translated to
 p :- foo(X), X = true.
 ```
 
-### External input relations
+### Reading EDB relations from disk
 
 It is possible to specify that an EDB relation should be read from an external
 file by annotating its declaration with `@disk`, as in
@@ -253,6 +261,30 @@ bar("aloha").
 
 Every fact directory must have a `.tsv` file for _every_ external input
 relation (the file can be empty).
+
+### Writing IDB relations to disk
+
+An IDB relation can be annotated with the annotation `@disk`, in which case
+Formulog will dump its contents into a `.tsv` file in the directory specified on
+the command line (defaulting to the current directory).
+
+For example, the program
+
+```
+rel bar(i32, i32)
+bar(1, 2).
+bar(3, 4).
+
+@disk rel foo(i32, i32)
+foo(X, Y) :- bar(X, Y).
+```
+
+will result in a file `foo.tsv` with the tab-separated contents:
+
+```
+1	2
+3	4
+```
 
 ## Functions
 
