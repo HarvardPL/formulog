@@ -1,0 +1,10 @@
+const x: i32 = 42
+
+const y: i32 = 84
+and z: string = "hello"
+
+rel ok
+ok :-
+  x = 42,
+  y = 84,
+  z = "hello".

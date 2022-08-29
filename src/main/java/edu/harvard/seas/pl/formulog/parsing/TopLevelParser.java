@@ -45,6 +45,7 @@ import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogBaseVisitor;
+import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.AdtDefContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.AnnotationContext;
 import edu.harvard.seas.pl.formulog.parsing.generated.FormulogParser.ClauseStmtContext;
@@ -114,9 +115,13 @@ class TopLevelParser {
 
         @Override
         public Void visitFunDecl(FunDeclContext ctx) {
-            List<Pair<FunctionSymbol, List<Var>>> ps = ParsingUtil.extractFunDeclarations(pc, ctx.funDefs().funDefLHS(),
-                    false);
-            Iterator<TermContext> bodies = ctx.funDefs().term().iterator();
+            var ps = ParsingUtil.extractFunDeclarations(pc, ctx.topLevelFunDefs().funDefLHS(), false);
+            if (ctx.topLevelFunDefs().intro.getType() == FormulogParser.CONST && !ps.get(0).snd().isEmpty()) {
+                throw new UncheckedParseException(ctx.start.getLine(),
+                        "Cannot declare a function with 'const' if it takes arguments (use 'fun' instead): " +
+                                ps.get(0).fst());
+            }
+            Iterator<TermContext> bodies = ctx.topLevelFunDefs().term().iterator();
             for (Pair<FunctionSymbol, List<Var>> p : ps) {
                 FunctionSymbol sym = p.fst();
                 List<Var> args = p.snd();
@@ -436,12 +441,12 @@ class TopLevelParser {
 
                 @Override
                 public Set<RelationSymbol> getFactSymbols() {
-                    return Collections.unmodifiableSet(new HashSet<>(initialFacts.keySet()));
+                    return Set.copyOf(initialFacts.keySet());
                 }
 
                 @Override
                 public Set<RelationSymbol> getRuleSymbols() {
-                    return Collections.unmodifiableSet(new HashSet<>(rules.keySet()));
+                    return Set.copyOf(rules.keySet());
                 }
 
                 @Override
