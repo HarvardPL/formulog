@@ -18,27 +18,20 @@ Dependencies:
 
 ### Docker
 
-Prebuilt images are available at https://hub.docker.com/r/ekzhang/formulog. If
-you have Docker installed, you can spin up a container with Formulog and all
-codegen dependencies by running the command
+Prebuilt images are available on [Docker Hub](https://hub.docker.com/r/aaronbembenek/formulog).
+If you have Docker installed, you can spin up an Ubuntu container with Formulog
+and some example programs by running this command:
 
 ```bash
-docker run -it ekzhang/formulog 
+docker run -it aaronbembenek/formulog # may require sudo
 ```
 
-Once inside the container, to compile and execute a sample program, you can run
-the commands
+This should place you in the directory `/root/formulog/`. From here, you should
+be able to run the following command and see some greetings:
 
 ```bash
-java -DcodeGen -DminIndex=false -jar formulog.jar benchmarks/fibonacci.flg
-make -C codegen/
-./codegen/flg
+java -jar formulog.jar examples/greeting.flg --dump-idb
 ```
-
-You also can build the latest image for Formulog by running
-`docker build -t formulog .`. For development, run `docker-compose run dev`,
-which will launch a container with the project root directory bound to
-`/home/formulog/dev`.
 
 ### Building from source
 
