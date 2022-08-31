@@ -1,7 +1,7 @@
-input r.
-output q.
-output p.
-output ok.
+@edb rel r.
+rel q.
+rel p.
+rel ok.
 
 p :- q.
 q :- r.

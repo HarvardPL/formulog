@@ -1,13 +1,13 @@
-output empty_ok
-output plus_ok
-output minus_ok
-output union_ok
-output diff_ok
-output singleton_ok
-output choose_ok
-output size_ok
-output subset_ok
-output ok
+rel empty_ok
+rel plus_ok
+rel minus_ok
+rel union_ok
+rel diff_ok
+rel singleton_ok
+rel choose_ok
+rel size_ok
+rel subset_ok
+rel ok
 
 fun opaque_set_id(s: 'a opaque_set) : 'a opaque_set = s
 

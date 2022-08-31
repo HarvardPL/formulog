@@ -1,7 +1,7 @@
-input foo(bool).
+@edb rel foo(bool).
 foo(true).
 
-output ok.
+rel ok.
 ok :-
   if true then true else false,
   let X = true in X && X,

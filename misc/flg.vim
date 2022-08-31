@@ -29,7 +29,7 @@ syn match keywords "{"
 syn match keywords "}"
 syn match keywords "<\["
 syn match keywords "]>"
-syn keyword keywords type input output match let if then else end fun in with uninterpreted and sort
+syn keyword keywords type rel const match let if then else end fun in with uninterpreted and sort
 syn keyword todo contained TODO XXX FIXME
 syn region comment start="(\*" end="\*)" fold contains=todo,comment
 syn keyword typeKeywords i32 i64 fp32 fp64 list bool option cmp string smt bv fp sym int array

@@ -2,5 +2,5 @@ fun foo(X: string, Y: i32) : string =
   let fun id(Y: 'a) : 'a = Y in
   string_concat(id(X), to_string(id(Y)))
 
-output ok
+rel ok
 ok :- foo("hello #", 42) = "hello #42".

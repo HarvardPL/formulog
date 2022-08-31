@@ -1,7 +1,7 @@
-input r(i32).
-output q(i32).
-output p(i32).
-output ok.
+@edb rel r(i32).
+rel q(i32).
+rel p(i32).
+rel ok.
 
 p(X) :- q(X).
 q(X) :- r(X).

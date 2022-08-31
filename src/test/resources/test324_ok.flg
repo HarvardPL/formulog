@@ -1,4 +1,4 @@
-output ok
+rel ok
 
 ok :-
   string_to_i32("42") = some(42),

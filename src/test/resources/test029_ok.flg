@@ -1,16 +1,16 @@
-input foo(i64).
+@edb rel foo(i64).
 
 foo(0L).
 foo(-1L).
 
-output add(i64, i64, i64).
+rel add(i64, i64, i64).
 
 add(X, Y, Z) :-
 	foo(X),
 	foo(Y),
 	Z = i64_add(X, Y).
 
-output ok.
+rel ok.
 ok :-
 	add(0L, 0L, 0L),
 	add(0L, -1L, -1L),

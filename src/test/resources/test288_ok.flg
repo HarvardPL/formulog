@@ -2,5 +2,5 @@ fun foo(X: i32) : i32 =
   let fun id(Y: 'a) : 'a = Y in
   id(X)
 
-output ok
+rel ok
 ok :- foo(42) = 42.

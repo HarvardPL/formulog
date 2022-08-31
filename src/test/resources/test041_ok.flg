@@ -1,6 +1,6 @@
 (* test how fp conversion works. *)
 
-output ok.
+rel ok.
 
 ok :-
 	

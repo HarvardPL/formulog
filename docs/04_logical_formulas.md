@@ -1,19 +1,18 @@
 # Logical formulas
 
-Formulog provides support for representing and reasoning about logical
-formulas.
+Formulog provides support for representing and reasoning about logical formulas.
 
 ## Example
 
 This example program would produce the facts `ok1`, `ok2`, and `ok3`.
 
 ```
-output ok1
+rel ok1
 ok1 :-
   is_valid(`false ==> true`),
   !is_sat(`true ==> false`).
 
-output ok2
+rel ok2
 ok2 :-
   E = `bv_add(#x[bv[32]], 42) #= 0`,
   is_sat(E),
@@ -25,7 +24,7 @@ type 'a my_list =
   | my_nil
   | my_cons('a, 'a my_list)
 
-output ok3
+rel ok3
 ok3 :-
   Xs = #xs[bool my_list],
   Ys = #ys[bool my_list],
@@ -38,11 +37,10 @@ ok3 :-
 
 ## Formula types
 
-For every non-formula type τ, there are two corresponding types that
-are used to represent τ-valued logical formulas. The first is `τ smt`, which
-represents a τ-valued formula. The second is `τ sym`, which represents a
-τ-valued formula variable (it is sometimes helpful to distinguish between these
-two types).
+For every non-formula type τ, there are two corresponding types that are used to
+represent τ-valued logical formulas. The first is `τ smt`, which represents a
+τ-valued formula. The second is `τ sym`, which represents a τ-valued formula
+variable (it is sometimes helpful to distinguish between these two types).
 
 You will often see formulas quoted with backticks, as in
 
@@ -64,10 +62,10 @@ For example, it rejects the first rule in this program and not the second, even
 though they are logically equivalent:
 
 ```
-input p(bool smt)
-input q(bool)
-output not_ok
-output ok
+rel p(bool smt)
+rel q(bool)
+rel not_ok
+rel ok
 
 not_ok :- p(`X`), q(X).
 ok     :- q(X), p(`X`).
@@ -93,17 +91,17 @@ uninterpreted sort ('a, 'b) foo
 
 ## Representing formulas
 
-Formulas are constructed from a library of constructors and are typically
-quoted by backticks, which tells the type checker to use the "formula mode" of
-the bimodal type system. Function calls that take arguments cannot appear
-within quotations.
+Formulas are constructed from a library of constructors and are typically quoted
+by backticks, which tells the type checker to use the "formula mode" of the
+bimodal type system. Function calls that take arguments cannot appear within
+quotations.
 
 ### Formula variables
 
 Formulog distinguishes between logic programming variables (like `X`) and
 formula variables (like `#x[bool]`). The latter are only interpreted as
-variables within formula; otherwise they are ground terms. Formula variables
-can be created using a special syntax: a pound sign, followed by a term `t`
+variables within formula; otherwise they are ground terms. Formula variables can
+be created using a special syntax: a pound sign, followed by a term `t`
 of arbitrary type within curly braces, followed by a type τ within square
 brackets, as in
 
@@ -137,18 +135,18 @@ thing as `#{"x"}[bool]`.
 
 ### Built-in formula terms
 
-Formulog provides built-in terms that are used to construct formulas that
-should be interpreted under a particular theory. For the most part, these
-constructors directly reflect the SMT-LIB standard.
+Formulog provides built-in terms that are used to construct formulas that should
+be interpreted under a particular theory. For the most part, these constructors
+directly reflect the SMT-LIB standard.
 
 #### Parameterized terms
 
 You will see that many formula terms are parameterized with a type or natural
 number. For example, the constructor for formula equality, `smt_eq[τ]`, is
-parameterized with the type τ of the operands of the equality, and the constructor
-for a bit vector constant, `bv_const[k]`, is parameterized with the width `k` of
-the bit vector. These parameters are necessary either because the type
-information is important to have at runtime (when serializing formulas into
+parameterized with the type τ of the operands of the equality, and the
+constructor for a bit vector constant, `bv_const[k]`, is parameterized with the
+width `k` of the bit vector. These parameters are necessary either because the
+type information is important to have at runtime (when serializing formulas into
 SMT-LIB), or for type safety reasons (issues arise if the type of the term does
 not uniquely determine the types of its arguments). However, Formulog can often
 infer the correct type without an explicit annotation. If you leave out the
@@ -231,8 +229,8 @@ as we supply notation that should cover most situations:
 ```
 
 The binary operators are listed above in order of precedence (so `#=`
-binds the most tightly, and `<==>` the least tightly). They all associate
-to the right, except for `#=`, which associates to the left.
+binds the most tightly, and `<==>` the least tightly). They all associate to the
+right, except for `#=`, which associates to the left.
 
 There is also notation for the quantifiers `forall` and `exists`, as in this
 example:
@@ -323,9 +321,9 @@ fp_is_nan[j,k]    : fp[j,k] smt -> bool smt
 fp_eq[j,k]        : [fp[j,k] smt, fp[j,k] smt] -> bool smt
 ```
 
-To make it syntactically more pleasant to deal with common floating point
-types, instead of supplying both the exponent and significand length, users can
-supply a single parameter that is expanded into the appropriate exponent and
+To make it syntactically more pleasant to deal with common floating point types,
+instead of supplying both the exponent and significand length, users can supply
+a single parameter that is expanded into the appropriate exponent and
 significand:
 
 * the parameter `16` is expanded to `5,11`;
@@ -417,9 +415,9 @@ Formulog and that make it easier to state formulas about `my_list` terms:
 These automatically generated constructors fall into two categories: testers,
 which are identified by the prefix `#is_` followed by the name of the
 constructor and are used to test the outermost constructor of a (possibly
-symbolic) term, and getters, which are identified by the name of the
-constructor prefixed with a `#` and followed by an underscore and an argument
-position, and which are used to extract the argument of a (possibly symbolic)
+symbolic) term, and getters, which are identified by the name of the constructor
+prefixed with a `#` and followed by an underscore and an argument position, and
+which are used to extract the argument of a (possibly symbolic)
 term.
 
 Symbolic getters are also created for records, where each getter is the name of
@@ -433,9 +431,9 @@ Formulog also provides a way to declare uninterpreted functions, as here:
 uninterpreted fun foo(bv[32] smt) : bool smt
 ```
 
-This effectively defines a new constructor for `bool smt` that expects a
-single argument of type `bv[32] smt`. Uninterpreted functions can only be used
-within formulas.
+This effectively defines a new constructor for `bool smt` that expects a single
+argument of type `bv[32] smt`. Uninterpreted functions can only be used within
+formulas.
 
 ## Reasoning about formulas
 
@@ -454,14 +452,14 @@ is_free      : ['a sym, 'b smt] -> bool
 
 The functions `is_sat` and `is_valid` check the satisfiability and validity,
 resp., of their argument and throw an exception if the SMT solver returns
-`unknown`. The function `is_sat_opt` takes a list of propositions and checks
-for the satisfiability of their conjunction, returning `none` in the case of
+`unknown`. The function `is_sat_opt` takes a list of propositions and checks for
+the satisfiability of their conjunction, returning `none` in the case of
 `unknown`; it also takes an argument for an optional timeout.
 
 The function `get_model` takes a list of propositions and an optional timeout
 and returns a model for the conjunction of those propositions if the SMT solver
-finds one in time; it returns `none` otherwise.
-Variables in a model can be inspected using `query_model`, which will return
+finds one in time; it returns `none` otherwise. Variables in a model can be
+inspected using `query_model`, which will return
 `none` if a variable is not present in the model or if it is of a type that
 cannot be concretely represented in Formulog (for example, Formulog does not
 have a concrete representation of a 13-bit bit vector).

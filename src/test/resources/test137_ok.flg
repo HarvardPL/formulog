@@ -2,7 +2,7 @@ uninterpreted sort ('a, 'b) typ.
 
 uninterpreted fun subtyp((bool, i32) typ smt, (bool, i32) typ smt) : bool smt.
 
-output ok.
+rel ok.
 ok :-
 	X = #x[(bool, i32) typ],
 	Y = #y[bool],

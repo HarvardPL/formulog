@@ -1,0 +1,11 @@
+rel foo(i32)
+rel bar(i32 option)
+rel ok
+
+bar(none).
+
+foo(X + 1) :- bar(some(X)).
+
+bar(some(42)) :- foo(42).
+
+ok :- !foo(42).

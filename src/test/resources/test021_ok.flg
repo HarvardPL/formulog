@@ -1,8 +1,8 @@
-output ok.
+rel ok.
 
-input input_list(i32 list).
-output palindrome(i32 list).
-output fail.
+@edb rel input_list(i32 list).
+rel palindrome(i32 list).
+rel fail.
 
 fun list_rev_helper(Xs:'a list, Acc:'a list) : 'a list =
 	match Xs with

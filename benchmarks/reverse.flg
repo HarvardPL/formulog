@@ -1,0 +1,21 @@
+fun append(Xs: 'a list, Y: 'a) : 'a list =
+  match Xs with
+  | [] => [Y]
+  | X :: Xs => X :: append(Xs, Y)
+  end
+
+fun reverse(Xs: 'a list) : 'a list =
+  match Xs with
+  | [] => []
+  | X :: Xs => append(reverse(Xs), X)
+  end
+
+fun make(X: i32) : i32 list =
+  match X with
+  | 0 => []
+  | N => N :: make(N - 1)
+  end
+
+output nums(i32 list)
+
+nums(L) :- L = reverse(make(512)).

@@ -1,4 +1,4 @@
-output ok.
+rel ok.
 ok :- 
   none = get_model([`#x[bool]`, `~#x[bool]`], none),
   some(M) = get_model([`#x[bool]`, `~#y[bool]`], none),

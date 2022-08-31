@@ -73,12 +73,12 @@ fun elem(X : 'a, L : 'a list) : bool =
   | Y :: Lrest => X = Y || elem(X, Lrest)
   end
 
-fun x : var = #x[string]
-fun y : var = #y[string]
-fun b : var = #b[string]
-fun b1 : var = #b1[string]
-fun b2 : var = #b2[string]
-fun v : var = #v[string]
+const x : var = #x[string]
+const y : var = #y[string]
+const b : var = #b[string]
+const b1 : var = #b1[string]
+const b2 : var = #b2[string]
+const v : var = #v[string]
 
 fun fresh_for(NAME : var, VARS : var list) : var =
   if elem(NAME, VARS)
@@ -235,22 +235,22 @@ fun bound_tvar(A : tvar, G : ctx) : bool =
   end
 
 @topdown
-output encode_ctx(ctx, bool smt)
+rel encode_ctx(ctx, bool smt)
 @topdown
-output encode_exp(exp, bool smt)
+rel encode_exp(exp, bool smt)
 
 @topdown
-output sub(ctx, typ, typ)
+rel sub(ctx, typ, typ)
 @topdown
-output wf_ctx(ctx)
+rel wf_ctx(ctx)
 @topdown
-output wf_typ(ctx, typ)
+rel wf_typ(ctx, typ)
 @topdown
-output wf_exp(ctx, exp, typ)
+rel wf_exp(ctx, exp, typ)
 @topdown
-output synth(ctx, exp, typ)
+rel synth(ctx, exp, typ)
 @topdown
-output check(ctx, exp, typ)
+rel check(ctx, exp, typ)
 
 (*******************************************************************************)
 (* SMT ENCODING ****************************************************************)
@@ -392,6 +392,9 @@ synth(G, exp_app(E1, E2), T) :-
 synth(G, exp_tapp(E, Targ), T) :-
   synth(G, E, typ_forall(A, Tinner)),
   typ_tsubst(A, Targ, Tinner) = T.
+
+(* Try uncommenting these different queries (one query allowed at a time); you
+might want to run Formulog with the `--dump-query` option. *)
 
 (*
 :- check(ctx_empty, exp_bool(true), typ_ref(v, base_bool, exp_var(v))).

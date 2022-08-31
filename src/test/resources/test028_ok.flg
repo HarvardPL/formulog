@@ -1,4 +1,4 @@
-input foo(i64).
+@edb rel foo(i64).
 
 foo(42l).
 foo(42L).

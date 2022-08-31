@@ -1,7 +1,7 @@
-output something_true.
-output something_false1.
-output something_false2.
-output ok.
+rel something_true.
+rel something_false1.
+rel something_false2.
+rel ok.
 
 something_true :-
 	X = #{"x"}[bv[64]],

@@ -1,11 +1,11 @@
-input foo(arg1: i32, arg2: i32, foo: i32)
+@edb rel foo(arg1: i32, arg2: i32, foo: i32)
 
-output bar(foo: i32, list: i32 list)
+rel bar(foo: i32, list: i32 list)
 
 foo(1, 2, 3).
 
 bar(1, []).
 
-output ok
+rel ok
 
 ok :- foo(1, 2, 3), bar(1, []).

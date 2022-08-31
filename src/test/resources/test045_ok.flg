@@ -1,5 +1,5 @@
-input foo(i32, i32)
-output ok
+@edb rel foo(i32, i32)
+rel ok
 
 foo(42, 13).
 foo(17, 42).

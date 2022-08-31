@@ -1,0 +1,12 @@
+# Fact files
+*.csv
+*.facts
+
+# Formulog files and output
+codegen/
+formulog.out
+
+# Souffle files and output
+sfl
+sfl.cpp
+souffle.out

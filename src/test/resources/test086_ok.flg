@@ -1,4 +1,4 @@
-output ok.
+rel ok.
 ok :-
   X1 = #x[i32],
   L1 = `[1, X1, 2]`,

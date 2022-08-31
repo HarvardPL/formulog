@@ -4,5 +4,5 @@ fun f(X: i32, Y: i32) : i32 =
     h(Z) in
   g(X + Y)
 
-output ok
+rel ok
 ok :- f(2, 3) = 10.

@@ -1,8 +1,8 @@
 @topdown
-output foo(i32)
+rel foo(i32)
 
 foo(0).
 foo(42).
 
-output ok
+rel ok
 ok :- foo(42), foo(_).

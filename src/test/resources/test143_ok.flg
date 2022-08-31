@@ -1,17 +1,17 @@
-input a(i32).
-input d(i32).
+@edb rel a(i32).
+@edb rel d(i32).
 
 @topdown
-output b(i32).
+rel b(i32).
 
 @topdown
-output c(i32, i32).
+rel c(i32, i32).
 
 @bottomup
-output p(i32).
+rel p(i32).
 
 @topdown
-output q(i32).
+rel q(i32).
 
 a(0). a(1). a(2).
 d(0). d(2). d(4).
@@ -24,5 +24,5 @@ c(X, Y) :- b(X), p(X), b(Y).
 
 q(X) :- c(X, X).
 
-output ok.
+rel ok.
 ok :- q(2).

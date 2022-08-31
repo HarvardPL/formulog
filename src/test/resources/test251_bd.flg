@@ -1,5 +1,5 @@
 @topdown
-output foo(i32)
+rel foo(i32)
 foo(_X).
 
 fun bar(X: i32) : bool = foo(X)

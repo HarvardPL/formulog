@@ -1,7 +1,7 @@
 type ('a, 'b) pair = ('a * 'b).
-input p_i32_string((i32, string) pair).
+@edb rel p_i32_string((i32, string) pair).
 type i32_pair = (i32, i32) pair. 
-input pair_of_i32_pair((i32_pair, i32_pair) pair).
+@edb rel pair_of_i32_pair((i32_pair, i32_pair) pair).
 
 p_i32_string((0, "")).
 p_i32_string((42, "hello")).

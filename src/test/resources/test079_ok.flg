@@ -1,4 +1,4 @@
-output ok.
+rel ok.
 ok :-
   X = #x[i32],
   Eq1 = `X #= 42`,

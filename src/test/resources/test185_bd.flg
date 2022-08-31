@@ -3,7 +3,7 @@ type 'a linked_list = {
   next : 'a linked_list option ;
 }.
 
-output ok.
+rel ok.
 ok :-
 	X = { val = 42 ; next = none ; },
 	Y = { val = "hello" ; next = some(X) ; },

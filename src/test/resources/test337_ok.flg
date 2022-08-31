@@ -1,0 +1,8 @@
+rel ok
+
+ok :-
+	i64_udiv(-2L, 2L) = 0x7fffffffffffffffL,
+	i64_urem(-4L, -3L) = -4L,
+	i64_shl(1L, 2L) = 4L,
+	i64_ashr(-1L, 1L) = 0xffffffffffffffffL,
+	i64_lshr(-1L, 1L) = 0x7fffffffffffffffL.

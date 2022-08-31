@@ -1,21 +1,21 @@
 type foo = a | b | c.
 
-output common(foo, i32).
+rel common(foo, i32).
 common(a, 0).
 common(b, 1).
 common(c, 2).
 
-output special(foo, i32).
+rel special(foo, i32).
 special(a, 5).
 
-output op(foo, i32).
+rel op(foo, i32).
 op(X, Res) :-
   common(X, Res),
   X not a.
 op(a, Res) :-
   special(a, Res).
 
-output ok.
+rel ok.
 ok :- 
   op(a, 5), !op(a, 0),
   !(a not a), b not a, c not a,

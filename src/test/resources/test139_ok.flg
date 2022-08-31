@@ -2,5 +2,5 @@ uninterpreted sort sv_map.
 
 uninterpreted fun f((string, i32 option) array smt) : bool smt.
 
-output ok.
+rel ok.
 ok :- is_sat(`f(array_const(none))`).

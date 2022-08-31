@@ -2,7 +2,7 @@ type foo =
   | foo1
   | foo2.
 
-output ok.
+rel ok.
 ok :-
 	X = #x[foo],
 	Y = `X #= foo1`,

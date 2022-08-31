@@ -1,0 +1,11 @@
+rel ok
+
+ok :-
+  is_sat(`bv_to_int(42) #= int_const(42)`),
+  is_sat(`int_to_bv(int_const(42)) #= 42`),
+  some(M) =
+    get_model([
+      `int_gt(#x[int], int_const(0))`,
+      `int_lt(#x[int], int_const(2))`,
+      `int_to_bv(#x[int]) #= #y[i32]`], none),
+  query_model(#y[i32], M) = some(1).

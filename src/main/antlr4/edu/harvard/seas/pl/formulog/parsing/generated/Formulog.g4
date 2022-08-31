@@ -22,12 +22,8 @@ tabSeparatedTermLine
 
 metadata
 :
-	funDefs '.'? # funDecl
-	| annotation* relType =
-	(
-		INPUT
-		| OUTPUT
-	) ID maybeAnnotatedTypeList '.'? # relDecl
+	topLevelFunDefs '.'? # funDecl
+	| annotation* relType = 'rel' ID maybeAnnotatedTypeList '.'? # relDecl
 	| 'type' typeDefLHS EQ type '.'? # typeAlias
 	| 'type' typeDefLHS EQ typeDefRHS
 	(
@@ -48,9 +44,17 @@ funDefLHS
 	ID args = varTypeList ':' retType = type
 ;
 
+topLevelFunDefs
+:
+	intro = (FUN | CONST) funDefLHS EQ term
+	(
+		'and' funDefLHS EQ term
+	)*
+;
+
 funDefs
 :
-	'fun' funDefLHS EQ term
+	FUN funDefLHS EQ term
 	(
 		'and' funDefLHS EQ term
 	)*
@@ -74,7 +78,6 @@ varTypeList
 		',' var ':' type
 	)* ')'
 	| // can be empty
-
 ;
 
 typeList
@@ -408,16 +411,6 @@ FORMULA_EQ
 	'#='
 ;
 
-INPUT
-:
-	'input'
-;
-
-OUTPUT
-:
-	'output'
-;
-
 FP32_NAN
 :
 	'fp32_nan'
@@ -643,6 +636,16 @@ FORALL
 EXISTS
 :
 	'exists'
+;
+
+FUN
+:
+	'fun'
+;
+
+CONST
+:
+	'const'
 ;
 
 HOLE

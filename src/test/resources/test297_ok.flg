@@ -1,16 +1,16 @@
 type foo = bar(i32)
 
-input baz(foo smt)
+@edb rel baz(foo smt)
 
 baz(`bar(#x[i32])`).
-baz(`bar(41)`).
+baz(`bar(bv_const(41))`).
 
-input buz(i32)
+@edb rel buz(i32)
 
 buz(41).
 buz(42).
 
-output ok
+rel ok
 
 ok :-
   buz(X),

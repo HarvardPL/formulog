@@ -1,10 +1,10 @@
 type foo = bar(i32)
 
-input baz(foo smt)
+@edb rel baz(foo smt)
 
 baz(`bar(#x[i32])`).
 
-output not_ok
+rel not_ok
 
 not_ok :-
   baz(`bar(X)`),

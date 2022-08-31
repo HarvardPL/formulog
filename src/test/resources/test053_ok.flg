@@ -1,4 +1,4 @@
-input foo(bv[32] smt).
+@edb rel foo(bv[32] smt).
 
 foo(`42`).
 foo(`bv_add(42, 77)`).

@@ -9,9 +9,9 @@ package edu.harvard.seas.pl.formulog.util;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,19 +28,26 @@ public interface CountingFJP {
 	void externallyAddTask(AbstractFJPTask w);
 
 	void recursivelyAddTask(AbstractFJPTask w);
-	
+
 	void reportTaskCompletion();
 
 	void blockUntilFinished();
 
+	default void blockUntilFinishedExn() throws EvaluationException {
+		blockUntilFinished();
+		if (hasFailed()) {
+			throw getFailureCause();
+		}
+	}
+
 	void shutdown();
-	
+
 	void fail(EvaluationException cause);
-	
+
 	boolean hasFailed();
-	
+
 	EvaluationException getFailureCause();
-	
+
 	long getStealCount();
-	
+
 }

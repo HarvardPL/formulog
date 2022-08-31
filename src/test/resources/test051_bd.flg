@@ -1,4 +1,4 @@
-output foo(i32).
+rel foo(i32).
 
 fun bar(X:i32) : i32 = if baz(X) then -X else X
 and baz(X:i32) : bool = foo(X).

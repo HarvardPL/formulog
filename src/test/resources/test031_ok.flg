@@ -1,5 +1,5 @@
-input foo(fp32).
-input bar(fp64).
+@edb rel foo(fp32).
+@edb rel bar(fp64).
 
 foo(42.0f).
 foo(-42.42F).

@@ -1,4 +1,4 @@
-output ok1.
+rel ok1.
 ok1 :-
   X = #{1}[bool],
   Y = #{"2"}[bool],
@@ -6,7 +6,7 @@ ok1 :-
   is_sat(`X #= Y`),
   !is_valid(`X #= Y`).
 
-output ok2.
+rel ok2.
 ok2 :-
   X = #{1}[bool],
   Y = #y[bool],
@@ -14,21 +14,21 @@ ok2 :-
   is_sat(`X #= Y`),
   !is_valid(`X #= Y`).
 
-output ok3.
+rel ok3.
 ok3 :-
   is_sat(`#{1}[bool] #= #{"2"}[bool]`),
   !is_valid(`#{1}[bool] #= #{"2"}[bool]`).
 
-output ok4.
+rel ok4.
 ok4 :-
   X = #{1}[bool],
   Y = #{1}[bool],
   X = Y,
   is_valid(`X #= Y`).
 
-output ok5.
+rel ok5.
 ok5 :-
   is_valid(`#{1}[bool] #= #{1}[bool]`).
 
-output ok.
+rel ok.
 ok :- ok1, ok2, ok3, ok4, ok5.

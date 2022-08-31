@@ -1,2 +1,2 @@
-output ok.
+rel ok.
 ok :- is_valid(`smt_eq[i32 sym list list]([], [])`).

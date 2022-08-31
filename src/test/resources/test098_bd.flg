@@ -1,3 +1,3 @@
-output foo(i32).
+rel foo(i32).
 
 :- foo("hello").

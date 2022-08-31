@@ -3,5 +3,5 @@ fun foo(X1: i32, X2: i32) : i32 =
   let fun baz(Z: i32) : i32 = bar(Z) + X2 in
   baz(3)
 
-output ok
+rel ok
 ok :- foo(1, 2) = 6.

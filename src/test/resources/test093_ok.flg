@@ -1,11 +1,11 @@
-output ok1.
+rel ok1.
 ok1 :- true.
 
-output ok2.
+rel ok2.
 ok2 :- !false.
 
-output ok3.
+rel ok3.
 ok3 :- X = true, X.
 
-output ok.
+rel ok.
 ok :- ok1, ok2, ok3.

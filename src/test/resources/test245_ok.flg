@@ -1,4 +1,4 @@
 fun foo : i32 smt = let X = `bv_to_bv_unsigned[64,32](0L)` in X
 
-output ok
+rel ok
 ok :- foo = X, is_valid(`X #= 0`).

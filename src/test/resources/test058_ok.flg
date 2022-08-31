@@ -1,6 +1,6 @@
-output ok.
-output something_true.
-output something_false.
+rel ok.
+rel something_true.
+rel something_false.
 
 uninterpreted fun foo(bv[32] smt) : bool smt.
 

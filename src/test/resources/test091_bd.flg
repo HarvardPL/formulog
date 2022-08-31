@@ -1,4 +1,4 @@
 type foo = | a. 
 
-output ok.
+rel ok.
 ok :- !a not a. 

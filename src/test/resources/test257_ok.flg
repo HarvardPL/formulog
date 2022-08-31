@@ -1,4 +1,4 @@
-input foo(string)
+@edb rel foo(string)
 
 foo("\n").
 foo("\r").
@@ -10,7 +10,7 @@ foo("\"\\").
 foo("\\\"\\").
 foo("\"\\\"").
 
-input bar(string list)
+@edb rel bar(string list)
 
 bar(["\"", "\\"]).
 bar(["\\", "\""]).

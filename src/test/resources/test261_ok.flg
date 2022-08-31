@@ -1,10 +1,10 @@
-input foo(fp32)
+@edb rel foo(fp32)
 foo(1e-1f).
 foo(1.0e-2f).
 foo(1e1f).
 foo(1.0e2f).
 
-output ok.
+rel ok.
 ok :-
   foo(0.01f),
   foo(0.1f),

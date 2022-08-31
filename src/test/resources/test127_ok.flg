@@ -1,7 +1,7 @@
 uninterpreted fun foo1(bool smt) : bool smt.
 uninterpreted fun foo2(bool smt) : bool smt.
 
-output ok.
+rel ok.
 ok :-
   X = #x[bool],
   Y = #y[bool],

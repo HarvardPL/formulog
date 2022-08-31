@@ -1,11 +1,11 @@
-input d(i32, i32).
-input e(i32, i32).
-input f(i32, i32).
+@edb rel d(i32, i32).
+@edb rel e(i32, i32).
+@edb rel f(i32, i32).
 
 @bottomup
-output a(i32, i32).
+rel a(i32, i32).
 @topdown
-output b(i32).
+rel b(i32).
 
 e(1, 2).
 d(1, 2). d(3, 4). d(4, 5). d(5, 3).
@@ -16,22 +16,22 @@ b(X) :- e(Z, X), f(X, Z).
 a(X, Y) :- d(X, Y), !b(Y).
 a(X, Y) :- a(X, Z), d(Z, Y), !b(Y).
 
-input three(i32).
+@edb rel three(i32).
 three(3).
-input four(i32).
+@edb rel four(i32).
 four(4).
-input five(i32).
+@edb rel five(i32).
 five(5).
 
-output ok1.
+rel ok1.
 ok1 :- a(3, X), three(X).
 
-output ok2.
+rel ok2.
 ok2 :- a(3, X), four(X).
 
-output ok3.
+rel ok3.
 ok3 :- a(3, X), five(X).
 
-output ok.
+rel ok.
 ok :- ok1, ok2, ok3.
 :- ok.

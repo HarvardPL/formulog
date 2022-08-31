@@ -1,5 +1,5 @@
 fun bar : 'a list = [].
 
-output foo.
+rel foo.
 foo :-
   _X = 1 :: 2 :: bar.

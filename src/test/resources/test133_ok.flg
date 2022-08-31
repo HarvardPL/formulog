@@ -1,4 +1,4 @@
-input formula(bool smt).
+@edb rel formula(bool smt).
 
-output not_ok.
+rel not_ok.
 not_ok :- formula(X), X = `_Y /\ _Z`. 
