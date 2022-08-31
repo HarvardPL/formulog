@@ -1,3 +1,0 @@
-output fib(i32, i32).
-fib(0, 0). fib(1, 1).
-fib(X + 1, Val1 + Val2) :- fib(X, Val1), fib(X - 1, Val2), X <= 25.
