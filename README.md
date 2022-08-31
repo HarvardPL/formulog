@@ -18,12 +18,13 @@ Dependencies:
 
 ### Docker
 
-Prebuilt images are available on [Docker Hub](https://hub.docker.com/r/aaronbembenek/formulog).
-If you have Docker installed, you can spin up an Ubuntu container with Formulog
-and some example programs by running this command:
+Prebuilt images are available
+on [Docker Hub](https://hub.docker.com/r/aaronbembenek/formulog). If you have
+Docker installed, you can spin up an Ubuntu container with Formulog and some
+example programs by running this command:
 
 ```bash
-docker run -it aaronbembenek/formulog # may require sudo
+docker run -it aaronbembenek/formulog:0.6.0 # may require sudo
 ```
 
 This should place you in the directory `/root/formulog/`. From here, you should
