@@ -2,10 +2,10 @@
 // Created by Aaron Bembenek on 1/23/23.
 //
 
-#include "smt_parser.h"
+#include "smt_parser.hpp"
 #include <sstream>
 
-void SmtTokenizer::load(bool allow_eof) {
+void SmtLibTokenizer::load(bool allow_eof) {
     if (m_next.has_value()) {
         return;
     }
@@ -29,26 +29,26 @@ void SmtTokenizer::load(bool allow_eof) {
     m_next = std::move(s);
 }
 
-const std::string &SmtTokenizer::peek() {
+const std::string &SmtLibTokenizer::peek() {
     load(false);
     return *m_next;
 }
 
-std::string SmtTokenizer::next() {
+std::string SmtLibTokenizer::next() {
     load(false);
     std::string s = *std::move(m_next);
     m_next.reset();
     return s;
 }
 
-bool SmtTokenizer::has_next() {
+bool SmtLibTokenizer::has_next() {
     load(true);
     return m_next.has_value();
 }
 
-void SmtTokenizer::consume(const std::string &s) {
+void SmtLibTokenizer::consume(const std::string &s) {
     std::stringstream ss(s);
-    SmtTokenizer t(ss);
+    SmtLibTokenizer t(ss);
     while (t.has_next()) {
         std::string expected = t.next();
         std::string found = next();

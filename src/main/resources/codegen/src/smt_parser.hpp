@@ -2,15 +2,15 @@
 // Created by Aaron Bembenek on 1/23/23.
 //
 
-#ifndef CODEGEN_SMT_PARSER_H
-#define CODEGEN_SMT_PARSER_H
+#ifndef CODEGEN_SMT_PARSER_HPP
+#define CODEGEN_SMT_PARSER_HPP
 
 #include <istream>
 #include <optional>
 
-class SmtTokenizer {
+class SmtLibTokenizer {
 public:
-    explicit SmtTokenizer(std::istream &is) : m_is(is) {}
+    explicit SmtLibTokenizer(std::istream &is) : m_is(is) {}
 
     void ignore_whitespace(bool ignore) {
         m_ignore_whitespace = ignore;
@@ -36,4 +36,4 @@ private:
     }
 };
 
-#endif //CODEGEN_SMT_PARSER_H
+#endif //CODEGEN_SMT_PARSER_HPP
