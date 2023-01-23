@@ -7,6 +7,9 @@
 
 #include <istream>
 #include <optional>
+#include "Term.hpp"
+
+namespace flg {
 
 class SmtLibTokenizer {
 public:
@@ -35,5 +38,32 @@ private:
         return ch == '_' || std::isalnum(ch);
     }
 };
+
+class SmtLibParser {
+public:
+    explicit SmtLibParser(std::unordered_map<std::string, term_ptr> &vars) : m_vars(vars) {}
+
+    typedef std::unordered_map<term_ptr, term_ptr> Model;
+    Model get_model(std::istream &is) const;
+
+private:
+    const std::unordered_map<std::string, term_ptr> &m_vars;
+
+    void consume_comment(SmtLibTokenizer &t) const;
+
+    void parse_function_def(Model &m, SmtLibTokenizer &t) const;
+
+    void skip_rest_of_s_exp(SmtLibTokenizer &t) const;
+
+    std::string parse_string_raw(SmtLibTokenizer &t) const;
+
+    std::string parse_identifier(SmtLibTokenizer &t) const;
+
+    void parse_type(SmtLibTokenizer &t) const;
+
+    static bool is_ident_char(int ch);
+};
+
+}
 
 #endif //CODEGEN_SMT_PARSER_HPP
