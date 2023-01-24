@@ -53,15 +53,11 @@ private:
 
     void parse_function_def(Model &m, SmtLibTokenizer &t) const;
 
-    void skip_rest_of_s_exp(SmtLibTokenizer &t) const;
-
-    std::string parse_string_raw(SmtLibTokenizer &t) const;
-
-    std::string parse_identifier(SmtLibTokenizer &t) const;
-
     void parse_type(SmtLibTokenizer &t) const;
 
-    static bool is_ident_char(int ch);
+    bool should_record(Symbol sym) const;
+
+    term_ptr parse_term(SmtLibTokenizer &t, Symbol sym) const;
 };
 
 }

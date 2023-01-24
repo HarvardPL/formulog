@@ -92,6 +92,9 @@ void SmtLibParser::consume_comment(SmtLibTokenizer &t) const {
     t.ignore_whitespace(true);
 }
 
+void skip_rest_of_s_exp(SmtLibTokenizer &t);
+std::string parse_identifier(SmtLibTokenizer &t);
+
 void SmtLibParser::parse_function_def(Model &m, SmtLibTokenizer &t) const {
     t.consume("(");
     auto tok = t.peek();
@@ -119,25 +122,7 @@ void SmtLibParser::parse_function_def(Model &m, SmtLibTokenizer &t) const {
     skip_rest_of_s_exp(t);
 }
 
-void SmtLibParser::skip_rest_of_s_exp(SmtLibTokenizer &t) const {
-    unsigned depth = 1;
-    while (depth > 0) {
-        const std::string &tok = t.peek();
-        if (tok == "(") {
-            t.consume(tok);
-            depth++;
-        } else if (tok == ")") {
-            t.consume(tok);
-            depth--;
-        } else if (tok == "\"") {
-            parse_string_raw(t);
-        } else if (tok == "|") {
-            parse_identifier(t);
-        }
-    }
-}
-
-std::string SmtLibParser::parse_string_raw(SmtLibTokenizer &t) const {
+std::string parse_string_raw(SmtLibTokenizer &t) {
     t.consume("\"");
     t.ignore_whitespace(false);
     std::string s;
@@ -156,29 +141,7 @@ std::string SmtLibParser::parse_string_raw(SmtLibTokenizer &t) const {
     return s;
 }
 
-std::string SmtLibParser::parse_identifier(SmtLibTokenizer &t) const {
-    std::string s = t.next();
-    if (s == "|") {
-        t.ignore_whitespace(false);
-        while (t.peek() != "|") {
-            s += t.next();
-        }
-        t.ignore_whitespace(true);
-    } else {
-        while (true) {
-            const std::string &tok = t.peek();
-            if (is_ident_char(tok[0])) {
-                t.consume(tok);
-                s += tok;
-            } else {
-                break;
-            }
-        }
-    }
-    return s;
-}
-
-bool SmtLibParser::is_ident_char(int ch) {
+bool is_ident_char(int ch) {
     if (std::isalnum(ch)) {
         return true;
     }
@@ -204,9 +167,181 @@ bool SmtLibParser::is_ident_char(int ch) {
     return false;
 }
 
+std::string parse_identifier(SmtLibTokenizer &t) {
+    std::string s = t.next();
+    if (s == "|") {
+        t.ignore_whitespace(false);
+        while (t.peek() != "|") {
+            s += t.next();
+        }
+        t.ignore_whitespace(true);
+    } else {
+        while (true) {
+            const std::string &tok = t.peek();
+            if (is_ident_char(tok[0])) {
+                t.consume(tok);
+                s += tok;
+            } else {
+                break;
+            }
+        }
+    }
+    return s;
+}
+
+
+void skip_rest_of_s_exp(SmtLibTokenizer &t) {
+    unsigned depth = 1;
+    while (depth > 0) {
+        const std::string &tok = t.peek();
+        if (tok == "(") {
+            t.consume(tok);
+            depth++;
+        } else if (tok == ")") {
+            t.consume(tok);
+            depth--;
+        } else if (tok == "\"") {
+            parse_string_raw(t);
+        } else if (tok == "|") {
+            parse_identifier(t);
+        }
+    }
+}
+
 void SmtLibParser::parse_type(SmtLibTokenizer &t) const {
-    if (t.next() == "(") {
+    std::string tok = t.next();
+    if (tok == "(") {
         skip_rest_of_s_exp(t);
+    }
+}
+
+bool SmtLibParser::should_record(Symbol sym) const {
+    switch (sym) {
+/* INSERT 0 */
+    default: return false;
+    }
+}
+
+term_ptr parse_string(SmtLibTokenizer &t) {
+    return Term::make<std::string>(parse_string_raw(t));
+}
+
+uint64_t parse_bv(SmtLibTokenizer &t) {
+    t.consume("#");
+    std::string tok = t.next();
+    std::string prefix = tok.substr(0, 1);
+    std::string num = tok.substr(1);
+    int base{0};
+    if (prefix == "b") {
+        base = 2;
+    } else {
+        assert(prefix == "x");
+        base = 16;
+    }
+    return std::stoull(num, nullptr, base);
+}
+
+template<typename To, typename From>
+To bit_cast(From from) {
+    To dst;
+    memcpy(&dst, &from, sizeof(To));
+    return dst;
+}
+
+term_ptr parse_i32(SmtLibTokenizer &t) {
+    return Term::make(bit_cast<int32_t>(parse_bv(t)));
+}
+
+term_ptr parse_i64(SmtLibTokenizer &t) {
+    return Term::make(bit_cast<int64_t>(parse_bv(t)));
+}
+
+template<typename T, unsigned E, unsigned S>
+term_ptr parse_fp(SmtLibTokenizer &t) {
+    t.consume("(");
+    T val;
+    if (t.peek() == "fp") {
+        t.consume("fp");
+        uint64_t sign = parse_bv(t);
+        uint64_t exp = parse_bv(t);
+        uint64_t mant = parse_bv(t);
+        uint64_t bits = sign << (E + S - 1);
+        bits |=  exp << (S - 1);
+        bits |= mant;
+        val = bit_cast<T>(bits);
+    } else {
+        t.consume("_");
+        std::string next = t.next();
+        if (next == "NaN") {
+            val = std::numeric_limits<T>::quiet_NaN();
+        } else if (next == "+") {
+            if (t.peek() == "oo") {
+                t.consume("oo");
+                val = +std::numeric_limits<T>::infinity();
+            } else {
+                t.consume("zero");
+                val = +0.0f;
+            }
+        } else {
+            assert(next == "-");
+            if (t.peek() == "oo") {
+                t.consume("oo");
+                val = -std::numeric_limits<T>::infinity();
+            } else {
+                t.consume("zero");
+                val = -0.0f;
+            }
+        }
+    }
+    skip_rest_of_s_exp(t);
+    return Term::make<T>(val);
+}
+
+term_ptr parse_fp32(SmtLibTokenizer &t) {
+    return parse_fp<float, 8, 24>(t);
+}
+
+term_ptr parse_fp64(SmtLibTokenizer &t) {
+    return parse_fp<float, 11, 53>(t);
+}
+
+term_ptr parse_bool(SmtLibTokenizer &t) {
+    std::string tok = t.next();
+    if (tok == "true") {
+        return Term::make(true);
+    } else {
+        assert(tok == "false");
+        return Term::make(false);
+    }
+}
+
+template<typename F>
+term_ptr parse_adt(SmtLibTokenizer &t) {
+    unsigned num_s_exps_to_skip = 0;
+    if (t.peek() == "(") {
+        t.consume("(");
+        num_s_exps_to_skip++;
+        if (t.peek() == "as") {
+            t.consume("as");
+            if (t.peek() == "(") {
+                t.consume("(");
+                num_s_exps_to_skip++;
+            }
+        }
+    }
+    F f;
+    term_ptr term = f(t);
+    for (unsigned i = 0; i < num_s_exps_to_skip; ++i) {
+        skip_rest_of_s_exp(t);
+    }
+    return term;
+}
+
+/* INSERT 1 */
+term_ptr SmtLibParser::parse_term(SmtLibTokenizer &t, Symbol sym) const {
+    switch (sym) {
+/* INSERT 2 */
+    default: abort();
     }
 }
 

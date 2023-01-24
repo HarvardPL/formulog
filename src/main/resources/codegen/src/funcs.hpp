@@ -329,6 +329,14 @@ term_ptr is_sat_opt(term_ptr t1, term_ptr t2) {
     __builtin_unreachable();
 }
 
+term_ptr get_model(term_ptr t1, term_ptr t2) {
+    return nullptr;
+}
+
+term_ptr query_model(term_ptr t1, term_ptr t2) {
+    return nullptr;
+}
+
 std::vector<souffle::RamDomain> make_int_key(std::vector<term_ptr> key) {
     unsigned arity = key.size();
     std::vector<souffle::RamDomain> intKey(arity);

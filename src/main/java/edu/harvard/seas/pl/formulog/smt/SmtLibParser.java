@@ -112,6 +112,7 @@ public class SmtLibParser {
         SolverVariable x = variables.get(id);
         if (x != null) {
             FunctorType ft = (FunctorType) x.getSymbol().getCompileTimeType();
+            System.out.println(x.getSymbol() + " " + ft);
             AlgebraicDataType type = (AlgebraicDataType) ft.getRetType();
             type = stripSymType(type);
 
@@ -126,12 +127,12 @@ public class SmtLibParser {
         BV32, BV64, FP32, FP64, STRING, ADT
     }
 
-    private AlgebraicDataType stripSymType(AlgebraicDataType symType) {
+    public static AlgebraicDataType stripSymType(AlgebraicDataType symType) {
         assert symType.getSymbol().equals(BuiltInTypeSymbol.SYM_TYPE);
         return (AlgebraicDataType) symType.getTypeArgs().get(0);
     }
 
-    private boolean shouldRecord(AlgebraicDataType type) throws SmtLibParseException {
+    public static boolean shouldRecord(AlgebraicDataType type) throws SmtLibParseException {
         Set<Symbol> seen = new HashSet<>();
         boolean ok = shouldRecord1(type, seen);
         for (Type arg : type.getTypeArgs()) {
@@ -146,7 +147,7 @@ public class SmtLibParser {
         throw new SmtLibParseException("INTERNAL ERROR: " + msg);
     }
 
-    private boolean shouldRecord1(AlgebraicDataType type, Set<Symbol> seen) throws SmtLibParseException {
+    private static boolean shouldRecord1(AlgebraicDataType type, Set<Symbol> seen) throws SmtLibParseException {
         TypeSymbol sym = type.getSymbol();
         if (!seen.add(sym)) {
             return true;
@@ -413,6 +414,7 @@ public class SmtLibParser {
             args = new Term[argTypes.size()];
             int i = 0;
             for (Type ty : argTypes) {
+                System.out.println("arg type " + ty);
                 Term arg = parseTerm(t, (AlgebraicDataType) ty);
                 args[i] = arg;
                 ++i;

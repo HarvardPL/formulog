@@ -272,6 +272,12 @@ public class FuncsHpp extends TemplateSrcFile {
                 case IS_VALID:
                     ctx.register(sym, "is_valid");
                     break;
+                case GET_MODEL:
+                    ctx.register(sym, "get_model");
+                    break;
+                case QUERY_MODEL:
+                    ctx.register(sym, "query_model");
+                    break;
                 case PRINT:
                     ctx.register(sym, "print");
                     break;
