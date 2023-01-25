@@ -19,6 +19,10 @@ public:
         m_ignore_whitespace = ignore;
     }
 
+    bool ignoring_whitespace() {
+        return m_ignore_whitespace;
+    }
+
     const std::string &peek();
 
     std::string next();

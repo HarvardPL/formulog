@@ -37,7 +37,7 @@ public class CompiledSemiNaiveEvaluationTest extends CommonEvaluationTest<SemiNa
 	public CompiledSemiNaiveEvaluationTest() {
 		super(Configuration.testCodeGen ? new CompiledSemiNaiveTester() : new NopTester<>());
 	}
-	
+
 	@Override
 	public void test061() {
 		// Ignoring test (substitute)
@@ -54,113 +54,8 @@ public class CompiledSemiNaiveEvaluationTest extends CommonEvaluationTest<SemiNa
 	}
 
 	@Override
-	public void test099() {
-		// Ignoring test (get_model)
-	}
-	
-	@Override
-	public void test100() {
-		// Ignoring test (get_model)
-	}
-	
-	@Override
-	public void test102() {
-		// Ignoring test (get_model)
-	}
-	
-	@Override
-	public void test103() {
-		// Ignoring test (get_model)
-	}
-	
-	@Override
-	public void test104() {
-		// Ignoring test (get_model)
-	}
-	
-	@Override
-	public void test105() {
-		// Ignoring test (get_model)
-	}
-	
-	@Override
-	public void test106() {
-		// Ignoring test (get_model)
-	}
-	
-	@Override
-	public void test107() {
-		// Ignoring test (get_model)
-	}
-	
-	@Override
-	public void test108() {
-		// Ignoring test (get_model)
-	}
-	
-	@Override
-	public void test109() {
-		// Ignoring test (get_model)
-	}
-	
-	@Override
-	public void test110() {
-		// Ignoring test (get_model)
-	}
-	
-	@Override
-	public void test111() {
-		// Ignoring test (get_model)
-	}
-	
-	@Override
-	public void test112() {
-		// Ignoring test (get_model)
-	}
-	
-	@Override
-	public void test113() {
-		// Ignoring test (get_model)
-	}
-	
-	@Override
-	public void test114() {
-		// Ignoring test (get_model)
-	}
-	
-	@Override
-	public void test115() {
-		// Ignoring test (get_model)
-	}
-	
-	@Override
-	public void test116() {
-		// Ignoring test (get_model)
-	}
-	
-	@Override
 	public void test128() {
 		// Ignoring test (is_free)
-	}
-	
-	@Override
-	public void test135() {
-		// Ignoring test (get_model)
-	}
-	
-	@Override
-	public void test137() {
-		// Ignoring test (get_model)
-	}
-	
-	@Override
-	public void test190() {
-		// Ignoring test (get_model)
-	}
-	
-	@Override
-	public void test254() {
-		// Ignoring test (get_model)
 	}
 	
 	@Override

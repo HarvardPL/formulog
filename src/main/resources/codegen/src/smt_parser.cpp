@@ -53,6 +53,7 @@ bool SmtLibTokenizer::has_next() {
 void SmtLibTokenizer::consume(const std::string &s) {
     std::stringstream ss(s);
     SmtLibTokenizer t(ss);
+    t.ignore_whitespace(m_ignore_whitespace);
     while (t.has_next()) {
         std::string expected = t.next();
         std::string found = next();
@@ -79,6 +80,7 @@ Model SmtLibParser::get_model(std::istream &is) const {
         }
     }
     t.consume(")");
+    assert(t.ignoring_whitespace());
     t.ignore_whitespace(false);
     // Remove EOL
     t.next();
@@ -87,6 +89,7 @@ Model SmtLibParser::get_model(std::istream &is) const {
 
 void SmtLibParser::consume_comment(SmtLibTokenizer &t) const {
     t.consume(";;");
+    assert(t.ignoring_whitespace());
     t.ignore_whitespace(false);
     while (t.next() != "\n") {
         // Keep cruising
@@ -126,6 +129,7 @@ void SmtLibParser::parse_function_def(Model &m, SmtLibTokenizer &t) const {
 
 std::string parse_string_raw(SmtLibTokenizer &t) {
     t.consume("\"");
+    assert(t.ignoring_whitespace());
     t.ignore_whitespace(false);
     std::string s;
     while (true) {
@@ -181,13 +185,13 @@ bool is_ident_char(int ch) {
 
 std::string parse_identifier(SmtLibTokenizer &t) {
     std::string s = t.next();
+    assert(t.ignoring_whitespace());
+    t.ignore_whitespace(false);
     if (s == "|") {
-        t.ignore_whitespace(false);
         while (t.peek() != "|") {
             s += t.next();
         }
         t.consume("|");
-        t.ignore_whitespace(true);
     } else {
         while (true) {
             const std::string &tok = t.peek();
@@ -195,10 +199,14 @@ std::string parse_identifier(SmtLibTokenizer &t) {
                 t.consume(tok);
                 s += tok;
             } else {
+                if (std::isspace(tok[0])) {
+                    t.consume(tok);
+                }
                 break;
             }
         }
     }
+    t.ignore_whitespace(true);
     return s;
 }
 
