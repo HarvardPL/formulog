@@ -89,6 +89,11 @@ public class SmtParserCpp extends TemplateSrcFile {
             for (ConstructorSymbol sym : trackedSmtVars) {
                 genParseFunc(getSmtVarType(sym));
             }
+            // Forward-declare functions to account for mutually recursive data types.
+            for (String name : parseFuncDefs.keySet()) {
+                out.println("struct " + name + ";");
+            }
+            out.println();
             for (Map.Entry<String, CppStmt> e : parseFuncDefs.entrySet()) {
                 out.println("struct " + e.getKey() + " {");
                 out.println("  term_ptr operator()(SmtLibTokenizer &t) {");
