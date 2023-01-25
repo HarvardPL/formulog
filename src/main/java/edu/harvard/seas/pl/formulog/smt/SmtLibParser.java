@@ -112,7 +112,6 @@ public class SmtLibParser {
         SolverVariable x = variables.get(id);
         if (x != null) {
             FunctorType ft = (FunctorType) x.getSymbol().getCompileTimeType();
-            System.out.println(x.getSymbol() + " " + ft);
             AlgebraicDataType type = (AlgebraicDataType) ft.getRetType();
             type = stripSymType(type);
 
@@ -414,7 +413,6 @@ public class SmtLibParser {
             args = new Term[argTypes.size()];
             int i = 0;
             for (Type ty : argTypes) {
-                System.out.println("arg type " + ty);
                 Term arg = parseTerm(t, (AlgebraicDataType) ty);
                 args[i] = arg;
                 ++i;
