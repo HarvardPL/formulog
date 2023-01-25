@@ -307,7 +307,7 @@ term_ptr parse_fp32(SmtLibTokenizer &t) {
 }
 
 term_ptr parse_fp64(SmtLibTokenizer &t) {
-    return parse_fp<float, 11, 53>(t);
+    return parse_fp<double, 11, 53>(t);
 }
 
 term_ptr parse_bool(SmtLibTokenizer &t) {
