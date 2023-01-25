@@ -83,19 +83,16 @@ void MemoizingSmtSolver::break_into_conjuncts(term_ptr t, std::set<term_ptr> &un
 }
 
 SmtResult MemoizingSmtSolver::check(const std::vector<term_ptr> &assertions, bool get_model, int timeout) {
-    if (get_model) {
-        throw std::runtime_error("not supporting models yet");
-    }
     std::vector<term_ptr> conjuncts;
     std::set<term_ptr> key;
     for (auto assertion: assertions) {
         break_into_conjuncts(assertion, key, conjuncts);
     }
-    if (conjuncts.empty()) {
-        return SmtResult::sat;
+    if (conjuncts.empty() && !get_model) {
+        return {SmtStatus::sat, {}};
     }
     if (key.find(Term::make(false)) != key.end()) {
-        return SmtResult::unsat;
+        return {SmtStatus::unsat, {}};
     }
     SmtResult res;
     auto it = s_memo.find(key);
@@ -112,15 +109,16 @@ SmtResult MemoizingSmtSolver::check(const std::vector<term_ptr> &assertions, boo
 }
 
 SmtResult AbstractSmtSolver::check(const std::vector<term_ptr> &assertions, bool get_model, int timeout) {
-    if (get_model) {
-        throw std::runtime_error("not supporting models yet");
-    }
     if (!m_initialized) {
         initialize();
         m_initialized = true;
     }
     term_vector_pair p = make_assertions(assertions);
-    auto res = m_shim->check_sat_assuming(p.first, p.second, timeout);
+    auto status = m_shim->check_sat_assuming(p.first, p.second, timeout);
+    SmtResult res{status, {}};
+    if (status == SmtStatus::sat && get_model) {
+        res.model = m_shim->get_model();
+    }
     cleanup();
     return res;
 }
@@ -224,7 +222,7 @@ void PushPopSolver::shrink_cache(unsigned int num_to_pop) {
 
 SmtResult DoubleCheckingSolver::check(const std::vector<term_ptr> &assertions, bool get_model, int timeout) {
     auto res = m_first->check(assertions, get_model, timeout);
-    if (res == SmtResult::unknown) {
+    if (res.status == SmtStatus::unknown) {
         res = m_second->check(assertions, get_model, timeout);
     }
     return res;

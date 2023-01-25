@@ -12,7 +12,7 @@
 
 namespace flg::smt {
 
-enum class SmtResult {
+enum class SmtStatus {
     sat, unsat, unknown
 };
 
@@ -32,8 +32,10 @@ public:
 
     void pop() { pop(1); }
 
-    virtual SmtResult
+    virtual SmtStatus
     check_sat_assuming(const std::vector<term_ptr> &onVars, const std::vector<term_ptr> &offVars, int timeout) = 0;
+
+    virtual Model get_model() = 0;
 
     virtual ~SmtShim() = default;
 };
@@ -52,8 +54,10 @@ public:
 
     void pop(unsigned int n) override;
 
-    SmtResult
+    SmtStatus
     check_sat_assuming(const std::vector<term_ptr> &onVars, const std::vector<term_ptr> &offVars, int timeout) override;
+
+    Model get_model() override;
 
 private:
     class Logger {
@@ -66,7 +70,7 @@ private:
             /*
             std::cerr << val;
             std::cerr.flush();
-             */
+            */
             return *this;
         }
 
@@ -74,7 +78,7 @@ private:
             m_in.flush();
             /*
             std::cerr.flush();
-             */
+            */
         }
 
     private:
@@ -86,6 +90,7 @@ private:
     boost::process::ipstream m_out;
 
     std::unordered_map<term_ptr, string> m_solver_vars;
+    std::unordered_map<string, term_ptr> m_solver_var_lookup;
     std::vector<term_ptr> m_solver_vars_in_order;
     std::vector<unsigned int> m_stack_positions;
     unsigned int m_cnt{0};

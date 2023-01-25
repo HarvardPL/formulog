@@ -16,7 +16,9 @@ void SmtLibTokenizer::load(bool allow_eof) {
         // keep looping
     }
     if (ch == std::char_traits<char>::eof()) {
-        if (!allow_eof) {
+        if (allow_eof) {
+            return;
+        } else {
             throw std::runtime_error("SMT-LIB tokenization error: unexpected EOF");
         }
     }
@@ -62,7 +64,7 @@ void SmtLibTokenizer::consume(const std::string &s) {
     }
 }
 
-SmtLibParser::Model SmtLibParser::get_model(std::istream &is) const {
+Model SmtLibParser::get_model(std::istream &is) const {
     SmtLibTokenizer t(is);
     t.consume("(");
     Model m;
@@ -174,6 +176,7 @@ std::string parse_identifier(SmtLibTokenizer &t) {
         while (t.peek() != "|") {
             s += t.next();
         }
+        t.consume("|");
         t.ignore_whitespace(true);
     } else {
         while (true) {
@@ -204,6 +207,8 @@ void skip_rest_of_s_exp(SmtLibTokenizer &t) {
             parse_string_raw(t);
         } else if (tok == "|") {
             parse_identifier(t);
+        } else {
+            t.consume(tok);
         }
     }
 }
@@ -315,7 +320,7 @@ term_ptr parse_bool(SmtLibTokenizer &t) {
     }
 }
 
-template<typename F>
+template<typename Fn>
 term_ptr parse_adt(SmtLibTokenizer &t) {
     unsigned num_s_exps_to_skip = 0;
     if (t.peek() == "(") {
@@ -329,8 +334,8 @@ term_ptr parse_adt(SmtLibTokenizer &t) {
             }
         }
     }
-    F f;
-    term_ptr term = f(t);
+    Fn fn;
+    term_ptr term = fn(t);
     for (unsigned i = 0; i < num_s_exps_to_skip; ++i) {
         skip_rest_of_s_exp(t);
     }

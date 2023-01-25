@@ -108,7 +108,7 @@ public class SmtParserCpp extends TemplateSrcFile {
 
             List<CppStmt> body = new ArrayList<>();
             String scrutinee = "x";
-            body.add(CppDecl.mk(scrutinee, CppMethodCall.mk(CppVar.mk("t"), "next")));
+            body.add(CppDecl.mk(scrutinee, CppFuncCall.mk("parse_identifier", CppVar.mk("t"))));
 
             List<Pair<CppExpr, CppStmt>> cases = new ArrayList<>();
             for (var cs : ty.getConstructors()) {

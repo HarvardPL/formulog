@@ -3,6 +3,7 @@
 //
 
 #include "smt_shim.h"
+#include "smt_parser.hpp"
 #include <bitset>
 #include <boost/format.hpp>
 
@@ -109,6 +110,7 @@ void SmtLibShim::declare_vars(term_ptr t) {
             ss << "x" << m_cnt++;
             auto s = ss.str();
             m_solver_vars.emplace(t, s);
+            m_solver_var_lookup.emplace(s, t);
             m_solver_vars_in_order.push_back(t);
             m_in << "(declare-fun " << s << " () " << Type::lookup(t->sym).second << ")\n";
         }
@@ -148,7 +150,9 @@ void SmtLibShim::pop(unsigned int n) {
         unsigned int how_many = m_solver_vars_in_order.size() - start_pos;
         for (unsigned int i = 0; i < how_many; ++i) {
             auto var = m_solver_vars_in_order.back();
+            auto symbol = m_solver_vars[var];
             m_solver_vars.erase(var);
+            m_solver_var_lookup.erase(symbol);
             m_solver_vars_in_order.pop_back();
         }
     }
@@ -163,7 +167,7 @@ void SmtLibShim::make_assertion(term_ptr assertion) {
     assert(m_annotations.empty());
 }
 
-SmtResult SmtLibShim::check_sat_assuming(const std::vector<term_ptr> &onVars, const std::vector<term_ptr> &offVars,
+SmtStatus SmtLibShim::check_sat_assuming(const std::vector<term_ptr> &onVars, const std::vector<term_ptr> &offVars,
                                          int timeout) {
     if (timeout < 0) {
         cerr << "Warning: ignoring negative timeout provided to SMT" << endl;
@@ -187,19 +191,26 @@ SmtResult SmtLibShim::check_sat_assuming(const std::vector<term_ptr> &onVars, co
 
     string line;
     getline(m_out, line);
-    SmtResult res;
+    SmtStatus status;
     if (line == "sat") {
-        res = SmtResult::sat;
+        status = SmtStatus::sat;
     } else if (line == "unsat") {
-        res = SmtResult::unsat;
+        status = SmtStatus::unsat;
     } else if (line == "unknown") {
-        res = SmtResult::unknown;
+        status = SmtStatus::unknown;
     } else {
         cerr << "Unexpected SMT response:" << endl;
         cerr << line << endl;
         abort();
     }
-    return res;
+    return status;
+}
+
+Model SmtLibShim::get_model() {
+    m_in << "(get-model)\n";
+    m_in.flush();
+    SmtLibParser parser(m_solver_var_lookup);
+    return parser.get_model(m_out);
 }
 
 void SmtLibShim::serialize(term_ptr t) {

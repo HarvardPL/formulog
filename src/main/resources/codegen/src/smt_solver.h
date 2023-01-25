@@ -16,6 +16,11 @@ enum class SmtSolverMode {
     push_pop_naive, push_pop, check_sat_assuming
 };
 
+struct SmtResult {
+    SmtStatus status;
+    std::optional<Model> model;
+};
+
 class SmtSolver {
 public:
     NO_COPY_OR_ASSIGN(SmtSolver);

@@ -43,7 +43,6 @@ class SmtLibParser {
 public:
     explicit SmtLibParser(std::unordered_map<std::string, term_ptr> &vars) : m_vars(vars) {}
 
-    typedef std::unordered_map<term_ptr, term_ptr> Model;
     Model get_model(std::istream &is) const;
 
 private:
