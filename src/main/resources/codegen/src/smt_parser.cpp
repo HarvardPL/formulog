@@ -136,6 +136,16 @@ std::string parse_string_raw(SmtLibTokenizer &t) {
                 break;
             }
             t.consume(tok);
+        } else if (tok == "\\" && t.peek() == "u") {
+            // Handle unicode (in a hacky way). Not sure if we also need to account for the backslash being escaped.
+            t.consume("u");
+            t.consume("{");
+            std::string val;
+            while ((tok = t.next()) != "}") {
+                val += tok;
+            }
+            s.push_back((char) std::stoi(val, nullptr, 16));
+            continue;
         }
         s += tok;
     }

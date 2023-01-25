@@ -6,6 +6,7 @@
 #include "smt_parser.hpp"
 #include <bitset>
 #include <boost/format.hpp>
+#include <regex>
 
 namespace flg::smt {
 
@@ -217,7 +218,7 @@ void SmtLibShim::serialize(term_ptr t) {
     switch (t->sym) {
         case Symbol::boxed_bool:
         case Symbol::boxed_string: {
-            m_in << *t;
+            m_in << "\"" << std::regex_replace(t->as_base<std::string>().val, std::regex("\""), "\"\"") << "\"";
             break;
         }
         case Symbol::boxed_i32: {
