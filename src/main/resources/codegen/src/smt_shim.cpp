@@ -216,7 +216,10 @@ Model SmtLibShim::get_model() {
 
 void SmtLibShim::serialize(term_ptr t) {
     switch (t->sym) {
-        case Symbol::boxed_bool:
+        case Symbol::boxed_bool: {
+            m_in << *t;
+            break;
+        }
         case Symbol::boxed_string: {
             m_in << "\"" << std::regex_replace(t->as_base<std::string>().val, std::regex("\""), "\"\"") << "\"";
             break;
