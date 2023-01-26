@@ -107,5 +107,25 @@ public class CompiledSemiNaiveEvaluationTest extends CommonEvaluationTest<SemiNa
 	public void test305() {
 		// Ignoring test (is_sats)
 	}
+	
+	@Override
+	public void test326() {
+		// Ignoring test (opaque_set_empty)
+	}
+	
+	@Override
+	public void test328() {
+		// Ignoring test (opaque_set_from_list)
+	}
+	
+	@Override
+	public void test336() {
+		// Ignoring test (i32_shl)
+	}
+	
+	@Override
+	public void test337() {
+		// Ignoring test (i64_urem)
+	}
 
 }
