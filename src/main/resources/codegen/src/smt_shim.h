@@ -152,6 +152,8 @@ private:
 
     std::string serialize_tester(Symbol sym);
 
+    template<size_t W>
+    void serialize_int2bv(term_ptr t);
 };
 
 }

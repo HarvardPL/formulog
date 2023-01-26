@@ -330,6 +330,14 @@ public class SmtShimCpp extends TemplateSrcFile {
                 case SMT_PAT:
                 case SMT_WRAP_VAR:
                     return CppFuncCall.mk("abort").toStmt();
+                case BV_TO_INT:
+                    return genSerializeOp("bv2int");
+                case INT_TO_BV: {
+                    int width = index(sym, 0);
+                    String func = "serialize_int2bv<" + width + ">";
+                    return mkCall(func);
+                }
+                    
             }
             return null;
         }

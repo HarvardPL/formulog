@@ -351,6 +351,13 @@ void SmtLibShim::serialize_int(term_ptr t) {
     m_in << arg0(t)->as_base<T>().val;
 }
 
+template<size_t W>
+void SmtLibShim::serialize_int2bv(term_ptr t) {
+    m_in << "((_ int2bv " << W << ") ";
+    serialize(arg0(t));
+    m_in << ")";
+}
+
 template<bool Exists>
 void SmtLibShim::serialize_quantifier(term_ptr t) {
     auto &x = t->as_complex();
