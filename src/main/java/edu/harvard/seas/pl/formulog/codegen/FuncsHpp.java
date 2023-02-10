@@ -218,6 +218,21 @@ public class FuncsHpp extends TemplateSrcFile {
                 case I32_XOR:
                     ctx.register(sym, "__bitwise_xor<int32_t>");
                     break;
+                case I32_SHL:
+                    ctx.register(sym, "__shl<int32_t>");
+                    break;
+                case I32_ASHR:
+                    ctx.register(sym, "__ashr<int32_t>");
+                    break;
+                case I32_LSHR:
+                    ctx.register(sym, "__lshr<int32_t, uint32_t>");
+                    break;
+                case I32_UREM:
+                    ctx.register(sym, "__urem<int32_t, uint32_t>");
+                    break;
+                case I32_UDIV:
+                    ctx.register(sym, "__udiv<int32_t, uint32_t>");
+                    break;
                 case I64_ADD:
                     ctx.register(sym, "__add<int64_t>");
                     break;
@@ -262,6 +277,21 @@ public class FuncsHpp extends TemplateSrcFile {
                     break;
                 case I64_XOR:
                     ctx.register(sym, "__bitwise_xor<int64_t>");
+                    break;
+                case I64_SHL:
+                    ctx.register(sym, "__shl<int64_t>");
+                    break;
+                case I64_ASHR:
+                    ctx.register(sym, "__ashr<int64_t>");
+                    break;
+                case I64_LSHR:
+                    ctx.register(sym, "__lshr<int64_t, uint64_t>");
+                    break;
+                case I64_UREM:
+                    ctx.register(sym, "__urem<int64_t, uint64_t>");
+                    break;
+                case I64_UDIV:
+                    ctx.register(sym, "__udiv<int64_t, uint64_t>");
                     break;
                 case IS_SAT:
                     ctx.register(sym, "is_sat");

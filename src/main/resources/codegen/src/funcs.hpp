@@ -74,6 +74,34 @@ term_ptr __bitwise_xor(term_ptr t1, term_ptr t2) {
 }
 
 template<typename T>
+term_ptr __shl(term_ptr t1, term_ptr t2) {
+    return Term::make(t1->as_base<T>().val << t2->as_base<T>().val);
+}
+
+template<typename T>
+term_ptr __ashr(term_ptr t1, term_ptr t2) {
+    return Term::make(t1->as_base<T>().val >> t2->as_base<T>().val);
+}
+
+template<typename T, typename U>
+term_ptr __lshr(term_ptr t1, term_ptr t2) {
+    U res = t1->as_base<U>().val >> t2->as_base<T>().val;
+    return Term::make(reinterpret_cast<T&>(res));
+}
+
+template<typename T, typename U>
+term_ptr __urem(term_ptr t1, term_ptr t2) {
+    U res = t1->as_base<U>().val % t2->as_base<U>().val;
+    return Term::make(reinterpret_cast<T&>(res));
+}
+
+template<typename T, typename U>
+term_ptr __udiv(term_ptr t1, term_ptr t2) {
+    U res = t1->as_base<U>().val / t2->as_base<U>().val;
+    return Term::make(reinterpret_cast<T&>(res));
+}
+
+template<typename T>
 term_ptr __neg(term_ptr t1) {
     return Term::make(-t1->as_base<T>().val);
 }
