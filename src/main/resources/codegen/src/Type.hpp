@@ -29,7 +29,6 @@ struct Type {
     static functor_type fp64;
     static functor_type string_;
     static functor_type bool_;
-    static functor_type model;
 
 private:
     static functor_type make_prim(const std::string &name);
