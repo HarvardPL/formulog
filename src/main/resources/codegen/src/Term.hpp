@@ -9,6 +9,7 @@
 #include <souffle/SouffleInterface.h>
 #include <tbb/concurrent_unordered_map.h>
 
+#include "set.hpp"
 #include "Symbol.hpp"
 
 #define NO_COPY_OR_ASSIGN(t) \
@@ -131,7 +132,7 @@ struct BaseTerm : public Term {
     static int compare(const BaseTerm<T> &t1, const BaseTerm<T> &t2);
 
 private:
-    BaseTerm(Symbol sym_, T &&val_) : Term{sym_}, val(std::move(val_)) {}
+    BaseTerm(Symbol sym_, T &&val_) : Term{sym_}, val{std::move(val_)} {}
 
     template<typename, Symbol> friend
     class BaseTermCache;
@@ -241,6 +242,11 @@ typedef std::map<term_ptr, term_ptr> Model;
 template<>
 inline term_ptr Term::make_moved<Model>(Model &&val) {
     return BaseTermCache<Model, Symbol::model>::get(std::move(val));
+}
+
+template<>
+inline term_ptr Term::make_moved(Set &&val) {
+    return BaseTermCache<Set, Symbol::opaque_set>::get(std::move(val));
 }
 
 template<typename T>

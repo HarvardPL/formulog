@@ -353,6 +353,42 @@ public class FuncsHpp extends TemplateSrcFile {
                 case stringToI64:
                     ctx.register(sym, "string_to_i64");
                     break;
+                case OPAQUE_SET_EMPTY:
+                    ctx.register(sym, "opaque_set_empty");
+                    break;
+                case OPAQUE_SET_PLUS:
+                    ctx.register(sym, "opaque_set_plus");
+                    break;
+                case OPAQUE_SET_MINUS:
+                    ctx.register(sym, "opaque_set_minus");
+                    break;
+                case OPAQUE_SET_UNION:
+                    ctx.register(sym, "opaque_set_union");
+                    break;
+                case OPAQUE_SET_DIFF:
+                    ctx.register(sym, "opaque_set_diff");
+                    break;
+                case OPAQUE_SET_CHOOSE:
+                    ctx.register(sym, "opaque_set_choose");
+                    break;
+                case OPAQUE_SET_SIZE:
+                    ctx.register(sym, "opaque_set_size");
+                    break;
+                case OPAQUE_SET_MEMBER:
+                    ctx.register(sym, "opaque_set_member");
+                    break;
+                case OPAQUE_SET_SINGLETON:
+                    ctx.register(sym, "opaque_set_singleton");
+                    break;
+                case OPAQUE_SET_SUBSET:
+                    ctx.register(sym, "opaque_set_subset");
+                    break;
+                case OPAQUE_SET_FROM_LIST:
+                    ctx.register(sym, "opaque_set_from_list");
+                    break;
+                case IS_SET_SAT:
+                    ctx.register(sym, "is_set_sat");
+                    break;
                 default:
                     System.err.println("unhandled built-in function symbol: " + sym);
             }

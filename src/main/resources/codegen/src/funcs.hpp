@@ -329,6 +329,21 @@ term_ptr is_sat_opt(term_ptr t1, term_ptr t2) {
     __builtin_unreachable();
 }
 
+term_ptr is_set_sat(term_ptr t1, term_ptr t2) {
+    int timeout = _extract_timeout_from_option(t2);
+    auto &s = t1->as_base<Set>().val;
+    std::vector<term_ptr> assertions{s.begin(), s.end()};
+    switch (smt::smt_solver.check(assertions, false, timeout).status) {
+        case smt::SmtStatus::sat:
+            return _make_some(Term::make<bool>(true));
+        case smt::SmtStatus::unsat:
+            return _make_some(Term::make<bool>(false));
+        case smt::SmtStatus::unknown:
+            return _make_none();
+    }
+    __builtin_unreachable();
+}
+
 term_ptr get_model(term_ptr t1, term_ptr t2) {
     int timeout = _extract_timeout_from_option(t2);
     auto assertions = Term::vectorize_list_term(t1);
@@ -441,6 +456,71 @@ _relation_agg_poly(const std::string &relname, const std::vector<term_ptr> &key,
         }
     }
     return vec_to_term_list(v);
+}
+
+term_ptr opaque_set_empty() {
+    return Term::make_moved(set::empty());
+}
+
+term_ptr opaque_set_plus(term_ptr val, term_ptr set) {
+    auto &s = set->as_base<Set>().val;
+    return Term::make_moved(set::plus(val, s));
+}
+
+term_ptr opaque_set_minus(term_ptr val, term_ptr set) {
+    auto &s = set->as_base<Set>().val;
+    return Term::make_moved(set::minus(val, s));
+}
+
+term_ptr opaque_set_union(term_ptr set1, term_ptr set2) {
+    auto &s1 = set1->as_base<Set>().val;
+    auto &s2 = set2->as_base<Set>().val;
+    return Term::make_moved(set::plus_all(s1, s2));
+}
+
+term_ptr opaque_set_diff(term_ptr set1, term_ptr set2) {
+    auto &s1 = set1->as_base<Set>().val;
+    auto &s2 = set2->as_base<Set>().val;
+    return Term::make_moved(set::minus_all(s1, s2));
+}
+
+term_ptr opaque_set_choose(term_ptr set) {
+    auto &s = set->as_base<Set>().val;
+    auto opt = set::choose(s);
+    if (opt.has_value()) {
+        auto p = opt.value();
+        auto t = p.first;
+        auto r = Term::make_moved(std::move(p.second));
+        auto sym = lookup_tuple_symbol(2);
+        return _make_some(Term::make_generic(sym, {t, r}));
+    } else {
+        return _make_none();
+    }
+}
+
+term_ptr opaque_set_size(term_ptr set) {
+    auto &s = set->as_base<Set>().val;
+    return Term::make((int32_t) set::size(s));
+}
+
+term_ptr opaque_set_member(term_ptr val, term_ptr set) {
+    auto &s = set->as_base<Set>().val;
+    return Term::make(set::member(val, s));
+}
+
+term_ptr opaque_set_singleton(term_ptr val) {
+    return Term::make_moved(set::singleton(val));
+}
+
+term_ptr opaque_set_subset(term_ptr set1, term_ptr set2) {
+    auto &s1 = set1->as_base<Set>().val;
+    auto &s2 = set2->as_base<Set>().val;
+    return Term::make(set::subset(s1, s2));
+}
+
+term_ptr opaque_set_from_list(term_ptr list) {
+    auto vec = Term::vectorize_list_term(list);
+    return Term::make_moved(set::from_vec(vec));
 }
 /* INSERT 0 */
 
