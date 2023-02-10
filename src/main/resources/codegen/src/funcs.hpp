@@ -522,6 +522,14 @@ term_ptr opaque_set_from_list(term_ptr list) {
     auto vec = Term::vectorize_list_term(list);
     return Term::make_moved(set::from_vec(vec));
 }
+
+term_ptr fold(term_ptr (*f)(term_ptr, term_ptr), term_ptr acc, term_ptr list) {
+    auto vec = Term::vectorize_list_term(list);
+    for (auto t : vec) {
+        acc = f(acc, t);
+    }
+    return acc;
+}
 /* INSERT 0 */
 
 } // namespace funcs

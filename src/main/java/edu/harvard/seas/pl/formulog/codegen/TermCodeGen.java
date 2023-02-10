@@ -264,7 +264,13 @@ public class TermCodeGen {
 
             @Override
             public CppExpr visit(Fold fold, Void in) {
-                throw new UnsupportedOperationException("Not supporting codegen for fold");
+                List<CppExpr> args = new ArrayList<>();
+                var f = ctx.lookupRepr(fold.getFunction());
+                args.add(CppExprFromString.mk(f));
+                for (Term arg : fold.getArgs()) {
+                    args.add(arg.accept(tv, in));
+                }
+                return CppFuncCall.mk("funcs::fold", args);
             }
 
         };
