@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <vector>
 
+#include <boost/container_hash/hash.hpp>
 #include <souffle/SouffleInterface.h>
 #include <tbb/concurrent_unordered_map.h>
 
@@ -154,7 +155,7 @@ inline const term_ptr max_term =
 // Concurrency-safe cache for BaseTerm values
 template<typename T, Symbol S>
 class BaseTermCache {
-    typedef concurrent_unordered_map<T, term_ptr> map_t;
+    typedef concurrent_unordered_map<T, term_ptr, boost::hash<T>> map_t;
     inline static map_t cache;
 
 public:
@@ -217,6 +218,13 @@ inline term_ptr Term::make<double>(double val) {
 template<>
 inline term_ptr Term::make<string>(string val) {
     return BaseTermCache<string, Symbol::boxed_string>::get(val);
+}
+
+typedef std::map<term_ptr, term_ptr> Model;
+
+template<>
+inline term_ptr Term::make<Model>(Model val) {
+    return BaseTermCache<Model, Symbol::model>::get(val);
 }
 
 template<typename T>

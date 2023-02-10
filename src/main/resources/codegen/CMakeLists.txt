@@ -30,6 +30,8 @@ target_sources(flg PRIVATE
         src/smt_solver.h
         src/smt_shim.cpp
         src/smt_shim.h
+        src/smt_parser.cpp
+        src/smt_parser.hpp
         formulog.cpp
         )
 

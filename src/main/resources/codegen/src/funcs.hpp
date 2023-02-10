@@ -272,12 +272,12 @@ term_ptr __conv(term_ptr t1) {
 }
 
 term_ptr is_sat(term_ptr t1) {
-    switch (smt::smt_solver.check(t1)) {
-        case smt::SmtResult::sat:
+    switch (smt::smt_solver.check(t1).status) {
+        case smt::SmtStatus::sat:
             return Term::make<bool>(true);
-        case smt::SmtResult::unsat:
+        case smt::SmtStatus::unsat:
             return Term::make<bool>(false);
-        case smt::SmtResult::unknown:
+        case smt::SmtStatus::unknown:
             throw runtime_error("SMT returned `unknown`");
     }
     __builtin_unreachable();
@@ -292,12 +292,12 @@ term_ptr _make_smt_not(term_ptr t) {
 }
 
 term_ptr is_valid(term_ptr t1) {
-    switch (smt::smt_solver.check(_make_smt_not(t1))) {
-        case smt::SmtResult::sat:
+    switch (smt::smt_solver.check(_make_smt_not(t1)).status) {
+        case smt::SmtStatus::sat:
             return Term::make<bool>(false);
-        case smt::SmtResult::unsat:
+        case smt::SmtStatus::unsat:
             return Term::make<bool>(true);
-        case smt::SmtResult::unknown:
+        case smt::SmtStatus::unknown:
             abort();
     }
     __builtin_unreachable();
@@ -318,15 +318,39 @@ term_ptr is_sat_opt(term_ptr t1, term_ptr t2) {
     int timeout = _extract_timeout_from_option(t2);
     auto assertions = Term::vectorize_list_term(t1);
     std::reverse(assertions.begin(), assertions.end());
-    switch (smt::smt_solver.check(assertions, false, timeout)) {
-        case smt::SmtResult::sat:
+    switch (smt::smt_solver.check(assertions, false, timeout).status) {
+        case smt::SmtStatus::sat:
             return _make_some(Term::make<bool>(true));
-        case smt::SmtResult::unsat:
+        case smt::SmtStatus::unsat:
             return _make_some(Term::make<bool>(false));
-        case smt::SmtResult::unknown:
+        case smt::SmtStatus::unknown:
             return _make_none();
     }
     __builtin_unreachable();
+}
+
+term_ptr get_model(term_ptr t1, term_ptr t2) {
+    int timeout = _extract_timeout_from_option(t2);
+    auto assertions = Term::vectorize_list_term(t1);
+    std::reverse(assertions.begin(), assertions.end());
+    auto res = smt::smt_solver.check(assertions, true, timeout);
+    switch (res.status) {
+        case smt::SmtStatus::sat:
+            return _make_some(Term::make<Model>(res.model.value()));
+        case smt::SmtStatus::unsat:
+        case smt::SmtStatus::unknown:
+            return _make_none();
+    }
+    __builtin_unreachable();
+}
+
+term_ptr query_model(term_ptr t1, term_ptr t2) {
+    Model m = t2->as_base<Model>().val;
+    auto it = m.find(t1);
+    if (it != m.end()) {
+        return _make_some(it->second);
+    }
+    return _make_none();
 }
 
 std::vector<souffle::RamDomain> make_int_key(std::vector<term_ptr> key) {

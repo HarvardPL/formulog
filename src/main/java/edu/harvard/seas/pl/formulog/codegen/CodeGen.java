@@ -75,6 +75,8 @@ public class CodeGen {
         copySrc("smt_solver.cpp");
         copySrc("smt_shim.h");
         new SmtShimCpp(ctx).gen(outDir);
+        copySrc("smt_parser.hpp");
+        new SmtParserCpp(ctx).gen(outDir);
         copySrc("Type.hpp");
         new TypeCpp(ctx).gen(outDir);
         copySrc("Term.hpp");

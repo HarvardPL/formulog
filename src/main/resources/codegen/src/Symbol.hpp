@@ -16,6 +16,7 @@ enum class Symbol {
     boxed_fp32,
     boxed_fp64,
     boxed_string,
+    model,
 #ifdef FLG_DEV
     nil,
     cons,

@@ -149,6 +149,7 @@ public final class Configuration {
 
     public static final boolean codeGen = propIsSet("codeGen");
     public static final boolean testCodeGen = propIsSet("testCodeGen");
+    public static final String cxxCompiler = getStringProp("cxxCompiler", null);
 
     public static final String souffleInclude = System.getProperty("souffleInclude");
     public static final String boostInclude = System.getProperty("boostInclude");

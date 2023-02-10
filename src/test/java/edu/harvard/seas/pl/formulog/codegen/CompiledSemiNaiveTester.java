@@ -26,9 +26,11 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.Main;
 import edu.harvard.seas.pl.formulog.ast.BasicProgram;
 import edu.harvard.seas.pl.formulog.eval.Tester;
@@ -87,10 +89,12 @@ public class CompiledSemiNaiveTester implements Tester {
         Path buildPath = topPath.resolve("build");
         CodeGen cg = new CodeGen(prog, topPath.toFile());
         cg.go();
-        Process cmake = Runtime.getRuntime().exec(new String[]{"cmake", "-B", buildPath.toString(),
-                "-S", topPath.toString(), "-DCMAKE_BUILD_TYPE=Debug",
-                "-DCMAKE_CXX_COMPILER=/usr/local/opt/llvm/bin/clang++"});
-        //"-DCMAKE_CXX_COMPILER=/usr/local/opt/gcc@11/bin/g++-11"
+        var cmakeCmds = new ArrayList<>(Arrays.asList("cmake", "-B", buildPath.toString(), "-S", topPath.toString(),
+                "-DCMAKE_BUILD_TYPE=Debug"));
+        if (Configuration.cxxCompiler != null) {
+            cmakeCmds.add("-DCMAKE_CXX_COMPILER=" + Configuration.cxxCompiler);
+        }
+        Process cmake = Runtime.getRuntime().exec(cmakeCmds.toArray(new String[0]));
         if (cmake.waitFor() != 0) {
             System.err.println("Could not cmake test");
             printToStdErr(cmake.getErrorStream());
