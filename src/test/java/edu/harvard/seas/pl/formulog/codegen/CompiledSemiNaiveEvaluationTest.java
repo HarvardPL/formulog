@@ -97,15 +97,5 @@ public class CompiledSemiNaiveEvaluationTest extends CommonEvaluationTest<SemiNa
 	public void test292() {
 		// Ignoring test (fold)
 	}
-	
-	@Override
-	public void test336() {
-		// Ignoring test (i32_shl)
-	}
-	
-	@Override
-	public void test337() {
-		// Ignoring test (i64_urem)
-	}
 
 }
