@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.smt;
  * #L%
  */
 
-
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StreamTokenizer;
@@ -258,20 +257,31 @@ public class SmtLibParser {
             skipRestOfSExp(t);
         }
     }
-
+    
+    private long parseBv(Tokenizer t) throws IOException, SmtLibParseException {
+        t.consume("#");
+        String tok = t.next();
+        String prefix = tok.substring(0, 1);
+        String num = tok.substring(1);
+        int base = 0;
+        if (prefix.equals("b")) {
+            base = 2;
+        } else {
+            assert(prefix.equals("x"));
+            base = 16;
+        }
+        return Long.parseUnsignedLong(num, base);
+    }
+    
     private Term parseTerm(Tokenizer t, AlgebraicDataType type) throws IOException, SmtLibParseException {
         switch (getTermType(type)) {
             case ADT:
                 return parseADTTerm(t, type);
             case BV32: {
-                t.consume("#");
-                String num = t.next().substring(1).toUpperCase();
-                return I32.make(Integer.parseUnsignedInt(num, 16));
+                return I32.make((int) parseBv(t));
             }
             case BV64: {
-                t.consume("#");
-                String num = t.next().substring(1).toUpperCase();
-                return I64.make(Long.parseUnsignedLong(num, 16));
+                return I64.make(parseBv(t));
             }
             // FIXME I'm not sure if these conversions to floating point are 100%
             // correct...
@@ -279,16 +289,14 @@ public class SmtLibParser {
                 float val = -1;
                 t.consume("(");
                 if (t.peek().equals("fp")) {
-                    t.consume("fp #");
-                    String sign = t.next().substring(1);
-                    t.consume("#");
-                    String exp = t.next().substring(1).toUpperCase();
-                    t.consume("#");
-                    String mant = t.next().substring(1);
-                    int bits = Integer.parseInt(sign) << 31;
-                    bits |= Integer.parseUnsignedInt(exp, 16) << 23;
-                    bits |= Integer.parseUnsignedInt(mant, 2);
-                    val = Float.intBitsToFloat(bits);
+                    t.consume("fp");
+                    long sign = parseBv(t);
+                    long exp = parseBv(t);
+                    long mant = parseBv(t);
+                    long bits = sign << 31;
+                    bits |= exp << 23;
+                    bits |= mant;
+                    val = Float.intBitsToFloat((int) bits);
                 } else {
                     t.consume("_");
                     String next = t.next();
@@ -320,15 +328,13 @@ public class SmtLibParser {
                 double val = -1;
                 t.consume("(");
                 if (t.peek().equals("fp")) {
-                    t.consume("fp #");
-                    String sign = t.next().substring(1);
-                    t.consume("#");
-                    String exp = t.next().substring(1);
-                    t.consume("#");
-                    String mant = t.next().substring(1).toUpperCase();
-                    long bits = Long.parseLong(sign) << 63;
-                    bits |= Long.parseUnsignedLong(exp, 2) << 52;
-                    bits |= Long.parseUnsignedLong(mant, 16);
+                    t.consume("fp");
+                    long sign = parseBv(t);
+                    long exp = parseBv(t);
+                    long mant = parseBv(t);
+                    long bits = sign << 63;
+                    bits |= exp << 52;
+                    bits |= mant;
                     val = Double.longBitsToDouble(bits);
                 } else {
                     t.consume("_");
