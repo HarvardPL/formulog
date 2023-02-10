@@ -246,7 +246,7 @@ bool SmtLibParser::should_record(Symbol sym) const {
 }
 
 term_ptr parse_string(SmtLibTokenizer &t) {
-    return Term::make<std::string>(parse_string_raw(t));
+    return Term::make_moved<std::string>(parse_string_raw(t));
 }
 
 uint64_t parse_bv(SmtLibTokenizer &t) {

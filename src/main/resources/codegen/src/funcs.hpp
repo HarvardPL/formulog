@@ -126,7 +126,7 @@ term_ptr print(term_ptr t1) {
 }
 
 term_ptr string_concat(term_ptr t1, term_ptr t2) {
-    return Term::make(t1->as_base<string>().val + t2->as_base<string>().val);
+    return Term::make_moved(t1->as_base<string>().val + t2->as_base<string>().val);
 }
 
 term_ptr string_matches(term_ptr t1, term_ptr t2) {
@@ -200,7 +200,7 @@ term_ptr list_to_string(term_ptr l) {
     for (auto sub: v) {
         str += (char) sub->as_base<int32_t>().val;
     }
-    return Term::make(str);
+    return Term::make_moved(std::move(str));
 }
 
 term_ptr substring(term_ptr str_term, term_ptr start_term, term_ptr len_term) {
@@ -210,7 +210,7 @@ term_ptr substring(term_ptr str_term, term_ptr start_term, term_ptr len_term) {
     if (start < 0 || len < 0 || str.size() < start + (size_t) len) {
         return _make_none();
     }
-    return _make_some(Term::make(str.substr(start, len)));
+    return _make_some(Term::make_moved(str.substr(start, len)));
 }
 
 term_ptr string_to_i32(term_ptr str_term) {
@@ -263,7 +263,7 @@ term_ptr to_string(term_ptr t1) {
     }
     stringstream ss;
     ss << *t1;
-    return Term::make(ss.str());
+    return Term::make_moved(ss.str());
 }
 
 template<typename S, typename T>
@@ -336,7 +336,7 @@ term_ptr get_model(term_ptr t1, term_ptr t2) {
     auto res = smt::smt_solver.check(assertions, true, timeout);
     switch (res.status) {
         case smt::SmtStatus::sat:
-            return _make_some(Term::make<Model>(res.model.value()));
+            return _make_some(Term::make_moved<Model>(std::move(res.model.value())));
         case smt::SmtStatus::unsat:
         case smt::SmtStatus::unknown:
             return _make_none();
