@@ -551,10 +551,13 @@ term_ptr opaque_set_from_list(term_ptr list) {
     return Term::make_moved(set::from_vec(vec));
 }
 
-term_ptr fold(term_ptr (*f)(term_ptr, term_ptr), term_ptr acc, term_ptr list) {
+// The template varargs is necessary to handle folding with closures (captured variables are passed in as additional
+// arguments).
+template<typename... Ts>
+term_ptr fold(term_ptr (*f)(term_ptr, term_ptr, Ts...), term_ptr acc, term_ptr list, Ts... args) {
     auto vec = Term::vectorize_list_term(list);
     for (auto t : vec) {
-        acc = f(acc, t);
+        acc = f(acc, t, args...);
     }
     return acc;
 }
