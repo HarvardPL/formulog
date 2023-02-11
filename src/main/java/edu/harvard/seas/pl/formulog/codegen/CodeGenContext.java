@@ -83,7 +83,7 @@ public class CodeGenContext {
     }
 
     public synchronized String lookupRepr(RelationSymbol sym) {
-        return sym + "_";
+        return sym.toString().replace(":", "__") + "_";
     }
 
     public synchronized void register(FunctionSymbol sym, String repr) {

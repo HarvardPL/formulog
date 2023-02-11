@@ -126,7 +126,7 @@ public class CompiledSemiNaiveTester implements Tester {
         BufferedReader br = new BufferedReader(new InputStreamReader(flg.getInputStream()));
         String line;
         while ((line = br.readLine()) != null) {
-            if (line.equals("ok: 1")) {
+            if (line.equals("ok: 1") || line.equals("query__ok: 1")) {
                 return true;
             }
         }
