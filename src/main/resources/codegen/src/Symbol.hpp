@@ -17,6 +17,7 @@ enum class Symbol {
     boxed_fp64,
     boxed_string,
     model,
+    opaque_set,
 #ifdef FLG_DEV
     nil,
     cons,

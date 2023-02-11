@@ -237,7 +237,7 @@ inline term_ptr TermParser::take_string() {
         throw parsing_error("Could not detect end of string literal");
     }
     ++pos;
-    return Term::make<string>(contents);
+    return Term::make_moved<string>(std::move(contents));
 }
 
 inline term_ptr TermParser::take_numeric() {

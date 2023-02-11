@@ -11,6 +11,7 @@ ostream& operator<<(ostream& out, Symbol sym) {
     case Symbol::boxed_fp64: return out << "boxed_fp64";
     case Symbol::boxed_string: return out << "boxed_string";
     case Symbol::model: return out << "model";
+    case Symbol::opaque_set: return out << "opaque_set";
 /* INSERT 0 */
   }
   __builtin_unreachable();

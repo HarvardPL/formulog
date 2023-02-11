@@ -74,6 +74,34 @@ term_ptr __bitwise_xor(term_ptr t1, term_ptr t2) {
 }
 
 template<typename T>
+term_ptr __shl(term_ptr t1, term_ptr t2) {
+    return Term::make(t1->as_base<T>().val << t2->as_base<T>().val);
+}
+
+template<typename T>
+term_ptr __ashr(term_ptr t1, term_ptr t2) {
+    return Term::make(t1->as_base<T>().val >> t2->as_base<T>().val);
+}
+
+template<typename T, typename U>
+term_ptr __lshr(term_ptr t1, term_ptr t2) {
+    U res = t1->as_base<U>().val >> t2->as_base<T>().val;
+    return Term::make(reinterpret_cast<T&>(res));
+}
+
+template<typename T, typename U>
+term_ptr __urem(term_ptr t1, term_ptr t2) {
+    U res = t1->as_base<U>().val % t2->as_base<U>().val;
+    return Term::make(reinterpret_cast<T&>(res));
+}
+
+template<typename T, typename U>
+term_ptr __udiv(term_ptr t1, term_ptr t2) {
+    U res = t1->as_base<U>().val / t2->as_base<U>().val;
+    return Term::make(reinterpret_cast<T&>(res));
+}
+
+template<typename T>
 term_ptr __neg(term_ptr t1) {
     return Term::make(-t1->as_base<T>().val);
 }
@@ -126,7 +154,7 @@ term_ptr print(term_ptr t1) {
 }
 
 term_ptr string_concat(term_ptr t1, term_ptr t2) {
-    return Term::make(t1->as_base<string>().val + t2->as_base<string>().val);
+    return Term::make_moved(t1->as_base<string>().val + t2->as_base<string>().val);
 }
 
 term_ptr string_matches(term_ptr t1, term_ptr t2) {
@@ -200,7 +228,7 @@ term_ptr list_to_string(term_ptr l) {
     for (auto sub: v) {
         str += (char) sub->as_base<int32_t>().val;
     }
-    return Term::make(str);
+    return Term::make_moved(std::move(str));
 }
 
 term_ptr substring(term_ptr str_term, term_ptr start_term, term_ptr len_term) {
@@ -210,7 +238,7 @@ term_ptr substring(term_ptr str_term, term_ptr start_term, term_ptr len_term) {
     if (start < 0 || len < 0 || str.size() < start + (size_t) len) {
         return _make_none();
     }
-    return _make_some(Term::make(str.substr(start, len)));
+    return _make_some(Term::make_moved(str.substr(start, len)));
 }
 
 term_ptr string_to_i32(term_ptr str_term) {
@@ -263,7 +291,7 @@ term_ptr to_string(term_ptr t1) {
     }
     stringstream ss;
     ss << *t1;
-    return Term::make(ss.str());
+    return Term::make_moved(ss.str());
 }
 
 template<typename S, typename T>
@@ -329,6 +357,21 @@ term_ptr is_sat_opt(term_ptr t1, term_ptr t2) {
     __builtin_unreachable();
 }
 
+term_ptr is_set_sat(term_ptr t1, term_ptr t2) {
+    int timeout = _extract_timeout_from_option(t2);
+    auto &s = t1->as_base<Set>().val;
+    std::vector<term_ptr> assertions{s.begin(), s.end()};
+    switch (smt::smt_solver.check(assertions, false, timeout).status) {
+        case smt::SmtStatus::sat:
+            return _make_some(Term::make<bool>(true));
+        case smt::SmtStatus::unsat:
+            return _make_some(Term::make<bool>(false));
+        case smt::SmtStatus::unknown:
+            return _make_none();
+    }
+    __builtin_unreachable();
+}
+
 term_ptr get_model(term_ptr t1, term_ptr t2) {
     int timeout = _extract_timeout_from_option(t2);
     auto assertions = Term::vectorize_list_term(t1);
@@ -336,7 +379,7 @@ term_ptr get_model(term_ptr t1, term_ptr t2) {
     auto res = smt::smt_solver.check(assertions, true, timeout);
     switch (res.status) {
         case smt::SmtStatus::sat:
-            return _make_some(Term::make<Model>(res.model.value()));
+            return _make_some(Term::make_moved<Model>(std::move(res.model.value())));
         case smt::SmtStatus::unsat:
         case smt::SmtStatus::unknown:
             return _make_none();
@@ -441,6 +484,82 @@ _relation_agg_poly(const std::string &relname, const std::vector<term_ptr> &key,
         }
     }
     return vec_to_term_list(v);
+}
+
+term_ptr opaque_set_empty() {
+    return Term::make_moved(set::empty());
+}
+
+term_ptr opaque_set_plus(term_ptr val, term_ptr set) {
+    auto &s = set->as_base<Set>().val;
+    return Term::make_moved(set::plus(val, s));
+}
+
+term_ptr opaque_set_minus(term_ptr val, term_ptr set) {
+    auto &s = set->as_base<Set>().val;
+    return Term::make_moved(set::minus(val, s));
+}
+
+term_ptr opaque_set_union(term_ptr set1, term_ptr set2) {
+    auto &s1 = set1->as_base<Set>().val;
+    auto &s2 = set2->as_base<Set>().val;
+    return Term::make_moved(set::plus_all(s1, s2));
+}
+
+term_ptr opaque_set_diff(term_ptr set1, term_ptr set2) {
+    auto &s1 = set1->as_base<Set>().val;
+    auto &s2 = set2->as_base<Set>().val;
+    return Term::make_moved(set::minus_all(s1, s2));
+}
+
+term_ptr opaque_set_choose(term_ptr set) {
+    auto &s = set->as_base<Set>().val;
+    auto opt = set::choose(s);
+    if (opt.has_value()) {
+        auto p = opt.value();
+        auto t = p.first;
+        auto r = Term::make_moved(std::move(p.second));
+        auto sym = lookup_tuple_symbol(2);
+        return _make_some(Term::make_generic(sym, {t, r}));
+    } else {
+        return _make_none();
+    }
+}
+
+term_ptr opaque_set_size(term_ptr set) {
+    auto &s = set->as_base<Set>().val;
+    return Term::make((int32_t) set::size(s));
+}
+
+term_ptr opaque_set_member(term_ptr val, term_ptr set) {
+    auto &s = set->as_base<Set>().val;
+    return Term::make(set::member(val, s));
+}
+
+term_ptr opaque_set_singleton(term_ptr val) {
+    return Term::make_moved(set::singleton(val));
+}
+
+term_ptr opaque_set_subset(term_ptr set1, term_ptr set2) {
+    auto &s1 = set1->as_base<Set>().val;
+    auto &s2 = set2->as_base<Set>().val;
+    return Term::make(set::subset(s1, s2));
+}
+
+term_ptr opaque_set_from_list(term_ptr list) {
+    auto vec = Term::vectorize_list_term(list);
+    return Term::make_moved(set::from_vec(vec));
+}
+
+// The template varargs is necessary to handle folding with closures (captured variables are passed in as additional
+// arguments).
+template<typename... Ts>
+term_ptr fold(term_ptr (*f)(term_ptr, term_ptr, Ts...), term_ptr acc, term_ptr list, Ts... args) {
+    auto vec = Term::vectorize_list_term(list);
+    for (auto t : vec) {
+        acc = f(acc, t, args...);
+    }
+    return acc;
 }
 /* INSERT 0 */
 

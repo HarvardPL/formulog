@@ -72,7 +72,6 @@ functor_type Type::i64 = make_prim("_ BitVec", {make_index("64")});
 functor_type Type::fp32 = make_prim("_ FloatingPoint", {make_index("8"), make_index("24")});
 functor_type Type::fp64 = make_prim("_ FloatingPoint", {make_index("11"), make_index("53")});
 functor_type Type::string_ = make_prim("String");
-functor_type Type::model = make_prim("Model");
 
 atomic_size_t Type::cnt;
 
@@ -95,7 +94,8 @@ functor_type Type::lookup(Symbol sym) {
         case Symbol::boxed_string:
             return string_;
         case Symbol::model:
-            return model;
+        case Symbol::opaque_set:
+            throw std::runtime_error("shouldn't happen");
 /* INSERT 0 */
     }
     __builtin_unreachable();

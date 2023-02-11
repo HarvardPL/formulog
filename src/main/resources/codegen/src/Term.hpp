@@ -9,6 +9,7 @@
 #include <souffle/SouffleInterface.h>
 #include <tbb/concurrent_unordered_map.h>
 
+#include "set.hpp"
 #include "Symbol.hpp"
 
 #define NO_COPY_OR_ASSIGN(t) \
@@ -58,6 +59,9 @@ struct Term {
     template<typename T>
     inline static term_ptr make(T val);
 
+    template<typename T>
+    inline static term_ptr make_moved(T &&val);
+
     // Construct a memoized ComplexTerm
     template<Symbol S, typename... T>
     static term_ptr make(T... val);
@@ -73,13 +77,9 @@ struct Term {
             return it->second;
         }
         auto id = int_cnt++;
-        auto result = term_int_map.emplace(this, id);
-        if (!result.second) {
-            return result.first->second;
-        }
-        auto result2 = int_term_map.emplace(id, this);
-        assert(result2.second);
-        return id;
+        auto res = int_term_map.emplace(id, this);
+        assert(res.second);
+        term_int_map.emplace(this, id).first->second;
          */
     }
 
@@ -132,7 +132,7 @@ struct BaseTerm : public Term {
     static int compare(const BaseTerm<T> &t1, const BaseTerm<T> &t2);
 
 private:
-    BaseTerm(Symbol sym_, T val_) : Term{sym_}, val(val_) {}
+    BaseTerm(Symbol sym_, T &&val_) : Term{sym_}, val{std::move(val_)} {}
 
     template<typename, Symbol> friend
     class BaseTermCache;
@@ -155,17 +155,29 @@ inline const term_ptr max_term =
 // Concurrency-safe cache for BaseTerm values
 template<typename T, Symbol S>
 class BaseTermCache {
-    typedef concurrent_unordered_map<T, term_ptr, boost::hash<T>> map_t;
+    struct Hash {
+        std::size_t operator()(const T *const &val) const {
+            return boost::hash<T>{}(*val);
+        }
+    };
+
+    struct Equals {
+        bool operator()(const T *const &val1, const T *const &val2) const {
+            return *val1 == *val2;
+        }
+    };
+
+    typedef concurrent_unordered_map<const T*, term_ptr, Hash, Equals> map_t;
     inline static map_t cache;
 
 public:
-    static term_ptr get(const T &val) {
-        auto it = cache.find(val);
+    static term_ptr get(T &&val) {
+        auto it = cache.find(&val);
         if (it != cache.end()) {
             return it->second;
         }
-        auto ptr = new BaseTerm<T>(S, val);
-        auto result = cache.insert({val, ptr});
+        auto ptr = new BaseTerm<T>(S, std::move(val));
+        auto result = cache.emplace(&ptr->val, ptr);
         if (!result.second) {
             // Term was not successfully inserted
             delete ptr;
@@ -185,12 +197,12 @@ inline term_ptr Term::make<bool>(bool val) {
 
 template<>
 inline term_ptr Term::make<int32_t>(int32_t val) {
-    return BaseTermCache<int32_t, Symbol::boxed_i32>::get(val);
+    return BaseTermCache<int32_t, Symbol::boxed_i32>::get(std::move(val));
 }
 
 template<>
 inline term_ptr Term::make<int64_t>(int64_t val) {
-    return BaseTermCache<int64_t, Symbol::boxed_i64>::get(val);
+    return BaseTermCache<int64_t, Symbol::boxed_i64>::get(std::move(val));
 }
 
 template<>
@@ -201,7 +213,7 @@ inline term_ptr Term::make<float>(float val) {
     if (isnan(val)) {
         return nan32_term;
     }
-    return cache::get(val);
+    return cache::get(std::move(val));
 }
 
 template<>
@@ -212,19 +224,29 @@ inline term_ptr Term::make<double>(double val) {
     if (isnan(val)) {
         return nan64_term;
     }
-    return cache::get(val);
+    return cache::get(std::move(val));
 }
 
 template<>
 inline term_ptr Term::make<string>(string val) {
-    return BaseTermCache<string, Symbol::boxed_string>::get(val);
+    return BaseTermCache<string, Symbol::boxed_string>::get(std::move(val));
+}
+
+template<>
+inline term_ptr Term::make_moved<string>(string &&val) {
+    return BaseTermCache<string, Symbol::boxed_string>::get(std::move(val));
 }
 
 typedef std::map<term_ptr, term_ptr> Model;
 
 template<>
-inline term_ptr Term::make<Model>(Model val) {
-    return BaseTermCache<Model, Symbol::model>::get(val);
+inline term_ptr Term::make_moved<Model>(Model &&val) {
+    return BaseTermCache<Model, Symbol::model>::get(std::move(val));
+}
+
+template<>
+inline term_ptr Term::make_moved(Set &&val) {
+    return BaseTermCache<Set, Symbol::opaque_set>::get(std::move(val));
 }
 
 template<typename T>
