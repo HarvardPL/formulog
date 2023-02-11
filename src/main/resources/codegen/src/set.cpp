@@ -34,7 +34,18 @@ Set plus_all(const Set &s1, const Set &s2) {
 
 Set minus_all(const Set &s1, const Set &s2) {
     Set r{s1};
-    r.erase(s2.begin(), s2.end());
+    auto it = r.begin();
+    for (auto elt : s2)
+    {
+        it = std::lower_bound(it, r.end(), elt);
+        if (it == r.end()) {
+            break;
+        }
+        if (*it != elt) {
+            continue;
+        }
+        it = r.erase(it);
+    }
     return r;
 }
 
