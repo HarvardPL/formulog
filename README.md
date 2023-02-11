@@ -211,15 +211,3 @@ mvn license:download-licenses
 
 The generated content can be found in the `target/generated-resources/`
 directory.
-
-## TODO
-
-This project is very much still under development and there are quite a few
-rough edges. Some of them will hopefully get smoothed out soon.
-
-* Standardize names of command-line options
-* Add support for configuration files
-* Better error messages
-* Faster parser
-* Interactive query mode
-* Tutorial
