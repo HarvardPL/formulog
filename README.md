@@ -193,6 +193,45 @@ threads, use
 java -DdebugSmt -jar formulog.jar greeting.flg -j 3
 ```
 
+## Compiling Formulog programs
+
+As an alternative to being directly interpreted, Formulog programs can be compiled into a mix of C++ and Souffle code, which can then in turn be compiled into an efficient executable.
+To enable compilation, set the `--codegen` (`-c`) flag; generated code will be placed in the directory `./codegen/` (you can change this using the `--codegen-dir` option).
+Within this directory you can use `cmake` to compile the generated code into a binary named `flg`.
+
+For example, to compile and execute the `greeting.flg` program from above, you can use these steps:
+
+```shellsession
+$ java -jar formulog.jar -c greeting.flg
+$ cd codegen
+$ cmake -B build -S .
+$ cmake --build build
+$ ./build/flg
+```
+
+This should produce output like the following:
+
+```
+greeting: 3
+greeting("Hello, Alice")
+greeting("Hello, World")
+greeting("Hello, Bob")
+```
+
+Code generation for Formulog is still experimental, and there are some rough edges that need to be smoothed out (for example, the produced binary does not output relations to disk).
+
+### Dependencies
+
+To build the generated code, you must have:
+
+- A C++ compiler that supports the C++17 standard (and OpenMP, if you want to produce parallelized code)
+- `cmake` (v3.21+)
+- [`boost`](https://www.boost.org/) (a version compatible with v1.79)
+- [`oneTBB`](https://oneapi-src.github.io/oneTBB/) (v2021.8.0 is known to work)
+- [`souffle`](https://souffle-lang.github.io/) (v2.3 is known to work)
+
+The Formulog Docker image already has these dependencies installed.
+
 ## Writing Formulog programs
 
 See the documentation in `docs/`. Some shortish example programs can be found in
