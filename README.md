@@ -119,12 +119,15 @@ greeting("Hello, World")
 The Formulog interpreter currently provides the following options:
 
 ```
-Usage: formulog [-hV] [--dump-all] [--dump-idb] [--dump-query] [--dump-sizes]
-                [-D=<outDir>] [-j=<parallelism>]
+Usage: formulog [-chV] [--dump-all] [--dump-idb] [--dump-query] [--dump-sizes]
+                [--codegen-dir=<codegenDir>] [-D=<outDir>] [-j=<parallelism>]
                 [--smt-solver-mode=<smtStrategy>]
                 [--dump=<relationsToPrint>]... [-F=<factDirs>]... <file>
 Runs Formulog.
       <file>         Formulog program file.
+  -c, --codegen      Compile the Formulog program.
+      --codegen-dir=<codegenDir>
+                     Directory for generated code (default: './codegen').
   -D, --output-dir=<outDir>
                      Directory for .tsv output files (default: '.').
       --dump=<relationsToPrint>

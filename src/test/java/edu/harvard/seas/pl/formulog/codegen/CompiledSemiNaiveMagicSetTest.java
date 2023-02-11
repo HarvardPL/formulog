@@ -29,13 +29,13 @@ import edu.harvard.seas.pl.formulog.magic.CommonMagicSetTest;
 public class CompiledSemiNaiveMagicSetTest extends CommonMagicSetTest<SemiNaiveEvaluation> {
 
 	static {
-		if (!Configuration.testCodeGen) {
-			System.err.println("WARNING: skipping CompiledSemiNaiveMagicSetTest; enable with flag");
+		if (!Configuration.testCodegen) {
+			System.err.println("WARNING: skipping CompiledSemiNaiveMagicSetTest; enable with system property `-DtestCodegen`");
 		}
 	}
 	
 	public CompiledSemiNaiveMagicSetTest() {
-		super(Configuration.testCodeGen ? new CompiledSemiNaiveTester() : new NopTester<>());
+		super(Configuration.testCodegen ? new CompiledSemiNaiveTester() : new NopTester<>());
 	}
 
 }

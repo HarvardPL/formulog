@@ -83,6 +83,12 @@ public final class Main implements Callable<Integer> {
 
     @Option(names = "--dump-sizes", description = "Print relation sizes.")
     private boolean dumpSizes;
+    
+    @Option(names = {"-c", "--codegen"}, description = "Compile the Formulog program.")
+    private boolean codegen;
+    
+    @Option(names = {"--codegen-dir"}, description = "Directory for generated code (default: './codegen').")
+    private File codegenDir = new File("codegen");
 
     @Parameters(index = "0", description = "Formulog program file.")
     private File file;
@@ -325,8 +331,8 @@ public final class Main implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        if (Configuration.codeGen) {
-            CodeGen.main(file);
+        if (codegen) {
+            CodeGen.main(file, codegenDir);
         } else {
             go();
         }
