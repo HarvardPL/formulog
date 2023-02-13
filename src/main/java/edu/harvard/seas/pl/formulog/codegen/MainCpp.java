@@ -56,6 +56,8 @@ public class MainCpp extends TemplateSrcFile {
         CodeGenUtil.copyOver(br, out, 4);
         pr.printResults();
         */
+        CodeGenUtil.copyOver(br, out, 4);
+        pr.printIdbsToDisk();
         CodeGenUtil.copyOver(br, out, -1);
     }
 
@@ -176,6 +178,14 @@ public class MainCpp extends TemplateSrcFile {
             String repr = ctx.lookupRepr(sym);
             CppExpr rel = CppMethodCall.mk(CppVar.mk("prog"), "getRelation", CppConst.mkString(repr));
             return CppMethodCall.mkThruPtr(rel, "size");
+        }
+        
+        public void printIdbsToDisk() {
+            for (RelationSymbol sym : ctx.getProgram().getRuleSymbols()) {
+                if (sym.isDisk()) {
+                    out.println("    saveToDisk(\"" + ctx.lookupRepr(sym) + "\");");
+                }
+            }
         }
 
     }
