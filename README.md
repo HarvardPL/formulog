@@ -218,13 +218,13 @@ greeting("Hello, World")
 greeting("Hello, Bob")
 ```
 
-Code generation for Formulog is still experimental, and there are some rough edges that need to be smoothed out (for example, the produced binary does not output relations to disk).
+Use the command `./build/flg -h` see options available when running the executable.
 
 ### Dependencies
 
 To build the generated code, you must have:
 
-- A C++ compiler that supports the C++17 standard (and OpenMP, if you want to produce parallelized code)
+- A C++ compiler that supports the C++17 standard (and OpenMP, if you want to produce a parallelized binary)
 - `cmake` (v3.21+)
 - [`boost`](https://www.boost.org/) (a version compatible with v1.79)
 - [`oneTBB`](https://oneapi-src.github.io/oneTBB/) (v2021.8.0 is known to work)
