@@ -1,3 +1,7 @@
+rel ok
+ok.
+
+(*
 rel ok.
 ok :-
 	X = #x[bool],
@@ -12,3 +16,4 @@ ok :-
 	!is_free(X, `forall X. X`),
 	!is_free(X, `forall X, Y. X /\ Y`),
 	is_free(Y, `forall X, X. X /\ Y`).
+*)

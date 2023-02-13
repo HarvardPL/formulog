@@ -420,7 +420,7 @@ public class FuncsHpp extends TemplateSrcFile {
                     ctx.register(sym, "is_set_sat");
                     break;
                 default:
-                    System.err.println("unhandled built-in function symbol: " + sym);
+                    throw new AssertionError("unhandled built-in function symbol: " + sym);
             }
         }
 

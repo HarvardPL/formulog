@@ -38,24 +38,4 @@ public class CompiledSemiNaiveEvaluationTest extends CommonEvaluationTest<SemiNa
 		super(Configuration.testCodeGen ? new CompiledSemiNaiveTester() : new NopTester<>());
 	}
 
-	@Override
-	public void test061() {
-		// Ignoring test (substitute)
-	}
-	
-	@Override
-	public void test096() {
-		// Ignoring test (substitute)
-	}
-	
-	@Override
-	public void test097() {
-		// Ignoring test (substitute)
-	}
-
-	@Override
-	public void test128() {
-		// Ignoring test (is_free)
-	}
-	
 }
