@@ -446,8 +446,6 @@ is_sat_opt   : [bool smt list, i32 option] -> bool option
 is_valid     : bool smt -> bool
 get_model    : [bool smt list, i32 option] -> model option
 query_model  : ['a sym, model] -> 'a option
-substitute   : ['a sym, 'a smt, 'b smt] -> 'b smt
-is_free      : ['a sym, 'b smt] -> bool
 ```
 
 The functions `is_sat` and `is_valid` check the satisfiability and validity,
@@ -463,7 +461,3 @@ inspected using `query_model`, which will return
 `none` if a variable is not present in the model or if it is of a type that
 cannot be concretely represented in Formulog (for example, Formulog does not
 have a concrete representation of a 13-bit bit vector).
-
-The function `substitute` is capture avoiding (for instance, it handles `let`
-expressions correctly within formulas). The function `is_free` returns true iff
-the given formula variable appears free in the supplied formula.

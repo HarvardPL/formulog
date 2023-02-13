@@ -33,7 +33,6 @@ import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Triple;
-import org.pcollections.HashTreePMap;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -214,10 +213,6 @@ public final class BuiltInFunctionDefFactory {
                 return getModel;
             case QUERY_MODEL:
                 return QueryModel.INSTANCE;
-            case SUBSTITUTE:
-                return Substitute.INSTANCE;
-            case IS_FREE:
-                return IsFree.INSTANCE;
             case fp32ToFp64:
                 return PrimitiveConversions.fp32ToFp64;
             case fp32ToI32:
@@ -1637,47 +1632,6 @@ public final class BuiltInFunctionDefFactory {
         }
 
     };
-
-    private enum Substitute implements FunctionDef {
-
-        INSTANCE;
-
-        @Override
-        public FunctionSymbol getSymbol() {
-            return BuiltInFunctionSymbol.SUBSTITUTE;
-        }
-
-        @Override
-        public Term evaluate(Term[] args) throws EvaluationException {
-            SolverVariable x = (SolverVariable) args[0];
-            SmtLibTerm y = (SmtLibTerm) args[1];
-            SmtLibTerm t = (SmtLibTerm) args[2];
-            return t.substSolverTerms(HashTreePMap.singleton(x, y));
-        }
-
-    }
-
-    private enum IsFree implements FunctionDef {
-
-        INSTANCE;
-
-        @Override
-        public FunctionSymbol getSymbol() {
-            return BuiltInFunctionSymbol.IS_FREE;
-        }
-
-        @Override
-        public Term evaluate(Term[] args) throws EvaluationException {
-            Set<SolverVariable> vars = ((SmtLibTerm) args[1]).freeVars();
-            SolverVariable x = (SolverVariable) args[0];
-            if (vars.contains(x)) {
-                return trueTerm;
-            } else {
-                return falseTerm;
-            }
-        }
-
-    }
 
     private final Map<Triple<Set<SmtLibTerm>, Boolean, Integer>, Future<SmtResult>> smtMemo = new ConcurrentHashMap<>();
 

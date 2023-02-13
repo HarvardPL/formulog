@@ -22,7 +22,6 @@ package edu.harvard.seas.pl.formulog.symbols;
 
 
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.a;
-import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.b;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.bool;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.cmp;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.fp32;
@@ -216,10 +215,6 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
 
     QUERY_MODEL("query_model", 2),
 
-    SUBSTITUTE("substitute", 3),
-
-    IS_FREE("is_free", 2),
-
     IS_SET_SAT("is_set_sat", 2),
 
     // Opaque datatypes
@@ -381,8 +376,6 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
             case I64_SCMP:
             case I64_UCMP:
                 return new FunctorType(i64, i64, cmp);
-            case IS_FREE:
-                return new FunctorType(sym(a), smt(b), bool);
             case IS_SAT:
             case IS_VALID:
                 return new FunctorType(smt(bool), bool);
@@ -414,8 +407,6 @@ public enum BuiltInFunctionSymbol implements FunctionSymbol {
                 return new FunctorType(string, i32, i32, option(string));
             case STRING_LENGTH:
                 return new FunctorType(string, i32);
-            case SUBSTITUTE:
-                return new FunctorType(sym(a), smt(a), smt(b), smt(b));
             case fp32ToFp64:
                 return new FunctorType(fp32, fp64);
             case fp32ToI32:
