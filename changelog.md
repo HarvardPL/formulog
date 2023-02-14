@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.0] - 2023-02-14
+
+### Added
+
+- Support for compilation to Souffle/C++ (`--codegen` option).
+
+### Changed
+
+- Removed built-in functions `substitute` and `is_free`.
+
 ## [0.6.0] - 2022-08-31
 
 ### Added

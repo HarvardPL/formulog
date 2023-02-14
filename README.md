@@ -24,7 +24,7 @@ Docker installed, you can spin up an Ubuntu container with Formulog and some
 example programs by running this command:
 
 ```bash
-docker run -it aaronbembenek/formulog:0.6.0 # may require sudo
+docker run -it aaronbembenek/formulog:0.7.0 # may require sudo
 ```
 
 This should place you in the directory `/root/formulog/`. From here, you should
@@ -205,7 +205,7 @@ For example, to compile and execute the `greeting.flg` program from above, you c
 $ java -jar formulog.jar -c greeting.flg
 $ cd codegen
 $ cmake -B build -S .
-$ cmake --build build
+$ cmake --build build [-j NCORES]
 $ ./build/flg
 ```
 
