@@ -107,10 +107,10 @@ public class CodeGen {
         if (args.length != 1) {
             throw new IllegalArgumentException("Expected a single argument (the Formulog source file)");
         }
-        main(new File(args[0]));
+        main(new File(args[0]), new File("codegen"));
     }
 
-    public static void main(File file) throws Exception {
+    public static void main(File file, File outDir) throws Exception {
         Program<UserPredicate, BasicRule> prog;
         try (FileReader fr = new FileReader(file)) {
             prog = new Parser().parse(fr);
@@ -119,11 +119,10 @@ public class CodeGen {
         MagicSetTransformer mst = new MagicSetTransformer(wtp);
         BasicProgram magicProg = mst.transform(Configuration.useDemandTransformation,
                 Configuration.restoreStratification);
-        File dir = new File("codegen");
-        File srcDir = dir.toPath().resolve("src").toFile();
+        File srcDir = outDir.toPath().resolve("src").toFile();
         srcDir.mkdirs();
         Util.clean(srcDir, false);
-        new CodeGen(magicProg, dir).go();
+        new CodeGen(magicProg, outDir).go();
 
     }
 

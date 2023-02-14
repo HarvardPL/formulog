@@ -24,7 +24,7 @@ Docker installed, you can spin up an Ubuntu container with Formulog and some
 example programs by running this command:
 
 ```bash
-docker run -it aaronbembenek/formulog:0.6.0 # may require sudo
+docker run -it aaronbembenek/formulog:0.7.0 # may require sudo
 ```
 
 This should place you in the directory `/root/formulog/`. From here, you should
@@ -119,12 +119,15 @@ greeting("Hello, World")
 The Formulog interpreter currently provides the following options:
 
 ```
-Usage: formulog [-hV] [--dump-all] [--dump-idb] [--dump-query] [--dump-sizes]
-                [-D=<outDir>] [-j=<parallelism>]
+Usage: formulog [-chV] [--dump-all] [--dump-idb] [--dump-query] [--dump-sizes]
+                [--codegen-dir=<codegenDir>] [-D=<outDir>] [-j=<parallelism>]
                 [--smt-solver-mode=<smtStrategy>]
                 [--dump=<relationsToPrint>]... [-F=<factDirs>]... <file>
 Runs Formulog.
       <file>         Formulog program file.
+  -c, --codegen      Compile the Formulog program.
+      --codegen-dir=<codegenDir>
+                     Directory for generated code (default: './codegen').
   -D, --output-dir=<outDir>
                      Directory for .tsv output files (default: '.').
       --dump=<relationsToPrint>
@@ -190,6 +193,45 @@ threads, use
 java -DdebugSmt -jar formulog.jar greeting.flg -j 3
 ```
 
+## Compiling Formulog programs
+
+As an alternative to being directly interpreted, Formulog programs can be compiled into a mix of C++ and Souffle code, which can then in turn be compiled into an efficient executable.
+To enable compilation, set the `--codegen` (`-c`) flag; generated code will be placed in the directory `./codegen/` (you can change this using the `--codegen-dir` option).
+Within this directory you can use `cmake` to compile the generated code into a binary named `flg`.
+
+For example, to compile and execute the `greeting.flg` program from above, you can use these steps:
+
+```shellsession
+$ java -jar formulog.jar -c greeting.flg
+$ cd codegen
+$ cmake -B build -S .
+$ cmake --build build [-j NCORES]
+$ ./build/flg
+```
+
+This should produce output like the following:
+
+```
+greeting: 3
+greeting("Hello, Alice")
+greeting("Hello, World")
+greeting("Hello, Bob")
+```
+
+Use the command `./build/flg -h` see options available when running the executable.
+
+### Dependencies
+
+To build the generated code, you must have:
+
+- A C++ compiler that supports the C++17 standard (and OpenMP, if you want to produce a parallelized binary)
+- `cmake` (v3.21+)
+- [`boost`](https://www.boost.org/) (a version compatible with v1.79)
+- [`oneTBB`](https://oneapi-src.github.io/oneTBB/) (v2021.8.0 is known to work)
+- [`souffle`](https://souffle-lang.github.io/) (v2.3 is known to work)
+
+The Formulog Docker image already has these dependencies installed.
+
 ## Writing Formulog programs
 
 See the documentation in `docs/`. Some shortish example programs can be found in
@@ -211,15 +253,3 @@ mvn license:download-licenses
 
 The generated content can be found in the `target/generated-resources/`
 directory.
-
-## TODO
-
-This project is very much still under development and there are quite a few
-rough edges. Some of them will hopefully get smoothed out soon.
-
-* Standardize names of command-line options
-* Add support for configuration files
-* Better error messages
-* Faster parser
-* Interactive query mode
-* Tutorial
