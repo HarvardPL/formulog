@@ -6,6 +6,8 @@
 #define SMT_PARSER_CPP_SET_H
 
 #include <boost/container/flat_set.hpp>
+#include <optional>
+#include <vector>
 
 namespace flg {
 

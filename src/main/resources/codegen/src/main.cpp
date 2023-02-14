@@ -149,11 +149,13 @@ int main(int argc, char **argv) {
     namespace po = boost::program_options;
     po::options_description desc("Allowed options");
     string cwd = boost::filesystem::current_path().string();
+    bool dump_idb{false};
+    bool no_smt_double_check{false};
     desc.add_options()
             ("help,h", "produce help message")
             ("parallelism,j", po::value<size_t>()->default_value(1),
              "number of threads to use")
-            ("dump-idb", po::bool_switch(),
+            ("dump-idb", po::bool_switch(&dump_idb),
                     "print the contents of the IDB relations to screen")
             ("fact-dir,F", po::value<vector<string>>()->default_value({cwd}),
              "input directory with external EDBs (can be set multiple times)")
@@ -161,7 +163,7 @@ int main(int argc, char **argv) {
              "directory for .tsv output files")
             ("smt-solver-mode", po::value<smt::SmtSolverMode>()->default_value(smt::SmtSolverMode::check_sat_assuming),
              "set interaction strategy between Formulog and the external SMT solver")
-            ("no-smt-double-check", po::bool_switch(),
+            ("no-smt-double-check", po::bool_switch(&no_smt_double_check),
              "do not double check unknown values returned by SMT solver (using a generally more reliable solver mode)")
             ("smt-cache-size", po::value<size_t>()->default_value(100),
              "how many implications to store for check-sat-assuming solver");
@@ -183,7 +185,7 @@ int main(int argc, char **argv) {
 
     initialize_symbols();
     globals::smt_solver_mode = vm["smt-solver-mode"].as<smt::SmtSolverMode>();
-    globals::smt_double_check = !vm.count("no-smt-double-check");
+    globals::smt_double_check = !no_smt_double_check;
     globals::program = souffle::ProgramFactory::newInstance("formulog");
     if (!globals::program) {
         cout << "Unable to load Souffle program" << endl;
@@ -196,6 +198,6 @@ int main(int argc, char **argv) {
     boost::filesystem::create_directories(out_dir);
     ExternalIdbPrinter idbPrinter(out_dir, parallelism);
     idbPrinter.go();
-    printResults(!vm.count("dump-idb"));
+    printResults(dump_idb);
     return 0;
 }
