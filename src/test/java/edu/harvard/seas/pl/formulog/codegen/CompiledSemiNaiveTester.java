@@ -49,6 +49,7 @@ public class CompiledSemiNaiveTester implements Tester {
     @Override
     public void test(String file, List<String> inputDirs) {
         boolean isBad = file.matches("test\\d\\d\\d_bd.flg");
+        Path topPath = null;
         try {
             InputStream is = getClass().getClassLoader().getResourceAsStream(file);
             if (is == null) {
@@ -64,7 +65,8 @@ public class CompiledSemiNaiveTester implements Tester {
             MagicSetTransformer mst = new MagicSetTransformer(wtp);
             BasicProgram magicProg = mst.transform(true, true);
             String name = file.substring(0, file.indexOf('.'));
-            boolean ok = evaluate(name, magicProg);
+            topPath = Path.of("codegen", "tests", name);
+            boolean ok = evaluate(name, topPath, magicProg);
             if (!ok && !isBad) {
                 String msg = "Test failed for a good program";
                 fail(msg);
@@ -78,11 +80,14 @@ public class CompiledSemiNaiveTester implements Tester {
             out.println("Unexpected exception:");
             e.printStackTrace(out);
             fail(baos.toString());
+        } finally {
+            if (!Configuration.keepCodegenTestDirs && topPath != null) {
+                Util.clean(topPath.toFile(), true);
+            }
         }
     }
 
-    private boolean evaluate(String name, BasicProgram prog) throws Exception {
-        Path topPath = Path.of("codegen", "tests", name);
+    private boolean evaluate(String name, Path topPath, BasicProgram prog) throws Exception {
         File srcDir = topPath.resolve("src").toFile();
         srcDir.mkdirs();
         Util.clean(srcDir, false);
