@@ -148,6 +148,7 @@ public final class Configuration {
             "stratification_graphs");
 
     public static final boolean testCodegen = propIsSet("testCodegen");
+    public static final boolean keepCodegenTestDirs = propIsSet("keepCodegenTestDirs");
     public static final String cxxCompiler = getStringProp("cxxCompiler", null);
 
     public static final String souffleInclude = System.getProperty("souffleInclude");
