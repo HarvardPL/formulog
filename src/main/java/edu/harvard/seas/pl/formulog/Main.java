@@ -50,7 +50,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.*;
 import picocli.CommandLine.Model;
 
-@Command(name = "formulog", mixinStandardHelpOptions = true, version = "Formulog 0.6.0", description = "Runs Formulog.")
+@Command(name = "formulog", mixinStandardHelpOptions = true, version = "Formulog 0.7.0", description = "Runs Formulog.")
 public final class Main implements Callable<Integer> {
 
     @Spec
