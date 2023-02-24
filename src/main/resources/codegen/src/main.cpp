@@ -194,6 +194,7 @@ int main(int argc, char **argv) {
     loadEdbs(vm["fact-dir"].as<vector<string>>(), parallelism);
     globals::program->setNumThreads(parallelism);
     globals::program->run();
+    flg::smt::SmtLibShim::terminate_all_children();
     boost::filesystem::path out_dir(vm["out-dir"].as<string>());
     boost::filesystem::create_directories(out_dir);
     ExternalIdbPrinter idbPrinter(out_dir, parallelism);

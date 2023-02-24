@@ -7,6 +7,7 @@
 
 #include <unordered_set>
 #include <boost/process.hpp>
+#include <tbb/concurrent_unordered_map.h>
 #include "Term.hpp"
 #include "Type.hpp"
 
@@ -59,7 +60,21 @@ public:
 
     Model get_model() override;
 
+    static void terminate_all_children() {
+        for (auto p : s_shims) {
+            if (p.second) {
+                p.first->m_proc.terminate();
+            }
+        }
+    }
+
+    ~SmtLibShim() override {
+        s_shims[this] = false;
+    }
+
 private:
+    inline static tbb::concurrent_unordered_map<SmtLibShim *, bool> s_shims;
+
     class Logger {
     public:
         explicit Logger(boost::process::opstream &&in) : m_in{std::move(in)} {}

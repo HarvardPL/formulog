@@ -102,7 +102,9 @@ void MyTypeInferer::unify(const Type &ty1, const Type &ty2) {
 }
 
 SmtLibShim::SmtLibShim(boost::process::child &&proc, boost::process::opstream &&in, boost::process::ipstream &&out)
-        : m_proc{std::move(proc)}, m_in{std::move(in)}, m_out{std::move(out)} {}
+        : m_proc{std::move(proc)}, m_in{std::move(in)}, m_out{std::move(out)} {
+            s_shims[this] = true;
+        }
 
 void SmtLibShim::declare_vars(term_ptr t) {
     if (is_solver_var(t)) {
