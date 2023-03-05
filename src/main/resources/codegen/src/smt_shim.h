@@ -63,7 +63,6 @@ public:
     static void terminate_all_children() {
         for (auto p : s_shims) {
             if (p.second) {
-                p.first->m_in.close();
                 p.first->m_proc.terminate();
             }
         }
