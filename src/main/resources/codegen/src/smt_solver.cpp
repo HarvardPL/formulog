@@ -30,9 +30,12 @@ TopLevelSmtSolver::TopLevelSmtSolver() {
 }
 
 std::unique_ptr<SmtShim> TopLevelSmtSolver::make_shim() {
+    namespace bp = boost::process;
+    // Force synchronization here to avoid some issues that come up with the
+    // `bp::child` constructor and pipes in a multithreaded setting. See
+    // <https://github.com/HarvardPL/formulog/issues/30>
     static std::mutex mtx;
     std::lock_guard<std::mutex> guard(mtx);
-    namespace bp = boost::process;
     bp::ipstream out;
     bp::opstream in;
     bp::child proc("z3 -in", bp::std_in < in, (bp::std_out & bp::std_err) > out);
