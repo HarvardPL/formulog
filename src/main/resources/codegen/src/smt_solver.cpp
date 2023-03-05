@@ -5,6 +5,8 @@
 #include "globals.h"
 #include "smt_solver.h"
 
+#include <mutex>
+
 namespace flg::smt {
 
 TopLevelSmtSolver::TopLevelSmtSolver() {
@@ -28,6 +30,8 @@ TopLevelSmtSolver::TopLevelSmtSolver() {
 }
 
 std::unique_ptr<SmtShim> TopLevelSmtSolver::make_shim() {
+    static std::mutex mtx;
+    std::lock_guard<std::mutex> guard(mtx);
     namespace bp = boost::process;
     bp::ipstream out;
     bp::opstream in;
