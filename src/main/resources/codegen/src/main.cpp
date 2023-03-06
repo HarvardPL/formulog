@@ -145,6 +145,21 @@ std::ostream &operator<<(std::ostream &os, const std::vector<std::string> &vec) 
 }
 }
 
+void printBanner(const std::string &heading) {
+    std::cout << "==================== " << heading << " ====================\n";
+}
+
+void printSmallBanner(const std::string &heading) {
+    std::cout << "---------- " << heading << " ----------\n";
+}
+
+void printSmtStats() {
+    std::cout << "\n";
+    printBanner("SMT STATS");
+    std::cout << "SMT calls: " << globals::smt_calls << "\n";
+    std::cout << "SMT time (ms): " << globals::smt_time << std::endl;
+}
+
 int main(int argc, char **argv) {
     namespace po = boost::program_options;
     po::options_description desc("Allowed options");
@@ -166,7 +181,9 @@ int main(int argc, char **argv) {
             ("no-smt-double-check", po::bool_switch(&no_smt_double_check),
              "do not double check unknown values returned by SMT solver (using a generally more reliable solver mode)")
             ("smt-cache-size", po::value<size_t>()->default_value(100),
-             "how many implications to store for check-sat-assuming solver");
+             "how many implications to store for check-sat-assuming solver")
+            ("smt-stats", po::bool_switch(&globals::smt_stats),
+             "report basic statistics related to SMT solver usage");
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -199,6 +216,10 @@ int main(int argc, char **argv) {
     boost::filesystem::create_directories(out_dir);
     ExternalIdbPrinter idbPrinter(out_dir, parallelism);
     idbPrinter.go();
+
+    if (globals::smt_stats) {
+        printSmtStats();
+    }
     printResults(dump_idb);
     return 0;
 }

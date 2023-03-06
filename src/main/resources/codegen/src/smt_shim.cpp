@@ -2,10 +2,12 @@
 // Created by Aaron Bembenek on 8/9/22.
 //
 
+#include "globals.h"
 #include "smt_shim.h"
 #include "smt_parser.hpp"
 #include <bitset>
 #include <boost/format.hpp>
+#include <chrono>
 #include <regex>
 
 namespace flg::smt {
@@ -192,8 +194,17 @@ SmtStatus SmtLibShim::check_sat_assuming(const std::vector<term_ptr> &onVars, co
     }
     m_in.flush();
 
+    std::chrono::time_point<std::chrono::steady_clock> start;
+    if (globals::smt_stats) {
+        start = std::chrono::steady_clock::now();
+    }
     string line;
     getline(m_out, line);
+    if (globals::smt_stats) {
+        auto end = std::chrono::steady_clock::now();
+        globals::smt_time += chrono::duration_cast<chrono::milliseconds>(end - start).count();
+        globals::smt_calls++;
+    }
     SmtStatus status;
     if (line == "sat") {
         status = SmtStatus::sat;
