@@ -168,6 +168,9 @@ public final class Configuration {
     public static final boolean inlineInRules = propIsSet("inlineInRules", true);
 
     public static final boolean eagerSemiNaive = propIsSet("eagerSemiNaive");
+    
+    public static final boolean recordWork = propIsSet("recordWork");
+    public static final AtomicLong work = new AtomicLong();
 
     static {
         if (recordFuncDiagnostics) {
