@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import org.apache.commons.lang3.time.StopWatch;
 import org.jgrapht.Graph;
 import org.jgrapht.alg.connectivity.KosarajuStrongConnectivityInspector;
 import org.jgrapht.alg.interfaces.StrongConnectivityAlgorithm;
@@ -233,13 +234,14 @@ public class SmtLibShim {
 		flush();
 		String result;
 		try {
-			long start = 0;
+			StopWatch clock = null;
 			if (Main.smtStats) {
-				start = System.currentTimeMillis();
+				clock = new StopWatch();
+				clock.start();
 			}
 			result = in.readLine();
 			if (Main.smtStats) {
-				Configuration.smtTime.addAndGet(System.currentTimeMillis() - start);
+				Configuration.smtTime.addAndGet(clock.getTime());
 				Configuration.smtCalls.incrementAndGet();
 			}
 			if (result == null) {
