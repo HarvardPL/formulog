@@ -13,7 +13,7 @@ void break_into_conjuncts(term_ptr t, std::vector<term_ptr> &acc);
 void break_into_conjuncts_negated(term_ptr t, std::vector<term_ptr> &acc);
 
 std::vector<term_ptr> break_into_conjuncts(term_ptr t) {
-    auto conjuncts = std::vector<term_ptr>{};
+    std::vector<term_ptr> conjuncts;
     break_into_conjuncts(t, conjuncts);
     return conjuncts;
 }
@@ -234,16 +234,16 @@ void break_into_conjuncts_negated(term_ptr t, std::vector<term_ptr> &acc) {
     }
 }
 
-void break_into_conjuncts(term_ptr t, std::vector<term_ptr> &ordered) {
+void break_into_conjuncts(term_ptr t, std::vector<term_ptr> &acc) {
     if (t->sym == Symbol::smt_and) {
         auto &c = t->as_complex();
-        break_into_conjuncts(c.val[0], ordered);
-        break_into_conjuncts(c.val[1], ordered);
+        break_into_conjuncts(c.val[0], acc);
+        break_into_conjuncts(c.val[1], acc);
     } else if (t->sym == Symbol::smt_not) {
         auto &c = t->as_complex();
-        break_into_conjuncts_negated(c.val[0], ordered);
+        break_into_conjuncts_negated(c.val[0], acc);
     } else if (t != Term::make(true)) {
-        ordered.push_back(t);
+        acc.push_back(t);
     }
 }
 
