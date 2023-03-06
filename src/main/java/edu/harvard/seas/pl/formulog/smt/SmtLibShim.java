@@ -47,6 +47,7 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.traverse.TopologicalOrderIterator;
 
 import edu.harvard.seas.pl.formulog.Configuration;
+import edu.harvard.seas.pl.formulog.Main;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.Expr;
@@ -232,7 +233,15 @@ public class SmtLibShim {
 		flush();
 		String result;
 		try {
+			long start = 0;
+			if (Main.smtStats) {
+				start = System.currentTimeMillis();
+			}
 			result = in.readLine();
+			if (Main.smtStats) {
+				Configuration.smtTime.addAndGet(System.currentTimeMillis() - start);
+				Configuration.smtCalls.incrementAndGet();
+			}
 			if (result == null) {
 				throw new EvaluationException("Problem with evaluating solver! Unexpected end of stream");
 			}
