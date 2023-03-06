@@ -209,23 +209,19 @@ void break_into_conjuncts_negated(term_ptr t, std::vector<term_ptr> &acc) {
         auto &c = t->as_complex();
         // Turn ~~A into A
         break_into_conjuncts(c.val[0], acc);
-        return;
     } else if (t->sym == Symbol::smt_imp) {
         // Turn ~(A => B) into A /\ ~B
         auto &c = t->as_complex();
         break_into_conjuncts(c.val[0], acc);
         break_into_conjuncts_negated(c.val[1], acc);
-        return;
     } else if (t->sym == Symbol::smt_or) {
         // Turn ~(A \/ B) into ~A /\ ~B
         auto &c = t->as_complex();
         break_into_conjuncts_negated(c.val[0], acc);
         break_into_conjuncts_negated(c.val[1], acc);
-        return;
     } else if (t == Term::make(true)) {
         // Turn ~True into False
         acc.push_back(Term::make(false));
-        return;
     } else if (t != Term::make(false)) {
 #ifndef FLG_DEV
         t = Term::make<Symbol::smt_not>(t);
