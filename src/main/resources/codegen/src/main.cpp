@@ -72,7 +72,17 @@ void evaluate() {
 /* INSERT 3 */
 }
 
-void printResults(bool dump) {
+void printBanner(const std::string &heading) {
+    std::cout << "==================== " << heading << " ====================\n";
+}
+
+void printSmallBanner(const std::string &heading) {
+    std::cout << "---------- " << heading << " ----------\n";
+}
+
+void printSizes() {
+    std::cout << "\n";
+    printBanner("RELATION SIZES");
     for (auto rel: globals::program->getOutputRelations()) {
         std::string name = rel->getName();
         if (name.find("CODEGEN_") == 0) {
@@ -80,17 +90,31 @@ void printResults(bool dump) {
         }
         name = name.substr(0, name.size() - 1);
         std::cout << name << ": " << rel->size() << std::endl;
-        if (dump) {
-            for (auto &tup: *rel) {
-                std::cout << name << "(";
-                for (size_t i = 0; i < rel->getPrimaryArity(); ++i) {
-                    std::cout << *Term::unintize(tup[i]);
-                    if (i < rel->getPrimaryArity() - 1) {
-                        std::cout << ", ";
-                    }
+    }
+}
+
+void printResults() {
+    std::cout << "\n";
+    printBanner("SELECTED IDB RELATIONS");
+    for (auto rel: globals::program->getOutputRelations()) {
+        std::string name = rel->getName();
+        if (name.find("CODEGEN_") == 0) {
+            continue;
+        }
+        name = name.substr(0, name.size() - 1);
+        std::stringstream ss;
+        ss << name  << " (" << rel->size() << ")";
+        std::cout << "\n";
+        printSmallBanner(ss.str());
+        for (auto &tup: *rel) {
+            std::cout << name << "(";
+            for (size_t i = 0; i < rel->getPrimaryArity(); ++i) {
+                std::cout << *Term::unintize(tup[i]);
+                if (i < rel->getPrimaryArity() - 1) {
+                    std::cout << ", ";
                 }
-                std::cout << ")" << std::endl;
             }
+            std::cout << ")" << std::endl;
         }
     }
 }
@@ -145,11 +169,19 @@ std::ostream &operator<<(std::ostream &os, const std::vector<std::string> &vec) 
 }
 }
 
+void printSmtStats() {
+    std::cout << "\n";
+    printBanner("SMT STATS");
+    std::cout << "SMT calls: " << globals::smt_calls << "\n";
+    std::cout << "SMT time (ms): " << globals::smt_time << std::endl;
+}
+
 int main(int argc, char **argv) {
     namespace po = boost::program_options;
     po::options_description desc("Allowed options");
     string cwd = boost::filesystem::current_path().string();
     bool dump_idb{false};
+    bool dump_sizes{false};
     bool no_smt_double_check{false};
     desc.add_options()
             ("help,h", "produce help message")
@@ -157,6 +189,7 @@ int main(int argc, char **argv) {
              "number of threads to use")
             ("dump-idb", po::bool_switch(&dump_idb),
                     "print the contents of the IDB relations to screen")
+            ("dump-sizes", po::bool_switch(&dump_sizes), "print relation sizes")
             ("fact-dir,F", po::value<vector<string>>()->default_value({cwd}),
              "input directory with external EDBs (can be set multiple times)")
             ("out-dir,D", po::value<string>()->default_value(cwd),
@@ -166,7 +199,9 @@ int main(int argc, char **argv) {
             ("no-smt-double-check", po::bool_switch(&no_smt_double_check),
              "do not double check unknown values returned by SMT solver (using a generally more reliable solver mode)")
             ("smt-cache-size", po::value<size_t>()->default_value(100),
-             "how many implications to store for check-sat-assuming solver");
+             "how many implications to store for check-sat-assuming solver")
+            ("smt-stats", po::bool_switch(&globals::smt_stats),
+             "report basic statistics related to SMT solver usage");
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -199,6 +234,15 @@ int main(int argc, char **argv) {
     boost::filesystem::create_directories(out_dir);
     ExternalIdbPrinter idbPrinter(out_dir, parallelism);
     idbPrinter.go();
-    printResults(dump_idb);
+
+    if (globals::smt_stats) {
+        printSmtStats();
+    }
+    if (dump_sizes) {
+        printSizes();
+    }
+    if (dump_idb) {
+        printResults();
+    }
     return 0;
 }

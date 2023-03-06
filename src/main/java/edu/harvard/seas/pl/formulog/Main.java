@@ -89,6 +89,9 @@ public final class Main implements Callable<Integer> {
     
     @Option(names = {"--codegen-dir"}, description = "Directory for generated code (default: './codegen').")
     private File codegenDir = new File("codegen");
+    
+    @Option(names = {"--smt-stats"}, description = "Report basic statistics related to SMT solver usage.")
+    public static boolean smtStats = false;
 
     @Parameters(index = "0", description = "Formulog program file.")
     private File file;
@@ -248,6 +251,12 @@ public final class Main implements Callable<Integer> {
 
     private void dumpResults(EvaluationResult res) {
         PrintStream out = System.out;
+        if (smtStats) {
+            out.println();
+            out.println(getBanner("SMT STATS"));
+            out.println("SMT calls: " + Configuration.smtCalls);
+            out.println("SMT time (ms): " + Configuration.smtTime);
+        }
         List<RelationSymbol> allSymbols = res.getSymbols().stream().sorted(Comparator.comparing(Object::toString)).collect(Collectors.toList());
         Set<String> stringReprs = allSymbols.stream().map(RelationSymbol::toString).collect(Collectors.toSet());
         for (String sym : relationsToPrint) {
@@ -256,9 +265,10 @@ public final class Main implements Callable<Integer> {
             }
         }
         if (dumpSizes) {
+            out.println();
             out.println(getBanner("RELATION SIZES"));
             for (RelationSymbol sym : allSymbols) {
-                out.println(sym + "\t" + res.getCount(sym));
+                out.println(sym + ": " + res.getCount(sym));
             }
         }
         if (dumpAll || dumpQuery) {

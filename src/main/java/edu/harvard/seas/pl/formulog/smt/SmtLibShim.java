@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import org.apache.commons.lang3.time.StopWatch;
 import org.jgrapht.Graph;
 import org.jgrapht.alg.connectivity.KosarajuStrongConnectivityInspector;
 import org.jgrapht.alg.interfaces.StrongConnectivityAlgorithm;
@@ -47,6 +48,7 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.traverse.TopologicalOrderIterator;
 
 import edu.harvard.seas.pl.formulog.Configuration;
+import edu.harvard.seas.pl.formulog.Main;
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.Expr;
@@ -232,7 +234,16 @@ public class SmtLibShim {
 		flush();
 		String result;
 		try {
+			StopWatch clock = null;
+			if (Main.smtStats) {
+				clock = new StopWatch();
+				clock.start();
+			}
 			result = in.readLine();
+			if (Main.smtStats) {
+				Configuration.smtTime.addAndGet(clock.getTime());
+				Configuration.smtCalls.incrementAndGet();
+			}
 			if (result == null) {
 				throw new EvaluationException("Problem with evaluating solver! Unexpected end of stream");
 			}

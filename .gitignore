@@ -43,5 +43,6 @@ target/
 
 # Formulog stuff
 /codegen/
+/src/main/resources/codegen/build/
 
 .idea/

@@ -464,6 +464,14 @@ public class SemiNaiveEvaluation implements Evaluation {
 
             });
         }
+        if (Configuration.recordWork) {
+            Runtime.getRuntime().addShutdownHook(new Thread() {
+                @Override
+                public void run() {
+                    System.err.println("[WORK] " + Configuration.work.get());
+                }
+            });
+        }
         for (Stratum stratum : strata) {
             evaluateStratum(stratum);
         }

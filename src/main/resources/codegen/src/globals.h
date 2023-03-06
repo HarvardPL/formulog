@@ -13,4 +13,10 @@ inline bool smt_double_check{true};
 
 inline size_t smt_cache_size{100};
 
+inline bool smt_stats{false};
+
+inline std::atomic<unsigned long long> smt_calls;
+
+inline std::atomic<unsigned long long> smt_time;
+
 }

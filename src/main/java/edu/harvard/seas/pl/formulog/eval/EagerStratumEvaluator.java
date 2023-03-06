@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.eval;
  * #L%
  */
 
-
 import java.util.Iterator;
 import java.util.Set;
 
@@ -259,6 +258,9 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 		}
 
 		void updateBinding(SimplePredicate p, Term[] ans) {
+			if (Configuration.recordWork) {
+				Configuration.work.incrementAndGet();
+			}
 			Term[] args = p.getArgs();
 			BindingType[] pat = p.getBindingPattern();
 			for (int i = 0; i < pat.length; ++i) {
@@ -283,6 +285,9 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 		}
 
 		private boolean handleDelta(SimplePredicate pred, Substitution s) throws EvaluationException {
+			if (Configuration.recordWork) {
+				Configuration.work.incrementAndGet();
+			}
 			BindingType[] bindings = pred.getBindingPattern();
 			Term[] args = pred.getArgs();
 			int i = 0;
@@ -368,8 +373,8 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 					reportFact(head.getSymbol(), head.getArgs(), s);
 					return;
 				} catch (EvaluationException e) {
-					throw new EvaluationException("Exception raised while evaluationg the literal: "
-							+ rule.getHead() + e.getLocalizedMessage());
+					throw new EvaluationException("Exception raised while evaluationg the literal: " + rule.getHead()
+							+ e.getLocalizedMessage());
 				}
 			}
 			Iterator<Iterable<Term[]>> tups = lookup(rule, pos, s).iterator();

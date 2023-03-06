@@ -332,6 +332,9 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
         }
 
         void updateBinding(SimplePredicate p, Term[] ans) {
+            if (Configuration.recordWork) {
+                Configuration.work.incrementAndGet();
+            }
             Term[] args = p.getArgs();
             BindingType[] pat = p.getBindingPattern();
             for (int i = 0; i < pat.length; ++i) {
