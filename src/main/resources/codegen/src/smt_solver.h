@@ -40,9 +40,7 @@ public:
 
     SmtResult check(const std::vector<term_ptr> &assertions, bool get_model, int timeout) override;
 
-    SmtResult check(term_ptr assertion) {
-        return check({assertion}, false, std::numeric_limits<int>::max());
-    }
+    SmtResult check(term_ptr assertion);
 
 private:
     std::unique_ptr<SmtSolver> m_delegate;
@@ -60,9 +58,6 @@ public:
 
 private:
     std::unique_ptr<SmtSolver> m_delegate;
-
-    static void break_into_conjuncts(term_ptr t, std::set<term_ptr> &unordered, std::vector<term_ptr> &ordered,
-                                     bool negated = false);
 
     static inline tbb::concurrent_unordered_map<std::set<term_ptr>, SmtResult, boost::hash<std::set<term_ptr>>> s_memo;
 };

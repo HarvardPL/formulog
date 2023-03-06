@@ -115,11 +115,11 @@ public class CompiledSemiNaiveTester implements Tester {
         }
 
         String cmd = topPath.resolve("build").resolve("flg").toString();
-        for (
-                String inputDir : inputDirs) {
+        for (String inputDir : inputDirs) {
             Path p = Paths.get(getClass().getClassLoader().getResource(inputDir).toURI());
             cmd += " --fact-dir " + p;
         }
+        cmd += " --dump-sizes";
 
         Process flg = Runtime.getRuntime().exec(cmd);
         if (flg.waitFor() != 0) {

@@ -112,7 +112,7 @@ void SmtLibShim::declare_vars(term_ptr t) {
     if (is_solver_var(t)) {
         if (m_solver_vars.find(t) == m_solver_vars.end()) {
             std::stringstream ss;
-            ss << "x" << m_cnt++;
+            ss << "x" << t->intize();
             auto s = ss.str();
             m_solver_vars.emplace(t, s);
             m_solver_var_lookup.emplace(s, t);
