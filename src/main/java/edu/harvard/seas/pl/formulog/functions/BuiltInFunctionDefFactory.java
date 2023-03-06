@@ -1650,6 +1650,36 @@ public final class BuiltInFunctionDefFactory {
         return l;
     }
 
+    private void breakIntoConjunctsNegated(SmtLibTerm assertion, List<SmtLibTerm> acc) {
+        if (assertion instanceof Constructor) {
+            Constructor c = (Constructor) assertion;
+            ConstructorSymbol sym = c.getSymbol();
+            Term[] args = c.getArgs();
+            if (sym.equals(BuiltInConstructorSymbol.SMT_NOT)) {
+                // Turn ~~A into A
+                breakIntoConjuncts((SmtLibTerm) args[0], acc);
+                return;
+            } else if (sym.equals(BuiltInConstructorSymbol.SMT_IMP)) {
+                // Turn ~(A => B) into A /\ ~B
+                breakIntoConjuncts((SmtLibTerm) args[0], acc);
+                breakIntoConjunctsNegated((SmtLibTerm) args[1], acc);
+                return;
+            } else if (sym.equals(BuiltInConstructorSymbol.SMT_OR)) {
+                // Turn ~(A \/ B) into ~A /\ ~B
+                breakIntoConjunctsNegated((SmtLibTerm) args[0], acc);
+                breakIntoConjunctsNegated((SmtLibTerm) args[1], acc);
+                return;
+            }
+        } else if (assertion.equals(trueTerm)) {
+            // Turn ~True into False
+            acc.add(falseTerm);
+            return;
+        }
+        if (!assertion.equals(falseTerm)) {
+            acc.add(negate(assertion));
+        }
+    }
+
     private void breakIntoConjuncts(SmtLibTerm assertion, List<SmtLibTerm> acc) {
         if (assertion instanceof Constructor) {
             Constructor c = (Constructor) assertion;
@@ -1659,28 +1689,14 @@ public final class BuiltInFunctionDefFactory {
                 breakIntoConjuncts((SmtLibTerm) args[0], acc);
                 breakIntoConjuncts((SmtLibTerm) args[1], acc);
                 return;
-            }
-            if (sym.equals(BuiltInConstructorSymbol.SMT_NOT)) {
-                if (args[0] instanceof Constructor) {
-                    c = (Constructor) args[0];
-                    sym = c.getSymbol();
-                    args = c.getArgs();
-                    if (sym.equals(BuiltInConstructorSymbol.SMT_IMP)) {
-                        // Turn ~(A => B) into A /\ ~B
-                        breakIntoConjuncts((SmtLibTerm) args[0], acc);
-                        breakIntoConjuncts(negate(args[1]), acc);
-                        return;
-                    }
-                    if (sym.equals(BuiltInConstructorSymbol.SMT_OR)) {
-                        // Turn ~(A \/ B) into ~A /\ ~B
-                        breakIntoConjuncts(negate(args[0]), acc);
-                        breakIntoConjuncts(negate(args[1]), acc);
-                        return;
-                    }
-                }
+            } else if (sym.equals(BuiltInConstructorSymbol.SMT_NOT)) {
+                breakIntoConjunctsNegated((SmtLibTerm) args[0], acc);
+                return;
             }
         }
-        acc.add(assertion);
+        if (!assertion.equals(trueTerm)) {
+            acc.add(assertion);
+        }
     }
 
     private SmtLibTerm negate(Term t) {
@@ -1888,8 +1904,8 @@ public final class BuiltInFunctionDefFactory {
 
     }
 
-    private static final Term trueTerm = BoolTerm.mkTrue();
-    private static final Term falseTerm = BoolTerm.mkFalse();
+    private static final SmtLibTerm trueTerm = BoolTerm.mkTrue();
+    private static final SmtLibTerm falseTerm = BoolTerm.mkFalse();
 
     private static Term boolToBoolTerm(boolean b) {
         if (b) {

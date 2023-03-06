@@ -112,7 +112,6 @@ private:
     std::unordered_map<string, term_ptr> m_solver_var_lookup;
     std::vector<term_ptr> m_solver_vars_in_order;
     std::vector<unsigned int> m_stack_positions;
-    unsigned int m_cnt{0};
     std::deque<Type> m_annotations;
 
     Type next_annotation() {

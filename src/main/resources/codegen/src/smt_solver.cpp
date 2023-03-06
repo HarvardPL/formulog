@@ -9,6 +9,15 @@
 
 namespace flg::smt {
 
+void break_into_conjuncts(term_ptr t, std::vector<term_ptr> &acc);
+void break_into_conjuncts_negated(term_ptr t, std::vector<term_ptr> &acc);
+
+std::vector<term_ptr> break_into_conjuncts(term_ptr t) {
+    auto conjuncts = std::vector<term_ptr>{};
+    break_into_conjuncts(t, conjuncts);
+    return conjuncts;
+}
+
 TopLevelSmtSolver::TopLevelSmtSolver() {
     std::unique_ptr<SmtSolver> inner;
     switch (globals::smt_solver_mode) {
@@ -46,65 +55,25 @@ SmtResult TopLevelSmtSolver::check(const std::vector<term_ptr> &assertions, bool
     return m_delegate->check(assertions, get_model, timeout);
 }
 
-MemoizingSmtSolver::MemoizingSmtSolver(std::unique_ptr<SmtSolver> &&delegate) : m_delegate{std::move(delegate)} {}
-
-void MemoizingSmtSolver::break_into_conjuncts(term_ptr t, std::set<term_ptr> &unordered, std::vector<term_ptr> &ordered,
-                                              bool negated) {
-    if (t->sym == Symbol::smt_and && !negated) {
-        auto &c = t->as_complex();
-        break_into_conjuncts(c.val[0], unordered, ordered);
-        break_into_conjuncts(c.val[1], unordered, ordered);
-        return;
-    } else if (t->sym == Symbol::smt_not || negated) {
-        auto tt = t->as_complex().val[0];
-        if (t->sym == Symbol::smt_not && negated) {
-            break_into_conjuncts(tt, unordered, ordered);
-            return;
-        }
-        if (tt->sym == Symbol::smt_imp) {
-            // Turn ~(A => B) into A /\ ~B
-            auto &c = tt->as_complex();
-            break_into_conjuncts(c.val[0], unordered, ordered);
-            break_into_conjuncts(c.val[1], unordered, ordered, true);
-            return;
-        }
-        if (tt->sym == Symbol::smt_or) {
-            // Turn ~(A \/ B) into ~A /\ ~B
-            auto &c = tt->as_complex();
-            break_into_conjuncts(c.val[0], unordered, ordered, true);
-            break_into_conjuncts(c.val[1], unordered, ordered, true);
-            return;
-        }
-    }
-    if (negated) {
-#ifndef FLG_DEV
-        t = Term::make<Symbol::smt_not>(t);
-#endif
-    }
-    if (t != Term::make(true)) {
-        auto it = unordered.insert(t);
-        if (it.second) {
-            ordered.push_back(t);
-        }
-    }
+SmtResult TopLevelSmtSolver::check(term_ptr assertion) {
+    return check(break_into_conjuncts(assertion), false, std::numeric_limits<int>::max());
 }
 
+MemoizingSmtSolver::MemoizingSmtSolver(std::unique_ptr<SmtSolver> &&delegate) : m_delegate{std::move(delegate)} {}
+
 SmtResult MemoizingSmtSolver::check(const std::vector<term_ptr> &assertions, bool get_model, int timeout) {
-    std::vector<term_ptr> conjuncts;
-    std::set<term_ptr> key;
-    for (auto assertion: assertions) {
-        break_into_conjuncts(assertion, key, conjuncts);
+    if (assertions.empty()) {
+        auto model = get_model ? std::optional<Model>{} : std::nullopt;
+        return {SmtStatus::sat, model};
     }
-    if (conjuncts.empty() && !get_model) {
-        return {SmtStatus::sat, {}};
-    }
+    std::set<term_ptr> key(assertions.begin(), assertions.end());
     if (key.find(Term::make(false)) != key.end()) {
         return {SmtStatus::unsat, {}};
     }
     SmtResult res;
     auto it = s_memo.find(key);
     if (it == s_memo.end()) {
-        res = m_delegate->check(conjuncts, get_model, timeout);
+        res = m_delegate->check(assertions, get_model, timeout);
         auto p = s_memo.emplace(key, res);
         if (!p.second) {
             res = p.first->second;
@@ -233,6 +202,49 @@ SmtResult DoubleCheckingSolver::check(const std::vector<term_ptr> &assertions, b
         res = m_second->check(assertions, get_model, timeout);
     }
     return res;
+}
+
+void break_into_conjuncts_negated(term_ptr t, std::vector<term_ptr> &acc) {
+    if (t->sym == Symbol::smt_not) {
+        auto &c = t->as_complex();
+        // Turn ~~A into A
+        break_into_conjuncts(c.val[0], acc);
+        return;
+    } else if (t->sym == Symbol::smt_imp) {
+        // Turn ~(A => B) into A /\ ~B
+        auto &c = t->as_complex();
+        break_into_conjuncts(c.val[0], acc);
+        break_into_conjuncts_negated(c.val[1], acc);
+        return;
+    } else if (t->sym == Symbol::smt_or) {
+        // Turn ~(A \/ B) into ~A /\ ~B
+        auto &c = t->as_complex();
+        break_into_conjuncts_negated(c.val[0], acc);
+        break_into_conjuncts_negated(c.val[1], acc);
+        return;
+    } else if (t == Term::make(true)) {
+        // Turn ~True into False
+        acc.push_back(Term::make(false));
+        return;
+    } else if (t != Term::make(false)) {
+#ifndef FLG_DEV
+        t = Term::make<Symbol::smt_not>(t);
+#endif
+        acc.push_back(t);
+    }
+}
+
+void break_into_conjuncts(term_ptr t, std::vector<term_ptr> &ordered) {
+    if (t->sym == Symbol::smt_and) {
+        auto &c = t->as_complex();
+        break_into_conjuncts(c.val[0], ordered);
+        break_into_conjuncts(c.val[1], ordered);
+    } else if (t->sym == Symbol::smt_not) {
+        auto &c = t->as_complex();
+        break_into_conjuncts_negated(c.val[0], ordered);
+    } else if (t != Term::make(true)) {
+        ordered.push_back(t);
+    }
 }
 
 }
