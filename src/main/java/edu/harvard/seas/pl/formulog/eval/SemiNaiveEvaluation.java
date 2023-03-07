@@ -285,7 +285,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 
     static BiFunction<ComplexLiteral, Set<Var>, Integer> chooseScoringFunction(boolean eagerEval) {
         if (eagerEval) {
-            return SemiNaiveEvaluation::score4;
+            return SemiNaiveEvaluation::score5;
         }
         switch (Configuration.optimizationSetting) {
             case 0:
@@ -298,6 +298,8 @@ public class SemiNaiveEvaluation implements Evaluation {
                 return SemiNaiveEvaluation::score3;
             case 4:
                 return SemiNaiveEvaluation::score4;
+            case 5:
+                return SemiNaiveEvaluation::score5;
             default:
                 throw new IllegalArgumentException(
                         "Unrecognized optimization setting: " + Configuration.optimizationSetting);
@@ -413,6 +415,25 @@ public class SemiNaiveEvaluation implements Evaluation {
             @Override
             public Integer visit(UserPredicate pred, Void input) {
                 if (pred.isNegated() || pred.getSymbol() instanceof DeltaSymbol) {
+                    return Integer.MAX_VALUE;
+                }
+                return 0;
+            }
+
+        }, null);
+    }
+    
+    static int score5(ComplexLiteral l, Set<Var> boundVars) {
+        return l.accept(new ComplexLiteralVisitor<Void, Integer>() {
+
+            @Override
+            public Integer visit(UnificationPredicate unificationPredicate, Void input) {
+                return 0;
+            }
+
+            @Override
+            public Integer visit(UserPredicate pred, Void input) {
+                if (pred.getSymbol() instanceof DeltaSymbol) {
                     return Integer.MAX_VALUE;
                 }
                 return 0;
