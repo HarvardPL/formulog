@@ -27,7 +27,7 @@ public:
 
     SmtSolver() = default;
 
-    virtual SmtResult check(const std::vector<term_ptr> &assertions, bool get_model, int timeout) = 0;
+    virtual SmtResult check(const std::vector<term_ptr> &assertions, bool get_model, int32_t timeout) = 0;
 
     virtual ~SmtSolver() = default;
 };
@@ -38,7 +38,7 @@ public:
 
     TopLevelSmtSolver();
 
-    SmtResult check(const std::vector<term_ptr> &assertions, bool get_model, int timeout) override;
+    SmtResult check(const std::vector<term_ptr> &assertions, bool get_model, int32_t timeout) override;
 
     SmtResult check(term_ptr assertion);
 
@@ -54,7 +54,7 @@ public:
 
     explicit MemoizingSmtSolver(std::unique_ptr<SmtSolver> &&delegate);
 
-    SmtResult check(const std::vector<term_ptr> &assertions, bool get_model, int timeout) override;
+    SmtResult check(const std::vector<term_ptr> &assertions, bool get_model, int32_t timeout) override;
 
 private:
     std::unique_ptr<SmtSolver> m_delegate;
@@ -70,7 +70,7 @@ public:
 
     using term_vector_pair = std::pair<std::vector<term_ptr>, std::vector<term_ptr>>;
 
-    SmtResult check(const std::vector<term_ptr> &assertions, bool get_model, int timeout) override;
+    SmtResult check(const std::vector<term_ptr> &assertions, bool get_model, int32_t timeout) override;
 
 protected:
     virtual void initialize() = 0;
@@ -143,7 +143,7 @@ public:
     DoubleCheckingSolver(std::unique_ptr<SmtSolver> &&first, std::unique_ptr<SmtSolver> &&second) : m_first(
             std::move(first)), m_second(std::move(second)) {}
 
-    SmtResult check(const std::vector<term_ptr> &assertions, bool get_model, int timeout) override;
+    SmtResult check(const std::vector<term_ptr> &assertions, bool get_model, int32_t timeout) override;
 
 private:
     std::unique_ptr<SmtSolver> m_first;

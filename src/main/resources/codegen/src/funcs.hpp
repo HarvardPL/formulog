@@ -331,8 +331,8 @@ term_ptr is_valid(term_ptr t1) {
     __builtin_unreachable();
 }
 
-int _extract_timeout_from_option(term_ptr o) {
-    int timeout{numeric_limits<int>::max()};
+int32_t _extract_timeout_from_option(term_ptr o) {
+    int32_t timeout{numeric_limits<int32_t>::max()};
 #ifndef FLG_DEV
     if (o->sym == Symbol::some) {
         auto &x = o->as_complex();

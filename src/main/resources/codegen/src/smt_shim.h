@@ -34,7 +34,7 @@ public:
     void pop() { pop(1); }
 
     virtual SmtStatus
-    check_sat_assuming(const std::vector<term_ptr> &onVars, const std::vector<term_ptr> &offVars, int timeout) = 0;
+    check_sat_assuming(const std::vector<term_ptr> &onVars, const std::vector<term_ptr> &offVars, int32_t timeout) = 0;
 
     virtual Model get_model() = 0;
 
@@ -56,7 +56,7 @@ public:
     void pop(unsigned int n) override;
 
     SmtStatus
-    check_sat_assuming(const std::vector<term_ptr> &onVars, const std::vector<term_ptr> &offVars, int timeout) override;
+    check_sat_assuming(const std::vector<term_ptr> &onVars, const std::vector<term_ptr> &offVars, int32_t timeout) override;
 
     Model get_model() override;
 
@@ -113,6 +113,8 @@ private:
     std::vector<term_ptr> m_solver_vars_in_order;
     std::vector<unsigned int> m_stack_positions;
     std::deque<Type> m_annotations;
+
+    void set_timeout(int32_t timeout);
 
     Type next_annotation() {
         auto ty = m_annotations.front();

@@ -108,6 +108,14 @@ SmtLibShim::SmtLibShim(boost::process::child &&proc, boost::process::opstream &&
             s_shims[this] = true;
         }
 
+void SmtLibShim::set_timeout(int32_t timeout) {
+    if (timeout < 0) {
+        cerr << "Warning: ignoring negative timeout provided to SMT" << endl;
+        timeout = numeric_limits<int32_t>::max();
+    }
+    m_in << "(set-option :timeout " << timeout << ")\n";
+}
+
 void SmtLibShim::declare_vars(term_ptr t) {
     if (is_solver_var(t)) {
         if (m_solver_vars.find(t) == m_solver_vars.end()) {
@@ -142,6 +150,8 @@ void SmtLibShim::make_declarations() {
 }
 
 void SmtLibShim::push() {
+    // Avoid push timing out. See <https://github.com/Z3Prover/z3/issues/4713>
+    set_timeout(numeric_limits<int32_t>::max());
     m_in << "(push 1)\n";
     m_stack_positions.push_back(m_solver_vars_in_order.size());
 }
@@ -174,12 +184,7 @@ void SmtLibShim::make_assertion(term_ptr assertion) {
 
 SmtStatus SmtLibShim::check_sat_assuming(const std::vector<term_ptr> &onVars, const std::vector<term_ptr> &offVars,
                                          int timeout) {
-    if (timeout < 0) {
-        cerr << "Warning: ignoring negative timeout provided to SMT" << endl;
-        timeout = numeric_limits<int>::max();
-    }
-    m_in << "(set-option :timeout " << timeout << ")\n";
-
+    set_timeout(timeout);
     if (onVars.empty() && offVars.empty()) {
         m_in << "(check-sat)\n";
     } else {
