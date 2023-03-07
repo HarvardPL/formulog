@@ -222,6 +222,11 @@ $ ./build/flg --dump-idb
 This should produce output like the following:
 
 ```
+Parsing...
+Finished parsing (0.000s)
+Evaluating...
+Finished evaluating (0.029s)
+
 ==================== SELECTED IDB RELATIONS ====================
 
 ---------- greeting (3) ----------
