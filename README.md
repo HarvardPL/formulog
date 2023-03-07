@@ -105,10 +105,21 @@ and run the command
 java -jar formulog.jar greeting.flg --dump-idb
 ```
 
-(assuming `formulog.jar` is the name of the Formulog executable JAR), you should
-see the results:
+(assuming `formulog.jar` is the name of the Formulog executable JAR), you should see results like the following:
 
 ```
+Parsing...
+Finished parsing (0.202s)
+Type checking...
+Finished type checking (0.024s)
+Rewriting and validating...
+Finished rewriting and validating (0.253s)
+Evaluating...
+Finished evaluating (0.354s)
+
+==================== SELECTED IDB RELATIONS ====================
+
+---------- greeting (3) ----------
 greeting("Hello, Alice")
 greeting("Hello, Bob")
 greeting("Hello, World")
@@ -120,8 +131,8 @@ The Formulog interpreter currently provides the following options:
 
 ```
 Usage: formulog [-chV] [--dump-all] [--dump-idb] [--dump-query] [--dump-sizes]
-                [--codegen-dir=<codegenDir>] [-D=<outDir>] [-j=<parallelism>]
-                [--smt-solver-mode=<smtStrategy>]
+                [--smt-stats] [--codegen-dir=<codegenDir>] [-D=<outDir>]
+                [-j=<parallelism>] [--smt-solver-mode=<smtStrategy>]
                 [--dump=<relationsToPrint>]... [-F=<factDirs>]... <file>
 Runs Formulog.
       <file>         Formulog program file.
@@ -144,7 +155,9 @@ Runs Formulog.
       --smt-solver-mode=<smtStrategy>
                      Strategy to use when interacting with external SMT solvers
                        ('naive', 'push-pop', or 'check-sat-assuming').
+      --smt-stats    Report basic statistics related to SMT solver usage.
   -V, --version      Print version information and exit.
+
 ```
 
 **Note:** The interpreter does not print any results by default; use one of the
@@ -174,8 +187,6 @@ are:
   runtime; defaults to false)
 * `printRelSizes` - print final relation sizes (defaults to false)
 * `printFinalRules` - print the final, transformed rules (defaults to false)
-* `factDirs=DIR_1,...,DIR_n` - directories for TSV files of input facts
-  (defaults to the current directory)
 * `trackedRelations=REL_1,...,REL_n` - print facts from listed relations as they
   are derived (defaults to the empty list)
 * `smtLogic=LOGIC` - set the logic used by the external SMT solver (defaults to
@@ -205,17 +216,19 @@ For example, to compile and execute the `greeting.flg` program from above, you c
 $ java -jar formulog.jar -c greeting.flg
 $ cd codegen
 $ cmake -B build -S .
-$ cmake --build build [-j NCORES]
-$ ./build/flg
+$ cmake --build build -j
+$ ./build/flg --dump-idb
 ```
 
 This should produce output like the following:
 
 ```
-greeting: 3
-greeting("Hello, Alice")
-greeting("Hello, World")
+==================== SELECTED IDB RELATIONS ====================
+
+---------- greeting (3) ----------
 greeting("Hello, Bob")
+greeting("Hello, World")
+greeting("Hello, Alice")
 ```
 
 Use the command `./build/flg -h` see options available when running the executable.
