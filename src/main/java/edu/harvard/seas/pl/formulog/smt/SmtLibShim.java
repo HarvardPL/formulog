@@ -182,6 +182,8 @@ public class SmtLibShim {
 	}
 
 	public void push() throws EvaluationException {
+		// Avoid push timing out. See <https://github.com/Z3Prover/z3/issues/4713>
+		setTimeout(Integer.MAX_VALUE);
 		println("(push 1)");
 		checkSuccess();
 		symbolsByStackPos.addLast(new HashSet<>());
@@ -206,8 +208,7 @@ public class SmtLibShim {
 		return checkSatAssuming(Collections.emptyList(), Collections.emptyList(), timeout);
 	}
 
-	public SmtStatus checkSatAssuming(Collection<SolverVariable> onVars, Collection<SolverVariable> offVars,
-			int timeout) throws EvaluationException {
+	private void setTimeout(int timeout) throws EvaluationException {
 		if (timeout < 0) {
 			System.err.println("Warning: negative timeout provided to solver - ignored");
 			timeout = Integer.MAX_VALUE;
@@ -216,6 +217,11 @@ public class SmtLibShim {
 			println("(set-option :timeout " + timeout + ")");
 			checkSuccess();
 		}
+	}
+	
+	public SmtStatus checkSatAssuming(Collection<SolverVariable> onVars, Collection<SolverVariable> offVars,
+			int timeout) throws EvaluationException {
+		setTimeout(timeout);
 		if (onVars.isEmpty() && offVars.isEmpty()) {
 			println("(check-sat)");
 		} else {
