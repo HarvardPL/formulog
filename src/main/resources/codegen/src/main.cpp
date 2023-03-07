@@ -1,3 +1,4 @@
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <vector>
@@ -5,6 +6,7 @@
 
 #include <boost/asio.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/format.hpp>
 #include <boost/program_options.hpp>
 #include <omp.h>
 
@@ -226,9 +228,22 @@ int main(int argc, char **argv) {
         cout << "Unable to load Souffle program" << endl;
         exit(1);
     }
+
+    cout << "Parsing..." << endl;
+    auto start = std::chrono::steady_clock::now();
     loadEdbs(vm["fact-dir"].as<vector<string>>(), parallelism);
+    auto end = chrono::steady_clock::now();
+    double diff = chrono::duration_cast<chrono::milliseconds>(end - start).count() / 1000.0;
+    cout << "Finished parsing (" << boost::format("%.3f") % diff << "s)" << endl;
+
+    cout << "Evaluating..." << endl;
     globals::program->setNumThreads(parallelism);
+    start = std::chrono::steady_clock::now();
     globals::program->run();
+    end = chrono::steady_clock::now();
+    diff = chrono::duration_cast<chrono::milliseconds>(end - start).count() / 1000.0;
+    cout << "Finished evaluating (" << boost::format("%.3f") % diff << "s)" << endl;
+
     flg::smt::SmtLibShim::terminate_all_children();
     boost::filesystem::path out_dir(vm["out-dir"].as<string>());
     boost::filesystem::create_directories(out_dir);
