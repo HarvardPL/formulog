@@ -21,7 +21,7 @@ std::vector<term_ptr> break_into_conjuncts(term_ptr t) {
 TopLevelSmtSolver::TopLevelSmtSolver() {
     std::unique_ptr<SmtSolver> inner;
     switch (globals::smt_solver_mode) {
-        case SmtSolverMode::push_pop_naive:
+        case SmtSolverMode::naive:
             inner = std::make_unique<PushPopNaiveSolver>(make_shim());
             break;
         case SmtSolverMode::push_pop:
