@@ -13,7 +13,7 @@
 namespace flg::smt {
 
 enum class SmtSolverMode {
-    push_pop_naive, push_pop, check_sat_assuming
+    naive, push_pop, check_sat_assuming
 };
 
 struct SmtResult {
@@ -164,8 +164,8 @@ inline std::istream &operator>>(std::istream &in, flg::smt::SmtSolverMode &mode)
     std::string token;
     in >> token;
 
-    if (token == "push-pop-naive") {
-        mode = flg::smt::SmtSolverMode::push_pop_naive;
+    if (token == "naive") {
+        mode = flg::smt::SmtSolverMode::naive;
     } else if (token == "push-pop") {
         mode = flg::smt::SmtSolverMode::push_pop;
     } else if (token == "check-sat-assuming") {
@@ -180,7 +180,7 @@ inline std::istream &operator>>(std::istream &in, flg::smt::SmtSolverMode &mode)
 
 inline std::ostream &operator<<(std::ostream &out, const flg::smt::SmtSolverMode &mode) {
     switch (mode) {
-        case flg::smt::SmtSolverMode::push_pop_naive:
+        case flg::smt::SmtSolverMode::naive:
             out << "naive";
             break;
         case flg::smt::SmtSolverMode::push_pop:
