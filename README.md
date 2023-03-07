@@ -157,7 +157,6 @@ Runs Formulog.
                        ('naive', 'push-pop', or 'check-sat-assuming').
       --smt-stats    Report basic statistics related to SMT solver usage.
   -V, --version      Print version information and exit.
-
 ```
 
 **Note:** The interpreter does not print any results by default; use one of the
