@@ -7,6 +7,7 @@
 
 #include "smt_shim.h"
 
+#include <future>
 #include <boost/container_hash/hash.hpp>
 #include <boost/program_options.hpp>
 
@@ -60,7 +61,7 @@ private:
     std::unique_ptr<SmtSolver> m_delegate;
 
     typedef std::tuple<std::set<term_ptr>, bool, int32_t> memo_key_t;
-    static inline tbb::concurrent_unordered_map<memo_key_t, SmtResult, boost::hash<memo_key_t>> s_memo;
+    static inline tbb::concurrent_unordered_map<memo_key_t, std::shared_future<SmtResult>, boost::hash<memo_key_t>> s_memo;
 };
 
 class AbstractSmtSolver : public SmtSolver {
