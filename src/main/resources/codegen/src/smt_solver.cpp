@@ -74,16 +74,23 @@ SmtResult MemoizingSmtSolver::check(const std::vector<term_ptr> &assertions, boo
         return {SmtStatus::unsat, {}};
     }
     SmtResult res;
+    std::shared_future<SmtResult> fut;
     memo_key_t key{std::move(set), get_model, timeout};
     auto it = s_memo.find(key);
     if (it == s_memo.end()) {
-        res = m_delegate->check(assertions, get_model, timeout);
-        auto p = s_memo.emplace(std::move(key), res);
-        if (!p.second) {
-            res = p.first->second;
+        std::promise<SmtResult> p;
+        fut = p.get_future();
+        auto it2 = s_memo.emplace(std::move(key), fut);
+        if (it2.second) {
+            res = m_delegate->check(assertions, get_model, timeout);
+            p.set_value(res);
+        } else {
+            fut = it2.first->second;
+            res = fut.get();
         }
     } else {
-        res = it->second;
+        fut = it->second;
+        res = fut.get();
     }
     return res;
 }
