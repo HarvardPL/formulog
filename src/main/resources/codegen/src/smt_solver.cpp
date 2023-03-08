@@ -62,19 +62,23 @@ SmtResult TopLevelSmtSolver::check(term_ptr assertion) {
 MemoizingSmtSolver::MemoizingSmtSolver(std::unique_ptr<SmtSolver> &&delegate) : m_delegate{std::move(delegate)} {}
 
 SmtResult MemoizingSmtSolver::check(const std::vector<term_ptr> &assertions, bool get_model, int timeout) {
+    if (timeout < 0) {
+        timeout = -1;
+    }
     if (assertions.empty()) {
         auto model = get_model ? std::optional<Model>{} : std::nullopt;
         return {SmtStatus::sat, model};
     }
-    std::set<term_ptr> key(assertions.begin(), assertions.end());
-    if (key.find(Term::make(false)) != key.end()) {
+    std::set<term_ptr> set(assertions.begin(), assertions.end());
+    if (set.find(Term::make(false)) != set.end()) {
         return {SmtStatus::unsat, {}};
     }
     SmtResult res;
+    memo_key_t key{std::move(set), get_model, timeout};
     auto it = s_memo.find(key);
     if (it == s_memo.end()) {
         res = m_delegate->check(assertions, get_model, timeout);
-        auto p = s_memo.emplace(key, res);
+        auto p = s_memo.emplace(std::move(key), res);
         if (!p.second) {
             res = p.first->second;
         }

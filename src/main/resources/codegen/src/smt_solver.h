@@ -59,7 +59,8 @@ public:
 private:
     std::unique_ptr<SmtSolver> m_delegate;
 
-    static inline tbb::concurrent_unordered_map<std::set<term_ptr>, SmtResult, boost::hash<std::set<term_ptr>>> s_memo;
+    typedef std::tuple<std::set<term_ptr>, bool, int32_t> memo_key_t;
+    static inline tbb::concurrent_unordered_map<memo_key_t, SmtResult, boost::hash<memo_key_t>> s_memo;
 };
 
 class AbstractSmtSolver : public SmtSolver {
