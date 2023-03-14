@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.codegen;
 
+import edu.harvard.seas.pl.formulog.Configuration;
+
 /*-
  * #%L
  * Formulog
@@ -36,19 +38,25 @@ import java.util.stream.Collectors;
 public class RuleTranslator {
 
     private final CodeGenContext ctx;
+    private final QueryPlanner queryPlanner;
     private static final String checkPred = "CODEGEN_CHECK";
 
-    public RuleTranslator(CodeGenContext ctx) {
+    public RuleTranslator(CodeGenContext ctx, QueryPlanner queryPlanner) {
         this.ctx = ctx;
+        this.queryPlanner = queryPlanner;
     }
 
     public Pair<List<SRule>, List<Stratum>> translate(BasicProgram prog) throws CodeGenException {
         var strats = checkStratification(prog);
         List<SRule> l = new ArrayList<>();
         Worker worker = new Worker(prog);
-        for (RelationSymbol sym : prog.getRuleSymbols()) {
-            for (BasicRule r : prog.getRules(sym)) {
-                l.add(worker.translate(r));
+        for (var stratum : strats) {
+            for (RelationSymbol sym : stratum.getPredicateSyms()) {
+                for (BasicRule r : prog.getRules(sym)) {
+                    var sr = worker.translate(r);
+                    sr.setQueryPlan(queryPlanner.genPlan(sr, stratum));
+                    l.add(sr);
+                }
             }
         }
         l.addAll(worker.createProjectionRules());

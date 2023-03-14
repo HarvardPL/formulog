@@ -21,12 +21,16 @@ package edu.harvard.seas.pl.formulog.codegen.ast.souffle;
  */
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+
+import edu.harvard.seas.pl.formulog.util.Pair;
 
 public class SRule {
 
     private final SLit head;
     private final List<SLit> body;
+    private List<Pair<Integer, int[]>> queryPlan;
 
     public SRule(SLit head, List<SLit> body) {
         this.head = head;
@@ -35,6 +39,14 @@ public class SRule {
 
     public SRule(SLit head, SLit... body) {
         this(head, Arrays.asList(body));
+    }
+
+    public List<SLit> getBody() {
+        return Collections.unmodifiableList(body);
+    }
+
+    public void setQueryPlan(List<Pair<Integer, int[]>> queryPlan) {
+        this.queryPlan = queryPlan;
     }
 
     @Override
@@ -56,6 +68,27 @@ public class SRule {
             }
         }
         sb.append(".");
+        if (queryPlan != null) {
+            sb.append("\n");
+            for (int i = 0; i < queryPlan.size(); ++i) {
+                if (i == 0) {
+                    sb.append(".plan ");
+                } else {
+                    sb.append(", ");
+                }
+                var p = queryPlan.get(i);
+                sb.append(p.fst());
+                sb.append(": (");
+                var plan = p.snd();
+                for (int j = 0; j < plan.length; ++j) {
+                    sb.append(plan[j]);
+                    if (j < plan.length - 1) {
+                        sb.append(",");
+                    }
+                }
+                sb.append(")");
+            }
+        }
         return sb.toString();
     }
 

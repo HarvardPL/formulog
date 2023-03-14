@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.codegen;
 
+import edu.harvard.seas.pl.formulog.Configuration;
+
 /*-
  * #%L
  * Formulog
@@ -46,7 +48,8 @@ public class SouffleCodeGen {
     }
 
     public void gen(File directory) throws CodeGenException, IOException {
-        Pair<List<SRule>, List<Stratum>> p = new RuleTranslator(ctx).translate(ctx.getProgram());
+        QueryPlanner qp = chooseQueryPlanner();
+        Pair<List<SRule>, List<Stratum>> p = new RuleTranslator(ctx, qp).translate(ctx.getProgram());
         var rules = p.fst();
         ctx.registerCustomRelation(non_existent_input, 0, SRuleMode.INPUT);
         ctx.registerCustomRelation(non_existent_output, 0, SRuleMode.OUTPUT);
@@ -55,6 +58,18 @@ public class SouffleCodeGen {
         File dlFile = directory.toPath().resolve(Path.of("src", "formulog.dl")).toFile();
         emitDlFile(dlFile, rules);
         new FunctorCodeGen(ctx).emitFunctors(directory);
+    }
+
+    private QueryPlanner chooseQueryPlanner() throws CodeGenException {
+        switch (Configuration.optimizationSetting) {
+        case 0:
+            return new NopQueryPlanner();
+        case 5:
+            return new DeltaFirstQueryPlanner(ctx);
+        default:
+            throw new CodeGenException(
+                    "Unsupported optimization setting for codegen: " + Configuration.optimizationSetting);
+        }
     }
 
     private void emitDlFile(File dlFile, List<SRule> rules) throws CodeGenException {
@@ -154,14 +169,14 @@ public class SouffleCodeGen {
             }
             writer.println(")");
             switch (mode) {
-                case INPUT:
-                    writer.print(".input ");
-                    break;
-                case OUTPUT:
-                    writer.print(".output ");
-                    break;
-                case INTERMEDIATE:
-                    return;
+            case INPUT:
+                writer.print(".input ");
+                break;
+            case OUTPUT:
+                writer.print(".output ");
+                break;
+            case INTERMEDIATE:
+                return;
             }
             writer.println(name);
         }

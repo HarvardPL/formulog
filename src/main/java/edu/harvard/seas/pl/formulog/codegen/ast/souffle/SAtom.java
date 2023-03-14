@@ -28,10 +28,14 @@ public class SAtom implements SLit {
     private final List<STerm> args;
     private final boolean isNegated;
 
-    public SAtom(String symbol_, List<STerm> args_, boolean isNegated_) {
-        pred = symbol_;
-        args = args_;
-        isNegated = isNegated_;
+    public SAtom(String symbol, List<STerm> args, boolean isNegated) {
+        pred = symbol;
+        this.args = args;
+        this.isNegated = isNegated;
+    }
+
+    public String getSymbol() {
+        return pred;
     }
 
     @Override
