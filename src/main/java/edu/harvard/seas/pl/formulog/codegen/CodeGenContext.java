@@ -46,6 +46,7 @@ public class CodeGenContext {
     private final Map<String, Pair<Integer, SRuleMode>> customRelations = new HashMap<>();
     private final Map<Term, String> exprFunctorNames = new HashMap<>();
     private final Map<ConstructorSymbol, String> dtorFunctorNames = new HashMap<>();
+    private final Map<String, RelationSymbol> reprToRelSym = new HashMap<>();
 
     private final BasicProgram prog;
 
@@ -83,7 +84,13 @@ public class CodeGenContext {
     }
 
     public synchronized String lookupRepr(RelationSymbol sym) {
-        return sym.toString().replace(":", "__") + "_";
+        var repr = sym.toString().replace(":", "__") + "_";
+        reprToRelSym.put(repr, sym);
+        return repr;
+    }
+
+    public synchronized RelationSymbol lookupRel(String repr) {
+        return reprToRelSym.get(repr);
     }
 
     public synchronized void register(FunctionSymbol sym, String repr) {
@@ -124,7 +131,8 @@ public class CodeGenContext {
     }
 
     public Set<Pair<String, Pair<Integer, SRuleMode>>> getCustomRelations() {
-        return customRelations.entrySet().stream().map(e -> new Pair<>(e.getKey(), e.getValue())).collect(Collectors.toSet());
+        return customRelations.entrySet().stream().map(e -> new Pair<>(e.getKey(), e.getValue()))
+                .collect(Collectors.toSet());
     }
 
     public void registerCustomRelation(String name, Integer arity, SRuleMode mode) {
