@@ -156,6 +156,9 @@ void CheckSatAssumingSolver::cleanup() {
         m_conjuncts_to_vars.clear();
         m_shim->pop();
         m_shim->push();
+        if (globals::smt_stats) {
+            globals::smt_cache_clears++;
+        }
     }
 }
 
