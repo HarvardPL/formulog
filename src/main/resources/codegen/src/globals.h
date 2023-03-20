@@ -19,4 +19,6 @@ inline std::atomic<unsigned long long> smt_calls;
 
 inline std::atomic<unsigned long long> smt_time;
 
+inline std::atomic<unsigned> smt_cache_clears;
+
 }

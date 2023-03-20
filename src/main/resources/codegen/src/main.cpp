@@ -176,6 +176,7 @@ void printSmtStats() {
     printBanner("SMT STATS");
     std::cout << "SMT calls: " << globals::smt_calls << "\n";
     std::cout << "SMT time (ms): " << globals::smt_time << std::endl;
+    std::cout << "SMT cache clears: " << globals::smt_cache_clears << std::endl;
 }
 
 int main(int argc, char **argv) {
