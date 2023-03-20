@@ -125,7 +125,6 @@ public:
 
 private:
     std::vector<term_ptr> m_stack;
-    std::unordered_set<term_ptr> m_set;
 
     void initialize() override;
 
