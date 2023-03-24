@@ -171,6 +171,9 @@ public final class Configuration {
 
 	public static final boolean recordWork = propIsSet("recordWork");
 	public static final AtomicLong work = new AtomicLong();
+	public static final AtomicLong workItems = new AtomicLong();
+	public static final AtomicLong newDerivs = new AtomicLong();
+	public static final AtomicLong dupDerivs = new AtomicLong();
 
 	public static final AtomicLong smtCalls = new AtomicLong();
 	public static final AtomicLong smtTime = new AtomicLong();
