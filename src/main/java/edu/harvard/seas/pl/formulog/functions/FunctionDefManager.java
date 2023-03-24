@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.functions;
  * #L%
  */
 
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,7 +39,7 @@ public class FunctionDefManager {
 			memo.put(sym, new DummyFunctionDef(sym));
 		}
 	}
-	
+
 	public void register(FunctionDef def) {
 		if (memo.put(def.getSymbol(), def) != null) {
 			throw new IllegalArgumentException(

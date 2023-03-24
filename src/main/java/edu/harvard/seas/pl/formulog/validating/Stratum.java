@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.validating;
  * #L%
  */
 
-
 import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
@@ -40,11 +39,11 @@ public class Stratum {
 	public int getRank() {
 		return rank;
 	}
-	
+
 	public Set<RelationSymbol> getPredicateSyms() {
 		return predicateSyms;
 	}
-	
+
 	public boolean hasRecursiveNegationOrAggregation() {
 		return hasRecursiveNegationOrAggregation;
 	}
@@ -53,6 +52,6 @@ public class Stratum {
 	public String toString() {
 		return "Stratum [rank=" + rank + ", predicateSyms=" + predicateSyms + ", hasRecursiveNegationOrAggregation="
 				+ hasRecursiveNegationOrAggregation + "]";
-	}	
-	
+	}
+
 }

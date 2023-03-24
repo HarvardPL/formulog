@@ -20,15 +20,14 @@ package edu.harvard.seas.pl.formulog.eval;
  * #L%
  */
 
-
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 
 public class InterpretedSemiNaiveTester extends AbstractTester<SemiNaiveEvaluation> {
-	
+
 	private final boolean eagerEval;
-	
+
 	public InterpretedSemiNaiveTester(boolean eagerEval) {
 		this.eagerEval = eagerEval;
 	}

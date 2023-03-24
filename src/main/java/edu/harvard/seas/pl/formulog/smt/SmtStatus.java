@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.smt;
  * #L%
  */
 
-
 public enum SmtStatus {
 	SATISFIABLE, UNSATISFIABLE, UNKNOWN
 }

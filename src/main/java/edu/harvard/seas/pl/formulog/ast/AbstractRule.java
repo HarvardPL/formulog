@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-
 import java.util.Iterator;
 import java.util.List;
 
@@ -28,12 +27,12 @@ public abstract class AbstractRule<H extends Literal, B extends Literal> impleme
 
 	private final H head;
 	private final List<B> body;
-	
+
 	protected AbstractRule(H head, List<B> body) {
 		this.head = head;
 		this.body = body;
 	}
-	
+
 	@Override
 	public Iterator<B> iterator() {
 		return body.iterator();
@@ -104,5 +103,5 @@ public abstract class AbstractRule<H extends Literal, B extends Literal> impleme
 			return false;
 		return true;
 	}
-	
+
 }

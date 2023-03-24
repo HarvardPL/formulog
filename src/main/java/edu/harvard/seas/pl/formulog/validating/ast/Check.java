@@ -23,7 +23,6 @@ package edu.harvard.seas.pl.formulog.validating.ast;
 import java.util.HashSet;
 import java.util.Set;
 
-
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
@@ -38,25 +37,25 @@ public class Check implements SimpleLiteral {
 	public static Check make(Term lhs, Term rhs, boolean negated) {
 		return new Check(lhs, rhs, negated);
 	}
-	
+
 	private Check(Term lhs, Term rhs, boolean negated) {
 		this.lhs = lhs;
 		this.rhs = rhs;
 		this.negated = negated;
 	}
-	
+
 	public boolean isNegated() {
 		return negated;
 	}
-	
+
 	public Term getLhs() {
 		return lhs;
 	}
-	
+
 	public Term getRhs() {
 		return rhs;
 	}
-	
+
 	public boolean check(Substitution subst) throws EvaluationException {
 		Term lhs = this.lhs.normalize(subst);
 		Term rhs = this.rhs.normalize(subst);
@@ -66,7 +65,7 @@ public class Check implements SimpleLiteral {
 		assert !rhs.containsUnevaluatedTerm();
 		return lhs.equals(rhs) ^ negated;
 	}
-	
+
 	@Override
 	public <I, O> O accept(SimpleLiteralVisitor<I, O> visitor, I input) {
 		return visitor.visit(this, input);

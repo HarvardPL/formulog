@@ -20,26 +20,25 @@ package edu.harvard.seas.pl.formulog.codegen.ast.cpp;
  * #L%
  */
 
-
 import edu.harvard.seas.pl.formulog.codegen.CodeGenUtil;
 
 import java.io.PrintWriter;
 
 public interface CppExpr {
 
-    void print(PrintWriter out);
+	void print(PrintWriter out);
 
-    default CppStmt toStmt() {
-        return new CppStmt() {
+	default CppStmt toStmt() {
+		return new CppStmt() {
 
-            @Override
-            public void println(PrintWriter out, int indent) {
-                CodeGenUtil.printIndent(out, indent);
-                CppExpr.this.print(out);
-                out.println(";");
-            }
+			@Override
+			public void println(PrintWriter out, int indent) {
+				CodeGenUtil.printIndent(out, indent);
+				CppExpr.this.print(out);
+				out.println(";");
+			}
 
-        };
-    }
+		};
+	}
 
 }

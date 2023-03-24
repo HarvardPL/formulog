@@ -27,31 +27,31 @@ import java.util.List;
 
 public class SExprBody implements SFunctorBody {
 
-    private final List<Var> args;
-    private final Term body;
+	private final List<Var> args;
+	private final Term body;
 
-    public SExprBody(List<Var> args_, Term body_) {
-        args = args_;
-        body = body_;
-    }
+	public SExprBody(List<Var> args_, Term body_) {
+		args = args_;
+		body = body_;
+	}
 
-    public Term getBody() {
-        return body;
-    }
+	public Term getBody() {
+		return body;
+	}
 
-    @Override
-    public List<Var> getArgs() {
-        return args;
-    }
+	@Override
+	public List<Var> getArgs() {
+		return args;
+	}
 
-    @Override
-    public SType getRetType() {
-        return SIntType.INSTANCE;
-    }
+	@Override
+	public SType getRetType() {
+		return SIntType.INSTANCE;
+	}
 
-    @Override
-    public boolean isStateful() {
-        return false;
-    }
+	@Override
+	public boolean isStateful() {
+		return false;
+	}
 
 }

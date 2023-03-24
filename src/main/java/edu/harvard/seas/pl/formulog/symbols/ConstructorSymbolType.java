@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-
 public enum ConstructorSymbolType {
 
 	SOLVER_UNINTERPRETED_FUNCTION,

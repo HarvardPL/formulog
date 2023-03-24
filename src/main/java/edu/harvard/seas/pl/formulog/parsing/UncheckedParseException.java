@@ -22,23 +22,22 @@ package edu.harvard.seas.pl.formulog.parsing;
 
 public class UncheckedParseException extends RuntimeException {
 
-	
 	private static final long serialVersionUID = 1L;
 	private final int lineNo;
 	private final String fileName;
-	
+
 	public UncheckedParseException(int lineNo, String message) {
 		super(message);
 		this.lineNo = lineNo;
 		this.fileName = null;
 	}
-	
+
 	public UncheckedParseException(int lineNo, Throwable cause) {
 		super(cause);
 		this.lineNo = lineNo;
 		this.fileName = null;
 	}
-	
+
 	public UncheckedParseException(ParseException e) {
 		super(e.getMessage());
 		this.lineNo = e.getLineNo();
@@ -48,9 +47,9 @@ public class UncheckedParseException extends RuntimeException {
 	public int getLineNo() {
 		return lineNo;
 	}
-	
+
 	public String getFileName() {
 		return fileName;
 	}
-	
+
 }

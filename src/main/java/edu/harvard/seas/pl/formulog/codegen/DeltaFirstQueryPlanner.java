@@ -57,7 +57,7 @@ public class DeltaFirstQueryPlanner implements QueryPlanner {
 		for (int i = 0; i < body.size(); ++i) {
 			var lit = body.get(i);
 			if (lit instanceof SAtom) {
-			    numAtoms++;
+				numAtoms++;
 				var pred = ((SAtom) lit).getSymbol();
 				var rel = ctx.lookupRel(pred);
 				if (rel != null && preds.contains(rel)) {
@@ -67,7 +67,7 @@ public class DeltaFirstQueryPlanner implements QueryPlanner {
 		}
 		return new Pair<>(numAtoms, l);
 	}
-	
+
 	private int[] genPlanForDelta(int delta, int numAtoms) {
 		int[] arr = new int[numAtoms];
 		Arrays.setAll(arr, (i) -> {

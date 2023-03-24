@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-
 import java.util.Collections;
 import java.util.Set;
 
@@ -36,19 +35,19 @@ public class BoolTerm extends AbstractTerm implements Primitive<Boolean>, SmtLib
 	private final boolean val;
 	private static final BoolTerm true_ = new BoolTerm(true);
 	private static final BoolTerm false_ = new BoolTerm(false);
-	
+
 	private BoolTerm(boolean val) {
 		this.val = val;
 	}
-	
+
 	public static BoolTerm mk(boolean val) {
 		return val ? true_ : false_;
 	}
-	
+
 	public static BoolTerm mkTrue() {
 		return true_;
 	}
-	
+
 	public static BoolTerm mkFalse() {
 		return false_;
 	}
@@ -77,7 +76,7 @@ public class BoolTerm extends AbstractTerm implements Primitive<Boolean>, SmtLib
 	public Set<SolverVariable> freeVars() {
 		return Collections.emptySet();
 	}
-	
+
 	@Override
 	public String toString() {
 		return Boolean.toString(val);

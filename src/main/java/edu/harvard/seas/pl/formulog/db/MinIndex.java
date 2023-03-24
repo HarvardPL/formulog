@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.db;
  * #L%
  */
 
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -35,10 +34,10 @@ public final class MinIndex {
 	private MinIndex() {
 		throw new AssertionError("impossible");
 	}
-	
+
 	public static <T> Map<Set<T>, Iterable<T>> compute(Set<T> domain, Set<Set<T>> searches) {
 		MinChainCover<Set<T>> mcc = new MinChainCover<>((x, y) -> y.containsAll(x));
-		Iterable<Iterable<Set<T>>> chains = mcc.compute(searches); 
+		Iterable<Iterable<Set<T>>> chains = mcc.compute(searches);
 		Map<Set<T>, Iterable<T>> idxs = new HashMap<>();
 		for (Iterable<Set<T>> chain : chains) {
 			List<T> idx = computeIndex(chain);
@@ -50,7 +49,7 @@ public final class MinIndex {
 		}
 		return idxs;
 	}
-	
+
 	private static <T> void padIndex(List<T> idx, Set<T> domain) {
 		Set<T> seen = new HashSet<>(idx);
 		for (T elt : domain) {
@@ -73,7 +72,7 @@ public final class MinIndex {
 		}
 		return index;
 	}
-	
+
 	public static void main(String[] args) {
 		Set<String> s1 = new HashSet<>(Arrays.asList("x"));
 		Set<String> s2 = new HashSet<>(Arrays.asList("x", "y"));

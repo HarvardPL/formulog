@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-
 public interface ConstructorSymbol extends TypedSymbol {
 
 	ConstructorSymbolType getConstructorSymbolType();
@@ -37,5 +36,5 @@ public interface ConstructorSymbol extends TypedSymbol {
 		}
 		throw new AssertionError("impossible");
 	}
-	
+
 }

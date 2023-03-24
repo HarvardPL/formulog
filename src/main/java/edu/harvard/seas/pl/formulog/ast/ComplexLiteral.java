@@ -23,7 +23,6 @@ package edu.harvard.seas.pl.formulog.ast;
 import java.util.HashSet;
 import java.util.Set;
 
-
 import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralExnVisitor;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralVisitor;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
@@ -31,7 +30,7 @@ import edu.harvard.seas.pl.formulog.unification.Substitution;
 public interface ComplexLiteral extends Literal {
 
 	Term[] getArgs();
-	
+
 	ComplexLiteral applySubstitution(Substitution subst);
 
 	boolean isNegated();
@@ -43,9 +42,9 @@ public interface ComplexLiteral extends Literal {
 		}
 		return vars;
 	}
-	
+
 	<I, O> O accept(ComplexLiteralVisitor<I, O> visitor, I input);
-	
+
 	<I, O, E extends Throwable> O accept(ComplexLiteralExnVisitor<I, O, E> visitor, I input) throws E;
-	
+
 }

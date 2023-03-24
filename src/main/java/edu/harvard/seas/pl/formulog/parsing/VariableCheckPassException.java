@@ -23,7 +23,7 @@ package edu.harvard.seas.pl.formulog.parsing;
 public class VariableCheckPassException extends Exception {
 
 	private static final long serialVersionUID = 1L;
-	
+
 	public VariableCheckPassException(String message) {
 		super(message);
 	}

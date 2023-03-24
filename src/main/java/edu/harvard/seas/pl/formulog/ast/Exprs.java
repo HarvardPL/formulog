@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-
 import edu.harvard.seas.pl.formulog.ast.FunctionCallFactory.FunctionCall;
 
 public final class Exprs {
@@ -32,9 +31,9 @@ public final class Exprs {
 	public static interface ExprVisitor<I, O> {
 
 		O visit(MatchExpr matchExpr, I in);
-		
+
 		O visit(FunctionCall funcCall, I in);
-		
+
 		O visit(LetFunExpr funcDefs, I in);
 
 		O visit(Fold fold, I in);
@@ -44,13 +43,13 @@ public final class Exprs {
 	public static interface ExprVisitorExn<I, O, E extends Throwable> {
 
 		O visit(MatchExpr matchExpr, I in) throws E;
-		
+
 		O visit(FunctionCall funcCall, I in) throws E;
-		
+
 		O visit(LetFunExpr funcDefs, I in) throws E;
-		
+
 		O visit(Fold fold, I in) throws E;
 
 	}
-	
+
 }

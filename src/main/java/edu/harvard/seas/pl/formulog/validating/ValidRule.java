@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.validating;
  * #L%
  */
 
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;

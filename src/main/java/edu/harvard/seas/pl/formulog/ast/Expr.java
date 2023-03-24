@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
 import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitorExn;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
@@ -36,12 +35,12 @@ public interface Expr extends Term {
 	default <I, O> O accept(TermVisitor<I, O> visitor, I in) {
 		return visitor.visit(this, in);
 	}
-	
+
 	@Override
 	default <I, O, E extends Throwable> O accept(TermVisitorExn<I, O, E> visitor, I in) throws E {
 		return visitor.visit(this, in);
 	}
-	
+
 	@Override
 	default boolean containsUnevaluatedTerm() {
 		return true;

@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.smt;
  * #L%
  */
 
-
 import edu.harvard.seas.pl.formulog.ast.Model;
 
 public class SmtResult {
@@ -29,7 +28,7 @@ public class SmtResult {
 	public final Model model;
 	public final int solverId;
 	public final int taskId;
-	
+
 	public SmtResult(SmtStatus status, Model model, int solverId, int taskId) {
 		this.status = status;
 		this.model = model;

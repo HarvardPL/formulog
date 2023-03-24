@@ -20,9 +20,8 @@ package edu.harvard.seas.pl.formulog.eval;
  * #L%
  */
 
-
 public interface StratumEvaluator {
 
 	void evaluate() throws EvaluationException;
-	
+
 }

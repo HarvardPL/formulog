@@ -24,7 +24,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-
 public interface Rule<H extends Literal, B extends Literal> extends Iterable<B> {
 
 	H getHead();

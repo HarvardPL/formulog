@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.db;
  * #L%
  */
 
-
 import java.util.Comparator;
 
 import edu.harvard.seas.pl.formulog.ast.Term;
@@ -36,7 +35,7 @@ public class ExampleComparator implements Comparator<Term[]> {
 		} else if (xid > yid) {
 			return 1;
 		}
-		
+
 		xid = xs[2].getId();
 		yid = ys[2].getId();
 		if (xid < yid) {
@@ -44,7 +43,7 @@ public class ExampleComparator implements Comparator<Term[]> {
 		} else if (xid > yid) {
 			return 1;
 		}
-		
+
 		xid = xs[1].getId();
 		yid = ys[1].getId();
 		if (xid < yid) {

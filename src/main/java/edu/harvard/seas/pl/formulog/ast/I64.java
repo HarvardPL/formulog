@@ -22,7 +22,6 @@ package edu.harvard.seas.pl.formulog.ast;
 
 import java.util.Collections;
 
-
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,11 +38,11 @@ public class I64 extends AbstractTerm implements Primitive<Long>, SmtLibTerm {
 
 	private static final Map<Long, I64> memo = new ConcurrentHashMap<>();
 	private final long val;
-	
+
 	private I64(long val) {
 		this.val = val;
 	}
-	
+
 	public static I64 make(long val) {
 		return Util.lookupOrCreate(memo, val, () -> new I64(val));
 	}
@@ -52,7 +51,7 @@ public class I64 extends AbstractTerm implements Primitive<Long>, SmtLibTerm {
 	public Long getVal() {
 		return val;
 	}
-	
+
 	@Override
 	public String toString() {
 		return Long.toString(val) + "L";
@@ -62,7 +61,7 @@ public class I64 extends AbstractTerm implements Primitive<Long>, SmtLibTerm {
 	public SmtLibTerm substSolverTerms(PMap<SolverVariable, SmtLibTerm> subst) {
 		return this;
 	}
-	
+
 	@Override
 	public void toSmtLib(SmtLibShim shim) {
 		shim.print("#x" + String.format("%016x", val));
@@ -72,7 +71,7 @@ public class I64 extends AbstractTerm implements Primitive<Long>, SmtLibTerm {
 	public Type getType() {
 		return BuiltInTypes.i64;
 	}
-	
+
 	@Override
 	public Set<SolverVariable> freeVars() {
 		return Collections.emptySet();

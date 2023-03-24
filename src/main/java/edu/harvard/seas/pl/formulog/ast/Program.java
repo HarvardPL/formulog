@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-
 import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.functions.FunctionDef;
@@ -33,27 +32,27 @@ import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 public interface Program<Q extends Literal, R extends Rule<Q, ?>> {
 
 	Set<FunctionSymbol> getFunctionSymbols();
-	
+
 	Set<RelationSymbol> getFactSymbols();
-	
+
 	Set<RelationSymbol> getRuleSymbols();
-	
+
 	FunctionDef getDef(FunctionSymbol sym);
-	
+
 	Set<Term[]> getFacts(RelationSymbol sym);
 
 	Set<R> getRules(RelationSymbol sym);
-	
+
 	SymbolManager getSymbolManager();
-	
+
 	boolean hasQuery();
-	
+
 	Q getQuery();
-	
+
 	FunctionCallFactory getFunctionCallFactory();
-	
+
 	Set<ConstructorSymbol> getUninterpretedFunctionSymbols();
-	
+
 	Set<TypeSymbol> getTypeSymbols();
 
 }

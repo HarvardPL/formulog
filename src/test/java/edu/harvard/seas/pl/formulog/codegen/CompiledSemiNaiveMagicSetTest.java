@@ -22,7 +22,6 @@ package edu.harvard.seas.pl.formulog.codegen;
 
 import edu.harvard.seas.pl.formulog.Configuration;
 
-
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
 import edu.harvard.seas.pl.formulog.magic.CommonMagicSetTest;
 
@@ -30,10 +29,11 @@ public class CompiledSemiNaiveMagicSetTest extends CommonMagicSetTest<SemiNaiveE
 
 	static {
 		if (!Configuration.testCodegen) {
-			System.err.println("WARNING: skipping CompiledSemiNaiveMagicSetTest; enable with system property `-DtestCodegen`");
+			System.err.println(
+					"WARNING: skipping CompiledSemiNaiveMagicSetTest; enable with system property `-DtestCodegen`");
 		}
 	}
-	
+
 	public CompiledSemiNaiveMagicSetTest() {
 		super(Configuration.testCodegen ? new CompiledSemiNaiveTester() : new NopTester<>());
 	}

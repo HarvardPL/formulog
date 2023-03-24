@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.codegen;
  * #L%
  */
 
-
 import edu.harvard.seas.pl.formulog.symbols.AbstractWrappedRelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 
@@ -29,7 +28,7 @@ public class NewSymbol extends AbstractWrappedRelationSymbol<RelationSymbol> {
 	public NewSymbol(RelationSymbol baseSymbol) {
 		super(baseSymbol);
 	}
-	
+
 	@Override
 	public String toString() {
 		return "new:" + getBaseSymbol();

@@ -21,11 +21,11 @@ package edu.harvard.seas.pl.formulog.codegen.ast.souffle;
  */
 
 public enum SIntType implements SType {
-    INSTANCE;
+	INSTANCE;
 
-    @Override
-    public String toString() {
-        return "number";
-    }
+	@Override
+	public String toString() {
+		return "number";
+	}
 
 }

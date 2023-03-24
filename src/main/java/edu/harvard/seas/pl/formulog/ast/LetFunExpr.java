@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -33,10 +32,10 @@ import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 
 public class LetFunExpr implements Expr {
-	
+
 	private final Set<NestedFunctionDef> defs;
 	private final Term letBody;
-	
+
 	private LetFunExpr(Set<NestedFunctionDef> defs, Term letBody) {
 		Set<NestedFunctionDef> freshDefs = new HashSet<>();
 		for (NestedFunctionDef def : defs) {
@@ -45,15 +44,15 @@ public class LetFunExpr implements Expr {
 		this.defs = Collections.unmodifiableSet(freshDefs);
 		this.letBody = letBody;
 	}
-	
+
 	public static LetFunExpr make(Set<NestedFunctionDef> defs, Term letBody) {
 		return new LetFunExpr(defs, letBody);
 	}
-	
+
 	public Set<NestedFunctionDef> getDefs() {
 		return defs;
 	}
-	
+
 	public Term getLetBody() {
 		return letBody;
 	}
@@ -141,7 +140,7 @@ public class LetFunExpr implements Expr {
 			return false;
 		return true;
 	}
-	
+
 	@Override
 	public String toString() {
 		String s = "let fun ";

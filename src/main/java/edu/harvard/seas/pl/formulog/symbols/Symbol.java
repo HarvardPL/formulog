@@ -20,9 +20,8 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-
 public interface Symbol {
-	
+
 	int getArity();
-	
+
 }

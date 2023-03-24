@@ -20,35 +20,34 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-
 public final class ComplexLiterals {
 
 	private ComplexLiterals() {
 		throw new AssertionError("impossible");
 	}
-	
+
 	public static UnificationPredicate unifyWithBool(Term t, boolean bool) {
 		return UnificationPredicate.make(t, bool ? BoolTerm.mkTrue() : BoolTerm.mkFalse(), false);
 	}
-	
+
 	public static UnificationPredicate trueAtom() {
 		return unifyWithBool(BoolTerm.mkTrue(), true);
 	}
-	
+
 	public static interface ComplexLiteralVisitor<I, O> {
 
 		O visit(UnificationPredicate unificationPredicate, I input);
 
 		O visit(UserPredicate userPredicate, I input);
-		
+
 	}
-	
+
 	public static interface ComplexLiteralExnVisitor<I, O, E extends Throwable> {
 
 		O visit(UnificationPredicate unificationPredicate, I input) throws E;
 
 		O visit(UserPredicate userPredicate, I input) throws E;
-		
+
 	}
-	
+
 }

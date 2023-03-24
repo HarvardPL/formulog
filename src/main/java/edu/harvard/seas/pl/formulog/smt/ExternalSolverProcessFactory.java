@@ -20,11 +20,10 @@ package edu.harvard.seas.pl.formulog.smt;
  * #L%
  */
 
-
 import java.io.IOException;
 
 public interface ExternalSolverProcessFactory {
 
 	Process newProcess(boolean incremental) throws IOException;
-	
+
 }

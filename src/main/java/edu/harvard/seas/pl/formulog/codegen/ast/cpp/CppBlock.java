@@ -29,23 +29,23 @@ import java.io.PrintWriter;
  */
 public class CppBlock implements CppStmt {
 
-    private final CppStmt stmt;
+	private final CppStmt stmt;
 
-    private CppBlock(CppStmt stmt) {
-        this.stmt = stmt;
-    }
+	private CppBlock(CppStmt stmt) {
+		this.stmt = stmt;
+	}
 
-    public static CppBlock mk(CppStmt stmt) {
-        return new CppBlock(stmt);
-    }
+	public static CppBlock mk(CppStmt stmt) {
+		return new CppBlock(stmt);
+	}
 
-    @Override
-    public void println(PrintWriter out, int indent) {
-        CodeGenUtil.printIndent(out, indent);
-        out.println("{");
-        stmt.println(out, indent + 1);
-        CodeGenUtil.printIndent(out, indent);
-        out.println("}");
-    }
+	@Override
+	public void println(PrintWriter out, int indent) {
+		CodeGenUtil.printIndent(out, indent);
+		out.println("{");
+		stmt.println(out, indent + 1);
+		CodeGenUtil.printIndent(out, indent);
+		out.println("}");
+	}
 
 }

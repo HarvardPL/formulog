@@ -39,28 +39,28 @@ import edu.harvard.seas.pl.formulog.util.Util;
 public class OpaqueSet extends AbstractTerm implements Primitive<Set<Term>> {
 
 	private final PSet<Term> s;
-	
+
 	private OpaqueSet(PSet<Term> s) {
 		this.s = s;
 	}
 
 	private static final OpaqueSet empty;
-	
+
 	private static final Map<PSet<Term>, OpaqueSet> memo = new ConcurrentHashMap<>();
-	
+
 	static {
 		PSet<Term> mt = MapPSet.from(HashPMap.empty(IntTreePMap.empty()));
 		empty = make(mt);
 	}
-	
+
 	public static OpaqueSet empty() {
 		return empty;
 	}
-	
+
 	public static OpaqueSet singleton(Term t) {
 		return empty.plus(t);
 	}
-	
+
 	public static OpaqueSet fromCollection(Collection<Term> c) {
 		PSet<Term> s = MapPSet.from(HashPMap.empty(IntTreePMap.empty()));
 		for (Term t : c) {
@@ -68,43 +68,43 @@ public class OpaqueSet extends AbstractTerm implements Primitive<Set<Term>> {
 		}
 		return make(s);
 	}
-	
+
 	private static OpaqueSet make(PSet<Term> s) {
 		return Util.lookupOrCreate(memo, s, () -> new OpaqueSet(s));
 	}
-	
+
 	public Collection<Term> getCollection() {
 		return s;
 	}
-	
+
 	public boolean member(Term t) {
 		return s.contains(t);
 	}
-	
+
 	public OpaqueSet plus(Term t) {
 		return make(s.plus(t));
 	}
-	
+
 	public OpaqueSet minus(Term t) {
 		return make(s.minus(t));
 	}
-	
+
 	public OpaqueSet union(OpaqueSet other) {
 		return make(s.plusAll(other.s));
 	}
-	
+
 	public OpaqueSet diff(OpaqueSet other) {
 		return make(s.minusAll(other.s));
 	}
-	
+
 	public int size() {
 		return s.size();
 	}
-	
+
 	public boolean isEmpty() {
 		return s.isEmpty();
 	}
-	
+
 	public Pair<Term, OpaqueSet> choose() {
 		if (isEmpty()) {
 			return null;
@@ -112,7 +112,7 @@ public class OpaqueSet extends AbstractTerm implements Primitive<Set<Term>> {
 		Term t = s.iterator().next();
 		return new Pair<>(t, make(s.minus(t)));
 	}
-	
+
 	public boolean containsAll(OpaqueSet other) {
 		return s.containsAll(other.s);
 	}
@@ -126,7 +126,7 @@ public class OpaqueSet extends AbstractTerm implements Primitive<Set<Term>> {
 	public Type getType() {
 		return BuiltInTypes.opaqueSet(BuiltInTypes.a);
 	}
-	
+
 	@Override
 	public String toString() {
 		String str = s.toString();

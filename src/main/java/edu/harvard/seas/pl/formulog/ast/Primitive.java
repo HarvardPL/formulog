@@ -23,7 +23,6 @@ package edu.harvard.seas.pl.formulog.ast;
 import java.util.Map;
 import java.util.Set;
 
-
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitorExn;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
@@ -32,7 +31,7 @@ import edu.harvard.seas.pl.formulog.unification.Substitution;
 public interface Primitive<T> extends Term {
 
 	T getVal();
-	
+
 	@Override
 	default <I, O> O accept(TermVisitor<I, O> v, I in) {
 		return v.visit(this, in);
@@ -52,27 +51,27 @@ public interface Primitive<T> extends Term {
 	public default Term applySubstitution(Substitution s) {
 		return this;
 	}
-	
+
 	@Override
 	public default Term normalize(Substitution s) {
 		return this;
 	}
-	
+
 	@Override
 	public default boolean isGround() {
 		return true;
 	}
-	
+
 	Type getType();
-	
+
 	@Override
 	public default void varSet(Set<Var> acc) {
 		// do nothing
 	}
-	
+
 	@Override
 	public default void updateVarCounts(Map<Var, Integer> counts) {
 		// do nothing
 	}
-	
+
 }

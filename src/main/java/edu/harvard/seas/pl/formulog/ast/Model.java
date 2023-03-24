@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,7 +32,7 @@ import edu.harvard.seas.pl.formulog.util.Util;
 public class Model extends AbstractTerm implements Primitive<Map<SolverVariable, Term>> {
 
 	private static final Map<Map<SolverVariable, Term>, Model> memo = new ConcurrentHashMap<>();
-	
+
 	private final Map<SolverVariable, Term> m;
 
 	private Model(Map<SolverVariable, Term> m) {

@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.types;
  * #L%
  */
 
-
 /**
  * An exception signifying a type error.
  *
@@ -38,8 +37,7 @@ public class TypeException extends Exception {
 	/**
 	 * Constructs an exception signifying a type error.
 	 * 
-	 * @param message
-	 *            the error message
+	 * @param message the error message
 	 */
 	public TypeException(String message) {
 		super(message);
@@ -48,8 +46,7 @@ public class TypeException extends Exception {
 	/**
 	 * Constructs an exception signifying a type error.
 	 * 
-	 * @param cause
-	 *            the exception that caused this exception
+	 * @param cause the exception that caused this exception
 	 */
 	public TypeException(Throwable cause) {
 		super(cause);
@@ -58,10 +55,8 @@ public class TypeException extends Exception {
 	/**
 	 * Constructs an exception signifying a type error.
 	 * 
-	 * @param message
-	 *            the error message
-	 * @param cause
-	 *            the exception that caused this exception
+	 * @param message the error message
+	 * @param cause   the exception that caused this exception
 	 */
 	public TypeException(String message, Throwable cause) {
 		super(message, cause);
@@ -70,14 +65,10 @@ public class TypeException extends Exception {
 	/**
 	 * Constructs an exception signifying a type error.
 	 * 
-	 * @param message
-	 *            the error message
-	 * @param cause
-	 *            the exception that caused this exception
-	 * @param enableSuppression
-	 *            whether or not suppression is enabled or disabled
-	 * @param writableStackTrace
-	 *            whether or not the stack trace should be writable
+	 * @param message            the error message
+	 * @param cause              the exception that caused this exception
+	 * @param enableSuppression  whether or not suppression is enabled or disabled
+	 * @param writableStackTrace whether or not the stack trace should be writable
 	 */
 	public TypeException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);

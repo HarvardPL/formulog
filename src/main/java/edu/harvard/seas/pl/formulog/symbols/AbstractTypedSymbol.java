@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 
 abstract class AbstractTypedSymbol extends AbstractSymbol implements TypedSymbol {

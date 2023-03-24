@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-
 abstract class AbstractSymbol implements Symbol {
 
 	private final String name;

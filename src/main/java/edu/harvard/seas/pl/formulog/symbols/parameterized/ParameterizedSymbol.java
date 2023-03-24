@@ -24,19 +24,18 @@ import java.util.List;
 
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 
-
 public interface ParameterizedSymbol extends Symbol {
 
 	SymbolBase getBase();
-	
+
 	List<Param> getArgs();
-	
+
 	ParameterizedSymbol copyWithNewArgs(List<Param> args);
 
 	ParameterizedSymbol copyWithNewArgs(Param... args);
-	
+
 	ParameterizedSymbol makeFinal();
-	
+
 	boolean isGround();
-	
+
 }

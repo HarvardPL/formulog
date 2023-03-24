@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.validating;
  * #L%
  */
 
-
 import static org.junit.Assert.fail;
 
 import java.io.FileNotFoundException;
@@ -100,12 +99,12 @@ public abstract class ValidatingTest {
 	public void test219() {
 		test("test219_ok.flg");
 	}
-	
+
 	@Test
 	public void test248() {
 		test("test248_bd.flg");
 	}
-	
+
 	@Test
 	public void test251() {
 		test("test251_bd.flg");

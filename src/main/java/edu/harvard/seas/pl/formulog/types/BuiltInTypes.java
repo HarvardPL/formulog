@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.types;
  * #L%
  */
 
-
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol.CMP_EQ;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol.CMP_GT;
 import static edu.harvard.seas.pl.formulog.symbols.BuiltInConstructorSymbol.CMP_LT;
@@ -125,15 +124,15 @@ public final class BuiltInTypes {
 	public static AlgebraicDataType sym(Type a) {
 		return AlgebraicDataType.make(SYM_TYPE, Collections.singletonList(a));
 	}
-	
+
 	public static AlgebraicDataType bv(Type a) {
 		return AlgebraicDataType.make(BV, a);
 	}
-	
+
 	public static AlgebraicDataType bv(int width) {
 		return bv(TypeIndex.make(width));
 	}
-	
+
 	public static AlgebraicDataType fp(Type a, Type b) {
 		return AlgebraicDataType.make(FP, a, b);
 	}
@@ -145,11 +144,11 @@ public final class BuiltInTypes {
 	public static AlgebraicDataType array(Type a, Type b) {
 		return AlgebraicDataType.make(ARRAY_TYPE, Arrays.asList(a, b));
 	}
-	
+
 	public static AlgebraicDataType opaqueSet(Type a) {
 		return AlgebraicDataType.make(OPAQUE_SET, a);
 	}
-	
+
 	public static AlgebraicDataType pair(Type a, Type b) {
 		return AlgebraicDataType.make(GlobalSymbolManager.lookupTupleTypeSymbol(2), a, b);
 	}

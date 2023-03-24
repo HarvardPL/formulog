@@ -20,30 +20,29 @@ package edu.harvard.seas.pl.formulog.smt;
  * #L%
  */
 
-
 public class SmtStrategy {
 
 	public enum Tag {
 		QUEUE,
-		
+
 		BEST_MATCH,
-		
+
 		NAIVE,
-		
+
 		PUSH_POP,
-		
+
 		PUSH_POP_NAIVE,
-		
+
 		PER_THREAD_QUEUE,
-		
+
 		PER_THREAD_BEST_MATCH,
-		
+
 		PER_THREAD_PUSH_POP,
-		
+
 		PER_THREAD_NAIVE,
-		
+
 		PER_THREAD_PUSH_POP_NAIVE,
-		
+
 		;
 	}
 

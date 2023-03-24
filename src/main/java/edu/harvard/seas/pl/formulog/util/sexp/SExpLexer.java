@@ -63,7 +63,7 @@ public class SExpLexer {
 		}
 		ready = false;
 	}
-	
+
 	public boolean hasToken() throws SExpException {
 		return ready || loadNextToken();
 	}
@@ -125,7 +125,7 @@ public class SExpLexer {
 		}
 		return bufSize > 0;
 	}
-	
+
 	public static void main(String[] args) throws SExpException {
 		Reader r = new StringReader("(hello 2(x ()) )");
 		SExpLexer lexer = new SExpLexer(r);

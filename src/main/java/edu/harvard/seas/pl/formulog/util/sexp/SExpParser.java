@@ -69,7 +69,7 @@ public class SExpParser {
 		lexer.consume(SExpToken.RPAREN);
 		return new SExpList(l);
 	}
-	
+
 	public static void main(String[] args) throws SExpException {
 		Reader r = new StringReader("(hello 2(x ()) )");
 		SExpParser parser = new SExpParser(r);

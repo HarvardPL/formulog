@@ -22,7 +22,6 @@ package edu.harvard.seas.pl.formulog.db;
 
 import java.util.ArrayList;
 
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -62,7 +61,7 @@ public class MinChainCover<T> {
 			}
 
 		};
-		
+
 		private final Node sink = new Node() {
 
 			@Override
@@ -71,7 +70,7 @@ public class MinChainCover<T> {
 			}
 
 		};
-		
+
 		@SuppressWarnings("unchecked")
 		public Worker(Set<T> s) {
 			int n = s.size();

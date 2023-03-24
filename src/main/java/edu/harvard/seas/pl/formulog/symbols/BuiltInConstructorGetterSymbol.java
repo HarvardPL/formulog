@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.a;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.list;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.option;
@@ -36,17 +35,17 @@ import edu.harvard.seas.pl.formulog.types.Types.Type;
 public enum BuiltInConstructorGetterSymbol implements ConstructorSymbol {
 
 	CONS_1("#cons_1", list(a), smt(a)),
-	
+
 	CONS_2("#cons_2", list(a), smt(list(a))),
-	
+
 	SOME_1("#some_1", option(a), smt(a))
-	
+
 	;
 
 	private final String name;
 	private final FunctorType type;
-	
-	private BuiltInConstructorGetterSymbol(String name, Type...types) {
+
+	private BuiltInConstructorGetterSymbol(String name, Type... types) {
 		this.name = name;
 		List<Type> argTypes = new ArrayList<>(Arrays.asList(types));
 		Type retType = argTypes.remove(types.length - 1);
@@ -62,7 +61,7 @@ public enum BuiltInConstructorGetterSymbol implements ConstructorSymbol {
 	public FunctorType getCompileTimeType() {
 		return type;
 	}
-	
+
 	@Override
 	public String toString() {
 		return name;
@@ -72,5 +71,5 @@ public enum BuiltInConstructorGetterSymbol implements ConstructorSymbol {
 	public ConstructorSymbolType getConstructorSymbolType() {
 		return ConstructorSymbolType.SOLVER_CONSTRUCTOR_GETTER;
 	}
-	
+
 }

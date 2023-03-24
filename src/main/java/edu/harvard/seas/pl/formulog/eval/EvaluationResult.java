@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.eval;
  * #L%
  */
 
-
 import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.UserPredicate;
@@ -29,11 +28,11 @@ import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 public interface EvaluationResult {
 
 	Iterable<UserPredicate> getAll(RelationSymbol sym);
-	
+
 	Iterable<UserPredicate> getQueryAnswer();
-	
+
 	Set<RelationSymbol> getSymbols();
-	
+
 	int getCount(RelationSymbol sym);
-	
+
 }

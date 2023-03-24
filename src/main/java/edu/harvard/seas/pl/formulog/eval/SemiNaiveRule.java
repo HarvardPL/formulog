@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.eval;
  * #L%
  */
 
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -42,8 +41,9 @@ public class SemiNaiveRule extends AbstractRule<UserPredicate, ComplexLiteral> {
 	private SemiNaiveRule(UserPredicate head, List<ComplexLiteral> body) {
 		super(head, body);
 	}
-	
-	public static Set<SemiNaiveRule> make(Rule<UserPredicate, ComplexLiteral> rule, Set<RelationSymbol> stratumSymbols) {
+
+	public static Set<SemiNaiveRule> make(Rule<UserPredicate, ComplexLiteral> rule,
+			Set<RelationSymbol> stratumSymbols) {
 		Set<SemiNaiveRule> rules = new HashSet<>();
 		for (int i = 0; i < rule.getBodySize(); ++i) {
 			boolean canBeDelta = rule.getBody(i).accept(new ComplexLiteralVisitor<Void, Boolean>() {
@@ -57,7 +57,7 @@ public class SemiNaiveRule extends AbstractRule<UserPredicate, ComplexLiteral> {
 				public Boolean visit(UserPredicate userPredicate, Void input) {
 					return stratumSymbols.contains(userPredicate.getSymbol());
 				}
-				
+
 			}, null);
 			if (canBeDelta) {
 				rules.add(make(rule, stratumSymbols, i));
@@ -69,7 +69,8 @@ public class SemiNaiveRule extends AbstractRule<UserPredicate, ComplexLiteral> {
 		return rules;
 	}
 
-	private static SemiNaiveRule make(Rule<UserPredicate, ComplexLiteral> rule, Set<RelationSymbol> stratumSymbols, int deltaIdx) {
+	private static SemiNaiveRule make(Rule<UserPredicate, ComplexLiteral> rule, Set<RelationSymbol> stratumSymbols,
+			int deltaIdx) {
 		List<ComplexLiteral> body = new ArrayList<>();
 		for (int i = 0; i < rule.getBodySize(); ++i) {
 			ComplexLiteral l = rule.getBody(i);
@@ -83,7 +84,7 @@ public class SemiNaiveRule extends AbstractRule<UserPredicate, ComplexLiteral> {
 		}
 		return new SemiNaiveRule(rule.getHead(), body);
 	}
-	
+
 	public static class DeltaSymbol extends AbstractWrappedRelationSymbol<RelationSymbol> {
 
 		public DeltaSymbol(RelationSymbol baseSymbol) {
@@ -95,7 +96,7 @@ public class SemiNaiveRule extends AbstractRule<UserPredicate, ComplexLiteral> {
 		public String toString() {
 			return "delta:" + getBaseSymbol();
 		}
-		
+
 	}
-	
+
 }

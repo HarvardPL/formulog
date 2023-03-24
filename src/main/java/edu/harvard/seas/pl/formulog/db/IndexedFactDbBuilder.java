@@ -22,13 +22,12 @@ package edu.harvard.seas.pl.formulog.db;
 
 import edu.harvard.seas.pl.formulog.ast.BindingType;
 
-
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 
 public interface IndexedFactDbBuilder<T extends IndexedFactDb> {
 
 	int makeIndex(RelationSymbol sym, BindingType[] pat);
-	
+
 	T build();
-	
+
 }

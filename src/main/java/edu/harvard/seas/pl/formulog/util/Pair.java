@@ -24,7 +24,6 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-
 public class Pair<U, V> {
 
 	private final U fst;

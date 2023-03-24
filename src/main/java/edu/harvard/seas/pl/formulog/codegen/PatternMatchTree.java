@@ -74,8 +74,7 @@ public class PatternMatchTree {
 	/**
 	 * Construct a pattern match tree from a list of (pattern => expression) pairs
 	 * 
-	 * @param clauses
-	 *            The (pattern => expression) pairs
+	 * @param clauses The (pattern => expression) pairs
 	 */
 	public PatternMatchTree(List<Pair<Term, Term>> clauses) {
 		PatternMatchingComputation k = PatternMatchingComputation.mk(clauses);
@@ -95,8 +94,7 @@ public class PatternMatchTree {
 	 * Get a map from representing the outgoing edges of the given node. The map's
 	 * iterator order matches the priority of the edges (high to low).
 	 * 
-	 * @param node
-	 *            The node
+	 * @param node The node
 	 * @return Map with the outgoing edges
 	 */
 	public Iterable<Pair<Edge<?>, Node>> getOutgoingEdges(Node node) {
@@ -116,8 +114,7 @@ public class PatternMatchTree {
 	 * Turn a pattern-matching computation into a tree representing that
 	 * computation.
 	 * 
-	 * @param k
-	 *            The computation
+	 * @param k The computation
 	 * @return return The node at the root of that tree
 	 */
 	private Node build(PatternMatchingComputation k) {
@@ -216,8 +213,7 @@ public class PatternMatchTree {
 		 * Construct a pattern-matching computation from a list of (pattern =>
 		 * expression) pairs.
 		 * 
-		 * @param clauses
-		 *            The (pattern => expression) pairs
+		 * @param clauses The (pattern => expression) pairs
 		 * @return the pattern-matching computation
 		 */
 		public static PatternMatchingComputation mk(List<Pair<Term, Term>> clauses) {
@@ -293,8 +289,7 @@ public class PatternMatchTree {
 		 * Create an edge corresponding to the pattern matching logic for the first step
 		 * in processing a deque of patterns. The provided deque is also updated.
 		 * 
-		 * @param d
-		 *            The deque of patterns
+		 * @param d The deque of patterns
 		 * @return The edge
 		 */
 		private static Edge<?> step(Deque<Term> d) {
@@ -403,7 +398,7 @@ public class PatternMatchTree {
 	public static class InternalNode implements Node {
 
 		private static AtomicInteger cnt = new AtomicInteger();
-		
+
 		private final SymbolicTerm symbolicTerm;
 		private final int id = cnt.getAndIncrement();
 
@@ -461,8 +456,7 @@ public class PatternMatchTree {
 	 * constructor), and this interface is parametric in the type of computation
 	 * that needs to be performed.
 	 *
-	 * @param <T>
-	 *            The type of the edge
+	 * @param <T> The type of the edge
 	 */
 	public static interface Edge<T> {
 

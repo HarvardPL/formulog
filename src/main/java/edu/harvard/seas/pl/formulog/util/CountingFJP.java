@@ -22,7 +22,6 @@ package edu.harvard.seas.pl.formulog.util;
 
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 
-
 public interface CountingFJP {
 
 	void externallyAddTask(AbstractFJPTask w);

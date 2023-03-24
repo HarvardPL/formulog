@@ -20,15 +20,14 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-
 public enum BindingType {
-	
+
 	BOUND, FREE, IGNORED;
-	
+
 	public boolean isBound() {
 		return this.equals(BOUND);
 	}
-	
+
 	public boolean isFree() {
 		return this.equals(FREE);
 	}
@@ -36,5 +35,5 @@ public enum BindingType {
 	public boolean isIgnored() {
 		return this.equals(IGNORED);
 	}
-	
+
 }

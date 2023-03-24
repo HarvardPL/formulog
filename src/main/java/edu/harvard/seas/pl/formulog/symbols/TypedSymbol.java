@@ -20,11 +20,10 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-
 import edu.harvard.seas.pl.formulog.types.FunctorType;
 
 public interface TypedSymbol extends Symbol {
-	
+
 	FunctorType getCompileTimeType();
-	
+
 }

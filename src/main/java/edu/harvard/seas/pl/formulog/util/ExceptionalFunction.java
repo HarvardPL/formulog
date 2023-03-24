@@ -20,10 +20,9 @@ package edu.harvard.seas.pl.formulog.util;
  * #L%
  */
 
-
 @FunctionalInterface
 public interface ExceptionalFunction<T1, T2, E extends Exception> {
-	
+
 	T2 apply(T1 arg) throws E;
 
 }

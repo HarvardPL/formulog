@@ -20,9 +20,8 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-
 public interface Literal {
-	
+
 	Term[] getArgs();
-	
+
 }

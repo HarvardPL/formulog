@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.unification;
  * #L%
  */
 
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -52,7 +51,7 @@ public class SimpleSubstitution implements Substitution {
 	public Iterable<Var> iterateKeys() {
 		return map.keySet();
 	}
-	
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder("[");

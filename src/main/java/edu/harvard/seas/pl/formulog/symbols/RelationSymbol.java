@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-
 public interface RelationSymbol extends TypedSymbol {
 
 	boolean isIdbSymbol();
@@ -28,11 +27,11 @@ public interface RelationSymbol extends TypedSymbol {
 	default boolean isEdbSymbol() {
 		return !isIdbSymbol();
 	}
-	
+
 	boolean isDisk();
 
 	boolean isBottomUp();
 
 	boolean isTopDown();
-	
+
 }

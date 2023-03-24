@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.util;
  * #L%
  */
 
-
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashSet;

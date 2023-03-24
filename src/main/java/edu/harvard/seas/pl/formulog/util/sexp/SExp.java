@@ -25,13 +25,13 @@ import java.util.List;
 public interface SExp {
 
 	boolean isAtom();
-	
+
 	default boolean isList() {
 		return !isAtom();
 	}
-	
+
 	String asAtom();
-	
+
 	List<SExp> asList();
-	
+
 }

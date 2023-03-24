@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.validating;
  * #L%
  */
 
-
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -50,7 +49,7 @@ public class FunctionDefValidation {
 			}
 		}
 	}
-	
+
 	public static void validate(UserFunctionDef def) throws InvalidProgramException {
 		Set<Var> params = checkParams(def.getParams());
 		Set<Var> vars = def.getBody().varSet();
@@ -66,7 +65,7 @@ public class FunctionDefValidation {
 			throw new InvalidProgramException(msg);
 		}
 	}
-	
+
 	private static Set<Var> checkParams(List<Var> params) throws InvalidProgramException {
 		Set<Var> vars = new HashSet<>();
 		for (Var param : params) {
@@ -76,5 +75,5 @@ public class FunctionDefValidation {
 		}
 		return vars;
 	}
-	
+
 }

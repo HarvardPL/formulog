@@ -81,6 +81,6 @@ public class UserFunctionDef implements FunctionDef {
 	@Override
 	public String toString() {
 		return "UserFunctionDef [sym=" + sym + ", params=" + params + ", body=" + body + "]";
-	}	
+	}
 
 }

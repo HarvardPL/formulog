@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -34,29 +33,29 @@ import edu.harvard.seas.pl.formulog.util.Util;
 public class Var extends AbstractTerm implements Term {
 
 	static final AtomicInteger cnt = new AtomicInteger();
-	
+
 	private final String name;
-	
+
 	protected Var(String name) {
 		this.name = name;
 	}
-	
+
 	public static Var fresh(String name) {
 		return new Var(name);
 	}
-	
+
 	public static Var fresh() {
 		return new Var("$" + cnt.getAndIncrement());
 	}
-	
+
 	public boolean isUnderscore() {
 		return name.equals("_");
 	}
-	
+
 	public String getName() {
 		return name;
 	}
-	
+
 	@Override
 	public String toString() {
 		return name;
@@ -110,9 +109,9 @@ public class Var extends AbstractTerm implements Term {
 	}
 
 	private static final Var hole = new Var("??");
-	
+
 	public static Var makeHole() {
 		return hole;
 	}
-	
+
 }

@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.unification;
  * #L%
  */
 
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,11 +33,11 @@ public class OverwriteSubstitution implements Substitution {
 	public OverwriteSubstitution() {
 		this(new HashMap<>());
 	}
-	
+
 	private OverwriteSubstitution(Map<Var, Term> m) {
 		this.m = m;
 	}
-	
+
 	@Override
 	public void put(Var v, Term t) {
 		m.put(v, t);
@@ -63,7 +62,7 @@ public class OverwriteSubstitution implements Substitution {
 	public OverwriteSubstitution copy() {
 		return new OverwriteSubstitution(new HashMap<>(m));
 	}
-	
+
 	@Override
 	public String toString() {
 		return m.toString();

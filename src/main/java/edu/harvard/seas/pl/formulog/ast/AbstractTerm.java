@@ -20,11 +20,10 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-
 public abstract class AbstractTerm implements Term {
 
 	private final int id;
-	
+
 	public AbstractTerm() {
 		this.id = Terms.nextId();
 	}

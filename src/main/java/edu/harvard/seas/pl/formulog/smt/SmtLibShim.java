@@ -174,7 +174,6 @@ public class SmtLibShim {
 		println("(reset)");
 		checkSuccess();
 	}
-	
 
 	public void resetAssertions() throws EvaluationException {
 		println("(reset-assertions)");
@@ -218,7 +217,7 @@ public class SmtLibShim {
 			checkSuccess();
 		}
 	}
-	
+
 	public SmtStatus checkSatAssuming(Collection<SolverVariable> onVars, Collection<SolverVariable> offVars,
 			int timeout) throws EvaluationException {
 		setTimeout(timeout);

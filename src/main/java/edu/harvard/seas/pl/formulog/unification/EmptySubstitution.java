@@ -20,14 +20,13 @@ package edu.harvard.seas.pl.formulog.unification;
  * #L%
  */
 
-
 import java.util.Collections;
 
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Var;
 
 public enum EmptySubstitution implements Substitution {
-	
+
 	INSTANCE;
 
 	@Override

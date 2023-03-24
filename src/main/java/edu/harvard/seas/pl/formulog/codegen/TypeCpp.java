@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.codegen;
  * #L%
  */
 
-
 import edu.harvard.seas.pl.formulog.codegen.ast.cpp.CppExpr;
 import edu.harvard.seas.pl.formulog.codegen.ast.cpp.CppReturn;
 import edu.harvard.seas.pl.formulog.codegen.ast.cpp.CppSeq;
@@ -38,54 +37,54 @@ import java.util.List;
 
 public class TypeCpp extends TemplateSrcFile {
 
-    public TypeCpp(CodeGenContext ctx) {
-        super("Type.cpp", ctx);
-    }
+	public TypeCpp(CodeGenContext ctx) {
+		super("Type.cpp", ctx);
+	}
 
-    public void gen(BufferedReader br, PrintWriter out) throws IOException {
-        Worker pr = new Worker(out);
-        CodeGenUtil.copyOver(br, out, 0);
-        pr.defineSymbolTypes();
-        CodeGenUtil.copyOver(br, out, -1);
-    }
+	public void gen(BufferedReader br, PrintWriter out) throws IOException {
+		Worker pr = new Worker(out);
+		CodeGenUtil.copyOver(br, out, 0);
+		pr.defineSymbolTypes();
+		CodeGenUtil.copyOver(br, out, -1);
+	}
 
-    private class Worker {
+	private class Worker {
 
-        private final PrintWriter out;
-        private final TypeCodeGen tcg = new TypeCodeGen(ctx);
+		private final PrintWriter out;
+		private final TypeCodeGen tcg = new TypeCodeGen(ctx);
 
-        public Worker(PrintWriter out) {
-            this.out = out;
-        }
+		public Worker(PrintWriter out) {
+			this.out = out;
+		}
 
-        public void defineSymbolTypes() {
-            for (ConstructorSymbol sym : ctx.getConstructorSymbols()) {
-                defineSymbolType(sym);
-            }
-        }
+		public void defineSymbolTypes() {
+			for (ConstructorSymbol sym : ctx.getConstructorSymbols()) {
+				defineSymbolType(sym);
+			}
+		}
 
-        private void defineSymbolType(ConstructorSymbol sym) {
-            out.println("    case " + ctx.lookupRepr(sym) + ": {");
-            genCaseBody(sym).println(out, 3);
-            out.println("    }");
-        }
+		private void defineSymbolType(ConstructorSymbol sym) {
+			out.println("    case " + ctx.lookupRepr(sym) + ": {");
+			genCaseBody(sym).println(out, 3);
+			out.println("    }");
+		}
 
-        private CppStmt genCaseBody(ConstructorSymbol sym) {
-            List<CppStmt> acc = new ArrayList<>();
-            FunctorType ft = simplify(sym.getCompileTimeType());
-            CppExpr typeCode = tcg.gen(acc, ft);
-            acc.add(CppReturn.mk(typeCode));
-            return CppSeq.mk(acc);
-        }
+		private CppStmt genCaseBody(ConstructorSymbol sym) {
+			List<CppStmt> acc = new ArrayList<>();
+			FunctorType ft = simplify(sym.getCompileTimeType());
+			CppExpr typeCode = tcg.gen(acc, ft);
+			acc.add(CppReturn.mk(typeCode));
+			return CppSeq.mk(acc);
+		}
 
-        private FunctorType simplify(FunctorType ft) {
-            List<Type> args = new ArrayList<>();
-            for (Type ty : ft.getArgTypes()) {
-                args.add(TypeChecker.simplify(ty));
-            }
-            return new FunctorType(args, TypeChecker.simplify(ft.getRetType()));
-        }
+		private FunctorType simplify(FunctorType ft) {
+			List<Type> args = new ArrayList<>();
+			for (Type ty : ft.getArgTypes()) {
+				args.add(TypeChecker.simplify(ty));
+			}
+			return new FunctorType(args, TypeChecker.simplify(ft.getRetType()));
+		}
 
-    }
+	}
 
 }

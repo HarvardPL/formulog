@@ -30,12 +30,11 @@ import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.Pair;
 
-
 public class MatchClause {
 
 	private final Term lhs;
 	private final Term rhs;
-	
+
 	public static MatchClause make(Term lhs, Term rhs) {
 		if (!checkForRepeatVariables(lhs)) {
 			throw new IllegalArgumentException("Cannot repeat variables in patterns: " + lhs);
@@ -53,7 +52,7 @@ public class MatchClause {
 	private static boolean checkForRepeatVariables(Term pat) {
 		return pat.accept(varsDistinct, new HashSet<>());
 	}
-	
+
 	private static TermVisitor<Set<String>, Boolean> varsDistinct = new TermVisitor<Set<String>, Boolean>() {
 
 		@Override
@@ -82,9 +81,9 @@ public class MatchClause {
 		public Boolean visit(Expr e, Set<String> in) {
 			throw new AssertionError("Shouldn't be expressions in patterns");
 		}
-		
+
 	};
-	
+
 	MatchClause(Term lhs, Term rhs) {
 		this.lhs = lhs;
 		this.rhs = rhs;
@@ -119,7 +118,7 @@ public class MatchClause {
 		}
 		return true;
 	}
-	
+
 	public Term getLhs() {
 		return lhs;
 	}
@@ -158,5 +157,5 @@ public class MatchClause {
 			return false;
 		return true;
 	}
-	
+
 }

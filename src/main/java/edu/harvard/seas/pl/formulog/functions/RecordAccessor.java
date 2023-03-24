@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.functions;
  * #L%
  */
 
-
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
@@ -29,8 +28,8 @@ import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 public class RecordAccessor implements FunctionDef {
 
 	private final FunctionSymbol sym;
-	private final int index; 
-	
+	private final int index;
+
 	public RecordAccessor(FunctionSymbol sym, int index) {
 		this.sym = sym;
 		this.index = index;
@@ -40,7 +39,7 @@ public class RecordAccessor implements FunctionDef {
 	public FunctionSymbol getSymbol() {
 		return sym;
 	}
-	
+
 	public int getIndex() {
 		return index;
 	}

@@ -20,13 +20,12 @@ package edu.harvard.seas.pl.formulog.validating;
  * #L%
  */
 
-
 /**
- * An exception signifying that a Datalog program is not well-formed. 
+ * An exception signifying that a Datalog program is not well-formed.
  *
  */
 public class InvalidProgramException extends Exception {
-	
+
 	private static final long serialVersionUID = 1L;
 
 	/**
@@ -38,8 +37,7 @@ public class InvalidProgramException extends Exception {
 	/**
 	 * Constructs an exception signifying an ill-formedness error.
 	 * 
-	 * @param message
-	 *            the error message
+	 * @param message the error message
 	 */
 	public InvalidProgramException(String message) {
 		super(message);
@@ -48,8 +46,7 @@ public class InvalidProgramException extends Exception {
 	/**
 	 * Constructs an exception signifying an ill-formedness error.
 	 * 
-	 * @param cause
-	 *            the exception that caused this exception
+	 * @param cause the exception that caused this exception
 	 */
 	public InvalidProgramException(Throwable cause) {
 		super(cause);
@@ -58,10 +55,8 @@ public class InvalidProgramException extends Exception {
 	/**
 	 * Constructs an exception signifying an ill-formedness error.
 	 * 
-	 * @param message
-	 *            the error message
-	 * @param cause
-	 *            the exception that caused this exception
+	 * @param message the error message
+	 * @param cause   the exception that caused this exception
 	 */
 	public InvalidProgramException(String message, Throwable cause) {
 		super(message, cause);
@@ -70,16 +65,13 @@ public class InvalidProgramException extends Exception {
 	/**
 	 * Constructs an exception signifying an ill-formedness error.
 	 * 
-	 * @param message
-	 *            the error message
-	 * @param cause
-	 *            the exception that caused this exception
-	 * @param enableSuppression
-	 *            whether or not suppression is enabled or disabled
-	 * @param writableStackTrace
-	 *            whether or not the stack trace should be writable
+	 * @param message            the error message
+	 * @param cause              the exception that caused this exception
+	 * @param enableSuppression  whether or not suppression is enabled or disabled
+	 * @param writableStackTrace whether or not the stack trace should be writable
 	 */
-	public InvalidProgramException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public InvalidProgramException(String message, Throwable cause, boolean enableSuppression,
+			boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 }

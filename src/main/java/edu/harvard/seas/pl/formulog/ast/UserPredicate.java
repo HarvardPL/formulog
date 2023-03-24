@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-
 import java.util.Arrays;
 
 import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralExnVisitor;
@@ -33,11 +32,11 @@ public class UserPredicate implements ComplexLiteral {
 	private final RelationSymbol symbol;
 	private final Term[] args;
 	private final boolean negated;
-	
+
 	public static UserPredicate make(RelationSymbol symbol, Term[] args, boolean negated) {
 		return new UserPredicate(symbol, args, negated);
 	}
-	
+
 	private UserPredicate(RelationSymbol symbol, Term[] args, boolean negated) {
 		this.symbol = symbol;
 		this.args = args;
@@ -52,7 +51,7 @@ public class UserPredicate implements ComplexLiteral {
 	public Term[] getArgs() {
 		return args;
 	}
-	
+
 	@Override
 	public boolean isNegated() {
 		return negated;
@@ -128,5 +127,5 @@ public class UserPredicate implements ComplexLiteral {
 	public <I, O, E extends Throwable> O accept(ComplexLiteralExnVisitor<I, O, E> visitor, I input) throws E {
 		return visitor.visit(this, input);
 	}
-	
+
 }

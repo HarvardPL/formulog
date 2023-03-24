@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.smt;
  * #L%
  */
 
-
 import java.util.Collection;
 import java.util.function.Supplier;
 
@@ -52,8 +51,7 @@ public class PerThreadSmtManager implements SmtLibSolver {
 	}
 
 	@Override
-	public SmtResult check(Collection<SmtLibTerm> conjuncts, boolean getModel, int timeout)
-			throws EvaluationException {
+	public SmtResult check(Collection<SmtLibTerm> conjuncts, boolean getModel, int timeout) throws EvaluationException {
 		try {
 			return subManager.get().check(conjuncts, getModel, timeout);
 		} catch (UncheckedEvaluationException e) {

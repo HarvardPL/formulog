@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.symbols.parameterized;
  * #L%
  */
 
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,7 +43,7 @@ public abstract class AbstractParameterizedSymbol<B extends SymbolBase> implemen
 			this.args.add(param);
 		}
 	}
-	
+
 	@Override
 	public int getArity() {
 		return base.getArity();
@@ -72,7 +71,7 @@ public abstract class AbstractParameterizedSymbol<B extends SymbolBase> implemen
 	public List<Param> getArgs() {
 		return args;
 	}
-	
+
 	@Override
 	public boolean isGround() {
 		for (Param arg : args) {

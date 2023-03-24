@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-
 public interface TypeSymbol extends Symbol {
 
 	TypeSymbolType getTypeSymbolType();
@@ -28,11 +27,11 @@ public interface TypeSymbol extends Symbol {
 	default boolean isNormalType() {
 		return getTypeSymbolType().equals(TypeSymbolType.NORMAL_TYPE);
 	}
-	
+
 	default boolean isAlias() {
 		return getTypeSymbolType().equals(TypeSymbolType.TYPE_ALIAS);
 	}
-	
+
 	default boolean isUninterpretedSort() {
 		return getTypeSymbolType().equals(TypeSymbolType.UNINTERPRETED_SORT);
 	}

@@ -20,15 +20,14 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-
 public interface MutableRelationSymbol extends RelationSymbol {
 
-    void setTopDown();
+	void setTopDown();
 
-    void setBottomUp();
+	void setBottomUp();
 
-    void setDisk();
+	void setDisk();
 
-    void setEdb();
+	void setEdb();
 
 }

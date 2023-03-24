@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.eval;
  * #L%
  */
 
-
 import java.util.HashSet;
 import java.util.Set;
 
@@ -76,7 +75,7 @@ public class PredicateFunctionSetter {
 			}
 		}
 	}
-	
+
 	public void setDb(IndexedFactDb db) {
 		assert this.db == null;
 		this.db = db;
@@ -190,7 +189,7 @@ public class PredicateFunctionSetter {
 		}
 		def.setDef(innerDef);
 	}
-	
+
 	private static BindingType[] turnIgnoredToFree(BindingType[] bindings) {
 		BindingType[] bindings2 = new BindingType[bindings.length];
 		for (int i = 0; i < bindings.length; ++i) {
@@ -231,7 +230,8 @@ public class PredicateFunctionSetter {
 		};
 	}
 
-	private FunctionDef makeAggregate(PredicateFunctionSymbol funcSym, Term[] paddedArgs, int idx, BindingType[] bindingsUsedForIndex) {
+	private FunctionDef makeAggregate(PredicateFunctionSymbol funcSym, Term[] paddedArgs, int idx,
+			BindingType[] bindingsUsedForIndex) {
 		RelationSymbol predSym = funcSym.getPredicateSymbol();
 		int arity = 0;
 		BindingType[] bindings = funcSym.getBindings();
@@ -280,7 +280,7 @@ public class PredicateFunctionSetter {
 
 		};
 	}
-	
+
 	private Term[] padArgs(PredicateFunctionSymbol funcSym) {
 		RelationSymbol predSym = funcSym.getPredicateSymbol();
 		Term[] padded = new Term[predSym.getArity()];
@@ -289,7 +289,7 @@ public class PredicateFunctionSetter {
 		}
 		return padded;
 	}
-	
+
 	private Term[] fillInPaddedArgs(PredicateFunctionSymbol funcSym, Term[] paddedArgs, Term[] actualArgs) {
 		RelationSymbol predSym = funcSym.getPredicateSymbol();
 		Term[] newArgs = new Term[predSym.getArity()];
@@ -306,5 +306,5 @@ public class PredicateFunctionSetter {
 		}
 		return newArgs;
 	}
-	
+
 }

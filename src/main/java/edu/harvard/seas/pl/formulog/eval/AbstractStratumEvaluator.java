@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.eval;
  * #L%
  */
 
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -36,11 +35,11 @@ public abstract class AbstractStratumEvaluator implements StratumEvaluator {
 	final Set<IndexedRule> firstRoundRules = new HashSet<>();
 	final Map<RelationSymbol, Set<IndexedRule>> laterRoundRules = new HashMap<>();
 	final Map<IndexedRule, boolean[]> splitPositions = new HashMap<>();
-	
+
 	public AbstractStratumEvaluator(Iterable<IndexedRule> rules) {
 		processRules(rules);
 	}
-	
+
 	private void processRules(Iterable<IndexedRule> rules) {
 		SmtCallFinder scf = new SmtCallFinder();
 		for (IndexedRule rule : rules) {

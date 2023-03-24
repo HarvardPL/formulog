@@ -22,11 +22,10 @@ package edu.harvard.seas.pl.formulog.functions;
 
 import edu.harvard.seas.pl.formulog.ast.BindingType;
 
-
 public interface PredicateFunctionDef extends FunctionDef {
 
 	int getIndex();
-	
+
 	BindingType[] getBindingsForIndex();
-	
+
 }

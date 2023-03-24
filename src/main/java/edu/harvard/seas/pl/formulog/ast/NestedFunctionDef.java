@@ -22,7 +22,6 @@ package edu.harvard.seas.pl.formulog.ast;
 
 import java.util.ArrayList;
 
-
 import java.util.Collections;
 import java.util.List;
 
@@ -45,11 +44,11 @@ public class NestedFunctionDef {
 					"Mismatch between arity and number of given parameters in nested function definition: " + sym);
 		}
 	}
-	
+
 	public static NestedFunctionDef make(FunctionSymbol sym, List<Var> params, Term body) {
 		return new NestedFunctionDef(sym, params, body);
 	}
-	
+
 	public NestedFunctionDef applySubstitution(Substitution s) {
 		Substitution s2 = new SimpleSubstitution();
 		for (Var x : s.iterateKeys()) {
@@ -59,7 +58,7 @@ public class NestedFunctionDef {
 		}
 		return make(sym, params, body.applySubstitution(s2));
 	}
-	
+
 	public NestedFunctionDef freshen() {
 		List<Var> newParams = new ArrayList<>();
 		Substitution s = new SimpleSubstitution();
@@ -70,15 +69,15 @@ public class NestedFunctionDef {
 		}
 		return make(sym, newParams, body.applySubstitution(s));
 	}
-	
+
 	public FunctionSymbol getSymbol() {
 		return sym;
 	}
-	
+
 	public List<Var> getParams() {
 		return params;
 	}
-	
+
 	public Term getBody() {
 		return body;
 	}

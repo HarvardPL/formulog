@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.a;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.bool;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.cmp;
@@ -38,31 +37,31 @@ import edu.harvard.seas.pl.formulog.types.Types.Type;
 public enum BuiltInConstructorTesterSymbol implements ConstructorSymbol {
 
 	IS_CMP_LT("#is_cmp_lt", cmp, smt(bool)),
-	
+
 	IS_CMP_EQ("#is_cmp_eq", cmp, smt(bool)),
-	
+
 	IS_CMP_GT("#is_cmp_gt", cmp, smt(bool)),
-	
+
 	IS_NIL("#is_nil", list(a), smt(bool)),
-	
+
 	IS_CONS("#is_cons", list(a), smt(bool)),
-	
+
 	IS_NONE("#is_none", option(a), smt(bool)),
-	
+
 	IS_SOME("#is_some", option(a), smt(bool)),
-	
+
 	;
 
 	private final FunctorType type;
 	private final String name;
 
-	private BuiltInConstructorTesterSymbol(String name, Type...types) {
+	private BuiltInConstructorTesterSymbol(String name, Type... types) {
 		this.name = name;
 		List<Type> argTypes = new ArrayList<>(Arrays.asList(types));
 		Type retType = argTypes.remove(types.length - 1);
 		type = new FunctorType(argTypes, retType);
 	}
-	
+
 	@Override
 	public int getArity() {
 		return 1;
