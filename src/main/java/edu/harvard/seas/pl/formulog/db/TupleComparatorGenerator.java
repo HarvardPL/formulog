@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.db;
  * #L%
  */
 
-
 import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -51,7 +50,7 @@ public class TupleComparatorGenerator extends ClassLoader {
 	private static final Type objectType = new ObjectType("java.lang.Object");
 	private static final Type termType = new ObjectType("edu.harvard.seas.pl.formulog.ast.Term");
 	private static final Type termArrayType = new ArrayType(termType, 1);
-	
+
 	private final AtomicInteger cnt = new AtomicInteger();
 	private Map<IntArrayWrapper, Comparator<Term[]>> memo = new ConcurrentHashMap<>();
 
@@ -67,7 +66,7 @@ public class TupleComparatorGenerator extends ClassLoader {
 		}
 		return cmp;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public Comparator<Term[]> generate1(int[] accessPat) throws InstantiationException, IllegalAccessException {
 		String className = "edu.harvard.seas.pl.formulog.db.CustomComparator" + cnt.getAndIncrement();
@@ -129,7 +128,7 @@ public class TupleComparatorGenerator extends ClassLoader {
 		br.setTarget(il.append(p.fst()));
 		return new Pair<>(il, p.snd());
 	}
-	
+
 	private InstructionList genLoad(InstructionFactory f, int argn, int idx) {
 		assert argn == 1 || argn == 2;
 		InstructionList il = new InstructionList();
@@ -139,14 +138,15 @@ public class TupleComparatorGenerator extends ClassLoader {
 		il.append(f.createInvoke("edu.harvard.seas.pl.formulog.ast.Term", "getId", Type.INT, new Type[] {},
 				Const.INVOKEINTERFACE));
 		il.append(new ISTORE(argn + 2));
-		return il; 
+		return il;
 	}
-	
+
 	private Pair<InstructionList, BranchInstruction> genICmp(InstructionFactory f, boolean firstCmp) {
 		InstructionList il = new InstructionList();
 		il.append(new ILOAD(3));
 		il.append(new ILOAD(4));
-		BranchInstruction br = InstructionFactory.createBranchInstruction(firstCmp ? Const.IF_ICMPGE : Const.IF_ICMPLE, null);
+		BranchInstruction br = InstructionFactory.createBranchInstruction(firstCmp ? Const.IF_ICMPGE : Const.IF_ICMPLE,
+				null);
 		il.append(br);
 		il.append(new PUSH(f.getConstantPool(), firstCmp ? -1 : 1));
 		il.append(InstructionConst.IRETURN);

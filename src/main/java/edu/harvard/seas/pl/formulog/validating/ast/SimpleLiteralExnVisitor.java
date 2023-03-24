@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.validating.ast;
  * #L%
  */
 
-
 public interface SimpleLiteralExnVisitor<I, O, E extends Throwable> {
 
 	O visit(Assignment assignment, I input) throws E;

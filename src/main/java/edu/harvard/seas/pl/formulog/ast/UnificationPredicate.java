@@ -22,7 +22,6 @@ package edu.harvard.seas.pl.formulog.ast;
 
 import java.util.Arrays;
 
-
 import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralExnVisitor;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralVisitor;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
@@ -35,19 +34,19 @@ public class UnificationPredicate implements ComplexLiteral {
 	public static UnificationPredicate make(Term lhs, Term rhs, boolean negated) {
 		return new UnificationPredicate(new Term[] { lhs, rhs }, negated);
 	}
-	
+
 	private UnificationPredicate(Term[] args, boolean negated) {
 		this.args = args;
 		this.negated = negated;
 	}
-	
+
 	@Override
 	public Term[] getArgs() {
 		return args;
 	}
-	
+
 	public Term getLhs() {
-		return args[0] ;
+		return args[0];
 	}
 
 	public Term getRhs() {
@@ -105,5 +104,5 @@ public class UnificationPredicate implements ComplexLiteral {
 			return false;
 		return true;
 	}
-	
+
 }

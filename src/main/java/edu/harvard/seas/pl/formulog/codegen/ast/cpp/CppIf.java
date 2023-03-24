@@ -30,54 +30,54 @@ import edu.harvard.seas.pl.formulog.util.Pair;
 
 public class CppIf implements CppStmt {
 
-    private final List<Pair<CppExpr, CppStmt>> cases;
-    private final CppStmt elseBranch;
+	private final List<Pair<CppExpr, CppStmt>> cases;
+	private final CppStmt elseBranch;
 
-    private CppIf(List<Pair<CppExpr, CppStmt>> cases, CppStmt elseBranch) {
-        if (cases.isEmpty()) {
-            throw new IllegalArgumentException("Need to have at least one case in an if statement");
-        }
-        this.cases = cases;
-        this.elseBranch = elseBranch;
-    }
+	private CppIf(List<Pair<CppExpr, CppStmt>> cases, CppStmt elseBranch) {
+		if (cases.isEmpty()) {
+			throw new IllegalArgumentException("Need to have at least one case in an if statement");
+		}
+		this.cases = cases;
+		this.elseBranch = elseBranch;
+	}
 
-    public static CppIf mk(CppExpr guard, CppStmt thenBranch) {
-        return mk(guard, thenBranch, null);
-    }
+	public static CppIf mk(CppExpr guard, CppStmt thenBranch) {
+		return mk(guard, thenBranch, null);
+	}
 
-    public static CppIf mk(CppExpr guard, CppStmt thenBranch, CppStmt elseBranch) {
-        return new CppIf(Collections.singletonList(new Pair<>(guard, thenBranch)), elseBranch);
-    }
+	public static CppIf mk(CppExpr guard, CppStmt thenBranch, CppStmt elseBranch) {
+		return new CppIf(Collections.singletonList(new Pair<>(guard, thenBranch)), elseBranch);
+	}
 
-    public static CppIf mk(List<Pair<CppExpr, CppStmt>> cases) {
-        return new CppIf(new ArrayList<>(cases), null);
-    }
+	public static CppIf mk(List<Pair<CppExpr, CppStmt>> cases) {
+		return new CppIf(new ArrayList<>(cases), null);
+	}
 
-    @Override
-    public void println(PrintWriter out, int indent) {
-        boolean first = true;
-        for (Pair<CppExpr, CppStmt> p : cases) {
-            CppExpr guard = p.fst();
-            CppStmt code = p.snd();
-            CodeGenUtil.printIndent(out, indent);
-            if (!first) {
-                out.print("} else ");
-            }
-            out.print("if (");
-            guard.print(out);
-            out.println(") {");
-            code.println(out, indent + 1);
-            first = false;
-        }
-        CodeGenUtil.printIndent(out, indent);
-        if (elseBranch == null) {
-            out.println("}");
-            return;
-        }
-        out.println("} else {");
-        elseBranch.println(out, indent + 1);
-        CodeGenUtil.printIndent(out, indent);
-        out.println("}");
-    }
+	@Override
+	public void println(PrintWriter out, int indent) {
+		boolean first = true;
+		for (Pair<CppExpr, CppStmt> p : cases) {
+			CppExpr guard = p.fst();
+			CppStmt code = p.snd();
+			CodeGenUtil.printIndent(out, indent);
+			if (!first) {
+				out.print("} else ");
+			}
+			out.print("if (");
+			guard.print(out);
+			out.println(") {");
+			code.println(out, indent + 1);
+			first = false;
+		}
+		CodeGenUtil.printIndent(out, indent);
+		if (elseBranch == null) {
+			out.println("}");
+			return;
+		}
+		out.println("} else {");
+		elseBranch.println(out, indent + 1);
+		CodeGenUtil.printIndent(out, indent);
+		out.println("}");
+	}
 
 }

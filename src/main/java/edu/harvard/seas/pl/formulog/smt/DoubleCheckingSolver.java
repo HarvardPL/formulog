@@ -31,7 +31,7 @@ public class DoubleCheckingSolver implements SmtLibSolver {
 
 	private final SmtLibSolver inner;
 	private final SmtLibSolver checker = new PushPopSolver();
-	
+
 	public DoubleCheckingSolver(SmtLibSolver inner) {
 		this.inner = inner;
 	}

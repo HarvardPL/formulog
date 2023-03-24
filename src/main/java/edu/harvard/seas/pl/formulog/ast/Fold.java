@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
@@ -50,19 +49,19 @@ public class Fold implements Expr {
 					+ f.getArity() + " arguments, but got the arguments " + Arrays.toString(args) + ").");
 		}
 	}
-	
+
 	public static Fold mk(FunctionSymbol f, Term[] args, FunctionCallFactory funCalls) {
 		return new Fold(f, args, funCalls);
 	}
-	
+
 	public Term[] getArgs() {
 		return args;
 	}
-	
+
 	public FunctionSymbol getFunction() {
 		return f;
 	}
-	
+
 	public FunctionCall getShamCall() {
 		return funCalls.make(f, args);
 	}
@@ -90,7 +89,7 @@ public class Fold implements Expr {
 		}
 		return new Fold(f, newArgs, funCalls);
 	}
-	
+
 	@Override
 	public Term normalize(Substitution s) throws EvaluationException {
 		Term[] newArgs = new Term[args.length];
@@ -139,13 +138,13 @@ public class Fold implements Expr {
 	public <I, O, E extends Throwable> O accept(ExprVisitorExn<I, O, E> visitor, I in) throws E {
 		return visitor.visit(this, in);
 	}
-	
+
 	@Override
 	public String toString() {
 		String s = "fold[" + f + "](";
 		for (int i = 0; i < args.length; ++i) {
 			s += args[i];
-			if (i < args.length -1) {
+			if (i < args.length - 1) {
 				s += ", ";
 			}
 		}

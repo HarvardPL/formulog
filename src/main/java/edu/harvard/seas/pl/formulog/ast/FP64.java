@@ -22,7 +22,6 @@ package edu.harvard.seas.pl.formulog.ast;
 
 import java.util.Collections;
 
-
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,16 +42,16 @@ public class FP64 extends AbstractTerm implements Primitive<Double>, SmtLibTerm 
 	private FP64(double val) {
 		this.val = val;
 	}
-	
+
 	public static FP64 make(double val) {
 		return Util.lookupOrCreate(memo, val, () -> new FP64(val));
 	}
-	
+
 	@Override
 	public Double getVal() {
 		return val;
 	}
-	
+
 	@Override
 	public String toString() {
 		if (Double.isNaN(val)) {
@@ -66,7 +65,6 @@ public class FP64 extends AbstractTerm implements Primitive<Double>, SmtLibTerm 
 		}
 		return Double.toString(val);
 	}
-	
 
 	@Override
 	public SmtLibTerm substSolverTerms(PMap<SolverVariable, SmtLibTerm> subst) {
@@ -90,7 +88,7 @@ public class FP64 extends AbstractTerm implements Primitive<Double>, SmtLibTerm 
 	public Type getType() {
 		return BuiltInTypes.fp64;
 	}
-	
+
 	@Override
 	public Set<SolverVariable> freeVars() {
 		return Collections.emptySet();

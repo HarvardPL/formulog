@@ -36,7 +36,7 @@ public final class OpaqueSetOps {
 	private OpaqueSetOps() {
 		throw new AssertionError("impossible");
 	}
-	
+
 	public static final FunctionDef empty = new FunctionDef() {
 
 		@Override
@@ -48,9 +48,9 @@ public final class OpaqueSetOps {
 		public Term evaluate(Term[] args) throws EvaluationException {
 			return OpaqueSet.empty();
 		}
-		
+
 	};
-	
+
 	public static final FunctionDef size = new FunctionDef() {
 
 		@Override
@@ -63,9 +63,9 @@ public final class OpaqueSetOps {
 			OpaqueSet s = (OpaqueSet) args[0];
 			return I32.make(s.size());
 		}
-		
+
 	};
-	
+
 	public static final FunctionDef plus = new FunctionDef() {
 
 		@Override
@@ -78,9 +78,9 @@ public final class OpaqueSetOps {
 			OpaqueSet s = (OpaqueSet) args[1];
 			return s.plus(args[0]);
 		}
-		
+
 	};
-	
+
 	public static final FunctionDef minus = new FunctionDef() {
 
 		@Override
@@ -93,9 +93,9 @@ public final class OpaqueSetOps {
 			OpaqueSet s = (OpaqueSet) args[1];
 			return s.minus(args[0]);
 		}
-		
+
 	};
-	
+
 	public static final FunctionDef union = new FunctionDef() {
 
 		@Override
@@ -109,9 +109,9 @@ public final class OpaqueSetOps {
 			OpaqueSet s2 = (OpaqueSet) args[1];
 			return s1.union(s2);
 		}
-		
+
 	};
-	
+
 	public static final FunctionDef diff = new FunctionDef() {
 
 		@Override
@@ -125,9 +125,9 @@ public final class OpaqueSetOps {
 			OpaqueSet s2 = (OpaqueSet) args[1];
 			return s1.diff(s2);
 		}
-		
+
 	};
-	
+
 	public static final FunctionDef choose = new FunctionDef() {
 
 		@Override
@@ -144,9 +144,9 @@ public final class OpaqueSetOps {
 			}
 			return Constructors.some(Constructors.tuple(p.fst(), p.snd()));
 		}
-		
+
 	};
-	
+
 	public static final FunctionDef member = new FunctionDef() {
 
 		@Override
@@ -159,9 +159,9 @@ public final class OpaqueSetOps {
 			OpaqueSet s = (OpaqueSet) args[1];
 			return BoolTerm.mk(s.member(args[0]));
 		}
-		
+
 	};
-	
+
 	public static final FunctionDef singleton = new FunctionDef() {
 
 		@Override
@@ -173,9 +173,9 @@ public final class OpaqueSetOps {
 		public Term evaluate(Term[] args) throws EvaluationException {
 			return OpaqueSet.singleton(args[0]);
 		}
-		
+
 	};
-	
+
 	public static final FunctionDef subset = new FunctionDef() {
 
 		@Override
@@ -189,7 +189,7 @@ public final class OpaqueSetOps {
 			OpaqueSet s2 = (OpaqueSet) args[1];
 			return BoolTerm.mk(s2.containsAll(s1));
 		}
-		
+
 	};
 
 	public static final FunctionDef fromList = new FunctionDef() {
@@ -203,7 +203,7 @@ public final class OpaqueSetOps {
 		public Term evaluate(Term[] args) throws EvaluationException {
 			return OpaqueSet.fromCollection(Terms.termToTermList(args[0]));
 		}
-		
+
 	};
 
 }

@@ -22,18 +22,17 @@ package edu.harvard.seas.pl.formulog.validating.ast;
 
 import java.util.Set;
 
-
 import edu.harvard.seas.pl.formulog.ast.Literal;
 import edu.harvard.seas.pl.formulog.ast.Var;
 
 public interface SimpleLiteral extends Literal {
 
 	<I, O> O accept(SimpleLiteralVisitor<I, O> visitor, I input);
-	
+
 	<I, O, E extends Throwable> O accept(SimpleLiteralExnVisitor<I, O, E> visitor, I input) throws E;
 
 	Set<Var> varSet();
-	
+
 	SimpleLiteralTag getTag();
-	
+
 }

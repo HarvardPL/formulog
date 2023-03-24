@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.symbols.parameterized;
  * #L%
  */
 
-
 import java.util.Arrays;
 import java.util.List;
 
@@ -37,7 +36,7 @@ public enum BuiltInConstructorSymbolBase implements FunctorBase {
 	BV_SGT("bv_sgt", 2, ParamKind.NAT),
 
 	BV_SGE("bv_sge", 2, ParamKind.NAT),
-	
+
 	BV_ULT("bv_ult", 2, ParamKind.NAT),
 
 	BV_ULE("bv_ule", 2, ParamKind.NAT),
@@ -45,13 +44,13 @@ public enum BuiltInConstructorSymbolBase implements FunctorBase {
 	BV_UGT("bv_ugt", 2, ParamKind.NAT),
 
 	BV_UGE("bv_uge", 2, ParamKind.NAT),
-	
+
 	BV_CONST("bv_const", 1, ParamKind.NAT),
 
 	BV_BIG_CONST("bv_big_const", 1, ParamKind.NAT),
-	
+
 	BV_EXTRACT("bv_extract", 3, ParamKind.NAT, ParamKind.NAT),
-	
+
 	BV_CONCAT("bv_concat", 2, ParamKind.NAT, ParamKind.NAT, ParamKind.NAT),
 
 	BV_TO_BV_SIGNED("bv_to_bv_signed", 1, ParamKind.NAT, ParamKind.NAT),
@@ -59,17 +58,17 @@ public enum BuiltInConstructorSymbolBase implements FunctorBase {
 	BV_TO_BV_UNSIGNED("bv_to_bv_unsigned", 1, ParamKind.NAT, ParamKind.NAT),
 
 	FP_TO_SBV("fp_to_sbv", 1, ParamKind.NAT, ParamKind.NAT, ParamKind.NAT),
-	
+
 	FP_TO_UBV("fp_to_ubv", 1, ParamKind.NAT, ParamKind.NAT, ParamKind.NAT),
-	
+
 	INT_TO_BV("int_to_bv", 1, ParamKind.NAT),
-	
+
 	BV_TO_INT("bv_to_int", 1, ParamKind.NAT),
-	
+
 	// Floating point
-	
+
 	FP_EQ("fp_eq", 2, ParamKind.NAT, ParamKind.NAT),
-	
+
 	FP_LT("fp_lt", 2, ParamKind.NAT, ParamKind.NAT),
 
 	FP_LE("fp_le", 2, ParamKind.NAT, ParamKind.NAT),
@@ -79,37 +78,37 @@ public enum BuiltInConstructorSymbolBase implements FunctorBase {
 	FP_GE("fp_ge", 2, ParamKind.NAT, ParamKind.NAT),
 
 	FP_IS_NAN("fp_is_nan", 1, ParamKind.NAT, ParamKind.NAT),
-	
+
 	FP_CONST("fp_const", 1, ParamKind.NAT, ParamKind.NAT),
 
 	FP_BIG_CONST("fp_big_const", 1, ParamKind.NAT, ParamKind.NAT),
 
 	FP_TO_FP("fp_to_fp", 1, ParamKind.NAT, ParamKind.NAT, ParamKind.NAT, ParamKind.NAT),
-	
+
 	BV_TO_FP("bv_to_fp", 1, ParamKind.NAT, ParamKind.NAT, ParamKind.NAT),
-	
+
 	// Logical connectives
 
 	SMT_PAT("smt_pat", 1, ParamKind.SMT_REPRESENTABLE_TYPE),
-	
+
 	SMT_WRAP_VAR("smt_wrap_var", 1, ParamKind.SMT_REPRESENTABLE_TYPE),
-	
+
 	SMT_EQ("smt_eq", 2, ParamKind.PRE_SMT_TYPE),
-	
+
 	SMT_LET("smt_let", 3, ParamKind.PRE_SMT_TYPE),
 
 	// Arrays
-	
+
 	ARRAY_SELECT("array_select", 2, ParamKind.PRE_SMT_TYPE),
-	
+
 	ARRAY_DEFAULT("array_default", 1, ParamKind.PRE_SMT_TYPE),
-	
+
 	// Solver variables
-	
+
 	SMT_VAR("smt_var", 1, ParamKind.ANY_TYPE, ParamKind.PRE_SMT_TYPE),
-	
+
 	;
-	
+
 	private final String name;
 	private final int arity;
 	private final List<ParamKind> paramTypes;
@@ -124,7 +123,7 @@ public enum BuiltInConstructorSymbolBase implements FunctorBase {
 	public int getArity() {
 		return arity;
 	}
-	
+
 	@Override
 	public String toString() {
 		return name;
@@ -134,9 +133,9 @@ public enum BuiltInConstructorSymbolBase implements FunctorBase {
 	public List<ParamKind> getParamKinds() {
 		return paramTypes;
 	}
-	
+
 	public ConstructorSymbolType getConstructorSymbolType() {
 		return ConstructorSymbolType.SOLVER_EXPR;
 	}
-	
+
 }

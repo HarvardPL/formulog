@@ -22,7 +22,6 @@ package edu.harvard.seas.pl.formulog.ast;
 
 import java.util.Set;
 
-
 import org.pcollections.PMap;
 
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
@@ -31,9 +30,9 @@ import edu.harvard.seas.pl.formulog.smt.SmtLibShim;
 public interface SmtLibTerm extends Term {
 
 	void toSmtLib(SmtLibShim shim);
-	
+
 	SmtLibTerm substSolverTerms(PMap<SolverVariable, SmtLibTerm> subst);
-	
+
 	Set<SolverVariable> freeVars();
-	
+
 }

@@ -20,13 +20,12 @@ package edu.harvard.seas.pl.formulog.eval;
  * #L%
  */
 
-
 public class UncheckedEvaluationException extends RuntimeException {
 
 	private static final long serialVersionUID = 1L;
 
 	public UncheckedEvaluationException() {
-		
+
 	}
 
 	public UncheckedEvaluationException(String message) {
@@ -41,7 +40,8 @@ public class UncheckedEvaluationException extends RuntimeException {
 		super(message, cause);
 	}
 
-	public UncheckedEvaluationException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public UncheckedEvaluationException(String message, Throwable cause, boolean enableSuppression,
+			boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 

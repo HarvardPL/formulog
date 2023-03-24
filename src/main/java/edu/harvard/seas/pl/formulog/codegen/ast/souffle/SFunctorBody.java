@@ -26,14 +26,14 @@ import java.util.List;
 
 public interface SFunctorBody {
 
-    default int getArity() {
-        return getArgs().size();
-    }
+	default int getArity() {
+		return getArgs().size();
+	}
 
-    List<Var> getArgs();
+	List<Var> getArgs();
 
-    SType getRetType();
+	SType getRetType();
 
-    boolean isStateful();
+	boolean isStateful();
 
 }

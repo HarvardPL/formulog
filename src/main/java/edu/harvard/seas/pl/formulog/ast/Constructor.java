@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitorExn;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
@@ -54,7 +53,7 @@ public interface Constructor extends Functor<ConstructorSymbol>, SmtLibTerm {
 
 	@Override
 	Term copyWithNewArgs(Term[] newArgs);
-	
+
 	@Override
 	default Term normalize(Substitution s) throws EvaluationException {
 		if (isGround() && !containsUnevaluatedTerm()) {
@@ -67,5 +66,5 @@ public interface Constructor extends Functor<ConstructorSymbol>, SmtLibTerm {
 		}
 		return copyWithNewArgs(newArgs);
 	}
-	
+
 }

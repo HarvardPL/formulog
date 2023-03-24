@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.eval;
  * #L%
  */
 
-
 public class EagerSemiNaiveEvaluationTest extends CommonEvaluationTest<SemiNaiveEvaluation> {
 
 	public EagerSemiNaiveEvaluationTest() {

@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.symbols.parameterized;
  * #L%
  */
 
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +42,7 @@ public class Param {
 			throw new IllegalArgumentException("Cannot instantiate parameter of kind " + kind + " with type " + type);
 		}
 	}
-	
+
 	private boolean check() {
 		if (type.isVar()) {
 			return true;
@@ -77,19 +76,19 @@ public class Param {
 		}
 		throw new AssertionError("impossible");
 	}
-	
+
 	public Type getType() {
 		return type;
 	}
-	
+
 	public ParamKind getKind() {
 		return kind;
 	}
-	
+
 	boolean isGround() {
 		return !Types.containsTypeVarOrOpaqueType(getType());
 	}
-	
+
 	public static List<Param> wildCards(int howMany) {
 		List<Param> params = new ArrayList<>();
 		for (int i = 0; i < howMany; ++i) {
@@ -97,7 +96,7 @@ public class Param {
 		}
 		return params;
 	}
-	
+
 	public static List<Param> applySubst(Iterable<Param> params, Map<TypeVar, Type> subst) {
 		List<Param> newParams = new ArrayList<>();
 		for (Param param : params) {
@@ -109,15 +108,15 @@ public class Param {
 	public static Param nat(int index) {
 		return new Param(TypeIndex.make(index), ParamKind.NAT);
 	}
-	
+
 	public static Param nat(Type type) {
 		return new Param(type, ParamKind.NAT);
 	}
-	
+
 	public static Param wildCard() {
 		return new Param(TypeVar.fresh(), ParamKind.WILD_CARD);
 	}
-	
+
 	public static Param wildCard(Type type) {
 		return new Param(type, ParamKind.WILD_CARD);
 	}
@@ -154,5 +153,5 @@ public class Param {
 	public String toString() {
 		return type + ":" + kind;
 	}
-	
+
 }

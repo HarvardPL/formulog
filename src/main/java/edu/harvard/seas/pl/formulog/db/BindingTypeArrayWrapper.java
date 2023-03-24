@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.db;
  * #L%
  */
 
-
 import java.util.Arrays;
 
 import edu.harvard.seas.pl.formulog.ast.BindingType;

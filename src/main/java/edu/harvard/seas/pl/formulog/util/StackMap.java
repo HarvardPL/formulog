@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.util;
  * #L%
  */
 
-
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
@@ -29,15 +28,15 @@ import java.util.Map;
 public class StackMap<K, V> {
 
 	private final Deque<Map<K, V>> stack = new ArrayDeque<>();
-	
+
 	public synchronized void push(Map<K, V> m) {
 		stack.addFirst(m);
 	}
-	
+
 	public synchronized Map<K, V> pop() {
 		return stack.remove();
 	}
-	
+
 	public synchronized V get(K k) {
 		for (Iterator<Map<K, V>> it = stack.iterator(); it.hasNext();) {
 			Map<K, V> m = it.next();
@@ -48,7 +47,7 @@ public class StackMap<K, V> {
 		}
 		return null;
 	}
-	
+
 	public synchronized V put(K k, V v) {
 		return stack.getFirst().put(k, v);
 	}

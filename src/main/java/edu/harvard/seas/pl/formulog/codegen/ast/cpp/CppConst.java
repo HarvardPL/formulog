@@ -20,43 +20,42 @@ package edu.harvard.seas.pl.formulog.codegen.ast.cpp;
  * #L%
  */
 
-
 import java.io.PrintWriter;
 
 public class CppConst<T> implements CppExpr {
 
-    private final T val;
+	private final T val;
 
-    private CppConst(T val) {
-        this.val = val;
-    }
+	private CppConst(T val) {
+		this.val = val;
+	}
 
-    public static CppConst<Boolean> mkTrue() {
-        return new CppConst<>(true);
-    }
+	public static CppConst<Boolean> mkTrue() {
+		return new CppConst<>(true);
+	}
 
-    public static CppConst<Boolean> mkFalse() {
-        return new CppConst<>(false);
-    }
+	public static CppConst<Boolean> mkFalse() {
+		return new CppConst<>(false);
+	}
 
-    public static CppConst<Integer> mkInt(int i) {
-        return new CppConst<>(i);
-    }
+	public static CppConst<Integer> mkInt(int i) {
+		return new CppConst<>(i);
+	}
 
-    public static CppConst<String> mkString(String s) {
-        return new CppConst<>(s);
-    }
+	public static CppConst<String> mkString(String s) {
+		return new CppConst<>(s);
+	}
 
-    @Override
-    public void print(PrintWriter out) {
-        boolean isString = val instanceof String;
-        if (isString) {
-            out.print("\"");
-        }
-        out.print(val);
-        if (isString) {
-            out.print("\"");
-        }
-    }
+	@Override
+	public void print(PrintWriter out) {
+		boolean isString = val instanceof String;
+		if (isString) {
+			out.print("\"");
+		}
+		out.print(val);
+		if (isString) {
+			out.print("\"");
+		}
+	}
 
 }

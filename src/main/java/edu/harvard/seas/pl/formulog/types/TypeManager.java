@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.types;
  * #L%
  */
 
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

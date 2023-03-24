@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.eval;
  * #L%
  */
 
-
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.validating.ast.Assignment;
@@ -35,7 +34,7 @@ public final class EvalUtil {
 	private EvalUtil() {
 		throw new AssertionError("impossible");
 	}
-	
+
 	public static RelationSymbol findDelta(IndexedRule rule) {
 		for (SimpleLiteral l : rule) {
 			RelationSymbol delta = l.accept(new SimpleLiteralVisitor<Void, RelationSymbol>() {

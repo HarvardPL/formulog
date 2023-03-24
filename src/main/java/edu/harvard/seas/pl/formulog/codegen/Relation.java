@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.codegen;
  * #L%
  */
 
-
 import java.util.List;
 
 import edu.harvard.seas.pl.formulog.ast.BindingType;
@@ -29,38 +28,38 @@ import edu.harvard.seas.pl.formulog.codegen.ast.cpp.CppStmt;
 
 public interface Relation extends CppExpr {
 
-    CppStmt mkDecl();
+	CppStmt mkDecl();
 
-    CppExpr mkContains(CppExpr expr, boolean useHints);
+	CppExpr mkContains(CppExpr expr, boolean useHints);
 
-    CppExpr mkContains(int idx, CppExpr expr, boolean useHints);
+	CppExpr mkContains(int idx, CppExpr expr, boolean useHints);
 
-    CppExpr mkInsert(CppExpr expr, boolean useHints);
+	CppExpr mkInsert(CppExpr expr, boolean useHints);
 
-    CppExpr mkInsertAll(CppExpr expr);
+	CppExpr mkInsertAll(CppExpr expr);
 
-    CppExpr mkIsEmpty();
+	CppExpr mkIsEmpty();
 
-    CppStmt mkDeclTuple(String name);
+	CppStmt mkDeclTuple(String name);
 
-    CppStmt mkDeclTuple(String name, List<CppExpr> exprs);
+	CppStmt mkDeclTuple(String name, List<CppExpr> exprs);
 
-    CppExpr mkTuple(List<CppExpr> exprs);
+	CppExpr mkTuple(List<CppExpr> exprs);
 
-    CppExpr mkTupleAccess(CppExpr tup, CppExpr idx);
+	CppExpr mkTupleAccess(CppExpr tup, CppExpr idx);
 
-    CppStmt mkPrint();
+	CppStmt mkPrint();
 
-    CppExpr mkPartition();
+	CppExpr mkPartition();
 
-    CppStmt mkPurge();
+	CppStmt mkPurge();
 
-    CppExpr mkLookup(int idx, BindingType[] pat, CppExpr key, boolean useHints);
+	CppExpr mkLookup(int idx, BindingType[] pat, CppExpr key, boolean useHints);
 
-    CppExpr mkSize();
+	CppExpr mkSize();
 
-    RelationStruct getStruct();
+	RelationStruct getStruct();
 
-    CppStmt mkDeclContext();
+	CppStmt mkDeclContext();
 
 }

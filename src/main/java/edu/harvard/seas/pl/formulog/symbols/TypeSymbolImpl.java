@@ -20,11 +20,10 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-
 class TypeSymbolImpl extends AbstractSymbol implements TypeSymbol {
 
 	private final TypeSymbolType symType;
-	
+
 	public TypeSymbolImpl(String name, int arity, TypeSymbolType symType) {
 		super(name, arity);
 		this.symType = symType;

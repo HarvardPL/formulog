@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.codegen;
  * #L%
  */
 
-
 import java.io.PrintWriter;
 
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
@@ -28,9 +27,9 @@ import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 public interface RelationStruct {
 
 	void declare(PrintWriter out);
-	
+
 	Relation mkRelation(RelationSymbol sym);
-	
+
 	String getName();
-	
+
 }

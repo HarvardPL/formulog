@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog;
  * #L%
  */
 
-
 public enum PrintPreference {
 	EDB, IDB, NONE, ALL, QUERY, SOME
 }

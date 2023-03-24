@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.functions;
  * #L%
  */
 
-
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
@@ -28,7 +27,7 @@ import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 public interface FunctionDef {
 
 	FunctionSymbol getSymbol();
-	
+
 	Term evaluate(Term[] args) throws EvaluationException;
-	
+
 }

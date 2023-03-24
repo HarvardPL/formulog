@@ -24,11 +24,11 @@ import java.io.PrintWriter;
 
 public enum CppNullptr implements CppExpr {
 
-    INSTANCE;
+	INSTANCE;
 
-    @Override
-    public void print(PrintWriter out) {
-        out.print("nullptr");
-    }
+	@Override
+	public void print(PrintWriter out) {
+		out.print("nullptr");
+	}
 
 }

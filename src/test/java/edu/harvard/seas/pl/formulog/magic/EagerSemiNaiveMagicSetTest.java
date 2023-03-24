@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.magic;
  * #L%
  */
 
-
 import edu.harvard.seas.pl.formulog.eval.InterpretedSemiNaiveTester;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
 

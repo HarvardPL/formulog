@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.codegen;
  * #L%
  */
 
-
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 
 import java.io.BufferedReader;
@@ -29,48 +28,36 @@ import java.io.PrintWriter;
 
 public class RelsHpp extends TemplateSrcFile {
 
-    public RelsHpp(CodeGenContext ctx) {
-        super("rels.hpp", ctx);
-    }
+	public RelsHpp(CodeGenContext ctx) {
+		super("rels.hpp", ctx);
+	}
 
-    public void gen(BufferedReader br, PrintWriter out) throws IOException {
-        /*
-        Worker pr = new Worker(out);
-        CodeGenUtil.copyOver(br, out, 0);
-        pr.defineRelations();
+	public void gen(BufferedReader br, PrintWriter out) throws IOException {
+		/*
+		 * Worker pr = new Worker(out); CodeGenUtil.copyOver(br, out, 0);
+		 * pr.defineRelations();
+		 * 
+		 */
+		CodeGenUtil.copyOver(br, out, -1);
+	}
 
-         */
-        CodeGenUtil.copyOver(br, out, -1);
-    }
-
-    /*
-    private class Worker {
-
-        private final PrintWriter out;
-
-        public Worker(PrintWriter out) {
-            this.out = out;
-        }
-
-        public void defineRelations() {
-            defineStructs();
-            defineRelations1();
-        }
-
-        private void defineStructs() {
-            for (RelationStruct struct : ctx.getRelationStructs()) {
-                struct.declare(out);
-                out.println();
-            }
-        }
-
-        private void defineRelations1() {
-            for (RelationSymbol sym : ctx.getRelationSymbols()) {
-                ctx.lookupRelation(sym).mkDecl().println(out, 0);
-            }
-        }
-
-    }
-     */
+	/*
+	 * private class Worker {
+	 * 
+	 * private final PrintWriter out;
+	 * 
+	 * public Worker(PrintWriter out) { this.out = out; }
+	 * 
+	 * public void defineRelations() { defineStructs(); defineRelations1(); }
+	 * 
+	 * private void defineStructs() { for (RelationStruct struct :
+	 * ctx.getRelationStructs()) { struct.declare(out); out.println(); } }
+	 * 
+	 * private void defineRelations1() { for (RelationSymbol sym :
+	 * ctx.getRelationSymbols()) { ctx.lookupRelation(sym).mkDecl().println(out, 0);
+	 * } }
+	 * 
+	 * }
+	 */
 
 }

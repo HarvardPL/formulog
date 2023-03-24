@@ -20,14 +20,13 @@ package edu.harvard.seas.pl.formulog.unification;
  * #L%
  */
 
-
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Var;
 
 public interface Substitution {
-	
+
 	void put(Var v, Term t);
-	
+
 	Term get(Var v);
 
 	static Term getIfPresent(Term t, Substitution s) {
@@ -36,13 +35,13 @@ public interface Substitution {
 		}
 		return t;
 	}
-	
+
 	boolean containsKey(Var v);
-	
+
 	Iterable<Var> iterateKeys();
 
 //	Substitution copy();
-	
+
 //	int newCheckpoint();
 
 //	int getCheckpoint();
@@ -52,5 +51,5 @@ public interface Substitution {
 //	int popCheckpoint();
 
 //	void mergeCheckpoint();
-	
+
 }

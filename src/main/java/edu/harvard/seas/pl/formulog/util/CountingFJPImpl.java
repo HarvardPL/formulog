@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.util;
  * #L%
  */
 
-
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.ForkJoinWorkerThread;

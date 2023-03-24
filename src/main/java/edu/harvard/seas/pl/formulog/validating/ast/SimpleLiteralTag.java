@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.validating.ast;
  * #L%
  */
 
-
 public enum SimpleLiteralTag {
 	ASSIGNMENT, CHECK, DESTRUCTOR, PREDICATE;
 }

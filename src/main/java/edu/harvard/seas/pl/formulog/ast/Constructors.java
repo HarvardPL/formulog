@@ -99,13 +99,13 @@ public final class Constructors {
 	public static Constructor nil() {
 		return nil;
 	}
-	
+
 	public static Constructor cons(Term hd, Term tl) {
-		return make(BuiltInConstructorSymbol.CONS, new Term[] { hd, tl } );
+		return make(BuiltInConstructorSymbol.CONS, new Term[] { hd, tl });
 	}
 
 	private static final Constructor none = makeZeroAry(BuiltInConstructorSymbol.NONE);
-	
+
 	public static final Term none() {
 		return none;
 	}
@@ -113,12 +113,10 @@ public final class Constructors {
 	public static Term some(Term arg) {
 		return make(BuiltInConstructorSymbol.SOME, Terms.singletonArray(arg));
 	}
-	
+
 	public static Term tuple(Term... args) {
 		return make(GlobalSymbolManager.lookupTupleSymbol(args.length), args);
 	}
-	
-	
 
 	private static Constructor lookupOrCreateBuiltInConstructor(BuiltInConstructorSymbol sym, Term[] args) {
 		Function<String, Constructor> makeSolverOp = op -> memo.lookupOrCreate(sym, args,
@@ -645,7 +643,7 @@ public final class Constructors {
 			}
 		});
 	}
-	
+
 	private static Constructor makeBvExtract(ParameterizedConstructorSymbol sym, Term[] args) {
 		return memo.lookupOrCreate(sym, args, () -> new AbstractConstructor<ParameterizedConstructorSymbol>(sym, args) {
 			@Override

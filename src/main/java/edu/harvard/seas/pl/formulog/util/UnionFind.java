@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.util;
  * #L%
  */
 
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -28,21 +27,21 @@ import java.util.Set;
 public class UnionFind<T> {
 
 	private final Map<T, T> m = new HashMap<>();
-	
+
 	public boolean contains(T t) {
 		return m.containsKey(t);
 	}
-	
+
 	public boolean add(T t) {
 		return m.putIfAbsent(t, t) == null;
 	}
-	
+
 	public void union(T t1, T t2) {
 		t1 = find(t1);
 		t2 = find(t2);
 		m.put(t1, t2);
 	}
-	
+
 	public T find(T t) {
 		assert contains(t);
 		T prev = null;
@@ -52,9 +51,9 @@ public class UnionFind<T> {
 		}
 		return t;
 	}
-	
+
 	public Set<T> members() {
 		return m.keySet();
 	}
-	
+
 }

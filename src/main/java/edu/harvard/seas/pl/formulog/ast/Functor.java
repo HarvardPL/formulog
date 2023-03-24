@@ -23,7 +23,6 @@ package edu.harvard.seas.pl.formulog.ast;
 import java.util.Map;
 import java.util.Set;
 
-
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 
 public interface Functor<S extends Symbol> extends Term {
@@ -42,7 +41,7 @@ public interface Functor<S extends Symbol> extends Term {
 			}
 		}
 	}
-	
+
 	@Override
 	default void updateVarCounts(Map<Var, Integer> counts) {
 		for (Term arg : getArgs()) {

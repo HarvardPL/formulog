@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-
 public interface BasicProgram extends Program<UserPredicate, BasicRule> {
-	
+
 }

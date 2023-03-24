@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.types;
  * #L%
  */
 
-
 import java.util.List;
 
 import edu.harvard.seas.pl.formulog.types.Types.Type;
@@ -28,5 +27,5 @@ import edu.harvard.seas.pl.formulog.types.Types.Type;
 public interface IndexedType {
 
 	Type instantiate(List<Integer> indices);
-	
+
 }

@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.util;
  * #L%
  */
 
-
 import java.util.ArrayDeque;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -29,27 +28,27 @@ import java.util.Queue;
 public class CompositeIterable<T> implements Iterable<T> {
 
 	private final Iterable<Iterable<T>> its;
-	
+
 	public CompositeIterable(Iterable<Iterable<T>> its) {
 		this.its = its;
 	}
-	
+
 	@Override
 	public Iterator<T> iterator() {
 		return new CompositeIterator();
 	}
-	
+
 	private final class CompositeIterator implements Iterator<T> {
-		
+
 		private final Queue<Iterator<T>> iterators;
-		
+
 		public CompositeIterator() {
 			Queue<Iterator<T>> l = new ArrayDeque<>();
 			for (Iterable<T> it : its) {
 				l.add(it.iterator());
 			}
 			this.iterators = l;
-			
+
 		}
 
 		private boolean load() {
@@ -62,7 +61,7 @@ public class CompositeIterable<T> implements Iterable<T> {
 			iterators.remove();
 			return load();
 		}
-		
+
 		@Override
 		public synchronized boolean hasNext() {
 			return load();
@@ -75,7 +74,7 @@ public class CompositeIterable<T> implements Iterable<T> {
 			}
 			return iterators.peek().next();
 		}
-		
+
 	}
 
 }

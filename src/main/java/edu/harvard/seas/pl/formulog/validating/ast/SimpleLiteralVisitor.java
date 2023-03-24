@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.validating.ast;
  * #L%
  */
 
-
 public interface SimpleLiteralVisitor<I, O> {
 
 	O visit(Assignment assignment, I input);

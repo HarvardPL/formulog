@@ -20,37 +20,36 @@ package edu.harvard.seas.pl.formulog.codegen.ast.cpp;
  * #L%
  */
 
-
 import edu.harvard.seas.pl.formulog.codegen.CodeGenUtil;
 
 import java.io.PrintWriter;
 
 public class CppReturn implements CppStmt {
 
-    private final CppExpr val;
+	private final CppExpr val;
 
-    private CppReturn(CppExpr val) {
-        this.val = val;
-    }
+	private CppReturn(CppExpr val) {
+		this.val = val;
+	}
 
-    public static CppReturn mk(CppExpr val) {
-        return new CppReturn(val);
-    }
+	public static CppReturn mk(CppExpr val) {
+		return new CppReturn(val);
+	}
 
-    public static CppReturn mk() {
-        return new CppReturn(null);
-    }
+	public static CppReturn mk() {
+		return new CppReturn(null);
+	}
 
-    @Override
-    public void println(PrintWriter out, int indent) {
-        CodeGenUtil.printIndent(out, indent);
-        if (val == null) {
-            out.println("return;");
-            return;
-        }
-        out.print("return ");
-        val.print(out);
-        out.println(";");
-    }
+	@Override
+	public void println(PrintWriter out, int indent) {
+		CodeGenUtil.printIndent(out, indent);
+		if (val == null) {
+			out.println("return;");
+			return;
+		}
+		out.print("return ");
+		val.print(out);
+		out.println(";");
+	}
 
 }

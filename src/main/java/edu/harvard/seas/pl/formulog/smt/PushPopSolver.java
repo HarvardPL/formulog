@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.smt;
  * #L%
  */
 
-
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
@@ -37,8 +36,8 @@ public class PushPopSolver extends AbstractSmtLibSolver {
 	private final Deque<SmtLibTerm> cache = new ArrayDeque<>();
 
 	@Override
-	protected Pair<Collection<SolverVariable>, Collection<SolverVariable>> makeAssertions(Collection<SmtLibTerm> assertions)
-			throws EvaluationException {
+	protected Pair<Collection<SolverVariable>, Collection<SolverVariable>> makeAssertions(
+			Collection<SmtLibTerm> assertions) throws EvaluationException {
 		int baseSize = cache.size();
 		int i = findDiffPos(assertions);
 		int pops = baseSize - i;

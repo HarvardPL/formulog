@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.codegen.ast.cpp;
  * #L%
  */
 
-
 import edu.harvard.seas.pl.formulog.codegen.CodeGenUtil;
 
 import java.io.PrintWriter;
@@ -30,32 +29,32 @@ import java.util.List;
 
 public class CppSeq implements CppStmt {
 
-    private final List<CppStmt> stmts;
+	private final List<CppStmt> stmts;
 
-    private CppSeq(List<CppStmt> stmts) {
-        this.stmts = stmts;
-    }
+	private CppSeq(List<CppStmt> stmts) {
+		this.stmts = stmts;
+	}
 
-    public static CppSeq mk(List<CppStmt> stmts) {
-        if (stmts.isEmpty()) {
-            return skip;
-        }
-        return new CppSeq(stmts);
-    }
+	public static CppSeq mk(List<CppStmt> stmts) {
+		if (stmts.isEmpty()) {
+			return skip;
+		}
+		return new CppSeq(stmts);
+	}
 
-    public static CppSeq mk(CppStmt... stmts) {
-        return mk(Arrays.asList(stmts));
-    }
+	public static CppSeq mk(CppStmt... stmts) {
+		return mk(Arrays.asList(stmts));
+	}
 
-    public static CppSeq skip() {
-        return skip;
-    }
+	public static CppSeq skip() {
+		return skip;
+	}
 
-    private static final CppSeq skip = new CppSeq(Collections.emptyList());
+	private static final CppSeq skip = new CppSeq(Collections.emptyList());
 
-    @Override
-    public void println(PrintWriter out, int indent) {
-        CodeGenUtil.print(stmts, out, indent);
-    }
+	@Override
+	public void println(PrintWriter out, int indent) {
+		CodeGenUtil.print(stmts, out, indent);
+	}
 
 }

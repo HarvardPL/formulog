@@ -25,7 +25,7 @@ import java.util.List;
 public class SExpAtom implements SExp {
 
 	private final String value;
-	
+
 	public SExpAtom(String value) {
 		this.value = value;
 	}
@@ -44,10 +44,10 @@ public class SExpAtom implements SExp {
 	public List<SExp> asList() {
 		throw new UnsupportedOperationException();
 	}
-	
+
 	@Override
 	public String toString() {
-		return value; 
+		return value;
 	}
 
 	@Override

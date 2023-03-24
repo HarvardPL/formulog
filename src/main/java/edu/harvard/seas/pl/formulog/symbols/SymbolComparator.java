@@ -20,13 +20,12 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-
 import java.util.Comparator;
 
 public enum SymbolComparator implements Comparator<Symbol> {
 
 	INSTANCE;
-	
+
 	@Override
 	public int compare(Symbol o1, Symbol o2) {
 		return o1.toString().compareTo(o2.toString());

@@ -20,13 +20,12 @@ package edu.harvard.seas.pl.formulog.util;
  * #L%
  */
 
-
 public class TodoException extends RuntimeException {
 
 	private static final long serialVersionUID = 1L;
 
 	public TodoException() {
-		
+
 	}
 
 	public TodoException(String message) {

@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +65,7 @@ public final class FunctionCallFactory {
 	public FunctionDefManager getDefManager() {
 		return defManager;
 	}
-	
+
 	public void clearMemoCache() {
 		callMemo.clear();
 	}
@@ -165,7 +164,7 @@ public final class FunctionCallFactory {
 			}
 			return r;
 		}
-		
+
 		private boolean hasSideEffects() {
 			// XXX This is rough, since it doesn't take into account the call
 			// graph (i.e., A could call B which is side effecting, but this
@@ -203,7 +202,7 @@ public final class FunctionCallFactory {
 			}
 			return r;
 		}
-		
+
 		public FunctionCallFactory getFactory() {
 			return FunctionCallFactory.this;
 		}

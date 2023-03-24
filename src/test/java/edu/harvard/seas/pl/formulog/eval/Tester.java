@@ -20,11 +20,10 @@ package edu.harvard.seas.pl.formulog.eval;
  * #L%
  */
 
-
 import java.util.List;
 
 public interface Tester {
 
-    void test(String file, List<String> inputDirs);
+	void test(String file, List<String> inputDirs);
 
 }

@@ -34,8 +34,8 @@ public class SingleShotSolver extends AbstractSmtLibSolver {
 	private Program<?, ?> prog;
 
 	@Override
-	protected Pair<Collection<SolverVariable>, Collection<SolverVariable>> makeAssertions(Collection<SmtLibTerm> assertions)
-			throws EvaluationException {
+	protected Pair<Collection<SolverVariable>, Collection<SolverVariable>> makeAssertions(
+			Collection<SmtLibTerm> assertions) throws EvaluationException {
 		shim.setLogic(Configuration.smtLogic);
 		shim.makeDeclarations();
 		for (SmtLibTerm assertion : assertions) {

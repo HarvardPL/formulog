@@ -20,15 +20,14 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-
 public enum TypeSymbolType {
 
 	NORMAL_TYPE,
-	
+
 	TYPE_ALIAS,
-	
+
 	UNINTERPRETED_SORT,
-	
+
 	;
-	
+
 }

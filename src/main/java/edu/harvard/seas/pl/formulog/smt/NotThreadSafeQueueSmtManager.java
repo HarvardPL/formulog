@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.smt;
  * #L%
  */
 
-
 import java.util.Collection;
 import java.util.function.Supplier;
 
@@ -43,8 +42,7 @@ public class NotThreadSafeQueueSmtManager implements SmtLibSolver {
 	}
 
 	@Override
-	public SmtResult check(Collection<SmtLibTerm> conjuncts, boolean getModel, int timeout)
-			throws EvaluationException {
+	public SmtResult check(Collection<SmtLibTerm> conjuncts, boolean getModel, int timeout) throws EvaluationException {
 		SmtLibSolver solver = solvers[pos];
 		SmtResult res = solver.check(conjuncts, getModel, timeout);
 		pos = (pos + 1) % solvers.length;

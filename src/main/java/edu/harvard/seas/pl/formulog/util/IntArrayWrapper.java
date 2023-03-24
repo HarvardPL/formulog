@@ -20,26 +20,25 @@ package edu.harvard.seas.pl.formulog.util;
  * #L%
  */
 
-
 import java.util.Arrays;
 
 public class IntArrayWrapper {
 
 	private final int[] a;
-	
+
 	public IntArrayWrapper(int[] a) {
 		this.a = a;
 	}
-	
+
 	public int[] getVal() {
 		return a;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return Arrays.hashCode(a);
 	}
-	
+
 	@Override
 	public boolean equals(Object o) {
 		if (o instanceof int[]) {
@@ -47,5 +46,5 @@ public class IntArrayWrapper {
 		}
 		return false;
 	}
-	
+
 }

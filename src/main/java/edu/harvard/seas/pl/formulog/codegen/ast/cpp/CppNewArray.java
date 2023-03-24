@@ -20,30 +20,29 @@ package edu.harvard.seas.pl.formulog.codegen.ast.cpp;
  * #L%
  */
 
-
 import java.io.PrintWriter;
 
 public class CppNewArray implements CppExpr {
 
-    private final String type;
-    private final CppExpr size;
+	private final String type;
+	private final CppExpr size;
 
-    private CppNewArray(String type, CppExpr size) {
-        this.type = type;
-        this.size = size;
-    }
+	private CppNewArray(String type, CppExpr size) {
+		this.type = type;
+		this.size = size;
+	}
 
-    public static CppNewArray mk(String type, CppExpr size) {
-        return new CppNewArray(type, size);
-    }
+	public static CppNewArray mk(String type, CppExpr size) {
+		return new CppNewArray(type, size);
+	}
 
-    @Override
-    public void print(PrintWriter out) {
-        out.print("new ");
-        out.print(type);
-        out.print("[");
-        size.print(out);
-        out.print("]");
-    }
+	@Override
+	public void print(PrintWriter out) {
+		out.print("new ");
+		out.print(type);
+		out.print("[");
+		size.print(out);
+		out.print("]");
+	}
 
 }

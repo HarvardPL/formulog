@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.eval;
  * #L%
  */
 
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;

@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.functions;
  * #L%
  */
 
-
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
@@ -29,11 +28,11 @@ public class DummyFunctionDef implements FunctionDef {
 
 	private final FunctionSymbol sym;
 	private volatile FunctionDef def;
-	
+
 	public DummyFunctionDef(FunctionSymbol sym) {
 		this.sym = sym;
 	}
-	
+
 	@Override
 	public FunctionSymbol getSymbol() {
 		return sym;
@@ -46,7 +45,7 @@ public class DummyFunctionDef implements FunctionDef {
 		}
 		return def.evaluate(args);
 	}
-	
+
 	public void setDef(FunctionDef def) {
 		this.def = def;
 	}

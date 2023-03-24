@@ -20,21 +20,20 @@ package edu.harvard.seas.pl.formulog.symbols.parameterized;
  * #L%
  */
 
-
 public enum ParamKind {
 
 	NAT,
-	
+
 	ANY_TYPE,
-	
+
 	SMT_REPRESENTABLE_TYPE,
-	
+
 	SMT_VAR,
-	
+
 	SMT_VARS,
-	
+
 	PRE_SMT_TYPE,
-	
+
 	WILD_CARD;
-	
+
 }

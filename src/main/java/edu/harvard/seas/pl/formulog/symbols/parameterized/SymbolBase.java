@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.symbols.parameterized;
  * #L%
  */
 
-
 import java.util.List;
 
 public interface SymbolBase {
@@ -32,5 +31,5 @@ public interface SymbolBase {
 	default int getNumParams() {
 		return getParamKinds().size();
 	}
-	
+
 }

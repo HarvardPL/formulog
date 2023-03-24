@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.unification;
  * #L%
  */
 
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;

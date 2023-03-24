@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.parsing;
  * #L%
  */
 
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -37,33 +36,33 @@ import edu.harvard.seas.pl.formulog.util.Pair;
 class ParsingContext {
 
 	private final SymbolManager sm = new SymbolManager();
-	private final FunctionDefManager fdm = new FunctionDefManager(); 
+	private final FunctionDefManager fdm = new FunctionDefManager();
 	private final FunctionCallFactory fcf = new FunctionCallFactory(fdm);
 	private final Map<FunctionSymbol, Pair<AlgebraicDataType, Integer>> rl = new HashMap<>();
 	private final Map<ConstructorSymbol, FunctionSymbol[]> cl = new HashMap<>();
 	private final TypeManager tm = new TypeManager();
 	private final Map<String, AtomicInteger> nfc = new HashMap<>();
-	
+
 	public SymbolManager symbolManager() {
 		return sm;
 	}
-	
+
 	public FunctionCallFactory functionCallFactory() {
 		return fcf;
 	}
-	
+
 	public FunctionDefManager functionDefManager() {
 		return fdm;
 	}
-	
+
 	public Map<FunctionSymbol, Pair<AlgebraicDataType, Integer>> recordLabels() {
 		return rl;
 	}
-	
+
 	public Map<ConstructorSymbol, FunctionSymbol[]> constructorLabels() {
 		return cl;
 	}
-	
+
 	public TypeManager typeManager() {
 		return tm;
 	}

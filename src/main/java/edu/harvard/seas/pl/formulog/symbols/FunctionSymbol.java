@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-
 public interface FunctionSymbol extends TypedSymbol {
 
 }

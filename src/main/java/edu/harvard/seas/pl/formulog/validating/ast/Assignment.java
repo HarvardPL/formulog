@@ -23,7 +23,6 @@ package edu.harvard.seas.pl.formulog.validating.ast;
 import java.util.HashSet;
 import java.util.Set;
 
-
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
@@ -33,20 +32,20 @@ public class Assignment implements SimpleLiteral {
 
 	private final Var var;
 	private final Term rhs;
-	
+
 	public static Assignment make(Var var, Term rhs) {
 		return new Assignment(var, rhs);
 	}
-	
+
 	public Assignment(Var var, Term rhs) {
 		this.var = var;
 		this.rhs = rhs;
 	}
-	
+
 	public void assign(Substitution subst) throws EvaluationException {
 		subst.put(var, rhs.normalize(subst));
 	}
-	
+
 	@Override
 	public <I, O> O accept(SimpleLiteralVisitor<I, O> visitor, I input) {
 		return visitor.visit(this, input);
@@ -79,11 +78,11 @@ public class Assignment implements SimpleLiteral {
 	public Term[] getArgs() {
 		return new Term[] { var, rhs };
 	}
-	
+
 	public Var getDef() {
 		return var;
 	}
-	
+
 	public Term getVal() {
 		return rhs;
 	}

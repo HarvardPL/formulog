@@ -35,159 +35,137 @@ import java.util.*;
 
 public class MainCpp extends TemplateSrcFile {
 
-    private final TermCodeGen tcg;
+	private final TermCodeGen tcg;
 
-    public MainCpp(CodeGenContext ctx) {
-        super("main.cpp", ctx);
-        this.tcg = new TermCodeGen(ctx);
-    }
+	public MainCpp(CodeGenContext ctx) {
+		super("main.cpp", ctx);
+		this.tcg = new TermCodeGen(ctx);
+	}
 
-    public void gen(BufferedReader br, PrintWriter out) throws IOException, CodeGenException {
-        Worker pr = new Worker(out);
-        CodeGenUtil.copyOver(br, out, 0);
-        pr.loadExternalEdbs();
-        CodeGenUtil.copyOver(br, out, 1);
-        pr.loadStaticFacts();
-        /*
-        CodeGenUtil.copyOver(br, out, 2);
-        pr.printStratumFuncs();
-        CodeGenUtil.copyOver(br, out, 3);
-        pr.evaluate();
-        CodeGenUtil.copyOver(br, out, 4);
-        pr.printResults();
-        */
-        CodeGenUtil.copyOver(br, out, 4);
-        pr.printIdbsToDisk();
-        CodeGenUtil.copyOver(br, out, -1);
-    }
+	public void gen(BufferedReader br, PrintWriter out) throws IOException, CodeGenException {
+		Worker pr = new Worker(out);
+		CodeGenUtil.copyOver(br, out, 0);
+		pr.loadExternalEdbs();
+		CodeGenUtil.copyOver(br, out, 1);
+		pr.loadStaticFacts();
+		/*
+		 * CodeGenUtil.copyOver(br, out, 2); pr.printStratumFuncs();
+		 * CodeGenUtil.copyOver(br, out, 3); pr.evaluate(); CodeGenUtil.copyOver(br,
+		 * out, 4); pr.printResults();
+		 */
+		CodeGenUtil.copyOver(br, out, 4);
+		pr.printIdbsToDisk();
+		CodeGenUtil.copyOver(br, out, -1);
+	}
 
-    private class Worker {
+	private class Worker {
 
-        //    private final SortedIndexedFactDb db = ctx.getEval().getDb();
-        private final PrintWriter out;
+		// private final SortedIndexedFactDb db = ctx.getEval().getDb();
+		private final PrintWriter out;
 
-        public Worker(PrintWriter out) {
-            this.out = out;
-        }
+		public Worker(PrintWriter out) {
+			this.out = out;
+		}
 
-        public void loadExternalEdbs() {
-            for (RelationSymbol sym : ctx.getProgram().getFactSymbols()) {
-                if (sym.isDisk()) {
-                    loadExternalEdbs(sym);
-                }
-            }
-        }
+		public void loadExternalEdbs() {
+			for (RelationSymbol sym : ctx.getProgram().getFactSymbols()) {
+				if (sym.isDisk()) {
+					loadExternalEdbs(sym);
+				}
+			}
+		}
 
-        public void loadExternalEdbs(RelationSymbol sym) {
-            String func = "loadEdbs";
-            CppExpr file = CppConst.mkString(sym + ".tsv");
-            CppExpr repr = CppConst.mkString(ctx.lookupRepr(sym));
-            CppExpr rel = CppMethodCall.mkThruPtr(CppVar.mk("globals::program"), "getRelation", repr);
-            CppExpr call = CppFuncCall.mk(func, CppVar.mk("dir"), file, rel);
-            call.toStmt().println(out, 1);
-        }
+		public void loadExternalEdbs(RelationSymbol sym) {
+			String func = "loadEdbs";
+			CppExpr file = CppConst.mkString(sym + ".tsv");
+			CppExpr repr = CppConst.mkString(ctx.lookupRepr(sym));
+			CppExpr rel = CppMethodCall.mkThruPtr(CppVar.mk("globals::program"), "getRelation", repr);
+			CppExpr call = CppFuncCall.mk(func, CppVar.mk("dir"), file, rel);
+			call.toStmt().println(out, 1);
+		}
 
-        public void loadStaticFacts() throws CodeGenException {
-            var prog = ctx.getProgram();
-            prog.getFunctionCallFactory().getDefManager().loadBuiltInFunctions(new PushPopSolver());
-            for (RelationSymbol sym : prog.getFactSymbols()) {
-                for (Term[] tup : prog.getFacts(sym)) {
-                    loadStaticFact(sym, tup);
-                }
-            }
-        }
+		public void loadStaticFacts() throws CodeGenException {
+			var prog = ctx.getProgram();
+			prog.getFunctionCallFactory().getDefManager().loadBuiltInFunctions(new PushPopSolver());
+			for (RelationSymbol sym : prog.getFactSymbols()) {
+				for (Term[] tup : prog.getFacts(sym)) {
+					loadStaticFact(sym, tup);
+				}
+			}
+		}
 
-        public void loadStaticFact(RelationSymbol sym, Term[] tup) throws CodeGenException {
-            List<CppExpr> args = new ArrayList<>();
-            List<CppStmt> stmts = new ArrayList<>();
-            TermCodeGen tcg = new TermCodeGen(ctx);
-            for (Term t : tup) {
-                try {
-                    t = t.normalize(new SimpleSubstitution());
-                } catch (EvaluationException e) {
-                    throw new CodeGenException("Could not normalize term occurring in fact: " + t);
-                }
-                Pair<CppStmt, CppExpr> p = tcg.gen(t, Collections.emptyMap());
-                stmts.add(p.fst());
-                args.add(p.snd());
-            }
-            CppExpr rel = CppConst.mkString(ctx.lookupRepr(sym));
-            stmts.add(CppFuncCall.mk("loadFact", rel, CppVectorLiteral.mk(args)).toStmt());
-            CppSeq.mk(stmts).println(out, 1);
-        }
+		public void loadStaticFact(RelationSymbol sym, Term[] tup) throws CodeGenException {
+			List<CppExpr> args = new ArrayList<>();
+			List<CppStmt> stmts = new ArrayList<>();
+			TermCodeGen tcg = new TermCodeGen(ctx);
+			for (Term t : tup) {
+				try {
+					t = t.normalize(new SimpleSubstitution());
+				} catch (EvaluationException e) {
+					throw new CodeGenException("Could not normalize term occurring in fact: " + t);
+				}
+				Pair<CppStmt, CppExpr> p = tcg.gen(t, Collections.emptyMap());
+				stmts.add(p.fst());
+				args.add(p.snd());
+			}
+			CppExpr rel = CppConst.mkString(ctx.lookupRepr(sym));
+			stmts.add(CppFuncCall.mk("loadFact", rel, CppVectorLiteral.mk(args)).toStmt());
+			CppSeq.mk(stmts).println(out, 1);
+		}
 
-        /*
-        public void loadEdbs() {
-            for (RelationSymbol sym : db.getSymbols()) {
-                if (sym.isEdbSymbol()) {
-                    // XXX Should probably change this so that we explicitly
-                    // load up only the master index, and then add the
-                    // master index to all the other ones.
-                    loadEdb(sym);
-                }
-            }
-        }
+		/*
+		 * public void loadEdbs() { for (RelationSymbol sym : db.getSymbols()) { if
+		 * (sym.isEdbSymbol()) { // XXX Should probably change this so that we
+		 * explicitly // load up only the master index, and then add the // master index
+		 * to all the other ones. loadEdb(sym); } } }
+		 * 
+		 * public void loadEdb(RelationSymbol sym) { Relation rel =
+		 * ctx.lookupRelation(sym); for (Term[] tup : db.getAll(sym)) { Pair<CppStmt,
+		 * List<CppExpr>> p = tcg.gen(Arrays.asList(tup), Collections.emptyMap());
+		 * p.fst().println(out, 1); rel.mkInsert(rel.mkTuple(p.snd()),
+		 * false).toStmt().println(out, 1); } }
+		 * 
+		 * public void printStratumFuncs() { StratumCodeGen scg = new
+		 * StratumCodeGen(ctx); List<Stratum> strata = ctx.getEval().getStrata(); for
+		 * (Iterator<Stratum> it = strata.iterator(); it.hasNext(); ) {
+		 * printStratumFunc(it.next(), scg); if (it.hasNext()) { out.println(); } } }
+		 * 
+		 * public void printStratumFunc(Stratum stratum, StratumCodeGen sgc) {
+		 * out.println("void stratum_" + stratum.getRank() + "() {");
+		 * sgc.gen(stratum).println(out, 1); out.println("}"); }
+		 * 
+		 * public void evaluate() { int n = ctx.getEval().getStrata().size(); for (int i
+		 * = 0; i < n; ++i) { CppFuncCall.mk("stratum_" + i,
+		 * Collections.emptyList()).toStmt().println(out, 1); } }
+		 * 
+		 */
 
-        public void loadEdb(RelationSymbol sym) {
-            Relation rel = ctx.lookupRelation(sym);
-            for (Term[] tup : db.getAll(sym)) {
-                Pair<CppStmt, List<CppExpr>> p = tcg.gen(Arrays.asList(tup), Collections.emptyMap());
-                p.fst().println(out, 1);
-                rel.mkInsert(rel.mkTuple(p.snd()), false).toStmt().println(out, 1);
-            }
-        }
+		public void printResults() {
+			for (RelationSymbol sym : ctx.getProgram().getRuleSymbols()) {
+				out.print("  cout << \"");
+				out.print(sym);
+				out.print(": \" << ");
+				genRelationSize(sym).print(out);
+				out.println(" << endl;");
+				// CppIf.mk(CppVar.mk("dump"), ctx.lookupRelation(sym).mkPrint()).println(out,
+				// 1);
+			}
+		}
 
-        public void printStratumFuncs() {
-            StratumCodeGen scg = new StratumCodeGen(ctx);
-            List<Stratum> strata = ctx.getEval().getStrata();
-            for (Iterator<Stratum> it = strata.iterator(); it.hasNext(); ) {
-                printStratumFunc(it.next(), scg);
-                if (it.hasNext()) {
-                    out.println();
-                }
-            }
-        }
+		private CppExpr genRelationSize(RelationSymbol sym) {
+			String repr = ctx.lookupRepr(sym);
+			CppExpr rel = CppMethodCall.mk(CppVar.mk("prog"), "getRelation", CppConst.mkString(repr));
+			return CppMethodCall.mkThruPtr(rel, "size");
+		}
 
-        public void printStratumFunc(Stratum stratum, StratumCodeGen sgc) {
-            out.println("void stratum_" + stratum.getRank() + "() {");
-            sgc.gen(stratum).println(out, 1);
-            out.println("}");
-        }
+		public void printIdbsToDisk() {
+			for (RelationSymbol sym : ctx.getProgram().getRuleSymbols()) {
+				if (sym.isDisk()) {
+					out.println("    saveToDisk(\"" + ctx.lookupRepr(sym) + "\");");
+				}
+			}
+		}
 
-        public void evaluate() {
-            int n = ctx.getEval().getStrata().size();
-            for (int i = 0; i < n; ++i) {
-                CppFuncCall.mk("stratum_" + i, Collections.emptyList()).toStmt().println(out, 1);
-            }
-        }
-
-     */
-
-        public void printResults() {
-            for (RelationSymbol sym : ctx.getProgram().getRuleSymbols()) {
-                out.print("  cout << \"");
-                out.print(sym);
-                out.print(": \" << ");
-                genRelationSize(sym).print(out);
-                out.println(" << endl;");
-                //CppIf.mk(CppVar.mk("dump"), ctx.lookupRelation(sym).mkPrint()).println(out, 1);
-            }
-        }
-
-        private CppExpr genRelationSize(RelationSymbol sym) {
-            String repr = ctx.lookupRepr(sym);
-            CppExpr rel = CppMethodCall.mk(CppVar.mk("prog"), "getRelation", CppConst.mkString(repr));
-            return CppMethodCall.mkThruPtr(rel, "size");
-        }
-        
-        public void printIdbsToDisk() {
-            for (RelationSymbol sym : ctx.getProgram().getRuleSymbols()) {
-                if (sym.isDisk()) {
-                    out.println("    saveToDisk(\"" + ctx.lookupRepr(sym) + "\");");
-                }
-            }
-        }
-
-    }
+	}
 
 }

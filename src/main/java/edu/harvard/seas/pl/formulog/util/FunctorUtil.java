@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.util;
  * #L%
  */
 
-
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -77,7 +76,7 @@ public final class FunctorUtil {
 	public static class Memoizer<T extends Term> {
 
 		private final Map<Key, T> memo = new ConcurrentHashMap<>();
-		
+
 		public T lookupOrCreate(Symbol sym, Term[] args, Supplier<T> constructor) {
 			if (sym.getArity() != args.length) {
 				throw new IllegalArgumentException("Symbol " + sym + " has arity " + sym.getArity() + " but args "

@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.smt;
  * #L%
  */
 
-
 import java.util.Collection;
 
 import edu.harvard.seas.pl.formulog.ast.Program;
@@ -30,7 +29,7 @@ import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 public interface SmtLibSolver {
 
 	void start(Program<?, ?> prog) throws EvaluationException;
-	
+
 	SmtResult check(Collection<SmtLibTerm> t, boolean getModel, int timeout) throws EvaluationException;
 
 	void destroy();

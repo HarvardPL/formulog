@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.db;
  * #L%
  */
 
-
 import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.Term;
@@ -29,23 +28,23 @@ import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 public interface IndexedFactDb {
 
 	Set<RelationSymbol> getSymbols();
-	
+
 	Iterable<Term[]> getAll(RelationSymbol sym);
-	
+
 	boolean isEmpty(RelationSymbol sym);
-	
+
 	int countDistinct(RelationSymbol sym);
-	
+
 	int numIndices(RelationSymbol sym);
-	
+
 	int countDuplicates(RelationSymbol sym);
-	
+
 	Iterable<Term[]> get(RelationSymbol sym, Term[] key, int index);
-	
+
 	boolean add(RelationSymbol sym, Term[] args);
-	
+
 	boolean addAll(RelationSymbol sym, Iterable<Term[]> tups);
-	
+
 	boolean hasFact(RelationSymbol sym, Term[] args);
 
 	void clear();

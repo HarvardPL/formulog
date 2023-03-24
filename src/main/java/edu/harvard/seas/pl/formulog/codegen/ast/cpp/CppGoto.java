@@ -20,27 +20,26 @@ package edu.harvard.seas.pl.formulog.codegen.ast.cpp;
  * #L%
  */
 
-
 import edu.harvard.seas.pl.formulog.codegen.CodeGenUtil;
 
 import java.io.PrintWriter;
 
 public class CppGoto implements CppStmt {
 
-    private final String label;
+	private final String label;
 
-    private CppGoto(String label) {
-        this.label = label;
-    }
+	private CppGoto(String label) {
+		this.label = label;
+	}
 
-    public static CppGoto mk(String label) {
-        return new CppGoto(label);
-    }
+	public static CppGoto mk(String label) {
+		return new CppGoto(label);
+	}
 
-    @Override
-    public void println(PrintWriter out, int indent) {
-        CodeGenUtil.printIndent(out, indent);
-        out.println("goto " + label + ";");
-    }
+	@Override
+	public void println(PrintWriter out, int indent) {
+		CodeGenUtil.printIndent(out, indent);
+		out.println("goto " + label + ";");
+	}
 
 }

@@ -22,7 +22,6 @@ package edu.harvard.seas.pl.formulog.codegen;
 
 import edu.harvard.seas.pl.formulog.Configuration;
 
-
 import edu.harvard.seas.pl.formulog.eval.CommonEvaluationTest;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
 
@@ -30,10 +29,11 @@ public class CompiledSemiNaiveEvaluationTest extends CommonEvaluationTest<SemiNa
 
 	static {
 		if (!Configuration.testCodegen) {
-			System.err.println("WARNING: skipping CompiledSemiNaiveEvaluationTest; enable with system property `-DtestCodegen`");
+			System.err.println(
+					"WARNING: skipping CompiledSemiNaiveEvaluationTest; enable with system property `-DtestCodegen`");
 		}
 	}
-	
+
 	public CompiledSemiNaiveEvaluationTest() {
 		super(Configuration.testCodegen ? new CompiledSemiNaiveTester() : new NopTester<>());
 	}

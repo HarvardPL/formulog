@@ -22,7 +22,6 @@ package edu.harvard.seas.pl.formulog.ast;
 
 import java.util.Collections;
 
-
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,7 +42,7 @@ public class FP32 extends AbstractTerm implements Primitive<Float>, SmtLibTerm {
 	private FP32(float val) {
 		this.val = val;
 	}
-	
+
 	public static FP32 make(float val) {
 		return Util.lookupOrCreate(memo, val, () -> new FP32(val));
 	}
@@ -52,7 +51,7 @@ public class FP32 extends AbstractTerm implements Primitive<Float>, SmtLibTerm {
 	public Float getVal() {
 		return val;
 	}
-	
+
 	@Override
 	public String toString() {
 		if (Float.isNaN(val)) {
@@ -71,7 +70,7 @@ public class FP32 extends AbstractTerm implements Primitive<Float>, SmtLibTerm {
 	public SmtLibTerm substSolverTerms(PMap<SolverVariable, SmtLibTerm> subst) {
 		return this;
 	}
-	
+
 	@Override
 	public void toSmtLib(SmtLibShim shim) {
 		if (Float.isNaN(val)) {
@@ -89,7 +88,7 @@ public class FP32 extends AbstractTerm implements Primitive<Float>, SmtLibTerm {
 	public Type getType() {
 		return BuiltInTypes.fp32;
 	}
-	
+
 	@Override
 	public Set<SolverVariable> freeVars() {
 		return Collections.emptySet();

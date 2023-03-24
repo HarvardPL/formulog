@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.symbols.parameterized;
  * #L%
  */
 
-
 public interface FunctorBase extends SymbolBase {
 
 }

@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-
 import static edu.harvard.seas.pl.formulog.symbols.ConstructorSymbolType.SOLVER_EXPR;
 import static edu.harvard.seas.pl.formulog.symbols.ConstructorSymbolType.VANILLA_CONSTRUCTOR;
 import static edu.harvard.seas.pl.formulog.types.BuiltInTypes.a;
@@ -44,43 +43,43 @@ import edu.harvard.seas.pl.formulog.types.Types.Type;
 public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 
 	// Lists
-	
+
 	NIL("nil", 0, VANILLA_CONSTRUCTOR),
-	
+
 	CONS("cons", 2, VANILLA_CONSTRUCTOR),
-	
+
 	// Options
-	
+
 	NONE("none", 0, VANILLA_CONSTRUCTOR),
-	
+
 	SOME("some", 1, VANILLA_CONSTRUCTOR),
 
 	// Comparisons
-	
+
 	CMP_LT("cmp_lt", 0, VANILLA_CONSTRUCTOR),
-	
+
 	CMP_EQ("cmp_eq", 0, VANILLA_CONSTRUCTOR),
-	
+
 	CMP_GT("cmp_gt", 0, VANILLA_CONSTRUCTOR),
 
 	// Constraints
-	
+
 	SMT_NOT("smt_not", 1, SOLVER_EXPR),
-	
+
 	SMT_AND("smt_and", 2, SOLVER_EXPR),
-	
+
 	SMT_OR("smt_or", 2, SOLVER_EXPR),
-	
+
 	SMT_IMP("smt_imp", 2, SOLVER_EXPR),
-	
+
 	SMT_ITE("smt_ite", 3, SOLVER_EXPR),
-	
+
 	SMT_EXISTS("smt_exists", 3, SOLVER_EXPR),
-	
+
 	SMT_FORALL("smt_forall", 3, SOLVER_EXPR),
-	
+
 	// Bit vectors
-	
+
 	BV_NEG("bv_neg", 1, SOLVER_EXPR),
 
 	BV_ADD("bv_add", 2, SOLVER_EXPR),
@@ -92,7 +91,7 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 	BV_SDIV("bv_sdiv", 2, SOLVER_EXPR),
 
 	BV_SREM("bv_srem", 2, SOLVER_EXPR),
-	
+
 	BV_UDIV("bv_udiv", 2, SOLVER_EXPR),
 
 	BV_UREM("bv_urem", 2, SOLVER_EXPR),
@@ -102,13 +101,13 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 	BV_OR("bv_or", 2, SOLVER_EXPR),
 
 	BV_XOR("bv_xor", 2, SOLVER_EXPR),
-	
+
 	BV_SHL("bv_shl", 2, SOLVER_EXPR),
-	
+
 	BV_ASHR("bv_ashr", 2, SOLVER_EXPR),
-	
+
 	BV_LSHR("bv_lshr", 2, SOLVER_EXPR),
-	
+
 	// Floating point
 
 	FP_NEG("fp_neg", 1, SOLVER_EXPR),
@@ -122,73 +121,73 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 	FP_DIV("fp_div", 2, SOLVER_EXPR),
 
 	FP_REM("fp_rem", 2, SOLVER_EXPR),
-	
+
 	// Arrays
 
 	ARRAY_STORE("array_store", 3, SOLVER_EXPR),
-	
+
 	ARRAY_CONST("array_const", 1, SOLVER_EXPR),
-	
+
 	// Strings
-	
+
 	STR_CONCAT("str_concat", 2, SOLVER_EXPR),
-	
+
 	STR_LEN("str_len", 1, SOLVER_EXPR),
-	
+
 	STR_SUBSTR("str_substr", 3, SOLVER_EXPR),
-	
+
 	STR_INDEXOF("str_indexof", 3, SOLVER_EXPR),
-	
+
 	STR_AT("str_at", 2, SOLVER_EXPR),
-	
+
 	STR_CONTAINS("str_contains", 2, SOLVER_EXPR),
-	
+
 	STR_PREFIXOF("str_prefixof", 2, SOLVER_EXPR),
-	
+
 	STR_SUFFIXOF("str_suffixof", 2, SOLVER_EXPR),
-	
+
 	STR_REPLACE("str_replace", 3, SOLVER_EXPR),
-	
+
 	// Ints
-	
+
 	INT_CONST("int_const", 1, SOLVER_EXPR),
-	
+
 	INT_BIG_CONST("int_big_const", 1, SOLVER_EXPR),
-	
+
 	INT_NEG("int_neg", 1, SOLVER_EXPR),
-	
+
 	INT_SUB("int_sub", 2, SOLVER_EXPR),
 
 	INT_ADD("int_add", 2, SOLVER_EXPR),
-	
+
 	INT_MUL("int_mul", 2, SOLVER_EXPR),
 
 	INT_DIV("int_div", 2, SOLVER_EXPR),
-	
+
 	INT_MOD("int_mod", 2, SOLVER_EXPR),
-	
+
 	INT_ABS("int_abs", 1, SOLVER_EXPR),
-	
+
 	INT_LE("int_le", 2, SOLVER_EXPR),
-	
+
 	INT_LT("int_lt", 2, SOLVER_EXPR),
-	
+
 	INT_GE("int_ge", 2, SOLVER_EXPR),
-	
+
 	INT_GT("int_gt", 2, SOLVER_EXPR),
-	
+
 	// Stuff for type checking formulas
-	
+
 	ENTER_FORMULA("enter_formula", 1, VANILLA_CONSTRUCTOR),
-	
-	EXIT_FORMULA("exit_formula", 1, VANILLA_CONSTRUCTOR),	
-	
+
+	EXIT_FORMULA("exit_formula", 1, VANILLA_CONSTRUCTOR),
+
 	;
 
 	private final String name;
 	private final int arity;
 	private final ConstructorSymbolType st;
-	
+
 	private BuiltInConstructorSymbol(String name, int arity, ConstructorSymbolType st) {
 		this.name = name;
 		this.arity = arity;
@@ -200,11 +199,11 @@ public enum BuiltInConstructorSymbol implements ConstructorSymbol {
 		return arity;
 	}
 
-	private FunctorType makeType(Type...types) {
+	private FunctorType makeType(Type... types) {
 		assert types.length == arity + 1;
 		return new FunctorType(types);
 	}
-	
+
 	@Override
 	public FunctorType getCompileTimeType() {
 		switch (this) {

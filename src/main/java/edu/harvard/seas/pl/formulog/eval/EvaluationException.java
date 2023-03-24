@@ -20,13 +20,12 @@ package edu.harvard.seas.pl.formulog.eval;
  * #L%
  */
 
-
 public class EvaluationException extends Exception {
 
 	private static final long serialVersionUID = 1L;
 
 	public EvaluationException() {
-		
+
 	}
 
 	public EvaluationException(String message) {

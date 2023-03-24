@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.eval;
  * #L%
  */
 
-
 import java.util.HashSet;
 import java.util.Set;
 
@@ -53,7 +52,7 @@ public class SmtCallFinder {
 		smtCallSymbols.add(BuiltInFunctionSymbol.IS_VALID);
 		smtCallSymbols.add(BuiltInFunctionSymbol.GET_MODEL);
 	}
-	
+
 	public boolean containsSmtCall(Literal l) {
 		for (Term arg : l.getArgs()) {
 			if (arg.accept(tv, null)) {
@@ -126,7 +125,6 @@ public class SmtCallFinder {
 			}
 			return false;
 		}
-
 
 		@Override
 		public Boolean visit(LetFunExpr funcDef, Void in) {

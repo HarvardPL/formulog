@@ -24,36 +24,35 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitorExn;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 
 public interface Term {
-	
+
 	<I, O> O accept(TermVisitor<I, O> v, I in);
-	
+
 	<I, O, E extends Throwable> O accept(TermVisitorExn<I, O, E> v, I in) throws E;
-	
+
 	boolean isGround();
 
 	boolean containsUnevaluatedTerm();
 
 	Term applySubstitution(Substitution s);
-	
+
 	Term normalize(Substitution s) throws EvaluationException;
-	
+
 	void varSet(Set<Var> acc);
-	
+
 	default Set<Var> varSet() {
 		Set<Var> vars = new HashSet<>();
 		varSet(vars);
 		return vars;
 	}
-	
+
 	void updateVarCounts(Map<Var, Integer> counts);
-	
+
 	int getId();
-	
+
 }

@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.util;
  * #L%
  */
 
-
 import java.util.concurrent.RecursiveAction;
 
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
@@ -43,7 +42,7 @@ public abstract class AbstractFJPTask extends RecursiveAction {
 			exec.fail(e);
 		}
 	}
-	
+
 	public abstract void doTask() throws EvaluationException;
 
 }

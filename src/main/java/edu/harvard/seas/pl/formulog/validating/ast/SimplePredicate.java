@@ -23,7 +23,6 @@ package edu.harvard.seas.pl.formulog.validating.ast;
 import java.util.Arrays;
 import java.util.HashSet;
 
-
 import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.BindingType;
@@ -40,7 +39,8 @@ public class SimplePredicate implements SimpleLiteral {
 	private final BindingType[] bindingPattern;
 	private final boolean negated;
 
-	public static SimplePredicate make(RelationSymbol symbol, Term[] args, BindingType[] bindingPattern, boolean negated) {
+	public static SimplePredicate make(RelationSymbol symbol, Term[] args, BindingType[] bindingPattern,
+			boolean negated) {
 		assert symbol.getArity() == args.length : "Symbol does not match argument arity";
 		return new SimplePredicate(symbol, args, bindingPattern, negated);
 	}

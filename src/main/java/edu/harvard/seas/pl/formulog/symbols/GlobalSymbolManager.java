@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -78,8 +77,9 @@ public final class GlobalSymbolManager {
 		}
 		return sym;
 	}
-	
-	public static ParameterizedConstructorSymbol getParameterizedSymbol(BuiltInConstructorSymbolBase base, List<Param> params) {
+
+	public static ParameterizedConstructorSymbol getParameterizedSymbol(BuiltInConstructorSymbolBase base,
+			List<Param> params) {
 		return getParameterizedSymbol(base).copyWithNewArgs(params);
 	}
 
@@ -153,7 +153,7 @@ public final class GlobalSymbolManager {
 		initialize();
 		return Collections.unmodifiableSet(typeSymbols);
 	}
-	
+
 	private static final Map<Integer, TupleSymbol> tupleSymbolMemo = new ConcurrentHashMap<>();
 	private static final Map<Integer, TypeSymbol> tupleTypeSymbolMemo = new ConcurrentHashMap<>();
 

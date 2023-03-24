@@ -28,7 +28,7 @@ import java.util.List;
 public class SExpList implements SExp {
 
 	private final List<SExp> l;
-	
+
 	public SExpList(List<SExp> l) {
 		this.l = Collections.unmodifiableList(new ArrayList<>(l));
 	}
@@ -47,7 +47,7 @@ public class SExpList implements SExp {
 	public List<SExp> asList() {
 		return l;
 	}
-	
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();

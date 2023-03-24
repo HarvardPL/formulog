@@ -25,11 +25,10 @@ import java.util.Deque;
 
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 
-
 public class MockCountingFJP implements CountingFJP {
 
 	private volatile EvaluationException failureCause;
-	
+
 	private final Deque<AbstractFJPTask> workItems = new ArrayDeque<>();
 
 	public synchronized void externallyAddTask(AbstractFJPTask w) {
@@ -48,24 +47,24 @@ public class MockCountingFJP implements CountingFJP {
 	}
 
 	public synchronized final void shutdown() {
-		
+
 	}
-	
+
 	public synchronized final void fail(EvaluationException cause) {
 		failureCause = cause;
 	}
-	
+
 	public synchronized final boolean hasFailed() {
 		return failureCause != null;
 	}
-	
+
 	public synchronized final EvaluationException getFailureCause() {
 		return failureCause;
 	}
 
 	@Override
 	public synchronized void reportTaskCompletion() {
-		
+
 	}
 
 	@Override

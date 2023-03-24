@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.codegen;
  * #L%
  */
 
-
 import java.util.List;
 
 import edu.harvard.seas.pl.formulog.eval.Evaluation;
@@ -28,9 +27,9 @@ import edu.harvard.seas.pl.formulog.eval.Tester;
 
 public class NopTester<T extends Evaluation> implements Tester {
 
-    @Override
-    public void test(String file, List<String> inputDirs) {
-        // do nothing
-    }
+	@Override
+	public void test(String file, List<String> inputDirs) {
+		// do nothing
+	}
 
 }

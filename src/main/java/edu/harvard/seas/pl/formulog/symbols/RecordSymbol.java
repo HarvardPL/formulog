@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-
 import java.util.List;
 
 public interface RecordSymbol extends ConstructorSymbol {

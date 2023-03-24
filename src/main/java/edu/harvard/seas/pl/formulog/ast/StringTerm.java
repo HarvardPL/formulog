@@ -22,7 +22,6 @@ package edu.harvard.seas.pl.formulog.ast;
 
 import java.util.Collections;
 
-
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,11 +38,11 @@ public class StringTerm extends AbstractTerm implements Primitive<String>, SmtLi
 
 	private static final Map<String, StringTerm> memo = new ConcurrentHashMap<>();
 	private final String val;
-	
+
 	private StringTerm(String val) {
 		this.val = val;
 	}
-	
+
 	public static StringTerm make(String val) {
 		return Util.lookupOrCreate(memo, val, () -> new StringTerm(val));
 	}
@@ -52,7 +51,7 @@ public class StringTerm extends AbstractTerm implements Primitive<String>, SmtLi
 	public String getVal() {
 		return val;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "\"" + val + "\"";
@@ -62,7 +61,7 @@ public class StringTerm extends AbstractTerm implements Primitive<String>, SmtLi
 	public SmtLibTerm substSolverTerms(PMap<SolverVariable, SmtLibTerm> subst) {
 		return this;
 	}
-	
+
 	@Override
 	public void toSmtLib(SmtLibShim shim) {
 		String s = val.replace("\"", "\"\"");
@@ -73,7 +72,7 @@ public class StringTerm extends AbstractTerm implements Primitive<String>, SmtLi
 	public Type getType() {
 		return BuiltInTypes.string;
 	}
-	
+
 	@Override
 	public Set<SolverVariable> freeVars() {
 		return Collections.emptySet();

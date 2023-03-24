@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.symbols;
  * #L%
  */
 
-
 public enum BuiltInTypeSymbol implements TypeSymbol {
 
 	BOOL_TYPE("bool", 0),
@@ -30,29 +29,29 @@ public enum BuiltInTypeSymbol implements TypeSymbol {
 	OPTION_TYPE("option", 1),
 
 	CMP_TYPE("cmp", 0),
-	
+
 	STRING_TYPE("string", 0),
-	
+
 	SMT_TYPE("smt", 1),
-	
+
 	SYM_TYPE("sym", 1),
-	
+
 	ARRAY_TYPE("array", 2),
-	
+
 	MODEL_TYPE("model", 0),
-	
+
 	INT_TYPE("int", 0),
-	
+
 	BV("bv", 1),
-	
+
 	FP("fp", 2),
-	
+
 	OPAQUE_SET("opaque_set", 1),
-	
+
 	SMT_PATTERN_TYPE("smt_pattern", 0),
-	
+
 	SMT_WRAPPED_VAR_TYPE("smt_wrapped_var", 0),
-	
+
 	;
 
 	private final String name;

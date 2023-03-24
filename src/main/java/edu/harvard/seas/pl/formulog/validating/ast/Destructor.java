@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.validating.ast;
  * #L%
  */
 
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -41,7 +40,8 @@ public class Destructor implements SimpleLiteral {
 	private final Var[] bindings;
 
 	public static Destructor make(Term x, ConstructorSymbol symbol, Var[] bindings) {
-		assert assertDisjoint(x.varSet(), Arrays.asList(bindings)) : "A variable cannot be on both sides of a destructor";
+		assert assertDisjoint(x.varSet(), Arrays.asList(bindings))
+				: "A variable cannot be on both sides of a destructor";
 		assert symbol.getArity() == bindings.length : "Symbol arity does not match number of variables";
 		assert bindings.length == new HashSet<>(Arrays.asList(bindings)).size() : "All variables must be distinct";
 		return new Destructor(x, symbol, bindings);
@@ -61,15 +61,15 @@ public class Destructor implements SimpleLiteral {
 		this.symbol = symbol;
 		this.bindings = vars;
 	}
-	
+
 	public Term getScrutinee() {
 		return x;
 	}
-	
+
 	public ConstructorSymbol getSymbol() {
 		return symbol;
 	}
-	
+
 	public Var[] getBindings() {
 		return bindings;
 	}
@@ -130,5 +130,5 @@ public class Destructor implements SimpleLiteral {
 		}
 		return new Term[] { x, Constructors.make(symbol, args) };
 	}
-	
+
 }

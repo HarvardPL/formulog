@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.parsing;
  * #L%
  */
 
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -72,7 +71,8 @@ public class VariableCheckPass {
 		return newBody;
 	}
 
-	public Set<BasicRule> checkRule(List<UserPredicate> heads, List<ComplexLiteral> body) throws VariableCheckPassException {
+	public Set<BasicRule> checkRule(List<UserPredicate> heads, List<ComplexLiteral> body)
+			throws VariableCheckPassException {
 		PassContext ctx = new PassContext();
 		Set<BasicRule> r = ctx.checkRule(heads, body);
 		try {
@@ -281,7 +281,8 @@ public class VariableCheckPass {
 				Var x = e.getKey();
 				int cnt = e.getValue();
 				if (looksLikeHole(x) && cnt > 0) {
-					throw new VariableCheckPassException("Can only use hole ?? as an argument to a predicate aggregate function.");
+					throw new VariableCheckPassException(
+							"Can only use hole ?? as an argument to a predicate aggregate function.");
 				} else if (looksLikeQuasiAnonymousVar(x) && cnt > 1) {
 					throw new VariableCheckPassException("Quasi-anonymous variable " + x + " occurs more than once.");
 				} else if (!looksAnonymous(x) && cnt == 1) {
@@ -289,7 +290,7 @@ public class VariableCheckPass {
 				}
 			}
 		}
-		
+
 	}
 
 	private static boolean looksLikeHole(Var x) {
