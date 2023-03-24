@@ -87,6 +87,11 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 			if (trackedRelations.contains(sym)) {
 				System.err.println("[TRACKED] " + UserPredicate.make(sym, newArgs, false));
 			}
+			if (Configuration.recordWork) {
+				Configuration.newDerivs.incrementAndGet();
+			}
+		} else if (Configuration.recordWork) {
+			Configuration.dupDerivs.incrementAndGet();
 		}
 	}
 
@@ -132,6 +137,9 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 			this.startPos = pos;
 			this.s = s;
 			this.it = it;
+			if (Configuration.recordWork) {
+				Configuration.workItems.incrementAndGet();
+			}
 		}
 
 		protected RuleSuffixEvaluator(IndexedRule rule, int pos, OverwriteSubstitution s,
@@ -147,6 +155,9 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 			this.startPos = pos;
 			this.s = s;
 			this.it = it;
+			if (Configuration.recordWork) {
+				Configuration.workItems.incrementAndGet();
+			}
 		}
 
 		@Override
@@ -282,6 +293,9 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 			super(exec);
 			this.rule = rule;
 			this.deltaArgs = deltaArgs;
+			if (Configuration.recordWork) {
+				Configuration.workItems.incrementAndGet();
+			}
 		}
 
 		private boolean handleDelta(SimplePredicate pred, Substitution s) throws EvaluationException {

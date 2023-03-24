@@ -116,6 +116,11 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 			if (trackedRelations.contains(sym)) {
 				System.err.println("[TRACKED] " + UserPredicate.make(sym, newArgs, false));
 			}
+			if (Configuration.recordWork) {
+				Configuration.newDerivs.incrementAndGet();
+			}
+		} else if (Configuration.recordWork) {
+			Configuration.dupDerivs.incrementAndGet();
 		}
 	}
 
@@ -205,6 +210,9 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 			this.startPos = pos;
 			this.s = s;
 			this.it = it;
+			if (Configuration.recordWork) {
+				Configuration.workItems.incrementAndGet();
+			}
 		}
 
 		protected RuleSuffixEvaluator(IndexedRule rule, int pos, OverwriteSubstitution s,
@@ -220,6 +228,9 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 			this.startPos = pos;
 			this.s = s;
 			this.it = it;
+			if (Configuration.recordWork) {
+				Configuration.workItems.incrementAndGet();
+			}
 		}
 
 		@Override
@@ -353,6 +364,9 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 		protected RulePrefixEvaluator(IndexedRule rule) {
 			super(exec);
 			this.rule = rule;
+			if (Configuration.recordWork) {
+				Configuration.workItems.incrementAndGet();
+			}
 		}
 
 		@Override
