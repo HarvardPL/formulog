@@ -169,6 +169,8 @@ public final class Configuration {
 
 	public static final boolean eagerSemiNaive = propIsSet("eagerSemiNaive");
 
+	public static final boolean useHashDbFilter = propIsSet("useHashDbFilter", true);
+
 	public static final boolean recordWork = propIsSet("recordWork");
 	public static final AtomicLong work = new AtomicLong();
 	public static final AtomicLong workItems = new AtomicLong();

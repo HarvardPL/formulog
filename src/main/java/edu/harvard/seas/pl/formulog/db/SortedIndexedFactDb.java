@@ -20,19 +20,9 @@ package edu.harvard.seas.pl.formulog.db;
  * #L%
  */
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
-import java.util.NavigableSet;
-import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -51,10 +41,33 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 	private final Map<RelationSymbol, Pair<IndexedFactSet, BindingType[]>[]> indices;
 	private final Map<RelationSymbol, Pair<IndexedFactSet, BindingType[]>> masterIndex;
 
+	private final Map<RelationSymbol, Set<HashedTuple>> hashFilter = new HashMap<>();
+	private final ThreadLocal<HashedTuple> hashKey = ThreadLocal.withInitial(HashedTuple::new);
+
 	private SortedIndexedFactDb(Map<RelationSymbol, Pair<IndexedFactSet, BindingType[]>[]> indices,
 			Map<RelationSymbol, Pair<IndexedFactSet, BindingType[]>> masterIndex) {
 		this.indices = indices;
 		this.masterIndex = masterIndex;
+		for (var sym : indices.keySet()) {
+			hashFilter.put(sym, Util.concurrentSet());
+		}
+	}
+
+	private static class HashedTuple {
+		public Term[] tup;
+
+		@Override
+		public int hashCode() {
+			return Arrays.hashCode(tup);
+		}
+
+		@Override
+		public boolean equals(Object other) {
+			if (other instanceof HashedTuple) {
+				return Arrays.equals(tup, ((HashedTuple) other).tup);
+			}
+			return false;
+		}
 	}
 
 	@Override
@@ -100,9 +113,29 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 		return p.fst().lookup(key, p.snd());
 	}
 
+	private boolean hashFilterAdd(RelationSymbol sym, Term[] tup) {
+		var key = hashKey.get();
+		key.tup = tup;
+		if (hashFilter.get(sym).add(key)) {
+			hashKey.set(new HashedTuple());
+			return true;
+		}
+		key.tup = null;
+		return false;
+	}
+
+	private boolean hashFilterContains(RelationSymbol sym, Term[] tup) {
+		var key = hashKey.get();
+		key.tup = tup;
+		return hashFilter.get(sym).contains(key);
+	}
+
 	@Override
 	public boolean add(RelationSymbol sym, Term[] tup) {
 		assert allNormal(tup);
+		if (Configuration.useHashDbFilter && !hashFilterAdd(sym, tup)) {
+			return false;
+		}
 		IndexedFactSet master = masterIndex.get(sym).fst();
 		if (master.add(tup)) {
 			for (Pair<IndexedFactSet, ?> p : indices.get(sym)) {
@@ -118,6 +151,15 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 
 	@Override
 	public boolean addAll(RelationSymbol sym, Iterable<Term[]> tups) {
+		if (Configuration.useHashDbFilter) {
+			ArrayList<Term[]> l = new ArrayList<>();
+			for (var tup : tups) {
+				if (hashFilterAdd(sym, tup)) {
+					l.add(tup);
+				}
+			}
+			tups = l;
+		}
 		IndexedFactSet master = masterIndex.get(sym).fst();
 		if (master.addAll(tups)) {
 			for (Pair<IndexedFactSet, ?> p : indices.get(sym)) {
@@ -143,6 +185,9 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 	@Override
 	public boolean hasFact(RelationSymbol sym, Term[] args) {
 		assert allNormal(args);
+		if (Configuration.useHashDbFilter) {
+			return hashFilterContains(sym, args);
+		}
 		return masterIndex.get(sym).fst().contains(args);
 	}
 
