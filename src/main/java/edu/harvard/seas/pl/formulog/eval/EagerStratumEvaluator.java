@@ -88,10 +88,10 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 				System.err.println("[TRACKED] " + UserPredicate.make(sym, newArgs, false));
 			}
 			if (Configuration.recordWork) {
-				Configuration.newDerivs.incrementAndGet();
+				Configuration.newDerivs.increment();
 			}
 		} else if (Configuration.recordWork) {
-			Configuration.dupDerivs.incrementAndGet();
+			Configuration.dupDerivs.increment();
 		}
 	}
 
@@ -138,7 +138,7 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 			this.s = s;
 			this.it = it;
 			if (Configuration.recordWork) {
-				Configuration.workItems.incrementAndGet();
+				Configuration.workItems.increment();
 			}
 		}
 
@@ -156,7 +156,7 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 			this.s = s;
 			this.it = it;
 			if (Configuration.recordWork) {
-				Configuration.workItems.incrementAndGet();
+				Configuration.workItems.increment();
 			}
 		}
 
@@ -270,7 +270,7 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 
 		void updateBinding(SimplePredicate p, Term[] ans) {
 			if (Configuration.recordWork) {
-				Configuration.work.incrementAndGet();
+				Configuration.work.increment();
 			}
 			Term[] args = p.getArgs();
 			BindingType[] pat = p.getBindingPattern();
@@ -294,13 +294,13 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 			this.rule = rule;
 			this.deltaArgs = deltaArgs;
 			if (Configuration.recordWork) {
-				Configuration.workItems.incrementAndGet();
+				Configuration.workItems.increment();
 			}
 		}
 
 		private boolean handleDelta(SimplePredicate pred, Substitution s) throws EvaluationException {
 			if (Configuration.recordWork) {
-				Configuration.work.incrementAndGet();
+				Configuration.work.increment();
 			}
 			BindingType[] bindings = pred.getBindingPattern();
 			Term[] args = pred.getArgs();

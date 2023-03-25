@@ -117,10 +117,10 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 				System.err.println("[TRACKED] " + UserPredicate.make(sym, newArgs, false));
 			}
 			if (Configuration.recordWork) {
-				Configuration.newDerivs.incrementAndGet();
+				Configuration.newDerivs.increment();
 			}
 		} else if (Configuration.recordWork) {
-			Configuration.dupDerivs.incrementAndGet();
+			Configuration.dupDerivs.increment();
 		}
 	}
 
@@ -211,7 +211,7 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 			this.s = s;
 			this.it = it;
 			if (Configuration.recordWork) {
-				Configuration.workItems.incrementAndGet();
+				Configuration.workItems.increment();
 			}
 		}
 
@@ -229,7 +229,7 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 			this.s = s;
 			this.it = it;
 			if (Configuration.recordWork) {
-				Configuration.workItems.incrementAndGet();
+				Configuration.workItems.increment();
 			}
 		}
 
@@ -343,7 +343,7 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 
 		void updateBinding(SimplePredicate p, Term[] ans) {
 			if (Configuration.recordWork) {
-				Configuration.work.incrementAndGet();
+				Configuration.work.increment();
 			}
 			Term[] args = p.getArgs();
 			BindingType[] pat = p.getBindingPattern();
@@ -365,7 +365,7 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 			super(exec);
 			this.rule = rule;
 			if (Configuration.recordWork) {
-				Configuration.workItems.incrementAndGet();
+				Configuration.workItems.increment();
 			}
 		}
 
