@@ -127,7 +127,9 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 	private boolean hashFilterContains(RelationSymbol sym, Term[] tup) {
 		var key = hashKey.get();
 		key.tup = tup;
-		return hashFilter.get(sym).contains(key);
+		var r = hashFilter.get(sym).contains(key);
+		key.tup = null;
+		return r;
 	}
 
 	@Override
