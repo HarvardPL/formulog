@@ -246,8 +246,8 @@ public class SmtLibShim {
 			}
 			result = in.readLine();
 			if (Main.smtStats) {
-				Configuration.smtTime.addAndGet(clock.getTime());
-				Configuration.smtCalls.incrementAndGet();
+				Configuration.smtTime.add(clock.getTime());
+				Configuration.smtCalls.increment();
 			}
 			if (result == null) {
 				throw new EvaluationException("Problem with evaluating solver! Unexpected end of stream");
