@@ -393,7 +393,7 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 			}
 			Iterator<Iterable<Term[]>> tups = lookup(rule, pos, s).iterator();
 			if (tups.hasNext()) {
-				exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, pos, s, tups));
+				new RuleSuffixEvaluator(rule, pos, s, tups).doTask();
 			}
 		}
 	}
