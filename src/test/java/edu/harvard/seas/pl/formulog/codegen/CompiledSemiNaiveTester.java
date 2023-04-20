@@ -119,7 +119,7 @@ public class CompiledSemiNaiveTester implements Tester {
 			Path p = Paths.get(getClass().getClassLoader().getResource(inputDir).toURI());
 			cmd += " --fact-dir " + p;
 		}
-		cmd += " --dump-sizes";
+		cmd += " --dump-sizes -j 4";
 
 		Process flg = Runtime.getRuntime().exec(cmd);
 		if (flg.waitFor() != 0) {
