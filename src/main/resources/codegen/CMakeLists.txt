@@ -8,8 +8,16 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=native")
 
 add_executable(flg "")
 
+set(SOUFFLE_FLAGS -w -j 2 -PSIPS:strict)
+
+option(FLG_EAGER_EVAL "Generate code performing eager evaluation (requires custom Soufflé)" OFF)
+if (FLG_EAGER_EVAL)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFLG_EAGER_EVAL")
+    set(SOUFFLE_FLAGS ${SOUFFLE_FLAGS} --eager-eval)
+endif ()
+
 add_custom_command(OUTPUT formulog.cpp
-        COMMAND souffle ${CMAKE_CURRENT_SOURCE_DIR}/src/formulog.dl -w -j 2 -PSIPS:strict -g formulog.cpp
+        COMMAND souffle ${CMAKE_CURRENT_SOURCE_DIR}/src/formulog.dl ${SOUFFLE_FLAGS} -g formulog.cpp
         DEPENDS src/formulog.dl)
 
 target_sources(flg PRIVATE

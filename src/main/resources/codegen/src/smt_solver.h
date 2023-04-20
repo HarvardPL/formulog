@@ -11,6 +11,10 @@
 #include <boost/container_hash/hash.hpp>
 #include <boost/program_options.hpp>
 
+#ifdef FLG_EAGER_EVAL
+#include <oneapi/tbb/enumerable_thread_specific.h>
+#endif
+
 namespace flg::smt {
 
 enum class SmtSolverMode {
@@ -48,6 +52,26 @@ private:
 
     static std::unique_ptr<SmtShim> make_shim();
 };
+
+#ifdef FLG_EAGER_EVAL
+class TBBTopLevelSmtSolver : public SmtSolver {
+public:
+    NO_COPY_OR_ASSIGN(TBBTopLevelSmtSolver);
+
+    TBBTopLevelSmtSolver() = default;
+
+    SmtResult check(const std::vector<term_ptr> &assertions, bool get_model, int timeout) override {
+        return solvers.local().check(assertions, get_model, timeout);
+    }
+
+    SmtResult check(term_ptr assertion) {
+        return solvers.local().check(assertion);
+    }
+
+private:
+    oneapi::tbb::enumerable_thread_specific<TopLevelSmtSolver> solvers;
+};
+#endif
 
 class MemoizingSmtSolver : public SmtSolver {
 public:
@@ -151,11 +175,15 @@ private:
     std::unique_ptr<SmtSolver> m_second;
 };
 
+#if FLG_EAGER_EVAL
+inline TBBTopLevelSmtSolver smt_solver;
+#else
 extern inline TopLevelSmtSolver smt_solver;
 #if defined(_OPENMP)
 #pragma omp threadprivate(smt_solver)
 #endif
 TopLevelSmtSolver smt_solver;
+#endif
 
 }
 
