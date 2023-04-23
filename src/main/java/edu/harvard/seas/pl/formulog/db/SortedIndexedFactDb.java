@@ -195,6 +195,9 @@ public class SortedIndexedFactDb implements IndexedFactDb {
 
 	@Override
 	public void clear() {
+		for (var s : hashFilter.values()) {
+			s.clear();
+		}
 		for (Pair<IndexedFactSet, BindingType[]>[] idxs : indices.values()) {
 			for (Pair<IndexedFactSet, ?> p : idxs) {
 				p.fst().clear();
