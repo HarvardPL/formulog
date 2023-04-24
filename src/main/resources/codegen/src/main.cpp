@@ -174,9 +174,9 @@ std::ostream &operator<<(std::ostream &os, const std::vector<std::string> &vec) 
 void printSmtStats() {
     std::cout << "\n";
     printBanner("SMT STATS");
-    std::cout << "SMT calls: " << globals::smt_calls << "\n";
-    std::cout << "SMT time (ms): " << globals::smt_time << std::endl;
-    std::cout << "SMT cache clears: " << globals::smt_cache_clears << std::endl;
+    std::cout << "SMT calls: " << globals::sum(globals::smt_calls) << "\n";
+    std::cout << "SMT time (ms): " << globals::sum(globals::smt_time) << std::endl;
+    std::cout << "SMT cache clears: " << globals::sum(globals::smt_cache_clears) << std::endl;
 }
 
 int main(int argc, char **argv) {
