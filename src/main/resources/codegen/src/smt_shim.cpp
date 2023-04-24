@@ -207,8 +207,8 @@ SmtStatus SmtLibShim::check_sat_assuming(const std::vector<term_ptr> &onVars, co
     getline(m_out, line);
     if (globals::smt_stats) {
         auto end = std::chrono::steady_clock::now();
-        globals::smt_time += std::chrono::duration_cast<chrono::milliseconds>(end - start).count();
-        globals::smt_calls++;
+        globals::smt_time.local() += std::chrono::duration_cast<chrono::milliseconds>(end - start).count();
+        globals::smt_calls.local()++;
     }
     SmtStatus status;
     if (line == "sat") {

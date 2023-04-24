@@ -157,7 +157,7 @@ void CheckSatAssumingSolver::cleanup() {
         m_shim->pop();
         m_shim->push();
         if (globals::smt_stats) {
-            globals::smt_cache_clears++;
+            globals::smt_cache_clears.local()++;
         }
     }
 }
