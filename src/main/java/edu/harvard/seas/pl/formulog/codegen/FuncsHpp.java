@@ -465,7 +465,7 @@ public class FuncsHpp extends TemplateSrcFile {
 					out.println("  typedef std::array<term_ptr, " + n + "> Key;");
 					out.println("  Key key = {" + String.join(", ", cppParams) + "};");
 				}
-				out.println("  static tbb::concurrent_unordered_map<Key, term_ptr, boost::hash<Key>> memo;");
+				out.println("  static ConcurrentHashMap<Key, term_ptr, boost::hash<Key>> memo;");
 				out.println("  auto it = memo.find(key);");
 				out.println("  if (it != memo.end()) { return it->second; }");
 			}

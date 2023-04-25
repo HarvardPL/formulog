@@ -7,9 +7,9 @@
 
 #include <boost/container_hash/hash.hpp>
 #include <souffle/SouffleInterface.h>
-#include <tbb/concurrent_unordered_map.h>
 
 #include "set.hpp"
+#include "ConcurrentHashMap.hpp"
 #include "Symbol.hpp"
 
 #define NO_COPY_OR_ASSIGN(t) \
@@ -20,7 +20,6 @@
 namespace flg {
 
 using namespace std;
-using tbb::concurrent_unordered_map;
 
 struct Term;
 
@@ -98,9 +97,9 @@ protected:
     Term(Symbol sym_) : sym{sym_} {}
 
 private:
-    inline static concurrent_unordered_map<souffle::RamDomain, term_ptr> int_term_map;
-    inline static concurrent_unordered_map<term_ptr, souffle::RamDomain> term_int_map;
-    inline static std::atomic<souffle::RamDomain> int_cnt{0};
+    //inline static tbb::concurrent_unordered_map<souffle::RamDomain, term_ptr> int_term_map;
+    //inline static tbb::concurrent_unordered_map<term_ptr, souffle::RamDomain> term_int_map;
+    //inline static std::atomic<souffle::RamDomain> int_cnt{0};
 };
 
 struct ComplexTerm : public Term {
@@ -167,7 +166,7 @@ class BaseTermCache {
         }
     };
 
-    typedef concurrent_unordered_map<const T*, term_ptr, Hash, Equals> map_t;
+    typedef ConcurrentHashMap<const T*, term_ptr, Hash, Equals> map_t;
     inline static map_t cache;
 
 public:
