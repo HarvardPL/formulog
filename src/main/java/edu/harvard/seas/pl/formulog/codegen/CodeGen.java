@@ -68,6 +68,7 @@ public class CodeGen {
 		assert repr.equals("Symbol::smt_var__bool__bool") : repr;
 
 		copy("CMakeLists.txt");
+		copySrc("ConcurrentHashMap.hpp");
 		new RelsHpp(ctx).gen(outDir);
 		new FuncsHpp(ctx).gen(outDir);
 		new MainCpp(ctx).gen(outDir);
