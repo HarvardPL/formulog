@@ -187,26 +187,11 @@ int Term::compare_natural(Term* t1, Term* t2) {
 }
  */
 
-// Template hash function for arrays of term_ptr's
-template <size_t N>
-struct ComplexTermHash {
-  typedef array<term_ptr, N> key_type;
-
-  size_t operator()(const key_type& arr) const {
-    size_t retval = 0;
-    for (term_ptr p : arr) {
-      retval ^=
-        (retval << 32) + 0xdeadbeef + reinterpret_cast<size_t>(p) / sizeof(p);
-    }
-    return retval;
-  }
-};
-
 // Concurrency-safe cache for ComplexTerm values
 template <Symbol S> class ComplexTermCache {
   inline static constexpr size_t arity = symbol_arity(S);
-  typedef ConcurrentHashMap<
-          array<term_ptr, arity>, term_ptr, ComplexTermHash<arity>> map_t;
+  typedef array<term_ptr, arity> key_t;
+  typedef ConcurrentHashMap<key_t, term_ptr, boost::hash<key_t>> map_t;
   inline static map_t cache;
 
   public:
