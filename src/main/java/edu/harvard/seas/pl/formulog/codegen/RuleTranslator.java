@@ -1,5 +1,15 @@
 package edu.harvard.seas.pl.formulog.codegen;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import edu.harvard.seas.pl.formulog.Configuration;
 
 /*-
@@ -21,25 +31,46 @@ import edu.harvard.seas.pl.formulog.Configuration;
  * limitations under the License.
  * #L%
  */
-
-import edu.harvard.seas.pl.formulog.ast.*;
-import edu.harvard.seas.pl.formulog.codegen.ast.souffle.*;
+import edu.harvard.seas.pl.formulog.ast.BasicProgram;
+import edu.harvard.seas.pl.formulog.ast.BasicRule;
+import edu.harvard.seas.pl.formulog.ast.Constructor;
+import edu.harvard.seas.pl.formulog.ast.Expr;
+import edu.harvard.seas.pl.formulog.ast.Primitive;
+import edu.harvard.seas.pl.formulog.ast.Term;
+import edu.harvard.seas.pl.formulog.ast.Terms;
+import edu.harvard.seas.pl.formulog.ast.Var;
+import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SAtom;
+import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SDestructorBody;
+import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SExprBody;
+import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SFunctorCall;
+import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SInfixBinaryOpAtom;
+import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SInt;
+import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SLit;
+import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SRule;
+import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SRuleMode;
+import edu.harvard.seas.pl.formulog.codegen.ast.souffle.STerm;
+import edu.harvard.seas.pl.formulog.codegen.ast.souffle.SVar;
+import edu.harvard.seas.pl.formulog.eval.SmtCallFinder;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
 import edu.harvard.seas.pl.formulog.validating.Stratifier;
 import edu.harvard.seas.pl.formulog.validating.Stratum;
 import edu.harvard.seas.pl.formulog.validating.ValidRule;
-import edu.harvard.seas.pl.formulog.validating.ast.*;
-
-import java.util.*;
-import java.util.stream.Collectors;
+import edu.harvard.seas.pl.formulog.validating.ast.Assignment;
+import edu.harvard.seas.pl.formulog.validating.ast.Check;
+import edu.harvard.seas.pl.formulog.validating.ast.Destructor;
+import edu.harvard.seas.pl.formulog.validating.ast.SimpleLiteral;
+import edu.harvard.seas.pl.formulog.validating.ast.SimpleLiteralVisitor;
+import edu.harvard.seas.pl.formulog.validating.ast.SimplePredicate;
+import edu.harvard.seas.pl.formulog.validating.ast.SimpleRule;
 
 public class RuleTranslator {
 
 	private final CodeGenContext ctx;
 	private final QueryPlanner queryPlanner;
 	private static final String checkPred = "CODEGEN_CHECK";
+	private static int smtSupRelCount = 0;
 
 	public RuleTranslator(CodeGenContext ctx, QueryPlanner queryPlanner) {
 		this.ctx = ctx;
@@ -53,9 +84,10 @@ public class RuleTranslator {
 		for (var stratum : strats) {
 			for (RelationSymbol sym : stratum.getPredicateSyms()) {
 				for (BasicRule r : prog.getRules(sym)) {
-					var sr = worker.translate(r);
-					sr.setQueryPlan(queryPlanner.genPlan(sr, stratum));
-					l.add(sr);
+					for (var sr : worker.translate(r)) {
+						sr.setQueryPlan(queryPlanner.genPlan(sr, stratum));
+						l.add(sr);
+					}
 				}
 			}
 		}
@@ -85,12 +117,13 @@ public class RuleTranslator {
 		private final BasicProgram prog;
 		private Map<Var, Integer> varCount;
 		private final Set<Pair<RelationSymbol, List<Boolean>>> projections = new HashSet<>();
+		private final SmtCallFinder scf = new SmtCallFinder();
 
 		public Worker(BasicProgram prog) {
 			this.prog = prog;
 		}
 
-		private SRule translate(BasicRule br) throws CodeGenException {
+		private List<SRule> translate(BasicRule br) throws CodeGenException {
 			SimpleRule sr;
 			try {
 				ValidRule vr = ValidRule.make(br, (_lit, _vars) -> 1);
@@ -99,14 +132,82 @@ public class RuleTranslator {
 			} catch (InvalidProgramException e) {
 				throw new CodeGenException(e);
 			}
-			List<SLit> headTrans = translate(sr.getHead());
-			assert headTrans.size() == 1;
-			SLit head = headTrans.get(0);
-			List<SLit> body = new ArrayList<>();
+			
+			List<List<SLit>> bodies = new ArrayList<>();
+			List<SLit> curBody = new ArrayList<>();
+			List<Set<SVar>> vars = new ArrayList<>();
+			Set<SVar> curVars = new HashSet<>();
 			for (int i = 0; i < sr.getBodySize(); ++i) {
-				body.addAll(translate(sr.getBody(i)));
+				var lit = sr.getBody(i);
+				if (Configuration.codegenSplitOnSmt && curBody.size() > 1 && scf.containsSmtCall(lit)) {
+					bodies.add(curBody);
+					curBody = new ArrayList<>();
+					vars.add(curVars);
+					curVars = new HashSet<>(curVars);
+				}
+				var lits = translate(lit);
+				curBody.addAll(lits);
+				addVars(lits, curVars);
 			}
-			return new SRule(head, body);
+			
+			var head = sr.getHead();
+			if (Configuration.codegenSplitOnSmt && curBody.size() > 1 && scf.containsSmtCall(head)) {
+				bodies.add(curBody);
+				curBody = new ArrayList<>();
+				vars.add(curVars);
+				curVars = new HashSet<>(curVars);
+			}
+			bodies.add(curBody);
+			vars.add(curVars);
+			
+			List<SLit> headTrans = translate(head);
+			assert headTrans.size() == 1;
+			var newHead = headTrans.get(0);
+			var liveVars = liveVarsByBody(newHead, bodies);
+			
+			List<SRule> rules = new ArrayList<>();
+			SAtom prevSup = null;
+			for (int i = 0; i < bodies.size(); ++i) {
+				var body = bodies.get(i);
+				if (prevSup != null) {
+					body.add(0, prevSup);
+				}
+				if (i < bodies.size() - 1) {
+					var presentVars = vars.get(i);
+					var varsToKeep = presentVars.stream().filter(liveVars.get(i + 1)::contains).collect(Collectors.toList());
+					var supAtom = newSmtSupAtom(varsToKeep);
+					rules.add(new SRule(supAtom, body));
+					prevSup = supAtom;
+				} else {
+					rules.add(new SRule(newHead, body));
+				}
+			}
+			return rules;
+		}
+		
+		void addVars(Collection<SLit> lits, Set<SVar> vars) {
+			for (var lit : lits) {
+				lit.varSet(vars);
+			}
+		}
+		
+		List<Set<SVar>> liveVarsByBody(SLit head, List<List<SLit>> bodies) {
+			List<Set<SVar>> l = new ArrayList<>();
+			Set<SVar> vars = head.varSet();
+			l.add(vars);
+			for (var it = bodies.listIterator(bodies.size()); it.hasPrevious();) {
+				vars = new HashSet<>(vars);
+				addVars(it.previous(), vars);
+				l.add(vars);
+			}
+			Collections.reverse(l);
+			return l;
+		}
+
+		private SAtom newSmtSupAtom(Collection<SVar> vars) {
+			var name = "CODEGEN_SMT_SUP_" + smtSupRelCount++;
+			ctx.registerCustomRelation(name, vars.size(), SRuleMode.OUTPUT);
+			return new SAtom(name, new ArrayList<>(vars), false);
 		}
 
 		private List<SLit> translate(SimpleLiteral lit) {

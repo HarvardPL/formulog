@@ -22,6 +22,7 @@ package edu.harvard.seas.pl.formulog.codegen.ast.souffle;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 public class SFunctorCall implements STerm {
 
@@ -51,6 +52,13 @@ public class SFunctorCall implements STerm {
 		}
 		sb.append(")");
 		return sb.toString();
+	}
+
+	@Override
+	public void varSet(Set<SVar> vars) {
+		for (var t : args) {
+			t.varSet(vars);
+		}
 	}
 
 }
