@@ -260,5 +260,5 @@ int main(int argc, char **argv) {
     if (dump_idb) {
         printResults();
     }
-    return 0;
+    std::_Exit(EXIT_SUCCESS);
 }
