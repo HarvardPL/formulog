@@ -51,6 +51,7 @@ public class SmtCallFinder {
 		smtCallSymbols.add(BuiltInFunctionSymbol.IS_SAT_OPT);
 		smtCallSymbols.add(BuiltInFunctionSymbol.IS_VALID);
 		smtCallSymbols.add(BuiltInFunctionSymbol.GET_MODEL);
+		smtCallSymbols.add(BuiltInFunctionSymbol.IS_SET_SAT);
 	}
 
 	public boolean containsSmtCall(Literal l) {

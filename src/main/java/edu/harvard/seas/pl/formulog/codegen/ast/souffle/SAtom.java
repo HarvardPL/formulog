@@ -21,6 +21,7 @@ package edu.harvard.seas.pl.formulog.codegen.ast.souffle;
  */
 
 import java.util.List;
+import java.util.Set;
 
 public class SAtom implements SLit {
 
@@ -54,6 +55,13 @@ public class SAtom implements SLit {
 		}
 		sb.append(")");
 		return sb.toString();
+	}
+
+	@Override
+	public void varSet(Set<SVar> vars) {
+		for (var t : args) {
+			t.varSet(vars);
+		}
 	}
 
 }

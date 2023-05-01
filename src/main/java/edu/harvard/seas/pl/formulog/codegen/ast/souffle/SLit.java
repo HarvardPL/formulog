@@ -1,5 +1,8 @@
 package edu.harvard.seas.pl.formulog.codegen.ast.souffle;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /*-
  * #%L
  * Formulog
@@ -21,4 +24,13 @@ package edu.harvard.seas.pl.formulog.codegen.ast.souffle;
  */
 
 public interface SLit {
+	
+	default Set<SVar> varSet() {
+		Set<SVar> vars = new HashSet<>();
+		varSet(vars);
+		return vars;
+	}
+	
+	void varSet(Set<SVar> vars);
+	
 }

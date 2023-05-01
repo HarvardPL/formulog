@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.codegen.ast.souffle;
 
+import java.util.Set;
+
 /*-
  * #%L
  * Formulog
@@ -35,6 +37,12 @@ public class SInfixBinaryOpAtom implements SLit {
 	@Override
 	public String toString() {
 		return lhs + " " + op + " " + rhs;
+	}
+
+	@Override
+	public void varSet(Set<SVar> vars) {
+		lhs.varSet(vars);
+		rhs.varSet(vars);
 	}
 
 }
