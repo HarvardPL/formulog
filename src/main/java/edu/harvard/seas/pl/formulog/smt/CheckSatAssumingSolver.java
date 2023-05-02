@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import edu.harvard.seas.pl.formulog.Configuration;
+import edu.harvard.seas.pl.formulog.Main;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
@@ -52,6 +53,9 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 	private void clearCache() throws EvaluationException {
 		if (Configuration.timeSmt) {
 			Configuration.recordCsaCacheClear(solverId);
+		}
+		if (Main.smtStats) {
+			Configuration.smtCacheClears.increment();
 		}
 		indicatorVars.clear();
 		nextVarId = 0;

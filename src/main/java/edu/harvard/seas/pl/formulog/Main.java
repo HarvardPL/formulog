@@ -256,6 +256,7 @@ public final class Main implements Callable<Integer> {
 			out.println(getBanner("SMT STATS"));
 			out.println("SMT calls: " + Configuration.smtCalls.unsafeGet());
 			out.println("SMT time (ms): " + Configuration.smtTime.unsafeGet());
+			out.println("SMT cache clears: " + Configuration.smtCacheClears.unsafeGet());
 		}
 		List<RelationSymbol> allSymbols = res.getSymbols().stream().sorted(Comparator.comparing(Object::toString))
 				.collect(Collectors.toList());

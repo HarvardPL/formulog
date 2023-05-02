@@ -181,6 +181,7 @@ public final class Configuration {
 
 	public static final SharedLong smtCalls = new SharedLong();
 	public static final SharedLong smtTime = new SharedLong();
+	public static final SharedLong smtCacheClears = new SharedLong();
 
 	static {
 		if (recordFuncDiagnostics) {
