@@ -299,9 +299,6 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 		}
 
 		private boolean handleDelta(SimplePredicate pred, Substitution s) throws EvaluationException {
-			if (Configuration.recordWork) {
-				Configuration.work.increment();
-			}
 			BindingType[] bindings = pred.getBindingPattern();
 			Term[] args = pred.getArgs();
 			int i = 0;
@@ -316,6 +313,9 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 					}
 				}
 				++i;
+			}
+			if (Configuration.recordWork) {
+				Configuration.work.increment();
 			}
 			return true;
 		}
