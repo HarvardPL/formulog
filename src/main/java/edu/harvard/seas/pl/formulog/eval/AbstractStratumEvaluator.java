@@ -22,22 +22,36 @@ package edu.harvard.seas.pl.formulog.eval;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import edu.harvard.seas.pl.formulog.Configuration;
+import edu.harvard.seas.pl.formulog.ast.BindingType;
+import edu.harvard.seas.pl.formulog.ast.Term;
+import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
+import edu.harvard.seas.pl.formulog.unification.OverwriteSubstitution;
+import edu.harvard.seas.pl.formulog.unification.Substitution;
+import edu.harvard.seas.pl.formulog.util.AbstractFJPTask;
+import edu.harvard.seas.pl.formulog.util.CountingFJP;
 import edu.harvard.seas.pl.formulog.util.Util;
+import edu.harvard.seas.pl.formulog.validating.ast.Assignment;
+import edu.harvard.seas.pl.formulog.validating.ast.Check;
+import edu.harvard.seas.pl.formulog.validating.ast.Destructor;
 import edu.harvard.seas.pl.formulog.validating.ast.SimpleLiteral;
 import edu.harvard.seas.pl.formulog.validating.ast.SimplePredicate;
 
 public abstract class AbstractStratumEvaluator implements StratumEvaluator {
 
-	final Set<IndexedRule> firstRoundRules = new HashSet<>();
-	final Map<RelationSymbol, Set<IndexedRule>> laterRoundRules = new HashMap<>();
-	final Map<IndexedRule, boolean[]> splitPositions = new HashMap<>();
+	protected final Set<IndexedRule> firstRoundRules = new HashSet<>();
+	protected final Map<RelationSymbol, Set<IndexedRule>> laterRoundRules = new HashMap<>();
+	protected final Map<IndexedRule, boolean[]> splitPositions = new HashMap<>();
+	protected final CountingFJP exec;
 
-	public AbstractStratumEvaluator(Iterable<IndexedRule> rules) {
+	public AbstractStratumEvaluator(Iterable<IndexedRule> rules, CountingFJP exec) {
 		processRules(rules);
+		this.exec = exec;
 	}
 
 	private void processRules(Iterable<IndexedRule> rules) {
@@ -68,6 +82,178 @@ public abstract class AbstractStratumEvaluator implements StratumEvaluator {
 			}
 		}
 		return splitPositions;
+	}
+
+	abstract protected void reportFact(RelationSymbol sym, Term[] args, Substitution s) throws EvaluationException;
+
+	abstract protected Iterable<Iterable<Term[]>> lookup(IndexedRule r, int pos, OverwriteSubstitution s)
+			throws EvaluationException;
+
+	protected static final boolean recordRuleDiagnostics = Configuration.recordRuleDiagnostics;
+
+	@SuppressWarnings("serial")
+	protected class RuleSuffixEvaluator extends AbstractFJPTask {
+
+		final IndexedRule rule;
+		final SimplePredicate head;
+		final SimpleLiteral[] body;
+		final int startPos;
+		final OverwriteSubstitution s;
+		final Iterator<Iterable<Term[]>> it;
+
+		protected RuleSuffixEvaluator(IndexedRule rule, SimplePredicate head, SimpleLiteral[] body, int pos,
+				OverwriteSubstitution s, Iterator<Iterable<Term[]>> it) {
+			super(exec);
+			this.rule = rule;
+			this.head = head;
+			this.body = body;
+			this.startPos = pos;
+			this.s = s;
+			this.it = it;
+			if (Configuration.recordWork) {
+				Configuration.workItems.increment();
+			}
+		}
+
+		protected RuleSuffixEvaluator(IndexedRule rule, int pos, OverwriteSubstitution s,
+				Iterator<Iterable<Term[]>> it) {
+			super(exec);
+			this.rule = rule;
+			this.head = rule.getHead();
+			SimpleLiteral[] bd = new SimpleLiteral[rule.getBodySize()];
+			for (int i = 0; i < bd.length; ++i) {
+				bd[i] = rule.getBody(i);
+			}
+			this.body = bd;
+			this.startPos = pos;
+			this.s = s;
+			this.it = it;
+			if (Configuration.recordWork) {
+				Configuration.workItems.increment();
+			}
+		}
+
+		@Override
+		public void doTask() throws EvaluationException {
+			long start = 0;
+			if (recordRuleDiagnostics) {
+				start = System.currentTimeMillis();
+			}
+			Iterable<Term[]> tups = it.next();
+			if (it.hasNext()) {
+				exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, head, body, startPos, s.copy(), it));
+			}
+			try {
+				for (Term[] tup : tups) {
+					evaluate(tup);
+				}
+			} catch (UncheckedEvaluationException e) {
+				throw new EvaluationException(
+						"Exception raised while evaluating the rule: " + rule + "\n\n" + e.getMessage());
+			}
+			if (recordRuleDiagnostics) {
+				long end = System.currentTimeMillis();
+				Configuration.recordRuleSuffixTime(rule, end - start);
+			}
+		}
+
+		private void evaluate(Term[] ans) throws UncheckedEvaluationException {
+			SimplePredicate p = (SimplePredicate) body[startPos];
+			updateBinding(p, ans);
+			int pos = startPos + 1;
+			@SuppressWarnings("unchecked")
+			Iterator<Term[]>[] stack = new Iterator[rule.getBodySize()];
+			boolean movingRight = true;
+			while (pos > startPos) {
+				if (pos == body.length) {
+					try {
+						reportFact(head.getSymbol(), head.getArgs(), s);
+					} catch (EvaluationException e) {
+						throw new UncheckedEvaluationException(
+								"Exception raised while evaluating the literal: " + head + "\n\n" + e.getMessage());
+					}
+					pos--;
+					movingRight = false;
+				} else if (movingRight) {
+					SimpleLiteral l = body[pos];
+					try {
+						switch (l.getTag()) {
+						case ASSIGNMENT:
+							((Assignment) l).assign(s);
+							pos++;
+							break;
+						case CHECK:
+							if (((Check) l).check(s)) {
+								pos++;
+							} else {
+								pos--;
+								movingRight = false;
+							}
+							break;
+						case DESTRUCTOR:
+							if (((Destructor) l).destruct(s)) {
+								pos++;
+							} else {
+								pos--;
+								movingRight = false;
+							}
+							break;
+						case PREDICATE:
+							Iterator<Iterable<Term[]>> tups = lookup(rule, pos, s).iterator();
+							if (((SimplePredicate) l).isNegated()) {
+								if (!tups.hasNext()) {
+									pos++;
+								} else {
+									pos--;
+									movingRight = false;
+								}
+							} else {
+								if (tups.hasNext()) {
+									stack[pos] = tups.next().iterator();
+									if (tups.hasNext()) {
+										exec.recursivelyAddTask(
+												new RuleSuffixEvaluator(rule, head, body, pos, s.copy(), tups));
+									}
+									// No need to do anything else: we'll hit the right case on the next iteration.
+								} else {
+									pos--;
+								}
+								movingRight = false;
+							}
+							break;
+						}
+					} catch (EvaluationException e) {
+						throw new UncheckedEvaluationException(
+								"Exception raised while evaluating the literal: " + l + "\n\n" + e.getMessage());
+					}
+				} else {
+					Iterator<Term[]> it = stack[pos];
+					if (it != null && it.hasNext()) {
+						ans = it.next();
+						updateBinding((SimplePredicate) rule.getBody(pos), ans);
+						movingRight = true;
+						pos++;
+					} else {
+						stack[pos] = null;
+						pos--;
+					}
+				}
+			}
+		}
+
+		private void updateBinding(SimplePredicate p, Term[] ans) {
+			if (Configuration.recordWork) {
+				Configuration.work.increment();
+			}
+			Term[] args = p.getArgs();
+			BindingType[] pat = p.getBindingPattern();
+			for (int i = 0; i < pat.length; ++i) {
+				if (pat[i].isFree()) {
+					s.put((Var) args[i], ans[i]);
+				}
+			}
+		}
+
 	}
 
 }

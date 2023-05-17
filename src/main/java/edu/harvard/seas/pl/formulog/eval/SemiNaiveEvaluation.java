@@ -507,7 +507,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 			l.addAll(rules.get(sym));
 		}
 		if (eagerEval) {
-			new EagerStratumEvaluator(stratum.getRank(), db, l, exec, trackedRelations).evaluate();
+			new EagerStratumEvaluator(db, l, exec, trackedRelations).evaluate();
 		} else {
 			new RoundBasedStratumEvaluator(stratum.getRank(), db, deltaDb, nextDeltaDb, l, exec, trackedRelations)
 					.evaluate();
