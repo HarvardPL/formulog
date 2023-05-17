@@ -117,8 +117,8 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 	@SuppressWarnings("serial")
 	private class RulePrefixEvaluator extends AbstractFJPTask {
 
-		final IndexedRule rule;
-		final Term[] deltaArgs;
+		private final IndexedRule rule;
+		private final Term[] deltaArgs;
 
 		protected RulePrefixEvaluator(IndexedRule rule, Term[] deltaArgs) {
 			super(exec);
@@ -129,7 +129,7 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 			}
 		}
 
-		private boolean handleDelta(SimplePredicate pred, Substitution s) throws EvaluationException {
+		private final boolean handleDelta(SimplePredicate pred, Substitution s) throws EvaluationException {
 			BindingType[] bindings = pred.getBindingPattern();
 			Term[] args = pred.getArgs();
 			int i = 0;
@@ -152,7 +152,7 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 		}
 
 		@Override
-		public void doTask() throws EvaluationException {
+		public final void doTask() throws EvaluationException {
 			long start = 0;
 			if (recordRuleDiagnostics) {
 				start = System.currentTimeMillis();
@@ -169,7 +169,7 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 			}
 		}
 
-		void evaluate() throws EvaluationException {
+		private void evaluate() throws EvaluationException {
 			int len = rule.getBodySize();
 			int pos = 0;
 			OverwriteSubstitution s = new OverwriteSubstitution();

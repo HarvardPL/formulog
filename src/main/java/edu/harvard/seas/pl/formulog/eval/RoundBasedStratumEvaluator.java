@@ -104,7 +104,7 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 	}
 
 	@Override
-	protected void reportFact(RelationSymbol sym, Term[] args, Substitution s) throws EvaluationException {
+	protected final void reportFact(RelationSymbol sym, Term[] args, Substitution s) throws EvaluationException {
 		Term[] newArgs = new Term[args.length];
 		for (int i = 0; i < args.length; ++i) {
 			newArgs[i] = args[i].normalize(s);
@@ -163,7 +163,7 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 	}
 
 	@Override
-	protected Iterable<Iterable<Term[]>> lookup(IndexedRule r, int pos, OverwriteSubstitution s)
+	protected final Iterable<Iterable<Term[]>> lookup(IndexedRule r, int pos, OverwriteSubstitution s)
 			throws EvaluationException {
 		SimplePredicate predicate = (SimplePredicate) r.getBody(pos);
 		int idx = r.getDbIndex(pos);
