@@ -110,7 +110,7 @@ public abstract class AbstractStratumEvaluator implements StratumEvaluator {
 			this.startPos = pos;
 			this.s = s;
 			this.it = it;
-			if (Configuration.recordWork) {
+			if (Configuration.recordDetailedWork) {
 				Configuration.workItems.increment();
 			}
 		}
@@ -128,7 +128,7 @@ public abstract class AbstractStratumEvaluator implements StratumEvaluator {
 			this.startPos = pos;
 			this.s = s;
 			this.it = it;
-			if (Configuration.recordWork) {
+			if (Configuration.recordDetailedWork) {
 				Configuration.workItems.increment();
 			}
 		}
