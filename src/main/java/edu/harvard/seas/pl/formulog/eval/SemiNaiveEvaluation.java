@@ -490,6 +490,13 @@ public class SemiNaiveEvaluation implements Evaluation {
 				@Override
 				public void run() {
 					System.err.println("[WORK] " + Configuration.work.unsafeGet());
+				}
+			});
+		}
+		if (Configuration.recordDetailedWork) {
+			Runtime.getRuntime().addShutdownHook(new Thread() {
+				@Override
+				public void run() {
 					System.err.println("[WORK ITEMS] " + Configuration.workItems.unsafeGet());
 					System.err.println("[NEW DERIVS] " + Configuration.newDerivs.unsafeGet());
 					System.err.println("[DUP DERIVS] " + Configuration.dupDerivs.unsafeGet());

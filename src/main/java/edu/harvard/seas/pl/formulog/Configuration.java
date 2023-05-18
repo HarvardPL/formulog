@@ -174,6 +174,7 @@ public final class Configuration {
 	public static final boolean useHashDbFilter = propIsSet("useHashDbFilter");
 
 	public static final boolean recordWork = propIsSet("recordWork");
+	public static final boolean recordDetailedWork = propIsSet("recordDetailedWork");
 	public static final SharedLong work = new SharedLong();
 	public static final SharedLong workItems = new SharedLong();
 	public static final SharedLong newDerivs = new SharedLong();

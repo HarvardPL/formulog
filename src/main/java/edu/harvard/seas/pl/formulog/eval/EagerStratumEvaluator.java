@@ -84,10 +84,10 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 			if (trackedRelations.contains(sym)) {
 				System.err.println("[TRACKED] " + UserPredicate.make(sym, newArgs, false));
 			}
-			if (Configuration.recordWork) {
+			if (Configuration.recordDetailedWork) {
 				Configuration.newDerivs.increment();
 			}
-		} else if (Configuration.recordWork) {
+		} else if (Configuration.recordDetailedWork) {
 			Configuration.dupDerivs.increment();
 		}
 	}
@@ -124,7 +124,7 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 			super(exec);
 			this.rule = rule;
 			this.deltaArgs = deltaArgs;
-			if (Configuration.recordWork) {
+			if (Configuration.recordDetailedWork) {
 				Configuration.workItems.increment();
 			}
 		}
