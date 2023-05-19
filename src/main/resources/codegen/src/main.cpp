@@ -177,6 +177,11 @@ void printSmtStats() {
     std::cout << "SMT calls: " << globals::sum(globals::smt_calls) << "\n";
     std::cout << "SMT time (ms): " << globals::sum(globals::smt_time) << std::endl;
     std::cout << "SMT cache clears: " << globals::sum(globals::smt_cache_clears) << std::endl;
+    std::cout << "SMT calls per solver: ";
+    globals::smt_calls.combine_each([&](auto ncalls) {
+        std::cout << ncalls << ",";
+    });
+    std::cout << std::endl;
 }
 
 int main(int argc, char **argv) {
