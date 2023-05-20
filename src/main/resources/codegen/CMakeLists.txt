@@ -21,6 +21,7 @@ add_custom_command(OUTPUT formulog.cpp
         DEPENDS src/formulog.dl)
 
 target_sources(flg PRIVATE
+        src/time.hpp
         src/ConcurrentHashMap.hpp
         src/funcs.hpp
         src/functors.cpp

@@ -21,6 +21,7 @@ package edu.harvard.seas.pl.formulog.functions;
  */
 
 import edu.harvard.seas.pl.formulog.Configuration;
+import edu.harvard.seas.pl.formulog.Main;
 import edu.harvard.seas.pl.formulog.ast.*;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
@@ -1741,7 +1742,7 @@ public final class BuiltInFunctionDefFactory {
 			fut = completableFut;
 		}
 		long waitStart = 0;
-		if (Configuration.timeSmt) {
+		if (Configuration.timeSmt || Main.smtStats) {
 			waitStart = System.nanoTime();
 		}
 		try {
@@ -1749,7 +1750,7 @@ public final class BuiltInFunctionDefFactory {
 		} catch (InterruptedException | ExecutionException e) {
 			throw new EvaluationException(e);
 		} finally {
-			if (Configuration.timeSmt) {
+			if (Configuration.timeSmt || Main.smtStats) {
 				Configuration.recordSmtWaitTime(System.nanoTime() - waitStart);
 			}
 		}

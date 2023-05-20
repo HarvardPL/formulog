@@ -86,11 +86,21 @@ SmtResult MemoizingSmtSolver::check(const std::vector<term_ptr> &assertions, boo
             p.set_value(res);
         } else {
             fut = it2.first->second;
-            res = fut.get();
+            auto op = [&] { res = fut.get(); };
+            if (globals::smt_stats) {
+                globals::smt_wait_time.local() += time(op);
+            } else {
+                op();
+            }
         }
     } else {
         fut = it->second;
-        res = fut.get();
+        auto op = [&] { res = fut.get(); };
+        if (globals::smt_stats) {
+            globals::smt_wait_time.local() += time(op);
+        } else {
+            op();
+        }
     }
     return res;
 }
