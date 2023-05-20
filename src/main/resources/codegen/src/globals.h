@@ -3,6 +3,7 @@
 #include <souffle/SouffleInterface.h>
 #include <tbb/combinable.h>
 #include "smt_solver.h"
+#include "time.hpp"
 
 namespace flg::globals {
 
@@ -18,7 +19,20 @@ inline bool smt_stats{false};
 
 inline tbb::combinable<unsigned long long> smt_calls;
 
-inline tbb::combinable<unsigned long long> smt_time;
+struct smt_stats_t {
+    time_t time;
+    unsigned long long ncalls;
+
+    friend smt_stats_t &operator+=(smt_stats_t &stats, time_t time) {
+        stats.time += time;
+        stats.ncalls++;
+        return stats;
+    }
+};
+
+inline tbb::combinable<smt_stats_t> smt_time;
+
+inline tbb::combinable<time_t> smt_wait_time;
 
 inline tbb::combinable<unsigned> smt_cache_clears;
 

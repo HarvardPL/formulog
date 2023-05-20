@@ -26,6 +26,7 @@ import edu.harvard.seas.pl.formulog.smt.*;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.util.Dataset;
+import edu.harvard.seas.pl.formulog.util.EnumerableThreadLocal;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.SharedLong;
 import edu.harvard.seas.pl.formulog.util.Util;
@@ -67,7 +68,7 @@ public final class Configuration {
 	private static final AtomicLong smtDeclTime = new AtomicLong();
 	private static final AtomicLong smtInferTime = new AtomicLong();
 	private static final AtomicLong smtSerialTime = new AtomicLong();
-	private static final AtomicLong smtWaitTime = new AtomicLong();
+	public static final SharedLong smtWaitTime = new SharedLong();
 	private static final AtomicInteger smtNumCallsSat = new AtomicInteger();
 	private static final AtomicInteger smtNumCallsUnsat = new AtomicInteger();
 	private static final AtomicInteger smtNumCallsUnknown = new AtomicInteger();
@@ -180,8 +181,17 @@ public final class Configuration {
 	public static final SharedLong newDerivs = new SharedLong();
 	public static final SharedLong dupDerivs = new SharedLong();
 
-	public static final SharedLong smtCalls = new SharedLong();
-	public static final SharedLong smtTime = new SharedLong();
+	public static class SmtStats {
+		public long time;
+		public long ncalls;
+		
+		public void add(long time) {
+			this.time += time;
+			ncalls++;
+		}
+	}
+
+	public static final EnumerableThreadLocal<SmtStats> smtTime = new EnumerableThreadLocal<>(SmtStats::new);
 	public static final SharedLong smtCacheClears = new SharedLong();
 
 	static {
@@ -274,7 +284,7 @@ public final class Configuration {
 	}
 
 	public static void recordSmtWaitTime(long time) {
-		smtWaitTime.addAndGet(time);
+		smtWaitTime.add(time);
 	}
 
 	public static void recordSmtDeclGlobalsTime(long time) {
@@ -288,7 +298,7 @@ public final class Configuration {
 			callsPerSolver.addDataPoint(ds.size());
 			timePerSolver.addDataPoint(ds.computeSum());
 		}
-		out.println("[SMT WAIT TIME] " + smtWaitTime.get() / 1e6 + "ms");
+		out.println("[SMT WAIT TIME] " + smtWaitTime.unsafeGet() / 1e6 + "ms");
 		out.println("[SMT DECL GLOBALS TIME] " + smtDeclGlobalsTime.get() / 1e6 + "ms");
 		out.println("[SMT ENCODE TIME - TOTAL] " + smtEncodeTime.get() / 1e6 + "ms");
 		out.println("[SMT ENCODE TIME - DECL] " + smtDeclTime.get() / 1e6 + "ms");

@@ -249,14 +249,32 @@ public final class Main implements Callable<Integer> {
 		}
 	}
 
+	private void printSmtStats(PrintStream out) {
+		List<String> times = new ArrayList<>();
+		List<String> calls = new ArrayList<>();
+		long[] total_time = {0};
+		long[] total_calls = {0};
+		Configuration.smtTime.forEach((stats) -> {
+			times.add(Long.toString(stats.time));
+			total_time[0] += stats.time;
+			calls.add(Long.toString(stats.ncalls));
+			total_calls[0] += stats.ncalls;
+		});
+		
+		out.println();
+		out.println(getBanner("SMT STATS"));
+		out.println("SMT calls: " + total_calls[0]);
+		out.println("SMT time (ms): " + total_time[0]);
+		out.println("SMT wait time (ms): " + Configuration.smtWaitTime.unsafeGet() / 1e6);
+		out.println("SMT cache clears: " + Configuration.smtCacheClears.unsafeGet());
+		out.println("SMT calls per solver: " + String.join(",", calls));
+		out.println("SMT time per solver (ms): " + String.join(",", times));
+	}
+
 	private void dumpResults(EvaluationResult res) {
 		PrintStream out = System.out;
 		if (smtStats) {
-			out.println();
-			out.println(getBanner("SMT STATS"));
-			out.println("SMT calls: " + Configuration.smtCalls.unsafeGet());
-			out.println("SMT time (ms): " + Configuration.smtTime.unsafeGet());
-			out.println("SMT cache clears: " + Configuration.smtCacheClears.unsafeGet());
+			printSmtStats(out);
 		}
 		List<RelationSymbol> allSymbols = res.getSymbols().stream().sorted(Comparator.comparing(Object::toString))
 				.collect(Collectors.toList());

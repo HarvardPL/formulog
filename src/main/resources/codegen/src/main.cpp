@@ -171,12 +171,43 @@ std::ostream &operator<<(std::ostream &os, const std::vector<std::string> &vec) 
 }
 }
 
+template <typename T>
+std::string join(const std::vector<T> &v) {
+    if (v.empty()) {
+        return "";
+    }
+    std::stringstream ss;
+    auto it = v.begin();
+    while (true) {
+        ss << *it++;
+        if (it == v.end()) {
+            break;
+        }
+        ss << ",";
+    }
+    return ss.str();
+}
+
 void printSmtStats() {
+    std::vector<double> times;
+    std::vector<unsigned long long> calls;
+    flg::time_t total_time;
+    double total_calls;
+    globals::smt_time.combine_each([&](auto stats) {
+        times.push_back(stats.time.count());
+        total_time += stats.time;
+        calls.push_back(stats.ncalls);
+        total_calls += stats.ncalls;
+    });
+
     std::cout << "\n";
     printBanner("SMT STATS");
-    std::cout << "SMT calls: " << globals::sum(globals::smt_calls) << "\n";
-    std::cout << "SMT time (ms): " << globals::sum(globals::smt_time) << std::endl;
+    std::cout << "SMT calls: " << total_calls << "\n";
+    std::cout << "SMT time (ms): " << total_time.count() << std::endl;
+    std::cout << "SMT wait time (ms): " << globals::sum(globals::smt_wait_time).count() << std::endl;
     std::cout << "SMT cache clears: " << globals::sum(globals::smt_cache_clears) << std::endl;
+    std::cout << "SMT calls per solver: " << join(calls) << std::endl;
+    std::cout << "SMT time per solver (ms): " << join(times) << std::endl;
 }
 
 int main(int argc, char **argv) {
@@ -260,5 +291,8 @@ int main(int argc, char **argv) {
     if (dump_idb) {
         printResults();
     }
+#ifdef FLG_RECORD_WORK
+    cout << "[WORK] " << globals::sum(souffle::work) << std::endl;
+#endif
     std::_Exit(EXIT_SUCCESS);
 }
