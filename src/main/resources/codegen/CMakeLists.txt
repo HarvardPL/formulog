@@ -16,6 +16,12 @@ if (FLG_EAGER_EVAL)
     set(SOUFFLE_FLAGS ${SOUFFLE_FLAGS} --eager-eval)
 endif ()
 
+option(FLG_RECORD_WORK "Report amount of work performed during evaluation (requires custom Soufflé)" OFF)
+if (FLG_RECORD_WORK)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFLG_RECORD_WORK")
+    set(SOUFFLE_FLAGS ${SOUFFLE_FLAGS} --record-work)
+endif ()
+
 add_custom_command(OUTPUT formulog.cpp
         COMMAND souffle ${CMAKE_CURRENT_SOURCE_DIR}/src/formulog.dl ${SOUFFLE_FLAGS} -g formulog.cpp
         DEPENDS src/formulog.dl)

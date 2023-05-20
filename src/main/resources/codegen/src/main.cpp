@@ -291,5 +291,8 @@ int main(int argc, char **argv) {
     if (dump_idb) {
         printResults();
     }
+#ifdef FLG_RECORD_WORK
+    cout << "[WORK] " << globals::sum(souffle::work) << std::endl;
+#endif
     std::_Exit(EXIT_SUCCESS);
 }
