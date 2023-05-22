@@ -121,7 +121,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 				for (BasicRule br : magicProg.getRules(sym)) {
 					for (SemiNaiveRule snr : SemiNaiveRule.make(br, stratumSymbols)) {
 						BiFunction<ComplexLiteral, Set<Var>, Integer> score = chooseScoringFunction(eagerEval);
-						ValidRule vr = ValidRule.make(tweakRule(snr, true), score);
+						ValidRule vr = ValidRule.make(tweakDeltaAtom(snr), score);
 						checkRule(vr, eagerEval);
 						predFuncs.preprocess(vr);
 						SimpleRule sr = SimpleRule.make(vr, magicProg.getFunctionCallFactory());
@@ -190,11 +190,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 				getTrackedRelations(magicProg.getSymbolManager()), eagerEval);
 	}
 
-	private static Rule<UserPredicate, ComplexLiteral> tweakRule(Rule<UserPredicate, ComplexLiteral> r,
-			boolean eagerEval) {
-		if (!eagerEval) {
-			return r;
-		}
+	private static Rule<UserPredicate, ComplexLiteral> tweakDeltaAtom(Rule<UserPredicate, ComplexLiteral> r) {
 		List<ComplexLiteral> newBody = new ArrayList<>();
 		for (ComplexLiteral l : r) {
 			l.accept(new ComplexLiteralVisitor<Void, Void>() {
@@ -540,7 +536,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 							.sorted((p1, p2) -> Long.compare(p2.snd(), p1.snd())).forEach(p -> {
 								System.err.println("[PER RULE WORK] " + p.snd() + " " + p.fst());
 							});
-					
+
 				}
 			});
 		}
