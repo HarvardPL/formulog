@@ -1,5 +1,15 @@
 package edu.harvard.seas.pl.formulog.eval;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.BiFunction;
+
 /*-
  * #%L
  * Formulog
@@ -22,26 +32,51 @@ package edu.harvard.seas.pl.formulog.eval;
 
 import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.Main;
-import edu.harvard.seas.pl.formulog.ast.*;
+import edu.harvard.seas.pl.formulog.ast.BasicProgram;
+import edu.harvard.seas.pl.formulog.ast.BasicRule;
+import edu.harvard.seas.pl.formulog.ast.ComplexLiteral;
 import edu.harvard.seas.pl.formulog.ast.ComplexLiterals.ComplexLiteralVisitor;
+import edu.harvard.seas.pl.formulog.ast.Rule;
+import edu.harvard.seas.pl.formulog.ast.Term;
+import edu.harvard.seas.pl.formulog.ast.Terms;
+import edu.harvard.seas.pl.formulog.ast.UnificationPredicate;
+import edu.harvard.seas.pl.formulog.ast.UserPredicate;
+import edu.harvard.seas.pl.formulog.ast.Var;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDbBuilder;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb;
 import edu.harvard.seas.pl.formulog.db.SortedIndexedFactDb.SortedIndexedFactDbBuilder;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveRule.DeltaSymbol;
 import edu.harvard.seas.pl.formulog.functions.FunctionDefManager;
 import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
-import edu.harvard.seas.pl.formulog.smt.*;
+import edu.harvard.seas.pl.formulog.smt.BestMatchSmtManager;
+import edu.harvard.seas.pl.formulog.smt.CallAndResetSolver;
+import edu.harvard.seas.pl.formulog.smt.CheckSatAssumingSolver;
+import edu.harvard.seas.pl.formulog.smt.DoubleCheckingSolver;
+import edu.harvard.seas.pl.formulog.smt.NotThreadSafeQueueSmtManager;
+import edu.harvard.seas.pl.formulog.smt.PerThreadSmtManager;
+import edu.harvard.seas.pl.formulog.smt.PushPopNaiveSolver;
+import edu.harvard.seas.pl.formulog.smt.PushPopSolver;
+import edu.harvard.seas.pl.formulog.smt.QueueSmtManager;
+import edu.harvard.seas.pl.formulog.smt.SingleShotSolver;
+import edu.harvard.seas.pl.formulog.smt.SmtLibSolver;
+import edu.harvard.seas.pl.formulog.smt.SmtStrategy;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
-import edu.harvard.seas.pl.formulog.util.*;
-import edu.harvard.seas.pl.formulog.validating.*;
+import edu.harvard.seas.pl.formulog.util.AbstractFJPTask;
+import edu.harvard.seas.pl.formulog.util.CountingFJP;
+import edu.harvard.seas.pl.formulog.util.CountingFJPImpl;
+import edu.harvard.seas.pl.formulog.util.MockCountingFJP;
+import edu.harvard.seas.pl.formulog.util.Pair;
+import edu.harvard.seas.pl.formulog.util.Util;
+import edu.harvard.seas.pl.formulog.validating.FunctionDefValidation;
+import edu.harvard.seas.pl.formulog.validating.InvalidProgramException;
+import edu.harvard.seas.pl.formulog.validating.Stratifier;
+import edu.harvard.seas.pl.formulog.validating.Stratum;
+import edu.harvard.seas.pl.formulog.validating.ValidRule;
 import edu.harvard.seas.pl.formulog.validating.ast.SimpleRule;
-
-import java.util.*;
-import java.util.function.BiFunction;
 
 public class SemiNaiveEvaluation implements Evaluation {
 
@@ -500,6 +535,12 @@ public class SemiNaiveEvaluation implements Evaluation {
 					System.err.println("[WORK ITEMS] " + Configuration.workItems.unsafeGet());
 					System.err.println("[NEW DERIVS] " + Configuration.newDerivs.unsafeGet());
 					System.err.println("[DUP DERIVS] " + Configuration.dupDerivs.unsafeGet());
+					Configuration.workPerRule.entrySet().stream()
+							.map(e -> new Pair<>(e.getKey(), e.getValue().unsafeGet()))
+							.sorted((p1, p2) -> Long.compare(p2.snd(), p1.snd())).forEach(p -> {
+								System.err.println("[PER RULE WORK] " + p.snd() + " " + p.fst());
+							});
+					
 				}
 			});
 		}

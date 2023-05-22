@@ -35,6 +35,7 @@ import edu.harvard.seas.pl.formulog.unification.OverwriteSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.AbstractFJPTask;
 import edu.harvard.seas.pl.formulog.util.CountingFJP;
+import edu.harvard.seas.pl.formulog.util.SharedLong;
 import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.ast.Assignment;
 import edu.harvard.seas.pl.formulog.validating.ast.Check;
@@ -271,6 +272,9 @@ public abstract class AbstractStratumEvaluator implements StratumEvaluator {
 		private void updateBinding(SimplePredicate p, Term[] ans) {
 			if (Configuration.recordWork) {
 				Configuration.work.increment();
+			}
+			if (Configuration.recordDetailedWork) {
+				Util.lookupOrCreate(Configuration.workPerRule, rule, SharedLong::new).increment();
 			}
 			Term[] args = p.getArgs();
 			BindingType[] pat = p.getBindingPattern();
