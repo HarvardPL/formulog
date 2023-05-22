@@ -121,7 +121,7 @@ public class SemiNaiveEvaluation implements Evaluation {
 				for (BasicRule br : magicProg.getRules(sym)) {
 					for (SemiNaiveRule snr : SemiNaiveRule.make(br, stratumSymbols)) {
 						BiFunction<ComplexLiteral, Set<Var>, Integer> score = chooseScoringFunction(eagerEval);
-						ValidRule vr = ValidRule.make(tweakRule(snr, eagerEval), score);
+						ValidRule vr = ValidRule.make(tweakRule(snr, true), score);
 						checkRule(vr, eagerEval);
 						predFuncs.preprocess(vr);
 						SimpleRule sr = SimpleRule.make(vr, magicProg.getFunctionCallFactory());
