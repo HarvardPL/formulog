@@ -162,7 +162,8 @@ public abstract class AbstractStratumEvaluator implements StratumEvaluator {
 			}
 			Iterable<Term[]> tups = it.next();
 			if (it.hasNext()) {
-				exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, head, body, startPos, s.copy(), it, scratch));
+				exec.recursivelyAddTask(
+						new RuleSuffixEvaluator(rule, head, body, startPos, s.copy(), it, scratch.clone()));
 			}
 			try {
 				for (Term[] tup : tups) {
@@ -238,7 +239,7 @@ public abstract class AbstractStratumEvaluator implements StratumEvaluator {
 									stack[pos] = tups.next().iterator();
 									if (tups.hasNext()) {
 										exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, head, body, pos, s.copy(),
-												tups, scratch));
+												tups, scratch.clone()));
 									}
 									// No need to do anything else: we'll hit the right case on the next iteration.
 								} else {

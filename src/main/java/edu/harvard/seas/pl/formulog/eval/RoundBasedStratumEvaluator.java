@@ -277,7 +277,7 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 			}
 			Iterator<Iterable<Term[]>> tups = lookup(rule, pos, s).iterator();
 			if (tups.hasNext()) {
-				new RuleSuffixEvaluator(rule, pos, s, tups, scratch).doTask();
+				new RuleSuffixEvaluator(rule, pos, s, tups, scratch.clone()).doTask();
 			}
 		}
 	}
