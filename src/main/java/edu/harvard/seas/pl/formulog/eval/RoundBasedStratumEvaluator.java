@@ -239,8 +239,7 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 					return;
 				}
 				if (pos == len) {
-					reportFact(head.getSymbol(), scratch);
-					return;
+					break;
 				}
 				l = rule.getBody(pos);
 				try {
@@ -274,6 +273,10 @@ public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 					throw new EvaluationException(
 							"Exception raised while evaluating the literal: " + l + "\n\n" + e.getMessage());
 				}
+			}
+			if (pos == len) {
+				reportFact(head.getSymbol(), scratch);
+				return;
 			}
 			Iterator<Iterable<Term[]>> tups = lookup(rule, pos, s).iterator();
 			if (tups.hasNext()) {
