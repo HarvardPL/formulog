@@ -4,7 +4,7 @@ package edu.harvard.seas.pl.formulog.validating.ast;
  * #%L
  * Formulog
  * %%
- * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
+ * Copyright (C) 2018 - 2023 President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ package edu.harvard.seas.pl.formulog.validating.ast;
  * #L%
  */
 
-import java.util.HashSet;
 import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.Term;
@@ -62,11 +61,9 @@ public class Assignment implements SimpleLiteral {
 	}
 
 	@Override
-	public Set<Var> varSet() {
-		Set<Var> vars = new HashSet<>();
+	public void varSet(Set<Var> vars) {
 		vars.add(var);
 		rhs.varSet(vars);
-		return vars;
 	}
 
 	@Override

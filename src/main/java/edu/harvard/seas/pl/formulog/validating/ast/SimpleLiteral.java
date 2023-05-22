@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.validating.ast;
 
+import java.util.HashSet;
+
 /*-
  * #%L
  * Formulog
@@ -31,7 +33,13 @@ public interface SimpleLiteral extends Literal {
 
 	<I, O, E extends Throwable> O accept(SimpleLiteralExnVisitor<I, O, E> visitor, I input) throws E;
 
-	Set<Var> varSet();
+	default Set<Var> varSet() {
+		Set<Var> vars = new HashSet<>();
+		varSet(vars);
+		return vars;
+	}
+	
+	void varSet(Set<Var> vars);
 
 	SimpleLiteralTag getTag();
 

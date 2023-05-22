@@ -47,6 +47,7 @@ public abstract class AbstractStratumEvaluator implements StratumEvaluator {
 	protected final Set<IndexedRule> firstRoundRules = new HashSet<>();
 	protected final Map<RelationSymbol, Set<IndexedRule>> laterRoundRules = new HashMap<>();
 	protected final Map<IndexedRule, boolean[]> splitPositions = new HashMap<>();
+	protected final Map<IndexedRule, Integer> checkPosition = new HashMap<>();
 	protected final CountingFJP exec;
 
 	public AbstractStratumEvaluator(Iterable<IndexedRule> rules, CountingFJP exec) {
@@ -65,6 +66,7 @@ public abstract class AbstractStratumEvaluator implements StratumEvaluator {
 			}
 			boolean[] positions = findSplitPositions(rule, scf);
 			splitPositions.put(rule, positions);
+			checkPosition.put(rule, findCheckPosition(rule));
 		}
 	}
 
@@ -84,7 +86,23 @@ public abstract class AbstractStratumEvaluator implements StratumEvaluator {
 		return splitPositions;
 	}
 
-	abstract protected void reportFact(RelationSymbol sym, Term[] args, Substitution s) throws EvaluationException;
+	private static int findCheckPosition(IndexedRule rule) {
+		var headVars = rule.getHead().varSet();
+		Set<Var> bound = new HashSet<>();
+		int i = 0;
+		for (; i < rule.getBodySize(); ++i) {
+			if (bound.containsAll(headVars)) {
+				break;
+			}
+			rule.getBody(i).varSet(bound);
+		}
+		return i;
+	}
+
+	abstract protected void reportFact(RelationSymbol sym, Term[] args);
+
+	abstract protected boolean checkFact(RelationSymbol sym, Term[] args, Substitution s, Term[] scratch)
+			throws EvaluationException;
 
 	abstract protected Iterable<Iterable<Term[]>> lookup(IndexedRule r, int pos, OverwriteSubstitution s)
 			throws EvaluationException;
@@ -100,9 +118,10 @@ public abstract class AbstractStratumEvaluator implements StratumEvaluator {
 		final int startPos;
 		final OverwriteSubstitution s;
 		final Iterator<Iterable<Term[]>> it;
+		final Term[] scratch;
 
 		protected RuleSuffixEvaluator(IndexedRule rule, SimplePredicate head, SimpleLiteral[] body, int pos,
-				OverwriteSubstitution s, Iterator<Iterable<Term[]>> it) {
+				OverwriteSubstitution s, Iterator<Iterable<Term[]>> it, Term[] scratch) {
 			super(exec);
 			this.rule = rule;
 			this.head = head;
@@ -110,13 +129,14 @@ public abstract class AbstractStratumEvaluator implements StratumEvaluator {
 			this.startPos = pos;
 			this.s = s;
 			this.it = it;
+			this.scratch = scratch;
 			if (Configuration.recordDetailedWork) {
 				Configuration.workItems.increment();
 			}
 		}
 
 		protected RuleSuffixEvaluator(IndexedRule rule, int pos, OverwriteSubstitution s,
-				Iterator<Iterable<Term[]>> it) {
+				Iterator<Iterable<Term[]>> it, Term[] scratch) {
 			super(exec);
 			this.rule = rule;
 			this.head = rule.getHead();
@@ -128,6 +148,7 @@ public abstract class AbstractStratumEvaluator implements StratumEvaluator {
 			this.startPos = pos;
 			this.s = s;
 			this.it = it;
+			this.scratch = scratch;
 			if (Configuration.recordDetailedWork) {
 				Configuration.workItems.increment();
 			}
@@ -141,7 +162,7 @@ public abstract class AbstractStratumEvaluator implements StratumEvaluator {
 			}
 			Iterable<Term[]> tups = it.next();
 			if (it.hasNext()) {
-				exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, head, body, startPos, s.copy(), it));
+				exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, head, body, startPos, s.copy(), it, scratch));
 			}
 			try {
 				for (Term[] tup : tups) {
@@ -164,14 +185,19 @@ public abstract class AbstractStratumEvaluator implements StratumEvaluator {
 			@SuppressWarnings("unchecked")
 			Iterator<Term[]>[] stack = new Iterator[rule.getBodySize()];
 			boolean movingRight = true;
+			var checkPos = checkPosition.get(rule);
 			while (pos > startPos) {
-				if (pos == body.length) {
-					try {
-						reportFact(head.getSymbol(), head.getArgs(), s);
-					} catch (EvaluationException e) {
-						throw new UncheckedEvaluationException(
-								"Exception raised while evaluating the literal: " + head + "\n\n" + e.getMessage());
+				try {
+					if (checkPos == pos && !checkFact(head.getSymbol(), head.getArgs(), s, scratch)) {
+						pos--;
+						movingRight = false;
 					}
+				} catch (EvaluationException e) {
+					throw new UncheckedEvaluationException(
+							"Exception raised while evaluating the literal: " + head + "\n\n" + e.getMessage());
+				}
+				if (pos == body.length) {
+					reportFact(head.getSymbol(), scratch);
 					pos--;
 					movingRight = false;
 				} else if (movingRight) {
@@ -212,7 +238,7 @@ public abstract class AbstractStratumEvaluator implements StratumEvaluator {
 									stack[pos] = tups.next().iterator();
 									if (tups.hasNext()) {
 										exec.recursivelyAddTask(
-												new RuleSuffixEvaluator(rule, head, body, pos, s.copy(), tups));
+												new RuleSuffixEvaluator(rule, head, body, pos, s.copy(), tups, scratch));
 									}
 									// No need to do anything else: we'll hit the right case on the next iteration.
 								} else {

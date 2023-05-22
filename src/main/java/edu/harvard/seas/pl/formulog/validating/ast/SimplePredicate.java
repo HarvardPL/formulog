@@ -21,8 +21,6 @@ package edu.harvard.seas.pl.formulog.validating.ast;
  */
 
 import java.util.Arrays;
-import java.util.HashSet;
-
 import java.util.Set;
 
 import edu.harvard.seas.pl.formulog.ast.BindingType;
@@ -153,12 +151,10 @@ public class SimplePredicate implements SimpleLiteral {
 	}
 
 	@Override
-	public Set<Var> varSet() {
-		Set<Var> vars = new HashSet<>();
+	public void varSet(Set<Var> vars) {
 		for (Term arg : args) {
 			arg.varSet(vars);
 		}
-		return vars;
 	}
 
 	@Override
