@@ -184,6 +184,7 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 			var scratch = new Term[head.getSymbol().getArity()];
 			var checkPos = checkPosition.get(rule);
 			loop: for (; pos <= len; ++pos) {
+				SimpleLiteral l = head;
 				if (checkPos == pos && !checkFact(head.getSymbol(), head.getArgs(), s, scratch)) {
 					return;
 				}
@@ -191,7 +192,7 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 					reportFact(head.getSymbol(), scratch);
 					return;
 				}
-				SimpleLiteral l = rule.getBody(pos);
+				l = rule.getBody(pos);
 				try {
 					switch (l.getTag()) {
 					case ASSIGNMENT:

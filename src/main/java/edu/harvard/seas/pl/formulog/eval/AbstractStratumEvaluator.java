@@ -135,8 +135,8 @@ public abstract class AbstractStratumEvaluator implements StratumEvaluator {
 			}
 		}
 
-		protected RuleSuffixEvaluator(IndexedRule rule, int pos, OverwriteSubstitution s,
-				Iterator<Iterable<Term[]>> it, Term[] scratch) {
+		protected RuleSuffixEvaluator(IndexedRule rule, int pos, OverwriteSubstitution s, Iterator<Iterable<Term[]>> it,
+				Term[] scratch) {
 			super(exec);
 			this.rule = rule;
 			this.head = rule.getHead();
@@ -188,7 +188,7 @@ public abstract class AbstractStratumEvaluator implements StratumEvaluator {
 			var checkPos = checkPosition.get(rule);
 			while (pos > startPos) {
 				try {
-					if (checkPos == pos && !checkFact(head.getSymbol(), head.getArgs(), s, scratch)) {
+					if (movingRight && checkPos == pos && !checkFact(head.getSymbol(), head.getArgs(), s, scratch)) {
 						pos--;
 						movingRight = false;
 					}
@@ -237,8 +237,8 @@ public abstract class AbstractStratumEvaluator implements StratumEvaluator {
 								if (tups.hasNext()) {
 									stack[pos] = tups.next().iterator();
 									if (tups.hasNext()) {
-										exec.recursivelyAddTask(
-												new RuleSuffixEvaluator(rule, head, body, pos, s.copy(), tups, scratch));
+										exec.recursivelyAddTask(new RuleSuffixEvaluator(rule, head, body, pos, s.copy(),
+												tups, scratch));
 									}
 									// No need to do anything else: we'll hit the right case on the next iteration.
 								} else {
