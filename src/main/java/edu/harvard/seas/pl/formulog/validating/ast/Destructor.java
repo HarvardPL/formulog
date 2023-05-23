@@ -110,11 +110,9 @@ public class Destructor implements SimpleLiteral {
 	}
 
 	@Override
-	public Set<Var> varSet() {
-		Set<Var> vars = new HashSet<>();
+	public void varSet(Set<Var> vars) {
 		x.varSet(vars);
 		vars.addAll(Arrays.asList(bindings));
-		return vars;
 	}
 
 	@Override

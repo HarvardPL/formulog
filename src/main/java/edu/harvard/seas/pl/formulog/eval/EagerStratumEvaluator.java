@@ -35,6 +35,7 @@ import edu.harvard.seas.pl.formulog.unification.OverwriteSubstitution;
 import edu.harvard.seas.pl.formulog.unification.Substitution;
 import edu.harvard.seas.pl.formulog.util.AbstractFJPTask;
 import edu.harvard.seas.pl.formulog.util.CountingFJP;
+import edu.harvard.seas.pl.formulog.util.SharedLong;
 import edu.harvard.seas.pl.formulog.util.Util;
 import edu.harvard.seas.pl.formulog.validating.ast.Assignment;
 import edu.harvard.seas.pl.formulog.validating.ast.Check;
@@ -48,7 +49,7 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 	private final Set<RelationSymbol> trackedRelations;
 
 	static final int taskSize = Configuration.taskSize;
-	static final int smtTaskSize = 1;
+	static final int smtTaskSize = Configuration.smtTaskSize;
 
 	public EagerStratumEvaluator(SortedIndexedFactDb db, Iterable<IndexedRule> rules, CountingFJP exec,
 			Set<RelationSymbol> trackedRelations) {
@@ -69,20 +70,17 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 	}
 
 	@Override
-	protected void reportFact(RelationSymbol sym, Term[] args, Substitution s) throws EvaluationException {
-		Term[] newArgs = new Term[args.length];
-		for (int i = 0; i < args.length; ++i) {
-			newArgs[i] = args[i].normalize(s);
-		}
-		if (db.add(sym, newArgs)) {
+	protected void reportFact(RelationSymbol sym, Term[] args) {
+		Term[] copy = args.clone();
+		if (db.add(sym, copy)) {
 			Set<IndexedRule> rs = laterRoundRules.get(sym);
 			if (rs != null) {
 				for (IndexedRule r : rs) {
-					exec.recursivelyAddTask(new RulePrefixEvaluator(r, newArgs));
+					exec.recursivelyAddTask(new RulePrefixEvaluator(r, copy));
 				}
 			}
 			if (trackedRelations.contains(sym)) {
-				System.err.println("[TRACKED] " + UserPredicate.make(sym, newArgs, false));
+				System.err.println("[TRACKED] " + UserPredicate.make(sym, copy, false));
 			}
 			if (Configuration.recordDetailedWork) {
 				Configuration.newDerivs.increment();
@@ -93,7 +91,17 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 	}
 
 	@Override
-	protected Iterable<Iterable<Term[]>> lookup(IndexedRule r, int pos, OverwriteSubstitution s) throws EvaluationException {
+	protected boolean checkFact(RelationSymbol sym, Term[] args, Substitution s, Term[] scratch)
+			throws EvaluationException {
+		for (int i = 0; i < args.length; ++i) {
+			scratch[i] = args[i].normalize(s);
+		}
+		return !db.hasFact(sym, scratch);
+	}
+
+	@Override
+	protected Iterable<Iterable<Term[]>> lookup(IndexedRule r, int pos, OverwriteSubstitution s)
+			throws EvaluationException {
 		SimplePredicate predicate = (SimplePredicate) r.getBody(pos);
 		int idx = r.getDbIndex(pos);
 		Term[] args = predicate.getArgs();
@@ -148,6 +156,9 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 			if (Configuration.recordWork) {
 				Configuration.work.increment();
 			}
+			if (Configuration.recordDetailedWork) {
+				Util.lookupOrCreate(Configuration.workPerRule, rule, SharedLong::new).increment();
+			}
 			return true;
 		}
 
@@ -173,8 +184,19 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 			int len = rule.getBodySize();
 			int pos = 0;
 			OverwriteSubstitution s = new OverwriteSubstitution();
-			loop: for (; pos < len; ++pos) {
-				SimpleLiteral l = rule.getBody(pos);
+			SimplePredicate head = rule.getHead();
+			var scratch = new Term[head.getSymbol().getArity()];
+			var checkPos = checkPosition.get(rule);
+			loop: for (; pos <= len; ++pos) {
+				SimpleLiteral l = head;
+				if (checkPos == pos && !checkFact(head.getSymbol(), head.getArgs(), s, scratch)) {
+					return;
+				}
+				if (pos == len) {
+					reportFact(head.getSymbol(), scratch);
+					return;
+				}
+				l = rule.getBody(pos);
 				try {
 					switch (l.getTag()) {
 					case ASSIGNMENT:
@@ -212,19 +234,9 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 							"Exception raised while evaluating the literal: " + l + "\n\n" + e.getMessage());
 				}
 			}
-			if (pos == len) {
-				try {
-					SimplePredicate head = rule.getHead();
-					reportFact(head.getSymbol(), head.getArgs(), s);
-					return;
-				} catch (EvaluationException e) {
-					throw new EvaluationException("Exception raised while evaluationg the literal: " + rule.getHead()
-							+ e.getLocalizedMessage());
-				}
-			}
 			Iterator<Iterable<Term[]>> tups = lookup(rule, pos, s).iterator();
 			if (tups.hasNext()) {
-				new RuleSuffixEvaluator(rule, pos, s, tups).doTask();
+				new RuleSuffixEvaluator(rule, pos, s, tups, scratch.clone()).doTask();
 			}
 		}
 	}

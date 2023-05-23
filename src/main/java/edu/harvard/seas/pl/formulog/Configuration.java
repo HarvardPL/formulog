@@ -22,6 +22,7 @@ package edu.harvard.seas.pl.formulog;
 
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDb;
+import edu.harvard.seas.pl.formulog.eval.IndexedRule;
 import edu.harvard.seas.pl.formulog.smt.*;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
@@ -170,7 +171,7 @@ public final class Configuration {
 	public static final boolean inlineInRules = propIsSet("inlineInRules", true);
 
 	public static final boolean eagerSemiNaive = propIsSet("eagerSemiNaive");
-	public static final boolean codegenSplitOnSmt = propIsSet("codegenSplitOnSmt", true);
+	public static final boolean codegenSplitOnSmt = propIsSet("codegenSplitOnSmt");
 
 	public static final boolean useHashDbFilter = propIsSet("useHashDbFilter");
 
@@ -180,6 +181,7 @@ public final class Configuration {
 	public static final SharedLong workItems = new SharedLong();
 	public static final SharedLong newDerivs = new SharedLong();
 	public static final SharedLong dupDerivs = new SharedLong();
+	public static final Map<IndexedRule, SharedLong> workPerRule = new ConcurrentHashMap<>();
 
 	public static class SmtStats {
 		public long time;
