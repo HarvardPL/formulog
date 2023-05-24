@@ -17,8 +17,6 @@ inline size_t smt_cache_size{100};
 
 inline bool smt_stats{false};
 
-inline tbb::combinable<unsigned long long> smt_calls;
-
 struct smt_stats_t {
     time_t time;
     unsigned long long ncalls;
@@ -31,9 +29,9 @@ struct smt_stats_t {
 };
 
 inline tbb::combinable<smt_stats_t> smt_time;
-
 inline tbb::combinable<time_t> smt_wait_time;
-
+inline tbb::combinable<unsigned> smt_cache_hits;
+inline tbb::combinable<unsigned> smt_cache_misses;
 inline tbb::combinable<unsigned> smt_cache_clears;
 
 template<typename T>

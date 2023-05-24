@@ -129,6 +129,10 @@ AbstractSmtSolver::term_vector_pair PushPopNaiveSolver::make_assertions(const st
     for (auto assertion: assertions) {
         m_shim->make_assertion(assertion);
     }
+    if (globals::smt_stats) {
+        globals::smt_cache_clears.local()++;
+        globals::smt_cache_misses.local() += assertions.size();
+    }
     return {{},
             {}};
 }
@@ -144,10 +148,15 @@ void CheckSatAssumingSolver::initialize() {
 
 AbstractSmtSolver::term_vector_pair CheckSatAssumingSolver::make_assertions(const std::vector<term_ptr> &assertions) {
     std::vector<term_ptr> on_vars;
+    unsigned hits{0};
+    unsigned misses{0};
     for (auto assertion: assertions) {
         auto &var = m_conjuncts_to_vars[assertion];
         if (!var) {
             var = ComplexTerm::fresh_smt_var();
+            misses++;
+        } else {
+            hits++;
         }
         on_vars.emplace_back(var);
 #ifdef FLG_DEV
@@ -156,6 +165,14 @@ AbstractSmtSolver::term_vector_pair CheckSatAssumingSolver::make_assertions(cons
         auto imp = Term::make<Symbol::smt_imp>(var, assertion);
 #endif
         m_shim->make_assertion(imp);
+    }
+    if (globals::smt_stats) {
+        if (hits) {
+            globals::smt_cache_hits.local() += hits;
+        }
+        if (misses) {
+            globals::smt_cache_misses.local() += misses;
+        }
     }
     return {on_vars,
             {}};
@@ -178,6 +195,17 @@ void PushPopSolver::initialize() {
 
 AbstractSmtSolver::term_vector_pair PushPopSolver::make_assertions(const std::vector<term_ptr> &assertions) {
     unsigned int pos = find_diff_pos(assertions);
+    if (globals::smt_stats) {
+        if (pos) {
+            globals::smt_cache_hits.local() += pos;
+        } else if (!m_stack.empty()) {
+            globals::smt_cache_clears.local()++;
+        }
+        auto misses = assertions.size() - pos;
+        if (misses) {
+            globals::smt_cache_misses.local() += misses;
+        }
+    }
     shrink_cache(m_stack.size() - pos);
     assert(m_stack.size() == pos);
     assert(pos <= assertions.size());
