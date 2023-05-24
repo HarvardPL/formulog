@@ -195,6 +195,8 @@ public final class Configuration {
 
 	public static final EnumerableThreadLocal<SmtStats> smtTime = new EnumerableThreadLocal<>(SmtStats::new);
 	public static final SharedLong smtCacheClears = new SharedLong();
+	public static final SharedLong smtCacheHits = new SharedLong();
+	public static final SharedLong smtCacheMisses = new SharedLong();
 
 	static {
 		if (recordFuncDiagnostics) {

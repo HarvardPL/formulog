@@ -23,6 +23,7 @@ package edu.harvard.seas.pl.formulog.smt;
 import java.util.Collection;
 
 import edu.harvard.seas.pl.formulog.Configuration;
+import edu.harvard.seas.pl.formulog.Main;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.Program;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
@@ -40,6 +41,10 @@ public class SingleShotSolver extends AbstractSmtLibSolver {
 		shim.makeDeclarations();
 		for (SmtLibTerm assertion : assertions) {
 			shim.makeAssertion(assertion);
+		}
+		if (Main.smtStats) {
+			Configuration.smtCacheMisses.add(assertions.size());
+			Configuration.smtCacheClears.increment();
 		}
 		return emptyCollectionPair;
 	}

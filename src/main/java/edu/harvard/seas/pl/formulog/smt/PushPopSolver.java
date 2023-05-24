@@ -26,6 +26,7 @@ import java.util.Deque;
 import java.util.Iterator;
 
 import edu.harvard.seas.pl.formulog.Configuration;
+import edu.harvard.seas.pl.formulog.Main;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
@@ -40,6 +41,13 @@ public class PushPopSolver extends AbstractSmtLibSolver {
 			Collection<SmtLibTerm> assertions) throws EvaluationException {
 		int baseSize = cache.size();
 		int i = findDiffPos(assertions);
+		if (Main.smtStats) {
+			Configuration.smtCacheHits.add(i);
+			if (i == 0 && !cache.isEmpty()) {
+				Configuration.smtCacheClears.increment();
+			}
+			Configuration.smtCacheMisses.add(assertions.size() - i);
+		}
 		int pops = baseSize - i;
 		shrinkCache(i);
 		Iterator<SmtLibTerm> it = assertions.iterator();

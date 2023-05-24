@@ -23,6 +23,7 @@ package edu.harvard.seas.pl.formulog.smt;
 import java.util.Collection;
 
 import edu.harvard.seas.pl.formulog.Configuration;
+import edu.harvard.seas.pl.formulog.Main;
 import edu.harvard.seas.pl.formulog.ast.Constructors.SolverVariable;
 import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
@@ -35,6 +36,10 @@ public class CallAndResetSolver extends AbstractSmtLibSolver {
 			Collection<SmtLibTerm> assertions) throws EvaluationException {
 		for (SmtLibTerm assertion : assertions) {
 			shim.makeAssertion(assertion);
+		}
+		if (Main.smtStats) {
+			Configuration.smtCacheMisses.add(assertions.size());
+			Configuration.smtCacheClears.increment();
 		}
 		return emptyCollectionPair;
 	}

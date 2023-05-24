@@ -95,6 +95,10 @@ public class CheckSatAssumingSolver extends AbstractSmtLibSolver {
 		if (Configuration.timeSmt) {
 			Configuration.recordCsaCacheStats(solverId, hits, misses, oldSize);
 		}
+		if (Main.smtStats) {
+			Configuration.smtCacheHits.add(hits);
+			Configuration.smtCacheMisses.add(misses);
+		}
 		Collection<SolverVariable> offVars;
 		if (Configuration.smtUseNegativeLiterals) {
 			offVars = indicatorVars.values().stream().filter(x -> !onVars.contains(x)).collect(Collectors.toList());

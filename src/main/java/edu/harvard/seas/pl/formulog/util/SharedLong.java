@@ -41,6 +41,9 @@ public class SharedLong {
 	}
 
 	public void add(long delta) {
+		if (delta == 0) {
+			return;
+		}
 		tl.get().val += delta;
 	}
 
