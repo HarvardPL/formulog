@@ -139,6 +139,7 @@ public final class Configuration {
 	private static final Dataset otherSolverEvalStats = new Dataset();
 
 	public static final boolean oneRuleAtATime = propIsSet("oneRuleAtATime");
+	public static final boolean parallelizeInnerLoops = propIsSet("parallelizeInnerLoops", true);
 
 	public static final boolean useDemandTransformation = propIsSet("useDemandTransformation", true);
 	public static final boolean restoreStratification = propIsSet("restoreStratification", true);

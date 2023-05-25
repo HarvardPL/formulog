@@ -1,5 +1,7 @@
 package edu.harvard.seas.pl.formulog.eval;
 
+import java.util.Collections;
+
 /*-
  * #%L
  * Formulog
@@ -100,7 +102,7 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 	}
 
 	@Override
-	protected Iterable<Iterable<Term[]>> lookup(IndexedRule r, int pos, OverwriteSubstitution s)
+	protected Iterable<Iterable<Term[]>> lookup(IndexedRule r, int pos, OverwriteSubstitution s, boolean split)
 			throws EvaluationException {
 		SimplePredicate predicate = (SimplePredicate) r.getBody(pos);
 		int idx = r.getDbIndex(pos);
@@ -117,9 +119,15 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 		RelationSymbol sym = predicate.getSymbol();
 		assert !(sym instanceof DeltaSymbol);
 		Iterable<Term[]> ans = db.get(sym, key, idx);
-		boolean shouldSplit = splitPositions.get(r)[pos];
-		int targetSize = shouldSplit ? smtTaskSize : taskSize;
-		return Util.splitIterable(ans, targetSize);
+		if (split) {
+			boolean smtSplit = splitPositions.get(r)[pos];
+			int targetSize = smtSplit ? smtTaskSize : taskSize;
+			return Util.splitIterable(ans, targetSize);
+		} else if (ans.iterator().hasNext()){
+			return Collections.singletonList(ans);
+		} else {
+			return Collections.emptyList();
+		}
 	}
 
 	@SuppressWarnings("serial")
@@ -215,7 +223,7 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 					case PREDICATE:
 						SimplePredicate p = (SimplePredicate) l;
 						if (p.isNegated()) {
-							if (lookup(rule, pos, s).iterator().hasNext()) {
+							if (lookup(rule, pos, s, false).iterator().hasNext()) {
 								return;
 							}
 						} else {
@@ -234,7 +242,7 @@ public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 							"Exception raised while evaluating the literal: " + l + "\n\n" + e.getMessage());
 				}
 			}
-			Iterator<Iterable<Term[]>> tups = lookup(rule, pos, s).iterator();
+			Iterator<Iterable<Term[]>> tups = lookup(rule, pos, s, true).iterator();
 			if (tups.hasNext()) {
 				new RuleSuffixEvaluator(rule, pos, s, tups, scratch.clone()).doTask();
 			}
