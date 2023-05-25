@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 
 import edu.harvard.seas.pl.formulog.ast.*;
 import edu.harvard.seas.pl.formulog.codegen.CodeGen;
+import edu.harvard.seas.pl.formulog.smt.AbstractSmtLibSolver;
 import edu.harvard.seas.pl.formulog.smt.SmtStrategy;
 import org.apache.commons.lang3.time.StopWatch;
 
@@ -121,6 +122,7 @@ public final class Main implements Callable<Integer> {
 		var res = eval.getResult();
 		dumpResults(res);
 		dumpResultsToDisk(res);
+		AbstractSmtLibSolver.destroyAll();
 	}
 
 	private BasicProgram parse() {
