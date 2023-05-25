@@ -105,7 +105,7 @@ public abstract class AbstractStratumEvaluator implements StratumEvaluator {
 	abstract protected boolean checkFact(RelationSymbol sym, Term[] args, Substitution s, Term[] scratch)
 			throws EvaluationException;
 
-	abstract protected Iterable<Iterable<Term[]>> lookup(IndexedRule r, int pos, OverwriteSubstitution s)
+	abstract protected Iterable<Iterable<Term[]>> lookup(IndexedRule r, int pos, OverwriteSubstitution s, boolean split)
 			throws EvaluationException;
 
 	protected static final boolean recordRuleDiagnostics = Configuration.recordRuleDiagnostics;
@@ -227,7 +227,8 @@ public abstract class AbstractStratumEvaluator implements StratumEvaluator {
 							}
 							break;
 						case PREDICATE:
-							Iterator<Iterable<Term[]>> tups = lookup(rule, pos, s).iterator();
+							Iterator<Iterable<Term[]>> tups = lookup(rule, pos, s, Configuration.parallelizeInnerLoops)
+									.iterator();
 							if (((SimplePredicate) l).isNegated()) {
 								if (!tups.hasNext()) {
 									pos++;
