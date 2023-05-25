@@ -32,6 +32,7 @@ import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.harvard.seas.pl.formulog.Configuration;
@@ -42,6 +43,7 @@ import edu.harvard.seas.pl.formulog.ast.SmtLibTerm;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import edu.harvard.seas.pl.formulog.util.Pair;
+import edu.harvard.seas.pl.formulog.util.Util;
 
 public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 
@@ -89,6 +91,7 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 			}
 		}
 		log = w;
+		instances.add(this);
 	}
 
 	protected abstract boolean isIncremental();
@@ -110,13 +113,28 @@ public abstract class AbstractSmtLibSolver implements SmtLibSolver {
 
 	@Override
 	public synchronized void destroy() {
-		assert solver != null;
-		solver.destroy();
-		solver = null;
+		while (solver != null && solver.isAlive()) {
+			try {
+				solver.getOutputStream().close();
+				solver.waitFor();
+				solver = null;
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	private final static Set<AbstractSmtLibSolver> instances = Util.concurrentSet();
+
+	public static synchronized void destroyAll() {
+		for (var solver : instances) {
+			solver.destroy();
+		}
 	}
 
 	@Override
 	public void finalize() {
+		instances.remove(this);
 		destroy();
 	}
 
