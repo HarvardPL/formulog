@@ -8,7 +8,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=native")
 
 add_executable(flg "")
 
-set(SOUFFLE_FLAGS -w -j 2 -PSIPS:strict)
+set(SOUFFLE_FLAGS -w -j 2 -PRamSIPS:strict)
 
 option(FLG_EAGER_EVAL "Generate code performing eager evaluation (requires custom Soufflé)" OFF)
 if (FLG_EAGER_EVAL)
