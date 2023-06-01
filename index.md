@@ -37,6 +37,6 @@ In most cases, you should cite the OOPSLA'20 Formulog paper:
     journal = {Proc. ACM Program. Lang.},
     month = {nov},
     articleno = {141},
-    numpages = {31},
+    numpages = {31}
 }
 ```
