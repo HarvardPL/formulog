@@ -26,7 +26,7 @@ package edu.harvard.seas.pl.formulog.types;
  */
 public class TypeException extends Exception {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = -7218535057319510121L;
 
 	/**
 	 * Constructs an exception signifying a type error.

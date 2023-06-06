@@ -22,6 +22,8 @@ package edu.harvard.seas.pl.formulog.codegen;
 
 public class CodeGenException extends Exception {
 
+	private static final long serialVersionUID = -3022070471185499421L;
+
 	public CodeGenException(String message) {
 		super(message);
 	}

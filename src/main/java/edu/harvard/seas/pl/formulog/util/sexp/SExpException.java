@@ -22,9 +22,11 @@ package edu.harvard.seas.pl.formulog.util.sexp;
 
 public class SExpException extends Exception {
 
-	private static final long serialVersionUID = 1L;
+
+	private static final long serialVersionUID = -8286351759750678592L;
 
 	public SExpException() {
+		
 	}
 
 	public SExpException(String message) {

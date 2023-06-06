@@ -26,7 +26,7 @@ package edu.harvard.seas.pl.formulog.parsing;
  */
 public class ParseException extends Exception {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 47248799671953000L;
 	private final String fileName;
 	private final int lineNo;
 

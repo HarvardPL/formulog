@@ -210,6 +210,7 @@ public class TypeCodeGen {
 			case SMT_TYPE:
 			case SMT_WRAPPED_VAR_TYPE:
 			case SYM_TYPE:
+			case OPAQUE_SET:
 				break;
 			}
 			return null;

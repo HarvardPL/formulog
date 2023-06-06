@@ -22,7 +22,7 @@ package edu.harvard.seas.pl.formulog.eval;
 
 public class UncheckedEvaluationException extends RuntimeException {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 3409298995077099693L;
 
 	public UncheckedEvaluationException() {
 

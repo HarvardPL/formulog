@@ -35,11 +35,8 @@ import java.util.*;
 
 public class MainCpp extends TemplateSrcFile {
 
-	private final TermCodeGen tcg;
-
 	public MainCpp(CodeGenContext ctx) {
 		super("main.cpp", ctx);
-		this.tcg = new TermCodeGen(ctx);
 	}
 
 	public void gen(BufferedReader br, PrintWriter out) throws IOException, CodeGenException {
@@ -48,19 +45,13 @@ public class MainCpp extends TemplateSrcFile {
 		pr.loadExternalEdbs();
 		CodeGenUtil.copyOver(br, out, 1);
 		pr.loadStaticFacts();
-		/*
-		 * CodeGenUtil.copyOver(br, out, 2); pr.printStratumFuncs();
-		 * CodeGenUtil.copyOver(br, out, 3); pr.evaluate(); CodeGenUtil.copyOver(br,
-		 * out, 4); pr.printResults();
-		 */
-		CodeGenUtil.copyOver(br, out, 4);
+		CodeGenUtil.copyOver(br, out, 2);
 		pr.printIdbsToDisk();
 		CodeGenUtil.copyOver(br, out, -1);
 	}
 
 	private class Worker {
 
-		// private final SortedIndexedFactDb db = ctx.getEval().getDb();
 		private final PrintWriter out;
 
 		public Worker(PrintWriter out) {
@@ -111,51 +102,6 @@ public class MainCpp extends TemplateSrcFile {
 			CppExpr rel = CppConst.mkString(ctx.lookupRepr(sym));
 			stmts.add(CppFuncCall.mk("loadFact", rel, CppVectorLiteral.mk(args)).toStmt());
 			CppSeq.mk(stmts).println(out, 1);
-		}
-
-		/*
-		 * public void loadEdbs() { for (RelationSymbol sym : db.getSymbols()) { if
-		 * (sym.isEdbSymbol()) { // XXX Should probably change this so that we
-		 * explicitly // load up only the master index, and then add the // master index
-		 * to all the other ones. loadEdb(sym); } } }
-		 * 
-		 * public void loadEdb(RelationSymbol sym) { Relation rel =
-		 * ctx.lookupRelation(sym); for (Term[] tup : db.getAll(sym)) { Pair<CppStmt,
-		 * List<CppExpr>> p = tcg.gen(Arrays.asList(tup), Collections.emptyMap());
-		 * p.fst().println(out, 1); rel.mkInsert(rel.mkTuple(p.snd()),
-		 * false).toStmt().println(out, 1); } }
-		 * 
-		 * public void printStratumFuncs() { StratumCodeGen scg = new
-		 * StratumCodeGen(ctx); List<Stratum> strata = ctx.getEval().getStrata(); for
-		 * (Iterator<Stratum> it = strata.iterator(); it.hasNext(); ) {
-		 * printStratumFunc(it.next(), scg); if (it.hasNext()) { out.println(); } } }
-		 * 
-		 * public void printStratumFunc(Stratum stratum, StratumCodeGen sgc) {
-		 * out.println("void stratum_" + stratum.getRank() + "() {");
-		 * sgc.gen(stratum).println(out, 1); out.println("}"); }
-		 * 
-		 * public void evaluate() { int n = ctx.getEval().getStrata().size(); for (int i
-		 * = 0; i < n; ++i) { CppFuncCall.mk("stratum_" + i,
-		 * Collections.emptyList()).toStmt().println(out, 1); } }
-		 * 
-		 */
-
-		public void printResults() {
-			for (RelationSymbol sym : ctx.getProgram().getRuleSymbols()) {
-				out.print("  cout << \"");
-				out.print(sym);
-				out.print(": \" << ");
-				genRelationSize(sym).print(out);
-				out.println(" << endl;");
-				// CppIf.mk(CppVar.mk("dump"), ctx.lookupRelation(sym).mkPrint()).println(out,
-				// 1);
-			}
-		}
-
-		private CppExpr genRelationSize(RelationSymbol sym) {
-			String repr = ctx.lookupRepr(sym);
-			CppExpr rel = CppMethodCall.mk(CppVar.mk("prog"), "getRelation", CppConst.mkString(repr));
-			return CppMethodCall.mkThruPtr(rel, "size");
 		}
 
 		public void printIdbsToDisk() {

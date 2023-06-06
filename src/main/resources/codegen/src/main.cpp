@@ -1,6 +1,7 @@
 #include <chrono>
 #include <fstream>
 #include <iostream>
+#include <utility>
 #include <vector>
 #include <string>
 
@@ -18,7 +19,7 @@ using namespace flg;
 using namespace std;
 
 struct ExternalEdbLoader {
-    ExternalEdbLoader(size_t nthreads) : pool(nthreads) {}
+    explicit ExternalEdbLoader(size_t nthreads) : pool(nthreads) {}
 
     void go(const vector<string> &dirs);
 
@@ -53,7 +54,7 @@ void ExternalEdbLoader::loadEdbs(const string &dir, const string &file, souffle:
     });
 }
 
-void loadFact(const string &relname, vector<term_ptr> args) {
+void loadFact(const string &relname, const vector<term_ptr> &args) {
     auto rel = globals::program->getRelation(relname);
     assert(rel);
     souffle::tuple tup(rel);
@@ -66,12 +67,6 @@ void loadFact(const string &relname, vector<term_ptr> args) {
 void loadEdbs(const vector<string> &dirs, size_t nthreads) {
     ExternalEdbLoader(nthreads).go(dirs);
 /* INSERT 1 */
-}
-
-/* INSERT 2 */
-
-void evaluate() {
-/* INSERT 3 */
 }
 
 void printBanner(const std::string &heading) {
@@ -122,7 +117,7 @@ void printResults() {
 }
 
 struct ExternalIdbPrinter {
-    ExternalIdbPrinter(const boost::filesystem::path &dir_, size_t nthreads) : dir(dir_), pool(nthreads) {}
+    ExternalIdbPrinter(boost::filesystem::path dir_, size_t nthreads) : dir(std::move(dir_)), pool(nthreads) {}
 
     void go();
 
@@ -158,13 +153,13 @@ void ExternalIdbPrinter::saveToDisk(const string &name) {
 }
 
 void ExternalIdbPrinter::go() {
-/* INSERT 4 */
+/* INSERT 2 */
     pool.join();
 }
 
 namespace std {
 std::ostream &operator<<(std::ostream &os, const std::vector<std::string> &vec) {
-    for (auto item: vec) {
+    for (auto &item: vec) {
         os << item << " ";
     }
     return os;

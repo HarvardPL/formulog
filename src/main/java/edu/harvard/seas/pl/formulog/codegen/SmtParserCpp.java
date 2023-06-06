@@ -37,7 +37,6 @@ import edu.harvard.seas.pl.formulog.codegen.ast.cpp.CppExpr;
 import edu.harvard.seas.pl.formulog.codegen.ast.cpp.CppExprFromString;
 import edu.harvard.seas.pl.formulog.codegen.ast.cpp.CppFuncCall;
 import edu.harvard.seas.pl.formulog.codegen.ast.cpp.CppIf;
-import edu.harvard.seas.pl.formulog.codegen.ast.cpp.CppMethodCall;
 import edu.harvard.seas.pl.formulog.codegen.ast.cpp.CppReturn;
 import edu.harvard.seas.pl.formulog.codegen.ast.cpp.CppSeq;
 import edu.harvard.seas.pl.formulog.codegen.ast.cpp.CppStmt;

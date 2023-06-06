@@ -22,7 +22,7 @@ package edu.harvard.seas.pl.formulog.parsing;
 
 public class UncheckedParseException extends RuntimeException {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = -4969126551201111362L;
 	private final int lineNo;
 	private final String fileName;
 

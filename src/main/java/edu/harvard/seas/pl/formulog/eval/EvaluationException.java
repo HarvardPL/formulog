@@ -22,7 +22,7 @@ package edu.harvard.seas.pl.formulog.eval;
 
 public class EvaluationException extends Exception {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 959646507426445054L;
 
 	public EvaluationException() {
 

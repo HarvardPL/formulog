@@ -22,7 +22,7 @@ package edu.harvard.seas.pl.formulog.util;
 
 public class TodoException extends RuntimeException {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = -3552412612033483231L;
 
 	public TodoException() {
 
