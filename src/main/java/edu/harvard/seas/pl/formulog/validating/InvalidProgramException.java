@@ -26,7 +26,7 @@ package edu.harvard.seas.pl.formulog.validating;
  */
 public class InvalidProgramException extends Exception {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 5958219607857975431L;
 
 	/**
 	 * Constructs an exception signifying an ill-formedness error.

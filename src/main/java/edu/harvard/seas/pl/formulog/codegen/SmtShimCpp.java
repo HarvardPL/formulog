@@ -153,6 +153,12 @@ public class SmtShimCpp extends TemplateSrcFile {
 				return genSerializeOp("bvurem");
 			case BV_XOR:
 				return genSerializeOp("bvxor");
+			case BV_SHL:
+				return genSerializeOp("bvshl");
+			case BV_LSHR:
+				return genSerializeOp("bvlshr");
+			case BV_ASHR:
+				return genSerializeOp("bvashr");
 			// Normal constructors don't need special treatment
 			case CMP_EQ:
 			case CMP_GT:

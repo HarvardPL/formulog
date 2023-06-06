@@ -70,7 +70,6 @@ public class CodeGen {
 		copy("CMakeLists.txt");
 		copySrc("time.hpp");
 		copySrc("ConcurrentHashMap.hpp");
-		new RelsHpp(ctx).gen(outDir);
 		new FuncsHpp(ctx).gen(outDir);
 		new MainCpp(ctx).gen(outDir);
 		new SouffleCodeGen(ctx).gen(outDir);
