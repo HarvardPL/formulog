@@ -9,9 +9,9 @@ package edu.harvard.seas.pl.formulog.functions;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,177 +33,176 @@ import edu.harvard.seas.pl.formulog.util.Pair;
 
 public final class OpaqueSetOps {
 
-	private OpaqueSetOps() {
-		throw new AssertionError("impossible");
-	}
+  private OpaqueSetOps() {
+    throw new AssertionError("impossible");
+  }
 
-	public static final FunctionDef empty = new FunctionDef() {
+  public static final FunctionDef empty =
+      new FunctionDef() {
 
-		@Override
-		public FunctionSymbol getSymbol() {
-			return BuiltInFunctionSymbol.OPAQUE_SET_EMPTY;
-		}
+        @Override
+        public FunctionSymbol getSymbol() {
+          return BuiltInFunctionSymbol.OPAQUE_SET_EMPTY;
+        }
 
-		@Override
-		public Term evaluate(Term[] args) throws EvaluationException {
-			return OpaqueSet.empty();
-		}
+        @Override
+        public Term evaluate(Term[] args) throws EvaluationException {
+          return OpaqueSet.empty();
+        }
+      };
 
-	};
+  public static final FunctionDef size =
+      new FunctionDef() {
 
-	public static final FunctionDef size = new FunctionDef() {
+        @Override
+        public FunctionSymbol getSymbol() {
+          return BuiltInFunctionSymbol.OPAQUE_SET_SIZE;
+        }
 
-		@Override
-		public FunctionSymbol getSymbol() {
-			return BuiltInFunctionSymbol.OPAQUE_SET_SIZE;
-		}
+        @Override
+        public Term evaluate(Term[] args) throws EvaluationException {
+          OpaqueSet s = (OpaqueSet) args[0];
+          return I32.make(s.size());
+        }
+      };
 
-		@Override
-		public Term evaluate(Term[] args) throws EvaluationException {
-			OpaqueSet s = (OpaqueSet) args[0];
-			return I32.make(s.size());
-		}
+  public static final FunctionDef plus =
+      new FunctionDef() {
 
-	};
+        @Override
+        public FunctionSymbol getSymbol() {
+          return BuiltInFunctionSymbol.OPAQUE_SET_PLUS;
+        }
 
-	public static final FunctionDef plus = new FunctionDef() {
+        @Override
+        public Term evaluate(Term[] args) throws EvaluationException {
+          OpaqueSet s = (OpaqueSet) args[1];
+          return s.plus(args[0]);
+        }
+      };
 
-		@Override
-		public FunctionSymbol getSymbol() {
-			return BuiltInFunctionSymbol.OPAQUE_SET_PLUS;
-		}
+  public static final FunctionDef minus =
+      new FunctionDef() {
 
-		@Override
-		public Term evaluate(Term[] args) throws EvaluationException {
-			OpaqueSet s = (OpaqueSet) args[1];
-			return s.plus(args[0]);
-		}
+        @Override
+        public FunctionSymbol getSymbol() {
+          return BuiltInFunctionSymbol.OPAQUE_SET_MINUS;
+        }
 
-	};
+        @Override
+        public Term evaluate(Term[] args) throws EvaluationException {
+          OpaqueSet s = (OpaqueSet) args[1];
+          return s.minus(args[0]);
+        }
+      };
 
-	public static final FunctionDef minus = new FunctionDef() {
+  public static final FunctionDef union =
+      new FunctionDef() {
 
-		@Override
-		public FunctionSymbol getSymbol() {
-			return BuiltInFunctionSymbol.OPAQUE_SET_MINUS;
-		}
+        @Override
+        public FunctionSymbol getSymbol() {
+          return BuiltInFunctionSymbol.OPAQUE_SET_UNION;
+        }
 
-		@Override
-		public Term evaluate(Term[] args) throws EvaluationException {
-			OpaqueSet s = (OpaqueSet) args[1];
-			return s.minus(args[0]);
-		}
+        @Override
+        public Term evaluate(Term[] args) throws EvaluationException {
+          OpaqueSet s1 = (OpaqueSet) args[0];
+          OpaqueSet s2 = (OpaqueSet) args[1];
+          return s1.union(s2);
+        }
+      };
 
-	};
+  public static final FunctionDef diff =
+      new FunctionDef() {
 
-	public static final FunctionDef union = new FunctionDef() {
+        @Override
+        public FunctionSymbol getSymbol() {
+          return BuiltInFunctionSymbol.OPAQUE_SET_DIFF;
+        }
 
-		@Override
-		public FunctionSymbol getSymbol() {
-			return BuiltInFunctionSymbol.OPAQUE_SET_UNION;
-		}
+        @Override
+        public Term evaluate(Term[] args) throws EvaluationException {
+          OpaqueSet s1 = (OpaqueSet) args[0];
+          OpaqueSet s2 = (OpaqueSet) args[1];
+          return s1.diff(s2);
+        }
+      };
 
-		@Override
-		public Term evaluate(Term[] args) throws EvaluationException {
-			OpaqueSet s1 = (OpaqueSet) args[0];
-			OpaqueSet s2 = (OpaqueSet) args[1];
-			return s1.union(s2);
-		}
+  public static final FunctionDef choose =
+      new FunctionDef() {
 
-	};
+        @Override
+        public FunctionSymbol getSymbol() {
+          return BuiltInFunctionSymbol.OPAQUE_SET_CHOOSE;
+        }
 
-	public static final FunctionDef diff = new FunctionDef() {
+        @Override
+        public Term evaluate(Term[] args) throws EvaluationException {
+          OpaqueSet s = (OpaqueSet) args[0];
+          Pair<Term, OpaqueSet> p = s.choose();
+          if (p == null) {
+            return Constructors.none();
+          }
+          return Constructors.some(Constructors.tuple(p.fst(), p.snd()));
+        }
+      };
 
-		@Override
-		public FunctionSymbol getSymbol() {
-			return BuiltInFunctionSymbol.OPAQUE_SET_DIFF;
-		}
+  public static final FunctionDef member =
+      new FunctionDef() {
 
-		@Override
-		public Term evaluate(Term[] args) throws EvaluationException {
-			OpaqueSet s1 = (OpaqueSet) args[0];
-			OpaqueSet s2 = (OpaqueSet) args[1];
-			return s1.diff(s2);
-		}
+        @Override
+        public FunctionSymbol getSymbol() {
+          return BuiltInFunctionSymbol.OPAQUE_SET_MEMBER;
+        }
 
-	};
+        @Override
+        public Term evaluate(Term[] args) throws EvaluationException {
+          OpaqueSet s = (OpaqueSet) args[1];
+          return BoolTerm.mk(s.member(args[0]));
+        }
+      };
 
-	public static final FunctionDef choose = new FunctionDef() {
+  public static final FunctionDef singleton =
+      new FunctionDef() {
 
-		@Override
-		public FunctionSymbol getSymbol() {
-			return BuiltInFunctionSymbol.OPAQUE_SET_CHOOSE;
-		}
+        @Override
+        public FunctionSymbol getSymbol() {
+          return BuiltInFunctionSymbol.OPAQUE_SET_SINGLETON;
+        }
 
-		@Override
-		public Term evaluate(Term[] args) throws EvaluationException {
-			OpaqueSet s = (OpaqueSet) args[0];
-			Pair<Term, OpaqueSet> p = s.choose();
-			if (p == null) {
-				return Constructors.none();
-			}
-			return Constructors.some(Constructors.tuple(p.fst(), p.snd()));
-		}
+        @Override
+        public Term evaluate(Term[] args) throws EvaluationException {
+          return OpaqueSet.singleton(args[0]);
+        }
+      };
 
-	};
+  public static final FunctionDef subset =
+      new FunctionDef() {
 
-	public static final FunctionDef member = new FunctionDef() {
+        @Override
+        public FunctionSymbol getSymbol() {
+          return BuiltInFunctionSymbol.OPAQUE_SET_SUBSET;
+        }
 
-		@Override
-		public FunctionSymbol getSymbol() {
-			return BuiltInFunctionSymbol.OPAQUE_SET_MEMBER;
-		}
+        @Override
+        public Term evaluate(Term[] args) throws EvaluationException {
+          OpaqueSet s1 = (OpaqueSet) args[0];
+          OpaqueSet s2 = (OpaqueSet) args[1];
+          return BoolTerm.mk(s2.containsAll(s1));
+        }
+      };
 
-		@Override
-		public Term evaluate(Term[] args) throws EvaluationException {
-			OpaqueSet s = (OpaqueSet) args[1];
-			return BoolTerm.mk(s.member(args[0]));
-		}
+  public static final FunctionDef fromList =
+      new FunctionDef() {
 
-	};
+        @Override
+        public FunctionSymbol getSymbol() {
+          return BuiltInFunctionSymbol.OPAQUE_SET_SUBSET;
+        }
 
-	public static final FunctionDef singleton = new FunctionDef() {
-
-		@Override
-		public FunctionSymbol getSymbol() {
-			return BuiltInFunctionSymbol.OPAQUE_SET_SINGLETON;
-		}
-
-		@Override
-		public Term evaluate(Term[] args) throws EvaluationException {
-			return OpaqueSet.singleton(args[0]);
-		}
-
-	};
-
-	public static final FunctionDef subset = new FunctionDef() {
-
-		@Override
-		public FunctionSymbol getSymbol() {
-			return BuiltInFunctionSymbol.OPAQUE_SET_SUBSET;
-		}
-
-		@Override
-		public Term evaluate(Term[] args) throws EvaluationException {
-			OpaqueSet s1 = (OpaqueSet) args[0];
-			OpaqueSet s2 = (OpaqueSet) args[1];
-			return BoolTerm.mk(s2.containsAll(s1));
-		}
-
-	};
-
-	public static final FunctionDef fromList = new FunctionDef() {
-
-		@Override
-		public FunctionSymbol getSymbol() {
-			return BuiltInFunctionSymbol.OPAQUE_SET_SUBSET;
-		}
-
-		@Override
-		public Term evaluate(Term[] args) throws EvaluationException {
-			return OpaqueSet.fromCollection(Terms.termToTermList(args[0]));
-		}
-
-	};
-
+        @Override
+        public Term evaluate(Term[] args) throws EvaluationException {
+          return OpaqueSet.fromCollection(Terms.termToTermList(args[0]));
+        }
+      };
 }

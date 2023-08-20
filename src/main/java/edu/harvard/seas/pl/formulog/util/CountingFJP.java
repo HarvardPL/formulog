@@ -24,29 +24,28 @@ import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 
 public interface CountingFJP {
 
-	void externallyAddTask(AbstractFJPTask w);
+  void externallyAddTask(AbstractFJPTask w);
 
-	void recursivelyAddTask(AbstractFJPTask w);
+  void recursivelyAddTask(AbstractFJPTask w);
 
-	void reportTaskCompletion();
+  void reportTaskCompletion();
 
-	void blockUntilFinished();
+  void blockUntilFinished();
 
-	default void blockUntilFinishedExn() throws EvaluationException {
-		blockUntilFinished();
-		if (hasFailed()) {
-			throw getFailureCause();
-		}
-	}
+  default void blockUntilFinishedExn() throws EvaluationException {
+    blockUntilFinished();
+    if (hasFailed()) {
+      throw getFailureCause();
+    }
+  }
 
-	void shutdown();
+  void shutdown();
 
-	void fail(EvaluationException cause);
+  void fail(EvaluationException cause);
 
-	boolean hasFailed();
+  boolean hasFailed();
 
-	EvaluationException getFailureCause();
+  EvaluationException getFailureCause();
 
-	long getStealCount();
-
+  long getStealCount();
 }

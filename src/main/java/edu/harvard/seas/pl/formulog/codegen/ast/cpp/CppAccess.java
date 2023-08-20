@@ -24,29 +24,28 @@ import java.io.PrintWriter;
 
 public class CppAccess implements CppExpr {
 
-	private final CppExpr val;
-	private final String field;
-	private final boolean thruPtr;
+  private final CppExpr val;
+  private final String field;
+  private final boolean thruPtr;
 
-	private CppAccess(CppExpr val, String field, boolean thruPtr) {
-		this.val = val;
-		this.field = field;
-		this.thruPtr = thruPtr;
-	}
+  private CppAccess(CppExpr val, String field, boolean thruPtr) {
+    this.val = val;
+    this.field = field;
+    this.thruPtr = thruPtr;
+  }
 
-	public static CppAccess mk(CppExpr val, String field) {
-		return new CppAccess(val, field, false);
-	}
+  public static CppAccess mk(CppExpr val, String field) {
+    return new CppAccess(val, field, false);
+  }
 
-	public static CppAccess mkThruPtr(CppExpr val, String field) {
-		return new CppAccess(val, field, true);
-	}
+  public static CppAccess mkThruPtr(CppExpr val, String field) {
+    return new CppAccess(val, field, true);
+  }
 
-	@Override
-	public void print(PrintWriter out) {
-		val.print(out);
-		out.print(thruPtr ? "->" : ".");
-		out.print(field);
-	}
-
+  @Override
+  public void print(PrintWriter out) {
+    val.print(out);
+    out.print(thruPtr ? "->" : ".");
+    out.print(field);
+  }
 }

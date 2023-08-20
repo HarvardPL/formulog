@@ -9,9 +9,9 @@ package edu.harvard.seas.pl.formulog.validating;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,9 +27,9 @@ import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 
 public class SemiNaiveValidatingTest extends ValidatingTest {
 
-	@Override
-	protected Evaluation setup(WellTypedProgram prog) throws InvalidProgramException, EvaluationException {
-		return SemiNaiveEvaluation.setup(prog, 2, false);
-	}
-
+  @Override
+  protected Evaluation setup(WellTypedProgram prog)
+      throws InvalidProgramException, EvaluationException {
+    return SemiNaiveEvaluation.setup(prog, 2, false);
+  }
 }

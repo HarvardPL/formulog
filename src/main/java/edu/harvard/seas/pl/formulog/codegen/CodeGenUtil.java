@@ -20,92 +20,89 @@ package edu.harvard.seas.pl.formulog.codegen;
  * #L%
  */
 
-import java.io.*;
-
-import java.nio.file.Path;
-import java.util.Iterator;
-
 import edu.harvard.seas.pl.formulog.codegen.ast.cpp.*;
 import edu.harvard.seas.pl.formulog.symbols.*;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.Param;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedSymbol;
+import java.io.*;
+import java.nio.file.Path;
+import java.util.Iterator;
 
 public final class CodeGenUtil {
 
-	private CodeGenUtil() {
-		throw new AssertionError("impossible");
-	}
+  private CodeGenUtil() {
+    throw new AssertionError("impossible");
+  }
 
-	public static void printIndent(PrintWriter out, int indent) {
-		for (int i = 0; i < indent; ++i) {
-			out.print("  ");
-		}
-	}
+  public static void printIndent(PrintWriter out, int indent) {
+    for (int i = 0; i < indent; ++i) {
+      out.print("  ");
+    }
+  }
 
-	public static void print(Iterable<CppStmt> stmts, PrintWriter out, int indent) {
-		for (CppStmt stmt : stmts) {
-			stmt.println(out, indent);
-		}
-	}
+  public static void print(Iterable<CppStmt> stmts, PrintWriter out, int indent) {
+    for (CppStmt stmt : stmts) {
+      stmt.println(out, indent);
+    }
+  }
 
-	public static void printSeparated(Iterable<CppExpr> exprs, String sep, PrintWriter out) {
-		for (Iterator<CppExpr> it = exprs.iterator(); it.hasNext();) {
-			it.next().print(out);
-			if (it.hasNext()) {
-				out.print(sep);
-			}
-		}
-	}
+  public static void printSeparated(Iterable<CppExpr> exprs, String sep, PrintWriter out) {
+    for (Iterator<CppExpr> it = exprs.iterator(); it.hasNext(); ) {
+      it.next().print(out);
+      if (it.hasNext()) {
+        out.print(sep);
+      }
+    }
+  }
 
-	public static CppExpr mkComplexTermLookup(CppExpr base, int offset) {
-		CppExpr cast = CppCast.mkReinterpret("const ComplexTerm&", CppUnop.mkDeref(base));
-		CppExpr access = CppAccess.mk(cast, "val");
-		return CppSubscript.mk(access, CppConst.mkInt(offset));
-	}
+  public static CppExpr mkComplexTermLookup(CppExpr base, int offset) {
+    CppExpr cast = CppCast.mkReinterpret("const ComplexTerm&", CppUnop.mkDeref(base));
+    CppExpr access = CppAccess.mk(cast, "val");
+    return CppSubscript.mk(access, CppConst.mkInt(offset));
+  }
 
-	public static void copyOver(BufferedReader in, PrintWriter out, int stopAt) throws IOException {
-		String line;
-		while ((line = in.readLine()) != null && !line.equals("/* INSERT " + stopAt + " */")) {
-			out.println(line);
-		}
-	}
+  public static void copyOver(BufferedReader in, PrintWriter out, int stopAt) throws IOException {
+    String line;
+    while ((line = in.readLine()) != null && !line.equals("/* INSERT " + stopAt + " */")) {
+      out.println(line);
+    }
+  }
 
-	public static String mkName(Symbol sym) {
-		String s;
-		if (sym instanceof ParameterizedSymbol) {
-			ParameterizedSymbol psym = (ParameterizedSymbol) sym;
-			StringBuilder sb = new StringBuilder(psym.getBase().toString());
-			for (Param p : psym.getArgs()) {
-				sb.append("__");
-				String ty = p.getType().toString().replaceAll("[^A-Za-z0-9_]+", "_");
-				sb.append(ty);
-			}
-			s = sb.toString();
-		} else {
-			s = sym.toString().replaceAll("[^A-Za-z0-9_]+", "_");
-		}
-		if (sym instanceof FunctionSymbol && !(sym instanceof BuiltInFunctionSymbol)) {
-			s = "FLG_" + s;
-		}
-		return s;
-	}
+  public static String mkName(Symbol sym) {
+    String s;
+    if (sym instanceof ParameterizedSymbol) {
+      ParameterizedSymbol psym = (ParameterizedSymbol) sym;
+      StringBuilder sb = new StringBuilder(psym.getBase().toString());
+      for (Param p : psym.getArgs()) {
+        sb.append("__");
+        String ty = p.getType().toString().replaceAll("[^A-Za-z0-9_]+", "_");
+        sb.append(ty);
+      }
+      s = sb.toString();
+    } else {
+      s = sym.toString().replaceAll("[^A-Za-z0-9_]+", "_");
+    }
+    if (sym instanceof FunctionSymbol && !(sym instanceof BuiltInFunctionSymbol)) {
+      s = "FLG_" + s;
+    }
+    return s;
+  }
 
-	public static String toString(CppStmt stmt, int indent) {
-		StringWriter sw = new StringWriter();
-		stmt.println(new PrintWriter(sw), indent);
-		return sw.toString();
-	}
+  public static String toString(CppStmt stmt, int indent) {
+    StringWriter sw = new StringWriter();
+    stmt.println(new PrintWriter(sw), indent);
+    return sw.toString();
+  }
 
-	public static InputStream inputSrcFile(String file) {
-		var cl = CodeGenUtil.class.getClassLoader();
-		var path = Path.of("codegen", "src", file).toString();
-		var is = cl.getResourceAsStream(path);
-		assert is != null : path;
-		return is;
-	}
+  public static InputStream inputSrcFile(String file) {
+    var cl = CodeGenUtil.class.getClassLoader();
+    var path = Path.of("codegen", "src", file).toString();
+    var is = cl.getResourceAsStream(path);
+    assert is != null : path;
+    return is;
+  }
 
-	public static File outputSrcFile(File topDir, String file) {
-		return topDir.toPath().resolve("src").resolve(file).toFile();
-	}
-
+  public static File outputSrcFile(File topDir, String file) {
+    return topDir.toPath().resolve("src").resolve(file).toFile();
+  }
 }

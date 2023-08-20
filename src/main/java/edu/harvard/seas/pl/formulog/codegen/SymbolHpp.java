@@ -21,7 +21,6 @@ package edu.harvard.seas.pl.formulog.codegen;
  */
 
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -29,43 +28,41 @@ import java.util.Set;
 
 public class SymbolHpp extends TemplateSrcFile {
 
-	public SymbolHpp(CodeGenContext ctx) {
-		super("Symbol.hpp", ctx);
-	}
+  public SymbolHpp(CodeGenContext ctx) {
+    super("Symbol.hpp", ctx);
+  }
 
-	public void gen(BufferedReader br, PrintWriter out) throws IOException {
-		Worker w = new Worker(out);
-		CodeGenUtil.copyOver(br, out, 0);
-		w.declareSymbols();
-		CodeGenUtil.copyOver(br, out, 1);
-		w.defineArity();
-		CodeGenUtil.copyOver(br, out, -1);
-	}
+  public void gen(BufferedReader br, PrintWriter out) throws IOException {
+    Worker w = new Worker(out);
+    CodeGenUtil.copyOver(br, out, 0);
+    w.declareSymbols();
+    CodeGenUtil.copyOver(br, out, 1);
+    w.defineArity();
+    CodeGenUtil.copyOver(br, out, -1);
+  }
 
-	private class Worker {
+  private class Worker {
 
-		private final Set<ConstructorSymbol> symbols = ctx.getConstructorSymbols();
-		private final PrintWriter out;
+    private final Set<ConstructorSymbol> symbols = ctx.getConstructorSymbols();
+    private final PrintWriter out;
 
-		public Worker(PrintWriter out) {
-			this.out = out;
-		}
+    public Worker(PrintWriter out) {
+      this.out = out;
+    }
 
-		void declareSymbols() {
-			for (ConstructorSymbol sym : symbols) {
-				out.print("  ");
-				out.println(ctx.lookupUnqualifiedRepr(sym) + ",");
-			}
-		}
+    void declareSymbols() {
+      for (ConstructorSymbol sym : symbols) {
+        out.print("  ");
+        out.println(ctx.lookupUnqualifiedRepr(sym) + ",");
+      }
+    }
 
-		void defineArity() {
-			for (ConstructorSymbol sym : symbols) {
-				out.print("    case ");
-				out.print(ctx.lookupRepr(sym));
-				out.println(": return " + sym.getArity() + ";");
-			}
-		}
-
-	}
-
+    void defineArity() {
+      for (ConstructorSymbol sym : symbols) {
+        out.print("    case ");
+        out.print(ctx.lookupRepr(sym));
+        out.println(": return " + sym.getArity() + ";");
+      }
+    }
+  }
 }

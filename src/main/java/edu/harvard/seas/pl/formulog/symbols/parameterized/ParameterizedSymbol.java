@@ -9,9 +9,9 @@ package edu.harvard.seas.pl.formulog.symbols.parameterized;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,22 +20,20 @@ package edu.harvard.seas.pl.formulog.symbols.parameterized;
  * #L%
  */
 
-import java.util.List;
-
 import edu.harvard.seas.pl.formulog.symbols.Symbol;
+import java.util.List;
 
 public interface ParameterizedSymbol extends Symbol {
 
-	SymbolBase getBase();
+  SymbolBase getBase();
 
-	List<Param> getArgs();
+  List<Param> getArgs();
 
-	ParameterizedSymbol copyWithNewArgs(List<Param> args);
+  ParameterizedSymbol copyWithNewArgs(List<Param> args);
 
-	ParameterizedSymbol copyWithNewArgs(Param... args);
+  ParameterizedSymbol copyWithNewArgs(Param... args);
 
-	ParameterizedSymbol makeFinal();
+  ParameterizedSymbol makeFinal();
 
-	boolean isGround();
-
+  boolean isGround();
 }

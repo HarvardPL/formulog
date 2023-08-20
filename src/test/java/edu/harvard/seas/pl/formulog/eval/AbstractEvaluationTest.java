@@ -25,18 +25,17 @@ import java.util.List;
 
 public abstract class AbstractEvaluationTest<T extends Evaluation> {
 
-	private final Tester tester;
+  private final Tester tester;
 
-	public AbstractEvaluationTest(Tester tester) {
-		this.tester = tester;
-	}
+  public AbstractEvaluationTest(Tester tester) {
+    this.tester = tester;
+  }
 
-	protected void test(String file, List<String> inputDirs) {
-		tester.test(file, inputDirs);
-	}
+  protected void test(String file, List<String> inputDirs) {
+    tester.test(file, inputDirs);
+  }
 
-	protected void test(String file) {
-		test(file, Collections.singletonList(""));
-	}
-
+  protected void test(String file) {
+    test(file, Collections.singletonList(""));
+  }
 }

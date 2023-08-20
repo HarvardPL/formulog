@@ -9,9 +9,9 @@ package edu.harvard.seas.pl.formulog.ast;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,137 +20,128 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
+import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
+import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitorExn;
+import edu.harvard.seas.pl.formulog.eval.EvaluationException;
+import edu.harvard.seas.pl.formulog.unification.Substitution;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitor;
-import edu.harvard.seas.pl.formulog.ast.Exprs.ExprVisitorExn;
-import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-import edu.harvard.seas.pl.formulog.unification.Substitution;
-
 public class LetFunExpr implements Expr {
 
-	private final Set<NestedFunctionDef> defs;
-	private final Term letBody;
+  private final Set<NestedFunctionDef> defs;
+  private final Term letBody;
 
-	private LetFunExpr(Set<NestedFunctionDef> defs, Term letBody) {
-		Set<NestedFunctionDef> freshDefs = new HashSet<>();
-		for (NestedFunctionDef def : defs) {
-			freshDefs.add(def.freshen());
-		}
-		this.defs = Collections.unmodifiableSet(freshDefs);
-		this.letBody = letBody;
-	}
+  private LetFunExpr(Set<NestedFunctionDef> defs, Term letBody) {
+    Set<NestedFunctionDef> freshDefs = new HashSet<>();
+    for (NestedFunctionDef def : defs) {
+      freshDefs.add(def.freshen());
+    }
+    this.defs = Collections.unmodifiableSet(freshDefs);
+    this.letBody = letBody;
+  }
 
-	public static LetFunExpr make(Set<NestedFunctionDef> defs, Term letBody) {
-		return new LetFunExpr(defs, letBody);
-	}
+  public static LetFunExpr make(Set<NestedFunctionDef> defs, Term letBody) {
+    return new LetFunExpr(defs, letBody);
+  }
 
-	public Set<NestedFunctionDef> getDefs() {
-		return defs;
-	}
+  public Set<NestedFunctionDef> getDefs() {
+    return defs;
+  }
 
-	public Term getLetBody() {
-		return letBody;
-	}
+  public Term getLetBody() {
+    return letBody;
+  }
 
-	@Override
-	public boolean isGround() {
-		for (NestedFunctionDef def : defs) {
-			if (!def.getBody().isGround()) {
-				return false;
-			}
-		}
-		return letBody.isGround();
-	}
+  @Override
+  public boolean isGround() {
+    for (NestedFunctionDef def : defs) {
+      if (!def.getBody().isGround()) {
+        return false;
+      }
+    }
+    return letBody.isGround();
+  }
 
-	@Override
-	public Term applySubstitution(Substitution s) {
-		Set<NestedFunctionDef> newDefs = new HashSet<>();
-		for (NestedFunctionDef def : defs) {
-			newDefs.add(def.applySubstitution(s));
-		}
-		return make(newDefs, letBody.applySubstitution(s));
-	}
+  @Override
+  public Term applySubstitution(Substitution s) {
+    Set<NestedFunctionDef> newDefs = new HashSet<>();
+    for (NestedFunctionDef def : defs) {
+      newDefs.add(def.applySubstitution(s));
+    }
+    return make(newDefs, letBody.applySubstitution(s));
+  }
 
-	@Override
-	public Term normalize(Substitution s) throws EvaluationException {
-		throw new UnsupportedOperationException();
-	}
+  @Override
+  public Term normalize(Substitution s) throws EvaluationException {
+    throw new UnsupportedOperationException();
+  }
 
-	@Override
-	public void varSet(Set<Var> acc) {
-		for (NestedFunctionDef def : defs) {
-			Set<Var> vars = def.getBody().varSet();
-			vars.removeAll(def.getParams());
-			acc.addAll(vars);
-		}
-	}
+  @Override
+  public void varSet(Set<Var> acc) {
+    for (NestedFunctionDef def : defs) {
+      Set<Var> vars = def.getBody().varSet();
+      vars.removeAll(def.getParams());
+      acc.addAll(vars);
+    }
+  }
 
-	@Override
-	public void updateVarCounts(Map<Var, Integer> counts) {
-		throw new UnsupportedOperationException("LetFunExpr.updateVarCounts() unimplemented");
-	}
+  @Override
+  public void updateVarCounts(Map<Var, Integer> counts) {
+    throw new UnsupportedOperationException("LetFunExpr.updateVarCounts() unimplemented");
+  }
 
-	@Override
-	public int getId() {
-		throw new UnsupportedOperationException();
-	}
+  @Override
+  public int getId() {
+    throw new UnsupportedOperationException();
+  }
 
-	@Override
-	public <I, O> O accept(ExprVisitor<I, O> visitor, I in) {
-		return visitor.visit(this, in);
-	}
+  @Override
+  public <I, O> O accept(ExprVisitor<I, O> visitor, I in) {
+    return visitor.visit(this, in);
+  }
 
-	@Override
-	public <I, O, E extends Throwable> O accept(ExprVisitorExn<I, O, E> visitor, I in) throws E {
-		return visitor.visit(this, in);
-	}
+  @Override
+  public <I, O, E extends Throwable> O accept(ExprVisitorExn<I, O, E> visitor, I in) throws E {
+    return visitor.visit(this, in);
+  }
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((defs == null) ? 0 : defs.hashCode());
-		result = prime * result + ((letBody == null) ? 0 : letBody.hashCode());
-		return result;
-	}
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((defs == null) ? 0 : defs.hashCode());
+    result = prime * result + ((letBody == null) ? 0 : letBody.hashCode());
+    return result;
+  }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		LetFunExpr other = (LetFunExpr) obj;
-		if (defs == null) {
-			if (other.defs != null)
-				return false;
-		} else if (!defs.equals(other.defs))
-			return false;
-		if (letBody == null) {
-			if (other.letBody != null)
-				return false;
-		} else if (!letBody.equals(other.letBody))
-			return false;
-		return true;
-	}
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) return true;
+    if (obj == null) return false;
+    if (getClass() != obj.getClass()) return false;
+    LetFunExpr other = (LetFunExpr) obj;
+    if (defs == null) {
+      if (other.defs != null) return false;
+    } else if (!defs.equals(other.defs)) return false;
+    if (letBody == null) {
+      if (other.letBody != null) return false;
+    } else if (!letBody.equals(other.letBody)) return false;
+    return true;
+  }
 
-	@Override
-	public String toString() {
-		String s = "let fun ";
-		for (Iterator<NestedFunctionDef> it = defs.iterator(); it.hasNext();) {
-			s += it.next();
-			if (it.hasNext()) {
-				s += "\nand ";
-			}
-		}
-		return s + " in\n" + letBody;
-	}
-
+  @Override
+  public String toString() {
+    String s = "let fun ";
+    for (Iterator<NestedFunctionDef> it = defs.iterator(); it.hasNext(); ) {
+      s += it.next();
+      if (it.hasNext()) {
+        s += "\nand ";
+      }
+    }
+    return s + " in\n" + letBody;
+  }
 }

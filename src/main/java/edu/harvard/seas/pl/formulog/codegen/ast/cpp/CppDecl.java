@@ -21,38 +21,36 @@ package edu.harvard.seas.pl.formulog.codegen.ast.cpp;
  */
 
 import edu.harvard.seas.pl.formulog.codegen.CodeGenUtil;
-
 import java.io.PrintWriter;
 
 public class CppDecl implements CppStmt {
 
-	private final String type;
-	private final String var;
-	private final CppExpr val;
+  private final String type;
+  private final String var;
+  private final CppExpr val;
 
-	private CppDecl(String type, String var, CppExpr val) {
-		this.type = type;
-		this.var = var;
-		this.val = val;
-	}
+  private CppDecl(String type, String var, CppExpr val) {
+    this.type = type;
+    this.var = var;
+    this.val = val;
+  }
 
-	public static CppDecl mk(String var, CppExpr val) {
-		return new CppDecl("auto", var, val);
-	}
+  public static CppDecl mk(String var, CppExpr val) {
+    return new CppDecl("auto", var, val);
+  }
 
-	public static CppDecl mkRef(String var, CppExpr val) {
-		return new CppDecl("auto&", var, val);
-	}
+  public static CppDecl mkRef(String var, CppExpr val) {
+    return new CppDecl("auto&", var, val);
+  }
 
-	@Override
-	public void println(PrintWriter out, int indent) {
-		CodeGenUtil.printIndent(out, indent);
-		out.print(type);
-		out.print(" ");
-		out.print(var);
-		out.print(" = ");
-		val.print(out);
-		out.println(";");
-	}
-
+  @Override
+  public void println(PrintWriter out, int indent) {
+    CodeGenUtil.printIndent(out, indent);
+    out.print(type);
+    out.print(" ");
+    out.print(var);
+    out.print(" = ");
+    val.print(out);
+    out.println(";");
+  }
 }

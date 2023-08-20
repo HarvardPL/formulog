@@ -24,57 +24,56 @@ import java.io.PrintWriter;
 
 public class CppBinop implements CppExpr {
 
-	private final CppExpr lhs;
-	private final String op;
-	private final CppExpr rhs;
+  private final CppExpr lhs;
+  private final String op;
+  private final CppExpr rhs;
 
-	private CppBinop(CppExpr lhs, String op, CppExpr rhs) {
-		this.lhs = lhs;
-		this.op = op;
-		this.rhs = rhs;
-	}
+  private CppBinop(CppExpr lhs, String op, CppExpr rhs) {
+    this.lhs = lhs;
+    this.op = op;
+    this.rhs = rhs;
+  }
 
-	private static CppBinop mk(CppExpr lhs, String op, CppExpr rhs) {
-		return new CppBinop(lhs, op, rhs);
-	}
+  private static CppBinop mk(CppExpr lhs, String op, CppExpr rhs) {
+    return new CppBinop(lhs, op, rhs);
+  }
 
-	public static CppBinop mkOrUpdate(CppExpr lhs, CppExpr rhs) {
-		return mk(lhs, "|=", rhs);
-	}
+  public static CppBinop mkOrUpdate(CppExpr lhs, CppExpr rhs) {
+    return mk(lhs, "|=", rhs);
+  }
 
-	public static CppBinop mkLogAnd(CppExpr lhs, CppExpr rhs) {
-		return mk(lhs, "&&", rhs);
-	}
+  public static CppBinop mkLogAnd(CppExpr lhs, CppExpr rhs) {
+    return mk(lhs, "&&", rhs);
+  }
 
-	public static CppBinop mkNotEq(CppExpr lhs, CppExpr rhs) {
-		return mk(lhs, "!=", rhs);
-	}
+  public static CppBinop mkNotEq(CppExpr lhs, CppExpr rhs) {
+    return mk(lhs, "!=", rhs);
+  }
 
-	public static CppBinop mkLt(CppExpr lhs, CppExpr rhs) {
-		return mk(lhs, "<", rhs);
-	}
+  public static CppBinop mkLt(CppExpr lhs, CppExpr rhs) {
+    return mk(lhs, "<", rhs);
+  }
 
-	public static CppBinop mkAssign(CppExpr lhs, CppExpr rhs) {
-		return mk(lhs, "=", rhs);
-	}
+  public static CppBinop mkAssign(CppExpr lhs, CppExpr rhs) {
+    return mk(lhs, "=", rhs);
+  }
 
-	public static CppExpr mkEq(CppExpr lhs, CppExpr rhs) {
-		return mk(lhs, "==", rhs);
-	}
+  public static CppExpr mkEq(CppExpr lhs, CppExpr rhs) {
+    return mk(lhs, "==", rhs);
+  }
 
-	public static CppExpr mkShiftLeft(CppExpr lhs, CppExpr rhs) {
-		return mk(lhs, "<<", rhs);
-	}
+  public static CppExpr mkShiftLeft(CppExpr lhs, CppExpr rhs) {
+    return mk(lhs, "<<", rhs);
+  }
 
-	@Override
-	public void print(PrintWriter out) {
-		out.print("(");
-		lhs.print(out);
-		out.print(" ");
-		out.print(op);
-		out.print(" ");
-		rhs.print(out);
-		out.print(")");
-	}
-
+  @Override
+  public void print(PrintWriter out) {
+    out.print("(");
+    lhs.print(out);
+    out.print(" ");
+    out.print(op);
+    out.print(" ");
+    rhs.print(out);
+    out.print(")");
+  }
 }

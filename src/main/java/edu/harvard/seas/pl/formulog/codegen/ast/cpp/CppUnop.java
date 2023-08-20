@@ -24,36 +24,35 @@ import java.io.PrintWriter;
 
 public class CppUnop implements CppExpr {
 
-	private final String op;
-	private final CppExpr expr;
+  private final String op;
+  private final CppExpr expr;
 
-	private CppUnop(String op, CppExpr expr) {
-		this.op = op;
-		this.expr = expr;
-	}
+  private CppUnop(String op, CppExpr expr) {
+    this.op = op;
+    this.expr = expr;
+  }
 
-	private static CppUnop mk(String op, CppExpr expr) {
-		return new CppUnop(op, expr);
-	}
+  private static CppUnop mk(String op, CppExpr expr) {
+    return new CppUnop(op, expr);
+  }
 
-	public static CppUnop mkNot(CppExpr expr) {
-		return mk("!", expr);
-	}
+  public static CppUnop mkNot(CppExpr expr) {
+    return mk("!", expr);
+  }
 
-	public static CppUnop mkPreIncr(CppExpr expr) {
-		return mk("++", expr);
-	}
+  public static CppUnop mkPreIncr(CppExpr expr) {
+    return mk("++", expr);
+  }
 
-	public static CppUnop mkDeref(CppExpr expr) {
-		return mk("*", expr);
-	}
+  public static CppUnop mkDeref(CppExpr expr) {
+    return mk("*", expr);
+  }
 
-	@Override
-	public void print(PrintWriter out) {
-		out.print("(");
-		out.print(op);
-		expr.print(out);
-		out.print(")");
-	}
-
+  @Override
+  public void print(PrintWriter out) {
+    out.print("(");
+    out.print(op);
+    expr.print(out);
+    out.print(")");
+  }
 }

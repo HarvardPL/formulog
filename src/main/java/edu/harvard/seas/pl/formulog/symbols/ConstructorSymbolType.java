@@ -9,9 +9,9 @@ package edu.harvard.seas.pl.formulog.symbols;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,19 +21,16 @@ package edu.harvard.seas.pl.formulog.symbols;
  */
 
 public enum ConstructorSymbolType {
+  SOLVER_UNINTERPRETED_FUNCTION,
 
-	SOLVER_UNINTERPRETED_FUNCTION,
+  VANILLA_CONSTRUCTOR,
 
-	VANILLA_CONSTRUCTOR,
+  SOLVER_EXPR,
 
-	SOLVER_EXPR,
+  SOLVER_CONSTRUCTOR_GETTER,
 
-	SOLVER_CONSTRUCTOR_GETTER,
+  SOLVER_CONSTRUCTOR_TESTER,
 
-	SOLVER_CONSTRUCTOR_TESTER,
-
-	INDEX_CONSTRUCTOR,
-
-	;
-
+  INDEX_CONSTRUCTOR,
+  ;
 }

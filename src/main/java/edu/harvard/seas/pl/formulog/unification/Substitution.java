@@ -9,9 +9,9 @@ package edu.harvard.seas.pl.formulog.unification;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,31 +25,31 @@ import edu.harvard.seas.pl.formulog.ast.Var;
 
 public interface Substitution {
 
-	void put(Var v, Term t);
+  void put(Var v, Term t);
 
-	Term get(Var v);
+  Term get(Var v);
 
-	static Term getIfPresent(Term t, Substitution s) {
-		if (t instanceof Var && s.containsKey((Var) t)) {
-			return s.get((Var) t);
-		}
-		return t;
-	}
+  static Term getIfPresent(Term t, Substitution s) {
+    if (t instanceof Var && s.containsKey((Var) t)) {
+      return s.get((Var) t);
+    }
+    return t;
+  }
 
-	boolean containsKey(Var v);
+  boolean containsKey(Var v);
 
-	Iterable<Var> iterateKeys();
+  Iterable<Var> iterateKeys();
 
-//	Substitution copy();
+  //	Substitution copy();
 
-//	int newCheckpoint();
+  //	int newCheckpoint();
 
-//	int getCheckpoint();
+  //	int getCheckpoint();
 
-//	void revertTo(int checkpoint);
+  //	void revertTo(int checkpoint);
 
-//	int popCheckpoint();
+  //	int popCheckpoint();
 
-//	void mergeCheckpoint();
+  //	void mergeCheckpoint();
 
 }

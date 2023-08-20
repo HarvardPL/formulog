@@ -9,9 +9,9 @@ package edu.harvard.seas.pl.formulog.ast;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,39 +20,37 @@ package edu.harvard.seas.pl.formulog.ast;
  * #L%
  */
 
-import java.util.Set;
-
 import edu.harvard.seas.pl.formulog.functions.FunctionDef;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
+import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolManager;
 import edu.harvard.seas.pl.formulog.symbols.TypeSymbol;
-import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
+import java.util.Set;
 
 public interface Program<Q extends Literal, R extends Rule<Q, ?>> {
 
-	Set<FunctionSymbol> getFunctionSymbols();
+  Set<FunctionSymbol> getFunctionSymbols();
 
-	Set<RelationSymbol> getFactSymbols();
+  Set<RelationSymbol> getFactSymbols();
 
-	Set<RelationSymbol> getRuleSymbols();
+  Set<RelationSymbol> getRuleSymbols();
 
-	FunctionDef getDef(FunctionSymbol sym);
+  FunctionDef getDef(FunctionSymbol sym);
 
-	Set<Term[]> getFacts(RelationSymbol sym);
+  Set<Term[]> getFacts(RelationSymbol sym);
 
-	Set<R> getRules(RelationSymbol sym);
+  Set<R> getRules(RelationSymbol sym);
 
-	SymbolManager getSymbolManager();
+  SymbolManager getSymbolManager();
 
-	boolean hasQuery();
+  boolean hasQuery();
 
-	Q getQuery();
+  Q getQuery();
 
-	FunctionCallFactory getFunctionCallFactory();
+  FunctionCallFactory getFunctionCallFactory();
 
-	Set<ConstructorSymbol> getUninterpretedFunctionSymbols();
+  Set<ConstructorSymbol> getUninterpretedFunctionSymbols();
 
-	Set<TypeSymbol> getTypeSymbols();
-
+  Set<TypeSymbol> getTypeSymbols();
 }

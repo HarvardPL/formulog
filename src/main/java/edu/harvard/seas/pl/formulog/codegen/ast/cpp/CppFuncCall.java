@@ -21,35 +21,33 @@ package edu.harvard.seas.pl.formulog.codegen.ast.cpp;
  */
 
 import edu.harvard.seas.pl.formulog.codegen.CodeGenUtil;
-
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.List;
 
 public class CppFuncCall implements CppExpr {
 
-	private final String func;
-	private final List<CppExpr> args;
+  private final String func;
+  private final List<CppExpr> args;
 
-	private CppFuncCall(String func, List<CppExpr> args) {
-		this.func = func;
-		this.args = args;
-	}
+  private CppFuncCall(String func, List<CppExpr> args) {
+    this.func = func;
+    this.args = args;
+  }
 
-	public static CppFuncCall mk(String func, List<CppExpr> args) {
-		return new CppFuncCall(func, args);
-	}
+  public static CppFuncCall mk(String func, List<CppExpr> args) {
+    return new CppFuncCall(func, args);
+  }
 
-	public static CppFuncCall mk(String func, CppExpr... args) {
-		return mk(func, Arrays.asList(args));
-	}
+  public static CppFuncCall mk(String func, CppExpr... args) {
+    return mk(func, Arrays.asList(args));
+  }
 
-	@Override
-	public void print(PrintWriter out) {
-		out.print(func);
-		out.print("(");
-		CodeGenUtil.printSeparated(args, ", ", out);
-		out.print(")");
-	}
-
+  @Override
+  public void print(PrintWriter out) {
+    out.print(func);
+    out.print("(");
+    CodeGenUtil.printSeparated(args, ", ", out);
+    out.print(")");
+  }
 }

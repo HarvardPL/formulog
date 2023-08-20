@@ -24,24 +24,23 @@ import java.io.PrintWriter;
 
 public class CppSubscript implements CppExpr {
 
-	private final CppExpr val;
-	private final CppExpr idx;
+  private final CppExpr val;
+  private final CppExpr idx;
 
-	private CppSubscript(CppExpr val, CppExpr idx) {
-		this.val = val;
-		this.idx = idx;
-	}
+  private CppSubscript(CppExpr val, CppExpr idx) {
+    this.val = val;
+    this.idx = idx;
+  }
 
-	public static CppSubscript mk(CppExpr val, CppExpr idx) {
-		return new CppSubscript(val, idx);
-	}
+  public static CppSubscript mk(CppExpr val, CppExpr idx) {
+    return new CppSubscript(val, idx);
+  }
 
-	@Override
-	public void print(PrintWriter out) {
-		val.print(out);
-		out.print("[");
-		idx.print(out);
-		out.print("]");
-	}
-
+  @Override
+  public void print(PrintWriter out) {
+    val.print(out);
+    out.print("[");
+    idx.print(out);
+    out.print("]");
+  }
 }
