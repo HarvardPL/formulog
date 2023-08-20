@@ -259,6 +259,12 @@ language built around refinement types.
 
 There's a Vim syntax file in the `misc/` directory.
 
+## Contributing
+
+Contributions to this project are most welcome!
+Please open a [GitHub issue](https://github.com/HarvardPL/formulog/issues) and then link a pull request to it.
+We use the [Google Java format](https://github.com/google/google-java-format); our CI will reject any pull requests that do not meet it.
+
 ## Third-party libraries
 
 This project uses third-party libraries. You can generate a list of these
