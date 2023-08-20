@@ -24,24 +24,23 @@ import java.io.PrintWriter;
 
 public class CppVar implements CppExpr {
 
-	private final String var;
+  private final String var;
 
-	private CppVar(String var) {
-		this.var = var;
-	}
+  private CppVar(String var) {
+    this.var = var;
+  }
 
-	public static CppVar mk(String var) {
-		return new CppVar(var);
-	}
+  public static CppVar mk(String var) {
+    return new CppVar(var);
+  }
 
-	@Override
-	public String toString() {
-		return var;
-	}
+  @Override
+  public String toString() {
+    return var;
+  }
 
-	@Override
-	public void print(PrintWriter out) {
-		out.print(var);
-	}
-
+  @Override
+  public void print(PrintWriter out) {
+    out.print(var);
+  }
 }

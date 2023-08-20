@@ -9,9 +9,9 @@ package edu.harvard.seas.pl.formulog.symbols;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,16 +24,16 @@ import edu.harvard.seas.pl.formulog.types.FunctorType;
 
 class ConstructorSymbolImpl extends AbstractTypedSymbol implements ConstructorSymbol {
 
-	private final ConstructorSymbolType symType;
+  private final ConstructorSymbolType symType;
 
-	public ConstructorSymbolImpl(String name, int arity, ConstructorSymbolType symType, FunctorType type) {
-		super(name, arity, type);
-		this.symType = symType;
-	}
+  public ConstructorSymbolImpl(
+      String name, int arity, ConstructorSymbolType symType, FunctorType type) {
+    super(name, arity, type);
+    this.symType = symType;
+  }
 
-	@Override
-	public ConstructorSymbolType getConstructorSymbolType() {
-		return symType;
-	}
-
+  @Override
+  public ConstructorSymbolType getConstructorSymbolType() {
+    return symType;
+  }
 }

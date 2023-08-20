@@ -24,29 +24,28 @@ import java.io.PrintWriter;
 
 public class CppCast implements CppExpr {
 
-	private final String type;
-	private final CppExpr expr;
-	private final String castName;
+  private final String type;
+  private final CppExpr expr;
+  private final String castName;
 
-	private CppCast(String castName, String type, CppExpr expr) {
-		this.type = type;
-		this.expr = expr;
-		this.castName = castName;
-	}
+  private CppCast(String castName, String type, CppExpr expr) {
+    this.type = type;
+    this.expr = expr;
+    this.castName = castName;
+  }
 
-	public static CppCast mkReinterpret(String type, CppExpr expr) {
-		return new CppCast("reinterpret_cast", type, expr);
-	}
+  public static CppCast mkReinterpret(String type, CppExpr expr) {
+    return new CppCast("reinterpret_cast", type, expr);
+  }
 
-	@Override
-	public void print(PrintWriter out) {
-		out.print(castName);
-		out.print("<");
-		out.print(type);
-		out.print(">");
-		out.print("(");
-		expr.print(out);
-		out.print(")");
-	}
-
+  @Override
+  public void print(PrintWriter out) {
+    out.print(castName);
+    out.print("<");
+    out.print(type);
+    out.print(">");
+    out.print("(");
+    expr.print(out);
+    out.print(")");
+  }
 }

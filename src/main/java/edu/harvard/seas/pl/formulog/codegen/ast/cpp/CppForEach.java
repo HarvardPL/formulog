@@ -21,36 +21,34 @@ package edu.harvard.seas.pl.formulog.codegen.ast.cpp;
  */
 
 import edu.harvard.seas.pl.formulog.codegen.CodeGenUtil;
-
 import java.io.PrintWriter;
 
 public class CppForEach implements CppStmt {
 
-	private final String var;
-	private final CppExpr val;
-	private final CppStmt body;
+  private final String var;
+  private final CppExpr val;
+  private final CppStmt body;
 
-	private CppForEach(String var, CppExpr val, CppStmt body) {
-		this.var = var;
-		this.val = val;
-		this.body = body;
-	}
+  private CppForEach(String var, CppExpr val, CppStmt body) {
+    this.var = var;
+    this.val = val;
+    this.body = body;
+  }
 
-	public static CppForEach mk(String var, CppExpr val, CppStmt body) {
-		return new CppForEach(var, val, body);
-	}
+  public static CppForEach mk(String var, CppExpr val, CppStmt body) {
+    return new CppForEach(var, val, body);
+  }
 
-	@Override
-	public void println(PrintWriter out, int indent) {
-		CodeGenUtil.printIndent(out, indent);
-		out.print("for (const auto& ");
-		out.print(var);
-		out.print(" : ");
-		val.print(out);
-		out.println(") {");
-		body.println(out, indent + 1);
-		CodeGenUtil.printIndent(out, indent);
-		out.println("}");
-	}
-
+  @Override
+  public void println(PrintWriter out, int indent) {
+    CodeGenUtil.printIndent(out, indent);
+    out.print("for (const auto& ");
+    out.print(var);
+    out.print(" : ");
+    val.print(out);
+    out.println(") {");
+    body.println(out, indent + 1);
+    CodeGenUtil.printIndent(out, indent);
+    out.println("}");
+  }
 }

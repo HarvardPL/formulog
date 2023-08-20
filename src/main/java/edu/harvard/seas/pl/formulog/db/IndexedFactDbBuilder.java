@@ -9,9 +9,9 @@ package edu.harvard.seas.pl.formulog.db;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,13 +21,11 @@ package edu.harvard.seas.pl.formulog.db;
  */
 
 import edu.harvard.seas.pl.formulog.ast.BindingType;
-
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 
 public interface IndexedFactDbBuilder<T extends IndexedFactDb> {
 
-	int makeIndex(RelationSymbol sym, BindingType[] pat);
+  int makeIndex(RelationSymbol sym, BindingType[] pat);
 
-	T build();
-
+  T build();
 }

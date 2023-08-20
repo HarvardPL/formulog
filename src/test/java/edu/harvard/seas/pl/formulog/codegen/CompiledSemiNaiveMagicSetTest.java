@@ -9,9 +9,9 @@ package edu.harvard.seas.pl.formulog.codegen;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,21 +21,20 @@ package edu.harvard.seas.pl.formulog.codegen;
  */
 
 import edu.harvard.seas.pl.formulog.Configuration;
-
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
 import edu.harvard.seas.pl.formulog.magic.CommonMagicSetTest;
 
 public class CompiledSemiNaiveMagicSetTest extends CommonMagicSetTest<SemiNaiveEvaluation> {
 
-	static {
-		if (!Configuration.testCodegen) {
-			System.err.println(
-					"WARNING: skipping CompiledSemiNaiveMagicSetTest; enable with system property `-DtestCodegen`");
-		}
-	}
+  static {
+    if (!Configuration.testCodegen) {
+      System.err.println(
+          "WARNING: skipping CompiledSemiNaiveMagicSetTest; enable with system property"
+              + " `-DtestCodegen`");
+    }
+  }
 
-	public CompiledSemiNaiveMagicSetTest() {
-		super(Configuration.testCodegen ? new CompiledSemiNaiveTester() : new NopTester<>());
-	}
-
+  public CompiledSemiNaiveMagicSetTest() {
+    super(Configuration.testCodegen ? new CompiledSemiNaiveTester() : new NopTester<>());
+  }
 }

@@ -21,53 +21,51 @@ package edu.harvard.seas.pl.formulog.codegen.ast.cpp;
  */
 
 import edu.harvard.seas.pl.formulog.codegen.CodeGenUtil;
-
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.List;
 
 public class CppCtor implements CppStmt {
 
-	private final String type;
-	private final String var;
-	private final List<CppExpr> args;
-	private final boolean initializer;
+  private final String type;
+  private final String var;
+  private final List<CppExpr> args;
+  private final boolean initializer;
 
-	private CppCtor(String type, String var, List<CppExpr> args, boolean initializer) {
-		this.type = type;
-		this.var = var;
-		this.args = args;
-		this.initializer = initializer;
-	}
+  private CppCtor(String type, String var, List<CppExpr> args, boolean initializer) {
+    this.type = type;
+    this.var = var;
+    this.args = args;
+    this.initializer = initializer;
+  }
 
-	public static CppCtor mk(String type, String var, List<CppExpr> args) {
-		return new CppCtor(type, var, args, false);
-	}
+  public static CppCtor mk(String type, String var, List<CppExpr> args) {
+    return new CppCtor(type, var, args, false);
+  }
 
-	public static CppCtor mk(String type, String var, CppExpr... args) {
-		return new CppCtor(type, var, Arrays.asList(args), false);
-	}
+  public static CppCtor mk(String type, String var, CppExpr... args) {
+    return new CppCtor(type, var, Arrays.asList(args), false);
+  }
 
-	public static CppCtor mkInitializer(String type, String var, List<CppExpr> args) {
-		return new CppCtor(type, var, args, true);
-	}
+  public static CppCtor mkInitializer(String type, String var, List<CppExpr> args) {
+    return new CppCtor(type, var, args, true);
+  }
 
-	public static CppCtor mkInitializer(String type, String var, CppExpr... args) {
-		return new CppCtor(type, var, Arrays.asList(args), true);
-	}
+  public static CppCtor mkInitializer(String type, String var, CppExpr... args) {
+    return new CppCtor(type, var, Arrays.asList(args), true);
+  }
 
-	@Override
-	public void println(PrintWriter out, int indent) {
-		CodeGenUtil.printIndent(out, indent);
-		out.print(type);
-		out.print(" ");
-		out.print(var);
-		if (!args.isEmpty()) {
-			out.print(initializer ? "{" : "(");
-			CodeGenUtil.printSeparated(args, ", ", out);
-			out.print(initializer ? "}" : ")");
-		}
-		out.println(";");
-	}
-
+  @Override
+  public void println(PrintWriter out, int indent) {
+    CodeGenUtil.printIndent(out, indent);
+    out.print(type);
+    out.print(" ");
+    out.print(var);
+    if (!args.isEmpty()) {
+      out.print(initializer ? "{" : "(");
+      CodeGenUtil.printSeparated(args, ", ", out);
+      out.print(initializer ? "}" : ")");
+    }
+    out.println(";");
+  }
 }

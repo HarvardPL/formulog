@@ -9,9 +9,9 @@ package edu.harvard.seas.pl.formulog.util;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,56 +20,50 @@ package edu.harvard.seas.pl.formulog.util;
  * #L%
  */
 
+import edu.harvard.seas.pl.formulog.eval.EvaluationException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-import edu.harvard.seas.pl.formulog.eval.EvaluationException;
-
 public class MockCountingFJP implements CountingFJP {
 
-	private volatile EvaluationException failureCause;
+  private volatile EvaluationException failureCause;
 
-	private final Deque<AbstractFJPTask> workItems = new ArrayDeque<>();
+  private final Deque<AbstractFJPTask> workItems = new ArrayDeque<>();
 
-	public synchronized void externallyAddTask(AbstractFJPTask w) {
-		workItems.addLast(w);
-	}
+  public synchronized void externallyAddTask(AbstractFJPTask w) {
+    workItems.addLast(w);
+  }
 
-	public synchronized void recursivelyAddTask(AbstractFJPTask w) {
-		workItems.addLast(w);
-	}
+  public synchronized void recursivelyAddTask(AbstractFJPTask w) {
+    workItems.addLast(w);
+  }
 
-	public synchronized final void blockUntilFinished() {
-		while (!workItems.isEmpty() && !hasFailed()) {
-			AbstractFJPTask task = workItems.removeLast();
-			task.compute();
-		}
-	}
+  public final synchronized void blockUntilFinished() {
+    while (!workItems.isEmpty() && !hasFailed()) {
+      AbstractFJPTask task = workItems.removeLast();
+      task.compute();
+    }
+  }
 
-	public synchronized final void shutdown() {
+  public final synchronized void shutdown() {}
 
-	}
+  public final synchronized void fail(EvaluationException cause) {
+    failureCause = cause;
+  }
 
-	public synchronized final void fail(EvaluationException cause) {
-		failureCause = cause;
-	}
+  public final synchronized boolean hasFailed() {
+    return failureCause != null;
+  }
 
-	public synchronized final boolean hasFailed() {
-		return failureCause != null;
-	}
+  public final synchronized EvaluationException getFailureCause() {
+    return failureCause;
+  }
 
-	public synchronized final EvaluationException getFailureCause() {
-		return failureCause;
-	}
+  @Override
+  public synchronized void reportTaskCompletion() {}
 
-	@Override
-	public synchronized void reportTaskCompletion() {
-
-	}
-
-	@Override
-	public long getStealCount() {
-		return 0;
-	}
-
+  @Override
+  public long getStealCount() {
+    return 0;
+  }
 }

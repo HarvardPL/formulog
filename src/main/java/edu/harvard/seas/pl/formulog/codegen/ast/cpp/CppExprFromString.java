@@ -24,19 +24,18 @@ import java.io.PrintWriter;
 
 public class CppExprFromString implements CppExpr {
 
-	private final String s;
+  private final String s;
 
-	private CppExprFromString(String s) {
-		this.s = s;
-	}
+  private CppExprFromString(String s) {
+    this.s = s;
+  }
 
-	public static CppExprFromString mk(String s) {
-		return new CppExprFromString(s);
-	}
+  public static CppExprFromString mk(String s) {
+    return new CppExprFromString(s);
+  }
 
-	@Override
-	public void print(PrintWriter out) {
-		out.print(s);
-	}
-
+  @Override
+  public void print(PrintWriter out) {
+    out.print(s);
+  }
 }

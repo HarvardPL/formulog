@@ -21,25 +21,23 @@ package edu.harvard.seas.pl.formulog.codegen.ast.cpp;
  */
 
 import edu.harvard.seas.pl.formulog.codegen.CodeGenUtil;
-
 import java.io.PrintWriter;
 
 public class CppLabel implements CppStmt {
 
-	private final String label;
+  private final String label;
 
-	public CppLabel(String label) {
-		this.label = label;
-	}
+  public CppLabel(String label) {
+    this.label = label;
+  }
 
-	public static CppLabel mk(String label) {
-		return new CppLabel(label);
-	}
+  public static CppLabel mk(String label) {
+    return new CppLabel(label);
+  }
 
-	@Override
-	public void println(PrintWriter out, int indent) {
-		CodeGenUtil.printIndent(out, indent);
-		out.println(label + ":");
-	}
-
+  @Override
+  public void println(PrintWriter out, int indent) {
+    CodeGenUtil.printIndent(out, indent);
+    out.println(label + ":");
+  }
 }

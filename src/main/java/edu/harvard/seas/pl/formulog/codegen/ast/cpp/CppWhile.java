@@ -21,32 +21,30 @@ package edu.harvard.seas.pl.formulog.codegen.ast.cpp;
  */
 
 import edu.harvard.seas.pl.formulog.codegen.CodeGenUtil;
-
 import java.io.PrintWriter;
 
 public class CppWhile implements CppStmt {
 
-	private final CppExpr guard;
-	private final CppStmt body;
+  private final CppExpr guard;
+  private final CppStmt body;
 
-	private CppWhile(CppExpr guard, CppStmt body) {
-		this.guard = guard;
-		this.body = body;
-	}
+  private CppWhile(CppExpr guard, CppStmt body) {
+    this.guard = guard;
+    this.body = body;
+  }
 
-	public static CppWhile mk(CppExpr guard, CppStmt body) {
-		return new CppWhile(guard, body);
-	}
+  public static CppWhile mk(CppExpr guard, CppStmt body) {
+    return new CppWhile(guard, body);
+  }
 
-	@Override
-	public void println(PrintWriter out, int indent) {
-		CodeGenUtil.printIndent(out, indent);
-		out.print("while (");
-		guard.print(out);
-		out.println(") {");
-		body.println(out, indent + 1);
-		CodeGenUtil.printIndent(out, indent);
-		out.println("}");
-	}
-
+  @Override
+  public void println(PrintWriter out, int indent) {
+    CodeGenUtil.printIndent(out, indent);
+    out.print("while (");
+    guard.print(out);
+    out.println(") {");
+    body.println(out, indent + 1);
+    CodeGenUtil.printIndent(out, indent);
+    out.println("}");
+  }
 }

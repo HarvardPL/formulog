@@ -22,11 +22,8 @@ package edu.harvard.seas.pl.formulog.codegen.ast.cpp;
 
 import java.io.PrintWriter;
 
-/**
- * Interface representing generated C++ code, which can be output.
- */
+/** Interface representing generated C++ code, which can be output. */
 public interface CppStmt {
 
-	void println(PrintWriter out, int indent);
-
+  void println(PrintWriter out, int indent);
 }
