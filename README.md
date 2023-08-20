@@ -1,6 +1,6 @@
 # Formulog
 
-[![Build Status](https://app.travis-ci.com/HarvardPL/formulog.svg?branch=master)](https://app.travis-ci.com/HarvardPL/formulog)
+[![Build Status](https://github.com/HarvardPL/formulog/actions/workflows/maven.yml/badge.svg)](https://github.com/HarvardPL/formulog/actions/workflows/maven.yml/badge.svg)
 
 Datalog with support for SMT queries and first-order functional programming.
 
