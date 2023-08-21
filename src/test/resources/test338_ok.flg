@@ -1,3 +1,5 @@
+(* Test case for issue #72 <https://github.com/HarvardPL/formulog/issues/72> *)
+
 rel foo(bool smt)
 
 foo(`true`).
