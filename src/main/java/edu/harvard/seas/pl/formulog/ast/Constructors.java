@@ -958,6 +958,7 @@ public final class Constructors {
   public static class SolverVariable extends AbstractConstructor<ParameterizedConstructorSymbol> {
 
     private static final AtomicInteger cnt = new AtomicInteger();
+
     /**
      * The unique numeric identifier for this solver variable, <i>as a solver variable</i>. This is
      * distinct from the numeric identifier of this solver variable <i>as a general term</i>. Having
