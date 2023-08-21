@@ -1,0 +1,11 @@
+rel foo(bool smt)
+
+foo(`true`).
+
+rel not_ok
+
+not_ok :- foo(`#x[i32] #= _`).
+
+rel ok
+
+ok :- !not_ok.
