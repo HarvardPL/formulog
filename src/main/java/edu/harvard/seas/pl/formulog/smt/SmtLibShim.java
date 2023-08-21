@@ -341,7 +341,7 @@ public class SmtLibShim {
   }
 
   private String toSmtSymbol(SolverVariable x) {
-    return "x" + x.getId();
+    return "x" + x.getSolverVarId();
   }
 
   private void declareSymbols(SmtLibTerm t) throws EvaluationException {

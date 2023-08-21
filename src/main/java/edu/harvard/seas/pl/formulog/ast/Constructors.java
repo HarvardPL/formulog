@@ -958,7 +958,14 @@ public final class Constructors {
   public static class SolverVariable extends AbstractConstructor<ParameterizedConstructorSymbol> {
 
     private static final AtomicInteger cnt = new AtomicInteger();
-    private final int id = cnt.getAndIncrement();
+
+    /**
+     * The unique numeric identifier for this solver variable, <i>as a solver variable</i>. This is
+     * distinct from the numeric identifier of this solver variable <i>as a general term</i>. Having
+     * a second ID for a solver variable is helpful because it (typically) is much smaller than the
+     * term ID, making it easier to read in SMT formulas.
+     */
+    private final int solverVarId = cnt.getAndIncrement();
 
     public SolverVariable(ParameterizedConstructorSymbol sym, Term[] args) {
       super(sym, args);
@@ -969,14 +976,14 @@ public final class Constructors {
       shim.print(this);
     }
 
-    public int getId() {
-      return id;
+    public int getSolverVarId() {
+      return solverVarId;
     }
 
     @Override
     public String toString() {
       if (Configuration.simplifyFormulaVars) {
-        return "#x" + id;
+        return "#x" + getSolverVarId();
       }
       Type ty = ((FunctorType) sym.getCompileTimeType()).getRetType();
       ty = ((AlgebraicDataType) ty).getTypeArgs().get(0);

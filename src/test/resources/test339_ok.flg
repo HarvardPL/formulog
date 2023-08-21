@@ -1,0 +1,52 @@
+(* Test case for issue #74 <https://github.com/HarvardPL/formulog/issues/74> *)
+
+rel bar(i32)
+
+rel foo(i32 smt)
+
+rel baz
+
+foo(`#x[?]`).
+
+baz :-
+  bar(X),
+  foo(`X`),
+  X + 1 = 42.
+
+bar(0).
+
+(* Make sure `foo` is recursive in `ok` stratum, so that when `ok` rule is run,
+   `foo` predicate is reordered to be first *) 
+foo(`0`) :- baz.
+
+foo(`#x0[?]`).
+foo(`#x1[?]`).
+foo(`#x2[?]`).
+foo(`#x3[?]`).
+foo(`#x4[?]`).
+foo(`#x5[?]`).
+foo(`#x6[?]`).
+foo(`#x7[?]`).
+foo(`#x8[?]`).
+foo(`#x9[?]`).
+foo(`#xa[?]`).
+foo(`#xb[?]`).
+foo(`#xc[?]`).
+foo(`#xd[?]`).
+foo(`#xe[?]`).
+foo(`#xf[?]`).
+
+foo(`41`).
+bar(41).
+
+fun len(xs: 'a list): i32 =
+  match xs with
+  | [] => 0
+  | _ :: t => 1 + len(t)
+  end
+
+rel ok
+
+ok :-
+  baz,
+  len(foo(??)) = 19.
