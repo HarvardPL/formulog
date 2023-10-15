@@ -257,7 +257,7 @@ our implementation of
 a [type checker for Dminor](https://github.com/HarvardPL/dminor-in-formulog), a
 language built around refinement types.
 
-There's a Vim syntax file in the `misc/` directory.
+Syntax highlighting is available for Visual Studio Code (follow instructions [here](https://github.com/HarvardPL/formulog-syntax)) and Vim (install [misc/flg.vim](./misc/flg.vim)).
 
 ## Contributing
 
