@@ -131,8 +131,9 @@ The Formulog interpreter currently provides the following options:
 
 ```
 Usage: formulog [-chV] [--dump-all] [--dump-idb] [--dump-query] [--dump-sizes]
-                [--smt-stats] [--codegen-dir=<codegenDir>] [-D=<outDir>]
-                [-j=<parallelism>] [--smt-solver-mode=<smtStrategy>]
+                [--eager-eval] [--smt-stats] [--codegen-dir=<codegenDir>]
+                [-D=<outDir>] [-j=<parallelism>]
+                [--smt-solver-mode=<smtStrategy>]
                 [--dump=<relationsToPrint>]... [-F=<factDirs>]... <file>
 Runs Formulog.
       <file>         Formulog program file.
@@ -147,6 +148,8 @@ Runs Formulog.
       --dump-idb     Print all IDB relations.
       --dump-query   Print query result.
       --dump-sizes   Print relation sizes.
+      --eager-eval   Use eager evaluation (instead of traditional semi-naive
+                       Datalog evaluation)
   -F, --fact-dir=<factDirs>
                      Directory to look for fact .tsv files (default: '.').
   -h, --help         Show this help message and exit.
@@ -243,11 +246,29 @@ To build the generated code, you must have:
 
 - A C++ compiler that supports the C++17 standard (and OpenMP, if you want to produce a parallelized binary)
 - `cmake` (v3.21+)
-- [`boost`](https://www.boost.org/) (a version compatible with v1.79)
+- [`boost`](https://www.boost.org/) (a version compatible with v1.81)
 - [`oneTBB`](https://oneapi-src.github.io/oneTBB/) (v2021.8.0 is known to work)
 - [`souffle`](https://souffle-lang.github.io/) (v2.3 is known to work)
 
 The Formulog Docker image already has these dependencies installed.
+
+## Eager Evaluation
+
+In addition to traditional semi-naive Datalog evaluation, Formulog supports _eager_ evaluation, a novel concurrent evaluation algorithm for Datalog that is faster than semi-naive evaluation on some Formulog workloads (often because it induces a more favorable distribution of the SMT workload across SMT solvers).
+Whereas semi-naive evaluation batches derived tuples to process them in explicit rounds, eager evaluation eagerly pursues the consequences of each tuple as it is derived.
+
+Using eager evaluation with the Formulog interpreter is easy: just add the `--eager-eval` flag.
+Eager evaluation can also be used with the Formulog compiler, provided you install [our custom version of Souffle](https://github.com/aaronbembenek/souffle).
+When you configure `cmake` on the generated code, you need to add `-DFLG_EAGER_EVAL=On`.
+For example, to build a version of the greeting program that uses eager evaluation, use these commands:
+
+```shellsession
+$ java -jar formulog.jar -c greeting.flg
+$ cd codegen
+$ cmake -B build -S . -DFLG_EAGER_EVAL=On
+$ cmake --build build -j
+$ ./build/flg --dump-idb
+```
 
 ## Writing Formulog programs
 

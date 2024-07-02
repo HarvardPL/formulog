@@ -53,7 +53,7 @@ target_sources(flg PRIVATE
         formulog.cpp
         )
 
-find_package(Boost 1.79 REQUIRED COMPONENTS filesystem system program_options)
+find_package(Boost 1.81 REQUIRED COMPONENTS filesystem system program_options)
 find_package(TBB REQUIRED)
 target_link_libraries(flg PRIVATE ${Boost_LIBRARIES} TBB::tbb)
 
