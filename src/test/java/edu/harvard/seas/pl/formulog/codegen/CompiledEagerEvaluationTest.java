@@ -1,8 +1,10 @@
+package edu.harvard.seas.pl.formulog.codegen;
+
 /*-
  * #%L
  * Formulog
  * %%
- * Copyright (C) 2019-2023 President and Fellows of Harvard College
+ * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,23 +19,22 @@
  * limitations under the License.
  * #L%
  */
-package edu.harvard.seas.pl.formulog.codegen;
 
 import edu.harvard.seas.pl.formulog.Configuration;
+import edu.harvard.seas.pl.formulog.eval.CommonEvaluationTest;
 import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
-import edu.harvard.seas.pl.formulog.magic.CommonMagicSetTest;
 
-public class CompiledSemiNaiveMagicSetTest extends CommonMagicSetTest<SemiNaiveEvaluation> {
+public class CompiledEagerEvaluationTest extends CommonEvaluationTest<SemiNaiveEvaluation> {
 
   static {
-    if (!Configuration.testCodeGen) {
+    if (!Configuration.testCodeGenEager) {
       System.err.println(
-          "WARNING: skipping CompiledSemiNaiveMagicSetTest; enable with system property"
-              + " `-DtestCodeGen`");
+          "WARNING: skipping CompiledEagerEvaluationTest; enable with system property"
+              + " `-DtestCodeGenEager`");
     }
   }
 
-  public CompiledSemiNaiveMagicSetTest() {
-    super(Configuration.testCodeGen ? new CodeGenTester(false) : new NopTester<>());
+  public CompiledEagerEvaluationTest() {
+    super(Configuration.testCodeGenEager ? new CodeGenTester(true) : new NopTester<>());
   }
 }

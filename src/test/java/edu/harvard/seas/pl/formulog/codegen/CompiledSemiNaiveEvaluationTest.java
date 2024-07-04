@@ -26,14 +26,14 @@ import edu.harvard.seas.pl.formulog.eval.SemiNaiveEvaluation;
 public class CompiledSemiNaiveEvaluationTest extends CommonEvaluationTest<SemiNaiveEvaluation> {
 
   static {
-    if (!Configuration.testCodegen) {
+    if (!Configuration.testCodeGen) {
       System.err.println(
           "WARNING: skipping CompiledSemiNaiveEvaluationTest; enable with system property"
-              + " `-DtestCodegen`");
+              + " `-DtestCodeGen`");
     }
   }
 
   public CompiledSemiNaiveEvaluationTest() {
-    super(Configuration.testCodegen ? new CompiledSemiNaiveTester() : new NopTester<>());
+    super(Configuration.testCodeGen ? new CodeGenTester(false) : new NopTester<>());
   }
 }
