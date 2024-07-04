@@ -41,6 +41,14 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * This class represents an abstract stratum evaluation method (e.g., semi-naive evaluation, eager
+ * evaluation). It includes functionality common to different evaluation techniques. Most notably,
+ * it splits a rule into a prefix (which conceptually contains no loops and can be processed
+ * sequentially) and a suffix (which contains loops that should be parallelized); additionally, it
+ * contains the code for evaluating the suffix of a rule, which is the "hot loop" during Datalog
+ * evaluation.
+ */
 public abstract class AbstractStratumEvaluator implements StratumEvaluator {
 
   protected final Set<IndexedRule> firstRoundRules = new HashSet<>();

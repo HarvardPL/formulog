@@ -21,6 +21,15 @@ package edu.harvard.seas.pl.formulog.codegen;
 
 import static org.junit.Assert.fail;
 
+import edu.harvard.seas.pl.formulog.Configuration;
+import edu.harvard.seas.pl.formulog.Main;
+import edu.harvard.seas.pl.formulog.ast.BasicProgram;
+import edu.harvard.seas.pl.formulog.eval.Tester;
+import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
+import edu.harvard.seas.pl.formulog.parsing.Parser;
+import edu.harvard.seas.pl.formulog.types.TypeChecker;
+import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
+import edu.harvard.seas.pl.formulog.util.Util;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -36,16 +45,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import edu.harvard.seas.pl.formulog.Configuration;
-import edu.harvard.seas.pl.formulog.Main;
-import edu.harvard.seas.pl.formulog.ast.BasicProgram;
-import edu.harvard.seas.pl.formulog.eval.Tester;
-import edu.harvard.seas.pl.formulog.magic.MagicSetTransformer;
-import edu.harvard.seas.pl.formulog.parsing.Parser;
-import edu.harvard.seas.pl.formulog.types.TypeChecker;
-import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
-import edu.harvard.seas.pl.formulog.util.Util;
 
 public class CodeGenTester implements Tester {
 
