@@ -25,7 +25,6 @@ import static org.junit.Assert.fail;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-
 import org.junit.Test;
 
 public class ParsingTest {
