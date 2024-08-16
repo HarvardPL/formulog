@@ -25,6 +25,7 @@ import static org.junit.Assert.fail;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+
 import org.junit.Test;
 
 public class ParsingTest {
@@ -168,5 +169,25 @@ public class ParsingTest {
   @Test
   public void test335() {
     test("test335_bd.flg");
+  }
+
+  @Test
+  public void test341() {
+    test("test341_bd.flg");
+  }
+
+  @Test
+  public void test342() {
+    test("test342_bd.flg");
+  }
+
+  @Test
+  public void test343() {
+    test("test343_bd.flg");
+  }
+
+  @Test
+  public void test344() {
+    test("test344_bd.flg");
   }
 }

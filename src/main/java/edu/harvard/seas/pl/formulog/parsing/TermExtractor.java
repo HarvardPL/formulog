@@ -1,25 +1,5 @@
 package edu.harvard.seas.pl.formulog.parsing;
 
-/*-
- * #%L
- * Formulog
- * %%
- * Copyright (C) 2018 - 2024 President and Fellows of Harvard College
- * %%
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * #L%
- */
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -32,6 +12,26 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+/*-
+ * #%L
+ * Formulog
+ * %%
+ * Copyright (C) 2018 - 2024 President and Fellows of Harvard College
+ * %%
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * #L%
+ */
 
 import edu.harvard.seas.pl.formulog.ast.BoolTerm;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
@@ -511,7 +511,10 @@ class TermExtractor {
               r = pc.functionCallFactory().make(BuiltInFunctionSymbol.BNOT, new Term[] {t});
               break;
             case FormulogParser.PLUS:
-              if (start != FormulogParser.HEX && start != FormulogParser.HEXL) {
+              if ((t instanceof I32 && start != FormulogParser.HEX)
+                  || (t instanceof I64 && start != FormulogParser.HEXL)
+                  || (t instanceof FP32)
+                  || (t instanceof FP64)) {
                 return t;
               }
               break;
@@ -529,7 +532,7 @@ class TermExtractor {
               break;
           }
           if (r == null) {
-            throw new AssertionError("Unrecognized unop: " + ctx.getText());
+            throw new UncheckedParseException(ctx.start.getLine(), "Unrecognized unop: " + ctx.getText());
           }
           assertNotInFormula(
               ctx.start.getLine(), "Cannot invoke a unop from within a formula: " + ctx.getText());
