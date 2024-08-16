@@ -20,19 +20,6 @@ package edu.harvard.seas.pl.formulog.parsing;
  * #L%
  */
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import edu.harvard.seas.pl.formulog.ast.BoolTerm;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
 import edu.harvard.seas.pl.formulog.ast.FP32;
@@ -102,6 +89,18 @@ import edu.harvard.seas.pl.formulog.types.Types.AlgebraicDataType;
 import edu.harvard.seas.pl.formulog.types.Types.Type;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.StackMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 class TermExtractor {
 
@@ -532,7 +531,8 @@ class TermExtractor {
               break;
           }
           if (r == null) {
-            throw new UncheckedParseException(ctx.start.getLine(), "Unrecognized unop: " + ctx.getText());
+            throw new UncheckedParseException(
+                ctx.start.getLine(), "Unrecognized unop: " + ctx.getText());
           }
           assertNotInFormula(
               ctx.start.getLine(), "Cannot invoke a unop from within a formula: " + ctx.getText());
