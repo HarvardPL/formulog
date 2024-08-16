@@ -1,0 +1,10 @@
+(* Test case for issue #80 <https://github.com/HarvardPL/formulog/issues/80> *)
+
+rel a(i32)
+rel b(i32)
+rel ok
+
+a(1-1).
+b(2+2).
+
+ok :- a(0), b(4).

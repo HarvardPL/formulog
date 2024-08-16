@@ -21,6 +21,7 @@ package edu.harvard.seas.pl.formulog.eval;
  */
 
 import java.util.Arrays;
+
 import org.junit.Test;
 
 public abstract class CommonEvaluationTest<T extends Evaluation> extends AbstractEvaluationTest<T> {
@@ -905,5 +906,10 @@ public abstract class CommonEvaluationTest<T extends Evaluation> extends Abstrac
   @Test
   public void test339() {
     test("test339_ok.flg");
+  }
+
+  @Test
+  public void test340() {
+    test("test340_ok.flg");
   }
 }

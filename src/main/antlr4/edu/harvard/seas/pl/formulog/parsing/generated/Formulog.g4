@@ -237,6 +237,7 @@ term
 	(
 		MINUS
 		| BANG
+		| PLUS
 	) term # unopTerm
 	| term op =
 	(
@@ -273,7 +274,7 @@ term
 		INT
 		| HEX
 	) # i32Term
-	| val = I64 # i64Term
+	| val = (INTL | HEXL) # i64Term
 	| val = FP64 # doubleTerm
 	| val = FP32 # floatTerm
 	| val =
@@ -458,10 +459,12 @@ VAR
 
 INT
 :
-	(
-		'+'
-		| '-'
-	)? [0-9]+
+	[0-9]+
+;
+
+INTL
+:
+	[0-9]+ ('l' | 'L')
 ;
 
 HEX
@@ -469,23 +472,15 @@ HEX
 	'0x' [0-9a-fA-F]+
 ;
 
+HEXL
+:
+	'0x' [0-9a-fA-F]+ ('l' | 'L')
+;
+
 fragment
 FP
 :
-	(
-		INT '.' [0-9]+
-		|
-		(
-			'+'
-			| '-'
-		)? '.' [0-9]+
-	)
-	(
-		(
-			'E'
-			| 'e'
-		) [0-9]+
-	)?
+	INT '.' INT
 ;
 
 fragment
@@ -498,7 +493,7 @@ FPE
 	(
 		'e'
 		| 'E'
-	) INT
+	) ('+'|'-')? INT
 ;
 
 FP32
@@ -528,18 +523,6 @@ FP64
 	(
 		'D'
 		| 'd'
-	)
-;
-
-I64
-:
-	(
-		INT
-		| HEX
-	)
-	(
-		'L'
-		| 'l'
 	)
 ;
 
