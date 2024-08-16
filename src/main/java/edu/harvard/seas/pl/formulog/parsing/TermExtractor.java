@@ -4,7 +4,7 @@ package edu.harvard.seas.pl.formulog.parsing;
  * #%L
  * Formulog
  * %%
- * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
+ * Copyright (C) 2018 - 2024 President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -412,7 +412,7 @@ class TermExtractor {
 
         @Override
         public Term visitDoubleTerm(DoubleTermContext ctx) {
-          return FP64.make(Double.parseDouble(ctx.val.getText()));
+          return FP64.make(Double.parseDouble(ctx.getText()));
         }
 
         @Override
@@ -503,42 +503,46 @@ class TermExtractor {
         @Override
         public Term visitUnopTerm(UnopTermContext ctx) {
           Term t = ctx.term().accept(this);
-          FunctionSymbol sym = tokenToUnopSym(ctx.op.getType());
-          if (sym == null) {
-            t = makeNonFunctionUnop(ctx.op.getType(), t);
-          } else {
-            t = pc.functionCallFactory().make(sym, new Term[] {t});
+          Term r = null;
+          var start = ctx.term().getStart().getType();
+          switch (ctx.op.getType()) {
+            case FormulogParser.BANG:
+              r = pc.functionCallFactory().make(BuiltInFunctionSymbol.BNOT, new Term[] {t});
+              break;
+            case FormulogParser.PLUS:
+              if ((t instanceof I32 && start != FormulogParser.HEX)
+                  || (t instanceof I64 && start != FormulogParser.HEXL)
+                  || (t instanceof FP32)
+                  || (t instanceof FP64)) {
+                return t;
+              }
+              break;
+            case FormulogParser.MINUS:
+              if (t instanceof I32 && start != FormulogParser.HEX) {
+                return I32.make(-((I32) t).getVal());
+              } else if (t instanceof I64 && start != FormulogParser.HEXL) {
+                return I64.make(-((I64) t).getVal());
+              } else if (t instanceof FP32) {
+                return FP32.make(-((FP32) t).getVal());
+              } else if (t instanceof FP64) {
+                return FP64.make(-((FP64) t).getVal());
+              }
+              r = pc.functionCallFactory().make(BuiltInFunctionSymbol.I32_NEG, new Term[] {t});
+              break;
           }
-          if (t == null) {
-            throw new AssertionError("Unrecognized unop: " + ctx.getText());
+          if (r == null) {
+            throw new UncheckedParseException(
+                ctx.start.getLine(), "Unrecognized unop: " + ctx.getText());
           }
           assertNotInFormula(
               ctx.start.getLine(), "Cannot invoke a unop from within a formula: " + ctx.getText());
-          return t;
-        }
-
-        private Term makeNonFunctionUnop(int tokenType, Term t) {
-          switch (tokenType) {
-            case FormulogParser.BANG:
-              return pc.functionCallFactory().make(BuiltInFunctionSymbol.BNOT, new Term[] {t});
-            default:
-              return null;
-          }
+          return r;
         }
 
         private Term makeBoolMatch(Term matchee, Term ifTrue, Term ifFalse) {
           MatchClause matchTrue = MatchClause.make(BoolTerm.mkTrue(), ifTrue);
           MatchClause matchFalse = MatchClause.make(BoolTerm.mkFalse(), ifFalse);
           return MatchExpr.make(matchee, Arrays.asList(matchTrue, matchFalse));
-        }
-
-        private FunctionSymbol tokenToUnopSym(int tokenType) {
-          switch (tokenType) {
-            case FormulogParser.MINUS:
-              return BuiltInFunctionSymbol.I32_NEG;
-            default:
-              return null;
-          }
         }
 
         private FunctionSymbol tokenToBinopSym(int tokenType) {

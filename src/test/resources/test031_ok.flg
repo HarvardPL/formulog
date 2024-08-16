@@ -2,11 +2,35 @@
 @edb rel bar(fp64).
 
 foo(42.0f).
+foo(42.0e1f).
+foo(42.0e-1f).
+foo(42.0e+1f).
 foo(-42.42F).
-foo(-.42F).
+foo(-0.42F).
 foo(-42F).
+foo(-42.0e1f).
+foo(-42.0e-1f).
+foo(-42.0e+1f).
+foo(+42.42F).
+foo(+0.42F).
+foo(+42F).
+foo(+42.0e1f).
+foo(+42.0e-1f).
+foo(+42.0e+1f).
 
 bar(42.0d).
+bar(42.0e1d).
+bar(42.0e-1d).
+bar(42.0e+1d).
 bar(-42.42D).
-bar(-.42D).
+bar(-0.42D).
 bar(-42D).
+bar(-42.0e1d).
+bar(-42.0e-1d).
+bar(-42.0e+1d).
+bar(+42.42D).
+bar(+0.42D).
+bar(+42D).
+bar(+42.0e1d).
+bar(+42.0e-1d).
+bar(+42.0e+1d).
