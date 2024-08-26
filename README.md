@@ -263,7 +263,7 @@ Syntax highlighting is available for Visual Studio Code (follow instructions [he
 
 Contributions to this project are most welcome!
 Please open a [GitHub issue](https://github.com/HarvardPL/formulog/issues) and then link a pull request to it.
-We use the [Google Java format](https://github.com/google/google-java-format); our CI will reject any pull requests that do not meet it.
+We use the [Google Java format](https://github.com/google/google-java-format); our CI will automatically format contributions before they are merged.
 
 ## Third-party libraries
 
