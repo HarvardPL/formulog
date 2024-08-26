@@ -38,6 +38,7 @@ import edu.harvard.seas.pl.formulog.validating.ast.SimpleLiteral;
 import edu.harvard.seas.pl.formulog.validating.ast.SimplePredicate;
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Set;
 import org.apache.commons.lang3.time.StopWatch;
 

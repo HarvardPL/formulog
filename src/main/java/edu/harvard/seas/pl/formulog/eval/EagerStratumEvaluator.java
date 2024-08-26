@@ -39,6 +39,7 @@ import edu.harvard.seas.pl.formulog.validating.ast.Destructor;
 import edu.harvard.seas.pl.formulog.validating.ast.SimpleLiteral;
 import edu.harvard.seas.pl.formulog.validating.ast.SimplePredicate;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Set;
 
 /**
