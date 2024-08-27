@@ -42,6 +42,14 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 
+/**
+ * This class implements eager evaluation of a stratum, an alternative evaluation strategy to
+ * traditional semi-naive Datalog evaluation. Instead of batching newly derived tuples into explicit
+ * rounds of evaluation (like semi-naive evaluation), eager evaluation eagerly pursues the
+ * consequences of newly derived tuples; this is achieved by immediately submitting work items for
+ * each newly derived tuple to a work-stealing thread pool that selects the next item to evaluate
+ * using the LIFO order.
+ */
 public final class EagerStratumEvaluator extends AbstractStratumEvaluator {
 
   private final SortedIndexedFactDb db;

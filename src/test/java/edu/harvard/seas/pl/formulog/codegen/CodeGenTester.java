@@ -30,7 +30,14 @@ import edu.harvard.seas.pl.formulog.parsing.Parser;
 import edu.harvard.seas.pl.formulog.types.TypeChecker;
 import edu.harvard.seas.pl.formulog.types.WellTypedProgram;
 import edu.harvard.seas.pl.formulog.util.Util;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -39,9 +46,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class CompiledSemiNaiveTester implements Tester {
+public class CodeGenTester implements Tester {
 
   private List<String> inputDirs = Collections.emptyList();
+  private final boolean eagerEval;
+
+  public CodeGenTester(boolean eagerEval) {
+    this.eagerEval = eagerEval;
+  }
 
   @Override
   public void test(String file, List<String> inputDirs) {
@@ -78,7 +90,7 @@ public class CompiledSemiNaiveTester implements Tester {
       e.printStackTrace(out);
       fail(baos.toString());
     } finally {
-      if (!Configuration.keepCodegenTestDirs && topPath != null) {
+      if (!Configuration.keepCodeGenTestDirs && topPath != null) {
         Util.clean(topPath.toFile(), true);
       }
     }
@@ -100,6 +112,9 @@ public class CompiledSemiNaiveTester implements Tester {
                 "-S",
                 topPath.toString(),
                 "-DCMAKE_BUILD_TYPE=Debug"));
+    if (eagerEval) {
+      cmakeCmds.add("-DFLG_EAGER_EVAL=On");
+    }
     if (Configuration.cxxCompiler != null) {
       cmakeCmds.add("-DCMAKE_CXX_COMPILER=" + Configuration.cxxCompiler);
     }

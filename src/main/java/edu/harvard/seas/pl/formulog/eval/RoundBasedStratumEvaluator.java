@@ -42,6 +42,15 @@ import java.util.Iterator;
 import java.util.Set;
 import org.apache.commons.lang3.time.StopWatch;
 
+/**
+ * This class implements traditional semi-naive evaluation of a stratum, in which rule atoms refer
+ * to auxiliary relations indexed by round of the fixpoint evaluation. For example, if the predicate
+ * p is recursive in the current stratum, going into round i+1, there will be the relation
+ * delta_i(p) holding the p facts derived in round i, and the relation p_{i+1} holding the entire p
+ * relation at the beginning of round i+1. Unlike some versions of semi-naive evaluation, we do not
+ * use the auxiliary relation p_i (that is, the relation p as it stood at the beginning of the
+ * previous round) when adorning non-linearly recursive rules.
+ */
 public final class RoundBasedStratumEvaluator extends AbstractStratumEvaluator {
 
   private final int stratumNum;

@@ -22,7 +22,11 @@ package edu.harvard.seas.pl.formulog;
 import edu.harvard.seas.pl.formulog.ast.Rule;
 import edu.harvard.seas.pl.formulog.db.IndexedFactDb;
 import edu.harvard.seas.pl.formulog.eval.IndexedRule;
-import edu.harvard.seas.pl.formulog.smt.*;
+import edu.harvard.seas.pl.formulog.smt.CheckSatAssumingSolver;
+import edu.harvard.seas.pl.formulog.smt.PushPopSolver;
+import edu.harvard.seas.pl.formulog.smt.SmtLibSolver;
+import edu.harvard.seas.pl.formulog.smt.SmtStatus;
+import edu.harvard.seas.pl.formulog.smt.SmtStrategy;
 import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
 import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.util.Dataset;
@@ -31,7 +35,13 @@ import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.SharedLong;
 import edu.harvard.seas.pl.formulog.util.Util;
 import java.io.PrintStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -151,8 +161,9 @@ public final class Configuration {
   public static final String debugStratificationOutDir =
       getStringProp("debugStratificationOutDir", "stratification_graphs");
 
-  public static final boolean testCodegen = propIsSet("testCodegen");
-  public static final boolean keepCodegenTestDirs = propIsSet("keepCodegenTestDirs");
+  public static final boolean testCodeGen = propIsSet("testCodeGen");
+  public static final boolean testCodeGenEager = propIsSet("testCodeGenEager");
+  public static final boolean keepCodeGenTestDirs = propIsSet("keepCodeGenTestDirs");
   public static final String cxxCompiler = getStringProp("cxxCompiler", null);
 
   public static final String souffleInclude = System.getProperty("souffleInclude");
