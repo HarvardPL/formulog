@@ -54,7 +54,7 @@ connecting with your SMT solver. You can compile without testing by adding the
 ### Supported SMT solvers
 
 We have primarily used Formulog with Z3 as the backend solver. Z3's textual
-interface can change even between patch versions. Z3 4.11.1 is known to work
+interface can change even between patch versions. Z3 4.12.2 is known to work
 with Formulog. To use Z3, the binary `z3` must be on your path.
 
 We also have some experimental (not recently tested) support for other solvers;
@@ -263,7 +263,8 @@ Syntax highlighting is available for Visual Studio Code (follow instructions [he
 
 Contributions to this project are most welcome!
 Please open a [GitHub issue](https://github.com/HarvardPL/formulog/issues) and then link a pull request to it.
-We use the [Google Java format](https://github.com/google/google-java-format); our CI will automatically format contributions before they are merged.
+Pull requests must be in the [Google Java format](https://github.com/google/google-java-format) before being merged.
+To reformat your code, run `mvn spotless:apply`; you can also check if your code is conformant (without reformatting it) by running `mvn spotless:check`.
 
 ## Third-party libraries
 

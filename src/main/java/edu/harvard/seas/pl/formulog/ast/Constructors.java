@@ -1,10 +1,8 @@
-package edu.harvard.seas.pl.formulog.ast;
-
 /*-
  * #%L
  * Formulog
  * %%
- * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
+ * Copyright (C) 2019-2023 President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +17,7 @@ package edu.harvard.seas.pl.formulog.ast;
  * limitations under the License.
  * #L%
  */
+package edu.harvard.seas.pl.formulog.ast;
 
 import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.smt.SmtLibShim;
@@ -959,12 +958,6 @@ public final class Constructors {
 
     private static final AtomicInteger cnt = new AtomicInteger();
 
-    /**
-     * The unique numeric identifier for this solver variable, <i>as a solver variable</i>. This is
-     * distinct from the numeric identifier of this solver variable <i>as a general term</i>. Having
-     * a second ID for a solver variable is helpful because it (typically) is much smaller than the
-     * term ID, making it easier to read in SMT formulas.
-     */
     private final int solverVarId = cnt.getAndIncrement();
 
     public SolverVariable(ParameterizedConstructorSymbol sym, Term[] args) {

@@ -2,7 +2,7 @@
  * #%L
  * Formulog
  * %%
- * Copyright (C) 2019-2023 President and Fellows of Harvard College
+ * Copyright (C) $YEAR President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,3 @@
  * limitations under the License.
  * #L%
  */
-package edu.harvard.seas.pl.formulog.symbols;
-
-public enum ConstructorSymbolType {
-  SOLVER_UNINTERPRETED_FUNCTION,
-
-  VANILLA_CONSTRUCTOR,
-
-  SOLVER_EXPR,
-
-  SOLVER_CONSTRUCTOR_GETTER,
-
-  SOLVER_CONSTRUCTOR_TESTER,
-
-  INDEX_CONSTRUCTOR,
-  ;
-}

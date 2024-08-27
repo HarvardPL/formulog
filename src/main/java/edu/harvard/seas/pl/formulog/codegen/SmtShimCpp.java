@@ -1,10 +1,8 @@
-package edu.harvard.seas.pl.formulog.codegen;
-
 /*-
  * #%L
  * Formulog
  * %%
- * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
+ * Copyright (C) 2019-2023 President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +17,7 @@ package edu.harvard.seas.pl.formulog.codegen;
  * limitations under the License.
  * #L%
  */
+package edu.harvard.seas.pl.formulog.codegen;
 
 import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.codegen.ast.cpp.*;
@@ -159,7 +158,7 @@ public class SmtShimCpp extends TemplateSrcFile {
           return genSerializeOp("bvlshr");
         case BV_ASHR:
           return genSerializeOp("bvashr");
-          // Normal constructors don't need special treatment
+        // Normal constructors don't need special treatment
         case CMP_EQ:
         case CMP_GT:
         case CMP_LT:

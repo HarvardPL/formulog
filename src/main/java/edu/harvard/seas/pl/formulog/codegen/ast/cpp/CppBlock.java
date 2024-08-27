@@ -1,10 +1,8 @@
-package edu.harvard.seas.pl.formulog.codegen.ast.cpp;
-
 /*-
  * #%L
  * Formulog
  * %%
- * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
+ * Copyright (C) 2019-2023 President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +17,11 @@ package edu.harvard.seas.pl.formulog.codegen.ast.cpp;
  * limitations under the License.
  * #L%
  */
+package edu.harvard.seas.pl.formulog.codegen.ast.cpp;
 
 import edu.harvard.seas.pl.formulog.codegen.CodeGenUtil;
 import java.io.PrintWriter;
 
-/** Generates an unnamed block, useful for scoping local variables. */
 public class CppBlock implements CppStmt {
 
   private final CppStmt stmt;

@@ -1,10 +1,8 @@
-package edu.harvard.seas.pl.formulog.codegen;
-
 /*-
  * #%L
  * Formulog
  * %%
- * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
+ * Copyright (C) 2020-2023 President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +17,7 @@ package edu.harvard.seas.pl.formulog.codegen;
  * limitations under the License.
  * #L%
  */
+package edu.harvard.seas.pl.formulog.codegen;
 
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Expr;
@@ -38,29 +37,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * The class turns an ML-style pattern match expression into a tree that encodes the same logic.
- * <br>
- * <br>
- * Edges in the tree represent pattern matching logic: binding variables, checking whether two
- * constants are equal, and checking whether two constructor symbols match up. <br>
- * <br>
- * The leafs of the tree are the right-hand side of the (pattern => expression) pairs in the match
- * expression; the path leading to a leaf corresponds to the logic that must completed successfully
- * for the corresponding pattern to be matched. <br>
- * <br>
- * Non-leaf nodes contain the symbolic term that is being checked at that point in the
- * pattern-matching logic; e.g., the second argument of the scrutinee term for the entire match
- * expression. The children of a node are ordered, with earlier children representing higher
- * priority patterns (which is necessary since patterns do not have to be mutually exclusive). <br>
- * <br>
- * Given a concrete scrutinee, a pattern match is simulated by walking the tree (in its order of
- * iteration). If you are at a leaf node, then it means the pattern corresponding to the path to
- * that leaf is matched, and you should evaluate the expression associated with that leaf. If you
- * are at an internal node, then you instantiate the symbolic term at that node with the concrete
- * scrutinee and try to match it against each edge in order. You then travel along the first edge
- * that matches, backtracking if necessary.
- */
 public class PatternMatchTree {
 
   private final Map<Node, List<Pair<Edge<?>, Node>>> m = new HashMap<>();
