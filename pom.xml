@@ -112,7 +112,10 @@
                 <version>2.44.0.BETA2</version>
                 <configuration>
                     <java>
-                        <googleJavaFormat />
+                        <googleJavaFormat>
+                            <version>1.23.0</version>
+                            <style>GOOGLE</style>
+                        </googleJavaFormat>
                         <licenseHeader>
                             <file>${project.basedir}/license-header</file>
                         </licenseHeader>
