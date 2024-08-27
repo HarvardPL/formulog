@@ -1,10 +1,8 @@
-package edu.harvard.seas.pl.formulog.types;
-
 /*-
  * #%L
  * Formulog
  * %%
- * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
+ * Copyright (C) 2019-2023 President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +17,7 @@ package edu.harvard.seas.pl.formulog.types;
  * limitations under the License.
  * #L%
  */
+package edu.harvard.seas.pl.formulog.types;
 
 import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;
 import edu.harvard.seas.pl.formulog.symbols.ConstructorSymbol;
@@ -428,9 +427,6 @@ public final class Types {
   }
 
   public static class OpaqueType implements Type {
-    /*
-     * This class is used (exclusively) during type checking.
-     */
 
     private static final AtomicInteger cnt = new AtomicInteger();
     private final int id;

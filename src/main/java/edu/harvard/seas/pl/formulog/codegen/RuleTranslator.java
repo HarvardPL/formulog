@@ -1,10 +1,8 @@
-package edu.harvard.seas.pl.formulog.codegen;
-
 /*-
  * #%L
  * Formulog
  * %%
- * Copyright (C) 2018 - 2022 President and Fellows of Harvard College
+ * Copyright (C) 2022-2023 President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +17,7 @@ package edu.harvard.seas.pl.formulog.codegen;
  * limitations under the License.
  * #L%
  */
+package edu.harvard.seas.pl.formulog.codegen;
 
 import edu.harvard.seas.pl.formulog.Configuration;
 import edu.harvard.seas.pl.formulog.ast.BasicProgram;
@@ -232,22 +231,6 @@ public class RuleTranslator {
 
             @Override
             public List<SLit> visit(Destructor destructor, Void input) {
-              /*
-               * A destructor of the form
-               *
-               * t -> c(X1, ..., Xn)
-               *
-               * gets translated as
-               *
-               * X0 = [[t]],
-               *
-               * @dtor_c(X0) = B, CODEGEN_CHECK(B, B2), X1 = @nth(0, X0, B2), ..., Xn = @nth(n
-               * - 1, X0, B2).
-               *
-               * @dtor_c(...) returns 1 if the term has the symbol c and 0 otherwise.
-               * CODEGEN_CHECK has a single tuple [1, 1]. It is there to make sure that the
-               * destructor has been successful before nth is called.
-               */
               List<SLit> l = new ArrayList<>();
               Term scrutinee = destructor.getScrutinee();
               STerm translatedScrutineeExpr = translate(scrutinee);

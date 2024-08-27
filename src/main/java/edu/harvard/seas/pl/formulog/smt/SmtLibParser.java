@@ -1,10 +1,8 @@
-package edu.harvard.seas.pl.formulog.smt;
-
 /*-
  * #%L
  * Formulog
  * %%
- * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
+ * Copyright (C) 2019-2023 President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +17,7 @@ package edu.harvard.seas.pl.formulog.smt;
  * limitations under the License.
  * #L%
  */
+package edu.harvard.seas.pl.formulog.smt;
 
 import edu.harvard.seas.pl.formulog.ast.BoolTerm;
 import edu.harvard.seas.pl.formulog.ast.Constructors;
@@ -294,8 +293,8 @@ public class SmtLibParser {
         {
           return I64.make(parseBv(t));
         }
-        // FIXME I'm not sure if these conversions to floating point are 100%
-        // correct...
+      // FIXME I'm not sure if these conversions to floating point are 100%
+      // correct...
       case FP32:
         {
           float val = -1;

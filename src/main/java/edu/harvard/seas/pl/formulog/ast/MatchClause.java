@@ -1,10 +1,8 @@
-package edu.harvard.seas.pl.formulog.ast;
-
 /*-
  * #%L
  * Formulog
  * %%
- * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
+ * Copyright (C) 2019-2023 President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +17,7 @@ package edu.harvard.seas.pl.formulog.ast;
  * limitations under the License.
  * #L%
  */
+package edu.harvard.seas.pl.formulog.ast;
 
 import edu.harvard.seas.pl.formulog.ast.Terms.TermVisitor;
 import edu.harvard.seas.pl.formulog.unification.SimpleSubstitution;
@@ -38,7 +37,6 @@ public class MatchClause {
     if (!checkForRepeatVariables(lhs)) {
       throw new IllegalArgumentException("Cannot repeat variables in patterns: " + lhs);
     }
-    /* XXX Is this necessary? Seems expensive. */
     Substitution s = new SimpleSubstitution();
     for (Var x : lhs.varSet()) {
       if (!x.isUnderscore()) {

@@ -1,10 +1,8 @@
-package edu.harvard.seas.pl.formulog.eval;
-
 /*-
  * #%L
  * Formulog
  * %%
- * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
+ * Copyright (C) 2019-2024 President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +17,7 @@ package edu.harvard.seas.pl.formulog.eval;
  * limitations under the License.
  * #L%
  */
+package edu.harvard.seas.pl.formulog.eval;
 
 import java.util.Arrays;
 import org.junit.Test;
@@ -493,12 +492,6 @@ public abstract class CommonEvaluationTest<T extends Evaluation> extends Abstrac
   public void test137() {
     test("test137_ok.flg");
   }
-
-  /*
-   * No longer supporting this semantics
-   *
-   * @Test public void test138() { test("test138_ok.flg"); }
-   */
 
   @Test
   public void test139() {

@@ -1,10 +1,8 @@
-package edu.harvard.seas.pl.formulog.codegen;
-
 /*-
  * #%L
  * Formulog
  * %%
- * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
+ * Copyright (C) 2020-2023 President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +17,7 @@ package edu.harvard.seas.pl.formulog.codegen;
  * limitations under the License.
  * #L%
  */
+package edu.harvard.seas.pl.formulog.codegen;
 
 import edu.harvard.seas.pl.formulog.ast.Constructor;
 import edu.harvard.seas.pl.formulog.ast.Expr;
@@ -39,7 +38,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-/** This class is used to take a Formulog term and generate its C++ representation. */
 public class TermCodeGen {
 
   private final CodeGenContext ctx;

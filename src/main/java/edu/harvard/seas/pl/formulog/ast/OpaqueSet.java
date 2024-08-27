@@ -1,10 +1,8 @@
-package edu.harvard.seas.pl.formulog.ast;
-
 /*-
  * #%L
  * Formulog
  * %%
- * Copyright (C) 2018 - 2021 President and Fellows of Harvard College
+ * Copyright (C) 2021-2023 President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +17,7 @@ package edu.harvard.seas.pl.formulog.ast;
  * limitations under the License.
  * #L%
  */
+package edu.harvard.seas.pl.formulog.ast;
 
 import edu.harvard.seas.pl.formulog.types.BuiltInTypes;
 import edu.harvard.seas.pl.formulog.types.Types.Type;

@@ -1,10 +1,8 @@
-package edu.harvard.seas.pl.formulog.codegen.ast.souffle;
-
 /*-
  * #%L
  * Formulog
  * %%
- * Copyright (C) 2018 - 2022 President and Fellows of Harvard College
+ * Copyright (C) 2022-2023 President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,5 +17,6 @@ package edu.harvard.seas.pl.formulog.codegen.ast.souffle;
  * limitations under the License.
  * #L%
  */
+package edu.harvard.seas.pl.formulog.codegen.ast.souffle;
 
 public interface SType {}

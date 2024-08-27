@@ -1,13 +1,8 @@
-package edu.harvard.seas.pl.formulog.codegen.ast.souffle;
-
-import java.util.HashSet;
-import java.util.Set;
-
 /*-
  * #%L
  * Formulog
  * %%
- * Copyright (C) 2018 - 2022 President and Fellows of Harvard College
+ * Copyright (C) 2022-2023 President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +17,10 @@ import java.util.Set;
  * limitations under the License.
  * #L%
  */
+package edu.harvard.seas.pl.formulog.codegen.ast.souffle;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public interface STerm {
 

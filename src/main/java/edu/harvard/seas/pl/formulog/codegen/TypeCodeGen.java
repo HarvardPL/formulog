@@ -1,10 +1,8 @@
-package edu.harvard.seas.pl.formulog.codegen;
-
 /*-
  * #%L
  * Formulog
  * %%
- * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
+ * Copyright (C) 2020-2023 President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +17,7 @@ package edu.harvard.seas.pl.formulog.codegen;
  * limitations under the License.
  * #L%
  */
+package edu.harvard.seas.pl.formulog.codegen;
 
 import edu.harvard.seas.pl.formulog.codegen.ast.cpp.*;
 import edu.harvard.seas.pl.formulog.symbols.BuiltInTypeSymbol;
@@ -37,7 +36,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/** This class is used to take a Formulog type and generate its C++ representation. */
 public class TypeCodeGen {
 
   private final CodeGenContext ctx;
@@ -194,8 +192,8 @@ public class TypeCodeGen {
           return mkType("_ FloatingPoint", args);
         case INT_TYPE:
           return mkType("Int", args);
-          // The rest of the built-in types can be treated as normal (i.e., user-defined)
-          // types
+        // The rest of the built-in types can be treated as normal (i.e., user-defined)
+        // types
         case LIST_TYPE:
         case OPTION_TYPE:
         case CMP_TYPE:

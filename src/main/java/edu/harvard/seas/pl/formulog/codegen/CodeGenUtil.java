@@ -1,10 +1,8 @@
-package edu.harvard.seas.pl.formulog.codegen;
-
 /*-
  * #%L
  * Formulog
  * %%
- * Copyright (C) 2018 - 2020 President and Fellows of Harvard College
+ * Copyright (C) 2019-2023 President and Fellows of Harvard College
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +17,26 @@ package edu.harvard.seas.pl.formulog.codegen;
  * limitations under the License.
  * #L%
  */
+package edu.harvard.seas.pl.formulog.codegen;
 
-import edu.harvard.seas.pl.formulog.codegen.ast.cpp.*;
-import edu.harvard.seas.pl.formulog.symbols.*;
+import edu.harvard.seas.pl.formulog.codegen.ast.cpp.CppAccess;
+import edu.harvard.seas.pl.formulog.codegen.ast.cpp.CppCast;
+import edu.harvard.seas.pl.formulog.codegen.ast.cpp.CppConst;
+import edu.harvard.seas.pl.formulog.codegen.ast.cpp.CppExpr;
+import edu.harvard.seas.pl.formulog.codegen.ast.cpp.CppStmt;
+import edu.harvard.seas.pl.formulog.codegen.ast.cpp.CppSubscript;
+import edu.harvard.seas.pl.formulog.codegen.ast.cpp.CppUnop;
+import edu.harvard.seas.pl.formulog.symbols.BuiltInFunctionSymbol;
+import edu.harvard.seas.pl.formulog.symbols.FunctionSymbol;
+import edu.harvard.seas.pl.formulog.symbols.Symbol;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.Param;
 import edu.harvard.seas.pl.formulog.symbols.parameterized.ParameterizedSymbol;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.file.Path;
 import java.util.Iterator;
 
