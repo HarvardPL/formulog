@@ -143,6 +143,17 @@ class TypeExtractor {
                 typeArgs.clear();
                 typeArgs.addAll(expanded);
               }
+              if (sym.getArity() != typeArgs.size()) {
+                var msg =
+                    "Type "
+                        + sym
+                        + " expects "
+                        + sym.getArity()
+                        + " parameter(s), but "
+                        + typeArgs.size()
+                        + " provided";
+                throw new UncheckedParseException(ctx.start.getLine(), msg);
+              }
               return pc.typeManager().lookup((TypeSymbol) sym, typeArgs);
           }
         }
