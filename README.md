@@ -269,14 +269,15 @@ SMT solving).
 - `push-pop`: try to use incremental SMT solving via the `push` and `pop` SMT
 commands. This can work well when query `y` extends query `x`; e.g., `y = c ::
 x`, where `c` is an additional conjunct; this situation most commonly occurs
-when using eager evaluation (see below).
+when using [eager evaluation](#eager-evaluation).
 - `check-sat-assuming`: try to use incremental SMT solving via the
 `check-sat-assuming` SMT command. This caches conjuncts in the SMT solver in a
 way such that they can be enabled or disabled per SMT query, and works well if
 there are shared conjuncts between queries `x` and `y`, but query `x` is not
 simply an extension of query `y` (e.g., it omits a conjunct in query `y`).
 
-For more information, see the extended abstract [Datalog-Based Systems Can Use Incremental SMT Solving](https://aaronbembenek.github.io/papers/datalog-incr-smt-iclp2020.pdf) (ICLP'20) by Aaron Bembenek, Michael Ballantyne, Michael Greenberg, and Nada Amin.
+For more information, see the ICLP'20 extended abstract [Datalog-Based Systems Can Use Incremental SMT Solving](https://aaronbembenek.github.io/papers/datalog-incr-smt-iclp2020.pdf)
+by Aaron Bembenek, Michael Ballantyne, Michael Greenberg, and Nada Amin.
 
 ## Eager Evaluation
 
