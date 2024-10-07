@@ -279,7 +279,7 @@ simply an extension of query `y` (e.g., it omits a conjunct in query `y`).
 For more information, see the ICLP'20 extended abstract [Datalog-Based Systems Can Use Incremental SMT Solving](https://aaronbembenek.github.io/papers/datalog-incr-smt-iclp2020.pdf)
 by Aaron Bembenek, Michael Ballantyne, Michael Greenberg, and Nada Amin.
 
-## Eager Evaluation
+## Eager evaluation
 
 In addition to traditional semi-naive Datalog evaluation, Formulog supports _eager_ evaluation, a novel concurrent evaluation algorithm for Datalog that is faster than semi-naive evaluation on some Formulog workloads (often because it induces a more favorable distribution of the SMT workload across SMT solvers).
 Whereas semi-naive evaluation batches derived tuples to process them in explicit rounds, eager evaluation eagerly pursues the consequences of each tuple as it is derived.
