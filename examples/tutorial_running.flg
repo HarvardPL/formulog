@@ -1,0 +1,90 @@
+(* An algebraic data type with a single variant *)
+type basic_typ =
+    | b_int
+    | b_bool
+
+(* A type alias *)
+type var = string
+
+(* For the sake of simplicity, we'll support just a few operations *)
+type op =
+    | o_add
+    | o_eq
+
+type pred =
+    | p_var(var)
+    | p_bool(bool)
+    (* i32 is the type of a 32-bit signed integer *)
+    | p_int(i32)
+    | p_interp_op(op, pred, pred)
+    | p_conj(pred, pred)
+    | p_disj(pred, pred)
+    | p_neg(pred)
+    | p_ite(pred, pred, pred)
+
+type constraint =
+    | c_pred(pred)
+    | c_conj(constraint, constraint)
+    | c_imp(var, basic_typ, pred, constraint)
+
+type typ =
+    | t_refined(basic_typ, var, pred)
+    | t_func(var, typ, typ)
+
+type kind =
+    | k_base
+    | k_star
+
+(* Tuples and lists are built-in type *)
+type env = (var * typ) list
+
+rel wf(env, typ, kind)
+
+wf(G, T, k_star) :- wf(G, T, k_base).
+
+wf(G, t_func(X, S, T), k_star) :-
+    wf(G, S, _Ks),
+    wf((X, S) :: G, T, _Kt).
+
+rel pred_wf(env, pred, basic_typ)
+
+pred_wf(_E, p_bool(_B), b_bool).
+
+pred_wf(_E, p_int(_I), b_int).
+
+pred_wf(E, p_interp_op(o_add, P1, P2), b_int) :-
+    pred_wf(E, P1, b_int),
+    pred_wf(E, P2, b_int).
+
+pred_wf(E, p_interp_op(o_eq, P1, P2), b_bool) :-
+    pred_wf(E, P1, T),
+    pred_wf(E, P2, T).
+
+(* We can define a Horn clause with two heads, meaning both conclusions hold *)
+pred_wf(E, p_conj(P1, P2), b_bool),
+pred_wf(E, p_disj(P1, P2), b_bool) :-
+    pred_wf(E, P1, b_bool),
+    pred_wf(E, P2, b_bool).
+
+pred_wf(E, p_neg(P), b_bool) :-
+    pred_wf(E, P, b_bool).
+
+pred_wf(E, p_ite(P1, P2, P3), T) :-
+    pred_wf(E, P1, b_bool),
+    pred_wf(E, P2, T),
+    pred_wf(E, P3, T).
+
+fun lookup(x: var, e: env): typ option =
+    match e with
+    | [] => none
+    | (y, t) :: rest => if x = y then some(t) else lookup(x, rest)
+    end
+
+pred_wf(E, p_var(V), B) :-
+    lookup(V, E) = some(t_refined(B, _, _)).
+
+wf(G, t_refined(B, V, P), k_base) :-
+    K = (V, t_refined(B, V, p_bool(true))),
+    pred_wf(K :: G, P, b_bool).
+
+:- pred_wf([], p_bool(true), b_bool).
