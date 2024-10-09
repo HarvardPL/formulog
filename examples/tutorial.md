@@ -60,7 +60,7 @@ type pred =
 type constraint =
     | c_pred(pred)
     | c_conj(constraint, constraint)
-    | c_imp(var, pred, constraint)
+    | c_imp(var, basic_type, pred, constraint)
 
 type typ =
     | t_refined(basic_typ, var, pred)
@@ -197,7 +197,7 @@ wf(G, t_refined(B, V, P), k_base) :-
 
 Note that in the `pred_wf` rule we invoke the `lookup` function we defined previously.
 
-### Entailment and Subtyping
+### Converting Constraints and Predicates to SMT
 
 The next judgments we encounter in JV are those for entailment and subtyping (Figure 3.4).
 
@@ -321,11 +321,84 @@ fun constraint2smt(c: constraint): bool smt =
         let s2 = constraint2smt(c2) in
         `s1 /\ s2`
     | c_pred(p) => let s = pred2smt(p) in `#v_bool_1(s)`
-    | c_imp(x, p1, c1) =>
+    | c_imp(x, _b, p1, c1) =>
+        (* Note that we do not actually need to use the basic type `_b` *)
         let prem = pred2smt(p1) in
         let conl = constraint2smt(c1) in
         `forall #{x}[val]. #v_bool_1(prem) ==> conl`
     end
+```
+
+### Entailment and Subtyping
+
+Now that we have a way to turn constraints into terms of type `bool smt`, we can start implementing the rules for entailment and subtyping (Figure 3.4).
+
+First, the rules for entailment:
+
+```
+rel ent(env, constraint)
+
+ent([], C) :- is_valid(constraint2smt(C)).
+
+ent((X, t_refined(B, X, P)) :: G, C) :-
+    ent(G, c_imp(X, B, P, C)).
+```
+
+XXX This is modified... need other rules?
+
+The function `is_valid` is a built-in that calls out to an external SMT solver.
+
+For the subtyping rules, we need to define helper functions for substituting variables in predicates and types (following Figure XXX):
+
+```
+fun subst_pred(p: pred, y: var, z: var): pred =
+    match p with
+    | p_bool(_) | p_int(_) => p
+    | p_var(x) => p_var(if x = y then z else x)
+    | p_interp_op(o, p1, p2) =>
+        let p1 = subst_pred(p1, y, z) in
+        let p2 = subst_pred(p2, y, z) in
+        p_interp_op(o, p1, p2)
+    | p_disj(p1, p2) =>
+        let p1 = subst_pred(p1, y, z) in
+        let p2 = subst_pred(p2, y, z) in
+        p_disj(p1, p2)
+    | p_conj(p1, p2) =>
+        let p1 = subst_pred(p1, y, z) in
+        let p2 = subst_pred(p2, y, z) in
+        p_conj(p1, p2)
+    | p_neg(p1) => 
+        let p1 = subst_pred(p1, y, z) in
+        p_neg(p1)
+    | p_ite(p1, p2, p3) =>
+        let p1 = subst_pred(p1, y, z) in
+        let p2 = subst_pred(p2, y, z) in
+        let p3 = subst_pred(p3, y, z) in
+        p_ite(p1, p2, p3)
+    end
+
+fun subst_typ(t: typ, y: var, z: var): typ =
+    match t with
+    | t_refined(b, v, p) =>
+        if v = y then t else t_refined(b, v, subst_pred(p, y, z)) 
+    | t_func(x, s, t) =>
+        let s = subst_typ(s, y, z) in
+        let t = if x = y then t else subst_typ(t, y, z) in
+        t_func(x, s, t)
+    end
+```
+
+We can then define the rules for subtyping:
+
+```
+rel sub(env, typ, typ)
+
+sub(G, t_refined(B, V1, P1), t_refined(B, V2, P2)) :-
+    ent(G, c_imp(V1, P1, c_pred(subst_pred(P2, V2, V1)))).
+
+sub(G, t_func(X1, S1, T1), t_func(X2, S2, T2)) :-
+    sub(G, S2, S1),
+    sub((X2, S2) :: G, subst_typ(T1, X1, X2), T2).
 ```
 
 ### Type Synthesis

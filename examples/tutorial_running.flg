@@ -25,7 +25,7 @@ type pred =
 type constraint =
     | c_pred(pred)
     | c_conj(constraint, constraint)
-    | c_imp(var, pred, constraint)
+    | c_imp(var, basic_typ, pred, constraint)
 
 type typ =
     | t_refined(basic_typ, var, pred)
@@ -130,8 +130,53 @@ fun constraint2smt(c: constraint): bool smt =
         let s2 = constraint2smt(c2) in
         `s1 /\ s2`
     | c_pred(p) => let s = pred2smt(p) in `#v_bool_1(s)`
-    | c_imp(x, p1, c1) =>
+    | c_imp(x, _b, p1, c1) =>
+        (* Note that we do not actually need to use the basic type `_b` *)
         let prem = pred2smt(p1) in
         let conl = constraint2smt(c1) in
         `forall #{x}[val]. #v_bool_1(prem) ==> conl`
     end
+
+rel ent(env, constraint)
+
+ent([], C) :- is_valid(constraint2smt(C)).
+
+ent((X, t_refined(B, X, P)) :: G, C) :-
+    ent(G, c_imp(X, B, P, C)).
+
+fun subst_pred(p: pred, y: var, z: var): pred =
+    match p with
+    | p_bool(_) | p_int(_) => p
+    | p_var(x) => p_var(if x = y then z else x)
+    | p_interp_op(o, p1, p2) =>
+        let p1 = subst_pred(p1, y, z) in
+        let p2 = subst_pred(p2, y, z) in
+        p_interp_op(o, p1, p2)
+    | p_disj(p1, p2) =>
+        let p1 = subst_pred(p1, y, z) in
+        let p2 = subst_pred(p2, y, z) in
+        p_disj(p1, p2)
+    | p_conj(p1, p2) =>
+        let p1 = subst_pred(p1, y, z) in
+        let p2 = subst_pred(p2, y, z) in
+        p_conj(p1, p2)
+    | p_neg(p1) => 
+        let p1 = subst_pred(p1, y, z) in
+        p_neg(p1)
+    | p_ite(p1, p2, p3) =>
+        let p1 = subst_pred(p1, y, z) in
+        let p2 = subst_pred(p2, y, z) in
+        let p3 = subst_pred(p3, y, z) in
+        p_ite(p1, p2, p3)
+    end
+
+fun subst_typ(t: typ, y: var, z: var): typ =
+    match t with
+    | t_refined(b, v, p) =>
+        if v = y then t else t_refined(b, v, subst_pred(p, y, z)) 
+    | t_func(x, s, t) =>
+        let s = subst_typ(s, y, z) in
+        let t = if x = y then t else subst_typ(t, y, z) in
+        t_func(x, s, t)
+    end
+
