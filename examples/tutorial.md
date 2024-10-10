@@ -8,7 +8,7 @@ Our hope is that our tutorial gives a good overview of many Formulog features, a
 
 This tutorial is intended for the PL practitioner (e.g., a grad student, academic, or research engineer).
 We assume you are familiar with SMT solving, ML-like functional languages, and logic programming, and also have some level of comfort with formal programming language notation (like inference rules).
-It is also probably helpful to have read one of our Formulog publications XXX, which should (hopefully) give a good sense for the overall design of the language and its motivations.
+It is also probably helpful to have read one of our Formulog publications, which should (hopefully) give a good sense for the overall design of the language and its motivations.
 If you are not familiar with refinement type checking or bidirectional type systems, you should probably skim the first few sections of the tutorial by Jhala and Vazou [1] (we'll focus on Sections 3.1 and 3.2).
 
 ### Help Improve This Tutorial
@@ -257,7 +257,7 @@ First, it takes us farther away from the formalism of JV.
 Second, it would likely lead to duplication, since we would need, e.g., two different constructors for equality, one where the subterms are ints and one where the subterms are bools.
 Third, it does not seem like a very flexible approach as our language of predicates becomes more complex.
 
-There is another alternative, which is to push the bool-vs-int distinction into the SMT level, using the SMT theory of algebraic data types (this follows the encoding approach of the Dminor refinement type system XXX).
+There is another alternative, which is to push the bool-vs-int distinction into the SMT level, using the SMT theory of algebraic data types (this follows the encoding approach of the Dminor refinement type system [2]).
 To do so, we'll define a new algebraic data type, representing a value in a predicate (which will be either an integer or a bool):
 
 ```
@@ -718,7 +718,7 @@ type var = val sym
 This will require a bunch of updates in the existing code (a bit of a pain), but it has the advantage that it is now very easy to create a fresh variable.
 For example, say that you have a context `g` and an expr `e`: the variable `#{(g, e)}[val]` is guaranteed to not occur in either `g` or `e` -- i.e., it's fresh.
 (Here, we are using the tuple `(g, e)` as the "name" of the variable.)
-We have found this trick to be useful in encoding more complex type systems. 
+We have found this trick to be useful in implementing more complex type systems. 
 
 ### Check Out More Complex Formulog Examples
 
@@ -726,21 +726,29 @@ For our Formulog publications, we have built three substantial, relatively sophi
 After going through this tutorial, you might find it interesting to check out the code for these case studies.
 While the analyses are more complex than the tutorial example (and, admittedly, not as well documented as they could be), this tutorial will have hopefully armed you with the information to understand a lot of what's happening in them.
 
-- [Dminor]() [XXX]: a refinement type checker that allows dynamic type tests, so that types can refer to expressions, and expressions can refer to types.
+- [Dminor](https://github.com/aaronbembenek/making-formulog-fast/blob/main/benchmarks/dminor/bench.flg) [2]: a refinement type checker that allows dynamic type tests, so that types can refer to expressions, and expressions can refer to types.
 Type checking also involves proving that expressions are pure, which requires termination checking.
-- [Scuba]() [XXX]: a context-sensitive, bottom-up points-to analysis for Java that uses SMT formulas to summarize the effects of methods on the points-to graph.
-- [Symex](): a KLEE-style [XXX] symbolic executor for a fragment of LLVM bitcode corresponding to simple C programs with loops and arrays.
+- [Scuba](https://github.com/aaronbembenek/making-formulog-fast/blob/main/benchmarks/scuba/bench.flg) [3]: a context-sensitive, bottom-up points-to analysis for Java that uses SMT formulas to summarize the effects of methods on the points-to graph.
+- [Symex](https://github.com/aaronbembenek/making-formulog-fast/blob/main/benchmarks/symex/bench.flg): a KLEE-style [4] symbolic executor for a fragment of LLVM bitcode corresponding to simple C programs with loops and arrays.
 
-## Takeaways
+## Conclusions
 
-- [ ] Precision of typed SMT terms
-- [ ] Why not represent preds, constraints with SMT terms to begin with? Checking well-formedness trickier
+In this tutorial, we've seen how to mechanize the formal specification of an interesting program analysis---the declarative rules for bidirectional refinement type checking---by encoding that specification directly in Formulog.
+It's neat to be able to program so close to the formal specification; as we've seen, doing so has even allowed us to identify a few possible gaps in the inference rules (i.e., the missing rules for entailment).
 
-XXX
+Furthermore, now that you have a Formulog implementation of the analysis, you can rely on Formulog's language infrastructure to apply both high-level and low-level optimizations to the analysis.
+For example, Formulog's parallel evaluation techniques can speed up type checking in the presence of multiple code units.
+Additionally, the compiler from Formulog to Soufflé makes it possible to automatically derive a decently efficient C++ version of the type checker.
+
+We hope you have enjoyed this dive into Formulog!
+As we mentioned earlier, please raise a [GitHub issue](https://github.com/HarvardPL/formulog/issues/new) for questions, comments, and feedback :)
 
 ## References
 
-JV
-KLEE
-Dminor
-Symex
+[1] Ranjit Jhala and Niki Vazou. 2020. Refinement Types: A Tutorial. arXiv:2010.07763. https://arxiv.org/abs/2010.07763
+
+[2] Gavin M. Bierman, Andrew D. Gordon, Cătălin Hriţcu, and David Langworthy. 2012. Semantic Subtyping with an SMT Solver. Journal of Functional Programming 22, 1 (2012), 31–105. https://doi.org/10.1145/1863543.1863560
+
+[3] Yu Feng, Xinyu Wang, Isil Dillig, and Thomas Dillig. 2015. Bottom-up Context-Sensitive Pointer Analysis for Java. In Proceedings of the 13th Asian Symposium on Programming Languages and Systems. 465–484. https://doi.org/10.1007/978-3-319-26529-2_25
+
+[4] Cristian Cadar, Daniel Dunbar, and Dawson Engler. 2008. KLEE: Unassisted and Automatic Generation of High-Coverage Tests for Complex Systems Programs. In Proceedings of the 8th USENIX Conference on Operating Systems Design and Implementation. 209–224. https://www.usenix.org/legacy/event/osdi08/tech/full_papers/cadar/cadar.pdf
