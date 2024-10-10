@@ -633,7 +633,9 @@ It works!
 
 ### Checking Addition
 
-XXX
+So far, our examples have not included very interesting refinements.
+Let's try to type check an expression involving addition.
+Since our language of expressions does not actually include operations like addition, we will include an "add" function in the context with the appropriate type.
 
 ```
 (* The type of the add function *)
@@ -661,16 +663,59 @@ ex(8, G, E, T) :-
     T = lit_typ(42).
 ```
 
-## Next Steps
+It works!
+We've been able to prove, in the type system, that our expression evaluates to 42.
 
-XXX
+## Exercises
 
-- [ ] Add uninterpreted function to expressions
-- [ ] Support bools
-- [ ] Dminor
-- [ ] Precision of typed SMT terms
-- [ ] Why not represent preds, constraints with SMT terms to begin with? Checking well-formedness trickier
+Interested readers might want to take on these extra exercises.
+
+### Add an Uninterpreted Operation
+
+Our language of predicates includes interpreted operations (like addition and equality), but no uninterpreted operations (the grammar of JV includes both).
+Add a new `pred` constructor `p_gcd(pred, pred)` that represents the greatest common denominator of two terms.
+When predicates are converted to SMT terms (`pred2smt`), emit an uninterpreted function term.
+SMT-level uninterpreted functions can be declared in Formulog using syntax like:
+
+```
+uninterpreted fun foo(i32 smt, string smt): bool smt
+```
+
+You'll also have to update rules/functions as appropriate, to handle the new constructor case.
+
+### Add Branches and Recursion
+
+Implement the additional rules for branches and recursion in JV Sections 4.2 and 4.3.
+We have not tried this ourselves; let us know (by raising a [GitHub issue](https://github.com/HarvardPL/formulog/issues/new)) if you run into difficulties!
+
+From skimming the new rules, the trickiest part appears to be creating a fresh variable `y` in the Chk-If rule.
+One approach you might consider is changing the type of variables from `string` to `val sym`:
+
+```
+type var = val sym
+```
+
+This will require a bunch of updates in the existing code (a bit of a pain), but it has the advantage that it is now very easy to create a fresh variable.
+For example, say that you have a context `g` and an expr `e`: the variable `#{(g, e)}[val]` is guaranteed to not occur in either `g` or `e` -- i.e., it's fresh.
+(Here, we are using the tuple `(g, e)` as the "name" of the variable.)
+We have found this trick to be useful in encoding more complex type systems. 
+
+### Check Out More Complex Formulog Examples
+
+Our Formulog publications have involved three substantial, relatively sophisticated SMT-based case studies.
+After going through this tutorial, you might find it interesting to check out the code for these case studies.
+While the analyses are more complex (and, admittedly, not as well documented as they could be), this tutorial will have hopefully armed you with the information to understand a lot of what's happening in them.
+
+- [Dminor]() [XXX]: a refinement type checker that allows dynamic type tests, so that types can refer to expressions, and expressions can refer to types.
+Type checking also involves proving that expressions are pure, which requires termination checking.
+- [Scuba]() [XXX]: a context-sensitive, bottom-up points-to analysis for Java that uses SMT formulas to summarize the effects of methods on the points-to graph.
+- [Symex](): a KLEE-style [XXX] symbolic executor for a fragment of LLVM bitcode (enough, essentially, to support simple C programs with loops and arrays).
 
 ## Takeaways
 
+- [ ] Precision of typed SMT terms
+- [ ] Why not represent preds, constraints with SMT terms to begin with? Checking well-formedness trickier
+
 XXX
+
+## References
