@@ -83,6 +83,8 @@ type env = (var * typ) list
 
 We can then similarly encode expressions, following Figure 3.2.
 
+![Figure 3.2](./images/figure_3_2.png)
+
 ```
 type expr =
     | e_int(i32)
@@ -96,6 +98,8 @@ type expr =
 ### Well-formedness
 
 The first judgments---which define type well-formedness---are given in Figure 3.3.
+
+![Figure 3.3](./images/figure_3_3.png)
 
 Typically, in Formulog, you would encode inference rules like these using Horn clauses, so let's do that here.
 
@@ -208,6 +212,8 @@ Formulog allows ML-style functions to be invoked from within Horn clauses.
 
 The next judgments we encounter in JV are those for entailment and subtyping (Figure 3.4).
 
+![Figure 3.4](./images/figure_3_4.png)
+
 The rule Ent-Emp requires us to determine if a constraint is valid; we can do this in Formulog by using the built-in function `is_valid`, provided that we convert a term of type `constraint` to a term of type `bool smt` (the type in Formulog representing an SMT proposition).
 That doesn't sound too bad; we can write a function to do that.
 The conjunction case is straightforward:
@@ -271,7 +277,7 @@ type val =
 ```
 
 This type will only appear in SMT formulas.
-We can then redefine `pred2smt` to return a term of type `val smt` (instead of `bool smt`):
+We can then redefine `pred2smt` to return a term of type `val smt`---i.e., a `val`-valued SMT term---instead of a term of type `bool smt`:
 
 ```
 fun pred2smt(p: pred): val smt =
@@ -332,6 +338,7 @@ fun constraint2smt(c: constraint): bool smt =
         (* Note that we do not actually need to use the basic type `_b` *)
         let prem = pred2smt(p1) in
         let conl = constraint2smt(c1) in
+        (* This uses more special syntax for SMT formulas *)
         `forall #{x}[val]. #v_bool_1(prem) ==> conl`
     end
 ```
@@ -339,6 +346,8 @@ fun constraint2smt(c: constraint): bool smt =
 ### Entailment and Subtyping
 
 Now that we have a way to turn constraints into terms of type `bool smt`, we can start implementing the rules for entailment and subtyping (Figure 3.4).
+
+![Figure 3.4](./images/figure_3_4.png)
 
 First, the rules for entailment:
 
@@ -409,7 +418,9 @@ sub(G, t_func(X1, S1, T1), t_func(X2, S2, T2)) :-
 
 ### Type Synthesis
 
-Given the machinery we have in place, the rules for type synthesis (Figure 3.5) fall into place nicely:
+Given the machinery we have in place, the rules for type synthesis (Figure 3.5) fall into place nicely.
+
+![Figure 3.5](./images/figure_3_5.png)
 
 ```
 rel syn(env, expr, typ)
@@ -434,7 +445,9 @@ syn(G, e_app(E, Y), subst_typ(T, X, Y)) :-
 
 ### Type Checking
 
-The type checking rules themselves (Figure 3.6) are also straightforward:
+The type checking rules themselves (Figure 3.6) are also straightforward.
+
+![Figure 3.6](./images/figure_3_6.png)
 
 ```
 chk(G, E, T) :-

@@ -140,6 +140,7 @@ fun constraint2smt(c: constraint): bool smt =
         (* Note that we do not actually need to use the basic type `_b` *)
         let prem = pred2smt(p1) in
         let conl = constraint2smt(c1) in
+        (* This uses more special syntax for SMT formulas *)
         `forall #{x}[val]. #v_bool_1(prem) ==> conl`
     end
 
