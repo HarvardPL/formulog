@@ -35,6 +35,8 @@ For the full, final code, see [tutorial.flg](tutorial.flg).
 
 The first formalism we encounter in JV Section 3.1 is a definition of types and environments (Figure 3.1), which also refers to the definitions of predicates (Figure 2.1).
 
+![Figure 3.1](./images/figure_3_1.png)
+
 ![Figure 2.1](./images/figure_2_1.png)
 
 We can encode these BNF-style definitions (along with the definition of constraints) using Formulog's support for algebraic data types:
