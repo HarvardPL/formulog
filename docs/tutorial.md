@@ -29,7 +29,7 @@ Our typical approach when implementing an analysis in Formulog is thus to try to
 
 This is the approach we will follow in this tutorial: directly translate the formalism of JV as we encounter it, and then go back to patch our implementation as necessary.
 Concretely, we will work our way through JV Sections 3.1 and 3.2.
-For the full, final code, see XXX.
+For the full, final code, see [tutorial.flg](tutorial.flg).
 
 ## Definitions
 
