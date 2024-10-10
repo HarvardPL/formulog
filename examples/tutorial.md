@@ -91,7 +91,7 @@ type expr =
 
 ### Well-formedness
 
-The first judgments -- defining type well-formedness -- are given in Figure 3.3.
+The first judgments---which define type well-formedness---are given in Figure 3.3.
 
 Typically, in Formulog, you would encode inference rules like these using Horn clauses, so let's do that here.
 
@@ -716,7 +716,7 @@ type var = val sym
 ```
 
 This will require a bunch of updates in the existing code (a bit of a pain), but it has the advantage that it is now very easy to create a fresh variable.
-For example, say that you have a context `g` and an expr `e`: the variable `#{(g, e)}[val]` is guaranteed to not occur in either `g` or `e` -- i.e., it's fresh.
+For example, say that you have a context `g` and an expr `e`: the variable `#{(g, e)}[val]` is guaranteed to not occur in either `g` or `e`---i.e., it's fresh.
 (Here, we are using the tuple `(g, e)` as the "name" of the variable.)
 We have found this trick to be useful in implementing more complex type systems. 
 
