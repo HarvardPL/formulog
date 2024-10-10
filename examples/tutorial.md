@@ -6,7 +6,10 @@ Our hope is that our tutorial gives a good overview of many Formulog features, a
 
 **Intended audience**:
 This tutorial is intended for folks with some background with SMT solving, an ML-like functional language, and logic programming, as well as a level of comfort with formal programming language notation (like inference rules) -- so, essentially PL researchers and PL-oriented engineers.
-It is recommended to skim the relevant sections in the article by Jhala and Vazou, as we'll be referring to their text often (and not repeating their exposition).
+It is recommended to skim the relevant sections in the article by Jhala and Vazou, as we'll be referring to their text often, and we won't do much to explain how the type system actually works.
+
+XXX The PL practitioner, widely construed
+If not familiar with refinement type checking or bidirectional type systems, read XXX
 
 **Attribution**:
 This tutorial includes figures from the article [Refinement Types: A Tutorial](https://arxiv.org/abs/2010.07763) (v1) by Ranjit Jhala and Niki Vazou, which has been published under a [CC BY 4.0 license](https://creativecommons.org/licenses/by/4.0/).
@@ -44,7 +47,6 @@ type var = string
 type op =
     | o_add
     | o_eq
-    | o_mul
 
 type pred =
     | p_var(var)
@@ -70,7 +72,7 @@ type kind =
     | k_base
     | k_star
 
-(* Tuples and lists are built-in type *)
+(* Tuples and lists are built-ins *)
 type env = (var * typ) list
 ```
 
@@ -195,7 +197,7 @@ wf(G, t_refined(B, V, P), k_base) :-
     pred_wf(K :: G, P, b_bool),
 ```
 
-Note that in the `pred_wf` rule we invoke the `lookup` function we defined previously.
+Note that in the rule defining a case of `pred_wf` we invoke the `lookup` function we defined previously -- that is, Formulog allows ML-style functions to be invoked from within Horn clauses.
 
 ### Converting Constraints and Predicates to SMT
 
@@ -388,13 +390,14 @@ fun subst_typ(t: typ, y: var, z: var): typ =
     end
 ```
 
+These functions are standard fare for XXX.
 We can then define the rules for subtyping:
 
 ```
 rel sub(env, typ, typ)
 
 sub(G, t_refined(B, V1, P1), t_refined(B, V2, P2)) :-
-    ent(G, c_imp(V1, P1, c_pred(subst_pred(P2, V2, V1)))).
+    ent(G, c_imp(V1, B, P1, c_pred(subst_pred(P2, V2, V1)))).
 
 sub(G, t_func(X1, S1, T1), t_func(X2, S2, T2)) :-
     sub(G, S2, S1),
@@ -403,10 +406,271 @@ sub(G, t_func(X1, S1, T1), t_func(X2, S2, T2)) :-
 
 ### Type Synthesis
 
+Given the machinery we have in place, the rules for type synthesis (Figure 3.5) fall into place nicely:
+
+```
+rel syn(env, expr, typ)
+
+(* Declare relation for type checking, so we can refer to it *)
+rel chk(env, expr, typ)
+
+syn(G, e_var(X), T) :- lookup(X, G) = some(T).
+
+(* Here we give an int n the type int{v : v = n} *)
+syn(_G, e_int(N), t_refined(b_int, "v", P)) :-
+    P = p_interp_op(o_eq, p_var("v"), p_int(N)).
+
+syn(G, e_annot(E, T), T) :-
+    wf(G, T, _k),
+    chk(G, E, T).
+
+syn(G, e_app(E, Y), subst_typ(T, X, Y)) :-
+    syn(G, E, t_func(X, S, T)),
+    chk(G, e_var(Y), S).
+```
+
 ### Type Checking
+
+The type checking rules themselves (Figure 3.6) are also straightforward:
+
+```
+chk(G, E, T) :-
+    syn(G, E, S),
+    sub(G, S, T).
+
+chk(G, e_lambda(X, E), t_func(X, T1, T2)) :-
+    chk((X, T1) :: G, E, T2).
+
+chk(G, e_let(X, E1, E2), T2) :-
+    syn(G, E1, T1),
+    chk((X, T1) :: G, E2, T2).
+```
+
+## Running Some Examples
+
+
+Now that we have all the logic in place, let's try to type check some terms!
+First, we'll add a little machinery for running examples:
+
+```
+(* We'll populate this relation with numbered examples *)
+rel ex(i32, env, expr, typ)
+
+rel check_ex(i32)
+
+check_ex(N) :-
+    ex(N, G, E, T),
+    chk(G, E, T).
+
+(* This is a query that checks all examples; replace the _ with a number to check a particular example *)
+:- check_ex(_).
+```
+
+### Checking Literals
+
+Let's try a simple example first:
+
+```
+(* The type int{v: v = n} *)
+fun lit_typ(n: i32): typ =
+    t_refined(b_int, "v", p_interp_op(o_eq, p_var("v"), p_int(n)))
+
+(*
+    Expr
+        42
+    Type
+        int{v: v = 42}
+*)
+ex(0, [], e_int(42), lit_typ(42)).
+```
+
+We can ask Formulog to dump the derived queries:
+
+```
+java -jar formulog.jar tutorial.flg --dump-query
+```
+
+Doing so, we'll see that `check_ex(0)` is derived:
+
+```
+==================== QUERY RESULTS (1) ====================
+query:check_ex(0)
+```
+
+So, our type checker works on that example!
+
+But maybe it accepts every term?
+Let's try an example that should fail:
+
+```
+(*
+    Expr
+        42
+    Type
+        int{v: v = 43}
+*)
+ex(1, [], e_int(42), lit_typ(43)).
+```
+
+When we run Formulog now, we see that `check_ex(1)` is *not* derived; and so our type checker has successfully rejected that example!
+
+### Checking Let Bindings
+
+Here's an example involving a simple let binding:
+
+```
+(*
+    Expr
+        let z = 42 in z
+    Type
+        int{v: v = 42}
+*)
+ex(2, [], E, T) :-
+    E = e_let("z", e_int(42), e_var("z")),
+    T = lit_typ(42).
+```
+
+When we run this, we see that the fact `check_ex(2)` is not derived, which is wrong: this example should go through.
+What's up?
+We can debug this example by adding `print` statements to rules to essentially track the progress of the type checker.
+
+XXX
+
+We see that type checking fails on the recursive entailment rule (which faithfully implements the rule Ent-Ext in JV):
+
+```
+ent((X, t_refined(B, X, P)) :: G, C) :-
+    ent(G, c_imp(X, B, P, C)).
+```
+
+The issue is that the judgment is too strict: it requires that the name of the variable in the context is the same as the name of the bound variable in the refinement.
+We can fix this by adding another rule if the names are different; this rule changes the name of the variable in the refinement to match the name of the variable in the context, as long as that name does not already appear in the refinement:
+
+```
+(* An additional rule *)
+ent((X, t_refined(B, Y, P)) :: G, C) :-
+    X != Y && !appears(X, P),
+    ent(G, c_imp(X, B, subst_pred(P, Y, X), C)).
+```
+
+Now the type checker works on this example!
+
+### Checking Functions
+
+Let's see if we can type a constant function:
+
+```
+(*
+    Expr
+        \y. 0 
+    Type
+        y:int{y: true} -> int{v: v = 0} 
+*)
+ex(5, [], e_lambda("y", e_int(0)), t_func("y", t_refined(b_int, "y", p_bool(true)), lit_typ(0))).
+```
+
+It works!
+How about if we bind that function, but do not actually use it?
+(Note that lambdas need to be annotated with a type, as there are no rules for synthesizing a type for a lambda.)
+
+```
+(*
+    Expr
+        let z = \y. 0 in
+        let x = 42 in
+        x
+    Type
+        int{v: v = 42}
+*)
+ex(6, [], E, T) :-
+    Lam_type = t_func("y", t_refined(b_int, "y", p_bool(true)), lit_typ(0)),
+    E1 = e_let("x", e_int(42), e_var("x")),
+    E = e_let("z", e_annot(e_lambda("y", e_int(0)), Lam_type), E1),
+    T = lit_typ(42).
+```
+
+This fails!
+What gives?
+If we do some more debugging, we see that entailment is once again an issue: there is no rule for what to do if there is a variable with a function type in the context (in this case, the variable "z").
+We can fix that by adding another entailment rule that skips over the binding, as long as the bound variable does not appear free in the constraint:
+
+```
+fun is_free(x: var, c: constraint): bool =
+    match c with
+    | c_pred(p) => appears(x, p)
+    | c_conj(c1, c2) => is_free(x, c1) || is_free(x, c2)
+    | c_imp(y, _, p, c1) =>
+        x != y && (appears(x, p) || is_free(x, c1))
+    end
+
+(* An additional rule *)
+ent((X, t_func(_, _, _)) :: G, C) :-
+    !is_free(X, C),
+    ent(G, C).
+```
+
+Now the example works :)
+
+How about if we apply the function?
+
+```
+(*
+    Expr
+        let z = \y. 0 in
+        let x = 42 in
+        z x
+    Type
+        int{v: v = 0}
+*)
+ex(7, [], E, T) :-
+    Lam_type = t_func("y", t_refined(b_int, "y", p_bool(true)), lit_typ(0)),
+    E1 = e_let("x", e_int(42), e_app(e_var("z"), "x")),
+    E = e_let("z", e_annot(e_lambda("y", e_int(0)), Lam_type), E1),
+    T = lit_typ(0).
+```
+
+It works!
+
+### Checking Addition
+
+XXX
+
+```
+(* The type of the add function *)
+const add_typ: typ =
+    let add = p_interp_op(o_add, p_var("x"), p_var("y")) in
+    let eq = p_interp_op(o_eq, p_var("v"), add) in
+    let r = t_refined(b_int, "v", eq) in
+    let t = t_func("y", t_refined(b_int, "v", p_bool(true)), r) in
+    let s = t_refined(b_int, "v", p_bool(true)) in
+    t_func("x", s, t)
+
+(*
+    Context
+        add |-> x:int{v: true} -> (y:int{v: true} -> int{v: v = x + y})
+        one |-> int{v: v = 1}
+    Expr
+        let z = 41 in
+        add z one
+    Type
+        int{v: v = 42}
+*)
+ex(8, G, E, T) :-
+    G = [("add", add_typ), ("one", lit_typ(1))],
+    E = e_let("z", e_int(41), e_app(e_app(e_var("add"), "z"), "one")),
+    T = lit_typ(42).
+```
+
+## Next Steps
+
+XXX
 
 - [ ] Add uninterpreted function to expressions
 - [ ] Support bools
 - [ ] Dminor
 - [ ] Precision of typed SMT terms
 - [ ] Why not represent preds, constraints with SMT terms to begin with? Checking well-formedness trickier
+
+## Takeaways
+
+XXX
