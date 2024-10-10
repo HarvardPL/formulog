@@ -1,32 +1,34 @@
 # Tutorial: Building a Refinement Type Checker
 
 In this tutorial, we'll implement a type checker for a small (but still interesting) refinement type system in Formulog.
-In particular, we'll implement the declarative type checking rules for the first system in the article [Refinement Types: A Tutorial](https://arxiv.org/abs/2010.07763) by Ranjit Jhala and Niki Vazou.
+In particular, we'll implement the declarative, bidirectional type checking rules for the first system in the article [Refinement Types: A Tutorial](https://arxiv.org/abs/2010.07763) by Ranjit Jhala and Niki Vazou [1].
 Our hope is that our tutorial gives a good overview of many Formulog features, and a flavor of what it is like to program a nontrivial analysis in Formulog.
 
-**Intended audience**:
-This tutorial is intended for folks with some background with SMT solving, an ML-like functional language, and logic programming, as well as a level of comfort with formal programming language notation (like inference rules) -- so, essentially PL researchers and PL-oriented engineers.
-It is recommended to skim the relevant sections in the article by Jhala and Vazou, as we'll be referring to their text often, and we won't do much to explain how the type system actually works.
+### Intended audience
 
-XXX The PL practitioner, widely construed
-If not familiar with refinement type checking or bidirectional type systems, read XXX
+This tutorial is intended for the PL practitioner (e.g., a grad student, academic, or research engineer).
+We assume you are familiar with SMT solving, ML-like functional languages, and logic programming, and also have some level of comfort with formal programming language notation (like inference rules).
+It is also probably helpful to have read one of our Formulog publications XXX, which should (hopefully) give a good sense for the overall design of the language and its motivations.
+If you are not familiar with refinement type checking or bidirectional type systems, you should probably skim the first few sections of the tutorial by Jhala and Vazou [1] (we'll focus on Sections 3.1 and 3.2).
 
-**Attribution**:
-This tutorial includes figures from the article [Refinement Types: A Tutorial](https://arxiv.org/abs/2010.07763) (v1) by Ranjit Jhala and Niki Vazou, which has been published under a [CC BY 4.0 license](https://creativecommons.org/licenses/by/4.0/).
+### Help Improve This Tutorial
+
+We're eager for feedback on ways to make this tutorial clearer and more useful!
+If you have a question about the content of this tutorial, a suggestion for improvement, or a bug report, please let us know by raising a [GitHub issue](https://github.com/HarvardPL/formulog/issues/new).
+
+### Attribution
+
+This tutorial includes figures from the article [Refinement Types: A Tutorial](https://arxiv.org/abs/2010.07763) (v1) by Ranjit Jhala and Niki Vazou [1], which has been published under a [CC BY 4.0 license](https://creativecommons.org/licenses/by/4.0/).
 We will refer to this article as "JV" for short.
-
-## Help Improve This Tutorial
-
-XXX
 
 ## General Approach
 
-One of the claimed advantages of Datalog (for writing program analyses) is to be able to implement analysis logic at the level of mathematical specification.
-Formulog extends this benefit to analyses that manipulate SMT formulas and rely on SMT solving for determining satisfiability.
-Thus, our approach when implementing an analysis in Formulog is to try to directly translate the formal specification of an analysis---inference rules and (typically pure) helper functions---into Horn clauses and functions.
-That is the approach we will follow in this tutorial: directly translate the formalism of JV as we encounter it, and then go back to patch our implementation as necessary.
+One of the advantages of writing a program analysis in Datalog is to be able to implement analysis logic at the level of mathematical specification.
+Formulog extends this benefit to analyses where the formal specification involves constructing logical terms (i.e., SMT formulas) and determining their satisfiability/validity (i.e., SMT solving).
+Our typical approach when implementing an analysis in Formulog is thus to try to directly translate the formal specification of an analysis---inference rules and mathematical helper functions---into Horn clauses and functional code.
 
-We will work our way through JV Sections 3.1 and 3.2.
+This is the approach we will follow in this tutorial: directly translate the formalism of JV as we encounter it, and then go back to patch our implementation as necessary.
+Concretely, we will work our way through JV Sections 3.1 and 3.2.
 For the full, final code, see XXX.
 
 ## Definitions
@@ -43,7 +45,7 @@ type basic_typ =
 (* A type alias *)
 type var = string
 
-(* For the sake of simplicity, we'll support just a few operations *)
+(* Interpreted operations: for simplicity, we'll support just a few *)
 type op =
     | o_add
     | o_eq
@@ -51,8 +53,7 @@ type op =
 type pred =
     | p_var(var)
     | p_bool(bool)
-    (* i32 is the type of a 32-bit signed integer *)
-    | p_int(i32)
+    | p_int(i32) (* i32 is the type of a 32-bit signed integer *)
     | p_interp_op(op, pred, pred)
     | p_conj(pred, pred)
     | p_disj(pred, pred)
@@ -101,14 +102,14 @@ rel wf(env, typ, kind)
 ```
 
 We can then encode the rules one by one, with reference to this relation.
-Let's start with the simplest, Wf-Kind:
+Let's start with the simplest rule, Wf-Kind:
 
 ```
 wf(G, T, k_star) :- wf(G, T, k_base).
 ```
 
 Horn clauses are read right to left, so this rule is saying that types that are well-formed at kind base are also well-formed at kind star.
-Identifiers beginning with an uppercase letter are logic programming variables.
+Identifiers beginning with an uppercase letter are logic programming variables, which are implicitly universally quantified across the entire rule.
 
 Wf-Fun is not too bad to encode either:
 
@@ -121,10 +122,9 @@ wf(G, t_func(X, S, T), k_star) :-
 Two things to note:
 
 - Identifiers that begin with an underscore are anonymous variables. Formulog will reject rules where a non-anonymous variable only appears once (a common bug).
-- The infix constructor `::` is the cons of a value and a list; in this case, we use it to extend the environment with a new binding (represented as a tuple).
+- As in ML variants, the infix constructor `::` is the cons of a value and a list; in this case, we use it to extend the environment with a new binding (represented as a tuple).
 
-Once we get to WF-Base, we notice that we're missing something: the premise requires the well-sortedness of a predicate, a judgment that is not defined in the paper.
-The authors say that this amounts to standard type checking (with refinements ignored).
+Once we get to WF-Base, we notice that we're missing something: the premise requires the well-sortedness of a predicate, a judgment that is not defined by JV, although the authors say that this amounts to standard type checking (with refinements ignored).
 We'll have to declare a relation for this and encode the rules:
 
 ```
@@ -197,7 +197,8 @@ wf(G, t_refined(B, V, P), k_base) :-
     pred_wf(K :: G, P, b_bool),
 ```
 
-Note that in the rule defining a case of `pred_wf` we invoke the `lookup` function we defined previously -- that is, Formulog allows ML-style functions to be invoked from within Horn clauses.
+Note that in the rule defining a case of `pred_wf` we invoke the `lookup` function we defined previously.
+Formulog allows ML-style functions to be invoked from within Horn clauses.
 
 ### Converting Constraints and Predicates to SMT
 
@@ -256,8 +257,8 @@ First, it takes us farther away from the formalism of JV.
 Second, it would likely lead to duplication, since we would need, e.g., two different constructors for equality, one where the subterms are ints and one where the subterms are bools.
 Third, it does not seem like a very flexible approach as our language of predicates becomes more complex.
 
-There is another alternative, which is to push the bool-vs-int distinction into the SMT level, using the SMT theory of algebraic data types (this follows Dminor XXX).
-To do so, we'll define a new algebraic data type, representing a value in a predicate:
+There is another alternative, which is to push the bool-vs-int distinction into the SMT level, using the SMT theory of algebraic data types (this follows the encoding approach of the Dminor refinement type system XXX).
+To do so, we'll define a new algebraic data type, representing a value in a predicate (which will be either an integer or a bool):
 
 ```
 type val =
@@ -309,7 +310,7 @@ Let's look at some simple cases first.
 
 In the other cases, we see the use of the constructors `#v_int_1` and `#v_bool_1`.
 For all datatypes (that can be expressed at the SMT level), Formulog creates constructors of this form that can be used within SMT formulas to access the arguments of constructors.
-For example, `#v_int_1` is defined so that `#v_int_1(v_int(X))` is the int `X`, but `#v_int_1(v_bool(_))` is any int.
+For example, `#v_int_1` is defined so that `#v_int_1(v_int(n))` is the int `n`, but `#v_int_1(v_bool(_))` is any int.
 This approach reflects the SMT-LIB theory of algebraic datatypes.
 Essentially, these constructors allow us to coerce (within an SMT formula) a value of type `val` to a `bool` or `int`.
 
@@ -346,11 +347,9 @@ ent((X, t_refined(B, X, P)) :: G, C) :-
     ent(G, c_imp(X, B, P, C)).
 ```
 
-XXX This is modified... need other rules?
-
 The function `is_valid` is a built-in that calls out to an external SMT solver.
 
-For the subtyping rules, we need to define helper functions for substituting variables in predicates and types (following Figure XXX):
+For the subtyping rules, we need to define helper functions for substituting variables in predicates and types (following the logic in Section 3.3.1):
 
 ```
 fun subst_pred(p: pred, y: var, z: var): pred =
@@ -390,7 +389,7 @@ fun subst_typ(t: typ, y: var, z: var): typ =
     end
 ```
 
-These functions are standard fare for XXX.
+These functions are pretty standard.
 We can then define the rules for subtyping:
 
 ```
@@ -533,10 +532,18 @@ ex(2, [], E, T) :-
 When we run this, we see that the fact `check_ex(2)` is not derived, which is wrong: this example should go through.
 What's up?
 We can debug this example by adding `print` statements to rules to essentially track the progress of the type checker.
+For example, if the first of these print functions fires, but the second one does not, then we know that the entailment call failed: 
 
-XXX
+```
+sub(G, t_refined(B, V1, P1), t_refined(B, V2, P2)) :-
+    print(("sub ent 0", G, V1, P1, V2, P2)),
+    ent(G, c_imp(V1, B, P1, c_pred(subst_pred(P2, V2, V1)))),
+    print(("sub ent 1", G, V1, P1, V2, P2)).
+```
 
-We see that type checking fails on the recursive entailment rule (which faithfully implements the rule Ent-Ext in JV):
+Print is a function that takes any type (here a tuple) and returns `true` (a function can be used in a rule body as an atom if it returns a bool).
+Admittedly, this is not a great debugging experience; hopefully we can come up with something better.
+Nonetheless, with a little effort, we see that type checking fails on the recursive entailment rule (which faithfully implements the rule Ent-Ext in JV):
 
 ```
 ent((X, t_refined(B, X, P)) :: G, C) :-
@@ -547,6 +554,19 @@ The issue is that the judgment is too strict: it requires that the name of the v
 We can fix this by adding another rule if the names are different; this rule changes the name of the variable in the refinement to match the name of the variable in the context, as long as that name does not already appear in the refinement:
 
 ```
+fun appears(x: var, p: pred): bool =
+    match p with
+    | p_var(y) => x = y
+    | p_bool(_) | p_int(_) => false
+    | p_interp_op(_, p1, p2)
+    | p_conj(p1, p2)
+    | p_disj(p1, p2) =>
+        appears(x, p1) || appears(x, p2)
+    | p_neg(p1) => appears(x, p1)
+    | p_ite(p1, p2, p3) =>
+        appears(x, p1) || appears(x, p2) || appears(x, p3)
+    end
+
 (* An additional rule *)
 ent((X, t_refined(B, Y, P)) :: G, C) :-
     X != Y && !appears(X, P),
@@ -571,7 +591,7 @@ ex(5, [], e_lambda("y", e_int(0)), t_func("y", t_refined(b_int, "y", p_bool(true
 
 It works!
 How about if we bind that function, but do not actually use it?
-(Note that lambdas need to be annotated with a type, as there are no rules for synthesizing a type for a lambda.)
+(Note that lambdas need to be annotated with a type using the `e_annot` constructor, as there are no rules for synthesizing a type for a lambda.)
 
 ```
 (*
@@ -668,13 +688,13 @@ We've been able to prove, in the type system, that our expression evaluates to 4
 
 ## Exercises
 
-Interested readers might want to take on these extra exercises.
+Adventurous readers might want to take on these extra exercises.
 
 ### Add an Uninterpreted Operation
 
 Our language of predicates includes interpreted operations (like addition and equality), but no uninterpreted operations (the grammar of JV includes both).
 Add a new `pred` constructor `p_gcd(pred, pred)` that represents the greatest common denominator of two terms.
-When predicates are converted to SMT terms (`pred2smt`), emit an uninterpreted function term.
+When a `p_gcd` predicate is converted to an SMT term in the function `pred2smt`, emit an uninterpreted function term.
 SMT-level uninterpreted functions can be declared in Formulog using syntax like:
 
 ```
@@ -689,7 +709,7 @@ Implement the additional rules for branches and recursion in JV Sections 4.2 and
 We have not tried this ourselves; let us know (by raising a [GitHub issue](https://github.com/HarvardPL/formulog/issues/new)) if you run into difficulties!
 
 From skimming the new rules, the trickiest part appears to be creating a fresh variable `y` in the Chk-If rule.
-One approach you might consider is changing the type of variables from `string` to `val sym`:
+One approach you might consider is changing the type of variables from `string` to `val sym` (i.e., a `val`-valued SMT variable):
 
 ```
 type var = val sym
@@ -702,14 +722,14 @@ We have found this trick to be useful in encoding more complex type systems.
 
 ### Check Out More Complex Formulog Examples
 
-Our Formulog publications have involved three substantial, relatively sophisticated SMT-based case studies.
+For our Formulog publications, we have built three substantial, relatively sophisticated SMT-based case studies.
 After going through this tutorial, you might find it interesting to check out the code for these case studies.
-While the analyses are more complex (and, admittedly, not as well documented as they could be), this tutorial will have hopefully armed you with the information to understand a lot of what's happening in them.
+While the analyses are more complex than the tutorial example (and, admittedly, not as well documented as they could be), this tutorial will have hopefully armed you with the information to understand a lot of what's happening in them.
 
 - [Dminor]() [XXX]: a refinement type checker that allows dynamic type tests, so that types can refer to expressions, and expressions can refer to types.
 Type checking also involves proving that expressions are pure, which requires termination checking.
 - [Scuba]() [XXX]: a context-sensitive, bottom-up points-to analysis for Java that uses SMT formulas to summarize the effects of methods on the points-to graph.
-- [Symex](): a KLEE-style [XXX] symbolic executor for a fragment of LLVM bitcode (enough, essentially, to support simple C programs with loops and arrays).
+- [Symex](): a KLEE-style [XXX] symbolic executor for a fragment of LLVM bitcode corresponding to simple C programs with loops and arrays.
 
 ## Takeaways
 
@@ -719,3 +739,8 @@ Type checking also involves proving that expressions are pure, which requires te
 XXX
 
 ## References
+
+JV
+KLEE
+Dminor
+Symex

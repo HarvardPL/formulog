@@ -6,7 +6,7 @@ type basic_typ =
 (* A type alias *)
 type var = string
 
-(* For the sake of simplicity, we'll support just a few operations *)
+(* Interpreted operations: for simplicity, we'll support just a few *)
 type op =
     | o_add
     | o_eq
@@ -172,11 +172,6 @@ fun subst_pred(p: pred, y: var, z: var): pred =
 rel ent(env, constraint)
 
 ent([], C) :- is_valid(constraint2smt(C)).
-
-(*
-ent((X, t_refined(B, X, P)) :: G, C) :-
-    ent(G, c_imp(X, B, P, C)).
-*)
 
 fun appears(x: var, p: pred): bool =
     match p with
