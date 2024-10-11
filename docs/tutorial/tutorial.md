@@ -151,43 +151,43 @@ type basic_typ =
 We can then encode the rule for boolean literals:
 
 ```
-pred_wf(_E, p_bool(_B), b_bool).
+pred_wf(_G, p_bool(_B), b_bool).
 ```
 
 The rules for most the other constructs is straightforward:
 
 ```
-pred_wf(_E, p_int(_I), b_int).
+pred_wf(_G, p_int(_I), b_int).
 
-pred_wf(E, p_interp_op(o_add, P1, P2), b_int) :-
-    pred_wf(E, P1, b_int),
-    pred_wf(E, P2, b_int).
+pred_wf(G, p_interp_op(o_add, P1, P2), b_int) :-
+    pred_wf(G, P1, b_int),
+    pred_wf(G, P2, b_int).
 
-pred_wf(E, p_interp_op(o_eq, P1, P2), b_bool) :-
-    pred_wf(E, P1, T),
-    pred_wf(E, P2, T).
+pred_wf(G, p_interp_op(o_eq, P1, P2), b_bool) :-
+    pred_wf(G, P1, T),
+    pred_wf(G, P2, T).
 
 (* We can define a Horn clause with two heads, meaning both conclusions hold *)
-pred_wf(E, p_conj(P1, P2), b_bool),
-pred_wf(E, p_disj(P1, P2), b_bool) :-
-    pred_wf(E, P1, b_bool),
-    pred_wf(E, P2, b_bool).
+pred_wf(G, p_conj(P1, P2), b_bool),
+pred_wf(G, p_disj(P1, P2), b_bool) :-
+    pred_wf(G, P1, b_bool),
+    pred_wf(G, P2, b_bool).
 
-pred_wf(E, p_neg(P), b_bool) :-
-    pred_wf(E, P, b_bool).
+pred_wf(G, p_neg(P), b_bool) :-
+    pred_wf(G, P, b_bool).
 
-pred_wf(E, p_ite(P1, P2, P3), T) :-
-    pred_wf(E, P1, b_bool),
-    pred_wf(E, P2, T),
-    pred_wf(E, P3, T).
+pred_wf(G, p_ite(P1, P2, P3), T) :-
+    pred_wf(G, P1, b_bool),
+    pred_wf(G, P2, T),
+    pred_wf(G, P3, T).
 ```
 
 The leaves us just handling variables; to do so, we need to define what it means to look up a variable in an environment.
 Formulog's first-order functional programming comes in handy for defining this type of helper function:
 
 ```
-fun lookup(x: var, e: env): typ option =
-    match e with
+fun lookup(x: var, g: env): typ option =
+    match g with
     | [] => none
     | (y, t) :: rest => if x = y then some(t) else lookup(x, rest)
     end
@@ -197,8 +197,8 @@ The `option` type (with its constructors `none` and `some`) is built into Formul
 We can now define the judgment for variables, as well as our final judgment for type well-formedness.
 
 ```
-pred_wf(E, p_var(V), B) :-
-    lookup(V, E) = some(t_refined(B, _, _)).
+pred_wf(G, p_var(V), B) :-
+    lookup(V, G) = some(t_refined(B, _, _)).
 
 wf(G, t_refined(B, V, P), k_base) :-
     K = (V, t_refined(B, V, p_true)),
@@ -632,7 +632,7 @@ ex(6, [], E, T) :-
 
 This fails!
 What gives?
-If we do some more debugging, we see that entailment is once again an issue: there is no rule for what to do if there is a variable with a function type in the context (in this case, the variable "z").
+If we do some more debugging, we see that entailment is once again an issue: there is no rule for what to do if there is a variable in the context with a function type (in this case, the program variable "z").
 We can fix that by adding another entailment rule that skips over the binding, as long as the bound variable does not appear free in the constraint:
 
 ```
