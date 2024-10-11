@@ -1,0 +1,410 @@
+(*******************************************************************************
+DEFINITIONS
+*******************************************************************************)
+
+(* An algebraic data type with a single variant *)
+type basic_typ =
+    | b_int
+    | b_bool
+
+(* A type alias *)
+type var = string
+
+(* Interpreted operations: for simplicity, we'll support just a few *)
+type op =
+    | o_add
+    | o_eq
+
+type pred =
+    | p_var(var)
+    | p_bool(bool)
+    (* i32 is the type of a 32-bit signed integer *)
+    | p_int(i32)
+    | p_interp_op(op, pred, pred)
+    | p_conj(pred, pred)
+    | p_disj(pred, pred)
+    | p_neg(pred)
+    | p_ite(pred, pred, pred)
+
+type constraint =
+    | c_pred(pred)
+    | c_conj(constraint, constraint)
+    | c_imp(var, basic_typ, pred, constraint)
+
+type typ =
+    | t_refined(basic_typ, var, pred)
+    | t_func(var, typ, typ)
+
+type kind =
+    | k_base
+    | k_star
+
+(* Tuples and lists are built-in type *)
+type env = (var * typ) list
+
+type expr =
+    | e_int(i32)
+    | e_var(var)
+    | e_let(var, expr, expr)
+    | e_lambda(var, expr)
+    | e_app(expr, var)
+    | e_annot(expr, typ)
+
+(*******************************************************************************
+WELL-FORMEDNESS
+*******************************************************************************)
+
+rel wf(env, typ, kind)
+
+wf(G, T, k_star) :- wf(G, T, k_base).
+
+wf(G, t_func(X, S, T), k_star) :-
+    wf(G, S, _Ks),
+    wf((X, S) :: G, T, _Kt).
+
+rel pred_wf(env, pred, basic_typ)
+
+pred_wf(_G, p_bool(_B), b_bool).
+
+pred_wf(_G, p_int(_I), b_int).
+
+pred_wf(G, p_interp_op(o_add, P1, P2), b_int) :-
+    pred_wf(G, P1, b_int),
+    pred_wf(G, P2, b_int).
+
+pred_wf(G, p_interp_op(o_eq, P1, P2), b_bool) :-
+    pred_wf(G, P1, T),
+    pred_wf(G, P2, T).
+
+(* We can define a Horn clause with two heads, meaning both conclusions hold *)
+pred_wf(G, p_conj(P1, P2), b_bool),
+pred_wf(G, p_disj(P1, P2), b_bool) :-
+    pred_wf(G, P1, b_bool),
+    pred_wf(G, P2, b_bool).
+
+pred_wf(G, p_neg(P), b_bool) :-
+    pred_wf(G, P, b_bool).
+
+pred_wf(G, p_ite(P1, P2, P3), T) :-
+    pred_wf(G, P1, b_bool),
+    pred_wf(G, P2, T),
+    pred_wf(G, P3, T).
+
+fun lookup(x: var, g: env): typ option =
+    match g with
+    | [] => none
+    | (y, t) :: rest => if x = y then some(t) else lookup(x, rest)
+    end
+
+pred_wf(G, p_var(V), B) :-
+    lookup(V, G) = some(t_refined(B, _, _)).
+
+wf(G, t_refined(B, V, P), k_base) :-
+    K = (V, t_refined(B, V, p_bool(true))),
+    pred_wf(K :: G, P, b_bool).
+
+(*******************************************************************************
+CONVERTING CONSTRAINTS AND PREDICATES TO SMT
+*******************************************************************************)
+
+type val =
+    | v_int(int)
+    | v_bool(bool)
+
+fun pred2smt(p: pred): val smt =
+    match p with
+    | p_bool(b) => `v_bool(b)`
+    | p_conj(p1, p2) =>
+        let v1 = pred2smt(p1) in
+        let v2 = pred2smt(p2) in
+        `v_bool(#v_bool_1(v1) /\ #v_bool_1(v2))`
+    | p_disj(p1, p2) =>
+        let v1 = pred2smt(p1) in
+        let v2 = pred2smt(p2) in
+        `v_bool(#v_bool_1(v1) \/ #v_bool_1(v2))`
+    | p_neg(p1) =>
+        let v1 = pred2smt(p1) in
+        `v_bool(~#v_bool_1(v1))`
+    | p_int(n) => `v_int(int_const(n))`
+    | p_interp_op(o, p1, p2) =>
+        let v1 = pred2smt(p1) in
+        let v2 = pred2smt(p2) in
+        match o with
+        | o_eq => `v_bool(v1 #= v2)`
+        | o_add => `v_int(int_add(#v_int_1(v1), #v_int_1(v2)))`
+        end
+    | p_ite(p1, p2, p3) =>
+        let v1 = pred2smt(p1) in
+        let v2 = pred2smt(p2) in
+        let v3 = pred2smt(p3) in
+        `#if #v_bool_1(v1) then v2 else v3`
+    | p_var(x) => `#{x}[val]`
+    end
+
+fun constraint2smt(c: constraint): bool smt =
+    match c with
+    | c_conj(c1, c2) =>
+        let s1 = constraint2smt(c1) in
+        let s2 = constraint2smt(c2) in
+        `s1 /\ s2`
+    | c_pred(p) => let s = pred2smt(p) in `#v_bool_1(s)`
+    | c_imp(x, _b, p1, c1) =>
+        (* Note that we do not actually need to use the basic type `_b` *)
+        let prem = pred2smt(p1) in
+        let conl = constraint2smt(c1) in
+        (* This uses more special syntax for SMT formulas *)
+        `forall #{x}[val]. #v_bool_1(prem) ==> conl`
+    end
+
+(*******************************************************************************
+ENTAILMENT AND SUBTYPING
+*******************************************************************************)
+
+fun subst_pred(p: pred, y: var, z: var): pred =
+    match p with
+    | p_bool(_) | p_int(_) => p
+    | p_var(x) => p_var(if x = y then z else x)
+    | p_interp_op(o, p1, p2) =>
+        let p1 = subst_pred(p1, y, z) in
+        let p2 = subst_pred(p2, y, z) in
+        p_interp_op(o, p1, p2)
+    | p_disj(p1, p2) =>
+        let p1 = subst_pred(p1, y, z) in
+        let p2 = subst_pred(p2, y, z) in
+        p_disj(p1, p2)
+    | p_conj(p1, p2) =>
+        let p1 = subst_pred(p1, y, z) in
+        let p2 = subst_pred(p2, y, z) in
+        p_conj(p1, p2)
+    | p_neg(p1) => 
+        let p1 = subst_pred(p1, y, z) in
+        p_neg(p1)
+    | p_ite(p1, p2, p3) =>
+        let p1 = subst_pred(p1, y, z) in
+        let p2 = subst_pred(p2, y, z) in
+        let p3 = subst_pred(p3, y, z) in
+        p_ite(p1, p2, p3)
+    end
+
+rel ent(env, constraint)
+
+ent([], C) :- is_valid(constraint2smt(C)).
+
+fun appears(x: var, p: pred): bool =
+    match p with
+    | p_var(y) => x = y
+    | p_bool(_) | p_int(_) => false
+    | p_interp_op(_, p1, p2)
+    | p_conj(p1, p2)
+    | p_disj(p1, p2) =>
+        appears(x, p1) || appears(x, p2)
+    | p_neg(p1) => appears(x, p1)
+    | p_ite(p1, p2, p3) =>
+        appears(x, p1) || appears(x, p2) || appears(x, p3)
+    end
+
+ent((X, t_refined(B, Y, P)) :: G, C) :-
+    X != Y && !appears(X, P),
+    ent(G, c_imp(X, B, subst_pred(P, Y, X), C)).
+
+ent((X, t_refined(B, Y, P)) :: G, C) :-
+    X = Y || !appears(X, P),
+    ent(G, c_imp(X, B, subst_pred(P, Y, X), C)).
+
+ent((X, t_refined(B, X, P)) :: G, C) :-
+    ent(G, c_imp(X, B, P, C)).
+
+fun is_free(x: var, c: constraint): bool =
+    match c with
+    | c_pred(p) => appears(x, p)
+    | c_conj(c1, c2) => is_free(x, c1) || is_free(x, c2)
+    | c_imp(y, _, p, c1) =>
+        x != y && (appears(x, p) || is_free(x, c1))
+    end
+
+ent((X, t_func(_, _, _)) :: G, C) :-
+    !is_free(X, C),
+    ent(G, C).
+
+fun subst_typ(t: typ, y: var, z: var): typ =
+    match t with
+    | t_refined(b, v, p) =>
+        if v = y then t else t_refined(b, v, subst_pred(p, y, z)) 
+    | t_func(x, s, t) =>
+        let s = subst_typ(s, y, z) in
+        let t = if x = y then t else subst_typ(t, y, z) in
+        t_func(x, s, t)
+    end
+
+rel sub(env, typ, typ)
+
+sub(G, t_refined(B, V1, P1), t_refined(B, V2, P2)) :-
+    ent(G, c_imp(V1, B, P1, c_pred(subst_pred(P2, V2, V1)))).
+
+sub(G, t_func(X1, S1, T1), t_func(X2, S2, T2)) :-
+    sub(G, S2, S1),
+    sub((X2, S2) :: G, subst_typ(T1, X1, X2), T2).
+
+(*******************************************************************************
+TYPE SYNTHESIS
+*******************************************************************************)
+
+rel syn(env, expr, typ)
+
+(* Declare relation for type checking, so we can refer to it *)
+rel chk(env, expr, typ)
+
+syn(G, e_var(X), T) :- lookup(X, G) = some(T).
+
+(* Here we give an int n the type int{v : v = n} *)
+syn(_G, e_int(N), t_refined(b_int, "v", P)) :-
+    P = p_interp_op(o_eq, p_var("v"), p_int(N)).
+
+syn(G, e_annot(E, T), T) :-
+    wf(G, T, _k),
+    chk(G, E, T).
+
+syn(G, e_app(E, Y), subst_typ(T, X, Y)) :-
+    syn(G, E, t_func(X, S, T)),
+    chk(G, e_var(Y), S).
+
+(*******************************************************************************
+TYPE CHECKING
+*******************************************************************************)
+
+chk(G, E, T) :-
+    syn(G, E, S),
+    sub(G, S, T).
+
+chk(G, e_lambda(X, E), t_func(X, T1, T2)) :-
+    chk((X, T1) :: G, E, T2).
+
+chk(G, e_let(X, E1, E2), T2) :-
+    syn(G, E1, T1),
+    chk((X, T1) :: G, E2, T2).
+
+(*******************************************************************************
+RUNNING SOME EXAMPLES
+*******************************************************************************)
+
+rel ex(i32, env, expr, typ)
+rel check_ex(i32)
+
+check_ex(N) :-
+    ex(N, G, E, T),
+    chk(G, E, T).
+
+:- check_ex(_).
+
+fun lit_typ(n: i32): typ =
+    t_refined(b_int, "v", p_interp_op(o_eq, p_var("v"), p_int(n)))
+
+(*
+    Expr
+        42
+    Type
+        int{v: v = 42}
+*)
+ex(0, [], e_int(42), lit_typ(42)).
+
+(*
+    Expr
+        43
+    Type
+        int{v: v = 43}
+*)
+ex(1, [], e_int(42), lit_typ(43)).
+
+(*
+    Expr
+        let z = 42 in z
+    Type
+        int{v: v = 42}
+*)
+ex(2, [], E, T) :-
+    E = e_let("z", e_int(42), e_var("z")),
+    T = lit_typ(42).
+
+(*
+    Expr
+        let y = 0 in
+        let x = 42 in x
+    Type
+        int{v: v = 42}
+*)
+ex(3, [], E, T) :-
+    E1 = e_let("x", e_int(42), e_var("x")),
+    E = e_let("y", e_int(0), E1),
+    T = lit_typ(42).
+
+(*
+    Expr
+        let x = 0 in
+        let x = 42 in x
+    Type
+        int{v: v = 42}
+*)
+ex(4, [], E, T) :-
+    E1 = e_let("x", e_int(42), e_var("x")),
+    E = e_let("x", e_int(0), E1),
+    T = lit_typ(42).
+
+(*
+    Expr
+        \y. 0 
+    Type
+        y:int{y: true} -> int{v: v = 0} 
+*)
+ex(5, [], e_lambda("y", e_int(0)), t_func("y", t_refined(b_int, "y", p_bool(true)), lit_typ(0))).
+
+(*
+    Expr
+        let z = \y. 0 in
+        let x = 42 in
+        x
+    Type
+        int{v: v = 42}
+*)
+ex(6, [], E, T) :-
+    Lam_type = t_func("y", t_refined(b_int, "y", p_bool(true)), lit_typ(0)),
+    E1 = e_let("x", e_int(42), e_var("x")),
+    E = e_let("z", e_annot(e_lambda("y", e_int(0)), Lam_type), E1),
+    T = lit_typ(42).
+
+(*
+    Expr
+        let z = \y. 0 in
+        let x = 42 in
+        z x
+    Type
+        int{v: v = 0}
+*)
+ex(7, [], E, T) :-
+    Lam_type = t_func("y", t_refined(b_int, "y", p_bool(true)), lit_typ(0)),
+    E1 = e_let("x", e_int(42), e_app(e_var("z"), "x")),
+    E = e_let("z", e_annot(e_lambda("y", e_int(0)), Lam_type), E1),
+    T = lit_typ(0).
+
+(* The type of the add function *)
+const add_typ: typ =
+    let add = p_interp_op(o_add, p_var("x"), p_var("y")) in
+    let eq = p_interp_op(o_eq, p_var("v"), add) in
+    let r = t_refined(b_int, "v", eq) in
+    let t = t_func("y", t_refined(b_int, "v", p_bool(true)), r) in
+    let s = t_refined(b_int, "v", p_bool(true)) in
+    t_func("x", s, t)
+
+(*
+    Context
+        add |-> x:int{v: true} -> (y:int{v: true} -> int{v: v = x + y})
+        one |-> int{v: v = 1}
+    Expr
+        let z = 41 in
+        add z one
+    Type
+        int{v: v = 42}
+*)
+ex(8, G, E, T) :-
+    G = [("add", add_typ), ("one", lit_typ(1))],
+    E = e_let("z", e_int(41), e_app(e_app(e_var("add"), "z"), "one")),
+    T = lit_typ(42).
