@@ -7,7 +7,7 @@
 Datalog has proven to be a useful language for implementing a range of program analyses, but analyses that use SMT-solving cannot be easily written in traditional versions of Datalog.
 Formulog sets out to fill this gap by augmenting Datalog with ways to construct and reason about SMT formulas, as well as some first-order functional programming to make life easier.
 
-Why write your SMT-based analysis in Formulog?
+**Why write your SMT-based analysis in Formulog?**
 
 1. By combining logic programming, functional programming, and SMT solving, Formulog makes it possible to encode many analyses declaratively at the level of mathematical specification (e.g., inference rules), closing the gap between specification and implementation---and often revealing bugs in the spec!
 2. This high-level encoding makes it possible for Formulog to apply high-level optimizations to your analysis, like automatic parallelization and goal-directed evaluation.
