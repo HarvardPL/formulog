@@ -299,18 +299,24 @@ $ ./build/flg --dump-idb
 
 ## Writing Formulog programs
 
-See the documentation in `docs/`. Some shortish example programs can be found in
-the `examples/` directory. To see an example of a larger development, check out
-our implementation of
-a [type checker for Dminor](https://github.com/HarvardPL/dminor-in-formulog), a
-language built around refinement types.
+Check out our [tutorial](./docs/tutorial/tutorial.md) for a walk-through of how to encode a refinement type system in Formulog.
+Additional shortish example programs can be found in the [examples](./examples) directory.
+For examples of larger developments, see the case studies we have used in publications:
+
+- [a refinement type checker](https://github.com/aaronbembenek/making-formulog-fast/blob/main/benchmarks/dminor/bench.flg)
+- [a bottom-up points-to analysis for Java](https://github.com/aaronbembenek/making-formulog-fast/blob/main/benchmarks/scuba/bench.flg)
+- [a symbolic executor an LLVM fragment](https://github.com/aaronbembenek/making-formulog-fast/blob/main/benchmarks/symex/bench.flg)
+
+See the [language reference](./docs/00_language_ref.md) for details about Formulog constructs.
 
 Syntax highlighting is available for Visual Studio Code (follow instructions [here](https://github.com/HarvardPL/formulog-syntax)) and Vim (install [misc/flg.vim](./misc/flg.vim)).
+
+Finally, please raise a [GitHub issue](https://github.com/HarvardPL/formulog/issues/new) if you want to try out Formulog but need additional information/assistance - we're happy to help! :)
 
 ## Contributing
 
 Contributions to this project are most welcome!
-Please open a [GitHub issue](https://github.com/HarvardPL/formulog/issues) and then link a pull request to it.
+Please open a [GitHub issue](https://github.com/HarvardPL/formulog/issues/new) and then link a pull request to it.
 Pull requests must be in the [Google Java format](https://github.com/google/google-java-format) before being merged.
 To reformat your code, run `mvn spotless:apply`; you can also check if your code is conformant (without reformatting it) by running `mvn spotless:check`.
 
