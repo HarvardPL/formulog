@@ -1,3 +1,7 @@
+(*******************************************************************************
+DEFINITIONS
+*******************************************************************************)
+
 (* An algebraic data type with a single variant *)
 type basic_typ =
     | b_int
@@ -45,6 +49,10 @@ type expr =
     | e_lambda(var, expr)
     | e_app(expr, var)
     | e_annot(expr, typ)
+
+(*******************************************************************************
+WELL-FORMEDNESS
+*******************************************************************************)
 
 rel wf(env, typ, kind)
 
@@ -95,6 +103,10 @@ wf(G, t_refined(B, V, P), k_base) :-
     K = (V, t_refined(B, V, p_bool(true))),
     pred_wf(K :: G, P, b_bool).
 
+(*******************************************************************************
+CONVERTING CONSTRAINTS AND PREDICATES TO SMT
+*******************************************************************************)
+
 type val =
     | v_int(int)
     | v_bool(bool)
@@ -143,6 +155,10 @@ fun constraint2smt(c: constraint): bool smt =
         (* This uses more special syntax for SMT formulas *)
         `forall #{x}[val]. #v_bool_1(prem) ==> conl`
     end
+
+(*******************************************************************************
+ENTAILMENT AND SUBTYPING
+*******************************************************************************)
 
 fun subst_pred(p: pred, y: var, z: var): pred =
     match p with
@@ -229,6 +245,10 @@ sub(G, t_func(X1, S1, T1), t_func(X2, S2, T2)) :-
     sub(G, S2, S1),
     sub((X2, S2) :: G, subst_typ(T1, X1, X2), T2).
 
+(*******************************************************************************
+TYPE SYNTHESIS
+*******************************************************************************)
+
 rel syn(env, expr, typ)
 
 (* Declare relation for type checking, so we can refer to it *)
@@ -248,6 +268,10 @@ syn(G, e_app(E, Y), subst_typ(T, X, Y)) :-
     syn(G, E, t_func(X, S, T)),
     chk(G, e_var(Y), S).
 
+(*******************************************************************************
+TYPE CHECKING
+*******************************************************************************)
+
 chk(G, E, T) :-
     syn(G, E, S),
     sub(G, S, T).
@@ -258,6 +282,10 @@ chk(G, e_lambda(X, E), t_func(X, T1, T2)) :-
 chk(G, e_let(X, E1, E2), T2) :-
     syn(G, E1, T1),
     chk((X, T1) :: G, E2, T2).
+
+(*******************************************************************************
+RUNNING SOME EXAMPLES
+*******************************************************************************)
 
 rel ex(i32, env, expr, typ)
 rel query(i32)

@@ -345,7 +345,7 @@ fun constraint2smt(c: constraint): bool smt =
 
 ### Entailment and Subtyping
 
-Now that we have a way to turn constraints into terms of type `bool smt`, we can start implementing the rules for entailment and subtyping (Figure 3.4).
+Now that we have a way to turn constraints into terms of type `bool smt`, we can start implementing the rules for entailment and subtyping (Figure 3.4, repeated from above).
 
 ![Figure 3.4](./images/figure_3_4.png)
 
@@ -362,7 +362,9 @@ ent((X, t_refined(B, X, P)) :: G, C) :-
 
 The function `is_valid` is a built-in that calls out to an external SMT solver.
 
-For the subtyping rules, we need to define helper functions for substituting variables in predicates and types (following the logic in Section 3.3.1):
+For the subtyping rules, we need to define helper functions for substituting variables in predicates (described briefly in Section 2.2) and types (explicitly given in Section 3.3.1).
+
+![Section 3.3.1](./images/section_3_3_1.png)
 
 ```
 fun subst_pred(p: pred, y: var, z: var): pred =
@@ -591,6 +593,7 @@ ent((X, t_refined(B, Y, P)) :: G, C) :-
 ```
 
 Now the type checker works on this example!
+(This isn't the most general solution: a better technique would be to create a fresh variable and substitute it with `Y` in `P` and `X` in `C`; however, this is good enough for now.)
 
 ### Checking Functions
 
