@@ -2,7 +2,21 @@
 
 ![Build Status](https://github.com/HarvardPL/formulog/actions/workflows/maven.yml/badge.svg)
 
-Datalog with support for SMT queries and first-order functional programming.
+**TL;DR: write SMT-based program analyses (symbolic executors, refinement type checkers, etc.) in an optimized Datalog-like language.**
+
+Datalog has proven to be a useful language for implementing a range of program analyses, but analyses that use SMT-solving cannot be easily written in traditional versions of Datalog.
+Formulog sets out to fill this gap by augmenting Datalog with ways to construct and reason about SMT formulas, as well as some first-order functional programming to make life easier.
+
+Why write your SMT-based analysis in Formulog?
+
+1. By combining logic programming, functional programming, and SMT solving, Formulog makes it possible to encode many analyses declaratively at the level of mathematical specification (e.g., inference rules), closing the gap between specification and implementation---and often revealing bugs in the spec!
+2. This high-level encoding makes it possible for Formulog to apply high-level optimizations to your analysis, like automatic parallelization and goal-directed evaluation.
+3. Thanks to our [Formulog-to-Soufflé compiler](#compiling-formulog-programs), you can automatically generate a C++ version of the analysis that leverages highly optimized Datalog algorithms and data structures.
+
+**Interested?**
+To get a sense for what's involved in building a nontrivial SMT-based analysis in Formulog,
+check out our [tutorial](./docs/tutorial/tutorial.md) on implementing a refinement type checker in Formulog.
+For more tips on where to start, check out the section on [writing Formulog programs](#writing-formulog-programs) later in this document.
 
 ## Setup
 
@@ -311,7 +325,7 @@ See the [language reference](./docs/00_language_ref.md) for details about Formul
 
 Syntax highlighting is available for Visual Studio Code (follow instructions [here](https://github.com/HarvardPL/formulog-syntax)) and Vim (install [misc/flg.vim](./misc/flg.vim)).
 
-Finally, please raise a [GitHub issue](https://github.com/HarvardPL/formulog/issues/new) if you want to try out Formulog but need additional information/assistance - we're happy to help! :)
+Finally, please raise a [GitHub issue](https://github.com/HarvardPL/formulog/issues/new) if you want to try out Formulog but need additional information/assistance---we're happy to help! :)
 
 ## Contributing
 
