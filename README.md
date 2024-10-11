@@ -4,7 +4,7 @@
 
 **TL;DR: write SMT-based program analyses (symbolic executors, refinement type checkers, etc.) in an optimized Datalog-like language.**
 
-Datalog has proven to be a useful language for implementing a range of program analyses, but analyses that use SMT-solving cannot be easily written in traditional versions of Datalog.
+Datalog has proven to be a useful language for implementing a range of program analyses, but analyses that use SMT solving cannot be easily written in traditional versions of Datalog.
 Formulog sets out to fill this gap by augmenting Datalog with ways to construct and reason about SMT formulas, as well as some first-order functional programming to make life easier.
 
 **Why write your SMT-based analysis in Formulog?**
