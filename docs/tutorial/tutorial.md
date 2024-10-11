@@ -262,10 +262,11 @@ But how about when we get to the `p_int` case?
 The function signature requires us to return a term of type `bool smt`, but that doesn't make any sense in this case.
 In fact, if we take a closer look at how predicates are defined, we can see that the syntax for predicates allow bool-valued and int-valued terms to be mixed.
 We could go back, and try to redefine the syntax for predicates in a way that distinguishes between bool-valued and int-valued terms.
-However, even if this were possible, doing so would have a few downsides.
-First, it takes us farther away from the formalism of JV.
-Second, it would likely lead to duplication, since we would need, e.g., two different constructors for equality, one where the subterms are ints and one where the subterms are bools.
-Third, it does not seem like a very flexible approach as our language of predicates becomes more complex.
+However, even if this were possible, doing so would have a few downsides:
+
+- it takes us farther away from the formalism of JV;
+- it would likely lead to duplication, since we would need, e.g., two different constructors for equality, one where the subterms are ints and one where the subterms are bools; and
+- it does not seem like a very flexible approach as our language of predicates becomes more complex.
 
 There is another alternative, which is to push the bool-vs-int distinction into the SMT level, using the SMT theory of algebraic data types (this follows the encoding approach of the Dminor refinement type system [2]).
 To do so, we'll define a new algebraic data type, representing a value in a predicate (which will be either an integer or a bool):
