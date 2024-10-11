@@ -116,7 +116,7 @@ Let's start with the simplest rule, Wf-Kind:
 wf(G, T, k_star) :- wf(G, T, k_base).
 ```
 
-Horn clauses are read right to left, so this rule is saying that types that are well-formed at kind base are also well-formed at kind star.
+Horn clauses are implications (read right to left), so this rule is saying that types that are well-formed at kind base are also well-formed at kind star.
 Identifiers beginning with an uppercase letter are logic programming variables, which are implicitly universally quantified across the entire rule.
 
 Wf-Fun is not too bad to encode either:
@@ -154,7 +154,7 @@ We can then encode the rule for boolean literals:
 pred_wf(_G, p_bool(_B), b_bool).
 ```
 
-The rules for most the other constructs is straightforward:
+The rules are straightforward for most of the other constructs:
 
 ```
 pred_wf(_G, p_int(_I), b_int).
@@ -182,7 +182,7 @@ pred_wf(G, p_ite(P1, P2, P3), T) :-
     pred_wf(G, P3, T).
 ```
 
-The leaves us just handling variables; to do so, we need to define what it means to look up a variable in an environment.
+That leaves us just handling variables; to do so, we need to define what it means to look up a variable in an environment.
 Formulog's first-order functional programming comes in handy for defining this type of helper function:
 
 ```
