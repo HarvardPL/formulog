@@ -8,11 +8,11 @@ nav_order: 1
 # Options and System Properties 
 
 Formulog evaluation is controlled by options and system properties.
-For example, to interpret the test program with SMT debug information (the `debugSmt` property) and 2
-threads (the `-j 2` option), use
+For example, to interpret the test program with SMT logging and 2
+threads, use the `debugSmt` property and `-j 2` option:
 
 ```
-java -DdebugSmt -jar formulog.jar greeting.flg -j 2
+java -DdebugSmt -jar formulog.jar example/greeting.flg -j 2
 ```
 
 ## Options

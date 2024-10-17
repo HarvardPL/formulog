@@ -49,7 +49,7 @@ predicates that are "invoked" from the functional fragment of Formulog.
 
 Queries are in the form `:- A.` where `A` is a positive (non-negated) atom. The
 typical rules about variable usage apply (see the "Anonymous variables" section
-of the [Program Safety page]({{ site.baseurl }}{% link lang_ref/program_safety.md %})). If you want to have a query consisting of
+of the [Program Safety page]({{ site.base_url }}{% link lang_ref/program_safety.md %})). If you want to have a query consisting of
 multiple atoms, write a rule defining a new relation and then query that
 relation. For example, the hypothetical query `:- A, B.` could be rewritten as
 the rule `R :- A, B.` and query `:- R.`. There can be only one query per

@@ -467,4 +467,4 @@ finds one in time; it returns `none` otherwise. Variables in a model can be
 inspected using `query_model`, which will return
 `none` if a variable is not present in the model or if it is of a type that
 cannot be concretely represented in Formulog (for example, Formulog does not
-have a concrete representation of a 13-bit bit vector).
+have a concrete representation of a 13-bit vector).

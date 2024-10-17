@@ -9,7 +9,7 @@ nav_order: 2
 Thank you for your interest in Formulog!
 This page describes how to set up Formulog and provides some pointers on writing Formulog programs.
 
-## Seting up Formulog
+## Setting up Formulog
 
 There are three main ways to set up Formulog (listed in increasing order of number of dependencies):
 
@@ -100,7 +100,7 @@ greeting("Hello, World")
 
 Now that you have Formulog set up, the fun part starts: writing Formulog programs!
 
-Check out our [tutorial]({{ site.baseurl }}{% link tutorial/index.md %}) for a walk-through of how to encode a refinement type system in Formulog.
+Check out our [tutorial]({{ site.base_url }}{% link tutorial/index.md %}) for a walk-through of how to encode a refinement type system in Formulog.
 Additional short-ish example programs can be found in the `examples/` directory (in the Docker image or repository base directory).
 For examples of larger developments, see the case studies we have used in publications:
 
@@ -108,7 +108,7 @@ For examples of larger developments, see the case studies we have used in public
 - [a bottom-up points-to analysis for Java](https://github.com/aaronbembenek/making-formulog-fast/blob/main/benchmarks/scuba/bench.flg)
 - [a symbolic executor an LLVM fragment](https://github.com/aaronbembenek/making-formulog-fast/blob/main/benchmarks/symex/bench.flg)
 
-See the [language reference]({{ site.baseurl }}{% link lang_ref/index.md %}) for details about Formulog constructs.
+See the [language reference]({{ site.base_url }}{% link lang_ref/index.md %}) for details about Formulog constructs.
 
 Syntax highlighting is available for Visual Studio Code (follow instructions [here](https://github.com/HarvardPL/formulog-syntax)) and Vim (install [misc/flg.vim](https://github.com/HarvardPL/formulog/blob/master/misc/flg.vim)).
 
