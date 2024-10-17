@@ -2,7 +2,7 @@
 DEFINITIONS
 *******************************************************************************)
 
-(* An algebraic data type with a single variant *)
+(* An algebraic data type with two variants *)
 type basic_typ =
     | b_int
     | b_bool
@@ -39,7 +39,7 @@ type kind =
     | k_base
     | k_star
 
-(* Tuples and lists are built-in type *)
+(* Tuples and lists are built-in types *)
 type env = (var * typ) list
 
 type expr =
