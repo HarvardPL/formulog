@@ -1,0 +1,8 @@
+title: Formulog 
+description: Datalog for SMT-based static analysis 
+theme: just-the-docs
+
+url: https://just-the-docs.github.io
+
+aux_links:
+  GitHub Repository: https://github.com/HarvardPL/formulog

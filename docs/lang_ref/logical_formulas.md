@@ -1,4 +1,11 @@
-# Logical formulas
+---
+title: Logical Formulas
+layout: page
+parent: Language Reference
+nav_order: 4
+---
+
+# Logical Formulas
 
 Formulog provides support for representing and reasoning about logical formulas.
 
@@ -35,7 +42,7 @@ ok3 :-
   !is_sat(`E /\ F`).
 ```
 
-## Formula types
+## Formula Types
 
 For every non-formula type τ, there are two corresponding types that are used to
 represent τ-valued logical formulas. The first is `τ smt`, which represents a
@@ -79,7 +86,7 @@ of `q`). The second rule is fine since `X` is bound in a position that has type
 type checker currently uses the order that the rule was originally written; in
 the future, the type checker could try to reorder rules to make them well typed.
 
-### Uninterpreted sorts
+### Uninterpreted Sorts
 
 Formulog allows users to define uninterpreted sorts that can be used within
 formulas. For instance, you can declare a polymorphic uninterpreted sort like
@@ -89,7 +96,7 @@ this:
 uninterpreted sort ('a, 'b) foo
 ```
 
-## Representing formulas
+## Representing Formulas
 
 Formulas are constructed from a library of constructors and are typically quoted
 by backticks, which tells the type checker to use the "formula mode" of the
@@ -133,13 +140,13 @@ There is also a shorthand syntax: a pound sign, followed by an identifier,
 followed by a type within square brackets, as in `#x[bool]`. This is the same
 thing as `#{"x"}[bool]`.
 
-### Built-in formula terms
+### Built-in Formula Terms
 
 Formulog provides built-in terms that are used to construct formulas that should
 be interpreted under a particular theory. For the most part, these constructors
 directly reflect the SMT-LIB standard.
 
-#### Parameterized terms
+#### Parameterized Terms
 
 You will see that many formula terms are parameterized with a type or natural
 number. For example, the constructor for formula equality, `smt_eq[τ]`, is
@@ -180,7 +187,7 @@ In this case, one annotation is enough to clarify things:
 The parameters to a parameterized constructor have to be fully resolved at
 compile time.
 
-#### Logical connectives
+#### Logical Connectives
 
 Formulog has the standard first-order logic connectives:
 
@@ -257,7 +264,7 @@ The notation supports patterns with multiple terms (they should be separated by
 commas); however, it does not support multiple patterns, in which case you need
 to use the explicit constructor described above.
 
-#### Bit vectors
+#### Bit Vectors
 
 We have bit vectors, where `bv[k] smt` is a `k`-bit symbolic bit vector:
 
@@ -297,7 +304,7 @@ constraints on their parameters (for example, with `bv_concat[i,j,k]`, it must
 be that `i + j = k`). Illegal parameter choices are therefore not caught by the
 type system, and might lead to SMT solver crashes at runtime.
 
-#### Floating point
+#### Floating Point
 
 And we have floating point, where `fp[j,k] smt` is a symbolic floating point
 number with exponent length `j` and signficand length `k`:
@@ -389,7 +396,7 @@ str_suffixof : string smt, string smt -> bool smt
 
 These operations follow the theory of strings supported by Z3 and CVC4.
 
-### Using algebraic data types and records in formulas
+### Using Algebraic Data Types and Records in Formulas
 
 Terms constructed from user-defined algebraic data types can also be used in
 formulas, where they are interpreted under the theory of algebraic data types.
@@ -423,7 +430,7 @@ term.
 Symbolic getters are also created for records, where each getter is the name of
 the relevant label prefixed with `#`.
 
-### Uninterpreted functions
+### Uninterpreted Functions
 
 Formulog also provides a way to declare uninterpreted functions, as here:
 
@@ -435,7 +442,7 @@ This effectively defines a new constructor for `bool smt` that expects a single
 argument of type `bv[32] smt`. Uninterpreted functions can only be used within
 formulas.
 
-## Reasoning about formulas
+## Reasoning about Formulas
 
 Formulog currently provides these functions for reasoning about/manipulating
 formulas:

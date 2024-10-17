@@ -1,15 +1,22 @@
-# Program safety
+---
+title: Program Safety
+layout: page
+parent: Language Reference
+nav_order: 2
+---
+
+# Program Safety
 
 Formulog imposes some restrictions on programs so that it can give guarantees
 about runtime behavior. Beyond the type system, these restrictions fall into
 two categories: restrictions on variable usage and restrictions on negation.
 
-## Variable usage
+## Variable Usage
 
 Correct variable usage is a tricky aspect of logic programming; this section
 describes Formulog's restrictions on this front.
 
-### Anonymous variables
+### Anonymous Variables
 
 To help catch bugs related to variable usage, Formulog requires that every
 variable that does not start with an underscore occurs more than once in its
@@ -19,7 +26,7 @@ this reason, Formulog does not allow any variable that begins with an underscore
 to occur more than once in a scope, except for the traditional anonymous
 variable `_`.
 
-### Binding variables
+### Binding Variables
 
 Formulog requires that every variable in a rule is "bound." In what follows, we
 use the identifiers `p` for a relation, `c` for a constructor, and `f` for a
@@ -81,7 +88,7 @@ any rewriting results in a rule that is still well-typed. Although we have not
 found our current approach to be a hindrance in practice, this is something that
 we could implement in the future.
 
-## Negation, aggregation, and stratification
+## Negation, Aggregation, and Stratification
 
 To ensure that every program has a least model, Formulog requires the use of
 stratified negation and aggregation, a common restriction in Datalog.
