@@ -97,23 +97,23 @@ public class ValidRule extends AbstractRule<UserPredicate, ComplexLiteral> {
     atoms.addAll(newList);
   }
 
-  private static Set<Var> checkBody(Rule<UserPredicate, ComplexLiteral> rule)
-      throws InvalidProgramException {
-    Set<Var> boundVars = new HashSet<>();
-    Map<Var, Integer> varCounts = rule.countVariables();
-    for (ComplexLiteral lit : rule) {
-      if (!Unification.canBindVars(lit, boundVars, varCounts)) {
-        throw new InvalidProgramException(
-            "Rule cannot be evaluated given the supplied order.\n"
-                + "The problematic rule is:\n"
-                + rule
-                + "\nThe problematic literal is: "
-                + lit);
-      }
-      boundVars.addAll(lit.varSet());
-    }
-    return boundVars;
-  }
+  // private static Set<Var> checkBody(Rule<UserPredicate, ComplexLiteral> rule)
+  //     throws InvalidProgramException {
+  //   Set<Var> boundVars = new HashSet<>();
+  //   Map<Var, Integer> varCounts = rule.countVariables();
+  //   for (ComplexLiteral lit : rule) {
+  //     if (!Unification.canBindVars(lit, boundVars, varCounts)) {
+  //       throw new InvalidProgramException(
+  //           "Rule cannot be evaluated given the supplied order.\n"
+  //               + "The problematic rule is:\n"
+  //               + rule
+  //               + "\nThe problematic literal is: "
+  //               + lit);
+  //     }
+  //     boundVars.addAll(lit.varSet());
+  //   }
+  //   return boundVars;
+  // }
 
   private ValidRule(UserPredicate head, List<ComplexLiteral> body) {
     super(head, body);
