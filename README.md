@@ -14,7 +14,7 @@ Formulog sets out to fill this gap by augmenting Datalog with ways to construct 
 3. Thanks to our [Formulog-to-Soufflé compiler](#compiling-formulog-programs), you can automatically generate a C++ version of the analysis that leverages highly optimized Datalog algorithms and data structures.
 
 **Interested?**
-For more information, check out the [Formulog documentation](https://harvardpl.github.io/formulog/) (also available in the [docs](./docs/) directory), including [tips on getting started](https://harvardpl.github.io/formulog/starting.html) and the [language reference](https://harvardpl.github.io/formulog/lang_ref/).
+For more information, check out the [Formulog docs](https://harvardpl.github.io/formulog/) (also available in the [docs](./docs/) directory), including [tips on getting started](https://harvardpl.github.io/formulog/starting.html) and the [language reference](https://harvardpl.github.io/formulog/lang_ref/).
 To get a sense for what's involved in building a nontrivial SMT-based analysis in Formulog,
 check out our [tutorial](https://harvardpl.github.io/formulog/tutorial/) on implementing a refinement type checker in Formulog.
 
@@ -25,7 +25,9 @@ Please open a [GitHub issue](https://github.com/HarvardPL/formulog/issues/new) a
 Pull requests must be in the [Google Java format](https://github.com/google/google-java-format) before being merged.
 To reformat your code, run `mvn spotless:apply`; you can also check if your code is conformant (without reformatting it) by running `mvn spotless:check`.
 
-## Third-party libraries
+## Licensing and Third-Party Libraries
+
+Formulog is released under an [Apache 2.0 license](./LICENSE.txt).
 
 This project uses third-party libraries. You can generate a list of these
 libraries and download their associated licenses with this command:
