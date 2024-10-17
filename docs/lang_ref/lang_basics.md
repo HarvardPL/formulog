@@ -1,4 +1,11 @@
-# Language basics
+---
+title: Language Basics
+layout: page
+parent: Language Reference
+nav_order: 1
+---
+
+# Language Basics
 
 Formulog is an extension of Datalog designed to support program analyses that
 use logical formulas, such as symbolic execution and refinement type checking.
@@ -13,7 +20,7 @@ A Formulog program consists of three main components:
 
 Formulog has a strong, static type system.
 
-### Built-in types
+### Built-in Types
 
 Formulog has five built-in primitive types:
 
@@ -46,9 +53,9 @@ type cmp =
 ```
 
 It also has built-in types representing logical formulas, but a discussion of
-these is delayed until the section on logical formulas.
+these is delayed until the [section on logical formulas]({{ site.baseurl }}{% link lang_ref/logical_formulas.md %}).
 
-#### List notation
+#### List Notation
 
 Formulog provides special notation for terms of the `list` type. The `cons`
 constructor can be written using the infix notation `::`; i.e., `X :: Y` is
@@ -59,7 +66,7 @@ term `[X, Y, Z]` is shorthand for `cons(X, cons(Y, cons(Z, nil)))`. The term
 
 Both notations can be used in pattern matching (described below).
 
-### User-defined types
+### User-Defined Types
 
 Formulog allows users to define their own (polymorphic) algebraic data types.
 For instance, this defines a list-like type:
@@ -207,7 +214,7 @@ where the rule is translated to
 p :- foo(X), X = true.
 ```
 
-### Reading EDB relations from disk
+### Reading EDB Relations from Disk
 
 It is possible to specify that an EDB relation should be read from an external
 file by annotating its declaration with `@disk`, as in
@@ -262,7 +269,7 @@ bar("aloha").
 Every fact directory must have a `.tsv` file for _every_ external input
 relation (the file can be empty).
 
-### Writing IDB relations to disk
+### Writing IDB Relations to Disk
 
 An IDB relation can be annotated with the annotation `@disk`, in which case
 Formulog will dump its contents into a `.tsv` file in the directory specified on
@@ -347,7 +354,7 @@ const pi : fp64 = 3.14
 (* same as `fun pi : fp64 = 3.14` *)
 ```
 
-### Lifted relations and aggregation
+### Lifted Relations and Aggregation
 
 Formulog allows any relation (i.e., EDB relations, IDB relations, and the
 built-in relations `!=` and `=`) to be lifted to a boolean-returning function.
@@ -375,7 +382,7 @@ relation `p` that relates a `bool` to an `i32`, we have:
 The use of lifted predicates must be stratified, as described in the "Program
 Safety" document.
 
-### Built-in functions
+### Built-in Functions
 
 Finally, Formulog already has a bunch of basic functions built-in (mostly to do
 with manipulating primitives):

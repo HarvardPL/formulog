@@ -1,14 +1,20 @@
+---
+title: Tutorial
+layout: page
+nav_order: 3
+---
+
 # Tutorial: Building a Refinement Type Checker
 
 In this tutorial, we'll implement a type checker for a small (but still interesting) refinement type system in Formulog.
 In particular, we'll implement the declarative, bidirectional type checking rules for the first system in the article [Refinement Types: A Tutorial](https://arxiv.org/abs/2010.07763) by Ranjit Jhala and Niki Vazou [1].
 Our hope is that our tutorial gives a good overview of many Formulog features, and a flavor of what it is like to program a nontrivial analysis in Formulog.
 
-### Intended audience
+### Intended Audience
 
 This tutorial is intended for the PL practitioner (e.g., a grad student, academic, or research engineer).
 We assume you are familiar with SMT solving, ML-like functional languages, and logic programming, and also have some level of comfort with formal programming language notation (like inference rules).
-It is also probably helpful to have read one of our Formulog publications, which should (hopefully) give a good sense for the overall design of the language and its motivations.
+It is also probably helpful to have read one of our [Formulog publications]({{ site.base_url }}{% link pubs.md %}), which should (hopefully) give a good sense for the overall design of the language and its motivations.
 If you are not familiar with refinement type checking or bidirectional type systems, you should probably skim the first few sections of the tutorial by Jhala and Vazou [1] (we'll focus on Sections 3.1 and 3.2).
 
 ### Help Improve This Tutorial
@@ -743,7 +749,7 @@ We have found this trick to be useful in implementing more complex type systems.
 
 ### Check Out More Complex Formulog Examples
 
-For our Formulog publications, we have built three substantial, relatively sophisticated SMT-based case studies.
+For our [Formulog publications]({{ site.base_url }}{% link pubs.md %}), we have built three substantial, relatively sophisticated SMT-based case studies.
 After going through this tutorial, you might find it interesting to check out the code for these case studies.
 While the analyses are more complex than the tutorial example (and, admittedly, not as well documented as they could be), this tutorial will have hopefully armed you with the information to understand a lot of what's happening in them.
 
@@ -759,7 +765,7 @@ It's neat to be able to program so close to the formal specification; as we've s
 
 Furthermore, now that you have a Formulog implementation of the analysis, you can rely on Formulog's language infrastructure to apply both high-level and low-level optimizations to the analysis.
 For example, Formulog's parallel evaluation techniques can speed up type checking in the presence of multiple code units.
-Additionally, the compiler from Formulog to Soufflé makes it possible to automatically derive a decently efficient C++ version of the type checker.
+Additionally, the [compiler]({{ site.base_url }}{% link eval_modes/compile.md %}) from Formulog to Soufflé makes it possible to automatically derive a decently efficient C++ version of the type checker.
 
 We hope you have enjoyed this dive into Formulog!
 As we mentioned earlier, please raise a [GitHub issue](https://github.com/HarvardPL/formulog/issues/new) for questions, comments, and feedback :)

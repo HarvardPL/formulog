@@ -46,3 +46,6 @@ target/
 /src/main/resources/codegen/build/
 
 .idea/
+
+# Jekyll
+_site/
