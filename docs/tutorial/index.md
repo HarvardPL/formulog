@@ -600,7 +600,7 @@ ent((X, t_refined(B, Y, P)) :: G, C) :-
 ```
 
 Now the type checker works on this example!
-(This isn't the most general solution: a better technique would be to create a fresh variable and substitute it with `Y` in `P` and `X` in `C`; however, this is good enough for now.)
+(This isn't the most general solution: a better technique would be to create a fresh variable and substitute it for `Y` in `P` and `X` in `C`; however, this is good enough for now.)
 
 ### Checking Functions
 

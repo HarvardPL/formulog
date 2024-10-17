@@ -421,7 +421,7 @@ with manipulating primitives):
   respectively. The string should either be a decimal integer preceded
   optionally by `-` or `+`, or a hexadecimal integer preceded by `0x`. The
   operations return `none` if the string is not in the proper format or
-  represents an integer too large to fit in 32/64 bits.
+  represents an integer of too great magnitude to fit in 32/64 bits.
 
 Standard arithmetic notation can be used for signed `i32` operations. For
 example, `38 + 12 / 3` is shorthand for `i32_add(38, i32_sdiv(12, 3))`.
