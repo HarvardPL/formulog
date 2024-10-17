@@ -6,7 +6,7 @@ nav_order: 2
 
 # Getting Started
 
-Thanks for your interest in Formulog!
+Thank you for your interest in Formulog!
 This page describes how to install Formulog and provides some pointers on writing Formulog programs.
 
 ## Seting up Formulog
