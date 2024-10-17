@@ -23,7 +23,7 @@ SMT solving).
 - `push-pop`: try to use incremental SMT solving via the `push` and `pop` SMT
 commands. This can work well when query `y` extends query `x`; e.g., `y = c ::
 x`, where `c` is an additional conjunct; this situation most commonly occurs
-when using [eager evaluation]({{ site.baseurl }}{% link eval_modes/eager.md %}).
+when using [eager evaluation]({{ site.base_url }}{% link eval_modes/eager.md %}).
 - `check-sat-assuming`: try to use incremental SMT solving via the
 `check-sat-assuming` SMT command. This caches conjuncts in the SMT solver in a
 way such that they can be enabled or disabled per SMT query, and works well if

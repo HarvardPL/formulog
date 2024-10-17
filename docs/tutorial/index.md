@@ -772,10 +772,10 @@ As we mentioned earlier, please raise a [GitHub issue](https://github.com/Harvar
 
 ## References
 
-[1] Ranjit Jhala and Niki Vazou. 2020. Refinement Types: A Tutorial. arXiv:2010.07763. https://arxiv.org/abs/2010.07763
+[1] Ranjit Jhala and Niki Vazou. 2020. Refinement Types: A Tutorial. arXiv:2010.07763. [https://arxiv.org/abs/2010.07763]
 
-[2] Gavin M. Bierman, Andrew D. Gordon, Cătălin Hriţcu, and David Langworthy. 2012. Semantic Subtyping with an SMT Solver. Journal of Functional Programming 22, 1 (2012), 31–105. https://doi.org/10.1145/1863543.1863560
+[2] Gavin M. Bierman, Andrew D. Gordon, Cătălin Hriţcu, and David Langworthy. 2012. Semantic Subtyping with an SMT Solver. Journal of Functional Programming 22, 1 (2012), 31–105. [https://doi.org/10.1145/1863543.1863560]
 
-[3] Yu Feng, Xinyu Wang, Isil Dillig, and Thomas Dillig. 2015. Bottom-up Context-Sensitive Pointer Analysis for Java. In Proceedings of the 13th Asian Symposium on Programming Languages and Systems. 465–484. https://doi.org/10.1007/978-3-319-26529-2_25
+[3] Yu Feng, Xinyu Wang, Isil Dillig, and Thomas Dillig. 2015. Bottom-up Context-Sensitive Pointer Analysis for Java. In Proceedings of the 13th Asian Symposium on Programming Languages and Systems. 465–484. [https://doi.org/10.1007/978-3-319-26529-2_25]
 
-[4] Cristian Cadar, Daniel Dunbar, and Dawson Engler. 2008. KLEE: Unassisted and Automatic Generation of High-Coverage Tests for Complex Systems Programs. In Proceedings of the 8th USENIX Conference on Operating Systems Design and Implementation. 209–224. https://www.usenix.org/legacy/event/osdi08/tech/full_papers/cadar/cadar.pdf
+[4] Cristian Cadar, Daniel Dunbar, and Dawson Engler. 2008. KLEE: Unassisted and Automatic Generation of High-Coverage Tests for Complex Systems Programs. In Proceedings of the 8th USENIX Conference on Operating Systems Design and Implementation. 209–224. [https://www.usenix.org/legacy/event/osdi08/tech/full_papers/cadar/cadar.pdf]

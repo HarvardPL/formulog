@@ -53,7 +53,7 @@ type cmp =
 ```
 
 It also has built-in types representing logical formulas, but a discussion of
-these is delayed until the [section on logical formulas]({{ site.baseurl }}{% link lang_ref/logical_formulas.md %}).
+these is delayed until the [section on logical formulas]({{ site.base_url }}{% link lang_ref/logical_formulas.md %}).
 
 #### List Notation
 
