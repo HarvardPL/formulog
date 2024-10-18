@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.8.0] - 2024-10-18
+
+### Added
+
+- Support for eager evaluation in both interpreter (`--eager-eval` option) and compiler.
+- Reorganized documentation and added a lot of new material, including a tutorial.
+- Apply Google Java format with Maven.
+- Various improvements to the code generator.
+
+### Changed
+
+- Better error reporting for type arity mismatch.
+- Clean up CI.
+- Better, more consistent CLI options for interpreter and generated code.
+
+### Fixed
+
+- Lexing of arithmetic expressions without spaces.
+- Various (rare) interpreter bugs.
+- Various bugs in the C++ runtime and generated code.
+
 ## [0.7.0] - 2023-02-14
 
 ### Added

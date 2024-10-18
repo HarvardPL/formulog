@@ -16,7 +16,7 @@ When you configure `cmake` on the generated code, you need to add `-DFLG_EAGER_E
 For example, to build a version of the greeting program that uses eager evaluation, use these commands:
 
 ```
-java -jar formulog.jar -c greeting.flg && \
+java -jar formulog.jar -c examples/greeting.flg && \
   cd codegen && \
   cmake -B build -S . -DFLG_EAGER_EVAL=On && \
   cmake --build build -j && \

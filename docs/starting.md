@@ -19,7 +19,7 @@ There are three main ways to set up Formulog (listed in increasing order of numb
 
 ### Use the Docker image
 
-Prebuilt images are available on [Docker Hub](https://hub.docker.com/r/aaronbembenek/formulog).
+Prebuilt images are available on [Docker Hub](https://hub.docker.com/r/aaronbembenek/formulog/tags).
 If you have Docker installed, you can spin up an Ubuntu container with Formulog, our custom version of Soufflé, and some example programs by running this command (replace `X.Y.Z` with the latest version):
 
 ```bash

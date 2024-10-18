@@ -1,3 +1,10 @@
+(***
+
+This is the full code listing for the Formulog tutorial, which is available at
+<https://harvardpl.github.io/formulog/tutorial/>.
+
+***)
+
 (*******************************************************************************
 DEFINITIONS
 *******************************************************************************)

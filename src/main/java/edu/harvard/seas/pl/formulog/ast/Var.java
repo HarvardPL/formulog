@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class Var extends AbstractTerm implements Term {
+public class Var extends AbstractTerm {
 
   static final AtomicInteger cnt = new AtomicInteger();
 

@@ -14,7 +14,7 @@ Within this directory you can use `cmake` to compile the generated code into a b
 For example, to compile and execute the `greeting.flg` program from above, you can use these steps:
 
 ```
-java -jar formulog.jar -c greeting.flg && \
+java -jar formulog.jar -c examples/greeting.flg && \
   cd codegen && \
   cmake -B build -S . && \
   cmake --build build -j && \

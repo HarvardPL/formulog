@@ -22,6 +22,7 @@ package edu.harvard.seas.pl.formulog.db;
 import edu.harvard.seas.pl.formulog.ast.Term;
 import edu.harvard.seas.pl.formulog.util.IntArrayWrapper;
 import edu.harvard.seas.pl.formulog.util.Pair;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,7 +53,12 @@ public class TupleComparatorGenerator extends ClassLoader {
   private Map<IntArrayWrapper, Comparator<Term[]>> memo = new ConcurrentHashMap<>();
 
   public Comparator<Term[]> generate(int[] accessPat)
-      throws InstantiationException, IllegalAccessException {
+      throws InstantiationException,
+          IllegalAccessException,
+          IllegalArgumentException,
+          InvocationTargetException,
+          NoSuchMethodException,
+          SecurityException {
     IntArrayWrapper key = new IntArrayWrapper(accessPat);
     Comparator<Term[]> cmp = memo.get(key);
     if (cmp == null) {
@@ -67,7 +73,12 @@ public class TupleComparatorGenerator extends ClassLoader {
 
   @SuppressWarnings("unchecked")
   public Comparator<Term[]> generate1(int[] accessPat)
-      throws InstantiationException, IllegalAccessException {
+      throws InstantiationException,
+          IllegalAccessException,
+          IllegalArgumentException,
+          InvocationTargetException,
+          NoSuchMethodException,
+          SecurityException {
     String className = "edu.harvard.seas.pl.formulog.db.CustomComparator" + cnt.getAndIncrement();
     ClassGen classGen =
         new ClassGen(
@@ -82,7 +93,7 @@ public class TupleComparatorGenerator extends ClassLoader {
 
     byte[] data = classGen.getJavaClass().getBytes();
     Class<?> c = defineClass(className, data, 0, data.length);
-    return (Comparator<Term[]>) c.newInstance();
+    return (Comparator<Term[]>) c.getDeclaredConstructor().newInstance();
   }
 
   private void addCompareMethod(ClassGen cg, int[] accessPat) {

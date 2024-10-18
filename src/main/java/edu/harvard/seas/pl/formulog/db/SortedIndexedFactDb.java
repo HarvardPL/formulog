@@ -27,8 +27,19 @@ import edu.harvard.seas.pl.formulog.symbols.RelationSymbol;
 import edu.harvard.seas.pl.formulog.symbols.SymbolComparator;
 import edu.harvard.seas.pl.formulog.util.Pair;
 import edu.harvard.seas.pl.formulog.util.Util;
-import java.util.*;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NavigableSet;
+import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -511,7 +522,12 @@ public class SortedIndexedFactDb implements IndexedFactDb {
       if (Configuration.genComparators) {
         try {
           cmp = gen.generate(a);
-        } catch (InstantiationException | IllegalAccessException e) {
+        } catch (InstantiationException
+            | IllegalAccessException
+            | IllegalArgumentException
+            | InvocationTargetException
+            | NoSuchMethodException
+            | SecurityException e) {
           throw new AssertionError(e);
         }
       } else {

@@ -69,7 +69,7 @@ import picocli.CommandLine.Spec;
 @Command(
     name = "formulog",
     mixinStandardHelpOptions = true,
-    version = "Formulog 0.7.0",
+    version = "Formulog 0.8.0",
     description = "Runs Formulog.")
 public final class Main implements Callable<Integer> {
 
