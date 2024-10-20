@@ -11,7 +11,7 @@ Formulog sets out to fill this gap by augmenting Datalog with ways to construct 
 
 1. By combining logic programming, functional programming, and SMT solving, Formulog makes it possible to encode many analyses declaratively at the level of mathematical specification (e.g., inference rules), closing the gap between specification and implementation---and often revealing bugs in the spec!
 2. This high-level encoding makes it possible for Formulog to apply high-level optimizations to your analysis, like automatic parallelization and goal-directed evaluation.
-3. Thanks to our [Formulog-to-Soufflé compiler](#compiling-formulog-programs), you can automatically generate a C++ version of the analysis that leverages highly optimized Datalog algorithms and data structures.
+3. Thanks to our [Formulog-to-Soufflé compiler](https://harvardpl.github.io/formulog/eval_modes/compile.html), you can automatically generate a C++ version of the analysis that leverages highly optimized Datalog algorithms and data structures.
 
 **Interested?**
 For more information, check out the [Formulog docs](https://harvardpl.github.io/formulog/) (also available in the [docs](./docs/) directory), including [tips on getting started](https://harvardpl.github.io/formulog/starting.html) and the [language reference](https://harvardpl.github.io/formulog/lang_ref/).
