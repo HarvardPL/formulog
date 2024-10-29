@@ -1,6 +1,6 @@
 # To upload the Docker images to Dockerhub, log into the Docker console, and then run
 #
-#   docker buildx build --push --platform linux/amd64,linux/arm64 -t aaronbembenek/formulog:vX.Y.Z .
+#   docker buildx build --push --platform linux/amd64,linux/arm64 -t aaronbembenek/formulog:X.Y.Z .
 #
 # (with the appropriate version number substituted for X.Y.Z).
 
