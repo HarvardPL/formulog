@@ -11,10 +11,14 @@ name: Java CI with Maven
 on:
   push:
     branches: ["master"]
-    paths: ["src/**"]
+    paths:
+      - "src/**"
+      - "pom.xml"
   pull_request:
     branches: ["master"]
-    paths: ["src/**"]
+    paths:
+      - "src/**"
+      - "pom.xml"
 
 jobs:
   build:
