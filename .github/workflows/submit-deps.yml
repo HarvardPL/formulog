@@ -1,0 +1,32 @@
+# Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
+
+name: Submit Maven Dependencies
+
+on:
+  push:
+    branches: ["master"]
+  pull_request_target:
+    branches: ["master"]
+
+permissions:
+  contents: write
+
+jobs:
+  submit-maven-deps:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out base branch (safe)
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.base.ref || github.ref_name }}
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Submit Maven dependency graph
+        uses: advanced-security/maven-dependency-submission-action@v5
+
