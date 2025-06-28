@@ -1,0 +1,23 @@
+# Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
+
+name: Submit Maven Dependencies
+
+on:
+  push:
+    branches: ["master"]
+
+permissions:
+  contents: write
+
+jobs:
+  submit-maven-deps:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Submit Maven dependency graph
+        uses: advanced-security/maven-dependency-submission-action@v5
