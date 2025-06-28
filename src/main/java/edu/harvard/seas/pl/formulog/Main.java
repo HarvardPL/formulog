@@ -405,7 +405,6 @@ public final class Main implements Callable<Integer> {
   }
 
   public static void main(String[] args) throws Exception {
-    int x = 0; // deadcode
     int exitCode = new CommandLine(new Main()).execute(args);
     System.exit(exitCode);
   }
