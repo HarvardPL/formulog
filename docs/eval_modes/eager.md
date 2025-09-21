@@ -18,7 +18,7 @@ For example, to build a version of the greeting program that uses eager evaluati
 ```
 java -jar formulog.jar -c examples/greeting.flg && \
   cd codegen && \
-  cmake -B build -S . -DFLG_EAGER_EVAL=On && \
+  cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DFLG_EAGER_EVAL=On && \
   cmake --build build -j && \
   ./build/flg --dump-idb
 ```

@@ -16,7 +16,7 @@ For example, to compile and execute the `greeting.flg` program from above, you c
 ```
 java -jar formulog.jar -c examples/greeting.flg && \
   cd codegen && \
-  cmake -B build -S . && \
+  cmake -B build -S . -DCMAKE_BUILD_TYPE=Release && \
   cmake --build build -j && \
   ./build/flg --dump-idb
 ```
